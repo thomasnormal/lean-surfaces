@@ -492,6 +492,14 @@ theorem bindE {x y : Run FrameState α} {f g : FrameState → α → Run FrameSt
   | timeout => rw [Run.timeout_bindE]; exact timeout
   | unsupported msg => rw [Run.unsupported_bindE]; exact unsupported
 
+theorem flattenStarRun {x y : Run FrameState (List RVal)}
+    (h : PBF a o₀ o x y) :
+    PBF a o₀ o (flattenStarRun x) (flattenStarRun y) := by
+  change PBF a o₀ o
+    (x.bind (fun st vs => .ok st (flattenStarCallArgs vs)))
+    (y.bind (fun st vs => .ok st (flattenStarCallArgs vs)))
+  exact bind h (fun st vs _ hs => ok hs (flattenStarCallArgs vs))
+
 theorem ite {c : Prop} [Decidable c] {x y z u : Run FrameState α}
     (ht : c → PBF a o₀ o x y) (he : ¬c → PBF a o₀ o z u) :
     PBF a o₀ o (if c then x else z) (if c then y else u) := by
@@ -943,6 +951,17 @@ theorem unpackSeqStar_swapAt (hslot : Heap.get? h pa = some o₀)
       · simp [unpackSeqStar, unpackAllStar, h1, h2]
   | _ => rfl
 
+theorem unpackAllStar_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (v : RVal) :
+    unpackAllStar (Heap.swapAt h pa o) v = unpackAllStar h v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+        ⟨_, _, _, _, _, h1, h2⟩
+      · simp [unpackAllStar, heq]
+      · simp [unpackAllStar, h1, h2]
+  | _ => rfl
+
 /-- The heap-aware assignment is blind: it diverts only on a `.ref`
 value at a tuple/list target, and reads the referent's CONSTRUCTOR. -/
 theorem assignToH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
@@ -1035,13 +1054,44 @@ theorem reprVal_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
           (h := h) (o := .generator q l₁ c₁ .running) hpa
         simp only [reprVal]
         simp [hs, hsda, hget]
-  | case23 active a fuel hlist hdict hview =>
+  | case23 active a fuel xs hget hsafe hempty =>
       rcases Heap.get?_swapAt_twin (b := a) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq |
         ⟨_, _, _, _, _, _, h2⟩
-      · simp only [reprVal, heq]
-      · simp only [reprVal, h2]
+      · simp [reprVal, heq, hget, hsafe, hempty]
+      · simp_all [reprVal]
+  | case24 active a fuel xs hget hsafe hnonempty ih =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot
+          ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq |
+        ⟨_, _, _, _, _, _, h2⟩
+      · simp [reprVal, heq, hget, hsafe, hnonempty, ih]
+      · simp_all [reprVal]
+  | case25 active a fuel xs hget hunsafe =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot
+          ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq |
+        ⟨_, _, _, _, _, _, h2⟩
+      · simp [reprVal, heq, hget, hunsafe]
+      · simp_all [reprVal]
+  | case26 active a fuel hlist hdict hview hset =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot
+          ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq |
+        ⟨_, _, _, _, _, _, h2⟩
+      · cases hg : h.get? a with
+        | none => simp [reprVal, heq, hg]
+        | some obj => cases obj <;> simp_all [reprVal, heq, hg]
+      · simp [reprVal, h2]
   | _ => simp_all [reprVal, reprVals, reprEntries]
+
+theorem instanceEqMarkerH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (v : RVal) :
+    instanceEqMarkerH (Heap.swapAt h pa o) v = instanceEqMarkerH h v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+        ⟨_, _, _, _, _, h1, h2⟩
+      · simp [instanceEqMarkerH, heq]
+      · simp [instanceEqMarkerH, h1, h2]
+  | _ => rfl
 
 /-- **`==` through the heap is blind** — the second mutual recursion, and
 the one whose ref/ref arm reads TWO addresses. A generator on either side
@@ -1058,84 +1108,84 @@ theorem heapEq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin 
     (motive_3 := fun f act ls rs =>
       heapEqEntries (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act ls rs
         = heapEqEntries h f act ls rs) with
-  | case4 _ _ x y _ _ _ _ _ _ hy hx _ ih =>
-      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+  | case6 _ _ x y _ _ _ _ _ _ _ _ hy hx _ ih =>
+      simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
         Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
-  | case5 _ _ x y _ _ _ _ _ _ hy hx _ =>
-      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+  | case7 _ _ x y _ _ _ _ _ _ _ _ hy hx _ =>
+      simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
         Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
-  | case6 _ _ x y _ _ _ _ hy hx _ ih =>
-      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+  | case8 _ _ x y _ _ _ _ _ _ hy hx _ ih =>
+      simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
         Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
-  | case7 _ _ x y _ _ _ _ hy hx _ =>
-      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+  | case9 _ _ x y _ _ _ _ _ _ hy hx _ =>
+      simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
         Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
-  | case8 _ _ x y _ _ _ _ hy hx =>
+  | case10 _ _ x y _ _ _ _ _ _ _ _ _ =>
       rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
       rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
-      simp_all [heapEq]
-  | case9 active fuel x y hxy hact da db hy hx hne =>
+      simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq]
+  | case11 active fuel x y _ _ hxy hact da db hy hx hne =>
       have hsx := Heap.get?_swapAt_of_ne_slot (o := .generator q l₁ c₁ .running)
         hslot (by simp) hx
       have hsy := Heap.get?_swapAt_of_ne_slot (o := .generator q l₁ c₁ .running)
         hslot (by simp) hy
-      simp [heapEq, hsx, hsy, hx, hy, hne]
-  | case10 active fuel x y hxy hact da db hy hx =>
+      simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsx, hsy, hx, hy, hne]
+  | case12 active fuel x y _ _ hxy hact da db hy hx =>
       have hsy := Heap.get?_swapAt_of_ne_slot (o := .generator q l₁ c₁ .running)
         hslot (by simp) hy
       rcases Heap.get?_swapAt_twin (b := x) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq | ⟨_, _, _, _, _, hx0, hx1⟩
-      · simp [heapEq, hsy, heq, hy, hx]
-      · simp [heapEq, hsy, hx0, hx1, hy, hx]
-  | case11 active fuel x y hxy hact dictAddr kind val hpred =>
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsy, heq, hy, hx]
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsy, hx0, hx1, hy, hx]
+  | case13 active fuel x y _ _ hxy hact dictAddr kind val hpred =>
       have hx : h.get? x = some (.dictView dictAddr kind) := by assumption
       have hy : h.get? y = some val := by assumption
       have hsx := Heap.get?_swapAt_of_ne_slot (o := .generator q l₁ c₁ .running)
         hslot (by simp) hx
       rcases Heap.get?_swapAt_twin (b := y) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq | ⟨_, _, _, _, _, hy0, hy1⟩
-      · simp [heapEq, hsx, heq, hx, hy]
-      · simp [heapEq, hsx, hy0, hy1, hx, hy]
-  | case12 active fuel x y hxy hact val dictAddr kind hpred =>
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsx, heq, hx, hy]
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsx, hy0, hy1, hx, hy]
+  | case14 active fuel x y _ _ hxy hact val dictAddr kind hpred =>
       have hx : h.get? x = some val := by assumption
       have hy : h.get? y = some (.dictView dictAddr kind) := by assumption
       have hsy := Heap.get?_swapAt_of_ne_slot (o := .generator q l₁ c₁ .running)
         hslot (by simp) hy
       rcases Heap.get?_swapAt_twin (b := x) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq | ⟨_, _, _, _, _, hx0, hx1⟩
-      · simp [heapEq, hsy, heq, hx, hy]
-      · simp [heapEq, hsy, hx0, hx1, hx, hy]
-  | case13 active fuel x y hxy hact val0 val1 hdict hlist hk1 hk2 hy hx =>
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsy, heq, hx, hy]
+      · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hsy, hx0, hx1, hx, hy]
+  | case15 active fuel x y _ _ hxy hact val0 val1 hdict hlist hk1 hk2 hy hx =>
       rcases Heap.get?_swapAt_twin (b := x) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqx | htx
       · rcases Heap.get?_swapAt_twin (b := y) hslot
             ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqy | hty
-        · simp_all [heapEq, heqx, heqy]
+        · simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, heqx, heqy]
         · rcases hty with ⟨q', a', c', b', d', hy0, hy1⟩
-          simp_all [heapEq, heqx, hy0, hy1]
+          simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, heqx, hy0, hy1]
       · rcases htx with ⟨q', a', c', b', d', hx0, hx1⟩
         rcases Heap.get?_swapAt_twin (b := y) hslot
             ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqy | hty
-        · simp_all [heapEq, hx0, hx1, heqy]
+        · simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hx0, hx1, heqy]
         · rcases hty with ⟨q'', a'', c'', b'', d'', hy0, hy1⟩
-          simp_all [heapEq, hx0, hx1, hy0, hy1]
-  | case14 active fuel x y hxy hact hno =>
+          simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hx0, hx1, hy0, hy1]
+  | case16 active fuel x y _ _ hxy hact hno =>
       rcases Heap.get?_swapAt_twin (b := x) hslot
           ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqx | htx
       · rcases Heap.get?_swapAt_twin (b := y) hslot
             ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqy | hty
-        · simp [heapEq, heqx, heqy]
+        · simp [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, heqx, heqy]
         · rcases hty with ⟨q', a', c', b', d', hy0, hy1⟩
-          simp_all [heapEq, heqx, hy0, hy1]
+          simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, heqx, hy0, hy1]
       · rcases htx with ⟨q', a', c', b', d', hx0, hx1⟩
         rcases Heap.get?_swapAt_twin (b := y) hslot
             ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heqy | hty
-        · simp_all [heapEq, hx0, hx1, heqy]
+        · simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hx0, hx1, heqy]
         · rcases hty with ⟨q'', a'', c'', b'', d'', hy0, hy1⟩
-          simp_all [heapEq, hx0, hx1, hy0, hy1]
-  | _ => simp_all [heapEq, heapEqList, heapEqEntries]
+          simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, hx0, hx1, hy0, hy1]
+  | _ => simp_all [instanceEqMarkerH_swapAt hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩, heapEq, heapEqList, heapEqEntries]
 
 theorem decimalOverflowValH_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (fuel : Nat) (active : List Addr) (v : RVal) :
@@ -1264,6 +1314,37 @@ theorem reprArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwi
     cases rest <;>
       simp only [reprArgs, decimalOverflowValH_swapAt hslot htwin,
         reprVal_swapAt hslot htwin]
+
+theorem floatCastArgsH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (vs : List RVal) :
+    floatCastArgsH (Heap.swapAt h pa o) vs = floatCastArgsH h vs := by
+  cases vs with
+  | nil => rfl
+  | cons v rest =>
+      cases rest with
+      | nil =>
+          cases v with
+          | ref b => simp [floatCastArgsH, floatCastValH,
+              RVal.typeNameH_swapAt hslot htwin]
+          | _ => rfl
+      | cons _ _ => rfl
+
+theorem reprArgsH_swapAt (m : Module) (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (vs : List RVal) :
+    reprArgsH m (Heap.swapAt h pa o) vs = reprArgsH m h vs := by
+  cases vs with
+  | nil => rfl
+  | cons v rest =>
+      cases rest with
+      | nil =>
+          cases v with
+          | ref b =>
+              rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+                ⟨_, _, _, _, _, h1, h2⟩
+              · simp [reprArgsH, heq, reprArgs_swapAt hslot htwin]
+              · simp [reprArgsH, h1, h2, reprArgs_swapAt hslot htwin]
+          | _ => simp [reprArgsH, reprArgs_swapAt hslot htwin]
+      | cons _ _ => simp [reprArgsH, reprArgs_swapAt hslot htwin]
 
 theorem formatValueH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (value : RVal) (reprConversion : Bool) :
@@ -2296,7 +2377,45 @@ theorem unpackStoreHM_swapAt (m : Module) (htwin : PayloadTwin o₀ o) :
       intro _
       exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
         fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
-  | case6 h env e es v vs hnn hna =>
+  | case6 h env rid sp c sp' sp'' es v vs a hlk ih =>
+      intro hslot
+      refine ⟨?_, fun p hp => ?_⟩
+      · simp only [unpackStoreHM, hlk, heapStore_swapAt hslot htwin]
+        cases hw : heapStore h a (Const.toRVal c) v with
+        | ok h' =>
+            simp only [Res.mapOk, Res.ok_bind]
+            exact (ih h' (heapStore_slot hslot htwin hw)).1
+        | exn e => simp only [Res.mapOk, Res.exn_bind]
+        | timeout => simp only [Res.mapOk, Res.timeout_bind]
+        | unsupported msg => simp only [Res.mapOk, Res.unsupported_bind]
+      · simp only [unpackStoreHM, hlk] at hp
+        cases hw : heapStore h a (Const.toRVal c) v with
+        | ok h' =>
+            simp only [hw, Res.ok_bind] at hp
+            exact (ih h' (heapStore_slot hslot htwin hw)).2 p hp
+        | exn e => simp [hw] at hp
+        | timeout => simp [hw] at hp
+        | unsupported msg => simp [hw] at hp
+  | case7 h env rid sp c sp' sp'' es v vs xs hlk =>
+      intro _
+      exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
+        fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
+  | case8 h env rid sp c sp' sp'' es v vs val hnr hlist hlk =>
+      intro _
+      cases val with
+      | ref b => exact absurd rfl (hnr b)
+      | listV xs => exact absurd rfl (hlist xs)
+      | _ => exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
+                fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
+  | case9 h env rid sp c sp' sp'' es v vs hlk =>
+      intro _
+      exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
+        fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
+  | case10 h env rid sp index sp' tail head tail' hni =>
+      intro _
+      exact ⟨by simp only [unpackStoreHM, hni, Res.mapOk],
+        fun p hp => by simp [unpackStoreHM, hni] at hp⟩
+  | case11 h env e es v vs hnn hna =>
       intro _
       cases e with
       | name id sp => exact absurd rfl (hnn id sp)
@@ -2307,7 +2426,7 @@ theorem unpackStoreHM_swapAt (m : Module) (htwin : PayloadTwin o₀ o) :
                     fun p hp => by simp [unpackStoreHM] at hp⟩
       | _ => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
                 fun p hp => by simp [unpackStoreHM] at hp⟩
-  | case7 es h env vs h1 h2 h3 h4 =>
+  | case12 es h env vs h1 h2 h3 h4 h5 h6 =>
       intro _
       cases es with
       | nil =>
@@ -2319,7 +2438,7 @@ theorem unpackStoreHM_swapAt (m : Module) (htwin : PayloadTwin o₀ o) :
           cases vs with
           | nil => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
                     fun p hp => by simp [unpackStoreHM] at hp⟩
-          | cons v vs' => exact (h4 e es' v vs' rfl rfl).elim
+          | cons v vs' => exact (h6 e es' v vs' rfl rfl).elim
 
 end TierB
 
@@ -2808,7 +2927,7 @@ theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1
       refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
       refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
       refine PBF.toWorld ?_
-      refine PBF.bind (ihSs m ⟨w, mkCallEnv f.params args⟩ f.body.toList hslot)
+      refine PBF.bind (ihSs m ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩ f.body.toList hslot)
         fun s flow _ hs => ?_
       cases flow with
       | ret v => exact PBF.ok hs _
@@ -3436,14 +3555,27 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           | some e =>
               cases e with
               | name id sp' =>
-                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                  cases findClass m id with
-                  | none =>
-                      refine PBF.ite (fun _ => PBF.exn hslot _) fun _ => ?_
-                      refine PBF.ite (fun _ => PBF.exn hslot _) (fun _ => PBF.unsupported)
-                  | some cic =>
-                      obtain ⟨ci, c⟩ := cic
-                      exact PBF.ite (fun _ => PBF.exn hslot _) (fun _ => PBF.unsupported)
+                  by_cases hunbound : hasUnboundLocal st.locals id
+                  · simp [hunbound]
+                    exact PBF.exn hslot _
+                  · simp [hunbound]
+                    cases hlocal : Env.lookup st.locals id with
+                    | none =>
+                      simp [hlocal]
+                      refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                      cases findClass m id with
+                      | none =>
+                        refine PBF.ite (fun _ => PBF.exn hslot _) fun _ => ?_
+                        by_cases hb : id ∈ admittedBuiltinRaise
+                        · simp [hb]; exact PBF.exn hslot _
+                        · simp [hb]; exact PBF.unsupported
+                      | some cic =>
+                        obtain ⟨ci, c⟩ := cic
+                        exact PBF.ite (fun _ => PBF.exn hslot _)
+                          (fun _ => PBF.unsupported)
+                    | some v =>
+                      cases v <;> try exact PBF.exn hslot _
+                      case ref a => exact PBF.unsupported
               | call func args kwargs cu _ =>
                   cases func with
                   | name id _ =>
@@ -3485,23 +3617,25 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   cases hnt : findNamedTuple m id with
                                   | some nt => simp [hnt]; exact PBF.unsupported
                                   | none =>
-                                      cases args.toList with
-                                      | nil => exact PBF.unsupported
-                                      | cons arg rest =>
+                                      by_cases hpy : isPyBuiltinName id
+                                      · simp [hfc, hnt, hpy]
+                                        cases args.toList with
+                                        | nil => exact PBF.unsupported
+                                        | cons arg rest =>
                                           cases rest with
                                           | cons _ _ => simp; exact PBF.unsupported
                                           | nil =>
-                                              cases arg with
-                                              | constant c _ =>
-                                                  cases c with
-                                                  | str msg =>
-                                                      cases hbe : builtinExcWithMessage id msg with
-                                                      | some e => simp [hbe]; exact PBF.exn hslot _
-                                                      | none =>
-                                                          simp [hbe]
-                                                          split <;> exact PBF.unsupported
-                                                  | _ => exact PBF.unsupported
+                                            cases arg with
+                                            | constant c _ =>
+                                              cases c with
+                                              | str msg =>
+                                                cases hbe : builtinExcWithMessage id msg with
+                                                | some e => simp [hbe]; exact PBF.exn hslot _
+                                                | none => simp [hbe]; split <;> exact PBF.unsupported
                                               | _ => exact PBF.unsupported
+                                            | _ => exact PBF.unsupported
+                                      · simp [hfc, hnt, hpy]
+                                        exact PBF.exn hslot _
                   | _ => exact PBF.unsupported
               | _ => exact PBF.unsupported
   | assertStmt test msg sp =>
@@ -3545,7 +3679,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 | some classInfo =>
                   obtain ⟨classId, definition⟩ := classInfo
                   refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                  refine PBF.bind (ihEs m st arguments.toList hslot)
+                  refine PBF.bind (PBF.flattenStarRun (ihEs m st arguments.toList hslot))
                     fun allocatedFrom values _ invariant => ?_
                   simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
                     World.swapAt_heap, Heap.size_swapAt,
@@ -3562,19 +3696,24 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         (className ++ ".__enter__")
                         #[.ref allocatedFrom.world.heap.size] allocatedInvariant))
                       fun enteredState entered _ enteredInvariant => ?_
+                    let exitName := className ++ ".__exit__"
+                    let exitTypeTest :=
+                      (Option.map FunctionDefn.withExitExceptionTypeTest
+                        (findFunction m exitName) == some true)
                     let finish (state : FrameState) :=
                       Run.bindE (execStmts m fuel state body.toList)
                         (fun after flow =>
                           match flow with
                           | .next | .ret _ | .brk | .cont =>
                             Run.withLocals after.locals
-                              (callIn m fuel after.world (className ++ ".__exit__")
+                              (callIn m fuel after.world exitName
                                 #[.ref allocatedFrom.world.heap.size, .none, .none, .none]) ⤳
                               fun exited _ => .ok exited flow)
                         (fun after error =>
                           Run.withLocals after.locals
-                            (callIn m fuel after.world (className ++ ".__exit__")
-                              #[.ref allocatedFrom.world.heap.size, .none, .none, .none]) ⤳
+                            (callIn m fuel after.world exitName
+                              (withExitArgs exitTypeTest
+                                (Array.size allocatedFrom.world.heap))) ⤳
                             fun exited result =>
                               Run.liftRes exited (truthyH exited.world.heap result) ⤳
                                 fun exited suppresses =>
@@ -3593,7 +3732,10 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                             (fun exited _ _ exitedInvariant => PBF.ok exitedInvariant _)
                       · refine PBF.bind (PBW.withLocals
                           (ihCall m after.world (className ++ ".__exit__")
-                            #[.ref allocatedFrom.world.heap.size, .none, .none, .none]
+                            (withExitArgs
+                              (Option.map FunctionDefn.withExitExceptionTypeTest
+                                (findFunction m (className ++ ".__exit__")) == some true)
+                              (Array.size allocatedFrom.world.heap))
                             afterInvariant))
                           fun exited result _ exitedInvariant => ?_
                         simp only [FrameState.swapAt_world, World.swapAt_heap,
@@ -3734,7 +3876,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       | mk env res =>
           cases res with
           | none => refine PBF.ok ?_ _; exact hslot
-          | some n => exact PBF.unsupported
+          | some n => exact PBF.exn hslot _
   | importFrom mod names star sp => simp only [execStmt]; exact PBF.exn hslot _
   | pass sp => simp only [execStmt]; exact PBF.ok hslot _
   | brk sp => simp only [execStmt]; exact PBF.ok hslot _
@@ -3786,7 +3928,20 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
             cases hg : lookupG (moduleGlobals m).1 id with
             | some ov =>
                 cases ov with
-                | some v => exact PBF.ok hslot _
+                | some v =>
+                    by_cases hname : id = "__name__"
+                    · simp only [hname, if_pos]
+                      cases hdel : Env.lookup st.world.globals (deletedModuleDunderMarker id) with
+                      | some dv =>
+                          simp only [hname] at hdel ⊢
+                          simp only [hdel]
+                          exact PBF.ok hslot _
+                      | none =>
+                          simp only [hname] at hdel ⊢
+                          simp only [hdel]
+                          exact PBF.ok hslot _
+                    · simp only [hname, if_neg]
+                      exact PBF.ok hslot _
                 | none =>
                     cases hlive : Env.lookup st.world.globals id with
                     | some v => exact PBF.ok hslot _
@@ -3899,1023 +4054,1068 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           -- ===== POSITIONAL =====
           · cases f with
             | name fname sp' =>
-                simp only []
-                cases Env.lookup st.locals fname with
-                | some v =>
-                    cases v with
-                    | ref b =>
-                        refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
-                        refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
-                        rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                          heq | ⟨_, _, _, _, _, h1, h2⟩
-                        · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
-                          cases hget : Heap.get? s1.world.heap b with
-                          | none => exact PBF.exn hs1 _
-                          | some obj =>
-                              cases obj with
-                              | cell cv => exact PBF.unsupported
-                              | closure nm ps ao lo hg ig bd cap =>
-                                  dsimp only
-                                  rw [cellsFor_swapAt hs1 htwin]
-                                  refine PBF.bind (PBF.liftRes hs1 _) fun s cap' _ hs => ?_
-                                  exact PBW.withLocals
-                                    (ihClosure m _ nm ps ao lo ig bd cap' vs.toArray hs)
-                              | _ => exact PBF.exn hs1 _
-                        · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
-                          exact PBF.exn hs1 _
-                    | _ =>
-                        exact PBF.bind (ihEs m st args.toList hslot)
-                          fun s1 vs _ hs1 => PBF.exn hs1 _
-                | none =>
-                    cases lookupG (moduleGlobals m).1 fname with
-                    | some ov =>
-                        cases ov with
-                        | some gv =>
-                            cases gv <;>
-                              exact PBF.bind (ihEs m st args.toList hslot)
-                                fun s1 vs _ hs1 => PBF.exn hs1 _
-                        | none =>
-                            cases Env.lookup st.world.globals fname with
-                            | some gv =>
-                                cases gv with
-                                | ref b =>
-                                    refine PBF.bind (ihEs m st args.toList hslot)
+                cases hstar : fname == starArgBuiltinName with
+                | true =>
+                  simp only [hstar, if_true]
+                  cases args.toList with
+                  | nil => exact PBF.unsupported
+                  | cons arg rest =>
+                    cases rest with
+                    | cons _ _ => exact PBF.unsupported
+                    | nil =>
+                      cases kwargs.toList with
+                      | cons _ _ => exact PBF.unsupported
+                      | nil =>
+                        refine PBF.bind (ihE m st arg hslot) fun s1 v _ hs1 => ?_
+                        simp only [FrameState.swapAt_world, World.swapAt_heap,
+                          unpackAllStar_swapAt hs1 htwin]
+                        refine PBF.bind (PBF.liftRes hs1 _) fun s2 xs _ hs2 => ?_
+                        exact PBF.ok hs2 _
+                | false =>
+                  simp only [hstar, Bool.false_eq_true, if_false]
+                  try simp_all [hstar]
+                  cases Env.lookup st.locals fname with
+                  | some v =>
+                      cases v with
+                      | ref b =>
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
+                          refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
+                          rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                            heq | ⟨_, _, _, _, _, h1, h2⟩
+                          · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                            cases hget : Heap.get? s1.world.heap b with
+                            | none => exact PBF.exn hs1 _
+                            | some obj =>
+                                cases obj with
+                                | cell cv => exact PBF.unsupported
+                                | closure nm ps ao lo hg ig bd cap =>
+                                    dsimp only
+                                    rw [cellsFor_swapAt hs1 htwin]
+                                    refine PBF.bind (PBF.liftRes hs1 _) fun s cap' _ hs => ?_
+                                    exact PBW.withLocals
+                                      (ihClosure m _ nm ps ao lo ig bd cap' vs.toArray hs)
+                                | _ => exact PBF.exn hs1 _
+                          · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                            exact PBF.exn hs1 _
+                      | _ =>
+                          exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                            fun s1 vs _ hs1 => PBF.exn hs1 _
+                  | none =>
+                      simp only [FrameState.swapAt_locals]
+                      refine PBF.ite (c :=
+                        (!funsHeapFree m.functions.toList && hasUnboundLocal st.locals fname) = true)
+                        (fun _ => PBF.exn hslot _) (fun _ => ?_)
+                      cases lookupG (moduleGlobals m).1 fname with
+                      | some ov =>
+                          cases ov with
+                          | some gv =>
+                              cases gv <;>
+                                refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                  (fun s1 vs _ hs1 => PBF.exn hs1 _)
+                          | none =>
+                              cases Env.lookup st.world.globals fname with
+                              | some gv =>
+                                  cases gv with
+                                  | ref b =>
+                                      refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
+                                      rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                        heq | ⟨_, _, _, _, _, h1, h2⟩
+                                      · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                                        cases hget : Heap.get? s1.world.heap b with
+                                        | none => exact PBF.exn hs1 _
+                                        | some obj =>
+                                            cases obj with
+                                            | cell cv => exact PBF.unsupported
+                                            | closure nm ps ao lo hg ig bd cap =>
+                                                dsimp only
+                                                rw [cellsFor_swapAt hs1 htwin]
+                                                refine PBF.bind (PBF.liftRes hs1 _)
+                                                  fun s cap' _ hs => ?_
+                                                exact PBW.withLocals (ihClosure m _ nm ps ao
+                                                  lo ig bd cap' vs.toArray hs)
+                                            | _ => exact PBF.exn hs1 _
+                                      · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                                        exact PBF.exn hs1 _
+                                  | _ =>
+                                      exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => PBF.exn hs1 _
+                              | none => exact PBF.unsupported
+                      | none =>
+                          refine PBF.ite (fun _ => ?_) fun _ => ?_
+                          -- a module `def`
+                          · refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                            refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
+                            exact PBW.withLocals (ihIn m s1.world fname vs.toArray hs1)
+                          · cases findClass m fname with
+                            | some cic =>
+                                obtain ⟨ci, c⟩ := cic
+                                refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                cases c.ntBase with
+                                | some nt =>
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                       fun s1 vs _ hs1 => ?_
-                                    refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
-                                    rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                      heq | ⟨_, _, _, _, _, h1, h2⟩
-                                    · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
-                                      cases hget : Heap.get? s1.world.heap b with
-                                      | none => exact PBF.exn hs1 _
-                                      | some obj =>
-                                          cases obj with
-                                          | cell cv => exact PBF.unsupported
-                                          | closure nm ps ao lo hg ig bd cap =>
-                                              dsimp only
-                                              rw [cellsFor_swapAt hs1 htwin]
-                                              refine PBF.bind (PBF.liftRes hs1 _)
-                                                fun s cap' _ hs => ?_
-                                              exact PBW.withLocals (ihClosure m _ nm ps ao
-                                                lo ig bd cap' vs.toArray hs)
-                                          | _ => exact PBF.exn hs1 _
-                                    · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
-                                      exact PBF.exn hs1 _
-                                | _ =>
-                                    exact PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => PBF.exn hs1 _
-                            | none => exact PBF.unsupported
-                    | none =>
-                        refine PBF.ite (fun _ => ?_) fun _ => ?_
-                        -- a module `def`
-                        · refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                          refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
-                          exact PBW.withLocals (ihIn m s1.world fname vs.toArray hs1)
-                        · cases findClass m fname with
-                          | some cic =>
-                              obtain ⟨ci, c⟩ := cic
-                              refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                              refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                              cases c.ntBase with
-                              | some nt =>
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  refine PBF.bind (ihEs m st args.toList hslot)
-                                    fun s1 vs _ hs1 => ?_
-                                  exact PBF.ite (fun _ => PBF.ok hs1 _) (fun _ => PBF.exn hs1 _)
-                              | none =>
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  refine PBF.bind (ihEs m st args.toList hslot)
-                                    fun s1 vs _ hs1 => ?_
-                                  cases classMethodQname m ci "__init__" with
-                                  | some initName =>
-                                      -- `__init__` runs in the world the instance was allocated in
-                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                        Heap.swapAt_push (Heap.lt_size_of_get? hs1),
-                                        Heap.size_swapAt]
-                                      refine PBF.bind (PBW.withLocals (ihIn m
-                                        { s1.world with
-                                            heap := s1.world.heap.push (.instance ci (instanceAttrs m ci)) }
-                                        initName
-                                        ((RVal.ref s1.world.heap.size :: vs).toArray)
-                                        (Heap.get?_push_of_get? _ hs1))) fun s2 r _ hs2 => ?_
-                                      cases r with
-                                      | none => exact PBF.ok hs2 _
-                                      | _ => exact PBF.exn hs2 _
-                                  | none =>
+                                    exact PBF.ite (fun _ => PBF.ok hs1 _) (fun _ => PBF.exn hs1 _)
+                                | none =>
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                      fun s1 vs _ hs1 => ?_
+                                    cases classMethodQname m ci "__init__" with
+                                    | some initName =>
+                                        -- `__init__` runs in the world the instance was allocated in
+                                        simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                          Heap.swapAt_push (Heap.lt_size_of_get? hs1),
+                                          Heap.size_swapAt]
+                                        refine PBF.bind (PBW.withLocals (ihIn m
+                                          { s1.world with
+                                              heap := s1.world.heap.push (.instance ci (instanceAttrs m ci)) }
+                                          initName
+                                          ((RVal.ref s1.world.heap.size :: vs).toArray)
+                                          (Heap.get?_push_of_get? _ hs1))) fun s2 r _ hs2 => ?_
+                                        cases r with
+                                        | none => exact PBF.ok hs2 _
+                                        | _ => exact PBF.exn hs2 _
+                                    | none =>
+                                        cases vs with
+                                        | nil => exact PBF.pushRef hs1 _
+                                        | cons _ _ => exact PBF.exn hs1 _
+                            | none =>
+                                cases findNamedTuple m fname with
+                                | some nt =>
+                                    refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                      fun s1 vs _ hs1 => ?_
+                                    exact PBF.ite (fun _ => PBF.ok hs1 _) (fun _ => PBF.exn hs1 _)
+                                | none =>
+                                    -- ===== the builtin chain =====
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- f-string format
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | nil => exact PBF.exn hs1 _
+                                          | cons right tail =>
+                                              cases tail with
+                                              | cons _ _ =>
+                                                  simp
+                                                  exact PBF.exn hs1 _
+                                              | nil =>
+                                                  cases right with
+                                                  | str spec => exact PBF.liftRes hs1 _
+                                                  | _ => exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- lenMult
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | nil => exact PBF.exn hs1 _
+                                          | cons right tail =>
+                                              cases tail with
+                                              | cons _ _ => exact PBF.exn hs1 _
+                                              | nil =>
+                                                  cases hsm : sequenceMultLength v right with
+                                                  | some result =>
+                                                      simp only [hsm]
+                                                      exact PBF.liftRes hs1 result
+                                                  | none =>
+                                                      simp only [hsm, FrameState.swapAt_world,
+                                                        World.swapAt_heap,
+                                                        evalBinOpH_swapAt hs1 htwin]
+                                                      refine PBF.liftMapOk hs1 (fun hr hw => ?_)
+                                                      cases hr with
+                                                      | mk h' r =>
+                                                          change PBF pa o₀ o
+                                                            (Run.liftRes
+                                                              {s1 with world := {s1.world with heap := h'}}
+                                                              (lenValH h' r))
+                                                            (Run.liftRes
+                                                              (({s1 with world := {s1.world with heap := h'}}).swapAt pa o)
+                                                              (lenValH (Heap.swapAt h' pa o) r))
+                                                          have hslot' := evalBinOpH_slot hs1 hw
+                                                          simp only [lenValH_swapAt hslot' htwin]
+                                                          exact PBF.liftRes
+                                                            (a := pa) (o₀ := o₀) (o := o)
+                                                            (st := {s1 with world := {s1.world with heap := h'}})
+                                                            (evalBinOpH_slot hs1 hw) (lenValH h' r)
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- len
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | nil =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                lenValH_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- sorted
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none =>
+                                                        simp only [hget, sortedValH_swapAt hs1 htwin]
+                                                        refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                        obtain ⟨h', r⟩ := x
+                                                        exact PBF.okWrite
+                                                          (sortedValH_slot hs1 hw) _
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            refine PBF.bind (PBF.liftRes hs2 _)
+                                                              fun s3 srt _ hs3 => ?_
+                                                            exact PBF.pushRef hs3 _
+                                                        | _ =>
+                                                            simp only [sortedValH_swapAt hs1 htwin]
+                                                            refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                            obtain ⟨h', r⟩ := x
+                                                            exact PBF.okWrite
+                                                              (sortedValH_slot hs1 hw) _
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    refine PBF.bind (PBF.liftRes hs2 _)
+                                                      fun s3 srt _ hs3 => ?_
+                                                    exact PBF.pushRef hs3 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, sortedValH_swapAt hs1 htwin]
+                                                  refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                  obtain ⟨h', r⟩ := x
+                                                  exact PBF.okWrite (sortedValH_slot hs1 hw) _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- max
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                            extremumValH_swapAt hs1 htwin]
+                                          exact PBF.liftRes hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                extremumValH_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                          | nil =>
+                                              cases v with
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none =>
+                                                        simp only [extremumValH_swapAt hs1 htwin]
+                                                        exact PBF.liftRes hs1 _
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                                            refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            exact PBF.liftRes hs2 _
+                                                        | _ =>
+                                                            simp only [extremumValH_swapAt hs1 htwin]
+                                                            exact PBF.liftRes hs1 _
+                                                  · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                                    refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    exact PBF.liftRes hs2 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                    extremumValH_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- min
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                            extremumValH_swapAt hs1 htwin]
+                                          exact PBF.liftRes hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                extremumValH_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                          | nil =>
+                                              cases v with
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none =>
+                                                        simp only [extremumValH_swapAt hs1 htwin]
+                                                        exact PBF.liftRes hs1 _
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                                            refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            exact PBF.liftRes hs2 _
+                                                        | _ =>
+                                                            simp only [extremumValH_swapAt hs1 htwin]
+                                                            exact PBF.liftRes hs1 _
+                                                  · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                                    refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    exact PBF.liftRes hs2 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                    extremumValH_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- any / all
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | str t =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | bytes values =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | tuple xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | ntuple _ _ xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | listV xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | rangeV lo hi step =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                  exact PBF.liftRes hs1 _
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | list xs =>
+                                                            simp only [anyAllScan_swapAt hs1 htwin]
+                                                            exact PBF.liftRes hs1 _
+                                                        | dict es sv =>
+                                                            simp only [anyAllScan_swapAt hs1 htwin]
+                                                            exact PBF.liftRes hs1 _
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihAny m s1.world b _ hs1))
+                                                              fun s2 bb _ hs2 => ?_
+                                                            exact PBF.ok hs2 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihAny m s1.world b _ hs1))
+                                                      fun s2 bb _ hs2 => ?_
+                                                    exact PBF.ok hs2 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- set
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
                                       cases vs with
                                       | nil => exact PBF.pushRef hs1 _
-                                      | cons _ _ => exact PBF.exn hs1 _
-                          | none =>
-                              cases findNamedTuple m fname with
-                              | some nt =>
-                                  refine PBF.bind (ihEs m st args.toList hslot)
-                                    fun s1 vs _ hs1 => ?_
-                                  exact PBF.ite (fun _ => PBF.ok hs1 _) (fun _ => PBF.exn hs1 _)
-                              | none =>
-                                  -- ===== the builtin chain =====
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- len
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | nil => exact PBF.exn hs1 _
-                                        | cons right tail =>
-                                            cases tail with
-                                            | cons _ _ => exact PBF.exn hs1 _
-                                            | nil =>
-                                                cases hsm : sequenceMultLength v right with
-                                                | some result =>
-                                                    simp only [hsm]
-                                                    exact PBF.liftRes hs1 result
-                                                | none =>
-                                                    simp only [hsm, FrameState.swapAt_world,
-                                                      World.swapAt_heap,
-                                                      evalBinOpH_swapAt hs1 htwin]
-                                                    refine PBF.liftMapOk hs1 (fun hr hw => ?_)
-                                                    cases hr with
-                                                    | mk h' r =>
-                                                        change PBF pa o₀ o
-                                                          (Run.liftRes
-                                                            {s1 with world := {s1.world with heap := h'}}
-                                                            (lenValH h' r))
-                                                          (Run.liftRes
-                                                            (({s1 with world := {s1.world with heap := h'}}).swapAt pa o)
-                                                            (lenValH (Heap.swapAt h' pa o) r))
-                                                        have hslot' := evalBinOpH_slot hs1 hw
-                                                        simp only [lenValH_swapAt hslot' htwin]
-                                                        exact PBF.liftRes
-                                                          (a := pa) (o₀ := o₀) (o := o)
-                                                          (st := {s1 with world := {s1.world with heap := h'}})
-                                                          (evalBinOpH_slot hs1 hw) (lenValH h' r)
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- len
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | nil =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              lenValH_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- sorted
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only []
-                                            cases v with
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none =>
-                                                      simp only [hget, sortedValH_swapAt hs1 htwin]
-                                                      refine PBF.liftMapOk hs1 fun x hw => ?_
-                                                      obtain ⟨h', r⟩ := x
-                                                      exact PBF.okWrite
-                                                        (sortedValH_slot hs1 hw) _
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          refine PBF.bind (PBF.liftRes hs2 _)
-                                                            fun s3 srt _ hs3 => ?_
-                                                          exact PBF.pushRef hs3 _
-                                                      | _ =>
-                                                          simp only [sortedValH_swapAt hs1 htwin]
-                                                          refine PBF.liftMapOk hs1 fun x hw => ?_
-                                                          obtain ⟨h', r⟩ := x
-                                                          exact PBF.okWrite
-                                                            (sortedValH_slot hs1 hw) _
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
-                                                  refine PBF.bind (PBF.liftRes hs2 _)
-                                                    fun s3 srt _ hs3 => ?_
-                                                  exact PBF.pushRef hs3 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, sortedValH_swapAt hs1 htwin]
-                                                refine PBF.liftMapOk hs1 fun x hw => ?_
-                                                obtain ⟨h', r⟩ := x
-                                                exact PBF.okWrite (sortedValH_slot hs1 hw) _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- max
-                                  · refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil =>
-                                        simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                          extremumValH_swapAt hs1 htwin]
-                                        exact PBF.liftRes hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              extremumValH_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                        | nil =>
-                                            cases v with
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none =>
-                                                      simp only [extremumValH_swapAt hs1 htwin]
-                                                      exact PBF.liftRes hs1 _
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                                          refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          exact PBF.liftRes hs2 _
-                                                      | _ =>
-                                                          simp only [extremumValH_swapAt hs1 htwin]
-                                                          exact PBF.liftRes hs1 _
-                                                · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
-                                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                                  refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
-                                                  exact PBF.liftRes hs2 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                  extremumValH_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- min
-                                  · refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil =>
-                                        simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                          extremumValH_swapAt hs1 htwin]
-                                        exact PBF.liftRes hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              extremumValH_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                        | nil =>
-                                            cases v with
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none =>
-                                                      simp only [extremumValH_swapAt hs1 htwin]
-                                                      exact PBF.liftRes hs1 _
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                                          refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          exact PBF.liftRes hs2 _
-                                                      | _ =>
-                                                          simp only [extremumValH_swapAt hs1 htwin]
-                                                          exact PBF.liftRes hs1 _
-                                                · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
-                                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                                  refine PBF.bind (PBW.withLocals (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
-                                                  exact PBF.liftRes hs2 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                  extremumValH_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- any / all
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only []
-                                            cases v with
-                                            | str t =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | bytes values =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | tuple xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | ntuple _ _ xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | listV xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | rangeV lo hi step =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
-                                                exact PBF.liftRes hs1 _
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | list xs =>
-                                                          simp only [anyAllScan_swapAt hs1 htwin]
-                                                          exact PBF.liftRes hs1 _
-                                                      | dict es sv =>
-                                                          simp only [anyAllScan_swapAt hs1 htwin]
-                                                          exact PBF.liftRes hs1 _
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihAny m s1.world b _ hs1))
-                                                            fun s2 bb _ hs2 => ?_
-                                                          exact PBF.ok hs2 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihAny m s1.world b _ hs1))
-                                                    fun s2 bb _ hs2 => ?_
-                                                  exact PBF.ok hs2 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- set
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.pushRef hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only []
-                                            cases v with
-                                            | str t =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 es _ hs2 => ?_
-                                                exact PBF.pushRef hs2 _
-                                            | bytes values =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun nextState entries _ invariant => ?_
-                                                exact PBF.pushRef invariant _
-                                            | tuple xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 es _ hs2 => ?_
-                                                exact PBF.pushRef hs2 _
-                                            | ntuple _ _ xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 es _ hs2 => ?_
-                                                exact PBF.pushRef hs2 _
-                                            | listV xs =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 es _ hs2 => ?_
-                                                exact PBF.pushRef hs2 _
-                                            | rangeV lo hi step =>
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 xs _ hs2 => ?_
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap, setDedup_swapAt hs2 htwin]
-                                                refine PBF.bind (PBF.liftRes hs2 _)
-                                                  fun s3 es _ hs3 => ?_
-                                                exact PBF.pushRef hs3 _
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | list xs =>
-                                                          simp only [setDedup_swapAt hs1 htwin]
-                                                          refine PBF.bind (PBF.liftRes hs1 _)
-                                                            fun s2 es _ hs2 => ?_
-                                                          exact PBF.pushRef hs2 _
-                                                      | dict es sv =>
-                                                          simp only [setDedup_swapAt hs1 htwin]
-                                                          refine PBF.bind (PBF.liftRes hs1 _)
-                                                            fun s2 es _ hs2 => ?_
-                                                          exact PBF.pushRef hs2 _
-                                                      | pyset xs => exact PBF.pushRef hs1 _
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            setDedup_swapAt hs2 htwin]
-                                                          refine PBF.bind (PBF.liftRes hs2 _)
-                                                            fun s3 es _ hs3 => ?_
-                                                          exact PBF.pushRef hs3 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | str t =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 es _ hs2 => ?_
+                                                  exact PBF.pushRef hs2 _
+                                              | bytes values =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun nextState entries _ invariant => ?_
+                                                  exact PBF.pushRef invariant _
+                                              | tuple xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 es _ hs2 => ?_
+                                                  exact PBF.pushRef hs2 _
+                                              | ntuple _ _ xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 es _ hs2 => ?_
+                                                  exact PBF.pushRef hs2 _
+                                              | listV xs =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 es _ hs2 => ?_
+                                                  exact PBF.pushRef hs2 _
+                                              | rangeV lo hi step =>
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 xs _ hs2 => ?_
                                                   simp only [FrameState.swapAt_world,
                                                     World.swapAt_heap, setDedup_swapAt hs2 htwin]
                                                   refine PBF.bind (PBF.liftRes hs2 _)
                                                     fun s3 es _ hs3 => ?_
                                                   exact PBF.pushRef hs3 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- abs
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | list xs =>
+                                                            simp only [setDedup_swapAt hs1 htwin]
+                                                            refine PBF.bind (PBF.liftRes hs1 _)
+                                                              fun s2 es _ hs2 => ?_
+                                                            exact PBF.pushRef hs2 _
+                                                        | dict es sv =>
+                                                            simp only [setDedup_swapAt hs1 htwin]
+                                                            refine PBF.bind (PBF.liftRes hs1 _)
+                                                              fun s2 es _ hs2 => ?_
+                                                            exact PBF.pushRef hs2 _
+                                                        | pyset xs => exact PBF.pushRef hs1 _
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              setDedup_swapAt hs2 htwin]
+                                                            refine PBF.bind (PBF.liftRes hs2 _)
+                                                              fun s3 es _ hs3 => ?_
+                                                            exact PBF.pushRef hs3 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, setDedup_swapAt hs2 htwin]
+                                                    refine PBF.bind (PBF.liftRes hs2 _)
+                                                      fun s3 es _ hs3 => ?_
+                                                    exact PBF.pushRef hs3 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- abs
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil => exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun nextState values _ invariant => ?_
+                                      cases values with
+                                      | nil => exact PBF.exn invariant _
+                                      | cons value rest =>
                                         cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil => exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun nextState values _ invariant => ?_
-                                    cases values with
-                                    | nil => exact PBF.exn invariant _
-                                    | cons value rest =>
-                                      cases rest with
-                                      | cons _ _ => exact PBF.unsupported
-                                      | nil =>
-                                        cases value <;> try exact PBF.unsupported
-                                        case int _ => exact PBF.ok invariant _
-                                        case bool _ => exact PBF.ok invariant _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · exact PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · exact PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                      boolCastArgs_swapAt hs1 htwin]
-                                    exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · exact PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- pow
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons _ rest =>
-                                        cases rest with
-                                        | nil => exact PBF.exn hs1 _
-                                        | cons _ rest =>
-                                            cases rest with
-                                            | nil => exact PBF.liftRes hs1 _
-                                            | cons _ rest =>
-                                                cases rest with
-                                                | nil => exact PBF.liftRes hs1 _
-                                                | cons _ _ => exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- sum
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases sumArgs vs with
-                                    | none => exact PBF.exn hs1 _
-                                    | some vstart =>
-                                        obtain ⟨v, start⟩ := vstart
-                                        cases start with
-                                        | str _ | bytes _ =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              sumRejectedStart_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                        | _ =>
-                                            simp only []
-                                            cases v with
-                                            | tuple xs => exact PBF.liftRes hs1 _
-                                            | ntuple _ _ xs => exact PBF.liftRes hs1 _
-                                            | listV xs => exact PBF.liftRes hs1 _
-                                            | str t => exact PBF.liftRes hs1 _
-                                            | bytes values => exact PBF.liftRes hs1 _
-                                            | rangeV lo hi step => exact PBF.liftRes hs1 _
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | list xs => exact PBF.liftRes hs1 _
-                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
-                                                      | dict es sv => exact PBF.liftRes hs1 _
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.ite
-                                                            (fun _ => PBF.unsupported) fun _ => ?_
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          exact PBF.liftRes hs2 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.ite
-                                                    (fun _ => PBF.unsupported) fun _ => ?_
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
-                                                  exact PBF.liftRes hs2 _
-                                            | _ => exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- tuple
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.ok hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
+                                        | cons _ _ => exact PBF.unsupported
                                         | nil =>
-                                            simp only []
-                                            cases v with
-                                            | str t => exact PBF.ok hs1 _
-                                            | bytes values => exact PBF.ok hs1 _
-                                            | tuple xs => exact PBF.ok hs1 _
-                                            | ntuple _ _ xs => exact PBF.ok hs1 _
-                                            | listV xs => exact PBF.ok hs1 _
-                                            | rangeV lo hi step => exact PBF.liftRes hs1 _
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | list xs => exact PBF.ok hs1 _
-                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
-                                                      | dict es sv => exact PBF.ok hs1 _
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.ite
-                                                            (fun _ => PBF.unsupported) fun _ => ?_
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          exact PBF.ok hs2 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.ite
-                                                    (fun _ => PBF.unsupported) fun _ => ?_
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
-                                                  exact PBF.ok hs2 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- list
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.allocList hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only []
-                                            cases v with
-                                            | str t => exact PBF.allocList hs1 _
-                                            | bytes values => exact PBF.allocList hs1 _
-                                            | tuple xs => exact PBF.allocList hs1 _
-                                            | ntuple _ _ xs => exact PBF.allocList hs1 _
-                                            | listV xs => exact PBF.allocList hs1 _
-                                            | rangeV lo hi step =>
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun s2 xs _ hs2 => ?_
-                                                exact PBF.allocList hs2 _
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | list xs => exact PBF.allocList hs1 _
-                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
-                                                      | dict es sv => exact PBF.allocList hs1 _
-                                                      | generator qn l cnt stt =>
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun s2 vals _ hs2 => ?_
-                                                          exact PBF.allocList hs2 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun s2 vals _ hs2 => ?_
+                                          cases value <;> try exact PBF.unsupported
+                                          case int _ => exact PBF.ok invariant _
+                                          case bool _ => exact PBF.ok invariant _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => by
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                            floatCastArgsH_swapAt hs1 htwin]
+                                          exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                        boolCastArgs_swapAt hs1 htwin]
+                                      exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- pow
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons _ rest =>
+                                          cases rest with
+                                          | nil => exact PBF.exn hs1 _
+                                          | cons _ rest =>
+                                              cases rest with
+                                              | nil => exact PBF.liftRes hs1 _
+                                              | cons _ rest =>
+                                                  cases rest with
+                                                  | nil => exact PBF.liftRes hs1 _
+                                                  | cons _ _ => exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- sum
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases sumArgs vs with
+                                      | none => exact PBF.exn hs1 _
+                                      | some vstart =>
+                                          obtain ⟨v, start⟩ := vstart
+                                          cases start with
+                                          | str _ | bytes _ =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                sumRejectedStart_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                          | _ =>
+                                              simp only []
+                                              cases v with
+                                              | tuple xs => exact PBF.liftRes hs1 _
+                                              | ntuple _ _ xs => exact PBF.liftRes hs1 _
+                                              | listV xs => exact PBF.liftRes hs1 _
+                                              | str t => exact PBF.liftRes hs1 _
+                                              | bytes values => exact PBF.liftRes hs1 _
+                                              | rangeV lo hi step => exact PBF.liftRes hs1 _
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | list xs => exact PBF.liftRes hs1 _
+                                                        -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                        | dict es sv => exact PBF.liftRes hs1 _
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.ite
+                                                              (fun _ => PBF.unsupported) fun _ => ?_
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            exact PBF.liftRes hs2 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.ite
+                                                      (fun _ => PBF.unsupported) fun _ => ?_
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    exact PBF.liftRes hs2 _
+                                              | _ => exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- tuple
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.ok hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | str t => exact PBF.ok hs1 _
+                                              | bytes values => exact PBF.ok hs1 _
+                                              | tuple xs => exact PBF.ok hs1 _
+                                              | ntuple _ _ xs => exact PBF.ok hs1 _
+                                              | listV xs => exact PBF.ok hs1 _
+                                              | rangeV lo hi step => exact PBF.liftRes hs1 _
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | list xs => exact PBF.ok hs1 _
+                                                        -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                        | dict es sv => exact PBF.ok hs1 _
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.ite
+                                                              (fun _ => PBF.unsupported) fun _ => ?_
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            exact PBF.ok hs2 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.ite
+                                                      (fun _ => PBF.unsupported) fun _ => ?_
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    exact PBF.ok hs2 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- list
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.allocList hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | str t => exact PBF.allocList hs1 _
+                                              | bytes values => exact PBF.allocList hs1 _
+                                              | tuple xs => exact PBF.allocList hs1 _
+                                              | ntuple _ _ xs => exact PBF.allocList hs1 _
+                                              | listV xs => exact PBF.allocList hs1 _
+                                              | rangeV lo hi step =>
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun s2 xs _ hs2 => ?_
                                                   exact PBF.allocList hs2 _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- dict
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.allocDict hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only []
-                                            cases v with
-                                            | ref b =>
-                                                rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                                  heq | ⟨_, _, _, _, _, h1, h2⟩
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, heq]
-                                                  cases hget : Heap.get? s1.world.heap b with
-                                                  | none => exact PBF.unsupported
-                                                  | some obj =>
-                                                      cases obj with
-                                                      | dict entries ver =>
-                                                          exact PBF.allocDict hs1 _
-                                                      | list xs =>
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            dictPairs_swapAt hs1 htwin]
-                                                          refine PBF.bind (PBF.liftRes hs1 _)
-                                                            fun pairState pairs _ pairInvariant => ?_
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            dictPairs_swapAt hs1 htwin]
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            dictBuild_swapAt pairInvariant htwin]
-                                                          refine PBF.bind (PBF.liftRes pairInvariant _)
-                                                            fun dictState entries _ dictInvariant => ?_
-                                                          exact PBF.allocDict dictInvariant _
-                                                      | generator qname locals continuation status =>
-                                                          refine PBF.bind (PBW.withLocals
-                                                            (ihDrain m s1.world b hs1))
-                                                            fun nextState values _ invariant => ?_
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            dictPairs_swapAt invariant htwin]
-                                                          refine PBF.bind (PBF.liftRes invariant _)
-                                                            fun pairState pairs _ pairInvariant => ?_
-                                                          simp only [FrameState.swapAt_world,
-                                                            World.swapAt_heap,
-                                                            dictBuild_swapAt pairInvariant htwin]
-                                                          refine PBF.bind (PBF.liftRes pairInvariant _)
-                                                            fun dictState entries _ dictInvariant => ?_
-                                                          exact PBF.allocDict dictInvariant _
-                                                      | pyset xs => exact PBF.exn hs1 _
-                                                      | «instance» ci attrs => exact PBF.exn hs1 _
-                                                      | closure _ _ _ _ _ _ _ _ =>
-                                                          exact PBF.exn hs1 _
-                                                      | dictView _ _ => exact PBF.unsupported
-                                                      | cell _ => exact PBF.unsupported
-                                                · simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, h1, h2]
-                                                  refine PBF.bind (PBW.withLocals
-                                                    (ihDrain m s1.world b hs1))
-                                                    fun nextState values _ invariant => ?_
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | list xs => exact PBF.allocList hs1 _
+                                                        -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                        | dict es sv => exact PBF.allocList hs1 _
+                                                        | generator qn l cnt stt =>
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun s2 vals _ hs2 => ?_
+                                                            exact PBF.allocList hs2 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun s2 vals _ hs2 => ?_
+                                                    exact PBF.allocList hs2 _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- dict
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.allocDict hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only []
+                                              cases v with
+                                              | ref b =>
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                    heq | ⟨_, _, _, _, _, h1, h2⟩
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, heq]
+                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    | none => exact PBF.unsupported
+                                                    | some obj =>
+                                                        cases obj with
+                                                        | dict entries ver =>
+                                                            exact PBF.allocDict hs1 _
+                                                        | list xs =>
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              dictPairs_swapAt hs1 htwin]
+                                                            refine PBF.bind (PBF.liftRes hs1 _)
+                                                              fun pairState pairs _ pairInvariant => ?_
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              dictPairs_swapAt hs1 htwin]
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              dictBuild_swapAt pairInvariant htwin]
+                                                            refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                              fun dictState entries _ dictInvariant => ?_
+                                                            exact PBF.allocDict dictInvariant _
+                                                        | generator qname locals continuation status =>
+                                                            refine PBF.bind (PBW.withLocals
+                                                              (ihDrain m s1.world b hs1))
+                                                              fun nextState values _ invariant => ?_
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              dictPairs_swapAt invariant htwin]
+                                                            refine PBF.bind (PBF.liftRes invariant _)
+                                                              fun pairState pairs _ pairInvariant => ?_
+                                                            simp only [FrameState.swapAt_world,
+                                                              World.swapAt_heap,
+                                                              dictBuild_swapAt pairInvariant htwin]
+                                                            refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                              fun dictState entries _ dictInvariant => ?_
+                                                            exact PBF.allocDict dictInvariant _
+                                                        | pyset xs => exact PBF.exn hs1 _
+                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | closure _ _ _ _ _ _ _ _ =>
+                                                            exact PBF.exn hs1 _
+                                                        | dictView _ _ => exact PBF.unsupported
+                                                        | cell _ => exact PBF.unsupported
+                                                  · simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap, h1, h2]
+                                                    refine PBF.bind (PBW.withLocals
+                                                      (ihDrain m s1.world b hs1))
+                                                      fun nextState values _ invariant => ?_
+                                                    simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap,
+                                                      dictPairs_swapAt invariant htwin]
+                                                    refine PBF.bind (PBF.liftRes invariant _)
+                                                      fun pairState pairs _ pairInvariant => ?_
+                                                    simp only [FrameState.swapAt_world,
+                                                      World.swapAt_heap,
+                                                      dictBuild_swapAt pairInvariant htwin]
+                                                    refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                      fun dictState entries _ dictInvariant => ?_
+                                                    exact PBF.allocDict dictInvariant _
+                                              | str text =>
+                                                  simp only [dictPairValues]
                                                   simp only [FrameState.swapAt_world,
                                                     World.swapAt_heap,
-                                                    dictPairs_swapAt invariant htwin]
-                                                  refine PBF.bind (PBF.liftRes invariant _)
+                                                    dictPairs_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
                                                     fun pairState pairs _ pairInvariant => ?_
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt hs1 htwin]
                                                   simp only [FrameState.swapAt_world,
                                                     World.swapAt_heap,
                                                     dictBuild_swapAt pairInvariant htwin]
                                                   refine PBF.bind (PBF.liftRes pairInvariant _)
                                                     fun dictState entries _ dictInvariant => ?_
                                                   exact PBF.allocDict dictInvariant _
-                                            | str text =>
-                                                simp only [dictPairValues]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun pairState pairs _ pairInvariant => ?_
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictBuild_swapAt pairInvariant htwin]
-                                                refine PBF.bind (PBF.liftRes pairInvariant _)
-                                                  fun dictState entries _ dictInvariant => ?_
-                                                exact PBF.allocDict dictInvariant _
-                                            | bytes values =>
-                                                simp only [dictPairValues]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun pairState pairs _ pairInvariant => ?_
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictBuild_swapAt pairInvariant htwin]
-                                                refine PBF.bind (PBF.liftRes pairInvariant _)
-                                                  fun dictState entries _ dictInvariant => ?_
-                                                exact PBF.allocDict dictInvariant _
-                                            | tuple xs | ntuple _ _ xs | listV xs =>
-                                                simp only [dictPairValues]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                refine PBF.bind (PBF.liftRes hs1 _)
-                                                  fun pairState pairs _ pairInvariant => ?_
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictPairs_swapAt hs1 htwin]
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap,
-                                                  dictBuild_swapAt pairInvariant htwin]
-                                                refine PBF.bind (PBF.liftRes pairInvariant _)
-                                                  fun dictState entries _ dictInvariant => ?_
-                                                exact PBF.allocDict dictInvariant _
-                                            | _ =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- range
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                      rangeMake_swapAt hs1 htwin]
-                                    exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- enumerate
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        simp only []
-                                        cases enumStart rest with
-                                        | none =>
-                                            cases rest with
-                                            | nil =>
-                                                simp only [FrameState.swapAt_world,
-                                                  World.swapAt_heap]
-                                                exact PBF.exn hs1 _
-                                            | cons bad rest' =>
-                                                cases rest' with
-                                                | nil =>
-                                                    simp only [FrameState.swapAt_world,
-                                                      World.swapAt_heap,
-                                                      RVal.typeNameH_swapAt hs1 htwin]
-                                                    exact PBF.exn hs1 _
-                                                | cons _ _ =>
-                                                    simp only [FrameState.swapAt_world,
-                                                      World.swapAt_heap]
-                                                    exact PBF.exn hs1 _
-                                        | some i0 =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              enumFrame_swapAt hs1 htwin]
-                                            cases enumFrame s1.world.heap i0 v with
-                                            | ok fr => exact PBF.pushRef hs1 _
-                                            | exn e => exact PBF.exn hs1 _
-                                            | timeout => exact PBF.timeout
-                                            | unsupported msg => exact PBF.unsupported
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- count
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases hca : countArgsVal vs with
-                                    | none => exact PBF.liftRes hs1 _
-                                    | some sst => exact PBF.pushRef hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- next
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil =>
-                                        simp only [FrameState.swapAt_world, World.swapAt_heap]
-                                        exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases v with
-                                        | ref b =>
-                                            cases rest with
-                                            | nil =>
-                                                refine PBF.bind (PBW.withLocals
-                                                  (ihIter m s1.world b hs1)) fun s2 r _ hs2 => ?_
-                                                cases r with
-                                                | some vv => exact PBF.ok hs2 _
-                                                | none => exact PBF.exn hs2 _
-                                            | cons d rest' =>
-                                                cases rest' with
-                                                | nil =>
-                                                    refine PBF.bind (PBW.withLocals
-                                                      (ihIter m s1.world b hs1))
-                                                      fun s2 r _ hs2 => ?_
-                                                    cases r with
-                                                    | some vv => exact PBF.ok hs2 _
-                                                    | none => exact PBF.ok hs2 _
-                                                | cons _ _ =>
-                                                    simp only [FrameState.swapAt_world,
-                                                      World.swapAt_heap,
-                                                      RVal.typeNameH_swapAt hs1 htwin]
-                                                    exact PBF.exn hs1 _
-                                        | _ =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              RVal.typeNameH_swapAt hs1 htwin]
-                                            exact PBF.exn hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- ord
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil => exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- chr
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil => exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.exn hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.exn hs1 _
-                                        | nil =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              asciiValH_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun nextState values _ invariant => ?_
-                                    cases values with
-                                    | nil => exact PBF.exn invariant _
-                                    | cons value rest =>
-                                      cases rest with
+                                              | bytes values =>
+                                                  simp only [dictPairValues]
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun pairState pairs _ pairInvariant => ?_
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt hs1 htwin]
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictBuild_swapAt pairInvariant htwin]
+                                                  refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                    fun dictState entries _ dictInvariant => ?_
+                                                  exact PBF.allocDict dictInvariant _
+                                              | tuple xs | ntuple _ _ xs | listV xs =>
+                                                  simp only [dictPairValues]
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt hs1 htwin]
+                                                  refine PBF.bind (PBF.liftRes hs1 _)
+                                                    fun pairState pairs _ pairInvariant => ?_
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt hs1 htwin]
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictBuild_swapAt pairInvariant htwin]
+                                                  refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                    fun dictState entries _ dictInvariant => ?_
+                                                  exact PBF.allocDict dictInvariant _
+                                              | _ =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- range
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                        rangeMake_swapAt hs1 htwin]
+                                      exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- enumerate
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          simp only []
+                                          cases enumStart rest with
+                                          | none =>
+                                              cases rest with
+                                              | nil =>
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap]
+                                                  exact PBF.exn hs1 _
+                                              | cons bad rest' =>
+                                                  cases rest' with
+                                                  | nil =>
+                                                      simp only [FrameState.swapAt_world,
+                                                        World.swapAt_heap,
+                                                        RVal.typeNameH_swapAt hs1 htwin]
+                                                      exact PBF.exn hs1 _
+                                                  | cons _ _ =>
+                                                      simp only [FrameState.swapAt_world,
+                                                        World.swapAt_heap]
+                                                      exact PBF.exn hs1 _
+                                          | some i0 =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                enumFrame_swapAt hs1 htwin]
+                                              cases enumFrame s1.world.heap i0 v with
+                                              | ok fr => exact PBF.pushRef hs1 _
+                                              | exn e => exact PBF.exn hs1 _
+                                              | timeout => exact PBF.timeout
+                                              | unsupported msg => exact PBF.unsupported
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- count
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases hca : countArgsVal vs with
+                                      | none => exact PBF.liftRes hs1 _
+                                      | some sst => exact PBF.pushRef hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- next
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
                                       | nil =>
-                                        simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                          strOfValH_swapAt invariant htwin]
-                                        exact PBF.liftRes invariant _
-                                      | cons specification extra =>
-                                        cases extra with
-                                        | cons _ _ =>
-                                          cases specification <;> exact PBF.exn invariant _
-                                        | nil =>
-                                          cases specification <;> try exact PBF.exn invariant _
-                                          case str text =>
-                                            refine PBF.ite (fun _ => ?_) (fun _ => ?_)
-                                            · simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                strOfValH_swapAt invariant htwin]
-                                              exact PBF.liftRes invariant _
-                                            · exact PBF.liftRes invariant _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- str
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.ok hs1 _
-                                    | cons v rest =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap]
+                                          exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases v with
+                                          | ref b =>
+                                              cases rest with
+                                              | nil =>
+                                                  refine PBF.bind (PBW.withLocals
+                                                    (ihIter m s1.world b hs1)) fun s2 r _ hs2 => ?_
+                                                  cases r with
+                                                  | some vv => exact PBF.ok hs2 _
+                                                  | none => exact PBF.exn hs2 _
+                                              | cons d rest' =>
+                                                  cases rest' with
+                                                  | nil =>
+                                                      refine PBF.bind (PBW.withLocals
+                                                        (ihIter m s1.world b hs1))
+                                                        fun s2 r _ hs2 => ?_
+                                                      cases r with
+                                                      | some vv => exact PBF.ok hs2 _
+                                                      | none => exact PBF.ok hs2 _
+                                                  | cons _ _ =>
+                                                      simp only [FrameState.swapAt_world,
+                                                        World.swapAt_heap,
+                                                        RVal.typeNameH_swapAt hs1 htwin]
+                                                      exact PBF.exn hs1 _
+                                          | _ =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                RVal.typeNameH_swapAt hs1 htwin]
+                                              exact PBF.exn hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- ord
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil => exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- chr
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil => exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.exn hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | nil =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                asciiValH_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun nextState values _ invariant => ?_
+                                      cases values with
+                                      | nil => exact PBF.exn invariant _
+                                      | cons value rest =>
                                         cases rest with
-                                        | cons _ _ => exact PBF.unsupported
                                         | nil =>
-                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              strOfValH_swapAt hs1 htwin]
-                                            exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                      reprArgs_swapAt hs1 htwin]
-                                    exact PBF.liftRes hs1 _
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  -- input
-                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- print
-                                  · refine PBF.bind (ihEs m st (complexPrintArgs args.toList) hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                      World.swapAt_stdout, strOfArgs_swapAt hs1 htwin]
-                                    cases strOfArgs s1.world.heap vs with
-                                    | some line => refine PBF.ok ?_ _; exact hs1
-                                    | none => exact PBF.unsupported
-                                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                  -- isModuleDunder
-                                  cases Env.lookup st.world.globals fname with
-                                  | some gv =>
-                                      cases gv with
-                                      | ref b =>
-                                          refine PBF.bind (ihEs m st args.toList hslot)
-                                            fun s1 vs _ hs1 => ?_
-                                          refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
-                                          rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
-                                            heq | ⟨_, _, _, _, _, h1, h2⟩
-                                          · simp only [FrameState.swapAt_world,
-                                              World.swapAt_heap, heq]
-                                            cases hget : Heap.get? s1.world.heap b with
-                                            | none => exact PBF.exn hs1 _
-                                            | some obj =>
-                                                cases obj with
-                                                | cell cv => exact PBF.unsupported
-                                                | closure nm ps ao lo hg ig bd cap =>
-                                                    dsimp only
-                                                    rw [cellsFor_swapAt hs1 htwin]
-                                                    refine PBF.bind (PBF.liftRes hs1 _)
-                                                      fun s cap' _ hs => ?_
-                                                    exact PBW.withLocals (ihClosure m _ nm
-                                                      ps ao lo ig bd cap' vs.toArray hs)
-                                                | _ => exact PBF.exn hs1 _
-                                          · simp only [FrameState.swapAt_world,
-                                              World.swapAt_heap, h1, h2]
-                                            exact PBF.exn hs1 _
-                                      | _ =>
-                                          exact PBF.bind (ihEs m st args.toList hslot)
-                                            fun s1 vs _ hs1 => PBF.exn hs1 _
-                                  | none =>
-                                      refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                                      exact PBF.ite (fun _ => PBF.exn hslot _)
-                                        (fun _ => PBF.unsupported)
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                            strOfValH_swapAt invariant htwin]
+                                          exact PBF.liftRes invariant _
+                                        | cons specification extra =>
+                                          cases extra with
+                                          | cons _ _ =>
+                                            cases specification <;> exact PBF.exn invariant _
+                                          | nil =>
+                                            cases specification <;> try exact PBF.exn invariant _
+                                            case str text =>
+                                              refine PBF.ite (fun _ => ?_) (fun _ => ?_)
+                                              · simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                  strOfValH_swapAt invariant htwin]
+                                                exact PBF.liftRes invariant _
+                                              · exact PBF.liftRes invariant _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- str
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      cases vs with
+                                      | nil => exact PBF.ok hs1 _
+                                      | cons v rest =>
+                                          cases rest with
+                                          | cons _ _ => exact PBF.unsupported
+                                          | nil =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                strOfValH_swapAt hs1 htwin]
+                                              exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                        reprArgs_swapAt hs1 htwin,
+                                        reprArgsH_swapAt m hs1 htwin]
+                                      exact PBF.liftRes hs1 _
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    -- input
+                                    refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                    -- print
+                                    · refine PBF.bind (ihEs m st (complexPrintArgs args.toList) hslot)
+                                        fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                        World.swapAt_stdout, strOfArgs_swapAt hs1 htwin]
+                                      cases strOfArgs s1.world.heap vs with
+                                      | some line => refine PBF.ok ?_ _; exact hs1
+                                      | none => exact PBF.unsupported
+                                    refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                    -- isModuleDunder
+                                    cases Env.lookup st.world.globals fname with
+                                    | some gv =>
+                                        cases gv with
+                                        | ref b =>
+                                            refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                              fun s1 vs _ hs1 => ?_
+                                            refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
+                                            rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                              heq | ⟨_, _, _, _, _, h1, h2⟩
+                                            · simp only [FrameState.swapAt_world,
+                                                World.swapAt_heap, heq]
+                                              cases hget : Heap.get? s1.world.heap b with
+                                              | none => exact PBF.exn hs1 _
+                                              | some obj =>
+                                                  cases obj with
+                                                  | cell cv => exact PBF.unsupported
+                                                  | closure nm ps ao lo hg ig bd cap =>
+                                                      dsimp only
+                                                      rw [cellsFor_swapAt hs1 htwin]
+                                                      refine PBF.bind (PBF.liftRes hs1 _)
+                                                        fun s cap' _ hs => ?_
+                                                      exact PBW.withLocals (ihClosure m _ nm
+                                                        ps ao lo ig bd cap' vs.toArray hs)
+                                                  | _ => exact PBF.exn hs1 _
+                                            · simp only [FrameState.swapAt_world,
+                                                World.swapAt_heap, h1, h2]
+                                              exact PBF.exn hs1 _
+                                        | _ =>
+                                            exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                              fun s1 vs _ hs1 => PBF.exn hs1 _
+                                    | none =>
+                                        refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                                        exact PBF.ite (fun _ => PBF.exn hslot _)
+                                          (fun _ => PBF.unsupported)
             | «attribute» recv attr sp' =>
                 refine PBF.ite (fun _ => ?_) fun _ => ?_
                 -- the trace clock
@@ -4933,7 +5133,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                       simp only []
                       cases ntupleCallPlan m tn fs attr with
                       | instMethod qname =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           exact PBW.withLocals (ihIn m s2.world qname _ hs2)
                       | attrMissing => exact PBF.exn hs1 _
                       | _ => exact PBF.unsupported
@@ -4942,27 +5142,27 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                       cases strCallPlan attr with
                       | refuse msg => exact PBF.unsupported
                       | swapcase =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.liftRes hs2 _
                           | cons _ _ => exact PBF.exn hs2 _
                       | isupper =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.liftRes hs2 _
                           | cons _ _ => exact PBF.exn hs2 _
                       | islower =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.liftRes hs2 _
                           | cons _ _ => exact PBF.exn hs2 _
                       | upper =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.liftRes hs2 _
                           | cons _ _ => exact PBF.exn hs2 _
                       | index =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.exn hs2 _
                           | cons v rest =>
@@ -4996,7 +5196,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                           simp only [FrameState.swapAt_world, World.swapAt_heap]
                                           exact PBF.exn hs2 _
                       | join =>
-                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                           cases vs with
                           | nil => exact PBF.exn hs2 _
                           | cons v rest =>
@@ -5009,7 +5209,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   | float fv =>
                       simp only []
                       split
-                      · refine PBF.bind (ihEs m s1 args.toList hs1)
+                      · refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1))
                           fun s2 vs _ hs2 => ?_
                         cases vs with
                         | nil => exact PBF.ok hs2 _
@@ -5025,7 +5225,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 | some v =>
                     cases v with
                     | ref b =>
-                        refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
+                        refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
                         refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                           fun s2 kvs _ hs2 => ?_
                         rcases Heap.get?_swapAt_twin (b := b) hs2 htwin with
@@ -5041,7 +5241,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                           exact PBF.exn hs2 _
                     | _ =>
-                        refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
+                        refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
                         refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                           fun s2 kvs _ hs2 => ?_
                         exact PBF.exn hs2 _
@@ -5051,7 +5251,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         cases ov with
                         | some gv =>
                             cases gv <;>
-                              (refine PBF.bind (ihEs m st args.toList hslot)
+                              (refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                  fun s1 vs _ hs1 => ?_
                                refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                  fun s2 kvs _ hs2 => ?_
@@ -5062,7 +5262,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         | some fdefn =>
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                            refine PBF.bind (ihEs m st args.toList hslot) fun s1 vs _ hs1 => ?_
+                            refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
                             refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                               fun s2 kvs _ hs2 => ?_
                             refine PBF.bind (PBF.liftRes hs2 _) fun s3 full _ hs3 => ?_
@@ -5072,7 +5272,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
                             · cases findNamedTuple m fname with
                               | some nt =>
-                                  refine PBF.bind (ihEs m st args.toList hslot)
+                                  refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                     fun s1 vs _ hs1 => ?_
                                   refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                     fun s2 kvs _ hs2 => ?_
@@ -5092,13 +5292,13 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                               cases kwargs.toList.find? (fun kv => kv.1 != "reverse") with
                               | some kkv =>
                                   obtain ⟨k, kv⟩ := kkv
-                                  refine PBF.bind (ihEs m st args.toList hslot)
+                                  refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                     fun s1 vs _ hs1 => ?_
                                   refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                     fun s2 kvs _ hs2 => ?_
                                   exact PBF.exn hs2 _
                               | none =>
-                                  refine PBF.bind (ihEs m st args.toList hslot)
+                                  refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                     fun s1 vs _ hs1 => ?_
                                   refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                     fun s2 kvs _ hs2 => ?_
@@ -5169,19 +5369,19 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                       exact PBF.okWrite
                                                         (sortedValH_slot hs3 hw) _
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
-                            · refine PBF.bind (ihEs m st args.toList hslot)
+                            · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                 fun s1 vs _ hs1 => ?_
                               refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                 fun s2 kvs _ hs2 => ?_
                               exact PBF.exn hs2 _
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
-                            · refine PBF.bind (ihEs m st args.toList hslot)
+                            · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                 fun s1 vs _ hs1 => ?_
                               refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                 fun s2 kvs _ hs2 => ?_
                               exact PBF.exn hs2 _
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
-                            · refine PBF.bind (ihEs m st args.toList hslot)
+                            · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                 fun s1 vs _ hs1 => ?_
                               refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                 fun s2 kvs _ hs2 => ?_
@@ -5211,7 +5411,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         | none => exact PBF.unsupported
                         | some fdefn =>
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                            refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                            refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                             refine PBF.bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2)
                               fun s3 kvs _ hs3 => ?_
                             refine PBF.bind (PBF.liftRes hs3 _) fun s4 full _ hs4 => ?_
@@ -5228,7 +5428,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         | none => exact PBF.unsupported
                         | some fdefn =>
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                            refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                            refine PBF.bind (PBF.flattenStarRun (ihEs m s1 args.toList hs1)) fun s2 vs _ hs2 => ?_
                             refine PBF.bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2)
                               fun s3 kvs _ hs3 => ?_
                             refine PBF.bind (PBF.liftRes hs3 _) fun s4 full _ hs4 => ?_

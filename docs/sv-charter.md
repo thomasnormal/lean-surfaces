@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Repeated fixed-struct-array ordering keys — 2026-10-29
+
+The legacy fixed-struct-array ordering lowering now accepts a repeated
+`rsort with (...)` (or `sort with (...)`) call when its key matches the
+preceding ordering call. The compatibility check compares the complete
+argument-list payload at the correct syntax level; incompatible keys remain
+loud. The existing `struct_array_ordering_with_field` envelope and receipt
+cover ascending then descending ordering.
+
+On the checked-in **1002-file** SystemVerilog example sweep, the adapter census
+moves **797 clean / 205 partial → 798 clean / 204 partial** and `Call:rsort`
+falls to zero. Differential coverage remains **490/484/0/6** and grammar
+coverage remains **235/113/122**.
+
 ## Qualified `if` fallbacks in the adapter — 2026-10-29
 
 The legacy adapter census now recognizes the extractor's

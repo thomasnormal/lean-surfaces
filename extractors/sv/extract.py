@@ -18063,7 +18063,14 @@ def _fixed_struct_array_ordering_with(sm, expression):
                 return False
             try:
                 previous_data = json.loads(previous_args.to_json())
-                return key_signature(previous_data) == current_signature
+                # ``key_signature`` consumes the argument-list payload under
+                # the ``args`` field of a complete method-expression syntax
+                # object.  ``previous_args.to_json()`` is already that
+                # payload, so wrap it back at the same level before comparing
+                # a preceding ``sort with``/``rsort with`` call.  Without the
+                # wrapper a compatible repeated ordering call was rejected
+                # even though the first ordering call had been lowered.
+                return key_signature({"args": previous_data}) == current_signature
             except Exception:
                 return False
 

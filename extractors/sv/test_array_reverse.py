@@ -332,6 +332,27 @@ class ArrayReverse(unittest.TestCase):
         self.assertFalse(any(node.get("fixed_struct_array_ordering_with_lowered")
                              for node in nodes(design)))
 
+    def test_struct_array_repeated_order_with_same_key_lowers_both_calls(self):
+        design = lower(
+            """module top;
+               typedef struct { byte red; byte green; } color_t;
+               color_t values[3];
+               initial begin
+                 values[0] = '{red: 5, green: 9};
+                 values[1] = '{red: 1, green: 7};
+                 values[2] = '{red: 3, green: 4};
+                 values.sort with (item.red);
+                 values.rsort with (item.red);
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_struct_array_ordering_with_lowered")]
+        self.assertEqual([node["fixed_struct_array_ordering_with_lowered"]
+                          for node in lowered], ["sort", "rsort"])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

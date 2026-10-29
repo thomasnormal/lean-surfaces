@@ -1,3 +1,13 @@
+# [0.1.224] — 2026-10-29
+
+The legacy fixed-struct-array ordering lowering now accepts a repeated
+`rsort with (...)` (or `sort with (...)`) call when its key matches the
+preceding ordering call. The compatibility check now compares the complete
+argument-list payload at the correct syntax level; incompatible keys remain
+loud. The existing `struct_array_ordering_with_field` envelope is fresh, and
+the adapter sweep moves **797/205 → 798/204** with `Call:rsort` falling to
+zero; differential coverage remains **490/484/0/6**.
+
 ## [0.1.223] — 2026-10-29
 
 The legacy adapter census now recognizes the extractor's

@@ -4222,6 +4222,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "struct_decl_adapter",
+      "file": "Examples/system-verilog/struct_decl_adapter/struct_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

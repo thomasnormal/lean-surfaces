@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unpacked-struct declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's flat-cell lowering for
+procedural untagged unpacked structs. A declaration is admitted only when its
+conversion produces `Var`/`Empty` cells; unsupported fields and aggregate
+boundaries remain loud. The `struct_decl_adapter` fixture, adapter regression,
+generated envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **465/459/0/6 → 466/460/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 940-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **2 → 0** (682 clean /
+258 partial).
+
 ## Fixed unpacked-array declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's flat-cell lowering for

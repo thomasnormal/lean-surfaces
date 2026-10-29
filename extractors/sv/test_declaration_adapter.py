@@ -81,6 +81,20 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("VariableDeclStatement:type", residual)
 
+    def test_unpacked_struct_declaration_follows_flat_lowering(self):
+        self.assertEqual(
+            blockers(
+                'module top; typedef struct { int x; bit y; } pair_t; '
+                'initial begin pair_t value; value.x = 10; value.y = 1; '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_unsupported_unpacked_struct_leaf_remains_loud(self):
+        residual = blockers(
+            'module top; typedef struct { real x; int y; } pair_t; '
+            'initial begin pair_t value; $display("PASS"); end endmodule')
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

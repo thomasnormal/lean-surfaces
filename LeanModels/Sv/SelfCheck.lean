@@ -1586,9 +1586,17 @@ def parseModuleD (j : Json) : Except String Design := do
     | .inl d => decls := decls.push d
     | .inr p => procs := procs.push p
   for dj in ← getArrF j "decls" do
-    match ← parseSDecl dj with
-    | .inl d => decls := decls.push d
-    | .inr p => procs := procs.push p
+    -- Declaration-only extractor slices may erase a source declaration to
+    -- `Empty` when its value is never represented (for example, a mixed
+    -- fixed/dynamic array used only by dimension metadata queries).  It has
+    -- no flat state to initialize and must be skipped at ingestion, just as
+    -- statement-level `Empty` is skipped by `parseSStmt`.
+    if (getStrF dj "kind").toOption == some "Empty" then
+      pure ()
+    else
+      match ← parseSDecl dj with
+      | .inl d => decls := decls.push d
+      | .inr p => procs := procs.push p
   for pj in ← getArrF j "processes" do
     procs := procs.push (← parseSProc pj)
   let others ← getArrF j "others"

@@ -3912,6 +3912,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mixed_dimension_queries",
+      "file": "Examples/system-verilog/mixed_dimension_queries/mixed_dimension_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

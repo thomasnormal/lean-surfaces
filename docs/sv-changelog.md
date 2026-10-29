@@ -1,3 +1,13 @@
+## [0.1.178] — 2026-10-29
+
+Declaration-only 2-state arrays combining fixed and dynamic unpacked
+dimensions now support metadata queries for their fixed dimensions and full
+unpacked rank. Selecting the dynamic dimension, initializing the array, and
+value reads or writes remain loud because no dynamic storage is represented.
+The `mixed_dimension_queries` fixture, extractor tests, Lean receipt, and
+differential row cover the admitted slice. Differential coverage grows
+**432/426/0/6 → 433/427/0/6**.
+
 ## [0.1.177] — 2026-10-29
 
 `$info`, `$warning`, and `$error` now accept no-format calls whose pure

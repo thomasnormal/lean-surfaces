@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Mixed fixed and dynamic dimension queries — 2026-10-29
+
+Declaration-only 2-state arrays that combine fixed and dynamic unpacked
+dimensions now retain their declared shape for metadata queries. `$size` may
+select fixed dimensions around the dynamic slot, while
+`$unpacked_dimensions` reports the complete unpacked rank. Selecting the
+dynamic dimension, initializing the array, or using its value remains loud
+because the legacy flat state has no dynamic storage. The
+`mixed_dimension_queries` fixture, extractor regressions, generated envelope,
+Lean receipt, and differential row cover the admitted metadata-only slice.
+
+Differential coverage grows **432/426/0/6 → 433/427/0/6**; grammar coverage
+remains **220/109/111**.
+
 ## Severity-task default formatting — 2026-10-29
 
 The legacy self-check tier now admits `$info`, `$warning`, and `$error` calls

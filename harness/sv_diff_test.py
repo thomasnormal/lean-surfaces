@@ -26,14 +26,17 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 CASES = REPO / "harness" / "sv_cases.json"
 RUNNER = REPO / "harness" / "sv" / "conformance" / "runner.lean"
-LEAN_AS = "17179869184"
-
-
 def capped(cmd, timeout=600):
-    """Run a Lean command under the fleet's 16 GiB RSS/address-space cap."""
+    """Run a Lean command under the fleet's cgroup memory/CPU cap.
+
+    An address-space cap makes Lean abort while creating worker threads on the
+    shared runner.  Keep the cap in a cgroup instead, matching the lane build
+    rule and leaving Lean's address space unconstrained.
+    """
     env = os.environ.copy()
     env.setdefault("LEAN_NUM_THREADS", "1")
-    return subprocess.run(["prlimit", "--as=" + LEAN_AS, "--"] + list(cmd),
+    return subprocess.run(["systemd-run", "--user", "--scope", "-q",
+                           "-p", "MemoryMax=24G", "-p", "CPUQuota=800%"] + list(cmd),
                           cwd=str(REPO), capture_output=True, text=True,
                           timeout=timeout, env=env)
 

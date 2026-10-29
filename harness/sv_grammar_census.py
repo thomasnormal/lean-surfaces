@@ -22,9 +22,6 @@ from pyslang.syntax import SyntaxTree
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_ROOT = REPO / "Examples" / "system-verilog"
-LEAN_AS = "17179869184"
-
-
 def load_extractor():
     path = REPO / "extractors" / "sv" / "extract.py"
     spec = importlib.util.spec_from_file_location("sv_extractor", path)
@@ -59,8 +56,9 @@ def run_batch(envelopes, fuel):
         import subprocess
         env = os.environ.copy()
         env.setdefault("LEAN_NUM_THREADS", "1")
-        p = subprocess.run(["prlimit", "--as=" + LEAN_AS, "--", "lake", "env", "lean",
-                            "-j", "1",
+        p = subprocess.run(["systemd-run", "--user", "--scope", "-q",
+                            "-p", "MemoryMax=24G", "-p", "CPUQuota=800%",
+                            "lake", "env", "lean", "-j", "1",
                             "--run", str(runner), "--batch", str(listing),
                             "--fuel", str(fuel)], cwd=str(REPO), capture_output=True,
                            text=True, timeout=1800, env=env)

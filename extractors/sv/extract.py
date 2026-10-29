@@ -691,6 +691,67 @@ def is_inert_2state_dynamic_array_decl(symbol):
         return False
 
 
+def is_inert_2state_mixed_array_decl(symbol):
+    """Whether an untouched 2-state array is used only for dimension queries.
+
+    A declaration such as ``int a[3][][5]`` has no flat storage shape: its
+    middle dimension is dynamic, while the surrounding dimensions are fixed.
+    IEEE dimension queries inspect that declared type without reading the
+    array value, so an uninitialized declaration can be erased when every
+    later source occurrence is the operand of ``$size``/``$dimensions`` or
+    ``$unpacked_dimensions``.  Any initializer or value use stays loud.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        if (symbol.type.isFourState
+                or getattr(symbol, "initializer", None) is not None):
+            return False
+        current = symbol.type.canonicalType
+        saw_dynamic = False
+        saw_fixed = False
+        while True:
+            kind = type(current).__name__
+            if kind == "DynamicArrayType":
+                saw_dynamic = True
+                current = current.elementType.canonicalType
+                continue
+            if kind == "FixedSizeUnpackedArrayType":
+                saw_fixed = True
+                current = current.elementType.canonicalType
+                continue
+            if kind == "PackedArrayType":
+                current = current.elementType.canonicalType
+                continue
+            if kind in ("PredefinedIntegerType", "EnumType", "PackedStructType",
+                        "PackedUnionType", "ScalarType"):
+                break
+            return False
+        if not (saw_dynamic and saw_fixed):
+            return False
+        source = _sv_code_source(
+            _SOURCE_BYTES.decode("utf-8", errors="replace")
+            if _SOURCE_BYTES else "")
+        name = getattr(symbol, "name", "")
+        if not source or not name:
+            return False
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            prefix = source[:occurrence.start()].rstrip()
+            suffix = source[occurrence.end():].lstrip()
+            if (not re.search(r"\$(?:size|dimensions|unpacked_dimensions)"
+                              r"\s*\(\s*$", prefix)
+                    or not re.match(r"(?:,\s*[^()]*)?\s*\)", suffix)):
+                return False
+        return True
+    except Exception:
+        return False
+
+
 def is_inert_empty_dynamic_array_decl(symbol):
     """Whether a zero-size dynamic-array initializer has no flat state.
 
@@ -1905,6 +1966,68 @@ def _fixed_query_dimensions(value_type):
         else:
             return None
     return dimensions, unpacked
+
+
+def _query_dimensions(value_type):
+    """Declared dimensions for metadata queries, retaining dynamic slots.
+
+    ``None`` marks an unpacked dynamic dimension.  Dimension metadata remains
+    available through such a slot; callers reject only a query that selects
+    the dynamic dimension itself.
+    """
+    try:
+        dimensions = []
+        unpacked = 0
+        current = value_type.canonicalType
+        while True:
+            kind = type(current).__name__
+            if kind == "FixedSizeUnpackedArrayType":
+                dimensions.append((current.range.left, current.range.right))
+                unpacked += 1
+                current = current.elementType.canonicalType
+            elif kind == "DynamicArrayType":
+                dimensions.append(None)
+                unpacked += 1
+                current = current.elementType.canonicalType
+            elif kind == "PackedArrayType":
+                dimensions.append((current.range.left, current.range.right))
+                current = current.elementType.canonicalType
+            elif kind in ("PredefinedIntegerType", "EnumType", "PackedStructType",
+                          "PackedUnionType"):
+                if kind == "PackedUnionType" and current.isTagged:
+                    return None
+                dimensions.append((current.bitWidth - 1, 0))
+                break
+            elif kind == "ScalarType":
+                break
+            else:
+                return None
+        return dimensions, unpacked
+    except Exception:
+        return None
+
+
+def _has_mixed_unpacked_dimensions(value_type):
+    """Whether an array type combines fixed and dynamic unpacked dimensions."""
+    try:
+        fixed = dynamic = False
+        current = value_type.canonicalType
+        while True:
+            kind = type(current).__name__
+            if kind == "FixedSizeUnpackedArrayType":
+                fixed = True
+                current = current.elementType.canonicalType
+            elif kind == "DynamicArrayType":
+                dynamic = True
+                current = current.elementType.canonicalType
+            elif kind in ("PackedArrayType", "PredefinedIntegerType", "EnumType",
+                          "PackedStructType", "PackedUnionType", "ScalarType"):
+                break
+            else:
+                return False
+        return fixed and dynamic
+    except Exception:
+        return False
 
 
 def _constant_dimension_selector(expression):
@@ -7509,6 +7632,8 @@ def _convert_dimension_query(sm, expression):
         return unsupported(sm, expression, "CallExpression:dimension:arity")
     argument = arguments[0]
     shape = _fixed_query_dimensions(argument.type)
+    if shape is None and _has_mixed_unpacked_dimensions(argument.type):
+        shape = _query_dimensions(argument.type)
     if shape is None or not _bits_argument_source_ok(argument):
         return unsupported(sm, expression, "CallExpression:dimension:argument")
     dimensions, unpacked = shape
@@ -7525,7 +7650,10 @@ def _convert_dimension_query(sm, expression):
                 return unsupported(sm, expression, "CallExpression:dimension:dynamic")
         if not 1 <= dimension <= len(dimensions):
             return unsupported(sm, expression, "CallExpression:dimension:index")
-        left, right = dimensions[dimension - 1]
+        selected = dimensions[dimension - 1]
+        if selected is None:
+            return unsupported(sm, expression, "CallExpression:dimension:dynamic")
+        left, right = selected
         value = {
             "$size": abs(left - right) + 1,
             "$high": max(left, right),
@@ -21775,6 +21903,8 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_2state_mixed_array_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         assoc_decls = _finite_string_assoc_decls(sm, symbol)
         if assoc_decls is not None:
@@ -24054,6 +24184,8 @@ def convert_var(sm, m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _SYM is None and is_inert_2state_mixed_array_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_associative_array_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_class_handle_decl(m):
@@ -24736,6 +24868,7 @@ def _convert_static_procedural_storage(sm, members):
         if (is_chandle_decl(symbol) or is_string_decl(symbol)
                 or is_inert_event_decl(symbol)
                 or is_inert_2state_floating_decl(symbol)
+                or is_inert_2state_mixed_array_decl(symbol)
                 or is_inert_class_handle_decl(symbol)
                 or is_literal_semaphore_decl(symbol)):
             continue

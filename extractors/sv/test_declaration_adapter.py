@@ -403,6 +403,16 @@ class DeclarationAdapter(unittest.TestCase):
                 '$display("PASS"); end endmodule'),
             [])
 
+    def test_qualified_if_fallbacks_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; int value, result; initial begin value = 2; '
+                'result = 0; unique if (value == 1) result = 1; '
+                'else if (value == 2) result = 2; else result = 99; '
+                'priority if (value > 3) result = 3; '
+                'else result = 4; $display("PASS"); end endmodule'),
+            [])
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

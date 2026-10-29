@@ -4440,6 +4440,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_qualified_if_fallback_adapter",
+      "file": "Examples/system-verilog/pure_qualified_if_fallback_adapter/pure_qualified_if_fallback_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

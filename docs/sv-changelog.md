@@ -1,3 +1,17 @@
+## [0.1.223] — 2026-10-29
+
+The legacy adapter census now recognizes the extractor's
+`qualified_fallback_lowered` lowering for `unique if` and `priority if` chains
+with explicit fallbacks. Complete chains have no qualifier diagnostic and run
+as ordinary adapter control; incomplete or overlapping forms remain loud. The
+`pure_qualified_if_fallback_adapter` fixture, adapter regression, generated
+envelope, Lean receipt, and differential row cover the admitted form.
+Differential coverage grows **489/483/0/6 → 490/484/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **1002-file** SystemVerilog example
+sweep (**1001 files before this witness**), the adapter census moves **795 clean
+/ 206 partial → 797 clean / 205 partial**; the existing qualified-if fallback
+residuals are cleared.
+
 ## [0.1.222] — 2026-10-29
 
 The legacy adapter census now follows the extractor's

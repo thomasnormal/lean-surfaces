@@ -484,6 +484,10 @@ def adapter_stmt(sm, s):
     if cn == "ConditionalStatement":
         from pyslang.ast import UniquePriorityCheck
         if s.check != UniquePriorityCheck.None_:
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("qualified_fallback_lowered") is not None):
+                return []
             return ["ConditionalStatement:" + str(s.check).split(".")[-1]]
         conds = s.conditions
         if len(conds) != 1:

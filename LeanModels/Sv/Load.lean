@@ -112,6 +112,7 @@ private partial def timedAccesses : SStmt → List (Bool × String)
   | .m0 body => m0Writes body
   | .assign _ name _ | .selectedAssign name _ _ _ _ _ _
   | .selectedNbaAssign name _ _ _ _ _ _ | .localDecl name _ _ _ => [(false, name)]
+  | .distUniformAssign target seed _ _ _ => [(false, target), (false, seed)]
   | .packedAssign targets _ | .packedNbaAssign targets _ => targets.map targetWrite
   | .scanf _ _ outputs result => (outputs.flatten ++ result).map targetWrite
   | .waitEvent signal _ => [(true, signal)]
@@ -125,7 +126,8 @@ private partial def timedAccesses : SStmt → List (Bool × String)
       steps.toList.flatMap timedAccesses ++ timedAccesses body
   | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
   | .doWhileLoop _ body => timedAccesses body
-  | .breakLoop | .continueLoop | .sysCall _ _ _ | .finish | .skip
+  | .breakLoop | .continueLoop | .sysCall _ _ _ | .strobe _ _ | .severity _ | .fatal _
+  | .finish | .skip
   | .delay _ | .waitCond _ => []
 
 /-- An internally written edge source requires the kernel's per-publication

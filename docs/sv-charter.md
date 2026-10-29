@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative count, exists, and empty-delete statements in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`associative_count_statement`, `associative_exists_statement`, and
+`associative_empty_delete_statement` markers for discarded finite associative
+`num`/`size` and literal `exists` observations, plus deletes on untouched
+associative arrays. Dynamic keys and effectful histories remain loud. The
+`pure_associative_count_exists_delete_statements_adapter` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+admitted forms.
+
+Differential coverage grows **484/478/0/6 → 485/479/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **997-file** SystemVerilog example
+sweep (**996 files before this witness**), the adapter census moves **786 clean
+/ 210 partial → 789 clean / 208 partial**.
+
 ## Finite associative endpoint and delete statements in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's

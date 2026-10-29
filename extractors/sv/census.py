@@ -138,6 +138,9 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "clog2_statement", "isunbounded_statement", "signing_statement",
     "time_scale_statement",
     "sformatf_statement",
+    "associative_count_statement",
+    "associative_exists_statement",
+    "associative_empty_delete_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",
@@ -723,8 +726,18 @@ def _adapter_design_blockers_impl(sm, comp, design=None):
 
 def adapter_design_blockers(sm, comp, design=None):
     """Run the adapter walk with the converter's elaborated parameter scope."""
+    # The extractor's finite associative-cell cache is keyed by elaborated
+    # symbol identity.  A census may inspect many compilations in one Python
+    # process, and pyslang can reuse wrapper identities across them; carrying
+    # this cache into the next adapter walk can therefore replay a prior
+    # design's cells.  Match convert_design's per-extraction lifetime here.
+    previous_assoc_cells = getattr(extract, "_ASSOC_CELLS", {})
+    extract._ASSOC_CELLS = {}
     if design is None:
-        design = extract.convert_design(sm, comp)
+        try:
+            design = extract.convert_design(sm, comp)
+        finally:
+            extract._ASSOC_CELLS = {}
     previous = getattr(extract, "_ELAB_PARAMETERS", set())
     parameters = set()
 
@@ -741,6 +754,7 @@ def adapter_design_blockers(sm, comp, design=None):
         return _adapter_design_blockers_impl(sm, comp, design)
     finally:
         extract._ELAB_PARAMETERS = previous
+        extract._ASSOC_CELLS = previous_assoc_cells
 
 
 def parse_meta(text):

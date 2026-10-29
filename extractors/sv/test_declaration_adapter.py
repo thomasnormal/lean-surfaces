@@ -243,8 +243,8 @@ class DeclarationAdapter(unittest.TestCase):
 
     def test_populated_associative_query_remains_loud(self):
         residual = blockers(
-            'module top; int values[string]; initial begin '
-            'values["answer"] = 1; values.num(); '
+            'module top; int values[string]; string key; initial begin '
+            'key = "answer"; values[key] = 1; values.num(); '
             '$display("PASS"); end endmodule')
         self.assertIn("Call:num", residual)
 
@@ -349,6 +349,15 @@ class DeclarationAdapter(unittest.TestCase):
                 'module top; int values[int]; int key; initial begin '
                 'values[2] = 20; values[5] = 50; values.last(key); '
                 'values.delete(5); values.first(key); values.delete(); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_finite_associative_count_exists_and_empty_delete_statements_are_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; int score[int]; int empty[int]; initial begin '
+                'score[1] = 10; score[2] = 20; score.num(); score.size(); '
+                'score.exists(1); empty.delete(7); empty.delete(); '
                 '$display("PASS"); end endmodule'),
             [])
 

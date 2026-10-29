@@ -64,6 +64,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.17] — 2026-10-29
+
 ### Changed
 
 - String percent formatting now admits the measured heap-dict mapping slice:
@@ -227,6 +229,9 @@ change is listed here under **Changed** or **Removed**.
   actual OS effects remain outside the tier.
 - A single bare `except:` now catches every represented exception; multiple
   handlers, tuple patterns, and observed exception bindings remain loud.
+- Direct top-level expression and assignment references now raise the faithful
+  runtime `NameError` when they occur before a later definition; compound
+  statements retain their conservative control-shell admission guard.
 
 ## [0.1.16] — 2026-10-28
 

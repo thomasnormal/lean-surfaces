@@ -89,6 +89,16 @@ def toRatio (value : Float64) : Option (Int × Nat) :=
     let (numerator, denominator) := value.magnitudeRatio
     some (if value.sign then -(numerator : Int) else (numerator : Int), denominator)
 
+/-- Reduce an exact binary64 ratio to the canonical positive-denominator
+    representative used by Python's numeric key equality. -/
+def normalizeRatio (ratio : Int × Nat) : Int × Nat :=
+  let g := ratio.1.natAbs.gcd ratio.2
+  if g == 0 then ratio
+  else (ratio.1 / (g : Int), ratio.2 / g)
+
+def keyRatio (value : Float64) : Option (Int × Nat) :=
+  value.toRatio.map normalizeRatio
+
 def eqv (left right : Float64) : Bool :=
   !left.isNaN && !right.isNaN &&
     (left.bits == right.bits || left.isZero && right.isZero)

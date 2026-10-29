@@ -65,7 +65,7 @@ all, themselves included. -/
 inductive KeyNF where
   | unit
   | ellipsis
-  | int (n : Int)
+  | rat (numerator : Int) (denominator : Nat)
   | str (s : String)
   | bytes (values : Array UInt8)
   | tup (xs : List KeyNF)
@@ -74,9 +74,9 @@ mutual
   def keyNF : RVal → Option KeyNF
     | .none => some .unit
     | .ellipsis => some .ellipsis
-    | .bool b => some (.int (if b then 1 else 0))
-    | .int n => some (.int n)
-    | .float _ => Option.none
+    | .bool b => some (.rat (if b then 1 else 0) 1)
+    | .int n => some (.rat n 1)
+    | .float value => value.keyRatio.map (fun p => .rat p.1 p.2)
     | .str s => some (.str s)
     | .bytes values => some (.bytes values)
     | .tuple xs => (keyNFList xs.toList).map .tup
@@ -97,6 +97,23 @@ private theorem some_eq_map_tup {x : KeyNF} {o : Option (List KeyNF)} :
     (some x = o.map KeyNF.tup) ↔ ∃ l, o = some l ∧ x = KeyNF.tup l := by
   cases o <;> simp [eq_comm]
 
+private theorem some_eq_map_rat {x : KeyNF} {value : Float64} :
+    (some x = value.keyRatio.map (fun p => KeyNF.rat p.1 p.2)) ↔
+      ∃ p, value.keyRatio = some p ∧ x = KeyNF.rat p.1 p.2 := by
+  cases h : value.keyRatio <;> simp [h]
+
+private theorem float_finite_iff_keyRatio (value : Float64) :
+    (!value.isNaN = true) ∧ (!value.isInf = true) ↔ value.keyRatio.isSome = true := by
+  by_cases he : value.exponent == 2047
+  · by_cases hf : value.fraction == 0
+    · simp [Float64.isNaN, Float64.isInf, Float64.keyRatio, Float64.toRatio, he, hf]
+    · have hf' : value.fraction ≠ 0 := by
+        intro h
+        apply hf
+        simp [h]
+      simp [Float64.isNaN, Float64.isInf, Float64.keyRatio, Float64.toRatio, he, hf, hf']
+  · simp [Float64.isNaN, Float64.isInf, Float64.keyRatio, Float64.toRatio, he]
+
 private theorem tup_lift {as bs : List RVal}
     (h : keyEqList as bs = true ↔ (keyNFList as).isSome = true ∧ keyNFList as = keyNFList bs) :
     keyEqList as bs = true ↔
@@ -108,19 +125,69 @@ private theorem tup_lift {as bs : List RVal}
 mutual
   theorem keyEq_iff_nf : (a b : RVal) →
       (keyEq a b = true ↔ (keyNF a).isSome = true ∧ keyNF a = keyNF b)
-    | .none, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup]
-    | .ellipsis, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup]
+    | .none, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
+    | .ellipsis, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
     | .bool x, b => by
         cases b
         case bool y => cases x <;> cases y <;> simp [keyEq, keyNF]
-        all_goals simp [keyEq, keyNF, some_eq_map_tup]
+        case float value =>
+          simp only [keyEq, keyNF]
+          cases h : value.keyRatio with
+          | none => simp [h]
+          | some p =>
+            rcases p with ⟨m, d⟩
+            simp [h]
+            constructor
+            · rintro ⟨hm, hd⟩
+              exact ⟨hm.symm, hd.symm⟩
+            · rintro ⟨hm, hd⟩
+              exact ⟨hm.symm, hd.symm⟩
+        all_goals simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
     | .int n, b => by
         cases b
         case bool y => cases y <;> simp [keyEq, keyNF]
-        all_goals simp [keyEq, keyNF, some_eq_map_tup]
-    | .float _, other => by cases other <;> simp [keyEq, keyNF]
-    | .str s, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup]
-    | .bytes values, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup]
+        case float value =>
+          simp only [keyEq, keyNF]
+          cases h : value.keyRatio with
+          | none => simp [h]
+          | some p =>
+            rcases p with ⟨m, d⟩
+            simp [h]
+            constructor
+            · rintro ⟨hm, hd⟩
+              exact ⟨hm.symm, hd.symm⟩
+            · rintro ⟨hm, hd⟩
+              exact ⟨hm.symm, hd.symm⟩
+        all_goals simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
+    | .float value, b => by
+        cases hvalue : value.keyRatio with
+        | none => cases b <;> simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+        | some p =>
+          cases b with
+          | none => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | ellipsis => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | bool x =>
+            rcases p with ⟨pn, pd⟩
+            simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | int n =>
+            rcases p with ⟨pn, pd⟩
+            simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | float other =>
+            cases hother : other.keyRatio with
+            | none => simp [keyEq, keyNF, hvalue, hother, some_eq_map_rat]
+            | some q =>
+              rcases p with ⟨pn, pd⟩
+              rcases q with ⟨qn, qd⟩
+              simp [keyEq, keyNF, hvalue, hother, some_eq_map_rat]
+          | str s => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | bytes values => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | tuple xs => simp [keyEq, keyNF, hvalue, some_eq_map_tup, some_eq_map_rat]
+          | ntuple t fields xs => simp [keyEq, keyNF, hvalue, some_eq_map_tup, some_eq_map_rat]
+          | listV xs => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | rangeV start stop step => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+          | ref addr => simp [keyEq, keyNF, hvalue, some_eq_map_rat]
+    | .str s, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
+    | .bytes values, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup, some_eq_map_rat]
     | .listV _, b => by cases b <;> simp [keyEq, keyNF]
     | .rangeV .., b => by cases b <;> simp [keyEq, keyNF]
     | .ref _, b => by cases b <;> simp [keyEq, keyNF]
@@ -128,12 +195,12 @@ mutual
         cases b
         case tuple ys => exact tup_lift (keyEqList_iff_nf xs.toList ys.toList)
         case ntuple _ _ ys => exact tup_lift (keyEqList_iff_nf xs.toList ys.toList)
-        all_goals (simp only [keyEq, keyNF]; cases keyNFList xs.toList <;> simp)
+        all_goals (simp only [keyEq, keyNF]; cases keyNFList xs.toList <;> simp [some_eq_map_rat])
     | .ntuple _ _ xs, b => by
         cases b
         case tuple ys => exact tup_lift (keyEqList_iff_nf xs.toList ys.toList)
         case ntuple _ _ ys => exact tup_lift (keyEqList_iff_nf xs.toList ys.toList)
-        all_goals (simp only [keyEq, keyNF]; cases keyNFList xs.toList <;> simp)
+        all_goals (simp only [keyEq, keyNF]; cases keyNFList xs.toList <;> simp [some_eq_map_rat])
 
   theorem keyEqList_iff_nf : (as bs : List RVal) →
       (keyEqList as bs = true ↔ (keyNFList as).isSome = true ∧ keyNFList as = keyNFList bs)
@@ -164,7 +231,11 @@ mutual
     | .ellipsis => by simp [hashableKey, keyNF]
     | .bool _ => by simp [hashableKey, keyNF]
     | .int _ => by simp [hashableKey, keyNF]
-    | .float _ => by simp [hashableKey, keyNF]
+    | .float value => by
+        simp only [hashableKey, keyNF, Bool.and_eq_true]
+        cases h : value.keyRatio with
+        | none => simpa [h] using (float_finite_iff_keyRatio value)
+        | some p => simpa [h] using (float_finite_iff_keyRatio value)
     | .str _ => by simp [hashableKey, keyNF]
     | .bytes _ => by simp [hashableKey, keyNF]
     | .listV _ => by simp [hashableKey, keyNF]
@@ -481,21 +552,68 @@ that reads only `.int` has a FALSE `KeyDetermined`. -/
 def keyInt : RVal → Option Int
   | .int n => some n
   | .bool b => some (if b then 1 else 0)
+  | .float value =>
+      match value.keyRatio with
+      | some (n, d) => if d == 1 then some n else none
+      | none => none
   | _ => Option.none
 
+private theorem keyInt_float_congr (value : Float64) : (b : RVal) →
+    keyEq (.float value) b = true → keyInt (.float value) = keyInt b
+  | .none, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .ellipsis, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .bool b, h => by
+      cases hr : value.keyRatio with
+      | none => simp [keyEq, keyInt, hr] at h
+      | some p =>
+        rcases p with ⟨n, d⟩
+        have h' : n = (if b then 1 else 0) ∧ d = 1 := by simpa [keyEq, hr] using h
+        simp [keyInt, hr, h'.1, h'.2]
+  | .int n, h => by
+      cases hr : value.keyRatio with
+      | none => simp [keyEq, keyInt, hr] at h
+      | some p =>
+        rcases p with ⟨m, d⟩
+        have h' : m = n ∧ d = 1 := by simpa [keyEq, hr] using h
+        simp [keyInt, hr, h'.1, h'.2]
+  | .float other, h => by
+      cases hr : value.keyRatio with
+      | none => simp [keyEq, keyInt, hr] at h
+      | some p =>
+        cases hs : other.keyRatio with
+        | none => simp [keyEq, keyInt, hr, hs] at h
+        | some q =>
+          rcases p with ⟨m, d⟩
+          rcases q with ⟨n, e⟩
+          have h' : m = n ∧ d = e := by simpa [keyEq, hr, hs] using h
+          simp [keyInt, hr, hs, h'.1, h'.2]
+  | .str s, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .bytes values, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .tuple xs, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .ntuple t fields xs, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .listV xs, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .rangeV start stop step, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+  | .ref addr, h => by cases hr : value.keyRatio <;> simp [keyEq, keyInt, hr] at h ⊢
+
+private theorem keyInt_float_right (a : RVal) (value : Float64)
+    (h : keyEq a (.float value) = true) : keyInt a = keyInt (.float value) := by
+  have hs : keyEq (.float value) a = true := by
+    rw [keyEq_symm]
+    exact h
+  exact (keyInt_float_congr value a hs).symm
+
 theorem keyInt_congr : (a b : RVal) → keyEq a b = true → keyInt a = keyInt b
-  | .none, b, h => by cases b <;> simp_all [keyEq, keyInt]
-  | .ellipsis, other, equality => by cases other <;> simp_all [keyEq, keyInt]
-  | .bool x, b, h => by cases b <;> cases x <;> simp_all [keyEq, keyInt]
-  | .int _, b, h => by cases b <;> simp_all [keyEq, keyInt]
-  | .float _, other, equality => by cases other <;> simp_all [keyEq, keyInt]
-  | .str _, b, h => by cases b <;> simp_all [keyEq, keyInt]
-  | .bytes _, other, equality => by cases other <;> simp_all [keyEq, keyInt]
-  | .listV _, b, h => by cases b <;> simp_all [keyEq]
-  | .rangeV .., b, h => by cases b <;> simp_all [keyEq]
-  | .ref _, b, h => by cases b <;> simp_all [keyEq]
-  | .tuple _, b, h => by cases b <;> simp_all [keyEq, keyInt]
-  | .ntuple _ _ _, b, h => by cases b <;> simp_all [keyEq, keyInt]
+  := by
+  intro a b h
+  cases a <;> cases b
+  case float.none value => exact keyInt_float_congr value .none h
+  case none.float value => exact keyInt_float_right .none value h
+  case bool.float b value => exact keyInt_float_right (.bool b) value h
+  case int.float n value => exact keyInt_float_right (.int n) value h
+  case float.bool value b => exact keyInt_float_congr value (.bool b) h
+  case float.int value n => exact keyInt_float_congr value (.int n) h
+  case float.float value other => exact keyInt_float_congr value (.float other) h
+  all_goals simp_all [keyEq, keyInt]
 
 theorem keyEqList_pair {x y : RVal} {ys : List RVal} (h : keyEqList [x, y] ys = true) :
     ∃ q e, ys = [q, e] ∧ keyEq x q = true ∧ keyEq y e = true := by

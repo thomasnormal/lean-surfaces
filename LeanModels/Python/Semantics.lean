@@ -3975,11 +3975,30 @@ mutual
     | .bool a, .int m => (if a then (1 : Int) else 0) == m
     | .int n, .bool b => n == (if b then (1 : Int) else 0)
     | .int n, .int m => n == m
-    | .float a, .float b => a.eqv b
-    | .float a, .int n => a.eqInt n
-    | .int n, .float a => a.eqInt n
-    | .float a, .bool b => a.eqInt (if b then 1 else 0)
-    | .bool b, .float a => a.eqInt (if b then 1 else 0)
+    -- Numeric dictionary keys use the exact finite binary64 ratio.  The
+    -- hashability gate rejects NaN/infinity before this relation is used;
+    -- keeping non-finite ratios out also gives the proof calculus a finite
+    -- normal form without inventing an identity for NaN payloads.
+    | .float a, .float b =>
+        match a.keyRatio, b.keyRatio with
+        | some x, some y => x == y
+        | _, _ => false
+    | .float a, .int n =>
+        match a.keyRatio with
+        | some (numerator, denominator) => numerator == n && denominator == 1
+        | none => false
+    | .int n, .float a =>
+        match a.keyRatio with
+        | some (numerator, denominator) => numerator == n && denominator == 1
+        | none => false
+    | .float a, .bool b =>
+        match a.keyRatio with
+        | some (numerator, denominator) => numerator == (if b then 1 else 0) && denominator == 1
+        | none => false
+    | .bool b, .float a =>
+        match a.keyRatio with
+        | some (numerator, denominator) => numerator == (if b then 1 else 0) && denominator == 1
+        | none => false
     | .str s, .str t => s == t
     | .bytes left, .bytes right => left == right
     | .tuple xs, .tuple ys => keyEqList xs.toList ys.toList

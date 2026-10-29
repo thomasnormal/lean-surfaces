@@ -37,7 +37,7 @@ theorem stop_str_total (value : PyBool) :
     all_goals simp [starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
       fstringFormatBuiltinName, lenMultBuiltinName, hasUnboundLocal,
       unboundLocalMarker, Env.lookup]
-    all_goals py_simp [rangeMake, flattenStarRun, flattenStarCallArgs, strOfValH,
+    all_goals py_simp [rangeMake, RangeBound.toInt, flattenStarRun, flattenStarCallArgs, strOfValH,
       reprVal, printOne, rangeBoundRepr, rangeVals, rangeValsAux, Run.bind,
       Run.liftRes, Run.toPublic, RVal.freezeB]
     all_goals simp only [decimalOverflowValH, rangeBoundRepr, zero_decimal,

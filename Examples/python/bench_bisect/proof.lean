@@ -231,9 +231,22 @@ theorem hbodyB (xs : List Int) (x : Int) :
   have hnn : ¬ Int.fdiv (lo + hi) 2 < 0 := by omega
   have hmn : (Int.fdiv (lo + hi) 2).toNat < xs.length := by omega
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
-  by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x <;>
+  by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x
+  · have hbrE : xs[((Int.fdiv (lo + hi) 2).toNat)]?.getD 0 < x := hbr
+    have hbrE' : xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
+      simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+        hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+        getD_eq_getElem, List.getElem?_eq_getElem] <;>
+      (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
+  · have hbrE : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)]?.getD 0 < x := hbr
+    have hbrE' : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
+      simpa [List.getElem?_eq_getElem hmn] using hbrE
+    rcases om with _ | mv <;>
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+        hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+        getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
 
 theorem hinvB (xs : List Int) (x : Int) (hs : List.Pairwise (· ≤ ·) xs) :
@@ -305,9 +318,14 @@ theorem bisect_left_core (xs : List Int) (x : Int)
   rcases om' with _ | mv <;>
     (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, callIn, bench_bisect]
-     simp (disch := omega) only [hloopT]
-     py_simp []
+     py_simp [callFunction, callIn, bench_bisect, hloopT,
+       funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+       Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+       moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+       starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+       fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
+       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+     all_goals simp_all
      all_goals omega)
 
 /-! ## Bounds-only variant (no sortedness): termination on ANY list -/
@@ -347,9 +365,22 @@ theorem hbodyT (xs : List Int) (x : Int) :
   have hnn : ¬ Int.fdiv (lo + hi) 2 < 0 := by omega
   have hmn : (Int.fdiv (lo + hi) 2).toNat < xs.length := by omega
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
-  by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x <;>
+  by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x
+  · have hbrE : xs[((Int.fdiv (lo + hi) 2).toNat)]?.getD 0 < x := hbr
+    have hbrE' : xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
+      simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+        hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+        getD_eq_getElem, List.getElem?_eq_getElem] <;>
+      (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
+  · have hbrE : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)]?.getD 0 < x := hbr
+    have hbrE' : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
+      simpa [List.getElem?_eq_getElem hmn] using hbrE
+    rcases om with _ | mv <;>
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+        hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+        getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
 
 theorem hinvT (xs : List Int) (x : Int) :
@@ -403,9 +434,14 @@ theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
   rcases om' with _ | mv <;>
     (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, callIn, bench_bisect]
-     simp (disch := omega) only [hloopT]
-     py_simp []
+     py_simp [callFunction, callIn, bench_bisect, hloopT,
+       funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+       Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+       moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+       starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+       fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
+       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+     all_goals try simp_all
      all_goals omega)
 
 open BL in
@@ -666,6 +702,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -675,6 +712,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
     · have hltE : x < a[((lo + hi) / 2).toNat] := by
@@ -685,6 +723,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -694,6 +733,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
 /-! ### Bounds-only obligations (termination without sortedness) -/
@@ -747,6 +787,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -756,6 +797,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
     · have hltE : x < a[((lo + hi) / 2).toNat] := by
@@ -766,6 +808,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -775,6 +818,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
       py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+        evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
 theorem BR.hinvT_pf (a : List Int) (x : Int) :
@@ -836,6 +880,12 @@ private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise
   · py_begin [bench_bisect]
     refine CallsTo.intro (fl + 32) ?_
     rw [hentry]
+    py_simp [funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+      Expr.heapFreeList, Expr.heapFree, moduleGenFree, funsGenAllocFree,
+      Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal, unboundLocalMarker,
+      starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+      fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
+      flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
     rw [hthresh (fl + 26) (by omega)]
     try unfold BR.toEnv
     rcases p' with ⟨lo', hi', _mid', grown'⟩
@@ -859,6 +909,12 @@ private theorem bisect_right_terminates_core (a : List Int) (x : Int) :
   py_begin [bench_bisect]
   refine CallsTo.intro (fl + 32) ?_
   rw [hentry]
+  py_simp [funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+    Expr.heapFreeList, Expr.heapFree, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal, unboundLocalMarker,
+    starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+    fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
+    flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
   rw [hthresh (fl + 26) (by omega)]
   try unfold BR.toEnv
   rcases p' with ⟨lo', hi', _mid', grown'⟩

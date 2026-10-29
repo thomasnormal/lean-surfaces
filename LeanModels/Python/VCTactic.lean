@@ -628,7 +628,7 @@ def interpUnfolds : List Name :=
    ``resolvedG, ``resolvedGAux, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
    ``evalGlobalDictItems, ``globalFuel,
    ``sumArgs, ``sumFold, ``rangeLen, ``rangeValsAux, ``rangeVals, ``rangeMake,
-   ``RangeBound.toInt, ``RangeBound.toRVal, ``asRangeBound, ``rangeBoundRepr,
+   ``RangeBound.toRVal, ``asRangeBound, ``rangeBoundRepr,
    ``lenMultBuiltinName,
    ``seqBudget, ``shiftBudget, ``tupleRepeat, ``seqSlice, ``seqSliceElems,
    ``g1DivGate, ``g1ExecCandidate, ``g1HeapPure, ``g1HeapPureList,

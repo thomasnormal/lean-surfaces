@@ -1,3 +1,17 @@
+## [0.1.210] — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`associative_empty_query_statement` and `associative_empty_endpoint_statement`
+markers for discarded `num`, `size`, `first`, and `last` calls on untouched
+associative arrays. Populated, dynamic, and effectful histories remain loud.
+The `pure_associative_query_statements_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms. Differential coverage grows **476/470/0/6 → 477/471/0/6**; grammar
+coverage remains **235/113/122**. On the checked-in 989-file SystemVerilog
+example sweep (988 files before this witness), the adapter census moves **749
+clean / 239 partial → 752 clean / 237 partial** and the four discarded empty
+associative-query call residuals fall to zero.
+
 ## [0.1.209] — 2026-10-29
 
 The legacy adapter census now follows the extractor's

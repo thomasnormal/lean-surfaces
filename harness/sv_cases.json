@@ -4321,6 +4321,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_associative_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_associative_query_statements_adapter/pure_associative_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

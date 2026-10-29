@@ -128,6 +128,8 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "string_query_statement",
     "enum_name_statement", "enum_numeric_statement",
     "floating_math_statement",
+    "associative_empty_query_statement",
+    "associative_empty_endpoint_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",

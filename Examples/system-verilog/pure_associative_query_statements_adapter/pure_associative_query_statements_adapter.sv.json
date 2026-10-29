@@ -1,0 +1,137 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/pure_associative_query_statements_adapter/pure_associative_query_statements_adapter.sv",
+  "source_sha256": "b7f3717713012ac71d1028ce15fa1e43886cb130b868f15fa7e9350017cb632d",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 22,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 7,
+              "end_line": 13,
+              "end_col": 15
+            },
+            "name": "last_key",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 14,
+              "col": 3,
+              "end_line": 21,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 14,
+                "col": 11,
+                "end_line": 21,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 22
+                  },
+                  "associative_empty_query_statement": "num"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 24
+                  },
+                  "associative_empty_query_statement": "size"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 35
+                  },
+                  "associative_empty_endpoint_statement": "first"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 32
+                  },
+                  "associative_empty_endpoint_statement": "last"
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -230,6 +230,24 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("Call:$sqrt", residual)
 
+    def test_discarded_empty_associative_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; int num_values[string]; int size_values[string]; '
+                'int first_values[string]; int last_values[int]; '
+                'string first_key; int last_key; initial begin '
+                'num_values.num(); size_values.size(); '
+                'first_values.first(first_key); last_values.last(last_key); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_populated_associative_query_remains_loud(self):
+        residual = blockers(
+            'module top; int values[string]; initial begin '
+            'values["answer"] = 1; values.num(); '
+            '$display("PASS"); end endmodule')
+        self.assertIn("Call:num", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

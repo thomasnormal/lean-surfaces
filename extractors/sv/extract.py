@@ -6790,6 +6790,29 @@ def _fixed_array_initializer_values(sm, initializer, target_name, width, count):
         if initializer is None:
             return [None] * count
 
+        # §5.9 permits a string literal to initialize an unpacked byte
+        # array.  Slang presents this as a conversion from one packed string
+        # literal; sample its ASCII bytes in declared array order and pad the
+        # remaining cells with zero.  Keep the boundary exact: non-ASCII,
+        # dynamic strings, and non-byte element widths still need aggregate
+        # storage and remain loud.
+        string_node = initializer
+        while type(string_node).__name__ == "ConversionExpression":
+            string_node = getattr(string_node, "operand", None)
+        if (type(string_node).__name__ == "StringLiteral"
+                and not getattr(string_node, "bad", False)
+                and width == 8):
+            text = getattr(string_node, "value", None)
+            if not isinstance(text, str) or any(ord(char) > 0x7f for char in text):
+                return None
+            values = []
+            for index in range(count):
+                value = ord(text[index]) if index < len(text) else 0
+                values.append({"kind": "Literal", "span": node_span(sm, string_node),
+                               "width": width,
+                               "bits": format(value, "08b")})
+            return values
+
         def scalar_value(element):
             if not _case_source_expression_ok(element, packed_members=True):
                 return None

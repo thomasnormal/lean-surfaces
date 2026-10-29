@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed unpacked byte-array string initializers — 2026-10-29
+
+Direct ASCII string literals now initialize finite fixed unpacked byte arrays
+in declared index order. A shorter literal supplies zero for the remaining
+cells, and the existing flat 2-state cells retain their normal conversion.
+Dynamic strings, non-ASCII literals, non-byte element arrays, and aggregate
+forms outside this exact conversion remain loud. The
+`fixed_array_string_initializer` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admitted shape.
+
+Differential coverage grows **435/429/0/6 → 436/430/0/6**; grammar coverage is
+unchanged. The external sv-tests-2 checkout is unavailable for a fresh corpus
+delta in this item.
+
 ## Fixed arrays of untagged unions — 2026-10-29
 
 Finite fixed unpacked arrays with an equal-width untagged union leaf now use

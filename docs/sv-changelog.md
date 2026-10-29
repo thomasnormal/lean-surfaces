@@ -1,3 +1,14 @@
+## [0.1.181] — 2026-10-29
+
+Fixed unpacked byte arrays now accept a direct ASCII string literal
+initializer. Characters are sampled in declared array order and shorter
+literals zero-pad the remaining cells through the existing 2-state boundary.
+Dynamic strings, non-ASCII literals, and non-byte element arrays remain loud.
+The `fixed_array_string_initializer` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admitted shape.
+Differential coverage grows **435/429/0/6 → 436/430/0/6**; grammar coverage is
+unchanged.
+
 ## [0.1.180] — 2026-10-29
 
 Fixed unpacked arrays whose leaf is an equal-width untagged union now flatten

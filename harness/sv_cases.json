@@ -3939,6 +3939,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_string_initializer",
+      "file": "Examples/system-verilog/fixed_array_string_initializer/fixed_array_string_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

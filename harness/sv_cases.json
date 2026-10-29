@@ -4348,6 +4348,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_empty_subroutine_statements_adapter",
+      "file": "Examples/system-verilog/pure_empty_subroutine_statements_adapter/pure_empty_subroutine_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

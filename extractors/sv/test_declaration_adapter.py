@@ -275,6 +275,29 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("InvalidStatement", residual)
 
+    def test_discarded_empty_subroutine_calls_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; task automatic noop(); endtask '
+                'task automatic input_noop(input logic value); endtask '
+                'initial begin noop(); input_noop(1\'b0); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_nonempty_subroutine_call_remains_loud(self):
+        residual = blockers(
+            'module top; task automatic noisy(); $display("NO"); endtask '
+            'initial begin noisy(); $display("PASS"); end endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine", residual)
+
+    def test_effectful_empty_input_task_call_remains_loud(self):
+        residual = blockers(
+            'module top; int counter; '
+            'task automatic input_noop(input logic value); endtask '
+            'initial begin input_noop(counter++); '
+            '$display("PASS"); end endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

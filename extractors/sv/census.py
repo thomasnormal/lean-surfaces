@@ -132,6 +132,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "associative_empty_endpoint_statement",
     "zero_size_statement",
     "typename_statement", "bits_statement",
+    "empty_subroutine_call", "empty_input_task_call",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",
@@ -531,6 +532,68 @@ def _adapter_generated_scope_blockers(sm, symbol):
     return blockers
 
 
+def _adapter_erased_subroutines(sm, scope):
+    """Return subroutines whose every call is an erased pure statement.
+
+    The legacy adapter has no callable frame.  A declaration can nevertheless
+    be metadata when all of its call sites are already lowered by the
+    extractor to an inert empty task/function statement.  Any value-position,
+    literal-return, effectful, or otherwise
+    unrecognized call keeps the declaration as a real adapter boundary.
+    """
+    calls = {}
+    erased = set()
+
+    def subroutine_key(subroutine):
+        location = getattr(subroutine, "location", None)
+        offset = getattr(location, "offset", None)
+        return (getattr(subroutine, "name", None), offset)
+
+    def call_key(call):
+        location = getattr(call, "location", None)
+        offset = getattr(location, "offset", None)
+        if offset is not None:
+            return offset
+        source_range = getattr(call, "sourceRange", None)
+        start = getattr(source_range, "start", None)
+        return getattr(start, "offset", None)
+
+    def inspect(node):
+        if type(node).__name__ == "CallExpression":
+            subroutine = getattr(node, "subroutine", None)
+            if subroutine is not None:
+                calls.setdefault(subroutine_key(subroutine), set()).add(call_key(node))
+
+    try:
+        scope.visit(inspect)
+    except Exception:
+        return set()
+
+    def inspect_statement(node):
+        if type(node).__name__ != "ExpressionStatement":
+            return
+        expression = getattr(node, "expr", None)
+        if type(expression).__name__ != "CallExpression":
+            return
+        subroutine = getattr(expression, "subroutine", None)
+        if subroutine is None:
+            return
+        converted = extract.convert_stmt(sm, node)
+        if (isinstance(converted, dict)
+                and converted.get("kind") == "Empty"
+                and any(marker in converted
+                        for marker in ADAPTER_PURE_STATEMENT_MARKERS)):
+            erased.add((subroutine_key(subroutine), call_key(expression)))
+
+    try:
+        scope.visit(inspect_statement)
+    except Exception:
+        return set()
+    return {key for key, identities in calls.items()
+            if identities and all((key, identity) in erased
+                                  for identity in identities)}
+
+
 def _adapter_design_blockers_impl(sm, comp, design=None):
     """Pass 2: residual blockers with the adapter tier treated as
     supported. Mirrors extract.convert_module's member routing."""
@@ -548,6 +611,10 @@ def _adapter_design_blockers_impl(sm, comp, design=None):
     }
     for inst in comp.getRoot().topInstances:
         try:
+            # Keep the recognizer and member walk on the same elaborated
+            # instance wrapper; pyslang may materialize distinct Python
+            # wrappers for the same underlying symbol on separate traversals.
+            erased_subroutines = _adapter_erased_subroutines(sm, inst)
             body = inst.body
             converted_module = converted_modules.get(getattr(inst, "name", None))
             generated_metadata_base = (
@@ -589,7 +656,11 @@ def _adapter_design_blockers_impl(sm, comp, design=None):
                         out.extend(_adapter_generated_scope_blockers(sm, m))
                         continue
                     elif (k == "Subroutine"
-                          and not extract._subroutine_is_referenced(inst, m)):
+                          and (not extract._subroutine_is_referenced(inst, m)
+                               or (getattr(m, "name", None),
+                                   getattr(getattr(m, "location", None),
+                                           "offset", None)) in
+                                  erased_subroutines)):
                         # A declaration has no time-zero effect until a call
                         # site names it.  convert_module erases the same
                         # unreferenced subroutine before building the envelope.

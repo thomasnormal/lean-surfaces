@@ -1,3 +1,18 @@
+## [0.1.213] — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`empty_subroutine_call` and `empty_input_task_call` markers. Empty tasks and
+functions with pure input actuals have no represented state or output, so
+their declarations and discarded calls are erased; nonempty, effectful,
+output-bearing, and value-position calls remain loud. The
+`pure_empty_subroutine_statements_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms. Differential coverage grows **479/473/0/6 → 480/474/0/6**; grammar
+coverage remains **235/113/122**. On the checked-in 992-file SystemVerilog
+example sweep (991 files before this witness), the adapter census moves
+**757 clean / 234 partial → 760 clean / 232 partial** and the two empty-call
+declaration residuals fall to zero.
+
 ## [0.1.212] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `typename_statement`

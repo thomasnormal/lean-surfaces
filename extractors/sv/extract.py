@@ -24371,6 +24371,31 @@ def _net_has_no_continuous_drivers(m):
 
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
+    if nk == "TriReg":
+        # A plain, un-driven trireg starts at high impedance just like an
+        # ordinary resolved net.  Charge strength, decay/delay, and any
+        # driver require retained charge state that the flat legacy envelope
+        # cannot represent, so keep those forms at the explicit boundary.
+        try:
+            charge_strength = m.chargeStrength
+        except (AttributeError, TypeError):
+            charge_strength = object()
+        if (getattr(m, "delay", None) is not None
+                or charge_strength is not None
+                or getattr(m, "initializer", None) is not None
+                or not _net_has_no_continuous_drivers(m)):
+            return unsupported(sm, m, "NetSymbol:TriReg")
+        w, reason = type_width(m.type)
+        if w is None:
+            return unsupported(sm, m, "NetSymbol:" + reason)
+        return signed_metadata({
+            "kind": "Net",
+            "span": sym_span(sm, m),
+            "name": _storage_name(m),
+            "width": w,
+            "init": {"kind": "Literal", "span": sym_span(sm, m),
+                      "width": w, "bits": "z" * w},
+        }, m.type)
     if nk in ("Tri0", "Tri1"):
         if (getattr(m, "delay", None) is not None
                 or not _net_has_no_continuous_drivers(m)):

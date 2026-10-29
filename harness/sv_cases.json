@@ -3865,6 +3865,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "trireg_net",
+      "file": "Examples/system-verilog/trireg_net/trireg_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

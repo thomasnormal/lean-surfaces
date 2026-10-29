@@ -119,7 +119,7 @@ emits:
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
 | `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, dynamic/queue or nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges, bounded fixed-unpacked integral arrays (including flattened multidimensional cells), and untagged packed struct/union vectors |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays; un-driven `wand`/`wor`/`triand`/`trior` use a high-impedance `Net.init` |
-| `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
+| `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay; a plain un-driven scalar or packed vector uses a repeated `z` literal `Net.init` |
 | `NetSymbol:Tri0` / `NetSymbol:Tri1` | driven implicit pull net with strength-sensitive four-state driver resolution; an un-driven declaration uses a repeated `0`/`1` literal `Net.init` |
 | `NetSymbol:Tri` | resolved-wire net requiring a general four-state driver set and strength resolution |
 | `NetSymbol:Interconnect` | hierarchical net requiring connected-port topology and per-bit net-type resolution |
@@ -1652,10 +1652,12 @@ Gate, switch and pull primitive instances remain explicit
 primitive boundary](sv-primitives.md). The envelope has no continuous-driver
 or net-resolution node.
 
-`trireg` declarations remain explicit `NetSymbol:TriReg` unsupported members;
-see [the charge-storage boundary](sv-trireg.md). The envelope has no
-per-net charge state, driver-release transition, charge-strength propagation
-or decay publication.
+Plain, un-driven `trireg` scalar and packed-vector declarations use a
+declaration-initialized high-impedance `Net`, as described by [the
+charge-storage boundary](sv-trireg.md). Forms with charge strength, delay,
+declaration or continuous drivers remain explicit `NetSymbol:TriReg`
+unsupported members: the envelope has no per-net charge state, driver-release
+transition, charge-strength propagation or decay publication.
 
 `tri0` declarations remain explicit `NetSymbol:Tri0` unsupported members; see
 [the implicit pull boundary](sv-tri0.md). The envelope has no implicit pull

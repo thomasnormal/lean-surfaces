@@ -1,14 +1,20 @@
-# `trireg` charge-storage nets — repricing boundary
+# `trireg` charge-storage nets — bounded admission
+
+The legacy self-check tier admits the plain, un-driven subset: a scalar or
+packed-vector declaration with no charge-strength qualifier, delay, or driver
+lowers to a flat net initialized with repeated high-impedance bits. This is
+the IEEE startup value before any driver contributes. The `trireg_net` fixture
+and differential row cover scalar and vector observations.
 
 The legacy envelope admits ordinary four-state values and a limited set of
 resolved net declarations, but it does not represent the charge-storage state
-of a `trireg`. A `trireg` is driven while one or more drivers contribute a
+of a driven `trireg`. A `trireg` is driven while one or more drivers contribute a
 non-`z` value; when all drivers float, it can retain the last resolved value in
 a capacitive state. Its charge strength (`small`, `medium`, or `large`) and
 optional decay delay affect that state, and connected capacitive nets can
 propagate the strongest charge.
 
-## Why `TriReg` remains a boundary
+## Why the remaining `TriReg` forms remain a boundary
 
 Treating a `trireg` as an ordinary `wire` would turn a release into `z` and
 lose the stored charge. Treating it as a variable would lose continuous
@@ -16,8 +22,9 @@ driver resolution, four-state `x` propagation, multiple-driver behavior and
 the distinction between driven and capacitive states. A declaration delay on
 the charge storage also needs a timed decay publication, which is distinct
 from the existing net and continuous-assignment delay boundaries. The current
-envelope has none of this per-net driver, charge or decay state, so no
-`TriReg` declaration is admitted and no second scheduler is introduced.
+envelope has none of this per-net driver, charge or decay state, so qualified,
+initialized, or driven forms remain explicit `NetSymbol:TriReg` refusals and
+no second scheduler is introduced.
 
 ## 2026-10-22 census and decision
 

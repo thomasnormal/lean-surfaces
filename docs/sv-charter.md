@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Plain un-driven `trireg` nets — 2026-10-29
+
+The legacy self-check tier now lowers a plain, un-driven `trireg` scalar or
+packed vector to a declaration-initialized high-impedance flat cell. Charge
+strength, delays, declaration drivers, and continuous drivers remain loud
+because the envelope has no retained charge or driver state. The `trireg_net`
+fixture, extractor regressions, generated envelope, Lean receipt, and
+differential row cover the admission and refusal boundaries.
+
+Differential coverage grows **427/421/0/6 → 428/422/0/6**; grammar coverage
+remains **219/108/111**.
+
 ## Un-driven implicit-pull nets — 2026-10-29
 
 The legacy self-check tier now lowers un-driven `tri0` and `tri1`

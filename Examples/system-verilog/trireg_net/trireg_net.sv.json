@@ -1,0 +1,222 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/trireg_net/trireg_net.sv",
+  "source_sha256": "87cb6f342820eacd23a2b32a9a859b4f14b12f6a3fc98ed5b6cbc5b493f6bc46",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Net",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 16
+            },
+            "name": "scalar",
+            "width": 1,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 16
+              },
+              "width": 1,
+              "bits": "z"
+            }
+          },
+          {
+            "kind": "Net",
+            "span": {
+              "line": 9,
+              "col": 16,
+              "end_line": 9,
+              "end_col": 19
+            },
+            "name": "bus",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 9,
+                "col": 16,
+                "end_line": 9,
+                "end_col": 19
+              },
+              "width": 4,
+              "bits": "zzzz"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 16,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 27
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 43
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 24
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 9,
+                          "end_line": 13,
+                          "end_col": 15
+                        },
+                        "width": 1,
+                        "name": "scalar"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 20,
+                          "end_line": 13,
+                          "end_col": 24
+                        },
+                        "width": 1,
+                        "bits": "z"
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 28,
+                        "end_line": 13,
+                        "end_col": 43
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 28,
+                          "end_line": 13,
+                          "end_col": 31
+                        },
+                        "width": 4,
+                        "name": "bus"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 36,
+                          "end_line": 13,
+                          "end_col": 43
+                        },
+                        "width": 4,
+                        "bits": "zzzz"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 13,
+                      "col": 45,
+                      "end_line": 13,
+                      "end_col": 62
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 27
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

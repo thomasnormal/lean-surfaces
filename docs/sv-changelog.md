@@ -1,3 +1,12 @@
+## [0.1.173] — 2026-10-29
+
+Plain, un-driven `trireg` scalar and packed-vector declarations now lower to
+high-impedance flat cells in the legacy self-check tier. Charge strength,
+delays, declaration drivers, and continuous drivers remain loud because the
+envelope has no retained charge state. The `trireg_net` fixture, extractor
+tests, Lean receipt, and differential row cover the admission and boundaries.
+Differential coverage grows **427/421/0/6 → 428/422/0/6**.
+
 ## [0.1.172] — 2026-10-29
 
 Un-driven `tri0` and `tri1` declarations now lower to flat cells initialized

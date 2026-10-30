@@ -1,3 +1,10 @@
+# [0.1.234] — 2026-10-30
+
+The legacy differential corpus now carries a compact `casez`/`casex` witness.
+The shared first-match wildcard predicates handle Z wildcards and X/Z
+wildcards respectively, with a literal `PASS` transcript. Coverage grows
+**496/484/0/12 → 497/485/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.233] — 2026-10-30
 
 The legacy differential corpus now pins a dynamic `priority if` chain without

@@ -3905,6 +3905,15 @@
       "expect": "match"
     },
     {
+      "name": "wildcard_case_accept",
+      "file": "Examples/system-verilog/wildcard_case_accept/wildcard_case_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "pure_integral_real_conversions",
       "file": "Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv",
       "module": "top",

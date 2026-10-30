@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Wildcard `casez`/`casex` differential witness — 2026-10-30
+
+The legacy self-check corpus now exercises the admitted wildcard case control
+chain with a compact `PASS` fixture. `casez` ignores Z in either operand and
+`casex` ignores X and Z, while source-order first-match selection is preserved.
+The `wildcard_case_accept` fixture, generated envelope, and differential row
+cover both predicates.
+
+Differential coverage grows **496/484/0/12 → 497/485/0/12**; grammar coverage
+remains **235/113/122**.
+
+
 ## Dynamic `priority if` no-fallback refusal witness — 2026-10-30
 
 The legacy self-check tier now pins a dynamic `priority if` chain without a

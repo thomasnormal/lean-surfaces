@@ -5009,27 +5009,36 @@
   },
   {
    "id": "le-generate-genvar-step",
-   "tag": "AssignmentExpression (genvar step `i = i + 1`)",
+   "tag": "GenerateFor:step",
    "group": "generate",
    "layers": [
     "extractor"
    ],
-   "trigger": "for (genvar i=0; i<N; i=i+1) ...   (i++ is accepted)",
-   "why": "The extractor refuses the step spelled as an assignment; the task READMEs call it 'an ls-sv gap, not a rule'.",
+   "trigger": "for (genvar i=0; i<N; i += 2) ...  /  i = i * 2  /  i = i + K  (a parameter amount)  /  i = N - 1 - i  /  i = i + 1'b1  (every assignment step that is not the plain +/-1)",
+   "why": "The semantic tier reads a generate step as `g++` or `g--` (`stepDelta`) and the proof tactics pattern-match the `++` node, so the extractor lowers the assignment spellings of exactly that step (`g = g + 1`, `g = 1 + g`, `g += 1`, `g = g - 1`, `g -= 1`, parenthesised or not, with the plain signed integer literal 1) to the SAME node as `g++` / `g--`; any other assignment step is the loud `GenerateFor:step`. A parameter amount is never folded to 1 (it is folded at the default point only), and an unsigned or narrower literal changes the arithmetic type of `g - 1`.",
    "category": "later",
    "proposed": false,
-   "prerequisite": "none recorded; proposed prerequisite: the extractor / loader accepts the `i = i + 1` (and presumably `i += k`) genvar step",
+   "prerequisite": "a general constant step (an amount, either sign, evaluated per point) in stepDelta / genvarSeq and in the tactics' step pattern",
+   "kinds": {
+    "extractor": [
+     "GenerateFor:step"
+    ]
+   },
    "where": [
     {
      "file": "extractors/sv/extract.py",
-     "fn": "convert_generate_for"
+     "fn": "_genstep"
+    },
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_genstep_delta"
     }
    ],
-   "evidence": "svgolf/tasks/mul/README.md; svgolf/tasks/add/README.md",
+   "evidence": "extractors/sv/test_generate_steps.py; cases2.json rows gstep_up*, gstep_down*, gstep_nest*, ripple_step* (Xcelium-pinned) and the refusal rows gstep_stride, gstep_param; Examples/system-verilog/ripple_step (the adder with `i = i + 1`, proved for every N by the unchanged tactics); Examples/system-verilog/sem2/gstep_*",
    "verified_by_run": true,
-   "value_rank": 18,
-   "value_note": "genvar loops written `i = i + 1` (README promises them, ls-sv refuses them)",
-   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+   "since": "2026-10-30",
+   "notes": "WP-L1 (2026-10-30): `i = i + 1` and its five sibling spellings are SUPPORTED (parser, semantics, extractor lowering, differential rows against Icarus and pinned Xcelium, an Examples proof, this register); the entry now records the remaining refusal. The Lean-side message 'generate step outside the ++/-- tier' (le-generate-for) is unchanged and still defensive. svGolf's README rule 'write the step as i++' is obsolete."
   },
   {
    "id": "le-generate-bound",

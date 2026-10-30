@@ -29655,8 +29655,66 @@ def _sym_implicit_signing(tsyn, ptype, node):
 
 # --- generate constructs ---------------------------------------------------
 
-def _genstep(sm, e):
-    """Generate-for iteration expression; `i++`/`i--` become Unary nodes."""
+def _genstep_one(x):
+    """True when `x` (implicit conversions looked through) is the plain SIGNED
+    32-bit integer literal `1` (`1`, `32'sd1`): the only amount a genvar
+    assignment step may add or subtract. An unsigned or narrower literal
+    (`1'b1`, `'d1`) changes the arithmetic type of `g - 1`, and a parameter is
+    folded at the default point only, so neither is read as `1`."""
+    while type(x).__name__ == "ConversionExpression":
+        x = x.operand
+    if type(x).__name__ != "IntegerLiteral":
+        return False
+    t = x.type
+    if not (t.isSigned and t.bitWidth == 32):
+        return False
+    v = x.value
+    return all(bit in "01" for bit in svint_bits(v)) and int(v) == 1
+
+
+def _genstep_delta(e, genvar):
+    """`+1` / `-1` when the generate iteration expression `e` is an
+    assignment step over the loop genvar `g` that IS `g++` / `g--`
+    (IEEE 1800-2023 27.4: `g = g + 1`, `g = 1 + g`, `g += 1`, `g = g - 1`,
+    `g -= 1`), all in the genvar's own `integer` type with the plain literal
+    1 (`_genstep_one`); else None. Every other assignment step (`g += 2`,
+    `g = g * 2`, `g = g + K`, `g = N - 1 - g`) is not a +/-1 step and stays
+    loud (`GenerateFor:step`)."""
+    if not genvar or type(e).__name__ != "AssignmentExpression":
+        return None
+    left = e.left
+    if type(left).__name__ != "NamedValueExpression" or left.symbol.name != genvar:
+        return None
+    r = e.right
+    if type(r).__name__ != "BinaryExpression" or str(r.type) != "integer":
+        return None
+    op = str(r.op).split(".")[-1]
+    if op not in ("Add", "Subtract"):
+        return None
+
+    def is_g(x):
+        # `g = g + 1` names the genvar; in `g += 1` slang binds the left operand
+        # to an lvalue reference of the assigned genvar.
+        if type(x).__name__ == "NamedValueExpression":
+            return x.symbol.name == genvar
+        return bool(e.isCompound) and type(x).__name__ == "LValueReferenceExpression"
+
+    if e.isCompound and str(e.op).split(".")[-1] != op:
+        return None
+    if is_g(r.left) and _genstep_one(r.right):
+        return 1 if op == "Add" else -1
+    if op == "Add" and _genstep_one(r.left) and is_g(r.right):
+        return 1
+    return None
+
+
+def _genstep(sm, e, genvar=None):
+    """Generate-for iteration expression; `i++`/`i--` become Unary nodes, and
+    so do the assignment spellings of the same +/-1 step (`i = i + 1`,
+    `i += 1`, `i = 1 + i`, `i = i - 1`, `i -= 1`: `_genstep_delta`), which are
+    lowered to the SAME node as `i++` / `i--`, so the semantic tier and the
+    proof tactics see one step vocabulary. Any other assignment step is the
+    loud `GenerateFor:step`."""
     if type(e).__name__ == "UnaryExpression":
         opname = str(e.op).split(".")[-1]
         if opname in ("Preincrement", "Postincrement"):
@@ -29673,6 +29731,22 @@ def _genstep(sm, e):
                 "op": op,
                 "operand": convert_sym_expr(sm, e.operand),
             }
+    delta = _genstep_delta(e, genvar)
+    if delta is not None:
+        return {
+            "kind": "Unary",
+            "span": node_span(sm, e),
+            "width": None,
+            "op": "++" if delta > 0 else "--",
+            "operand": convert_sym_expr(sm, e.left),
+        }
+    if type(e).__name__ == "AssignmentExpression":
+        return unsupported(
+            sm, e, "GenerateFor:step",
+            "genvar step '%s' is not a +/-1 step: only `g++`, `++g`, `g--`, `--g` and "
+            "the assignment forms `g = g + 1`, `g = 1 + g`, `g += 1`, `g = g - 1`, "
+            "`g -= 1` (the plain integer literal 1) are supported"
+            % source_text(e))
     return convert_sym_expr(sm, e)
 
 
@@ -29694,7 +29768,7 @@ def convert_generate_for(sm, m):
         init = convert_sym_expr(sm, m.initialExpression)
         init = _sym_genvar_init(sm, m, init)
         bound = convert_sym_expr(sm, m.stopExpression)
-        step = _genstep(sm, m.iterExpression)
+        step = _genstep(sm, m.iterExpression, genvar)
         entries = []
         try:
             entries = list(m.entries)

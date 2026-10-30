@@ -15885,3 +15885,25 @@ Xcelium traces (additive, 7 entries); 11 refusal rows (`clk_undriven`, `clk_tied
 Fixtures: `Examples/system-verilog/sem2/clk_*` with the refusal messages pinned verbatim by
 `#guard_msgs`.
 
+## Genvar step spelled as an assignment (WP-L1) — 2026-10-30
+
+`for (genvar i = 0; i < N; i = i + 1)` (IEEE 1800-2023 27.4 allows `g = g + 1` and `g += 1` besides
+`g++`) was refused: the extractor kept the step as an `Unsupported` `AssignmentExpression` and
+`stepDelta` only reads `.unary .inc/.dec`. The fix is in the extractor only (`_genstep`,
+`_genstep_delta`, `_genstep_one`): the five spellings of the +/-1 step (`g = g + 1`, `g = 1 + g`,
+`g += 1`, `g = g - 1`, `g -= 1`, parenthesised or not) are lowered to the SAME `Unary` `++`/`--`
+node as `g++`/`g--`. Why not teach `stepDelta` a new node: the step is matched by `simp`/`rw`
+lemmas (`stepDelta_inc`, `GenItem.expand2_genFor_ascending_*`, `CombView`'s `.unary .inc` pattern)
+across the whole proof layer; a new constructor would have been a semantics change and a
+tactic change, while one lowering keeps `LeanModels/Sv` byte-identical (nothing in the library
+rebuilds) and is exactly slang's own reading of the loop. The condition for the lowering is
+the type: the right operand must be the plain SIGNED 32-bit literal `1` in the genvar's
+`integer` arithmetic. A parameter amount is never folded (it is a value at the default point
+only), an unsigned or narrower literal (`1'b1`) changes the arithmetic type of `g - 1`, and a stride
+(`g += 2`), `g * 2`, `1 - g` and `N - 1 - g` are not a +/-1 step; those are the loud
+`GenerateFor:step`. Evidence: `extractors/sv/test_generate_steps.py`; `cases2.json` rows
+`gstep_*`, `ripple_step*` (Icarus + pinned Xcelium, 0 differences) and the refusal rows
+`gstep_stride`, `gstep_param`; `Examples/system-verilog/ripple_step` proves the adder for every `N`
+with the unchanged tactics. Not done (not trivial): strides, and a step amount that is a parameter
+expression (they need a general `stepDelta` and a tactic pattern for it).
+

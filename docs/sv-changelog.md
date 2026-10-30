@@ -1,3 +1,29 @@
+# [0.1.268] — 2026-10-30
+
+Genvar step spelled as an assignment (WP-L1; register `le-generate-genvar-step`).
+`for (i = 0; i < N; i = i + 1)` was refused ("generate step outside the ++/--
+tier") although `i++` was accepted, and the svGolf READMEs told players to write
+`i++`. The extractor now lowers the assignment spellings of the +/-1 step
+(`g = g + 1`, `g = 1 + g`, `g += 1`, `g = g - 1`, `g -= 1`, parenthesised or
+not, with the plain signed 32-bit integer literal 1, in the genvar's own integer
+arithmetic) to the SAME `Unary` `++` / `--` node as `g++` / `g--`
+(`_genstep`, `_genstep_delta`, `_genstep_one`), so the semantic tier
+(`stepDelta`), the family lemmas and the proof tactics are untouched and read
+the design exactly as before. Every other assignment step (`g += 2`,
+`g = g * 2`, a parameter amount `g = g + K` even where K is 1 at the defaults,
+`g = 1 - g`, an unsigned or narrower literal) is the new loud
+`GenerateFor:step` Unsupported node, never a guessed stride. No committed
+envelope changes (37 symbolic generate-for envelopes re-extract byte-identical;
+none holds an assignment step). New: `extractors/sv/test_generate_steps.py` (6
+tests, 10 fail with the lowering neutered), 14 rows in `cases2.json` (12 admitted
+rows against Icarus and new pinned Xcelium traces, 2 refusal rows), fixtures
+`Examples/system-verilog/sem2/gstep_{up,down,nest,stride,param}`, and
+`Examples/system-verilog/ripple_step`: the ripple-carry adder of `ripple_add`
+written with `i = i + 1`, whose generate items equal `ripple_add`'s
+(`gen.lean`) and which `sv_structure` + `sv_equations` prove for every
+`N >= 1` unchanged (`ripple_step_correct`). Register: the entry now records the
+remaining refusal; the ranked "allowed later" row 18 leaves the table.
+
 # [0.1.267] — 2026-10-30
 
 The timed scheduler now publishes guarded procedural NBA writes back into
@@ -7,6 +33,7 @@ continues to terminate by fuel and remains a loud refusal. Differential
 coverage grows **536/521/0/15 → 537/522/0/15**.
 Grammar coverage grows **237/189/48 → 237/190/47** as the unary-bitwise-not
 witness now runs through the convergent timed loop.
+
 
 # [0.1.266] — 2026-10-30
 

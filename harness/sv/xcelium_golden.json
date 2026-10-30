@@ -3396,6 +3396,99 @@
    "hash": "9454485dc2ff9e31aff727303c2642d2edc7d8a093786786556532946e0faca8",
    "status": "ok"
   },
+  "gstep_down": {
+   "cycles": [
+    "CYCLE 0 a=1000 r1=0001 r2=0001",
+    "CYCLE 1 a=0110 r1=0110 r2=0110",
+    "CYCLE 2 a=1011 r1=1101 r2=1101",
+    "CYCLE 3 a=0001 r1=1000 r2=1000",
+    "CYCLE 4 a=1x01 r1=10x1 r2=10x1",
+    "CYCLE 5 a=0000 r1=0000 r2=0000"
+   ],
+   "hash": "69ee4956858dacc138587e8c1f4a09c2b40fd6d68f65a810a5b3035dcb59d9b1",
+   "status": "ok"
+  },
+  "gstep_down_n1": {
+   "cycles": [
+    "CYCLE 0 a=0 r1=0 r2=0",
+    "CYCLE 1 a=1 r1=1 r2=1",
+    "CYCLE 2 a=x r1=x r2=x"
+   ],
+   "hash": "b5c6d120c2dddd3f869655a341739e2a265244e89fcd9d7797ba78f6f5148628",
+   "status": "ok"
+  },
+  "gstep_down_n6": {
+   "cycles": [
+    "CYCLE 0 a=100000 r1=000001 r2=000001",
+    "CYCLE 1 a=011010 r1=010110 r2=010110",
+    "CYCLE 2 a=10x101 r1=101x01 r2=101x01",
+    "CYCLE 3 a=000001 r1=100000 r2=100000"
+   ],
+   "hash": "8522bf9e56814d1b94b12a043ff2712d8e5ea5b5257e56b2654474b0c8867d41",
+   "status": "ok"
+  },
+  "gstep_nest": {
+   "cycles": [
+    "CYCLE 0 a=101 b=11 p=110011",
+    "CYCLE 1 a=110 b=01 p=010100",
+    "CYCLE 2 a=111 b=10 p=101010",
+    "CYCLE 3 a=0x1 b=11 p=00xx11",
+    "CYCLE 4 a=000 b=00 p=000000"
+   ],
+   "hash": "9ddd276f86ec05dfba465a93079913cff034e94e4c97f782ad8bb0c9694279a9",
+   "status": "ok"
+  },
+  "gstep_nest_n1m1": {
+   "cycles": [
+    "CYCLE 0 a=0 b=0 p=0",
+    "CYCLE 1 a=1 b=1 p=1",
+    "CYCLE 2 a=1 b=x p=x"
+   ],
+   "hash": "1984d72ecdf0737e8ca1d305d3e841384d82c28c1437a707db9c47abb9fb4d34",
+   "status": "ok"
+  },
+  "gstep_nest_n4m3": {
+   "cycles": [
+    "CYCLE 0 a=1011 b=110 p=110000110110",
+    "CYCLE 1 a=0110 b=011 p=000011011000",
+    "CYCLE 2 a=1111 b=101 p=101101101101",
+    "CYCLE 3 a=x001 b=111 p=xxx000000111"
+   ],
+   "hash": "35a775fc8c313e55ef0e227ef1ed85539e287f69cbd2810863e1a5822faea555",
+   "status": "ok"
+  },
+  "gstep_up": {
+   "cycles": [
+    "CYCLE 0 a=1100 b=1010 x1=1000 x2=1110 x3=0110 x4=0100",
+    "CYCLE 1 a=0110 b=0011 x1=0010 x2=0111 x3=0101 x4=0100",
+    "CYCLE 2 a=1111 b=0101 x1=0101 x2=1111 x3=1010 x4=1010",
+    "CYCLE 3 a=x010 b=0011 x1=0010 x2=x011 x3=x001 x4=x000",
+    "CYCLE 4 a=0000 b=1111 x1=0000 x2=1111 x3=1111 x4=0000",
+    "CYCLE 5 a=1010 b=1x10 x1=1010 x2=1x10 x3=0x00 x4=0000"
+   ],
+   "hash": "05545d716967b212940cd44696e7115012762b5cd6e5d98c273bbbe8f2388461",
+   "status": "ok"
+  },
+  "gstep_up_n1": {
+   "cycles": [
+    "CYCLE 0 a=0 b=0 x1=0 x2=0 x3=0 x4=0",
+    "CYCLE 1 a=1 b=0 x1=0 x2=1 x3=1 x4=1",
+    "CYCLE 2 a=1 b=1 x1=1 x2=1 x3=0 x4=0",
+    "CYCLE 3 a=x b=1 x1=x x2=1 x3=x x4=0"
+   ],
+   "hash": "493579edba141cc903500682b2b39cee9ff6e102a783d93b50a438b2d4b6f395",
+   "status": "ok"
+  },
+  "gstep_up_n7": {
+   "cycles": [
+    "CYCLE 0 a=1100110 b=1010101 x1=1000100 x2=1110111 x3=0110011 x4=0100010",
+    "CYCLE 1 a=0111111 b=0000011 x1=0000011 x2=0111111 x3=0111100 x4=0111100",
+    "CYCLE 2 a=1x00001 b=1111111 x1=1x00001 x2=1111111 x3=0x11110 x4=0000000",
+    "CYCLE 3 a=0000000 b=0000000 x1=0000000 x2=0000000 x3=0000000 x4=0000000"
+   ],
+   "hash": "4be161968a50e0cfc4c574831e7827726d30910df3e97e191be0718cde730e61",
+   "status": "ok"
+  },
   "gvcat": {
    "cycles": [
     "CYCLE 0 a=1111 src=x01zx01zx01zx01z y=0101 z=1100 o_flat=x10xx10xx01xx01x",
@@ -6658,6 +6751,38 @@
     "CYCLE 41 a=11111111 b=11111111 cin=1 s=11111111 cout=1"
    ],
    "hash": "ae1996707841eac0b5d725f0df98ede8398e25e27d7ceca8651e7f50a8b3bba0",
+   "status": "ok"
+  },
+  "ripple_step": {
+   "cycles": [
+    "CYCLE 0 a=0101 b=0011 cin=0 s=1000 cout=0",
+    "CYCLE 1 a=1111 b=0001 cin=0 s=0000 cout=1",
+    "CYCLE 2 a=1111 b=1111 cin=1 s=1111 cout=1",
+    "CYCLE 3 a=1010 b=0101 cin=1 s=0000 cout=1",
+    "CYCLE 4 a=x011 b=0001 cin=0 s=x100 cout=0",
+    "CYCLE 5 a=0000 b=0000 cin=0 s=0000 cout=0"
+   ],
+   "hash": "6f581404720c5450f1c29bea4e57446df8a4f87ca51e4f06279af8cc0d193571",
+   "status": "ok"
+  },
+  "ripple_step_n1": {
+   "cycles": [
+    "CYCLE 0 a=0 b=0 cin=0 s=0 cout=0",
+    "CYCLE 1 a=1 b=1 cin=0 s=0 cout=1",
+    "CYCLE 2 a=1 b=1 cin=1 s=1 cout=1",
+    "CYCLE 3 a=1 b=x cin=0 s=x cout=x"
+   ],
+   "hash": "afe2c9c3bdef6cc8989f1d0c975a4cfb5d43615ed67eae198789df7f36e4f738",
+   "status": "ok"
+  },
+  "ripple_step_n8": {
+   "cycles": [
+    "CYCLE 0 a=01010101 b=00110011 cin=0 s=10001000 cout=0",
+    "CYCLE 1 a=11111111 b=00000001 cin=0 s=00000000 cout=1",
+    "CYCLE 2 a=11111111 b=11111111 cin=1 s=11111111 cout=1",
+    "CYCLE 3 a=1000000x b=00000001 cin=1 s=100000xx cout=0"
+   ],
+   "hash": "c3272021e78b5fc2486d6aac49d219c4243c822f534336d91ace6acaf8bb7562",
    "status": "ok"
   },
   "selected_assign": {

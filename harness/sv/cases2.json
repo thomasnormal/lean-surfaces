@@ -30699,6 +30699,460 @@
       ],
       "refusal": "Clock:data-read",
       "measured": "WP-Q0 clock discipline, `Clock:data-read` (REFUSED): the child register is clocked by the parent's input port through a bare connection (allowed), but the child ALSO reads its clock port as data (`assign y = ck & d`); after flattening that reads `u.ck`, a continuous copy of the parent's clock. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): y = 1 0 1 1 for d = 1 0 1 1 (the clock is high at the last evaluation of the assignment); the model without the guard has no clock value: y = x 0 x x."
+    },
+    {
+      "name": "gstep_up",
+      "example": "sem2/gstep_up",
+      "top": "gstep_up",
+      "signals": [
+        "a",
+        "b",
+        "x1",
+        "x2",
+        "x3",
+        "x4"
+      ],
+      "stimulus": [
+        {
+          "a": "1100",
+          "b": "1010"
+        },
+        {
+          "a": "0110",
+          "b": "0011"
+        },
+        {
+          "a": "1111",
+          "b": "0101"
+        },
+        {
+          "a": "x010",
+          "b": "0011"
+        },
+        {
+          "a": "0000",
+          "b": "1111"
+        },
+        {
+          "a": "1010",
+          "b": "1x10"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Four loops, one spelling each: `i = i + 1` (AND), `i += 1` (OR), `i = 1 + i` (XOR), `k = (k + 1)` on a separately declared genvar (a & ~b); an x input bit gives x in exactly its own bit of each output."
+    },
+    {
+      "name": "gstep_up_n1",
+      "example": "sem2/gstep_up",
+      "top": "gstep_up",
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "b",
+        "x1",
+        "x2",
+        "x3",
+        "x4"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "x",
+          "b": "1"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 1 (a single iteration; the default-point fold is cross-checked at N = 1 by the xcheck sidecar)."
+    },
+    {
+      "name": "gstep_up_n7",
+      "example": "sem2/gstep_up",
+      "top": "gstep_up",
+      "params": {
+        "N": 7
+      },
+      "signals": [
+        "a",
+        "b",
+        "x1",
+        "x2",
+        "x3",
+        "x4"
+      ],
+      "stimulus": [
+        {
+          "a": "1100110",
+          "b": "1010101"
+        },
+        {
+          "a": "0111111",
+          "b": "0000011"
+        },
+        {
+          "a": "1x00001",
+          "b": "1111111"
+        },
+        {
+          "a": "0000000",
+          "b": "0000000"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 7."
+    },
+    {
+      "name": "gstep_down",
+      "example": "sem2/gstep_down",
+      "top": "gstep_down",
+      "signals": [
+        "a",
+        "r1",
+        "r2"
+      ],
+      "stimulus": [
+        {
+          "a": "1000"
+        },
+        {
+          "a": "0110"
+        },
+        {
+          "a": "1011"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1x01"
+        },
+        {
+          "a": "0000"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Decreasing loops `i = N-1; i >= 0; i = i - 1` and `j -= 1`: the bit reversal r1 and the identity-through-reversal r2."
+    },
+    {
+      "name": "gstep_down_n1",
+      "example": "sem2/gstep_down",
+      "top": "gstep_down",
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "r1",
+        "r2"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        },
+        {
+          "a": "x"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 1, decreasing."
+    },
+    {
+      "name": "gstep_down_n6",
+      "example": "sem2/gstep_down",
+      "top": "gstep_down",
+      "params": {
+        "N": 6
+      },
+      "signals": [
+        "a",
+        "r1",
+        "r2"
+      ],
+      "stimulus": [
+        {
+          "a": "100000"
+        },
+        {
+          "a": "011010"
+        },
+        {
+          "a": "10x101"
+        },
+        {
+          "a": "000001"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 6, decreasing."
+    },
+    {
+      "name": "gstep_nest",
+      "example": "sem2/gstep_nest",
+      "top": "gstep_nest",
+      "signals": [
+        "a",
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "a": "101",
+          "b": "11"
+        },
+        {
+          "a": "110",
+          "b": "01"
+        },
+        {
+          "a": "111",
+          "b": "10"
+        },
+        {
+          "a": "0x1",
+          "b": "11"
+        },
+        {
+          "a": "000",
+          "b": "00"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Nested loops, outer `i = i + 1`, inner `j += 1`: the N x M AND matrix in row-major order."
+    },
+    {
+      "name": "gstep_nest_n1m1",
+      "example": "sem2/gstep_nest",
+      "top": "gstep_nest",
+      "params": {
+        "N": 1,
+        "M": 1
+      },
+      "signals": [
+        "a",
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "x"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = M = 1."
+    },
+    {
+      "name": "gstep_nest_n4m3",
+      "example": "sem2/gstep_nest",
+      "top": "gstep_nest",
+      "params": {
+        "N": 4,
+        "M": 3
+      },
+      "signals": [
+        "a",
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "a": "1011",
+          "b": "110"
+        },
+        {
+          "a": "0110",
+          "b": "011"
+        },
+        {
+          "a": "1111",
+          "b": "101"
+        },
+        {
+          "a": "x001",
+          "b": "111"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 4, M = 3."
+    },
+    {
+      "name": "ripple_step",
+      "example": "ripple_step",
+      "top": "ripple_step",
+      "signals": [
+        "a",
+        "b",
+        "cin",
+        "s",
+        "cout"
+      ],
+      "stimulus": [
+        {
+          "a": "0101",
+          "b": "0011",
+          "cin": "0"
+        },
+        {
+          "a": "1111",
+          "b": "0001",
+          "cin": "0"
+        },
+        {
+          "a": "1111",
+          "b": "1111",
+          "cin": "1"
+        },
+        {
+          "a": "1010",
+          "b": "0101",
+          "cin": "1"
+        },
+        {
+          "a": "x011",
+          "b": "0001",
+          "cin": "0"
+        },
+        {
+          "a": "0000",
+          "b": "0000",
+          "cin": "0"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. The ripple-carry adder of `ripple_add` written with `i = i + 1` (carry out and sum with an x operand bit: x in the bits the carry chain can reach)."
+    },
+    {
+      "name": "ripple_step_n1",
+      "example": "ripple_step",
+      "top": "ripple_step",
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "b",
+        "cin",
+        "s",
+        "cout"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0",
+          "cin": "0"
+        },
+        {
+          "a": "1",
+          "b": "1",
+          "cin": "0"
+        },
+        {
+          "a": "1",
+          "b": "1",
+          "cin": "1"
+        },
+        {
+          "a": "1",
+          "b": "x",
+          "cin": "0"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 1."
+    },
+    {
+      "name": "ripple_step_n8",
+      "example": "ripple_step",
+      "top": "ripple_step",
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "a",
+        "b",
+        "cin",
+        "s",
+        "cout"
+      ],
+      "stimulus": [
+        {
+          "a": "01010101",
+          "b": "00110011",
+          "cin": "0"
+        },
+        {
+          "a": "11111111",
+          "b": "00000001",
+          "cin": "0"
+        },
+        {
+          "a": "11111111",
+          "b": "11111111",
+          "cin": "1"
+        },
+        {
+          "a": "1000000x",
+          "b": "00000001",
+          "cin": "1"
+        }
+      ],
+      "measured": "WP-L1 (2026-10-30), genvar step spelled as an assignment: the extractor lowers the +/-1 assignment spellings to the same step node as `i++`/`i--`, so the row runs the same generate expansion. Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 8."
+    },
+    {
+      "name": "gstep_stride",
+      "example": "sem2/gstep_stride",
+      "top": "gstep_stride",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1111"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "0101"
+        }
+      ],
+      "refusal": "GenerateFor:step",
+      "measured": "WP-L1, `GenerateFor:step` (REFUSED): a stride-2 step `i += 2` is legal SystemVerilog (IEEE 1800-2023 27.4) and every simulator evaluates it, but the semantic tier reads a generate step as `g++`/`g--` and the tactics match that node; the extractor leaves any other assignment step as the loud `GenerateFor:step`. Measured 2026-10-30 on this row's own generated testbench: Xcelium 24.03-s004 y = x1x1 / x0x0 / x1x1 for a = 1111 / 1010 / 0101 (only the even bits are driven; the odd bits of the `logic` output stay x), Icarus 12.0 drives the same bits and shows z in the undriven ones (z1z1 / z0z0 / z1z1): the simulators agree on the driven bits; the model has no semantics for the loop."
+    },
+    {
+      "name": "gstep_param",
+      "example": "sem2/gstep_param",
+      "top": "gstep_param",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1111"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "0101"
+        }
+      ],
+      "refusal": "GenerateFor:step",
+      "measured": "WP-L1, `GenerateFor:step` (REFUSED): the step amount is a parameter (`i = i + S`, S = 1 at the defaults). A parameter is folded at the default point only, so the step is never read as `i++` (at S = 2 the same text is a stride). Measured 2026-10-30 on this row's own generated testbench: Xcelium 24.03-s004 and Icarus 12.0 both give y = a (1111 / 1010 / 0101) at S = 1; the refusal is about what the model can promise at other S, not about a simulator split."
     }
   ]
 }

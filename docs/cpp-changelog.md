@@ -24,13 +24,15 @@ coverage advance independently from the Python tier.
   false-path witness: the false condition skips the computed body entirely.
 - Added a callable plain-`for` computed-initialization assignment `continue`
   witness: the body updates the outer value before each loop continuation.
+- Added a callable plain-`for` computed-initialization assignment `break`
+  witness: the first body iteration updates the outer value and exits.
 
 ### Measured
 
-- The checked-in corpus now contains **1078 differential rows**: **1061 MATCH**,
+- The checked-in corpus now contains **1079 differential rows**: **1062 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **572**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **573**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted full CI now uses one Lean elaboration worker, preserving the complete
+  repository gate while avoiding the runner resource kill at the final Python
+  targets.
+
 - The `rsa_inverse` proof now composes a nested `extended_gcd` call through
   the stateful `CallsIn` judgment without weakening the conservative
   heap-free fragment.

@@ -73,8 +73,8 @@ set_option maxRecDepth 8192
 #guard callFunction string_repeat "repeat_right"
   #[.str (String.ofList (List.replicate 1025 'x')), .int 1024] 4096
   matches .unsupported _
-#guard callFunction string_repeat "repeat_live_list" #[.int 2] 4096
-  matches .unsupported _
+#py_check string_repeat.repeat_live_list(2) =
+  (Val.list #[.int 1, .int 2, .int 1, .int 2])
 
 theorem repeat_right_total (text : PyStr) (count : PyInt)
     (countBound : count.natAbs ≤ 1048576)

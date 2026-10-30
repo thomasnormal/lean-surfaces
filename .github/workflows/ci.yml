@@ -42,9 +42,11 @@ jobs:
         run: lake exe cache get
       - name: Full check
         env:
-          # Keep the complete proof build below the hosted runner's memory
-          # limit; Lean uses this variable instead of a lake -j flag.
-          LEAN_NUM_THREADS: 2
+          # The hosted runner terminates the complete build with SIGTERM at
+          # the final Python targets when two Lean workers overlap.  Keep the
+          # full target set and all gates, but serialize Lean's elaboration so
+          # the peak stays below the runner's resource limit.
+          LEAN_NUM_THREADS: 1
         run: ./check.sh
 
   # The README quickstart, verbatim, on both platforms it promises. Nothing

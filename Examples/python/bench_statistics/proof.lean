@@ -33,11 +33,20 @@ insertion-sort lemmas. On this Mathlib pin the sortedness lemma is named
 import LeanModels.Python
 import Mathlib.Data.List.Sort
 
+set_option maxHeartbeats 2000000
+set_option maxRecDepth 8192
+
 namespace Examples.python.bench_statistics.proof
 
 open LeanModels LeanModels.Python
 
 load_program bench_statistics from "Examples/python/bench_statistics/bench_statistics.json"
+
+private theorem globals_empty : moduleGlobals bench_statistics = ([], true) := by
+  rfl
+
+private theorem data_ne_sorted : ("data" == "sorted") = false := by decide
+private theorem data_ne_len : ("data" == "len") = false := by decide
 
 /-! ## `sortInts` ↔ Mathlib bridge -/
 
@@ -215,7 +224,19 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
     (by rw [sortInts_length]; omega)
   refine ⟨64, ?_⟩
   py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
-    asIntList_map_thaw_comp,
+    asIntList_map_thaw_comp, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    lenMultBuiltinName, isLoweredBuiltinName, isBuiltinName, isPyBuiltinName,
+    findFunction, findClass, findNamedTuple,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals,
+    Run.liftRes, Run.toPublic, RVal.freezeB, Run.ok_bind, Run.exn_bind,
+    Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
+    moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
+    data_ne_sorted, data_ne_len,
     hne, hfd, hnn, h0le, hlt, htn, hq]
 
 /-- **Main theorem (`median_low`).** For every nonempty int list,
@@ -243,7 +264,19 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have htn : (((data.length : Int)) / 2).toNat = (data.length - 1) / 2 := by
       omega
     py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
-    asIntList_map_thaw_comp,
+    asIntList_map_thaw_comp, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    lenMultBuiltinName, isLoweredBuiltinName, isBuiltinName, isPyBuiltinName,
+    findFunction, findClass, findNamedTuple,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals,
+    Run.liftRes, Run.toPublic, RVal.freezeB, Run.ok_bind, Run.exn_bind,
+    Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
+    moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
+    data_ne_sorted, data_ne_len,
       hne, hfd, hpar, hnn, h0le, hlt, htn, hq]
   · -- even length: return data[n // 2 - 1], and n//2 − 1 = (n-1)/2
     have hmod : (data.length : Int) % 2 = 0 := by
@@ -255,7 +288,19 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have htn : ((((data.length : Int)) / 2) - 1).toNat = (data.length - 1) / 2 := by
       omega
     py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
-    asIntList_map_thaw_comp,
+    asIntList_map_thaw_comp, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    lenMultBuiltinName, isLoweredBuiltinName, isBuiltinName, isPyBuiltinName,
+    findFunction, findClass, findNamedTuple,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals,
+    Run.liftRes, Run.toPublic, RVal.freezeB, Run.ok_bind, Run.exn_bind,
+    Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
+    moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
+    data_ne_sorted, data_ne_len,
       hne, hfd, hpar, hnn, h1le, hlt, htn, hq]
 
 /-! ## The public corollaries -/

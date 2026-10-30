@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 502 | 490 | 0 | 12 | sv-tests-2 declarations |
+| 503 | 491 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -474,6 +474,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `compilation_unit_typedef` | `Examples/system-verilog/compilation_unit_typedef/compilation_unit_typedef.sv` | match | **MATCH** | `ok` | MATCH |
 | `package_metadata` | `Examples/system-verilog/package_metadata/package_metadata.sv` | match | **MATCH** | `ok` | MATCH |
 | `inside_parameter_adapter` | `Examples/system-verilog/inside_parameter_adapter/inside_parameter_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `inside_accept` | `Examples/system-verilog/inside_accept/inside_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `display_format_escape_adapter` | `Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `forward_typedef_metadata` | `Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv` | match | **MATCH** | `ok` | MATCH |
 | `unreferenced_subroutine_metadata` | `Examples/system-verilog/unreferenced_subroutine_metadata/unreferenced_subroutine_metadata.sv` | match | **MATCH** | `ok` | MATCH |

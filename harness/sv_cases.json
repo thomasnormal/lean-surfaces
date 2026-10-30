@@ -4165,6 +4165,15 @@
       "expect": "match"
     },
     {
+      "name": "inside_accept",
+      "file": "Examples/system-verilog/inside_accept/inside_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "display_format_escape_adapter",
       "file": "Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv",
       "module": "top",

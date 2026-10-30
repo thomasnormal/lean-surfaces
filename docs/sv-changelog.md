@@ -1,3 +1,10 @@
+# [0.1.240] — 2026-10-30
+
+The legacy differential corpus now carries a compact ordinary `inside`
+expression witness with scalar membership, range hit and miss checks, and a
+literal `PASS` transcript. Differential coverage grows **502/490/0/12 →
+503/491/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.239] — 2026-10-30
 
 The legacy differential corpus now carries a compact typed local `let` witness

@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Ordinary `inside` expression witness — 2026-10-30
+
+The legacy differential corpus now carries a compact ordinary `inside`
+expression fixture with scalar membership, range hit and miss checks, and a
+literal `PASS` transcript. The existing integral membership predicates are
+exercised directly outside a case chain.
+
+Differential coverage grows **502/490/0/12 → 503/491/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Typed local `let` formals — 2026-10-30
 
 The legacy differential corpus now carries a compact typed local `let` witness

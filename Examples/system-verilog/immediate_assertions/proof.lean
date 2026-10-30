@@ -33,7 +33,7 @@ theorem failure_retains (value : LVec) (state : SvState) (pending : NbaQueue)
   unfold checked
   rw [stepSStmt.eq_def]
   simp only [running, Bool.false_eq_true, if_false, evaluation, Res.ok_bind, failed]
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   rfl
@@ -49,7 +49,7 @@ theorem success_retains (value : LVec) (state : SvState) (pending : NbaQueue)
   unfold checked
   rw [stepSStmt.eq_def]
   simp only [running, Bool.false_eq_true, if_false, evaluation, Res.ok_bind, passed, if_true]
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   rfl

@@ -32,7 +32,7 @@ theorem delay_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output (loop delayedBody) =
       .ok (state, pending, output, .suspended (.atTime 2)
         [increment "fast", .forAfterBody trueCondition #[] delayedBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
@@ -49,7 +49,7 @@ theorem event_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output (loop eventBody) =
       .ok (state, pending, output, .suspended (.atEdge "trigger" .any)
         [increment "changes", .forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
@@ -69,7 +69,7 @@ theorem event_rearms (state : SvState) (pending : NbaQueue) (output : Out)
       .ok (state, pending, { output with transfer := .normal },
         .suspended (.atEdge "trigger" .any)
           [increment "changes", .forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change transfer = .normal at normal

@@ -6,16 +6,16 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv",
-  "source_sha256": "6005ffaf16c3baa346b625cc6aea7bf9c4c69d94ac489af35cfe78044a67de79",
+  "source_sha256": "ca49d3b6d256009281cbfd22baa01f0c022159a163c73b2a1758244a165683d4",
   "design": {
     "kind": "Design",
     "modules": [
       {
         "kind": "Module",
         "span": {
-          "line": 3,
+          "line": 8,
           "col": 1,
-          "end_line": 12,
+          "end_line": 17,
           "end_col": 10
         },
         "name": "top",
@@ -24,9 +24,9 @@
           {
             "kind": "Var",
             "span": {
-              "line": 4,
+              "line": 9,
               "col": 9,
-              "end_line": 4,
+              "end_line": 9,
               "end_col": 17
             },
             "name": "a",
@@ -34,9 +34,9 @@
             "init": {
               "kind": "Literal",
               "span": {
-                "line": 4,
+                "line": 9,
                 "col": 13,
-                "end_line": 4,
+                "end_line": 9,
                 "end_col": 17
               },
               "width": 1,
@@ -48,37 +48,53 @@
           {
             "kind": "Initial",
             "span": {
-              "line": 5,
+              "line": 10,
               "col": 3,
-              "end_line": 11,
+              "end_line": 16,
               "end_col": 6
             },
             "body": {
               "kind": "Block",
               "span": {
-                "line": 5,
+                "line": 10,
                 "col": 11,
-                "end_line": 11,
+                "end_line": 16,
                 "end_col": 6
               },
               "stmts": [
                 {
-                  "kind": "Unsupported",
+                  "kind": "SysCall",
                   "span": {
-                    "line": 6,
+                    "line": 11,
                     "col": 5,
-                    "end_line": 6,
+                    "end_line": 11,
                     "end_col": 38
                   },
-                  "sv_kind": "ExpressionStatement:CallExpression",
-                  "text": "$monitor(\"SCHED MONITOR %0d\", a);"
+                  "name": "$monitor",
+                  "format": "SCHED MONITOR %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 35,
+                        "end_line": 11,
+                        "end_col": 36
+                      },
+                      "width": 1,
+                      "name": "a"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
                 },
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 7,
+                    "line": 12,
                     "col": 5,
-                    "end_line": 7,
+                    "end_line": 12,
                     "end_col": 31
                   },
                   "name": "$display",
@@ -89,9 +105,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 8,
+                    "line": 13,
                     "col": 5,
-                    "end_line": 8,
+                    "end_line": 13,
                     "end_col": 29
                   },
                   "name": "$strobe",
@@ -102,26 +118,26 @@
                 {
                   "kind": "Delay",
                   "span": {
-                    "line": 9,
+                    "line": 14,
                     "col": 5,
-                    "end_line": 9,
+                    "end_line": 14,
                     "end_col": 17
                   },
                   "amount": 1,
                   "body": {
                     "kind": "BlockingAssign",
                     "span": {
-                      "line": 9,
+                      "line": 14,
                       "col": 8,
-                      "end_line": 9,
+                      "end_line": 14,
                       "end_col": 17
                     },
                     "target": {
                       "kind": "Ident",
                       "span": {
-                        "line": 9,
+                        "line": 14,
                         "col": 8,
-                        "end_line": 9,
+                        "end_line": 14,
                         "end_col": 9
                       },
                       "width": 1,
@@ -130,9 +146,9 @@
                     "value": {
                       "kind": "Literal",
                       "span": {
-                        "line": 9,
+                        "line": 14,
                         "col": 12,
-                        "end_line": 9,
+                        "end_line": 14,
                         "end_col": 16
                       },
                       "width": 1,
@@ -143,18 +159,18 @@
                 {
                   "kind": "Delay",
                   "span": {
-                    "line": 10,
+                    "line": 15,
                     "col": 5,
-                    "end_line": 10,
+                    "end_line": 15,
                     "end_col": 16
                   },
                   "amount": 1,
                   "body": {
                     "kind": "SysCall",
                     "span": {
-                      "line": 10,
+                      "line": 15,
                       "col": 8,
-                      "end_line": 10,
+                      "end_line": 15,
                       "end_col": 16
                     },
                     "name": "$finish",

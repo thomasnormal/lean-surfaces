@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 537 | 522 | 0 | 15 | sv-tests-2 declarations |
+| 537 | 523 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -224,7 +224,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_zero_delay_convergent` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |
-| `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_postponed_strobe` | `Examples/system-verilog/scheduler_postponed_strobe/scheduler_postponed_strobe.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_initial_always` | `Examples/system-verilog/scheduler_initial_always/scheduler_initial_always.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_comb_accept_timed` | `Examples/system-verilog/always_comb_accept/always_comb_accept.sv` | match | **MATCH** | `ok` | MATCH |

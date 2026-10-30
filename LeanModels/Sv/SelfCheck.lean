@@ -319,6 +319,9 @@ inductive SStmt where
   | sysCall (write : Bool) (format : Option String) (args : Array (SExpr × Bool))
   /-- `$strobe`: evaluate and emit at the end of the time-zero slot. -/
   | strobe (format : Option String) (args : Array (SExpr × Bool))
+  /-- `$monitor`: replace the active registration; the call is sampled in
+  the Postponed region and emits only on its first sample or a value change. -/
+  | monitor (format : Option String) (args : Array (SExpr × Bool))
   /-- Severity diagnostics evaluate arguments but have no self-check stream. -/
   | severity (args : Array (SExpr × Bool))
   /-- `$fatal` evaluates its arguments, reports outside the self-check stream,
@@ -428,7 +431,7 @@ partial def SStmt.readNames : SStmt → List String
   | .repeatBody _ body | .repeatAfterBody _ body => SStmt.readNames body
   | .doWhileLoop condition body => SExpr.readNames condition ++ SStmt.readNames body
   | .localDecl _ _ _ init => init.map SExpr.readNames |>.getD []
-  | .sysCall _ _ args | .strobe _ args | .severity args | .fatal args =>
+  | .sysCall _ _ args | .strobe _ args | .monitor _ args | .severity args | .fatal args =>
       args.toList.flatMap fun (arg, _) => SExpr.readNames arg
   | .waitCond condition => SExpr.readNames condition
   | .breakLoop | .continueLoop | .finish | .skip | .delay _ | .waitEvent _ _ => []
@@ -466,7 +469,7 @@ partial def SStmt.writeNames : SStmt → List String
   | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
   | .doWhileLoop _ body => SStmt.writeNames body
   | .localDecl name _ _ _ => [name]
-  | .sysCall _ _ _ | .strobe _ _ | .severity _ | .fatal _
+  | .sysCall _ _ _ | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _
   | .finish | .skip | .delay _ | .waitEvent _ _ | .waitCond _
   | .breakLoop | .continueLoop => []
 
@@ -523,6 +526,13 @@ inductive LoopTransfer where
   | continueLoop
 deriving Repr, BEq, ReflBEq, LawfulBEq, DecidableEq, Inhabited
 
+/-- One active `$monitor` registration and its last Postponed sample. -/
+structure Monitor where
+  format : Option String
+  args : Array (SExpr × Bool)
+  last : Option (List LVec) := none
+deriving Repr, BEq, Inhabited
+
 /-- Collected simulator output: finished `lines`, the unterminated tail
 `cur` (`$write` without a newline), and the `halted` flag set by
 `$finish`/`$stop`. -/
@@ -533,6 +543,10 @@ structure Out where
   pending : Array SStmt := #[]
   halted : Bool := false
   transfer : LoopTransfer := .normal
+  /-- The single active `$monitor` registration.  The array keeps the
+  registration state extensible while the executor replaces it on every
+  `$monitor` call, as required by IEEE 1800. -/
+  monitors : Array Monitor := #[]
 deriving Repr, BEq, Inhabited
 
 /-- Append rendered text, splitting completed lines on `'\n'`. -/
@@ -1108,6 +1122,8 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           return (st, nba, out.emit (if write then text else text ++ "\n"))
       | .strobe format args =>
           return (st, nba, { out with pending := out.pending.push (.sysCall false format args) })
+      | .monitor format args =>
+          return (st, nba, { out with monitors := #[{ format := format, args := args }] })
       | .severity args => do
           let _ ← evalArgs fuel st args.toList
           return (st, nba, out)
@@ -1232,6 +1248,27 @@ def flushStrobes (fuel : Nat) (st : SvState) (out : Out) :
           let next := { out' with pending := rest.toArray }
           flushStrobes fuel st' { next with halted := out.halted }
 
+/-- Sample the active `$monitor` registration in Postponed.  A registration
+is emitted on its first sample and thereafter only when one of its argument
+values changes.  The comparison uses the evaluated values, while rendering
+retains each argument's signedness metadata. -/
+def flushMonitor (fuel : Nat) (st : SvState) (out : Out) :
+    Res (SvState × Out) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+      match out.monitors.toList with
+      | [] => .ok (st, out)
+      | monitor :: _ => do
+          let values ← evalArgs fuel st monitor.args.toList
+          let sampled := values.map fun value => value.1
+          if monitor.last == some sampled then
+            .ok (st, out)
+          else
+            let text ← renderCall monitor.format values
+            let emitted := out.emit (text ++ "\n")
+            .ok (st, { emitted with monitors := #[{ monitor with last := some sampled }] })
+
 /-- The self-check entry point: execute every `initial` process once at
 time 0 (source order), collecting the rendered `$display` output lines.
 `$finish` ends the run cleanly. The time-0 NBA queue commits after all
@@ -1253,7 +1290,8 @@ def runSelfCheck (d : Design) (fuel : Nat)
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
   let st ← initDecls fuel d.decls.toList []
   let (st', _, out) ← runInits fuel d.procs.toList st [] {} assignmentOrder
-  let (_, out) ← flushStrobes fuel st' out
+  let (st'', out) ← flushMonitor fuel st' out
+  let (_, out) ← flushStrobes fuel st'' out
   if out.transfer != .normal then
     .unsupported "loop transfer outside a loop"
   else
@@ -1619,6 +1657,16 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
           unless signed.size == args.size do
             throw "SysCall: args/arg_signed length mismatch"
           return .strobe format (args.zip signed)
+      | "$monitor" =>
+          let format := (getFOpt j "format").bind (·.getStr?.toOption)
+          let args ← (← getArrF j "args").mapM parseSExpr
+          let signed ← (← getArrF j "arg_signed").mapM fun b =>
+            match b.getBool? with
+            | .ok v => .ok v
+            | .error _ => .error "arg_signed entries must be Bools"
+          unless signed.size == args.size do
+            throw "SysCall: args/arg_signed length mismatch"
+          return .monitor format (args.zip signed)
       | "$info" | "$warning" | "$error" =>
           let args ← (← getArrF j "args").mapM parseSExpr
           let signed ← (← getArrF j "arg_signed").mapM fun b =>

@@ -98,7 +98,8 @@ def elabDesign (d : Design) : Except String SvWorld := do
   let procs ← d.processes.mapM procOf
   return { signals := initState d
          , procs := procs
-         , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
+         , regionQ := fun r => if r == Region.active then List.range procs.size else []
+         , out := {} }
 
 private partial def m0Writes : Stmt → List (Bool × String)
   | .blockingAssign name _ | .nbaAssign name _ => [(false, name)]
@@ -130,7 +131,7 @@ private partial def timedAccesses : SStmt → List (Bool × String)
       steps.toList.flatMap timedAccesses ++ timedAccesses body
   | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
   | .doWhileLoop _ body => timedAccesses body
-  | .breakLoop | .continueLoop | .sysCall _ _ _ | .strobe _ _ | .severity _ | .fatal _
+  | .breakLoop | .continueLoop | .sysCall _ _ _ | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _
   | .finish | .skip
   | .delay _ | .waitCond _ => []
 
@@ -143,7 +144,7 @@ private partial def hasTimingControl : SStmt → Bool
   | .selectedNbaAssign _ _ _ _ _ _ _ | .distUniformAssign _ _ _ _ _
   | .packedAssign _ _ | .packedNbaAssign _ _ | .scanf _ _ _ _
   | .breakLoop | .continueLoop | .localDecl _ _ _ _ | .sysCall _ _ _
-  | .strobe _ _ | .severity _ | .fatal _ | .finish | .skip => false
+  | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _ | .finish | .skip => false
   | .ifStmt _ thenBranch elseBranch =>
       hasTimingControl thenBranch || (elseBranch.map hasTimingControl).getD false
   | .block body => body.toList.any hasTimingControl
@@ -251,7 +252,8 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
   let procs := procs.toArray
   return { signals := signals
          , procs := procs
-         , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
+         , regionQ := fun r => if r == Region.active then List.range procs.size else []
+         , out := {} }
 
 /-- A time-zero approximation cannot enter the timed executor at any fuel. -/
 theorem elabTimedDesign_requiresTimeZero (fuel : Nat) (d : SelfCheck.Design)

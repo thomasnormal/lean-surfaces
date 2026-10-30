@@ -202,7 +202,7 @@ structure SvWorld where
   future : List (Nat × Nat) := []
   /-- `$display`/`$write` output. For most of the corpus this IS the
   verdict, which is why `$finish` must preserve it. -/
-  out : Out := {}
+  out : Out := ⟨#[], "", #[], false, .normal, #[]⟩
   /-- Oracle invocation counter. -/
   k : Nat := 0
 

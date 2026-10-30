@@ -1827,8 +1827,13 @@
       "name": "scheduler_region_outputs",
       "file": "Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv",
       "module": "top",
-      "oracle": "refuse",
-      "expect": "refuse",
+      "oracle": [
+        "SCHED DISPLAY",
+        "SCHED MONITOR 0",
+        "SCHED STROBE",
+        "SCHED MONITOR 1"
+      ],
+      "expect": "match",
       "mode": "timed",
       "ticks": 3
     },

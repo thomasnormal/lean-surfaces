@@ -115,6 +115,7 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_STROBE = "$strobe"
+SYSCALL_MONITOR = "$monitor"
 # File-format tasks are admitted only for the predefined stdout descriptor;
 # `$fwrite` maps to the existing no-newline `$write` node.
 SYSCALL_FILE_FMT = ("$fdisplay", "$fwrite")
@@ -149,9 +150,10 @@ SYSCALL_QUIET = ("$info", "$warning", "$error")
 # assertion-control tasks therefore have no modeled effect; scoped or
 # argumented controls remain loud until assertion state is represented.
 SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill", "$assertcontrol")
-# Monitor toggles only affect an active `$monitor` registration.  The
-# self-check state has no monitor stream, so no-argument toggles are inert when
-# the design contains no registration; registered monitors stay loud.
+# Monitor toggles affect the active `$monitor` registration.  The registration
+# now has a modeled Postponed stream; no-argument toggles remain inert only
+# when the source contains no registration, while registered controls stay
+# loud until their enable/disable state is represented.
 SYSCALL_MONITOR_CTRL = ("$monitoron", "$monitoroff")
 # Coverage query calls have no represented coverage database in the
 # self-check state.  A literal-only call therefore has the standard
@@ -23593,7 +23595,7 @@ def _display_argument(sm, expression):
 
 
 def _convert_syscall(sm, s, e):
-    """`$display`/`$write`/`$finish`/`$stop` in statement position ->
+    """`$display`/`$write`/`$strobe`/`$monitor`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
     first argument to be a string literal (the format); the remaining args
     are M0/self-check expressions with a parallel `arg_signed` list (the
@@ -24250,7 +24252,7 @@ def _convert_syscall(sm, s, e):
         if literal_shape and not re.search(r"%t", source):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
-    if is_sys and name == SYSCALL_STROBE:
+    if is_sys and name in (SYSCALL_STROBE, SYSCALL_MONITOR):
         try:
             args = list(e.arguments)
         except Exception:

@@ -14,6 +14,11 @@ the body when no read window overlaps the written window (a zero-width window in
 `#print axioms` pin (at most `propext`, `Classical.choice`, `Quot.sound`), no `set_option` beyond a linter
 switch, default heartbeats. The tactics do not use the modules yet; the register entry for procedural
 `always_comb` bodies in the fragment is unchanged until they do.
+Timed `$monitor` now retains the active registration and samples it in the
+Postponed region. The first sample and each changed value emit before queued
+`$strobe` output, matching the pinned `scheduler_region_outputs` transcript;
+the registration is replaced by a later `$monitor` call. Differential coverage
+grows **537/522/0/15 → 537/523/0/14**.
 
 # [0.1.269] — 2026-10-30
 

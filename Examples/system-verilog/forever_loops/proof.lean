@@ -25,7 +25,7 @@ theorem event_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output eventLoop =
       .ok (state, pending, output, .suspended (.atEdge "trigger" .pos)
         [.forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
@@ -42,7 +42,7 @@ theorem timer_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output timedLoop =
       .ok (state, pending, output, .suspended (.atTime 2)
         [.breakLoop, .forAfterBody trueCondition #[] breakBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
@@ -59,7 +59,7 @@ theorem resumed_break_exits (state : SvState) (pending : NbaQueue) (output : Out
     stepSStmts (fuel + 12) state pending output
         [.breakLoop, .forAfterBody trueCondition #[] breakBody] =
       .ok (state, pending, { output with transfer := .normal }, .done) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   rfl
@@ -73,7 +73,7 @@ theorem next_iteration_rearms (state : SvState) (pending : NbaQueue) (output : O
       .ok (state, pending, { output with transfer := .normal },
         .suspended (.atEdge "trigger" .pos)
           [.forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
   change halted = false at running
   subst halted
   change transfer = .normal at normal

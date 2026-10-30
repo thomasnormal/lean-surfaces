@@ -364,14 +364,15 @@ def resumeProcess (index : Nat) : SvM Unit := do
 
 /-! ## Postponed output -/
 
-/-- Flush the output work queued by `$strobe` after the Active/Inactive/NBA
-loop has closed.  `flushStrobes` evaluates the retained call against the
-final signal state and preserves `$finish`'s state-preserving halt.  The
-queue is therefore the one postponed-region implementation for both the
-legacy self-check runner and the timed scheduler. -/
+/-- Flush monitor samples before the output work queued by `$strobe` after the
+Active/Inactive/NBA loop has closed.  Both operations evaluate against the
+final signal state and preserve `$finish`'s state-preserving halt.  This is
+the one postponed-region implementation for the legacy self-check runner and
+the timed scheduler. -/
 def flushPostponed (fuel : Nat) : SvM Unit := do
   let w ← get
-  let (signals, out) ← liftRes ⟨"21.2"⟩ (flushStrobes fuel w.signals w.out)
+  let (signals, out) ← liftRes ⟨"21.2"⟩ (flushMonitor fuel w.signals w.out)
+  let (signals, out) ← liftRes ⟨"21.2"⟩ (flushStrobes fuel signals out)
   set { w with signals := signals, out := out, curRegion := Region.postponed }
 
 /-! ## The slot -/

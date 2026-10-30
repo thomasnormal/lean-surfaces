@@ -5,6 +5,8 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.168] — 2026-10-30
+
 ### Added
 
 - Added a callable plain-`for` shadow-local witness whose initialized inner

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 500 | 488 | 0 | 12 | sv-tests-2 declarations |
+| 501 | 489 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -513,6 +513,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `pure_coverage_nocov_statements_adapter` | `Examples/system-verilog/pure_coverage_nocov_statements_adapter/pure_coverage_nocov_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_qualified_if_fallback_adapter` | `Examples/system-verilog/pure_qualified_if_fallback_adapter/pure_qualified_if_fallback_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `let_accept` | `Examples/system-verilog/let_accept/let_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `let_default_accept` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `let_effects_refuse` | `Examples/system-verilog/let_expressions/effects.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 
 ## Grammar census
@@ -591,7 +592,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.EmptyStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.EnumType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EqualityExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.EqualsAssertionArgClause` | `Examples/system-verilog/let_expressions/defaults.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.EqualsAssertionArgClause` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EqualsValueClause` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.EventControlWithExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.EventType` | `Examples/system-verilog/event_decl/event_decl.sv` | **MATCH** | `ok`  |
@@ -657,7 +658,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |

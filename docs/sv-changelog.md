@@ -1,3 +1,10 @@
+# [0.1.238] — 2026-10-30
+
+The legacy differential corpus now carries a compact pure local `let` witness
+for default formal binding and reordered named actuals, with literal `PASS`
+checks. Differential coverage grows **500/488/0/12 → 501/489/0/12**; grammar
+coverage remains **235/113/122**.
+
 # [0.1.237] — 2026-10-30
 
 The legacy differential corpus now carries a compact pure local `let` witness

@@ -4522,6 +4522,15 @@
       "expect": "match"
     },
     {
+      "name": "let_default_accept",
+      "file": "Examples/system-verilog/let_default_accept/let_default_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "let_effects_refuse",
       "file": "Examples/system-verilog/let_expressions/effects.sv",
       "module": "top",

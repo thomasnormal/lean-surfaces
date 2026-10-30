@@ -365,7 +365,7 @@
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "gen_closure_any", "args": [[3], [9]], "expect": "match"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "rebound_after", "args": [[5]], "expect": "match"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "uses_nonlocal", "args": [[4]], "expect": "match"},
-  {"file": "Examples/python/closure_lab/closure_lab.py", "function": "def_in_loop", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/closure_lab/closure_lab.py", "function": "def_in_loop", "args": [[3]], "expect": "match", "note": "A nested def inside a loop reuses the enclosing frame's cell; each call observes the current loop value."},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "early_call", "args": [[1]], "expect": "match", "note": "The direct nested call sees CPython's static-local marker and raises UnboundLocalError before the definition executes."},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_basic", "args": [[{"t": "str", "v": "abcde"}, 2, {"t": "str", "v": "Z"}], [{"t": "str", "v": "xy"}, 0, {"t": "str", "v": "q"}]], "expect": "match"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_capture", "args": [[3], [0]], "expect": "match"},

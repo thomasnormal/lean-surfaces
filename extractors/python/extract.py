@@ -2267,9 +2267,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "While",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": convert_stmt_list(node.body, module_scope=module_scope,
+            "body": convert_stmt_list(node.body, enclosing=enclosing,
+                                       module_scope=module_scope,
                                        func_scope=func_scope),
-            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+            "orelse": convert_stmt_list(node.orelse, enclosing=enclosing,
+                                         module_scope=module_scope,
                                          func_scope=func_scope),
         }
 
@@ -2304,7 +2306,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 "after": after,
                 "value": synthetic_value,
             }
-            body = convert_stmt_list(node.body, module_scope=module_scope,
+            body = convert_stmt_list(node.body, enclosing=enclosing,
+                                     module_scope=module_scope,
                                      func_scope=func_scope)
             return {
                 "kind": "For",
@@ -2312,7 +2315,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 "target": synthetic_target,
                 "iter": convert_expr(node.iter),
                 "body": [unpack_stmt] + body,
-                "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+                "orelse": convert_stmt_list(node.orelse, enclosing=enclosing,
+                                             module_scope=module_scope,
                                              func_scope=func_scope),
             }
         if _target_has_starred(node.target):
@@ -2325,9 +2329,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "span": span(node),
             "target": convert_expr(node.target),
             "iter": convert_expr(node.iter),
-            "body": convert_stmt_list(node.body, module_scope=module_scope,
+            "body": convert_stmt_list(node.body, enclosing=enclosing,
+                                       module_scope=module_scope,
                                        func_scope=func_scope),
-            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+            "orelse": convert_stmt_list(node.orelse, enclosing=enclosing,
+                                         module_scope=module_scope,
                                          func_scope=func_scope),
         }
 
@@ -2336,9 +2342,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "If",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": convert_stmt_list(node.body, module_scope=module_scope,
+            "body": convert_stmt_list(node.body, enclosing=enclosing,
+                                       module_scope=module_scope,
                                        func_scope=func_scope),
-            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+            "orelse": convert_stmt_list(node.orelse, enclosing=enclosing,
+                                         module_scope=module_scope,
                                          func_scope=func_scope),
         }
 
@@ -2367,7 +2375,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 }
                 for item in node.items
             ],
-            "body": convert_stmt_list(node.body, module_scope=module_scope,
+            "body": convert_stmt_list(node.body, enclosing=enclosing,
+                                       module_scope=module_scope,
                                        func_scope=func_scope),
         }
     if isinstance(node, ast.Delete):
@@ -2464,7 +2473,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                              or isinstance(h.body[0].value.value,
                                            (bool, int, str, bytes, float)))
                         for h in node.handlers)):
-            nested_body = convert_stmt_list(node.body,
+            nested_body = convert_stmt_list(node.body, enclosing=enclosing,
                                             module_scope=module_scope,
                                             func_scope=func_scope,
                                             import_guard=False)
@@ -2477,7 +2486,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     "body": nested_body,
                     "exc_name": h.type.id,
                     "handler": convert_stmt_list(
-                        h.body, module_scope=module_scope,
+                        h.body, enclosing=enclosing, module_scope=module_scope,
                         func_scope=func_scope, import_guard=False),
                     "try_unsupported": None,
                 }]
@@ -2514,7 +2523,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             parameter = isinstance(yielded, ast.Name) and yielded.id in params
             if scalar or parameter:
                 return convert_stmt_list(
-                    node.body, module_scope=module_scope,
+                    node.body, enclosing=enclosing, module_scope=module_scope,
                     func_scope=func_scope)
         # A narrow effectful-finally slice can be lowered without adding a
         # cleanup frame: when the protected body only returns a name and the
@@ -2552,11 +2561,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                      or isinstance(node.finalbody[0].value.args[0].value,
                                    (bool, int, str, bytes, float)))):
             return convert_stmt_list(
-                list(node.finalbody) + list(node.body),
+                list(node.finalbody) + list(node.body), enclosing=enclosing,
                 module_scope=module_scope, func_scope=func_scope)
         if (node.finalbody and not node.handlers and not node.orelse
                 and all(isinstance(s, ast.Pass) for s in node.finalbody)):
-            return convert_stmt_list(node.body, module_scope=module_scope,
+            return convert_stmt_list(node.body, enclosing=enclosing,
+                                     module_scope=module_scope,
                                      func_scope=func_scope)
         reasons = []
         exc_name = ""
@@ -2588,7 +2598,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     and not (func_scope and enclosing is not None
                              and not _except_name_used(enclosing, h.name))):
                 reasons.append("'as' binding")
-            handler_body = convert_stmt_list(h.body, module_scope=module_scope,
+            handler_body = convert_stmt_list(h.body, enclosing=enclosing,
+                                             module_scope=module_scope,
                                              func_scope=func_scope)
         if node.finalbody:
             reasons.append("'finally' clause")
@@ -2626,7 +2637,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         guard = (module_scope and len(node.handlers) == 1
                  and isinstance(node.handlers[0].type, ast.Name)
                  and node.handlers[0].type.id == "ImportError")
-        body = convert_stmt_list(node.body, module_scope=module_scope,
+        body = convert_stmt_list(node.body, enclosing=enclosing,
+                                 module_scope=module_scope,
                                  func_scope=func_scope,
                                  import_guard=guard)
         handler = handler_body
@@ -2667,7 +2679,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "If",
             "span": marker_span,
             "test": name_node,
-            "body": convert_stmt_list(node.orelse,
+            "body": convert_stmt_list(node.orelse, enclosing=enclosing,
                                        module_scope=module_scope,
                                        func_scope=func_scope),
             "orelse": [],

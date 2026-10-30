@@ -30,9 +30,10 @@ The claims worth naming:
   an ESCAPING closure (`cell_escapes`) refuses; a generator reads cells
   at RESUME while the tier reads at the CALL, so a rebinding at or after
   the first call (`gen_cell_after_call`) refuses. Unsupported compound
-  `nonlocal` targets and a def inside a loop refuse as before. A direct
-  call before a nested def uses the frame's static-local marker and raises
-  CPython's `UnboundLocalError`.
+  `nonlocal` targets remain loud. A nested def inside a loop reuses the
+  defining frame's cell and is admitted. A direct call before a nested def
+  uses the frame's static-local marker and raises CPython's
+  `UnboundLocalError`.
 
 No `proof.lean`: checks-only, like `kw_lab`/`drain_lab`.
 -/
@@ -72,6 +73,7 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
 #py_check closure_lab.two_closures_one_cell(3) = 48
 #py_check closure_lab.cell_unbound_at_def(2) = 12
 #py_check closure_lab.gen_cell_before_call(2) = 13
+#py_check closure_lab.def_in_loop(3) = 6
 
 /-! ### the loud frontier — what the cell mechanism does NOT cover -/
 
@@ -80,8 +82,6 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
 #guard (match callFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "uses_nonlocal" #[.int 4] 10000 with
-  | .unsupported _ => true | _ => false)
-#guard (match callFunction closure_lab "def_in_loop" #[.int 3] 10000 with
   | .unsupported _ => true | _ => false)
 #py_check closure_lab.early_call(1) raises (.unboundLocalError "f")
 

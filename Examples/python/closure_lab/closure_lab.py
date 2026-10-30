@@ -1,13 +1,13 @@
 """closure_lab — H7 nested defs and closures: the acceptance battery.
 
-The snapshot tier (docs/memory-model.md §nested defs and closures):
-a nested def captures enclosing locals AT DEF TIME, admitted exactly
-when no capture is rebound after the def — where snapshot and CPython's
-cell are observationally equal, generator bodies (which read captures
-at RESUME time) included. Everything else refuses LOUDLY at extraction:
-rebinding after the def, unsupported compound `nonlocal` targets, and a
-def inside a loop. A direct nested-name call before its def is admitted
-through the static-local marker and raises CPython's `UnboundLocalError`.
+The cell tier (docs/memory-model.md §nested defs and closures) admits nested
+defs whose enclosing frame can refresh every capture at the call. Generator
+cells retain their first-call rebinding restriction; escaped cells and
+unsupported compound `nonlocal` targets stay loud. A nested def inside a loop
+reuses the enclosing frame's cell. A direct nested-name call before its def
+is admitted through the static-local marker and raises CPython's
+`UnboundLocalError`.
+
 CPython is the oracle for every row.
 """
 

@@ -985,10 +985,10 @@ parameter of the enclosing function, CPython's symtable rule — is:
   CPython would raise the free-variable `NameError`; we refuse);
 * bound NOWHERE textually after the def (assignment, augmented
   assignment, `for`-target, unpacking, `del`, import — any binding
-  occurrence); and the def itself sits in NO loop body of the enclosing
-  function (a loop makes "textually after" and "executes after"
-  diverge, and re-creating the closure per iteration is exactly where
-  cell-vs-snapshot becomes observable).
+  occurrence). A loop-created nested def is admitted through the cell tier
+  below: its closure reuses the enclosing frame's cell, so each call observes
+  the current binding. Generator cells still use the stricter first-call
+  rebinding rule recorded below.
 
 unsupported compound `nonlocal` targets, a def nested deeper than one level,
 and any violation above keep today's loud `Stmt.unsupported` — the

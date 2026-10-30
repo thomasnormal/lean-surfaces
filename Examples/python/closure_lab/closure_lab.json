@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/closure_lab/closure_lab.py",
-  "source_sha256": "07ecdfcbf31d73b3290ce75d11bf9e2afbd02df26f263216519d077c84501b5e",
+  "source_sha256": "fe304fa5f6a62855c6222da8832dc24b342b06e3b63936b26751823d2b04e863",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe snapshot tier (docs/memory-model.md \u00a7nested defs and closures):\na nested def captures enclosing locals AT DEF TIME, admitted exactly\nwhen no capture is rebound after the def \u2014 where snapshot and CPython's\ncell are observationally equal, generator bodies (which read captures\nat RESUME time) included. Everything else refuses LOUDLY at extraction:\nrebinding after the def, unsupported compound `nonlocal` targets, and a\ndef inside a loop. A direct nested-name call before its def is admitted\nthrough the static-local marker and raises CPython's `UnboundLocalError`.\nCPython is the oracle for every row.\n"
+            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe cell tier (docs/memory-model.md \u00a7nested defs and closures) admits nested\ndefs whose enclosing frame can refresh every capture at the call. Generator\ncells retain their first-call rebinding restriction; escaped cells and\nunsupported compound `nonlocal` targets stay loud. A nested def inside a loop\nreuses the enclosing frame's cell. A direct nested-name call before its def\nis admitted through the static-local marker and raises CPython's\n`UnboundLocalError`.\n\nCPython is the oracle for every row.\n"
           }
         }
       },
@@ -4328,7 +4328,7 @@
             },
             "body": [
               {
-                "kind": "FunctionDef",
+                "kind": "NestedDef",
                 "span": {
                   "lineno": 201,
                   "col_offset": 8,
@@ -4359,7 +4359,11 @@
                       "id": "a"
                     }
                   }
-                ]
+                ],
+                "captures": [
+                  "<cell>a"
+                ],
+                "closure_unsupported": null
               },
               {
                 "kind": "Assign",

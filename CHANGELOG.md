@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Nested function definitions inside loops now use the enclosing frame's
+  shared closure cell, matching CPython's late-bound capture on each call;
+  unsupported deeper scopes and generator rebinding edges remain loud.
+
 - TypeError-handler local analysis is now computed once during ingestion and
   marked only on affected functions, keeping ordinary proof reductions fast
   while preserving the handler's late-binding behavior.

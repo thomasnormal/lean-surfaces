@@ -17,6 +17,28 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-30-pycomplete-184 — admit nested defs inside loops
+
+Nested function definitions in a function's loop, branch, context-manager, or
+exception body now retain the enclosing function as their closure scope. The
+existing cell allocator reuses one slot per enclosing frame, so a loop-created
+closure observes the current binding on every call, exactly as CPython does.
+The recursive nested-name and generator-cell-after-first-call boundaries remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 150 passed; the loop nested-def fixture now records `NestedDef` with `<cell>a` |
+| Focused differential | `closure_lab::def_in_loop(3)` MATCH in both interpreters (`6`) |
+| Full executable differential | 3,758 cases: 3,721 matched / 37 recorded refusals / 0 failed |
+| Full proof differential | 3,758 cases: 3,620 matched / 138 refusals / 0 failed |
+| Refusal census | 37 rows in 12 classes, 0 drifts; `closure_lab::def_in_loop` retired |
+
+DECIDED: propagate the enclosing function scope through compound statement
+bodies so loop-created closures use the existing shared-cell runtime; retain
+loud failure for recursive nested names, escaped cells, and generator
+rebindings after their first call.
+
 ## 2026-10-26-pycomplete-163 — erase an unread ordinary-class assignment
 
 The dead-value ingestion rewrite now covers admitted, creation-pure ordinary

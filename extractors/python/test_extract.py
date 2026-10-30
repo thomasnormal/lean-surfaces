@@ -472,16 +472,20 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(nd["closure_unsupported"])
         self.assertEqual(nd["captures"], ["<cell>c"])
 
-    def test_nested_def_inside_loop_stays_plain_functiondef(self):
-        # not a DIRECT child of the body: plain FunctionDef, which
-        # ingestion refuses loudly (the loop is where snapshot-vs-cell
-        # becomes observable)
+    def test_nested_def_inside_loop_is_a_cell_closure(self):
+        # A loop-created closure reuses the enclosing frame's cell. The
+        # runtime already allocates that cell once and refreshes it at each
+        # call, so the nested definition can use the ordinary H7 shape even
+        # though it is not a direct child of the function body.
         fn = self._first_fn(
             "def outer(a):\n    t = 0\n    while a > 0:\n"
             "        def f():\n            return a\n"
             "        t = t + f()\n        a = a - 1\n    return t\n")
         loop = fn["body"][1]
-        self.assertEqual(loop["body"][0]["kind"], "FunctionDef")
+        nested = loop["body"][0]
+        self.assertEqual(nested["kind"], "NestedDef")
+        self.assertEqual(nested["captures"], ["<cell>a"])
+        self.assertIsNone(nested["closure_unsupported"])
 
     def test_early_call_of_nested_name_uses_static_marker(self):
         # CPython: UnboundLocalError (static-locals rule). The runtime marks

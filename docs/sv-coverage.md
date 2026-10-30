@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 509 | 497 | 0 | 12 | sv-tests-2 declarations |
+| 510 | 498 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -27,6 +27,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `logical_accept` | `Examples/system-verilog/logical_accept/logical_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unary_plus_arithmetic` | `Examples/system-verilog/unary_plus/arithmetic.sv` | match | **MATCH** | `ok` | MATCH |
 | `unary_minus_accept` | `Examples/system-verilog/unary_minus_accept/unary_minus_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `reduction_accept` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -530,7 +531,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 235 | 113 | 122 | pyslang SyntaxKind |
+| 235 | 115 | 120 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -743,11 +744,11 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.TimingControlStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.TypedefDeclaration` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/sem2/acg_alias_not/acg_alias_not.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | **MATCH** | `ok`  |

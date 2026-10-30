@@ -1,3 +1,9 @@
+# [0.1.247] — 2026-10-30
+
+The legacy differential corpus now carries a unary reduction witness for `|`,
+`&`, and `^`, including an X-propagating reduction. Coverage grows
+**509/497/0/12 → 510/498/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.246] — 2026-10-30
 
 The legacy differential corpus now carries a compact unary-minus witness over

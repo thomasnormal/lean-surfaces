@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unary reduction witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for `|`, `&`, and `^`, including known results and an X-propagating reduction,
+with a literal `PASS` transcript.
+
+Differential coverage grows **509/497/0/12 → 510/498/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Unary-minus arithmetic witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

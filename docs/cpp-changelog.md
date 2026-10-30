@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+### Added
+
+- Added a callable plain-`for` declaration-initializer false-path witness:
+  `for (int i = 2; i < 2; ++i) ;` skips the loop body and preserves the outer
+  parameter.
+
+### Measured
+
+- The checked-in corpus now contains **1087 differential rows**: **1070 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **581**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.168] — 2026-10-30
 
 ### Added

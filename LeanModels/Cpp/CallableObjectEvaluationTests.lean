@@ -4770,6 +4770,34 @@ def callableLocalForDeclarationInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalForDeclarationInitializationStatementFrameWitness
 
+private def localForDeclarationInitializationFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer := automaticLiteral "0x12" 2
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x12"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x12")
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.forLoop initializer condition step .skip)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 9
+  | _ => false
+
+def callableLocalForDeclarationInitializationFalseStatementFrameWitness : Bool :=
+  localForDeclarationInitializationFalseStatementFrame
+
+#guard callableLocalForDeclarationInitializationFalseStatementFrameWitness
+
 private def localDoWhileInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

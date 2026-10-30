@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted full CI now builds each Python example directory in its own Lake
+  process, releasing proof state between examples so late Python targets are
+  not killed by accumulated memory pressure.
+
 - Hosted full CI now isolates each `Examples/<language>` source group in its
   own Lake process, preventing late Python proof targets from inheriting the
   memory pressure of unrelated example groups.

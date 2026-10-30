@@ -207,7 +207,7 @@ lake_build_step() {
     # single Lean elaboration worker.  Build each library root and executable
     # in a fresh Lake process so the complete gate remains intact while memory
     # is released between target groups.
-    local build_failed=0 target group_dir
+    local build_failed=0 target group_dir python_example
     for target in LeanModels; do
       echo "=== [lake-build] lake build $target"
       if ! lake build "$target"; then
@@ -216,6 +216,21 @@ lake_build_step() {
     done
     for group_dir in Examples/*; do
       [ -d "$group_dir" ] || continue
+      if [ "$group_dir" = "Examples/python" ]; then
+        # Python has enough proof targets to exhaust the hosted runner even
+        # after the language groups were split.  Give each example its own
+        # Lake process so completed-target state is released between proofs.
+        for python_example in "$group_dir"/*; do
+          [ -d "$python_example" ] || continue
+          mapfile -t targets < <(find "$python_example" -type f -name '*.lean' | sort)
+          [ "${#targets[@]}" -gt 0 ] || continue
+          echo "=== [lake-build] lake build ${targets[*]}"
+          if ! lake build "${targets[@]}"; then
+            build_failed=1
+          fi
+        done
+        continue
+      fi
       mapfile -t targets < <(find "$group_dir" -type f -name '*.lean' | sort)
       [ "${#targets[@]}" -gt 0 ] || continue
       echo "=== [lake-build] lake build ${targets[*]}"

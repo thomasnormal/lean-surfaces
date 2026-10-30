@@ -5,6 +5,8 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.170] — 2026-10-30
+
 ### Added
 
 - Added a declaration-initializer `return` witness: the body creates its local

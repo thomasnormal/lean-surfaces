@@ -1,3 +1,11 @@
+# [0.1.265] — 2026-10-30
+
+Timed `$strobe` calls now flush through the scheduler's Postponed close after
+Active, Inactive, and NBA work settle, so deferred arguments observe the final
+value in the time slot. `$monitor` registration remains a loud boundary until
+monitor state and change-trigger scheduling are represented. Differential
+coverage grows **535/520/0/15 → 536/521/0/15**.
+
 # [0.1.264] — 2026-10-30
 
 The timed scheduler now delivers a procedural `#0` through the Inactive

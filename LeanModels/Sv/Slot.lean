@@ -362,6 +362,18 @@ def resumeProcess (index : Nat) : SvM Unit := do
         | _, _ =>
             refuseSv .outOfTier ⟨"9.7"⟩ "resume target is not an admitted waiter"
 
+/-! ## Postponed output -/
+
+/-- Flush the output work queued by `$strobe` after the Active/Inactive/NBA
+loop has closed.  `flushStrobes` evaluates the retained call against the
+final signal state and preserves `$finish`'s state-preserving halt.  The
+queue is therefore the one postponed-region implementation for both the
+legacy self-check runner and the timed scheduler. -/
+def flushPostponed (fuel : Nat) : SvM Unit := do
+  let w ← get
+  let (signals, out) ← liftRes ⟨"21.2"⟩ (flushStrobes fuel w.signals w.out)
+  set { w with signals := signals, out := out, curRegion := Region.postponed }
+
 /-! ## The slot -/
 
 /-- One time slot: Active, then Inactive, then the NBA commit, **looping**
@@ -381,7 +393,7 @@ def slotStep (σ : RegionOracle) : Nat → SvM Unit
       else do
         let w ← get
         if w.nba.isEmpty then
-          pure ()
+          flushPostponed fuel
         else do
           let before ← get
           applyNba

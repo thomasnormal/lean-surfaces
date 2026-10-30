@@ -321,8 +321,9 @@ loud scheduler boundary.
 All other statement-position calls remain `Unsupported` with their source
 text. The boundary is intentional:
 
-* severity calls are represented above; `$strobe` and `$monitor` still publish
-  in Postponed and need the scheduler's read-only region and registration rules;
+* severity calls are represented above; timed `$strobe` now publishes through
+  the scheduler's Postponed close, while `$monitor` still needs registration
+  state and change-trigger rules;
 * queue tasks, array methods, and PLA tasks mutate aggregate or modeled device
   state not present in the scalar/packed/fixed-cell store, except for the
   source-pure empty aggregate deletions admitted above;

@@ -3914,6 +3914,15 @@
       "expect": "match"
     },
     {
+      "name": "case_inside_accept",
+      "file": "Examples/system-verilog/case_inside_accept/case_inside_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "pure_integral_real_conversions",
       "file": "Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv",
       "module": "top",

@@ -1,3 +1,10 @@
+# [0.1.235] — 2026-10-30
+
+The legacy differential corpus now carries a compact ordinary `case (…) inside`
+witness with range membership, first-match selection, and a literal `PASS`
+transcript. Differential coverage grows **497/485/0/12 → 498/486/0/12**;
+grammar coverage remains **235/113/122**.
+
 # [0.1.234] — 2026-10-30
 
 The legacy differential corpus now carries a compact `casez`/`casex` witness.

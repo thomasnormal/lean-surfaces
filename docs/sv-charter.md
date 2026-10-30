@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Ordinary `case (…) inside` differential witness — 2026-10-30
+
+The legacy differential corpus now carries a compact ordinary `case (…) inside`
+fixture with range membership and a literal `PASS` transcript. The existing
+case-inside lowering is exercised through first-match range selection while
+the default arm remains explicit.
+
+Differential coverage grows **497/485/0/12 → 498/486/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Wildcard `casez`/`casex` differential witness — 2026-10-30
 
 The legacy self-check corpus now exercises the admitted wildcard case control

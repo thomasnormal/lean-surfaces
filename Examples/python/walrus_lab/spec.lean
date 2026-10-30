@@ -51,11 +51,11 @@ load_program walrus_lab from "Examples/python/walrus_lab/walrus_lab.json"
 #py_check walrus_lab.w_while(1) = 0
 
 /-! ### a short-circuited walrus never binds — CPython's UnboundLocalError,
-which this tier answers as the `NameError` its exception model carries -/
+which the model carries explicitly as `UnboundLocalError` -/
 
 #py_check walrus_lab.w_short_circuit(5) = 1
 #guard (match callFunction walrus_lab "w_short_circuit" #[.int 0] 10000 with
-  | .exn (.nameError "q") => true | _ => false)
+  | .exn (.unboundLocalError "q") => true | _ => false)
 
 /-! ### the comprehension flavour: hoisted, not re-scoped -/
 

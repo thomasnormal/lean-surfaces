@@ -733,6 +733,7 @@ maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.
 # the differential suite and the grammar census; a tier change that moves
 # coverage must move the page too.
 step  "py-coverage-fresh" python3 harness/coverage_page.py --check
+step  "language-progress-fresh" python3 harness/language_progress.py --check
 # Curated examples (Examples/python/README.md), plus scalar and sequence proofs:
 # none of their declarations may rest on `sorryAx` or native computation.
 # Reads the oleans the build step produced.

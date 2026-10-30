@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- README now renders one progress bar per supported language from the checked-in
+  coverage pages; CI fails when the percentages or row counts go stale.
+
 - The `divmod_lab` proof now keeps its symbolic integer theorem on a bounded
   simplification path; the float `divmod` case remains covered by its kernel
   `#py_check` and the dedicated `float_lab` proof, avoiding a duplicate

@@ -79,7 +79,7 @@ semantics, `never` for a golf submission (principles `P-NO-TIME`, `P-SYNTHESIZAB
 | lean-loader | 10 | 4 | 1 | 0 |
 | lean-proof-tooling | 1 | 5 | 0 | 0 |
 | **ls-sv total** | **60** | **122** | **17** | **0** |
-| svGolf checker (separate project: `svgolf/REFUSALS.md` on the golf branch) | 27 | 17 | 14 | 0 |
+| svGolf checker (separate project: `svgolf/REFUSALS.md` on the golf branch) | 28 | 17 | 14 | 0 |
 
 ## Allowed later (ordered by expected value for svGolf tasks)
 

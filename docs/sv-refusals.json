@@ -7656,8 +7656,9 @@
     "verified_by_run": true,
     "notes": "Over-refuses a[i-1] with a 2-bit i (typed 32-bit) and any procedural for-loop counter used as an index; the generate-for twin passes.",
     "attacks": [
+     "_example/oob_rare",
      "_example/oob_select",
-     "_example/oob_rare"
+     "_example/rare_mid"
     ]
    },
    {
@@ -7864,6 +7865,37 @@
      }
     ],
     "verified_by_run": true
+   },
+   {
+    "id": "sg-design-unsupported",
+    "tag": "an envelope that loads but contains an Unsupported process or expression",
+    "group": "g-extract",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "a user function call in an always_comb or in an assign (`assign y = both(a, b)`), a procedural loop, any construct the extractor embeds as an `Unsupported` node instead of refusing",
+    "why": "The extractor exits 0 and `load_design_sv2` builds `design.sem` even when a construct is unsupported: the node is kept as a loud `Process2.unsupported`/`Unsupported` expression and refuses only when run. No proof about such a design can hold, so the `design` stage rejects it before any proof, scoring or leaderboard step, naming the first loud node, at the scoring point and at every probe point not larger than it.",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "the design loads, but ls-sv cannot run it"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "check"
+     }
+    ],
+    "evidence": "WP-C3 (PLAN2 goal 0); tests/checker/test_design_stage.py; ls-sv coverage audit 10/30 (the extractor never exits non-zero)",
+    "verified_by_run": true,
+    "attacks": [
+     "_example/func_call",
+     "_example/assign_func"
+    ],
+    "decided_by": "Thomas 2026-10-30: the plan review's correctness gate (PLAN2 goal 0)"
    },
    {
     "id": "sg-params",
@@ -8692,13 +8724,17 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "tests/_example/attacks/fn_uninit.sv, latch_never.sv, latch_star.sv",
-    "why": "x in IEEE, resolved freely by Yosys (to 1 or 0). ls-sv has no user function calls, no AlwaysLatch, no always @*, so no static rule sees it and the postsynth stage is the only line today; it fails closed.",
+    "trigger": "tests/_example/attacks/fn_uninit.sv, latch_never.sv, latch_star.sv (rejected at `design`; the postsynth check alone rejects them too)",
+    "why": "x in IEEE, resolved freely by Yosys (to 1 or 0). ls-sv has no user function calls, no AlwaysLatch, no always @*, so no static rule sees it. Since WP-C3 the `design` stage rejects the loaded envelope that carries the Unsupported node (`Design2.hasUnsupported`); the postsynth stage, alone, still fails closed on it. Both lines hold today.",
     "category": "later",
     "proposed": false,
     "prerequisite": "a 4-state rule in score/fourstate.py MUST land BEFORE ls-sv models the construct",
     "plan": "LATCH4",
     "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "the design loads, but ls-sv cannot run it"
+     },
      {
       "file": "svgolf/check/postsynth.py",
       "text": "ls-sv does not support this design"
@@ -8706,12 +8742,12 @@
     ],
     "where": [
      {
-      "file": "svgolf/check/postsynth.py",
-      "fn": "run"
+      "file": "svgolf/check.py",
+      "fn": "check"
      },
      {
       "file": "svgolf/check/postsynth.py",
-      "fn": "lssv_eval"
+      "fn": "run"
      }
     ],
     "evidence": "README Rules (three x sources)",

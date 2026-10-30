@@ -1,4 +1,4 @@
-# [0.1.265] — 2026-10-30
+# [0.1.266] — 2026-10-30
 
 The clock-discipline guard (WP-Q0, refusal-only; `LeanModels/Sv/ClockGuard2.lean`,
 the first item S0 of `svgolf/design/sequential/README.md`). The cycle semantics
@@ -24,6 +24,14 @@ measurement of what the unguarded model got wrong); 17 fixtures
 Register: `gu-clock-source`, `gu-clock-reset`, `gu-clock-multiple`,
 `gu-clock-data-read` (later, plan SEQ), `le-instance-clock` and `sg-unclocked`
 updated.
+
+# [0.1.265] — 2026-10-30
+
+Timed `$strobe` calls now flush through the scheduler's Postponed close after
+Active, Inactive, and NBA work settle, so deferred arguments observe the final
+value in the time slot. `$monitor` registration remains a loud boundary until
+monitor state and change-trigger scheduling are represented. Differential
+coverage grows **535/520/0/15 → 536/521/0/15**.
 
 # [0.1.264] — 2026-10-30
 

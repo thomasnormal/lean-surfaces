@@ -1822,6 +1822,18 @@
       "ticks": 3
     },
     {
+      "name": "scheduler_postponed_strobe",
+      "file": "Examples/system-verilog/scheduler_postponed_strobe/scheduler_postponed_strobe.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED DISPLAY",
+        "SCHED STROBE 9"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
       "name": "scheduler_initial_always",
       "file": "Examples/system-verilog/scheduler_initial_always/scheduler_initial_always.sv",
       "module": "top",

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 493 | 484 | 0 | 9 | sv-tests-2 declarations |
+| 494 | 484 | 0 | 10 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -441,6 +441,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `floating_integral_write` | `Examples/system-verilog/floating_integral_write/floating_integral_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `priority_case_fallback` | `Examples/system-verilog/priority_case_fallback/priority_case_fallback.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique0_case` | `Examples/system-verilog/unique0_case/unique0_case.sv` | match | **MATCH** | `ok` | MATCH |
+| `unique0_case_dynamic_refuse` | `Examples/system-verilog/unique0_case_dynamic_refuse/unique0_case_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `literal_function_computed_statement` | `Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `case_array_widening` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_integral_real_conversions` | `Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv` | match | **MATCH** | `ok` | MATCH |

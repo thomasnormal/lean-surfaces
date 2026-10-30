@@ -3866,6 +3866,13 @@
       "expect": "match"
     },
     {
+      "name": "unique0_case_dynamic_refuse",
+      "file": "Examples/system-verilog/unique0_case_dynamic_refuse/unique0_case_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
       "name": "literal_function_computed_statement",
       "file": "Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv",
       "module": "top",

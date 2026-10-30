@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `unique0 case` refusal witness — 2026-10-30
+
+The legacy self-check tier now pins a dynamic `unique0 case` label as
+`CaseStatement:Unique0`. Literal, duplicate-free labels remain admitted because
+`unique0` permits no match; a dynamic label leaves overlap behavior unresolved,
+so the qualifier stays loud. The `unique0_case_dynamic_refuse` fixture,
+generated envelope, and differential row record the refusal.
+
+Differential coverage grows **493/484/0/9 → 494/484/0/10**; grammar coverage
+remains **235/113/122**.
+
+
 ## `priority case` no-default refusal witness — 2026-10-30
 
 The legacy self-check tier now pins the existing loud boundary for a dynamic

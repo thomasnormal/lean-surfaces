@@ -1,3 +1,11 @@
+# [0.1.231] — 2026-10-30
+
+The legacy differential corpus now pins a dynamic `unique0 case` label as a
+loud `CaseStatement:Unique0` refusal. Literal labels remain admitted where the
+no-match path is allowed; dynamic overlap behavior is not guessed. Coverage
+grows **493/484/0/9 → 494/484/0/10**; grammar coverage remains
+**235/113/122**.
+
 # [0.1.230] — 2026-10-30
 
 The legacy differential corpus now pins a `priority case` without a `default`

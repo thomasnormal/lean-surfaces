@@ -204,11 +204,26 @@ lake_build_step() {
     # Lake's bare build keeps the complete default-target graph and its
     # completed-job state in one process.  On the hosted runner that retained
     # state grows until the final Python targets receive SIGTERM, even with a
-    # single Lean elaboration worker.  Build each declared default target in a
-    # fresh Lake process so the complete gate remains intact while memory is
-    # released between target groups.
-    local build_failed=0 target
-    for target in LeanModels Examples leanmodels-run circuit-dc-runner c-torture-run; do
+    # single Lean elaboration worker.  Build each library root and executable
+    # in a fresh Lake process so the complete gate remains intact while memory
+    # is released between target groups.
+    local build_failed=0 target group_dir
+    for target in LeanModels; do
+      echo "=== [lake-build] lake build $target"
+      if ! lake build "$target"; then
+        build_failed=1
+      fi
+    done
+    for group_dir in Examples/*; do
+      [ -d "$group_dir" ] || continue
+      mapfile -t targets < <(find "$group_dir" -type f -name '*.lean' | sort)
+      [ "${#targets[@]}" -gt 0 ] || continue
+      echo "=== [lake-build] lake build ${targets[*]}"
+      if ! lake build "${targets[@]}"; then
+        build_failed=1
+      fi
+    done
+    for target in leanmodels-run circuit-dc-runner c-torture-run; do
       echo "=== [lake-build] lake build $target"
       if ! lake build "$target"; then
         build_failed=1

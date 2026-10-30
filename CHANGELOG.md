@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted full CI now isolates each `Examples/<language>` source group in its
+  own Lake process, preventing late Python proof targets from inheriting the
+  memory pressure of unrelated example groups.
+
 - Hosted full CI now builds each declared default target in its own Lake
   process, preserving the complete gate while releasing accumulated build
   state between target groups.

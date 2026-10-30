@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The clock-trace example now checks the modeled `AttributeError` for a
+  shadowed `time` receiver, keeping its non-vacuity guard aligned with the
+  interpreter.
+
 - Hosted full CI now builds each Python example directory in its own Lake
   process, releasing proof state between examples so late Python targets are
   not killed by accumulated memory pressure.

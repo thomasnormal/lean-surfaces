@@ -88,7 +88,7 @@ driver's handler (the pass-4 composition) -/
 /-! ### the admission's edges: shadowing kills the pop; args refuse -/
 
 #guard callFunctionClock clock_lab "shadowed" #[] [123] 4096 matches
-  .unsupported _
+  .exn .attributeError
 #py_check clock_lab.call_with_arg() raises
   (.typeError "time.time() takes no arguments (1 given)")
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted full CI now builds each declared default target in its own Lake
+  process, preserving the complete gate while releasing accumulated build
+  state between target groups.
+
 - Hosted full CI now uses one Lean elaboration worker, preserving the complete
   repository gate while avoiding the runner resource kill at the final Python
   targets.

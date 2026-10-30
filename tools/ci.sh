@@ -201,7 +201,20 @@ STUB
 # turns the skip into a FAILURE, for a caller that must not proceed without it.
 lake_build_step() {
   if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
-    step "lake-build" lake build
+    # Lake's bare build keeps the complete default-target graph and its
+    # completed-job state in one process.  On the hosted runner that retained
+    # state grows until the final Python targets receive SIGTERM, even with a
+    # single Lean elaboration worker.  Build each declared default target in a
+    # fresh Lake process so the complete gate remains intact while memory is
+    # released between target groups.
+    local build_failed=0 target
+    for target in LeanModels Examples leanmodels-run circuit-dc-runner c-torture-run; do
+      echo "=== [lake-build] lake build $target"
+      if ! lake build "$target"; then
+        build_failed=1
+      fi
+    done
+    [ "$build_failed" = 0 ] || fail+=("lake-build")
     return
   fi
   echo "=== [lake-build] SKIPPED on non-CI host — Lean builds go through tools/triad.sh (A11)"

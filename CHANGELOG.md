@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The triad classifier self-test now uses an isolated SystemVerilog fixture,
+  so adding a cross-tier example import cannot change the test's one-tier
+  expectation.
+
 - The clock-erasure proof now tracks starred positional arguments, static-local
   markers, faithful missing-local errors, exception-handler dispatch, and the
   current context-manager exit arguments across the stateful interpreter.

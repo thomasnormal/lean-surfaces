@@ -3542,7 +3542,16 @@ if [ "$SELF_TEST" = "1" ]; then
   # index gate has to live in THIS floor (2026-08-26).
   check "docs-only gates: docs_check + index" "$(gate_floor docs)" "$DOCS_FLOOR"
 
+  # Keep this classifier fixture independent of the live Examples tree.  The
+  # tier map is derived from imports, so a new SystemVerilog example may also
+  # import another tier (the real tree now has a Python-backed ripple adder).
+  # This row tests the one-tier shape itself; it must not change merely because
+  # the corpus grows.
+  mkdir -p "$tmp/tiermap/Examples/system-verilog/toggle"
+  printf 'import LeanModels.Sv\n' > "$tmp/tiermap/Examples/system-verilog/toggle/proof.lean"
+  LS_GREP_ROOT="$tmp/tiermap"
   cls LeanModels/Sv/Obs.lean Examples/system-verilog/toggle/proof.lean
+  LS_GREP_ROOT=
   check "tier-local diff -> tier"           "$(class_name "$CLASS_RANK")" "tier"
   check "the two trees name ONE tier"       "$CLASS_TIERS" "Sv"
   check "the touched module is a target"    "$BUILD_TARGETS" "LeanModels.Sv.Obs Examples"

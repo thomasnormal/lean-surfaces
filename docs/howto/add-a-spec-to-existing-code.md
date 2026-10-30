@@ -62,7 +62,7 @@ load_program add from "Examples/python/add/add.json"
 
 /-- Total correctness: straight-line body, one `py_prove`. -/
 theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by
-  py_prove [add]
+  py_prove [add, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
 
 end Examples.python.add.proof
 ```

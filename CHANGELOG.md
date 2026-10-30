@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Hosted full CI now gives each Python Lean source file its own Lake process,
+  releasing elaboration state between proof and spec targets to keep the full
+  gate below the runner's resource limit.
+
 - The `bench_statistics` acceptance guards now record the faithful
   `NameError` raised when its intentionally unvendored `StatisticsError`
   name is reached on empty input.

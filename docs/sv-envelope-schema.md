@@ -836,7 +836,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "==?" "!=?" "&&" "||" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "==?" "!=?" "&&" "||" "<" "<=" ">" ">="` (the M0 set; the binary XNOR `~^` / `^~` has no `op` of its own: in a SIGNAL expression of the symbolic tier it is lowered to `Unary` `"~"` over `Binary` `"^"` — `~(a ^ b)`, WP-L2 — and in a symbolic-constant position it stays `Unsupported` `BinaryExpression:BinaryXnor`;
 `<<` `>>` `<<<` and `>>>` are integral shifts (§11.4.10). Their envelope
 operators are typed as `u<<`/`s<<`, `u>>`/`s>>`, `u<<<`/`s<<<`, and
 `u>>>`/`s>>>`; the prefix records the signedness of the left operand.

@@ -35,3 +35,20 @@ python3.9 extractors/sv/xnor_reprice.py \
 
 The instrument reports syntax only. It does not evaluate truth tables or
 collapse four-state values to booleans.
+
+## 2026-10-30: the symbolic tier lowers it (WP-L2)
+
+The M0 / self-check tier above is unchanged and still loud. The symbolic (sv-0.2) tier, which svGolf
+proves in, now accepts the binary operator in SIGNAL expressions: the extractor lowers `a ~^ b` and
+`a ^~ b` (one slang operator) to `~(a ^ b)`, built from the two nodes that tier already has
+(`_convert_xnor_expr`, `extractors/sv/extract.py`). It is exact because slang has already converted
+both operands to the expression's own type: the inner `^` and the outer `~` have the xnor's context
+width and signedness, any x/z operand bit gives x (`x ^ y = x`, `~x = x`) and equal known bits give 1
+(Table 11-14), and the extension bits of a wider context are `0 ~^ 0 = 1`. Not lowered, and still the
+loud `BinaryExpression:BinaryXnor`: a parameter default, a localparam, a generate condition (the
+constant tier has its own width rules for `~`). A signed operand pair assigned to a wider target stays
+the tier's `ConversionExpression:width`, as for `^`. The reduction form `~^a` was already admitted.
+Evidence: `harness/sv/cases2.json` rows `xnor_*` (Icarus 12.0 and pinned Xcelium 24.03-s004),
+`extractors/sv/test_xnor_lowering.py`, `Examples/system-verilog/xnor_n/proof.lean` (the value for every
+width). Register entry `ex-xnor`.
+

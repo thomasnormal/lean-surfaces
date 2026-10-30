@@ -15907,3 +15907,30 @@ only), an unsigned or narrower literal (`1'b1`) changes the arithmetic type of `
 with the unchanged tactics. Not done (not trivial): strides, and a step amount that is a parameter
 expression (they need a general `stepDelta` and a tactic pattern for it).
 
+## The binary XNOR `~^` / `^~` in the symbolic tier (WP-L2) — 2026-10-30
+
+`a ~^ b` and `a ^~ b` (IEEE 1800-2023 11.4.8, Table 11-14) are one slang operator (`BinaryXnor`),
+which the symbolic extractor refused. It is now lowered, in SIGNAL expressions, to `~(a ^ b)`:
+`Unary "~"` over `Binary "^"`, the nodes `instExpr2`, `Expr2` and every proof already know. Why a
+lowering and not a native `BinOp.xnor`: the constructor would sit in `Ast.lean`, under the whole
+`LeanModels.Sv` chain, and every exhaustive match on `BinOp`, the evaluator, the lowering lemmas and
+the tactics would change and rebuild, for a table that is the composition of two pinned ones.
+Why it is exact: slang has converted both operands to the expression's own type, so the inner `^` and
+the outer `~` are typed as the xnor was (same context width, same signedness); `x ^ y = x` for any x/z
+operand bit and `~x = x`, so the result bit is x exactly where Table 11-14 says; equal known bits give
+1, which includes the extension bits of a wider context (`0 ~^ 0 = 1`, measured: 8-bit operands into a
+16-bit target give an all-ones upper byte on Xcelium 24.03, Icarus 12.0 and the model). Symbolic-constant
+positions (parameter defaults, localparams, generate conditions) are NOT lowered: the constant tier
+(`Param.lean` `evalInt`) refuses an INT-class `~` and has its own sized rule, none measured against the
+lowering, so they stay `BinaryExpression:BinaryXnor`, refused at the defaults by `load_design_sv2`
+(message pinned in `Examples/system-verilog/sem2/xnor_const`) or loud in `name.sem`
+(`xnor_genconst`). A signed operand pair assigned to a wider target needs sign extension, which the
+tier does not have: `ConversionExpression:width`, exactly as for `$signed(a) ^ $signed(b)` (measured: the
+simulators sign-extend, `xnor_sgn_wide`). The reduction `~^a` was already admitted and is pinned by
+rows. The proof: `Examples/system-verilog/xnor_n/proof.lean` shows for every width and every 4-state
+vector pair that the lowered expression is the bitwise `xnorTable` written out from the standard, and
+that `xnor_n.sem N` is that one process. The sv_comb recognizer is unchanged: it rejects every unary
+operator, which is the `~` item of the always_comb work; once `~` is in the fragment, `~(a ^ b)` is
+covered by it. Regression evidence: every committed symbolic envelope re-extracts byte-identical
+(the lowering only fires where the extractor emitted an Unsupported before).
+

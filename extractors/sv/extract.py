@@ -10143,8 +10143,17 @@ def _convert_binary_expr(sm, e):
                 "left": _convert_expr(sm, e.left),
                 "right": _convert_expr(sm, e.right),
             }
+    if sym is None and e.op == BinaryOperator.BinaryXnor and _SYM is not None \
+            and not _SYM.symctx:
+        return _convert_xnor_expr(sm, e)
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
+    return _convert_binary_core(sm, e, sym)
+
+
+def _convert_binary_core(sm, e, sym):
+    """The operand/width/type handling of a binary expression whose operator symbol is `sym`
+    (split out of `_convert_binary_expr` in WP-L2 so the xnor lowering runs the `^` path)."""
     string_compare = _convert_string_compare(sm, e, sym)
     if string_compare is not None:
         return string_compare
@@ -10202,6 +10211,29 @@ def _convert_binary_expr(sm, e):
         "op": sym,
         "left": left,
         "right": right,
+    }
+
+
+def _convert_xnor_expr(sm, e):
+    """`a ~^ b` / `a ^~ b` (IEEE 1800-2023 11.4.8, Table 11-14; one slang operator for both
+    spellings) in a SIGNAL expression of the symbolic tier (WP-L2): the node `~(a ^ b)`, built from
+    the two nodes the tier already has. The lowering is exact: slang has converted both operands to
+    the expression's own type, so the inner `^` and the outer `~` are typed exactly as the xnor was
+    (the same context width, the same signedness), `~(a ^ b)` of any x/z operand bit is x
+    (`x ^ y = x`, `~x = x`), and equal known bits give 1. A symbolic-CONSTANT position
+    (parameter defaults, generate headers, dimensions) is not lowered: the constant
+    tier has its own width rules for `~` (an INT-class `~` is refused there, `Param.lean`
+    `evalInt`) and this lowering was not measured against them, so it stays the loud
+    `BinaryExpression:BinaryXnor`."""
+    inner = _convert_binary_core(sm, e, "^")
+    if inner.get("kind") != "Binary":
+        return inner
+    return {
+        "kind": "Unary",
+        "span": node_span(sm, e),
+        "width": inner.get("width"),
+        "op": "~",
+        "operand": inner,
     }
 
 

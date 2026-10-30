@@ -1,3 +1,27 @@
+# [0.1.269] — 2026-10-30
+
+The binary XNOR `~^` / `^~` in the symbolic tier (WP-L2; register `ex-xnor`). The extractor refused it
+(`BinaryExpression:BinaryXnor`); in a SIGNAL expression it is now lowered to `~(a ^ b)`, the two nodes
+the tier already has (`_convert_xnor_expr`; `_convert_binary_expr` gained a `_convert_binary_core` split so
+the lowering runs exactly the `^` path). Both spellings are one slang operator and produce the same node.
+The lowering is exact: slang converts both operands to the expression's own type first, so the inner `^`
+and the outer `~` carry the xnor's context width and signedness; any x/z operand bit gives x and equal
+known bits give 1 (IEEE 1800-2023 Table 11-14), and the extension bits of a wider context are
+`0 ~^ 0 = 1`. A parameter default, a localparam and a generate condition are symbolic-constant positions:
+not lowered, still the loud `BinaryExpression:BinaryXnor`. A signed operand pair assigned to a wider
+target stays the tier's `ConversionExpression:width` (as `^` does). The reduction `~^a` was already
+admitted; it is pinned by rows now. No LeanModels file changed (nothing in the library rebuilds), and
+neither did any committed envelope (all symbolic envelopes re-extract byte-identical). New:
+`extractors/sv/test_xnor_lowering.py` (12 tests, 10 fail with the lowering neutered), 13 rows in
+`cases2.json` (10 simulated rows against Icarus and new pinned Xcelium traces, 3 refusal rows with their
+measurements), fixtures `Examples/system-verilog/sem2/xnor_{bin,red,seq,sgn,sgn_wide,const,genconst}`
+with the refusal messages pinned, and `Examples/system-verilog/xnor_n`: for every width the lowered
+expression is the bitwise IEEE Table 11-14 (`xnor_vec`, x/z propagation `xnor_vec_unknown`, known
+vectors `xnor_known`), the evaluator computes it (`xnor_eval`), and `xnor_n.sem N` is exactly that one
+process (`xnor_n_processes`). The sv_comb tactics do not read it (they reject every unary operator; that
+is the `~` item of the always_comb work). Register: `ex-xnor` now records the remaining refusal; the
+ranked "allowed later" row 4 leaves the table.
+
 # [0.1.268] — 2026-10-30
 
 Genvar step spelled as an assignment (WP-L1; register `le-generate-genvar-step`).

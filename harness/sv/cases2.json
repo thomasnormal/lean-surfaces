@@ -31153,6 +31153,565 @@
       ],
       "refusal": "GenerateFor:step",
       "measured": "WP-L1, `GenerateFor:step` (REFUSED): the step amount is a parameter (`i = i + S`, S = 1 at the defaults). A parameter is folded at the default point only, so the step is never read as `i++` (at S = 2 the same text is a stride). Measured 2026-10-30 on this row's own generated testbench: Xcelium 24.03-s004 and Icarus 12.0 both give y = a (1111 / 1010 / 0101) at S = 1; the refusal is about what the model can promise at other S, not about a simulator split."
+    },
+    {
+      "name": "xnor_bin",
+      "example": "sem2/xnor_bin",
+      "top": "xnor_bin",
+      "signals": [
+        "a",
+        "b",
+        "c",
+        "p",
+        "q",
+        "y1",
+        "y2",
+        "z1",
+        "w",
+        "y3",
+        "y4"
+      ],
+      "stimulus": [
+        {
+          "a": "1100",
+          "b": "1010",
+          "c": "0110",
+          "p": "0",
+          "q": "0"
+        },
+        {
+          "a": "0101",
+          "b": "0101",
+          "c": "1111",
+          "p": "1",
+          "q": "1"
+        },
+        {
+          "a": "1x00",
+          "b": "1010",
+          "c": "0z10",
+          "p": "1",
+          "q": "0"
+        },
+        {
+          "a": "0z11",
+          "b": "x011",
+          "c": "1111",
+          "p": "x",
+          "q": "1"
+        },
+        {
+          "a": "zzzz",
+          "b": "0000",
+          "c": "1111",
+          "p": "z",
+          "q": "z"
+        },
+        {
+          "a": "1111",
+          "b": "1111",
+          "c": "xxxx",
+          "p": "0",
+          "q": "x"
+        },
+        {
+          "a": "0000",
+          "b": "1111",
+          "c": "0000",
+          "p": "1",
+          "q": "1"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Both spellings (y1 `a ~^ b`, y2 `a ^~ b`, always equal), one-bit operands (z1), a 2N-bit target (w: the operands are extended to 8 bits BEFORE the operator, so the extension bits are `0 ~^ 0 = 1`), an expression operand (y3 = (a & b) ~^ c) and the left-associative chain y4 = a ~^ b ~^ c. Operands carry x and z in different bits (1x00/0z10, 0z11/x011, zzzz, xxxx): an x or z bit gives x in exactly that bit, a known pair elsewhere is untouched; `0 & x = 0` keeps y3's bit known where the AND decides it."
+    },
+    {
+      "name": "xnor_bin_n8",
+      "example": "sem2/xnor_bin",
+      "top": "xnor_bin",
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "a",
+        "b",
+        "c",
+        "p",
+        "q",
+        "y1",
+        "y2",
+        "z1",
+        "w",
+        "y3",
+        "y4"
+      ],
+      "stimulus": [
+        {
+          "a": "11001010",
+          "b": "10100110",
+          "c": "01101001",
+          "p": "1",
+          "q": "0"
+        },
+        {
+          "a": "00000000",
+          "b": "00000000",
+          "c": "11111111",
+          "p": "0",
+          "q": "0"
+        },
+        {
+          "a": "1x00z010",
+          "b": "10100110",
+          "c": "0z10x001",
+          "p": "x",
+          "q": "1"
+        },
+        {
+          "a": "11111111",
+          "b": "x1111z11",
+          "c": "10101010",
+          "p": "1",
+          "q": "z"
+        },
+        {
+          "a": "01010101",
+          "b": "01010101",
+          "c": "xxxxxxxx",
+          "p": "0",
+          "q": "1"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 8, so w is the context-widened case the lead asked for: 8-bit operands assigned to a 16-bit target, upper byte 11111111 whatever the operands (cycle 0: w = 1111111110010011, y1 = 10010011), x/z in different bits (cycle 2: 1x00z010 ~^ 10100110 = 1x01x011), chain and expression operand as at N = 4."
+    },
+    {
+      "name": "xnor_bin_n1",
+      "example": "sem2/xnor_bin",
+      "top": "xnor_bin",
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "b",
+        "c",
+        "p",
+        "q",
+        "y1",
+        "y2",
+        "z1",
+        "w",
+        "y3",
+        "y4"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0",
+          "c": "1",
+          "p": "0",
+          "q": "0"
+        },
+        {
+          "a": "0",
+          "b": "1",
+          "c": "1",
+          "p": "1",
+          "q": "0"
+        },
+        {
+          "a": "1",
+          "b": "1",
+          "c": "0",
+          "p": "1",
+          "q": "1"
+        },
+        {
+          "a": "x",
+          "b": "1",
+          "c": "z",
+          "p": "x",
+          "q": "1"
+        },
+        {
+          "a": "z",
+          "b": "z",
+          "c": "1",
+          "p": "0",
+          "q": "z"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. N = 1: one-bit vectors, w is 2 bits (upper bit 1)."
+    },
+    {
+      "name": "xnor_red",
+      "example": "sem2/xnor_red",
+      "top": "xnor_red",
+      "signals": [
+        "a",
+        "p",
+        "r1",
+        "r2",
+        "r3",
+        "r4"
+      ],
+      "stimulus": [
+        {
+          "a": "0000",
+          "p": "0"
+        },
+        {
+          "a": "0001",
+          "p": "1"
+        },
+        {
+          "a": "0011",
+          "p": "0"
+        },
+        {
+          "a": "0111",
+          "p": "1"
+        },
+        {
+          "a": "1111",
+          "p": "x"
+        },
+        {
+          "a": "1x01",
+          "p": "z"
+        },
+        {
+          "a": "zzzz",
+          "p": "1"
+        },
+        {
+          "a": "x000",
+          "p": "0"
+        },
+        {
+          "a": "0x00",
+          "p": "1"
+        },
+        {
+          "a": "1010",
+          "p": "0"
+        },
+        {
+          "a": "1000",
+          "p": "1"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. The reduction `~^a` / `^~a` (both spellings, already admitted by the extractor; this row pins it): 1 when the number of 1 bits is even and every bit is known (a = 0000, 0011, 1111, 1010 give 1; 0001, 0111, 1000 give 0), x as soon as any bit is x or z (1x01, zzzz, x000, 0x00); r3 reduces the part select a[N-1:1], r4 the single bit p (`~^p` = ~p, x for x/z)."
+    },
+    {
+      "name": "xnor_red_n8",
+      "example": "sem2/xnor_red",
+      "top": "xnor_red",
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "a",
+        "p",
+        "r1",
+        "r2",
+        "r3",
+        "r4"
+      ],
+      "stimulus": [
+        {
+          "a": "00000000",
+          "p": "0"
+        },
+        {
+          "a": "10000000",
+          "p": "1"
+        },
+        {
+          "a": "11000011",
+          "p": "0"
+        },
+        {
+          "a": "11111111",
+          "p": "1"
+        },
+        {
+          "a": "1111z111",
+          "p": "0"
+        },
+        {
+          "a": "01x00000",
+          "p": "1"
+        },
+        {
+          "a": "01010101",
+          "p": "1"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. The reduction at N = 8 with x and z bits (1111z111, 01x00000)."
+    },
+    {
+      "name": "xnor_seq",
+      "example": "sem2/xnor_seq",
+      "top": "xnor_seq",
+      "signals": [
+        "rst",
+        "a",
+        "b",
+        "q",
+        "m"
+      ],
+      "stimulus": [
+        {
+          "rst": "1",
+          "a": "0101",
+          "b": "0011"
+        },
+        {
+          "rst": "0",
+          "a": "0101",
+          "b": "0011"
+        },
+        {
+          "a": "1100",
+          "b": "1100"
+        },
+        {
+          "a": "1111",
+          "b": "0000"
+        },
+        {
+          "a": "1x00",
+          "b": "0z00"
+        },
+        {
+          "a": "0000",
+          "b": "1111"
+        },
+        {
+          "rst": "1",
+          "a": "1010",
+          "b": "1010"
+        },
+        {
+          "rst": "0",
+          "a": "0110",
+          "b": "1001"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. `~^` in an `always_ff` body (`q <= q ~^ a`, NBA, one input-port clock, so the clock discipline of WP-Q0 admits it) and in an `always_comb` body (`m = a ^~ b`): q is x before the first reset, the register then follows `~(q ^ a)` including x/z bits of a, the comb output m is the table on (a, b).",
+      "clock": "clk"
+    },
+    {
+      "name": "xnor_sgn",
+      "example": "sem2/xnor_sgn",
+      "top": "xnor_sgn",
+      "signals": [
+        "ua",
+        "ub",
+        "same",
+        "mixed"
+      ],
+      "stimulus": [
+        {
+          "ua": "1100",
+          "ub": "1010"
+        },
+        {
+          "ua": "0101",
+          "ub": "0101"
+        },
+        {
+          "ua": "1000",
+          "ub": "0111"
+        },
+        {
+          "ua": "1x00",
+          "ub": "1010"
+        },
+        {
+          "ua": "1z11",
+          "ub": "x011"
+        },
+        {
+          "ua": "0000",
+          "ub": "0000"
+        },
+        {
+          "ua": "1111",
+          "ub": "1111"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Signed operands: `same = $signed(ua) ~^ $signed(ub)` (a signed pair at its own width is the plain table: signedness never changes a bit), `mixed = $signed(ua) ^~ ub` (mixed signedness makes the expression unsigned: the signed side is ZERO-extended to 2N before the operator, so the upper half is 1111 whatever ua's sign bit is; cycle 2: ua = 1000, ub = 0111 gives mixed = 11110000)."
+    },
+    {
+      "name": "xnor_sgn_n8",
+      "example": "sem2/xnor_sgn",
+      "top": "xnor_sgn",
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "ua",
+        "ub",
+        "same",
+        "mixed"
+      ],
+      "stimulus": [
+        {
+          "ua": "10000000",
+          "ub": "01111111"
+        },
+        {
+          "ua": "11001100",
+          "ub": "11001100"
+        },
+        {
+          "ua": "1x001100",
+          "ub": "10101010"
+        },
+        {
+          "ua": "00000000",
+          "ub": "11111111"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^` / `^~`: the extractor lowers the binary operator to `~(a ^ b)` (nodes the symbolic tier already has), so the 4-state table is the product of the pinned `^` and `~` tables (IEEE 1800-2023 Table 11-14: any x/z operand bit gives x, equal known bits give 1). Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) both equal the model's trace cycle for cycle. Signed operands at N = 8."
+    },
+    {
+      "name": "xnor_sgn_wide",
+      "example": "sem2/xnor_sgn_wide",
+      "top": "xnor_sgn_wide",
+      "signals": [
+        "ua",
+        "ub",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "ua": "1100",
+          "ub": "1010"
+        },
+        {
+          "ua": "0101",
+          "ub": "0101"
+        },
+        {
+          "ua": "1000",
+          "ub": "0111"
+        }
+      ],
+      "refusal": "ConversionExpression:width",
+      "measured": "WP-L2 (REFUSED, `ConversionExpression:width`): a signed operand PAIR assigned to a WIDER target sign-extends the operands before the operator (IEEE 1800-2023 11.8.2). The tier has no signed widening, so `^` refuses the same text and the lowered `~^` inherits the refusal. Measured 2026-10-30 on this row's own generated testbench, Xcelium 24.03-s004 and Icarus 12.0 agree: w = 11111001 11111111 00000000 for (ua, ub) = (1100, 1010), (0101, 0101), (1000, 0111); the last pair shows the sign extension (a zero-extending model would answer 11110000, not 00000000)."
+    },
+    {
+      "name": "xnor_const",
+      "example": "sem2/xnor_const",
+      "top": "xnor_const",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1100"
+        },
+        {
+          "a": "0101"
+        }
+      ],
+      "refusal": "BinaryExpression:BinaryXnor",
+      "measured": "WP-L2 (REFUSED, `BinaryExpression:BinaryXnor`): `~^` in a parameter default (`Q = (6 ~^ 3)`) and in a localparam (`M = 4'b1010 ~^ 4'b0110`) is a symbolic-CONSTANT position and is NOT lowered; the constant tier has its own width rules for `~` and the lowering was measured for signal expressions only. `load_design_sv2` refuses at the defaults: \"parameter 'Q' default: unsupported node 'BinaryExpression:BinaryXnor' in a constant context\". Measured 2026-10-30 on this row's own generated testbench, Xcelium 24.03-s004 and Icarus 12.0 agree: y = a ^ 0011 = 1111 0110 for a = 1100, 0101."
+    },
+    {
+      "name": "xnor_genconst",
+      "example": "sem2/xnor_genconst",
+      "top": "xnor_genconst",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1100"
+        },
+        {
+          "a": "0101"
+        }
+      ],
+      "refusal": "BinaryExpression:BinaryXnor",
+      "measured": "WP-L2 (REFUSED, `BinaryExpression:BinaryXnor`): `~^` in a generate condition (`if ((i ~^ 1) != 0)`) is a symbolic-CONSTANT position and is NOT lowered; `load_design_sv2` loads the envelope and `name.sem` is the loud error design \"generate if: unsupported node 'BinaryExpression:BinaryXnor' in a constant context\". Measured 2026-10-30 on this row's own generated testbench, Xcelium 24.03-s004 and Icarus 12.0 agree: y = a (every `i ~^ 1` is nonzero for i < 4) = 1100 0101."
+    },
+    {
+      "name": "xnor_n",
+      "example": "xnor_n",
+      "top": "xnor_n",
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1100",
+          "b": "1010"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        },
+        {
+          "a": "1111",
+          "b": "0000"
+        },
+        {
+          "a": "1x0z",
+          "b": "10xz"
+        },
+        {
+          "a": "zzzz",
+          "b": "zzzz"
+        },
+        {
+          "a": "0101",
+          "b": "01x1"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^`: the extractor lowers it to `~(a ^ b)`; Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (XREF-MATCH) equal the model's trace cycle for cycle. The Examples/system-verilog/xnor_n design (`assign y = a ~^ b`, the subject of proof.lean's every-width Table 11-14 theorems): x and z operand bits give x in exactly their own bit (1x0z ~^ 10xz = 1xxx), equal known vectors give all ones."
+    },
+    {
+      "name": "xnor_n_n13",
+      "example": "xnor_n",
+      "top": "xnor_n",
+      "params": {
+        "N": 13
+      },
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1100101011001",
+          "b": "1010011010101"
+        },
+        {
+          "a": "0000000000000",
+          "b": "0000000000000"
+        },
+        {
+          "a": "1x00z01011001",
+          "b": "1010011010x01"
+        },
+        {
+          "a": "1111111111111",
+          "b": "1111111111111"
+        }
+      ],
+      "measured": "WP-L2 (2026-10-30), XNOR `~^`: the extractor lowers it to `~(a ^ b)`; Icarus 12.0 and the pinned Xcelium 24.03-s004 trace (XREF-MATCH) equal the model's trace cycle for cycle. N = 13 (an odd width, the cross-check sidecar probes the point)."
     }
   ]
 }

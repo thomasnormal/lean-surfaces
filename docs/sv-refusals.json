@@ -1824,12 +1824,11 @@
    "layers": [
     "extractor"
    ],
-   "trigger": "H: assign y = a ~^ b;",
-   "why": "The operator is absent from the symbolic BINARY_OPS (the unary reduction ~^ is admitted).",
+   "trigger": "H: parameter Q = (6 ~^ 3);  /  localparam logic [3:0] M = 4'b1010 ~^ 4'b0110;  /  if ((i ~^ 1) != 0) in a generate (every symbolic-CONSTANT position)",
+   "why": "The binary XNOR `~^` (and its spelling `^~`, one slang operator) is SUPPORTED in signal expressions of the symbolic tier since WP-L2 (2026-10-30): the extractor lowers it to `~(a ^ b)`, so any x/z operand bit gives x and equal known bits give 1 (IEEE 1800-2023 Table 11-14), at the expression's own context width and signedness. It stays loud in a parameter default, a localparam or a generate condition: the constant tier has its own width rules for `~` (an INT-class `~` is refused there) and the lowering was not measured against them.",
    "category": "later",
    "proposed": false,
-   "prerequisite": "none recorded; proposed prerequisite: add the operator to the symbolic set (cheap)",
-   "plan": "OPS",
+   "prerequisite": "a measured width rule for `~` / `^` in the constant tier (Param.lean `evalInt` refuses an INT-class `~`; `evalSized` has the sized case), then the same lowering in constant positions",
    "kinds": {
     "extractor": [
      "BinaryExpression:*"
@@ -1839,13 +1838,17 @@
     {
      "file": "extractors/sv/extract.py",
      "fn": "_convert_binary_expr"
+    },
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_convert_xnor_expr"
     }
    ],
-   "evidence": "docs/sv-xnor.md (the M0 tier admits it)",
+   "evidence": "extractors/sv/test_xnor_lowering.py; cases2.json rows xnor_bin*, xnor_red*, xnor_seq, xnor_sgn*, xnor_n* (Icarus + pinned Xcelium) and the refusal rows xnor_sgn_wide, xnor_const, xnor_genconst; Examples/system-verilog/xnor_n (every-width Table 11-14 proof); Examples/system-verilog/sem2/xnor_*; docs/sv-xnor.md (M0 tier)",
    "verified_by_run": true,
-   "value_rank": 4,
-   "value_note": "xnor is a native gate: golfers write `~^` to save an inverter",
-   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+   "since": "2026-10-30",
+   "notes": "WP-L2 (2026-10-30): binary `~^` / `^~` SUPPORTED in signal expressions (extractor lowering, differential rows against Icarus and pinned Xcelium, an every-width hand proof, this register); the reduction `~^a` was already admitted and is pinned by rows now. A signed operand PAIR assigned to a wider target stays the loud `ConversionExpression:width` (the tier has no signed widening; `^` refuses the same text). The sv_comb tactics do NOT read it: the recognizer rejects every unary operator (`~`), which is WP-G's item; once `~` is in the fragment `~(a ^ b)` needs no further change. The M0 (self-check) tier is untouched."
   },
   {
    "id": "ex-equiv",

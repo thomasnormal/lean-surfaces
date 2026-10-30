@@ -7042,6 +7042,131 @@
    ],
    "hash": "c54f5be7fdd6486ad45fbe0141d98ed881ac57e225a661fd0b798b8d30d55a86",
    "status": "ok"
+  },
+  "xnor_bin": {
+   "cycles": [
+    "CYCLE 0 a=1100 b=1010 c=0110 p=0 q=0 y1=1001 y2=1001 z1=1 w=11111001 y3=0001 y4=0000",
+    "CYCLE 1 a=0101 b=0101 c=1111 p=1 q=1 y1=1111 y2=1111 z1=1 w=11111111 y3=0101 y4=1111",
+    "CYCLE 2 a=1x00 b=1010 c=0z10 p=1 q=0 y1=1x01 y2=1x01 z1=0 w=11111x01 y3=0x01 y4=0x00",
+    "CYCLE 3 a=0z11 b=x011 c=1111 p=x q=1 y1=xx11 y2=xx11 z1=x w=1111xx11 y3=0011 y4=xx11",
+    "CYCLE 4 a=zzzz b=0000 c=1111 p=z q=z y1=xxxx y2=xxxx z1=x w=1111xxxx y3=0000 y4=xxxx",
+    "CYCLE 5 a=1111 b=1111 c=xxxx p=0 q=x y1=1111 y2=1111 z1=x w=11111111 y3=xxxx y4=xxxx",
+    "CYCLE 6 a=0000 b=1111 c=0000 p=1 q=1 y1=0000 y2=0000 z1=1 w=11110000 y3=1111 y4=1111"
+   ],
+   "hash": "843857393d4e374d63a66cb0455d68a3bd176a99b98ab5fb57ad2b3462fa229c",
+   "status": "ok"
+  },
+  "xnor_bin_n1": {
+   "cycles": [
+    "CYCLE 0 a=0 b=0 c=1 p=0 q=0 y1=1 y2=1 z1=1 w=11 y3=0 y4=1",
+    "CYCLE 1 a=0 b=1 c=1 p=1 q=0 y1=0 y2=0 z1=0 w=10 y3=0 y4=0",
+    "CYCLE 2 a=1 b=1 c=0 p=1 q=1 y1=1 y2=1 z1=1 w=11 y3=0 y4=0",
+    "CYCLE 3 a=x b=1 c=z p=x q=1 y1=x y2=x z1=x w=1x y3=x y4=x",
+    "CYCLE 4 a=z b=z c=1 p=0 q=z y1=x y2=x z1=x w=1x y3=x y4=x"
+   ],
+   "hash": "8d1503213d13d63a33975c9b0a828e21adb522ccb1285eb76f6a8e20c90e6560",
+   "status": "ok"
+  },
+  "xnor_bin_n8": {
+   "cycles": [
+    "CYCLE 0 a=11001010 b=10100110 c=01101001 p=1 q=0 y1=10010011 y2=10010011 z1=0 w=1111111110010011 y3=00010100 y4=00000101",
+    "CYCLE 1 a=00000000 b=00000000 c=11111111 p=0 q=0 y1=11111111 y2=11111111 z1=1 w=1111111111111111 y3=00000000 y4=11111111",
+    "CYCLE 2 a=1x00z010 b=10100110 c=0z10x001 p=x q=1 y1=1x01x011 y2=1x01x011 z1=x w=111111111x01x011 y3=0x01x100 y4=0x00x101",
+    "CYCLE 3 a=11111111 b=x1111z11 c=10101010 p=1 q=z y1=x1111x11 y2=x1111x11 z1=x w=11111111x1111x11 y3=x0101x10 y4=x0101x10",
+    "CYCLE 4 a=01010101 b=01010101 c=xxxxxxxx p=0 q=1 y1=11111111 y2=11111111 z1=0 w=1111111111111111 y3=xxxxxxxx y4=xxxxxxxx"
+   ],
+   "hash": "bb01ab320a5144975124d5d8beaa8019ba2dd1051ff424f038baf2f72b4a79d7",
+   "status": "ok"
+  },
+  "xnor_n": {
+   "cycles": [
+    "CYCLE 0 a=1100 b=1010 y=1001",
+    "CYCLE 1 a=0000 b=0000 y=1111",
+    "CYCLE 2 a=1111 b=0000 y=0000",
+    "CYCLE 3 a=1x0z b=10xz y=1xxx",
+    "CYCLE 4 a=zzzz b=zzzz y=xxxx",
+    "CYCLE 5 a=0101 b=01x1 y=11x1"
+   ],
+   "hash": "35f45477e3cb9e74be5b85c4bb209383b0a6b02c323e0ade20cc3ef27ea014ad",
+   "status": "ok"
+  },
+  "xnor_n_n13": {
+   "cycles": [
+    "CYCLE 0 a=1100101011001 b=1010011010101 y=1001001110011",
+    "CYCLE 1 a=0000000000000 b=0000000000000 y=1111111111111",
+    "CYCLE 2 a=1x00z01011001 b=1010011010x01 y=1x01x01110x11",
+    "CYCLE 3 a=1111111111111 b=1111111111111 y=1111111111111"
+   ],
+   "hash": "955d104485bfe1e11028391bb661161c5d0eba75ca4bcad10b2360ebb562bd48",
+   "status": "ok"
+  },
+  "xnor_red": {
+   "cycles": [
+    "CYCLE 0 a=0000 p=0 r1=1 r2=1 r3=1 r4=1",
+    "CYCLE 1 a=0001 p=1 r1=0 r2=0 r3=1 r4=0",
+    "CYCLE 2 a=0011 p=0 r1=1 r2=1 r3=0 r4=1",
+    "CYCLE 3 a=0111 p=1 r1=0 r2=0 r3=1 r4=0",
+    "CYCLE 4 a=1111 p=x r1=1 r2=1 r3=0 r4=x",
+    "CYCLE 5 a=1x01 p=z r1=x r2=x r3=x r4=x",
+    "CYCLE 6 a=zzzz p=1 r1=x r2=x r3=x r4=0",
+    "CYCLE 7 a=x000 p=0 r1=x r2=x r3=x r4=1",
+    "CYCLE 8 a=0x00 p=1 r1=x r2=x r3=x r4=0",
+    "CYCLE 9 a=1010 p=0 r1=1 r2=1 r3=1 r4=1",
+    "CYCLE 10 a=1000 p=1 r1=0 r2=0 r3=0 r4=0"
+   ],
+   "hash": "ffdd58ec212445c7b05166a1a17f9c812eec86f35621792a0c3a2f684ac02bc4",
+   "status": "ok"
+  },
+  "xnor_red_n8": {
+   "cycles": [
+    "CYCLE 0 a=00000000 p=0 r1=1 r2=1 r3=1 r4=1",
+    "CYCLE 1 a=10000000 p=1 r1=0 r2=0 r3=0 r4=0",
+    "CYCLE 2 a=11000011 p=0 r1=1 r2=1 r3=0 r4=1",
+    "CYCLE 3 a=11111111 p=1 r1=1 r2=1 r3=0 r4=0",
+    "CYCLE 4 a=1111z111 p=0 r1=x r2=x r3=x r4=1",
+    "CYCLE 5 a=01x00000 p=1 r1=x r2=x r3=x r4=0",
+    "CYCLE 6 a=01010101 p=1 r1=1 r2=1 r3=0 r4=0"
+   ],
+   "hash": "6feb4059bdf2e7bbf700a7683ac9b34ec139ee92313bd8f747d0a51eefb151b2",
+   "status": "ok"
+  },
+  "xnor_seq": {
+   "cycles": [
+    "CYCLE 0 rst=1 a=0101 b=0011 q=0000 m=1001",
+    "CYCLE 1 rst=0 a=0101 b=0011 q=1010 m=1001",
+    "CYCLE 2 rst=0 a=1100 b=1100 q=1001 m=1111",
+    "CYCLE 3 rst=0 a=1111 b=0000 q=1001 m=0000",
+    "CYCLE 4 rst=0 a=1x00 b=0z00 q=1x10 m=0x11",
+    "CYCLE 5 rst=0 a=0000 b=1111 q=0x01 m=0000",
+    "CYCLE 6 rst=1 a=1010 b=1010 q=0000 m=1111",
+    "CYCLE 7 rst=0 a=0110 b=1001 q=1001 m=0000",
+    "CYCLE 8 rst=0 a=0000 b=0000 q=0110 m=1111"
+   ],
+   "hash": "8d98072319c48286fca80bc5a53d930999a3790c62b44b7ca45e8fe258c1b365",
+   "status": "ok"
+  },
+  "xnor_sgn": {
+   "cycles": [
+    "CYCLE 0 ua=1100 ub=1010 same=1001 mixed=11111001",
+    "CYCLE 1 ua=0101 ub=0101 same=1111 mixed=11111111",
+    "CYCLE 2 ua=1000 ub=0111 same=0000 mixed=11110000",
+    "CYCLE 3 ua=1x00 ub=1010 same=1x01 mixed=11111x01",
+    "CYCLE 4 ua=1z11 ub=x011 same=xx11 mixed=1111xx11",
+    "CYCLE 5 ua=0000 ub=0000 same=1111 mixed=11111111",
+    "CYCLE 6 ua=1111 ub=1111 same=1111 mixed=11111111"
+   ],
+   "hash": "d4fc88f85a87c891b870d7a6ed4a0861d7fc538dd74e64c7988a9b6a8f019855",
+   "status": "ok"
+  },
+  "xnor_sgn_n8": {
+   "cycles": [
+    "CYCLE 0 ua=10000000 ub=01111111 same=00000000 mixed=1111111100000000",
+    "CYCLE 1 ua=11001100 ub=11001100 same=11111111 mixed=1111111111111111",
+    "CYCLE 2 ua=1x001100 ub=10101010 same=1x011001 mixed=111111111x011001",
+    "CYCLE 3 ua=00000000 ub=11111111 same=00000000 mixed=1111111100000000"
+   ],
+   "hash": "ac55f26c518e9e61fc31159ddfe5e33f51c1d2316b61ae27d592602a0a872c4a",
+   "status": "ok"
   }
  },
  "simulator": {

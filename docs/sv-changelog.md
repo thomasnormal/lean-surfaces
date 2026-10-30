@@ -1,4 +1,4 @@
-# [0.1.256] — 2026-10-30
+# [0.1.258] — 2026-10-30
 
 Silent-wrong-value fix in the symbolic extractor (WP-E1): a constant element or
 range select through a member of a packed struct or union whose type is a
@@ -21,6 +21,24 @@ Icarus 12.0 declares a continuous-driver departure on the last) and refusal rows
 `member_elem_dyn`, `member_elem_indexed`. The register's known hole "element
 select of a packed-array member" is closed and `*:window-mismatch` added. No
 committed envelope changed; legacy corpus coverage is unchanged.
+
+# [0.1.257] — 2026-10-30
+
+The scheduler-facing conformance harness now drives plain `always` processes
+through the retained Active/Inactive/NBA loop until `$finish` or the bounded
+observation budget. The grammar census routes plain `Always` and non-`always_ff`
+edge witnesses through this timed runner; `always_ff` remains a separate
+boundary. Differential coverage grows **518/506/0/12 → 519/507/0/12** and
+grammar coverage grows **235/122/113 → 235/159/76**. The coverage page now
+states that the legacy self-check path remains initial-only while timed plain
+`always` is admitted.
+
+# [0.1.256] — 2026-10-30
+
+The generated coverage page now leads with the real grammar census and the
+sv-tests-2 clean-extraction share. The differential table is labelled as
+self-consistency on the selected witness rows, and the initial-only boundary
+is stated before the measurements.
 
 # [0.1.255] — 2026-10-30
 

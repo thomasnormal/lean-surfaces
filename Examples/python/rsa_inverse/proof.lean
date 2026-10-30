@@ -70,7 +70,14 @@ private theorem egcd_core (A B : Int) (hA : 0 < A) (hB : 0 < B) :
       ∃ i j : Int, v = .tuple #[.int (Int.gcd A B : Nat), .int i, .int j] ∧
         0 ≤ i ∧ i < B ∧ (i * A) % B = (Int.gcd A B : Int) % B ∧
         0 ≤ j ∧ j ≤ A ∧ (j * B) % A = (Int.gcd A B : Int) % A := by
-  py_vcgen [rsa_inverse]
+  py_vcgen [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals, Run.liftRes, Run.toPublic,
+    RVal.freezeB]
     (inv := fun (a b x y lx ly : Int) =>
       0 < a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B ∧
       lx * A + ly * B = a ∧ x * A + y * B = b ∧ EgcdPhase A B a b x y lx ly)
@@ -202,6 +209,23 @@ theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
   rw [execWhile.eq_2]
   py_simp [rsa_inverse]
 
+private theorem callsIn_exists_of_callsTo {m : Module} {fname : String}
+    {args : Array Val} {v : Val} (h : CallsTo m fname args v)
+    (hv : Val.listFree v = true) :
+    ∃ w, CallsIn m (initWorld m) fname (RVal.thawArgs args) w (RVal.thaw v) := by
+  obtain ⟨fuel, hf⟩ := h
+  unfold callFunction at hf
+  cases hc : callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
+  | ok w rv =>
+    rw [hc, Run.toPublic_ok] at hf
+    have hrv : rv = RVal.thaw v :=
+      RVal.eq_thaw_of_freezeB w.heap fuel rv hf hv
+    subst hrv
+    exact ⟨w, fuel, hc⟩
+  | exn w e => simp [hc] at hf
+  | timeout => simp [hc] at hf
+  | unsupported msg => simp [hc] at hf
+
 /-- `Int`-typed core of `inverse_spec` — TOTAL correctness on coprime
 inputs. Coprimality rewrites the callee fact's gcd to 1, and the closing
 `py_vcgen` consumes it as a local `CallsTo` hypothesis at the call site;
@@ -214,11 +238,35 @@ private theorem inverse_core (x n : Int) (hx : 0 < x) (hn : 1 < n)
     ∃ r : Int, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧
       rsa_inverse.inverse(x, n) ==> r := by
   obtain ⟨v, hrun, i, j, rfl, hi0, hib, himod, -⟩ := egcd_core x n hx (by omega)
-  rw [hco] at hrun himod
-  simp only [Int.natCast_one] at hrun himod
+  rw [hco] at himod
+  simp only [Int.natCast_one] at himod
   rw [show (1:Int) % n = 1 from Int.emod_eq_of_lt (by omega) (by omega)] at himod
   refine ⟨i, hi0, hib, himod, ?_⟩
-  py_vcgen [rsa_inverse]
+  obtain ⟨w, hcall⟩ := callsIn_exists_of_callsTo hrun (by rfl)
+  obtain ⟨f₀, hcall⟩ := hcall.at_least
+  have hcall' := hcall (f₀ + 11) (by omega)
+  have hw : initWorld rsa_inverse = ({ heap := #[], globals := [] } : World) := by
+    rfl
+  rw [hw] at hcall'
+  change callIn rsa_inverse (f₀ + 11) ({ heap := #[], globals := [] } : World)
+      "extended_gcd" #[.int x, .int n] = _ at hcall'
+  have hcallU := hcall'
+  simp only [rsa_inverse] at hcallU
+  refine CallsTo.intro (f₀ + 16) ?_
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals, Run.liftRes, Run.toPublic,
+    RVal.freezeB]
+  rw [hcallU]
+  py_simp [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, Run.bind, Run.withLocals, Run.liftRes,
+    Run.toPublic, RVal.freezeB, hco, Int.natCast_one]
 
 /-- **Total correctness of the shipped `inverse`** (python-rsa 4.9.1): on
 coprime inputs `0 < x`, `1 < n`, it terminates and returns the modular

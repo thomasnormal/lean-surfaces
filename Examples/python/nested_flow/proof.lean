@@ -95,7 +95,14 @@ the inner loop left `m' ≠ 0`), outer decrease (the nonlinear
 theorem first_factor_total (n : PyInt) (hn : 2 ≤ n) :
     nested_flow.first_factor(n) ==> (n.toNat.minFac : PyInt) := by
   have hn2 : (2 : Int) ≤ n := hn
-  py_vcgen [nested_flow]
+  py_vcgen [nested_flow, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals,
+    Run.liftRes, Run.toPublic, RVal.freezeB]
     (inv1 := fun (i : Int) => 2 ≤ i ∧ ∀ d : Int, 2 ≤ d → d < i → ¬ d ∣ n)
     (dec1 := fun (i : Int) => (n - i).toNat)
     (inv2 := fun (m : Int) => 0 ≤ m ∧ i ∣ (n - m))

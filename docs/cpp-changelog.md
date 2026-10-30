@@ -10,13 +10,19 @@ coverage advance independently from the Python tier.
 - Added a callable plain-`for` shadow-local witness whose initialized inner
   value is assigned to the outer binding before `break`; the false-condition
   companion remains covered separately.
+- Added a callable plain-`for` assignment false-path witness: the loop's
+  literal initialization and assignment are skipped by a false condition.
+- Added a callable plain-`for` assignment `return` false-path witness: a false
+  loop condition skips the body and the unchanged controlling value is returned.
+- Added a callable plain-`for` assignment `continue` false-path witness: a
+  false loop condition skips the body and leaves the controlling value unchanged.
 
 ### Measured
 
-- The checked-in corpus now contains **1071 differential rows**: **1054 MATCH**,
+- The checked-in corpus now contains **1074 differential rows**: **1057 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **565**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **568**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

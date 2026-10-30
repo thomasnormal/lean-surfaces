@@ -1749,6 +1749,17 @@
       "expect": "refuse"
     },
     {
+      "name": "always_accept_timed",
+      "file": "Examples/system-verilog/always_accept/always_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "delayed_refusal",
       "file": "Examples/system-verilog/time_boundary/delayed.sv",
       "module": "top",

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Hosted full CI now uses one Lean elaboration worker, preserving the complete
+  repository gate while avoiding the runner resource kill at the final Python
+  targets.
+
+- The `rsa_inverse` proof now composes a nested `extended_gcd` call through
+  the stateful `CallsIn` judgment without weakening the conservative
+  heap-free fragment.
+
 - Flat starred `for` targets now reuse the existing starred-unpack worker for
   each loop item; nested and otherwise unsupported target shapes remain loud.
 - Decimal `int(str)` conversion now returns CPython's pinned 4300-digit `ValueError` instead of a tier refusal; malformed inputs within the budget retain their exact literal errors.

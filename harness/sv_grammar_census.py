@@ -22,6 +22,7 @@ from pyslang.syntax import SyntaxTree
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_ROOT = REPO / "Examples" / "system-verilog"
+TIMED_RUNNER = REPO / "harness" / "sv" / "conformance" / "timed_runner.lean"
 def load_extractor():
     path = REPO / "extractors" / "sv" / "extract.py"
     spec = importlib.util.spec_from_file_location("sv_extractor", path)
@@ -88,6 +89,60 @@ def run_batch(envelopes, fuel):
             pass
 
 
+def run_timed_batch(envelopes, fuel, ticks=16):
+    """Run process witnesses through the scheduler-facing timed runner."""
+    listing = Path(tempfile.mktemp(prefix="sv-grammar-timed-list-", suffix=".txt"))
+    listing.write_text("".join(str(p) + "\n" for p in envelopes), encoding="utf-8")
+    try:
+        import subprocess
+        env = os.environ.copy()
+        env.setdefault("LEAN_NUM_THREADS", "1")
+        p = subprocess.run(["systemd-run", "--user", "--scope", "-q",
+                            "-p", "MemoryMax=24G", "-p", "CPUQuota=800%",
+                            "lake", "env", "lean", "-j", "1", "--run",
+                            str(TIMED_RUNNER), "--batch", str(listing),
+                            "--fuel", str(fuel), "--ticks", str(ticks)],
+                           cwd=str(REPO), capture_output=True, text=True,
+                           timeout=1800, env=env)
+        if p.returncode:
+            raise RuntimeError("timed self-check grammar runner failed (%d):\n%s\n%s" %
+                               (p.returncode, p.stdout[-2000:], p.stderr[-2000:]))
+        out = {}
+        current = None
+        for line in p.stdout.splitlines():
+            if line.startswith("=== BEGIN "):
+                current = line[len("=== BEGIN "):]
+                out[current] = {"lines": []}
+            elif line.startswith("=== END ") and current is not None:
+                tail = line[len("=== END "):]
+                path, status = tail.split(" status=", 1)
+                parts = status.split(" ", 1)
+                out[path]["status"] = parts[0]
+                out[path]["detail"] = parts[1] if len(parts) == 2 else ""
+                current = None
+            elif current is not None:
+                out[current]["lines"].append(line)
+        return out
+    finally:
+        try:
+            listing.unlink()
+        except OSError:
+            pass
+
+
+def needs_timed_runner(envelope):
+    """Use the scheduler for plain/clocked `always`, retaining other refusals."""
+    try:
+        payload = json.loads(Path(envelope).read_text(encoding="utf-8"))
+        modules = payload.get("design", {}).get("modules", [])
+        processes = modules[0].get("processes", []) if len(modules) == 1 else []
+        return any(p.get("kind") == "Always" or
+                   (p.get("kind") == "AlwaysPosedge" and
+                    p.get("style") != "always_ff") for p in processes)
+    except (OSError, ValueError, TypeError):
+        return False
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--root", default=os.environ.get("SV_GRAMMAR_ROOT", str(DEFAULT_ROOT)))
@@ -111,7 +166,15 @@ def main(argv=None):
                 metadata.append((kind, source, envelope, "parsed"))
             except Exception as exc:
                 metadata.append((kind, source, None, "extract-error: %s" % exc))
-        model = run_batch([e for _, _, e, status in metadata if e is not None], args.fuel)
+        standard = [e for _, _, e, status in metadata
+                    if e is not None and not needs_timed_runner(e)]
+        timed = [e for _, _, e, status in metadata
+                 if e is not None and needs_timed_runner(e)]
+        model = {}
+        if standard:
+            model.update(run_batch(standard, args.fuel))
+        if timed:
+            model.update(run_timed_batch(timed, args.fuel))
         rows = []
         for kind, source, envelope, frontend in metadata:
             if envelope is None:

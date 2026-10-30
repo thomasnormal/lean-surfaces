@@ -1798,9 +1798,13 @@ width that is itself an input port of the instantiating module; the flop then
 flattens to a flop on that signal, and the rule applies again one level up.
 Any other clock — a child-internal signal, an expression, a derived or gated
 parent signal such as `assign gclk = clk & en` — is loud (`Instance:clock`).
-(A top-level `always_ff @(posedge g)` on a derived `g` is still admitted and
-runs on the cycle clock: the flat tier's single-clock gap, which flattening
-does not widen.) On an instance-free design `instantiateH` IS `instantiate2`
+(A top-level `always_ff @(posedge g)` on a derived `g` is still admitted by
+`name.sem` and runs on the cycle clock: the flat tier's single-clock gap,
+which flattening does not widen. Since WP-Q0 (2026-10-30) the LOADER refuses
+it: the clock-discipline guard `LeanModels/Sv/ClockGuard2.lean`, a check
+beside `name.sem`, requires every edge process to be clocked by the one
+input-port clock that nothing reads as data — `Clock:source`,
+`Clock:reset`, `Clock:multiple`, `Clock:data-read`.) On an instance-free design `instantiateH` IS `instantiate2`
 (`Hier2Gen.lean`, `PDesign.instantiateH_flat`).
 
 **Port width context.** (Round 6, 2026-10-29: a bare reference to a NET fed

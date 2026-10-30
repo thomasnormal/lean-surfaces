@@ -1,3 +1,30 @@
+# [0.1.265] — 2026-10-30
+
+The clock-discipline guard (WP-Q0, refusal-only; `LeanModels/Sv/ClockGuard2.lean`,
+the first item S0 of `svgolf/design/sequential/README.md`). The cycle semantics
+runs every edge process once per cycle and never reads the clock's value, so a
+clocked design whose clock is undriven, tied to a constant, assign-derived (gated),
+an internal net, a register, a second clock port, read as data, or whose
+asynchronous reset is generated inside the design ran in the model on cycles
+where no simulator sees an edge (measured on Xcelium 24.03 and Icarus 12.0: a
+gated counter counts only the enabled edges, an undriven or tied clock never
+captures). Such a design is now refused by the loader: `Clock:source`,
+`Clock:reset`, `Clock:multiple`, `Clock:data-read`, and the existing Hier2
+`Instance:clock` is reported at the loader too. The guard sits BESIDE `name.sem`
+like the select and alias guards (the recorded instantiation lemmas are stated
+for the unguarded family): `load_design_sv2` at the defaults and every probed
+point, `probeCheckString`, the differential runner and `PDesign.clockReport`
+run it; `Hier2.lean` and every proof file are untouched. Admitted designs prove
+what they satisfy (`Design2.clockViolation_source`, `_single`, `_reads`,
+`_of_noEdge`). No existing row of the corpus is affected (36 of the 691 rows hold
+an edge process, all single-clock and admitted); 18 rows are new (7 admitted
+designs against Icarus and new pinned Xcelium traces, 11 refusal rows with the
+measurement of what the unguarded model got wrong); 17 fixtures
+`Examples/system-verilog/sem2/clk_*` with the refusal messages pinned.
+Register: `gu-clock-source`, `gu-clock-reset`, `gu-clock-multiple`,
+`gu-clock-data-read` (later, plan SEQ), `le-instance-clock` and `sg-unclocked`
+updated.
+
 # [0.1.264] — 2026-10-30
 
 The timed scheduler now delivers a procedural `#0` through the Inactive

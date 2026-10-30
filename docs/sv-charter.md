@@ -12504,6 +12504,10 @@ to an input port of the top (`clockGuardProc`, `Hier2.lean`; `#guard`s for
 the gated, child-internal and two-level cases), so no flattened child flop
 runs on a derived clock. Closing the top-level half needs a clock-domain
 check on `Design2` (or a multi-clock cycle semantics) and is not started.
+CLOSED at the loader on 2026-10-30 (WP-Q0): see "The clock-discipline guard"
+at the end of this charter. `name.sem` still instantiates such a design
+(the recorded lemmas are stated for the unguarded family); `load_design_sv2`,
+the differential runner and `probeCheckString` refuse it.
 
 One driver per bit after flattening (2026-10-28, verifier round 2):
 flattening adds the port-connection assigns AFTER the extractor's
@@ -15827,3 +15831,54 @@ pinned data. (d) `iverilog-single-element-minus-select` sits on a refusal row an
 checked. (e) The declared-divergence register (`docs/sv-declared-divergences.json`) holds
 M0-mode provenance rows and was not touched. (f) `dyn32`'s unsigned-base cells and the
 element select of a packed-array member of a packed struct stay open (audit 6.4).
+
+## The clock-discipline guard (WP-Q0, refusal-only) — 2026-10-30
+
+The first item (S0) of the sequential road (`svgolf/design/sequential/README.md`, approved by
+Thomas on 2026-10-30). `Sem2.cycleStep2` runs every edge-phase process once per cycle and never
+reads the clock's value, so the model is exact only when the clock is an input port of the top
+whose edge is the cycle (the stimulus protocol: one entry, one rising edge) and silently wrong in
+every other case. Measured on Xcelium 24.03-s004 and Icarus 12.0 (rows `clk_*`): an undriven or
+constant-tied clock never captures (the model captured every cycle), a gated counter counts only
+the enabled edges (`0 0 1 1 2 3 3` against the model's `0 1 2 3 4 5 6`), an internal-net clock
+captures on the rising edges of its source only, a register used as a clock stays x, a design that
+reads the clock as data gets the waveform where the model has no value.
+
+**The rules** (`LeanModels/Sv/ClockGuard2.lean`, on the ELABORATED, flattened `Design2`): (1)
+`Clock:source`, every edge process is clocked by a one-bit INPUT port of the top; (2) `Clock:reset`,
+an asynchronous reset is an input port, not its own clock, and no signal is both a clock and a reset;
+(3) `Clock:multiple`, at most one clock (several clocks are the note's S5/S6); (4) `Clock:data-read`,
+nothing reads the clock as data, except the plain copy `assign t = clk` (what a bare instance
+clock connection flattens to), whose target joins the clock's copy set and is checked in turn, and a
+copy that reaches an output port is a data use; (5) `Instance:clock`, the existing Hier2 kind, now
+also REPORTED at the loader, first, as the root cause. A refused design is the design itself with the
+loud `Clock:*` process appended (`Design2.disciplineGuard`).
+
+**Where.** A check BESIDE `name.sem`, exactly like `RangeGuard2.lean` and `CombAlias2.lean`: the
+instantiation lemmas (`PDesign.instantiate2_eq`, `instantiateG2_of_ok`, `instantiateGD2_of_ok`,
+`instantiateGD2_eq_driverGuard`, `Design2.driverGuard_of_ok`, `CombViewMain.lean`, the ∀-N
+examples and every svGolf reference) are stated for the unguarded family, so a guard inside
+`instantiateG2`/`instantiateGD2` would falsify them. The guard is run by `load_design_sv2` at the
+defaults and at every probe-sidecar point (`Envelope2.clockAtPoints`), by `probeCheckString` (the svGolf
+checker's entry), by `harness/sv/runner2.lean` at each row's point, and by `PDesign.clockReport`.
+Edit set: `ClockGuard2.lean` (new), `Ingest2.lean`, `runner2.lean`, `diff_test2.py`
+(`SV_LEAN_MODULES`), the register; `Hier2.lean` and every proof file are untouched.
+
+**Trust.** The guard is a decidable function of the elaborated design and only refuses
+(`disciplineGuard_of_admits`): it adds no axiom and no trusted statement. What an admitted design
+satisfies is proved (`clockViolation_source`: every clock is a declared one-bit input port,
+`clockViolation_single`: one clock, `clockViolation_reads`: nothing outside plain copies of the
+clock's copy set reads it; `clockViolation_of_noEdge`: a combinational family is its own guard), all
+on `propext`/`Quot.sound` only. The sequential statement's own `ClockedBy` is the proof-side twin.
+
+**Corpus.** Of the 691 rows of `cases2.json` before this lane, 36 hold an edge process (34 on `clk`,
+`Clk_CI` and `clk_i` two each) and ALL are admitted; no row violates. The M0 tier (`Design`, the
+`clocked`, `counter`, `toggle`, `swap_nba`, `race_blk` examples) never passes through `Design2` and
+is unaffected. 18 rows are new: 7 admitted designs (`clk_cnt`, `clk_cnt_n2`, `clk_shreg`,
+`clk_pipe2`, `clk_fsm`, `clk_arst`, `clk_child_ok`) agree with Icarus and with the new pinned
+Xcelium traces (additive, 7 entries); 11 refusal rows (`clk_undriven`, `clk_tied`, `clk_gated`,
+`clk_internal`, `clk_reg`, `clk_data`, `clk_out`, `clk_two`, `clk_rst_int`, `clk_child_gated`,
+`clk_child_data`) carry the Xcelium/Icarus measurement of what the unguarded model got wrong.
+Fixtures: `Examples/system-verilog/sem2/clk_*` with the refusal messages pinned verbatim by
+`#guard_msgs`.
+

@@ -5,6 +5,7 @@ import LeanModels.Sv.Hier2
 import LeanModels.Sv.Probe2
 import LeanModels.Sv.RangeGuard2
 import LeanModels.Sv.CombAlias2
+import LeanModels.Sv.ClockGuard2
 
 /-!
 # SV symbolic-envelope ingestion — schema sv-0.2 (`LeanModels.Sv`)
@@ -812,12 +813,24 @@ def Envelope2.aliasAtPoints (e : Envelope2) (pr : Probes2) : Option (String × S
     | .ok (d', args) => (d'.aliasReport e.lib args).map (renderOverrides p.overrides, ·)
     | .error _ => none
 
+/-- **The clock-discipline guard at every probed point** (WP-Q0, 2026-10-30;
+`ClockGuard2.lean`, a check BESIDE `name.sem` like the select and alias
+guards): the first point at which the instantiated design violates the clock
+discipline — `(point, kind, message)`, or `none`. -/
+def Envelope2.clockAtPoints (e : Envelope2) (pr : Probes2) : Option (String × String × String) :=
+  pr.points.findSome? fun p =>
+    match e.design.atPoint (e.design.params.map fun prm => p.overrides.lookup prm.name) with
+    | .ok (d', args) =>
+        (d'.clockReport e.lib args).map fun (k, msg) => (renderOverrides p.overrides, k, msg)
+    | .error _ => none
+
 /-- `probeReportString` collapsed to pass/fail: `.ok n` = all `n` entries
 agree, `.error msg` = the first failing entry (or a parse error). Since
 round 3 (folds) also `.error` when the legacy-select range guard refuses
 at a probed point (`Envelope2.legacyRangeAtPoints`), and since round 6 when
 a select guard does (`Envelope2.selectGuardAtPoints`) or the `always_comb`
-alias guard does (`Envelope2.aliasAtPoints`). -/
+alias guard does (`Envelope2.aliasAtPoints`), and since WP-Q0 (2026-10-30) when
+the clock-discipline guard does (`Envelope2.clockAtPoints`). -/
 def probeCheckString (envText probesText : String) : Except String Nat := do
   let rep ← probeReportString envText probesText
   match rep.find? (fun (_, v) => !v.ok) with
@@ -830,7 +843,10 @@ def probeCheckString (envText probesText : String) : Except String Nat := do
       | none =>
           match e.aliasAtPoints pr with
           | some (l, msg) => throw s!"alias guard FAILED at {l}: {msg} (`AlwaysComb:alias-read`)"
-          | none => return rep.length
+          | none =>
+              match e.clockAtPoints pr with
+              | some (l, k, msg) => throw s!"clock guard FAILED at {l}: {msg} (`{k}`)"
+              | none => return rep.length
 
 /-- `probeCheckString` on files: the envelope at `envPath` and its sidecar
 (`probeSidecarPath`). `.ok none` = no sidecar exists (nothing checked —
@@ -869,6 +885,12 @@ encoding):
   the hierarchy flattened at the defaults must have distinct names
   (`Design2.namesNodup`) and one driver per bit (`driversOk`: no
   `PortConn:driver` process).
+  Since WP-Q0 (2026-10-30) the instantiated design must also pass the clock
+  discipline (`ClockGuard2.lean`, `Design2.clockViolation`, a check BESIDE
+  `name.sem`, at the defaults and at every probed point): every edge process
+  is clocked by the same one-bit INPUT port, an asynchronous reset is an input
+  port, and nothing reads the clock as data (`Clock:source`, `Clock:reset`,
+  `Clock:multiple`, `Clock:data-read`).
 
 Before defining anything the command replays the defaults elaboration and
 compares it against the envelope's `resolved` metadata
@@ -961,6 +983,15 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
                 throwErrorAt path
                   "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`AlwaysComb:alias-read`, `Stmt2.aliasViol`)"
             | _ => pure ()
+          -- The clock discipline (WP-Q0, 2026-10-30, `ClockGuard2.lean`): a
+          -- check BESIDE `name.sem`, run at the defaults here and at every
+          -- probed point below. A clocked design whose clock is not an input
+          -- port of the top, is read as data, is a second clock or an
+          -- internal reset would run in the model on cycles where no
+          -- simulator sees an edge.
+          if let some (k, msg) := dD.clockReport then
+            throwErrorAt path
+              "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`{k}`, `Design2.clockViolation`)"
       | _ => pure ()
       -- The legacy-select range guard (round 3 folds, `RangeGuard2.lean`):
       -- a check BESIDE `name.sem` (whose recorded lemmas pin it), run at
@@ -998,6 +1029,10 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
         if let some (l, msg) := envl.aliasAtPoints pr then
           throwErrorAt path
             "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`AlwaysComb:alias-read`, `PDesign.aliasReport`)"
+        -- The clock discipline at every probed point (WP-Q0).
+        if let some (l, k, msg) := envl.clockAtPoints pr then
+          throwErrorAt path
+            "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`{k}`, `PDesign.clockReport`)"
   let funName := (← getCurrNamespace) ++ name.getId
   let pdName := funName ++ `pdesign
   let semName := funName ++ `sem

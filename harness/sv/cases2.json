@@ -30008,6 +30008,697 @@
         }
       ],
       "measured": "WP-E1 2026-10-30: shapes beyond the zero-based `[N-1:0]` member. In `s_t { logic [7:4][3:0] n; logic [4:7][3:0] r; logic [1:0][1:0][3:0] m; u_t u; }` (64 bits) the labels count elements of the array they select from: s.n[5] = a_i[55:52] (range [7:4], element 7 on top), s.n[6:5] = [59:52], s.r[4] = [47:44] (ascending [4:7]: element 4 on top), s.r[7] = [35:32], s.m[1][0] = [27:24], s.m[1] = [31:24], s.m[1][0][2:1] = [26:25], and through the union nested in the struct s.u.b[1] = [15:8], s.u.b[0][7:4] = [7:4]. Pre-fix every one of these was a one-bit window (s.n[5] = PartSel[49:49])."
+    },
+    {
+      "name": "clk_cnt",
+      "example": "sem2/clk_cnt",
+      "top": "clk_cnt",
+      "signals": [
+        "rst",
+        "en",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "0"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "x"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "rst": "x",
+          "en": "1"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Cycle 0 (no reset yet): q = x (x + 1 = x). en = x holds the count (`else if (x)` takes no branch), rst = x takes the else branch (the count goes on), reset forgets the count."
+    },
+    {
+      "name": "clk_cnt_n2",
+      "example": "sem2/clk_cnt",
+      "top": "clk_cnt",
+      "params": {
+        "N": 2
+      },
+      "signals": [
+        "rst",
+        "en",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "0"
+        },
+        {
+          "en": "1"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. N = 2: the count wraps 3 -> 0 (the default-point fold is cross-checked at N = 2 by the xcheck sidecar)."
+    },
+    {
+      "name": "clk_shreg",
+      "example": "sem2/clk_shreg",
+      "top": "clk_shreg",
+      "signals": [
+        "rst",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst": "0",
+          "d": "1"
+        },
+        {
+          "rst": "1",
+          "d": "0"
+        },
+        {
+          "rst": "0",
+          "d": "1"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "x"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Before the first reset the shifted-in bit lands in an x register (q = xxx1, partially known); d = x shifts an x through the register (101x, 01x0, 1x00, x000) until four known bits are shifted in."
+    },
+    {
+      "name": "clk_pipe2",
+      "example": "sem2/clk_pipe2",
+      "top": "clk_pipe2",
+      "signals": [
+        "rst",
+        "a",
+        "b",
+        "s1",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "rst": "1",
+          "a": "0000",
+          "b": "0000"
+        },
+        {
+          "rst": "0",
+          "a": "0101",
+          "b": "0011"
+        },
+        {
+          "a": "1111",
+          "b": "0001"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        },
+        {
+          "a": "1x01",
+          "b": "0011"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        },
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "0",
+          "a": "1010",
+          "b": "0101"
+        },
+        {
+          "a": "0000",
+          "b": "0000"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Both stages sampled (`s1`, `y`): y is s1 one cycle later; an x bit in a (1x01) travels through s1 (1x10) to y one cycle later."
+    },
+    {
+      "name": "clk_fsm",
+      "example": "sem2/clk_fsm",
+      "top": "clk_fsm",
+      "signals": [
+        "rst",
+        "go",
+        "busy",
+        "done"
+      ],
+      "stimulus": [
+        {
+          "rst": "0",
+          "go": "1"
+        },
+        {
+          "rst": "1",
+          "go": "0"
+        },
+        {
+          "rst": "0",
+          "go": "0"
+        },
+        {
+          "go": "1"
+        },
+        {
+          "go": "0"
+        },
+        {
+          "go": "0"
+        },
+        {
+          "go": "0"
+        },
+        {
+          "go": "1"
+        },
+        {
+          "go": "1"
+        },
+        {
+          "rst": "1",
+          "go": "1"
+        },
+        {
+          "rst": "0",
+          "go": "0"
+        },
+        {
+          "go": "x"
+        },
+        {
+          "go": "1"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Cycle 0: the state is x and the `case` default takes IDLE; IDLE -> RUN -> DONE -> IDLE with `busy`/`done` combinational on the state; go = x (cycle 11) leaves IDLE (the `if (x)` takes no branch)."
+    },
+    {
+      "name": "clk_arst",
+      "example": "sem2/clk_arst",
+      "top": "clk_arst",
+      "signals": [
+        "rst_n",
+        "en",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst_n": "0",
+          "en": "0",
+          "d": "0101"
+        },
+        {
+          "rst_n": "1",
+          "en": "1",
+          "d": "0101"
+        },
+        {
+          "d": "0111"
+        },
+        {
+          "en": "0",
+          "d": "1001"
+        },
+        {
+          "rst_n": "0"
+        },
+        {
+          "d": "0011"
+        },
+        {
+          "rst_n": "1",
+          "en": "1",
+          "d": "0110"
+        },
+        {
+          "en": "x",
+          "d": "1111"
+        },
+        {
+          "rst_n": "x",
+          "d": "0010"
+        },
+        {
+          "rst_n": "1",
+          "en": "1",
+          "d": "0001"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Asynchronous active-low reset (the pinned pin3 ledger): the reset acts the moment `rst_n` falls (cycles 0 and 4, before the edge); rst_n = x (cycle 8, a 1 -> x glitch) is a negedge event too and the register holds 0110 in all tools; en = x holds. `rst_n` is read as data inside the block (allowed); it is not a clock."
+    },
+    {
+      "name": "clk_child_ok",
+      "example": "sem2/clk_child_ok",
+      "top": "clk_child_ok",
+      "signals": [
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "x"
+        },
+        {
+          "d": "0"
+        }
+      ],
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (vip-ng refsim, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. A child register clocked through a bare connection `.ck(clk)` to the parent's input port: the flattened design has the connection copy `u.ck = clk` (a plain copy nothing reads) and the child's edge process on `clk`."
+    },
+    {
+      "name": "clk_undriven",
+      "example": "sem2/clk_undriven",
+      "top": "clk_undriven",
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        }
+      ],
+      "refusal": "Clock:source",
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED; `LeanModels/Sv/ClockGuard2.lean`, a check beside `name.sem`): the clock `clk` is an internal signal nothing drives — the undriven-clock exploit of svgolf/design/sequential/README.md. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): y = x x x x (no edge ever occurs, the register stays x); the model WITHOUT the guard captures a & b in every cycle, y = 1 0 0 1."
+    },
+    {
+      "name": "clk_tied",
+      "example": "sem2/clk_tied",
+      "top": "clk_tied",
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        }
+      ],
+      "refusal": "Clock:source",
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED): the clock is tied to the constant 0 (`assign clk = 1'b0`), which Yosys turns into `assign y = 1'hx` (0 GE). Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): y = x x x x (no edge); the model without the guard captures a & b in every cycle, y = 1 0 0 1."
+    },
+    {
+      "name": "clk_gated",
+      "example": "sem2/clk_gated",
+      "top": "clk_gated",
+      "signals": [
+        "en",
+        "rst",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "en": "1",
+          "rst": "1"
+        },
+        {
+          "en": "0",
+          "rst": "0"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "0"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "0"
+        }
+      ],
+      "refusal": "Clock:source",
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED): an assign-derived (gated) clock `g = clk & en` (the charter's single-clock gap, svgolf/design/sequential/experiments.md E5). Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): the counter counts only the enabled edges, q = 0000 0000 0001 0001 0010 0011 0011 for en = 1 0 1 0 1 1 0; the model without the guard counts every cycle, q = 0000 0001 0010 0011 0100 0101 0110."
+    },
+    {
+      "name": "clk_internal",
+      "example": "sem2/clk_internal",
+      "top": "clk_internal",
+      "signals": [
+        "sel",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "sel": "0",
+          "d": "1"
+        },
+        {
+          "sel": "0",
+          "d": "0"
+        },
+        {
+          "sel": "1",
+          "d": "1"
+        },
+        {
+          "sel": "0",
+          "d": "0"
+        },
+        {
+          "sel": "1",
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:source",
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED): an internal net `ck` (a rename of the input `sel`) used as the clock. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): the register captures only on the rising edges of `sel` (sel = 0 0 1 0 1): q = x x 1 1 1; the model without the guard captures d in every cycle, q = 1 0 1 0 1."
+    },
+    {
+      "name": "clk_reg",
+      "example": "sem2/clk_reg",
+      "top": "clk_reg",
+      "signals": [
+        "d",
+        "div",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:source",
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED): a REGISTER used as a clock (the divide-by-two `div <= ~div` clocks `q`). Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): `div` stays x (it is never initialised), so `q` never captures: q = x x x x x x; the model without the guard ticks the second flop in every cycle, q = 1 0 1 1 0 1."
+    },
+    {
+      "name": "clk_data",
+      "example": "sem2/clk_data",
+      "top": "clk_data",
+      "signals": [
+        "a",
+        "d",
+        "y",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "d": "1"
+        },
+        {
+          "a": "1",
+          "d": "0"
+        },
+        {
+          "a": "0",
+          "d": "1"
+        },
+        {
+          "a": "1",
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:data-read",
+      "measured": "WP-Q0 clock discipline, `Clock:data-read` (REFUSED): `assign y = clk ^ a` reads the clock as data (the register on `clk` is fine by itself). Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): y = 1 0 1 0 for a = 0 1 0 1 (the clock value last seen by the assignment: y = ~a at the negedge sample), q = d; the model without the guard has no value for the clock (the stimulus never binds it): y = x x x x."
+    },
+    {
+      "name": "clk_out",
+      "example": "sem2/clk_out",
+      "top": "clk_out",
+      "signals": [
+        "d",
+        "q",
+        "ck_o"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:data-read",
+      "measured": "WP-Q0 clock discipline, `Clock:data-read` (REFUSED): the clock is exported on an output port (`assign ck_o = clk`), a plain copy that reaches the environment. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): the simulators DISAGREE on the sampled value of a copy of the clock at the negedge (Xcelium ck_o = 1 1 1 1, Icarus ck_o = 0 0 0 0: a testbench scheduling race); the model without the guard reports x (the clock is never bound). The value of a clock copy is not an observable the cycle model can give a meaning."
+    },
+    {
+      "name": "clk_two",
+      "example": "sem2/clk_two",
+      "top": "clk_two",
+      "signals": [
+        "d",
+        "a",
+        "b"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        }
+      ],
+      "refusal": "Clock:multiple",
+      "measured": "WP-Q0 clock discipline, `Clock:multiple` (REFUSED): a second clock port. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree; the testbench pulses `clk1` only, the row's `clock`): `a` follows d, b stays x because `clk2` never ticks: b = x x x x x; the model without the guard ticks both clocks in every cycle (it runs every edge process once per cycle), b = x 1 0 1 1 (b follows a one cycle later) — a reading no stimulus of a simulator is bound to produce.",
+      "clock": "clk1"
+    },
+    {
+      "name": "clk_rst_int",
+      "example": "sem2/clk_rst_int",
+      "top": "clk_rst_int",
+      "signals": [
+        "rst",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst": "1",
+          "d": "1"
+        },
+        {
+          "rst": "0",
+          "d": "1"
+        },
+        {
+          "rst": "0",
+          "d": "0"
+        },
+        {
+          "rst": "1",
+          "d": "1"
+        },
+        {
+          "rst": "0",
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:reset",
+      "measured": "WP-Q0 clock discipline, `Clock:reset` (REFUSED): the asynchronous reset `rst_q` is a register of the design (`rst_q <= ~rst` on `clk`), not an input port. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): the reset acts asynchronously the moment `rst_q` falls (the first posedge) and `q` stays 0 in every cycle (q = 0 0 0 0 0); the model without the guard (its reset-event phase compares settled inputs, and `rst_q` changes only in the edge phase) gives q = 1 0 0 1 0."
+    },
+    {
+      "name": "clk_child_gated",
+      "example": "sem2/clk_child_gated",
+      "top": "clk_child_gated",
+      "signals": [
+        "en",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "en": "0",
+          "d": "1"
+        },
+        {
+          "en": "1",
+          "d": "1"
+        },
+        {
+          "en": "0",
+          "d": "0"
+        },
+        {
+          "en": "1",
+          "d": "0"
+        }
+      ],
+      "refusal": "Instance:clock",
+      "measured": "WP-Q0 clock discipline, `Instance:clock` (REFUSED, the existing Hier2 kind now reported by the loader too): the child register's clock port is connected to the gated parent signal `g = clk & en`. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): the child captures d only while en = 1: q = x 1 1 0 for en = 0 1 0 1 (d = 1 1 0 0); `name.sem` was already loud (`run2` stops at the `Instance:clock` process), so the model has no trace to compare."
+    },
+    {
+      "name": "clk_child_data",
+      "example": "sem2/clk_child_data",
+      "top": "clk_child_data",
+      "signals": [
+        "d",
+        "q",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "1"
+        }
+      ],
+      "refusal": "Clock:data-read",
+      "measured": "WP-Q0 clock discipline, `Clock:data-read` (REFUSED): the child register is clocked by the parent's input port through a bare connection (allowed), but the child ALSO reads its clock port as data (`assign y = ck & d`); after flattening that reads `u.ck`, a continuous copy of the parent's clock. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through refsim on vip-ng and Icarus 12.0, which agree unless said): y = 1 0 1 1 for d = 1 0 1 1 (the clock is high at the last evaluation of the assignment); the model without the guard has no clock value: y = x 0 x x."
     }
   ]
 }

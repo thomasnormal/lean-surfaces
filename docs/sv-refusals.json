@@ -448,6 +448,7 @@
    "LeanModels/Sv/RangeGuard2.lean",
    "LeanModels/Sv/CombGuard2.lean",
    "LeanModels/Sv/CombAlias2.lean",
+   "LeanModels/Sv/ClockGuard2.lean",
    "LeanModels/Sv/Sem2.lean",
    "LeanModels/Sv/Semantics.lean",
    "LeanModels/Sv/Comb2Proc.lean",
@@ -4504,7 +4505,8 @@
    "tag": "Instance:clock",
    "group": "hierarchy",
    "layers": [
-    "lean-model"
+    "lean-model",
+    "lean-loader"
    ],
    "trigger": "a child clock port connected to a non-bare expression (`.ck(clk & en)`); a child flop clocked by a child-internal signal; `assign g = clk & en; child u(.ck(g))`",
    "why": "Sem2 runs every edge process once per cycle whatever its clock (single-clock cycle semantics); a derived or gated clock would fire while its enable is 0.",
@@ -4525,11 +4527,15 @@
     {
      "file": "LeanModels/Sv/Hier2.lean",
      "fn": "clockGuardProc"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockInstanceViol"
     }
    ],
    "evidence": "docs/sv-charter.md 'Single-clock gap, recorded (2026-10-28)'; Hier2.lean #guards",
    "verified_by_run": true,
-   "notes": "A TOP-level always_ff on a derived clock is admitted by the flat tier (known gap); svGolf closes it with `Unclocked`.",
+   "notes": "Since WP-Q0 (2026-10-30) the TOP-level single-clock gap is closed by the Clock:* guards (gu-clock-source and siblings), and this kind is also REPORTED at the loader (load_design_sv2, the differential runner, probeCheckString) by `Design2.clockInstanceViol`, first as the root cause; it was only loud in `name.sem` before. svGolf's Unclocked remains the statement-level twin for combinational tasks.",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
@@ -6026,6 +6032,210 @@
    "verified_by_run": false,
    "since": "2026-10-29",
    "notes": "Landed uncommitted in the working tree when this register was generated. Admitted: write-then-read, a SEPARATE always_comb copy, a copy of an unwritten variable. The two declared Icarus departures acg_alias_assign and acg_alias_port become refusals."
+  },
+  {
+   "id": "gu-clock-source",
+   "tag": "Clock:source",
+   "group": "guards",
+   "layers": [
+    "lean-guard",
+    "lean-loader"
+   ],
+   "trigger": "H: logic clk; always_ff @(posedge clk) y <= a & b;  (undriven)  /  assign clk = 1'b0; ... (tied)  /  assign g = clk & en; always_ff @(posedge g) ...  (gated)  /  always_ff @(posedge div) with div a register  /  a clock that is an output or an internal net",
+   "why": "Sem2 runs every edge process once per cycle and never reads the clock's value, so it is exact only when the clock is a one-bit INPUT port of the top whose edge is the cycle. A dead, tied, gated, derived, register or internal-net clock captures every cycle in the model and never (or only on enabled edges) in a simulator: measured on Xcelium 24.03 and Icarus 12.0 (rows clk_undriven, clk_tied, clk_gated, clk_internal, clk_reg).",
+   "category": "later",
+   "proposed": false,
+   "prerequisite": "clock edges as events (S5): edge detection from the clock signal between snapshots, clock gating, derived clocks (a clock produced by NBA logic also needs the R1 slot loop)",
+   "plan": "SEQ",
+   "kinds": {
+    "lean": [
+     "Clock:source"
+    ]
+   },
+   "where": [
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockSourceViol"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockViolation"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.disciplineGuard"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "PDesign.clockReport"
+    },
+    {
+     "file": "LeanModels/Sv/Ingest2.lean",
+     "fn": "load_design_sv2"
+    },
+    {
+     "file": "harness/sv/runner2.lean",
+     "fn": "main"
+    }
+   ],
+   "evidence": "LeanModels/Sv/ClockGuard2.lean; svgolf/design/sequential/README.md section 4 S0 and experiments.md E2/E5; rows clk_* of harness/sv/cases2.json; Examples/system-verilog/sem2/clk_*",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-30: approved the sequential design note (svgolf/design/sequential/README.md), whose first ls-sv item S0 is this loader refusal",
+   "since": "2026-10-30",
+   "notes": "A check BESIDE name.sem (like gu-alias-read): the recorded instantiation lemmas are stated for the unguarded family. Run by load_design_sv2 at the defaults and every probed point, probeCheckString (the svGolf checker's entry) and the differential runner. Closes the charter's single-clock gap for the TOP level; svGolf's Unclocked (sg-unclocked) is the statement-level twin until the sequential statement (ClockedBy) lands. The M0 tier is unaffected."
+  },
+  {
+   "id": "gu-clock-reset",
+   "tag": "Clock:reset",
+   "group": "guards",
+   "layers": [
+    "lean-guard",
+    "lean-loader"
+   ],
+   "trigger": "H: logic rst_q; always_ff @(posedge clk) rst_q <= ~rst; always_ff @(posedge clk or negedge rst_q) ...  /  @(posedge c or negedge c)  /  a signal that is both a clock and a reset",
+   "why": "An asynchronous reset must be an input port: a reset the design generates is a real asynchronous event in hardware but only a value at a snapshot in the cycle semantics (the reset-event phase compares the settled inputs between snapshots). Measured (row clk_rst_int): simulators reset at the first posedge and hold q = 0, the model gives 1 0 0 1 0.",
+   "category": "later",
+   "proposed": false,
+   "prerequisite": "clock edges as events (S5): an internally generated reset is an event of the active/NBA region, needing edge detection on arbitrary signals",
+   "plan": "SEQ",
+   "kinds": {
+    "lean": [
+     "Clock:reset"
+    ]
+   },
+   "where": [
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockResetViol"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockViolation"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.disciplineGuard"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "PDesign.clockReport"
+    },
+    {
+     "file": "LeanModels/Sv/Ingest2.lean",
+     "fn": "load_design_sv2"
+    },
+    {
+     "file": "harness/sv/runner2.lean",
+     "fn": "main"
+    }
+   ],
+   "evidence": "LeanModels/Sv/ClockGuard2.lean; svgolf/design/sequential/README.md section 4 S0 and experiments.md E2/E5; rows clk_* of harness/sv/cases2.json; Examples/system-verilog/sem2/clk_*",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-30: approved the sequential design note (svgolf/design/sequential/README.md), whose first ls-sv item S0 is this loader refusal",
+   "since": "2026-10-30",
+   "notes": "Rule 2 of the clock discipline. Also refuses a reset that is the clock of another edge process (an input port is a clock or a reset, not both)."
+  },
+  {
+   "id": "gu-clock-multiple",
+   "tag": "Clock:multiple",
+   "group": "guards",
+   "layers": [
+    "lean-guard",
+    "lean-loader"
+   ],
+   "trigger": "H: always_ff @(posedge clk1) a <= d; always_ff @(posedge clk2) b <= a;  (two clock ports)",
+   "why": "The cycle step ticks every edge process once, i.e. all clocks together, which no stimulus of a real simulator is bound to do; independent or interleaved clocks need tick sets and interleavings (zero-skew coincident edges sample OLD values, pinned on Xcelium: clk2).",
+   "category": "later",
+   "proposed": false,
+   "prerequisite": "several clocks (S6): a step is a set of clocks that rise together, the stimulus quantifies all interleavings",
+   "plan": "SEQ",
+   "kinds": {
+    "lean": [
+     "Clock:multiple"
+    ]
+   },
+   "where": [
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockMultiViol"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockViolation"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.disciplineGuard"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "PDesign.clockReport"
+    },
+    {
+     "file": "LeanModels/Sv/Ingest2.lean",
+     "fn": "load_design_sv2"
+    },
+    {
+     "file": "harness/sv/runner2.lean",
+     "fn": "main"
+    }
+   ],
+   "evidence": "LeanModels/Sv/ClockGuard2.lean; svgolf/design/sequential/README.md section 4 S0 and experiments.md E2/E5; rows clk_* of harness/sv/cases2.json; Examples/system-verilog/sem2/clk_*",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-30: approved the sequential design note (svgolf/design/sequential/README.md), whose first ls-sv item S0 is this loader refusal",
+   "since": "2026-10-30",
+   "notes": "Rule 3 of the clock discipline: more than one distinct clock port is refused (the sequential note defers S5/S6); several processes on the SAME clock are fine."
+  },
+  {
+   "id": "gu-clock-data-read",
+   "tag": "Clock:data-read",
+   "group": "guards",
+   "layers": [
+    "lean-guard",
+    "lean-loader"
+   ],
+   "trigger": "H: assign y = clk ^ a;  /  if (clk) ...  /  assign ck_o = clk;  (output)  /  a child that reads its own clock port as data (assign y = ck & d)",
+   "why": "The model never gives the clock a value (the stimulus does not bind it; it is whatever the entry says or x), a simulator sees the waveform: a design that uses the clock as data is a gated or derived clock in disguise. Measured (rows clk_data, clk_out, clk_child_data). The one exemption is the plain copy `assign t = clk` (what a bare instance clock connection flattens to), whose target joins the clock's copy set and is checked in turn; a copy reaching an output port is refused too.",
+   "category": "later",
+   "proposed": false,
+   "prerequisite": "clock edges as events (S5): the clock as a value needs its waveform in the trace",
+   "plan": "SEQ",
+   "kinds": {
+    "lean": [
+     "Clock:data-read"
+    ]
+   },
+   "where": [
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockReadViol"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.clockViolation"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "Design2.disciplineGuard"
+    },
+    {
+     "file": "LeanModels/Sv/ClockGuard2.lean",
+     "fn": "PDesign.clockReport"
+    },
+    {
+     "file": "LeanModels/Sv/Ingest2.lean",
+     "fn": "load_design_sv2"
+    },
+    {
+     "file": "harness/sv/runner2.lean",
+     "fn": "main"
+    }
+   ],
+   "evidence": "LeanModels/Sv/ClockGuard2.lean; svgolf/design/sequential/README.md section 4 S0 and experiments.md E2/E5; rows clk_* of harness/sv/cases2.json; Examples/system-verilog/sem2/clk_*",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-30: approved the sequential design note (svgolf/design/sequential/README.md), whose first ls-sv item S0 is this loader refusal",
+   "since": "2026-10-30",
+   "notes": "Rule 4 of the clock discipline, decided on the flattened design (hierarchies included)."
   },
   {
    "id": "gu-nba-in-comb",
@@ -8206,7 +8416,8 @@
      "add/dead_clock_tied"
     ],
     "value_rank": 8,
-    "value_note": "registered, pipelined and multi-cycle designs (serial multiplier, iterative divider)"
+    "value_note": "registered, pipelined and multi-cycle designs (serial multiplier, iterative divider)",
+    "notes": "Since WP-Q0 (2026-10-30) ls-sv itself refuses a dead, tied, gated, derived, register, internal-net, multiple or data-read clock and an internal asynchronous reset at the loader (gu-clock-source, gu-clock-reset, gu-clock-multiple, gu-clock-data-read in docs/sv-refusals.md), so a CLOCKED design that loads is single-clock and input-port-clocked. `Unclocked` stays the statement-level requirement of combinational tasks; the sequential statement (ClockedBy, svgolf/design/sequential/README.md) replaces it and the loader refusals are its loader-side twin."
    },
    {
     "id": "sg-terminates",

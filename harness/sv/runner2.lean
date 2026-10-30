@@ -235,6 +235,15 @@ def main (argv : List String) : IO UInt32 := do
         match p with
         | .unsupported "AlwaysComb:alias-read" msg => .error s!"AlwaysComb:alias-read: {msg}"
         | _ => pure ()
+      -- The clock discipline (WP-Q0, 2026-10-30, `ClockGuard2.lean`): a
+      -- check beside `name.sem`, at this row's point on the instantiated
+      -- (flattened) design. A clock that is not an input port of the top, a
+      -- clock read as data, a second clock or an internal asynchronous reset
+      -- is named here (`Clock:source`, `Clock:data-read`, `Clock:multiple`,
+      -- `Clock:reset`) before `run2` would run the design on cycles where no
+      -- simulator sees an edge.
+      if let some (k, msg) := d.clockReport then
+        .error s!"{k}: {msg}"
       let stim ← (← getArrF case "stimulus").toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
       pure (d, stim, signals, fuel)

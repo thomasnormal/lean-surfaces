@@ -800,6 +800,120 @@
    "hash": "878c833f8decb35106fbfdb3ea794000ad3cd5556d7be3ff952ab9db9a4197a3",
    "status": "ok"
   },
+  "clk_arst": {
+   "cycles": [
+    "CYCLE 0 rst_n=0 en=0 d=0101 q=0000",
+    "CYCLE 1 rst_n=1 en=1 d=0101 q=0101",
+    "CYCLE 2 rst_n=1 en=1 d=0111 q=0111",
+    "CYCLE 3 rst_n=1 en=0 d=1001 q=0111",
+    "CYCLE 4 rst_n=0 en=0 d=1001 q=0000",
+    "CYCLE 5 rst_n=0 en=0 d=0011 q=0000",
+    "CYCLE 6 rst_n=1 en=1 d=0110 q=0110",
+    "CYCLE 7 rst_n=1 en=x d=1111 q=0110",
+    "CYCLE 8 rst_n=x en=x d=0010 q=0110",
+    "CYCLE 9 rst_n=1 en=1 d=0001 q=0001"
+   ],
+   "hash": "b819eaf6dc2bfd9f7ad2a9c3805d2407ac7c5643e1e1eb83d4c3d37b22578dcf",
+   "status": "ok"
+  },
+  "clk_child_ok": {
+   "cycles": [
+    "CYCLE 0 d=1 q=1",
+    "CYCLE 1 d=0 q=0",
+    "CYCLE 2 d=1 q=1",
+    "CYCLE 3 d=1 q=1",
+    "CYCLE 4 d=x q=x",
+    "CYCLE 5 d=0 q=0"
+   ],
+   "hash": "ba94ef6d10dd56e5217405d19979b0a1f74daf1c89d9a9302202b29d8c250031",
+   "status": "ok"
+  },
+  "clk_cnt": {
+   "cycles": [
+    "CYCLE 0 rst=0 en=1 q=xxxx",
+    "CYCLE 1 rst=1 en=0 q=0000",
+    "CYCLE 2 rst=0 en=1 q=0001",
+    "CYCLE 3 rst=0 en=1 q=0010",
+    "CYCLE 4 rst=0 en=1 q=0011",
+    "CYCLE 5 rst=0 en=0 q=0011",
+    "CYCLE 6 rst=0 en=1 q=0100",
+    "CYCLE 7 rst=0 en=x q=0100",
+    "CYCLE 8 rst=0 en=1 q=0101",
+    "CYCLE 9 rst=1 en=1 q=0000",
+    "CYCLE 10 rst=0 en=1 q=0001",
+    "CYCLE 11 rst=0 en=1 q=0010",
+    "CYCLE 12 rst=x en=1 q=0011"
+   ],
+   "hash": "b3529ec9d439001b4367d9f12b331c8e9fa2460f794017df8ac2a0ee208036d8",
+   "status": "ok"
+  },
+  "clk_cnt_n2": {
+   "cycles": [
+    "CYCLE 0 rst=1 en=0 q=00",
+    "CYCLE 1 rst=0 en=1 q=01",
+    "CYCLE 2 rst=0 en=1 q=10",
+    "CYCLE 3 rst=0 en=1 q=11",
+    "CYCLE 4 rst=0 en=1 q=00",
+    "CYCLE 5 rst=0 en=1 q=01",
+    "CYCLE 6 rst=0 en=1 q=10",
+    "CYCLE 7 rst=0 en=0 q=10",
+    "CYCLE 8 rst=0 en=1 q=11"
+   ],
+   "hash": "790073830af027deaa7533c031b5f2d2b94d2c74689f02c1f60b4b19ecdce116",
+   "status": "ok"
+  },
+  "clk_fsm": {
+   "cycles": [
+    "CYCLE 0 rst=0 go=1 busy=0 done=0",
+    "CYCLE 1 rst=1 go=0 busy=0 done=0",
+    "CYCLE 2 rst=0 go=0 busy=0 done=0",
+    "CYCLE 3 rst=0 go=1 busy=1 done=0",
+    "CYCLE 4 rst=0 go=0 busy=0 done=1",
+    "CYCLE 5 rst=0 go=0 busy=0 done=0",
+    "CYCLE 6 rst=0 go=0 busy=0 done=0",
+    "CYCLE 7 rst=0 go=1 busy=1 done=0",
+    "CYCLE 8 rst=0 go=1 busy=0 done=1",
+    "CYCLE 9 rst=1 go=1 busy=0 done=0",
+    "CYCLE 10 rst=0 go=0 busy=0 done=0",
+    "CYCLE 11 rst=0 go=x busy=0 done=0",
+    "CYCLE 12 rst=0 go=1 busy=1 done=0"
+   ],
+   "hash": "4d03eb96c5d108b3bdf0977b7dc91791ea6c2b81be5ec3b41c881f1cd8c03676",
+   "status": "ok"
+  },
+  "clk_pipe2": {
+   "cycles": [
+    "CYCLE 0 rst=1 a=0000 b=0000 s1=0000 y=0000",
+    "CYCLE 1 rst=0 a=0101 b=0011 s1=0110 y=0000",
+    "CYCLE 2 rst=0 a=1111 b=0001 s1=1110 y=0110",
+    "CYCLE 3 rst=0 a=0000 b=0000 s1=0000 y=1110",
+    "CYCLE 4 rst=0 a=1x01 b=0011 s1=1x10 y=0000",
+    "CYCLE 5 rst=0 a=0000 b=0000 s1=0000 y=1x10",
+    "CYCLE 6 rst=0 a=0000 b=0000 s1=0000 y=0000",
+    "CYCLE 7 rst=1 a=0000 b=0000 s1=0000 y=0000",
+    "CYCLE 8 rst=0 a=1010 b=0101 s1=1111 y=0000",
+    "CYCLE 9 rst=0 a=0000 b=0000 s1=0000 y=1111"
+   ],
+   "hash": "a725bdaf851a165f0bc102c339cc041ecfcfc2df164c1f241cf83842ef7aa9a0",
+   "status": "ok"
+  },
+  "clk_shreg": {
+   "cycles": [
+    "CYCLE 0 rst=0 d=1 q=xxx1",
+    "CYCLE 1 rst=1 d=0 q=0000",
+    "CYCLE 2 rst=0 d=1 q=0001",
+    "CYCLE 3 rst=0 d=1 q=0011",
+    "CYCLE 4 rst=0 d=0 q=0110",
+    "CYCLE 5 rst=0 d=1 q=1101",
+    "CYCLE 6 rst=0 d=x q=101x",
+    "CYCLE 7 rst=0 d=0 q=01x0",
+    "CYCLE 8 rst=0 d=0 q=1x00",
+    "CYCLE 9 rst=0 d=0 q=x000",
+    "CYCLE 10 rst=0 d=1 q=0001"
+   ],
+   "hash": "99901e3706eff1c87432e26352de80b8c9b0e7ac0166af82da467fd83873d0c7",
+   "status": "ok"
+  },
   "concat_add": {
    "cycles": [
     "CYCLE 0 a=1011 b=0110 cin=1 s=0010 cout=1",

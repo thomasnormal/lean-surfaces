@@ -255,11 +255,13 @@ def InWin (σd σs : String → Int) (st : TSite) : Prop :=
      | _ => True)
 
 /-- The facts the tactic closes by `omega`: reads in range, dimensions nonnegative, loop bounds
-within the generate fuel. -/
+within the generate fuel. The fuel is `(Σ|args| + 2)² + 64` (`PDesign.surfaceFuel`), so any loop
+count affine in the parameters with coefficient sum at most 4 is within it: the bound used here is
+the linear `4 · Σ|args| + 60` (a loop over `2*N` columns is admitted; svGolf `mul` tree design). -/
 def AutoObl (σ : String → Int) (args : List Int) : Prop :=
   (∀ ls ∈ s.lsites, Loops.all ls.hdrs σ fun σ' => ∀ r ∈ ls.site.rds, s.InR σ σ' r) ∧
   (∀ ls ∈ s.lsites, ∀ a ∈ ls.site.tgt :: ls.site.rds, s.DimNum σ a) ∧
-  (∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat ≤ (args.map Int.natAbs).sum + 60)
+  (∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat ≤ 4 * (args.map Int.natAbs).sum + 60)
 
 def InRangeObl (σ : String → Int) : Prop :=
   ∀ ls ∈ s.lsites, Loops.all ls.hdrs σ fun σ' => s.InWin σ σ' ls.site

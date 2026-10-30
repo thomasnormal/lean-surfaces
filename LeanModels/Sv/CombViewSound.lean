@@ -189,10 +189,13 @@ theorem summary_spec {d : PDesign} {s : Summary} (h : d.summary = .ok s) :
   obtain ⟨k1, k2⟩ := famsOf?_spec hg
   exact ⟨hl, he, ho, rfl, rfl, hp, k1.symm, k2⟩
 
-theorem surfaceFuel_gt (args : List Int) (x : Nat) (hx : x ≤ (args.map Int.natAbs).sum + 60) :
+theorem surfaceFuel_gt (args : List Int) (x : Nat) (hx : x ≤ 4 * (args.map Int.natAbs).sum + 60) :
     x < PDesign.surfaceFuel args := by
   show x < ((args.map Int.natAbs).sum + 2) * ((args.map Int.natAbs).sum + 2) + 64
-  have := Nat.le_mul_self ((args.map Int.natAbs).sum + 2)
+  have h : ((args.map Int.natAbs).sum + 2) * ((args.map Int.natAbs).sum + 2) =
+      (args.map Int.natAbs).sum * (args.map Int.natAbs).sum + 4 * (args.map Int.natAbs).sum + 4 := by
+    simp only [Nat.add_mul, Nat.mul_add]
+    omega
   omega
 
 theorem paramEnv2_dims {d : PDesign} {args : List Int} {env : IEnv}

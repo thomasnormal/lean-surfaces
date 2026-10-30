@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 504 | 492 | 0 | 12 | sv-tests-2 declarations |
+| 505 | 493 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -446,6 +446,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `unique0_case_dynamic_refuse` | `Examples/system-verilog/unique0_case_dynamic_refuse/unique0_case_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `literal_function_computed_statement` | `Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `case_array_widening` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | match | **MATCH** | `ok` | MATCH |
+| `case_equality_accept` | `Examples/system-verilog/case_equality_accept/case_equality_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `wildcard_case_accept` | `Examples/system-verilog/wildcard_case_accept/wildcard_case_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `case_inside_accept` | `Examples/system-verilog/case_inside_accept/case_inside_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `case_inside_dynamic_accept` | `Examples/system-verilog/case_inside_dynamic_accept/case_inside_dynamic_accept.sv` | match | **MATCH** | `ok` | MATCH |

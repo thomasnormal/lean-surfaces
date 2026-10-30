@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Four-state case equality witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for exact `===` and `!==` comparisons, including a matching X bit and a
+nonmatching value, with a literal `PASS` transcript.
+
+Differential coverage grows **504/492/0/12 → 505/493/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Dynamic `inside` expression range witness — 2026-10-30
 
 The legacy differential corpus now carries a compact dynamic `inside`

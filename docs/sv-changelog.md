@@ -1,3 +1,9 @@
+# [0.1.242] — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for exact four-state `===`/`!==` comparisons. Coverage grows
+**504/492/0/12 → 505/493/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.241] — 2026-10-30
 
 The legacy differential corpus now carries a compact dynamic `inside`

@@ -263,6 +263,27 @@ theorem driven_known (_hd : CombDesign d) (ha : Acyclic d) (hx : d.XFree) (hc : 
   have := key (rank i) i t e rfl hp n lo w off hm (k - lo) (by omega)
   rwa [show lo + (k - lo) = k by omega] at this
 
+/-- **Every supported read is known** (the knownness theorem under `sv_equations`; WP-P, P2). In a
+state that solves the settle equations (`CombEqs`) and has the comb shape (`StateShape`), with known
+inputs (`d.InputsKnown`), for a comb design (`CombDesign`) with a rank certificate (`Acyclic`), x-free
+right-hand sides (`d.XFree`) and no undriven read (`d.Covered`): EVERY read of EVERY assign's
+right-hand side is known (`ReadKnown`: each bit it observes is `0` or `1`, never `x`/`z`).
+
+This is the fact that makes the Boolean equations of `sv_equations` the real semantics. A four-state
+gate (`&`, `|`, `^`) of known bits is the Boolean gate, so the right-hand side evaluates to a Boolean
+(`Expr2.evalPure2_ofBoolFn`) and the equation `st.boolAt n (lo + k) = <Boolean value>` holds
+(`CombKnown.settled`, which uses this theorem). Nothing here is about the shape of the gates: a
+construct whose value is not determined by the Boolean values of its reads (a procedural `if`, `?:` with
+an unknown condition) needs the same hypothesis, "its reads are known", and this theorem is where it
+comes from. The proof is the strong induction on the rank of `driven_known`: a read is covered, so each
+of its bits is an input bit (known by hypothesis) or a driven bit (known by the induction). -/
+theorem CombKnown.reads_known (hd : CombDesign d) (ha : Acyclic d) (hx : d.XFree) (hc : d.Covered)
+    (heqs : CombEqs d st) (hs : StateShape d st) (hin : d.InputsKnown st)
+    {i : Nat} {t : Lhs2} {e : Expr2} (hp : d.processes[i]? = some (.assign t e)) :
+    ∀ r ∈ e.reads, ReadKnown d st r := fun r hr =>
+  readKnown_of_covered hs hin (hc i t e hp r hr) (fun n' k' _ hdr =>
+    driven_known hd ha hx hc heqs hs hin n' k' hdr)
+
 /-- **The x-free knownness theorem, with the Boolean equations.** For a comb design whose
 right-hand sides are in the x-free fragment (`d.XFree`), with no undriven read (`d.Covered`),
 in any state that solves the settle equations (`CombEqs`), has the comb shape (`StateShape`)
@@ -278,9 +299,7 @@ theorem CombKnown.settled (hd : CombDesign d) (ha : Acyclic d) (hx : d.XFree) (h
         KnownBit st n (lo + k) ∧
           SvState.boolAt st n (lo + k) = e.xfBitsZ d (SvState.boolAt st) (off + k) := by
   intro i t e n lo w off hp hm k hk
-  have hdk := driven_known hd ha hx hc heqs hs hin
-  have hreads : ∀ r ∈ e.reads, ReadKnown d st r := fun r hr =>
-    readKnown_of_covered hs hin (hc i t e hp r hr) (fun n' k' _ hdr => hdk n' k' hdr)
+  have hreads := CombKnown.reads_known hd ha hx hc heqs hs hin hp
   obtain ⟨wd, hwd⟩ := hx i t e hp
   have hev := Expr2.evalPure2_ofBoolFn (e.size + 1) e (Nat.lt_succ_self _) hwd hreads
   obtain ⟨old, v, hold, hv, hext⟩ := heqs i t e n lo w off hp hm

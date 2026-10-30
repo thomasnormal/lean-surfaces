@@ -25,8 +25,9 @@ What `sv_equations` does. It reads the design off the settled-state hypotheses i
 product of `sv_structure`), runs the recognizer (`PDesign.summary`, as `sv_structure`), applies the
 producer theorem `CombEq.eq_view` (the parameter stage, the structural facts and the fragment check
 are closed by `rfl` and `decide`), normalizes the netlist view `s.Eqs ∧ s.Knowns` to one named
-hypothesis per assign (`eq_<signal>_<block>_<position>`, `known_…`), and returns the obligations it
-does not discharge, tagged:
+hypothesis per assign (`eq_<signal>_<block>_<position>`, `known_…`; and the STABLE ALIASES
+`eq_<signal>_<k>`, `known_<signal>_<k>`, `k` the ordinal of the assign among those that write the
+signal: `stableAliases`), and returns the obligations it does not discharge, tagged:
 
 * `auto`, `inRange` — as for `sv_structure` (reads/targets inside their declared vectors);
 * `width` — every operand is exactly as wide as the target (no implicit `resize`);
@@ -34,6 +35,14 @@ does not discharge, tagged:
 * `cover` — every bit a read observes has a source (an input bit or a bit some assign writes);
 * `inputsKnown` — the input ports hold known vectors of their declared width (the player's premise:
   the tactic cannot know how the inputs were obtained).
+
+**Knownness.** Why the Boolean equations are the real semantics: in a state that solves the design's
+equations, with the comb shape, known inputs, and a rank certificate, EVERY supported read is known
+(`CombKnown.reads_known`, `CombKnownThm.lean`; its consequences `CombKnown.settled` for the driven bits are
+what `known_*` states). A four-state gate of known bits is the Boolean gate, so the right-hand side
+evaluates to a Boolean and `eq_*` holds. The producer theorem `CombEq.eq_view` cites it through
+`CombKnown.settled`; a construct whose value is not determined by the Boolean values of its reads needs
+the same hypothesis and gets it from the same theorem.
 
 The equations are over `Bool` (`SvState.boolAt`), with the SV's gate structure preserved
 (left-associated `^`); the row stride of a 2-D signal hides inside `rmN W i j`. The simp set that
@@ -214,6 +223,23 @@ private partial def countAnd (e : Expr) : Nat :=
 private def eqName (ls : LSite) : String := s!"eq_{ls.site.tgt.name}_{ls.blk}_{ls.site.pos}"
 private def knownName (ls : LSite) : String := s!"known_{ls.site.tgt.name}_{ls.blk}_{ls.site.pos}"
 
+/-- **Stable aliases** (WP-P, P2). The generated names `eq_<signal>_<block>_<position>` depend on the
+generate-block label and on the assign's position in its block, so an unrelated edit (a renamed label,
+an assign added above) renumbers them. The aliases name an equation by its TARGET signal and the
+ordinal (from 1) of the assign among the assigns that write that signal, in source order:
+`eq_c_1` is the first assign that writes `c`, `eq_c_2` the second. An edit that does not add, remove or
+reorder the assigns of a signal leaves that signal's aliases alone. For each site: the alias of the
+equation, of the knownness fact, and the generated names they stand for. -/
+def stableAliases (sites : List LSite) : List (String × String × String × String) := Id.run do
+  let mut counts : List (String × Nat) := []
+  let mut out : List (String × String × String × String) := []
+  for ls in sites do
+    let n := ls.site.tgt.name
+    let k := ((counts.lookup n).getD 0) + 1
+    counts := (n, k) :: counts.filter (·.1 != n)
+    out := out ++ [(s!"eq_{n}_{k}", eqName ls, s!"known_{n}_{k}", knownName ls)]
+  return out
+
 /-- Peel a right-nested conjunction `h : A₁ ∧ … ∧ Aₖ` into the named hypotheses. -/
 private def peelNames (h : Ident) (names : List String) : TacticM Unit := do
   match names with
@@ -294,12 +320,20 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
           throwError "sv_equations: {what}\n{e.toMessageData}"
         unless (← getGoals).isEmpty do
           throwError "sv_equations: {what}"
+      let closeDecide (n : Name) (what : String) : TacticM Unit := do
+        setGoals [← find n]
+        try
+          closeByDecide (← getMainGoal) what
+          setGoals []
+        catch _ =>
+          -- false (or not evaluable): the kernel decision, for its own report, as before WP-P
+          closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
       closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
-      closeWith `hok "the structural check failed" (← `(tactic| decide +kernel))
-      closeWith `hfrag "a right-hand side is outside the fragment of `sv_equations` (a gate tree of `&`, `|`, `^` over accesses and known literals, a concatenation of accesses and known literals, or a fill `'0`/`'1`)" (← `(tactic| decide +kernel))
+      closeDecide `hok "the structural check failed"
+      closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (a gate tree of `&`, `|`, `^` over accesses and known literals, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq) :
           TacticM (List MVarId) := do
@@ -357,18 +391,37 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
         evalTactic (← `(tactic| obtain ⟨$(mkIdent `keyE):ident, $(mkIdent `keyK):ident⟩ := $keyI))
         peelNames (mkIdent `keyE) eqNames
         peelNames (mkIdent `keyK) knNames
+        -- the stable aliases: copies of the generated hypotheses under `eq_<signal>_<k>`, asserted
+        -- directly (`assertHypotheses`: no elaboration, so a heartbeat-tight `solution` is not tipped over)
+        let mainG ← getMainGoal
+        let aliasHyps ← mainG.withContext do
+          let lctx ← getLCtx
+          let mut hyps : Array Hypothesis := #[]
+          for (ae, oe, ak, ok) in stableAliases sites do
+            for (a, o) in [(ae, oe), (ak, ok)] do
+              if let some d := lctx.findFromUserName? (Name.mkSimple o) then
+                hyps := hyps.push { userName := Name.mkSimple a, type := d.type, value := d.toExpr }
+          return hyps
+        let (_, mainG') ← mainG.assertHypotheses aliasHyps
+        replaceMainGoal [mainG']
       else
         logWarning m!"sv_equations: the normalized netlist view has {nE} equation and {nK} knownness conjuncts for {eqNames.length} sites; left in `key` unnamed"
       let mut lines : Array String := #[]
       if hintOnly then
         let g ← getMainGoal
+        let aliasNames := (stableAliases sites).foldl (fun acc (ae, _, ak, _) => acc ++ [ae, ak]) []
         lines ← g.withContext do
           let mut ls : Array String := #[]
           for d in ← getLCtx do
             if d.isImplementationDetail then continue
             let n := d.userName.toString
+            if aliasNames.contains n then continue
             if n.startsWith "eq_" || n.startsWith "known_" || n == "key" then
               ls := ls.push s!"  {n} : {← ppExpr (← instantiateMVars d.type)}"
+          if isAnd && nE == eqNames.length && nK == knNames.length then
+            ls := ls.push "  stable aliases (copies of the above; same statements):"
+            for (ae, oe, ak, ok) in stableAliases sites do
+              ls := ls.push s!"    {ae} := {oe}    {ak} := {ok}"
           return ls
         for g in out do
           lines := lines.push s!"  [{(← g.getTag)}] ⊢ {← g.withContext (do ppExpr (← instantiateMVars (← g.getType)))}"
@@ -377,7 +430,7 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
       return lines
   if hintOnly then
     saved.restore
-    logInfo m!"sv_equations: the netlist view and the obligations\n{"\n".intercalate report.toList}"
+    logInfo m!"sv_equations: the netlist view and the obligations\n  (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)\n{"\n".intercalate report.toList}"
 
 /-- `sv_equations` — see the module docstring. -/
 syntax (name := svEquations) "sv_equations" : tactic

@@ -18,6 +18,7 @@ namespace Examples.«system-verilog».ripple_add.comb_hint
 
 /--
 info: sv_equations: the netlist view and the obligations
+  (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)
   eq_c_plain_0 : st.boolAt "c" 0 = st.boolAt "cin" 0
   eq_cout_plain_1 : st.boolAt "cout" 0 = st.boolAt "c" N
   eq_s_g_bit_0 : ∀ (i : Nat), i < N → st.boolAt "s" i = (st.boolAt "a" i ^^ st.boolAt "b" i ^^ st.boolAt "c" i)
@@ -29,6 +30,11 @@ info: sv_equations: the netlist view and the obligations
   known_cout_plain_1 : (∃ v, st.lookup "cout" = some v ∧ v.width = 1) ∧ KnownBit st "cout" 0
   known_s_g_bit_0 : ∀ (i : Nat), i < N → (∃ v, st.lookup "s" = some v ∧ v.width = (↑N + -1).natAbs + 1) ∧ KnownBit st "s" i
   known_c_g_bit_1 : ∀ (i : Nat), i < N → (∃ v, st.lookup "c" = some v ∧ v.width = N + 1) ∧ KnownBit st "c" (i + 1)
+  stable aliases (copies of the above; same statements):
+    eq_c_1 := eq_c_plain_0    known_c_1 := known_c_plain_0
+    eq_cout_1 := eq_cout_plain_1    known_cout_1 := known_cout_plain_1
+    eq_s_1 := eq_s_g_bit_0    known_s_1 := known_s_g_bit_0
+    eq_c_2 := eq_c_g_bit_1    known_c_2 := known_c_g_bit_1
   [inRange_1] ⊢ ∀ (i : Int), 0 ≤ i → i < ↑N → 0 ≤ i ∧ i ≤ ↑(↑N + -1).natAbs
   [inRange_2] ⊢ ∀ (i : Int), 0 ≤ i → i < ↑N → 0 ≤ i + 1 ∧ i + 1 ≤ ↑N
   [bitRead_1] ⊢ ∀ (i : Int), 0 ≤ i → i < ↑N → i ≤ ↑(↑N + -1).natAbs ∧ i ≤ ↑N

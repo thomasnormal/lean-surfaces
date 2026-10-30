@@ -20,6 +20,7 @@ namespace Examples.«system-verilog».lp_add.comb_hint
 
 /--
 info: sv_equations: the netlist view and the obligations
+  (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)
   eq_c_plain_0 : st.boolAt "c" 0 = st.boolAt "cin" 0
   eq_cout_plain_1 : st.boolAt "cout" 0 = st.boolAt "c" N
   eq_s_g_bit_0 : ∀ (i : Nat),
@@ -35,6 +36,11 @@ info: sv_equations: the netlist view and the obligations
   known_c_g_bit_1 : ∀ (i : Nat),
   ↑i < 2 * ((↑N + 1) / 2) - ↑N % 2 →
     (∃ v, st.lookup "c" = some v ∧ v.width = (2 * ((↑N + 1) / 2) - ↑N % 2).natAbs + 1) ∧ KnownBit st "c" (i + 1)
+  stable aliases (copies of the above; same statements):
+    eq_c_1 := eq_c_plain_0    known_c_1 := known_c_plain_0
+    eq_cout_1 := eq_cout_plain_1    known_cout_1 := known_cout_plain_1
+    eq_s_1 := eq_s_g_bit_0    known_s_1 := known_s_g_bit_0
+    eq_c_2 := eq_c_g_bit_1    known_c_2 := known_c_g_bit_1
   [inRange_1] ⊢ ↑N % 2 ≤ 2 * ((↑N + 1) / 2)
   [inRange_2] ⊢ ∀ (i : Int), 0 ≤ i → i < 2 * ((↑N + 1) / 2) - ↑N % 2 → 0 ≤ i ∧ i ≤ ↑(↑N + -1).natAbs
   [inRange_3] ⊢ ∀ (i : Int), 0 ≤ i → i < 2 * ((↑N + 1) / 2) - ↑N % 2 → 0 ≤ i + 1 ∧ i + 1 ≤ ↑(2 * ((↑N + 1) / 2) - ↑N % 2).natAbs

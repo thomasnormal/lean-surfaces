@@ -14,8 +14,10 @@ valuation `σ'` of its enclosing loops,
 * `KnownSite` — those target bits are known (`0`/`1`), and the target signal is bound at its
   declared width in `st`.
 
-Both come from the one x-free knownness theorem of lane K (`CombKnown.settled`), whose two static
-hypotheses (`XFree`, `Covered`) are DERIVED here from compact obligations on the summary:
+Both come from the one x-free knownness theorem of lane K (`CombKnown.settled`, built on
+`CombKnown.reads_known`: in a settled state with known inputs and a rank certificate, EVERY supported read
+is known, so each right-hand side evaluates to a Boolean), whose two static hypotheses (`XFree`, `Covered`)
+are DERIVED here from compact obligations on the summary:
 
 * `EqFrag` — decidable: the right-hand sides are in the fragment, literals carry no `x`/`z`;
 * `WidthObl` — operand widths equal target widths (otherwise `fitExpr2` inserts a `resize`);

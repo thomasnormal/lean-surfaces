@@ -764,6 +764,125 @@ theorem lex_view_using {d : PDesign} {s : Summary} {args : List Int} {env : IEnv
   acyclic_using hs harity h1 (Agrees_of_map hag) hok hauto hin hc hrank
     (fun L => ⟨countRank L κ, fun a _ b hb h => countRank_lt L κ hb h⟩)
 
+/-! ## WP-P (P1): the bundle `CombDesign ∧ Acyclic`, and the declarations of a comb design
+
+`sv_structure` on a goal `CombDesign (X.sem N) ∧ Acyclic (X.sem N)` derives both from ONE
+application of `Summary.sound` and ONE round of the obligation normalizations (`auto`, `inRange`,
+`driverDisjoint`, `rankDecreases`). Proved separately, `CombDesign` and `Acyclic` each re-normalize the
+first two (and `Acyclic` without `using hc` the third): measured at about a sixth of the CPU time of a
+2-D reference proof (svgolf/PROVING.md, "Proof effort").
+
+`decls_view` is the theorem under `sv_interface`: the declarations of `name.sem N` are the summary's,
+read off the `CombDesign` profile alone (no `AutoObl`, no `InRangeObl`: the profile already says the
+instantiation succeeded). -/
+
+/-- `CombDesign` and `Acyclic` of `name.sem N` from one set of obligations and a `Nat` rank. -/
+theorem comb_acyclic_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
+    {σ : String → Int} {env : IEnv} (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env) (hag : Agrees σ env s.params) (hok : s.StructOk)
+    (hauto : s.AutoObl σ args) (hin : s.InRangeObl σ) (hdisj : s.DisjObl σ)
+    {ρ : SiteId → Nat} (hrank : s.RankObl ρ σ) :
+    CombDesign (d.instantiateGD2 args) ∧ Acyclic (d.instantiateGD2 args) := by
+  obtain ⟨m, hm, hR⟩ := Summary.sound hs harity h1 hag hok hauto hin
+  obtain ⟨hc, hpos⟩ := realized_comb hR hok hauto hin hdisj
+  rw [PDesign.instantiateGD2_of_combDesign hm hc hpos]
+  exact ⟨hc, realized_acyclic hR hok hauto hin hrank (fun _ => ⟨ρ, fun _ _ _ _ h => h⟩)⟩
+
+/-- … from a LEXICOGRAPHIC key. -/
+theorem comb_acyclic_of_lex {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
+    {σ : String → Int} {env : IEnv} (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env) (hag : Agrees σ env s.params) (hok : s.StructOk)
+    (hauto : s.AutoObl σ args) (hin : s.InRangeObl σ) (hdisj : s.DisjObl σ)
+    {κ : SiteId → Key} (hrank : s.LexObl κ σ) :
+    CombDesign (d.instantiateGD2 args) ∧ Acyclic (d.instantiateGD2 args) := by
+  obtain ⟨m, hm, hR⟩ := Summary.sound hs harity h1 hag hok hauto hin
+  obtain ⟨hc, hpos⟩ := realized_comb hR hok hauto hin hdisj
+  rw [PDesign.instantiateGD2_of_combDesign hm hc hpos]
+  exact ⟨hc, realized_acyclic hR hok hauto hin hrank
+    (fun L => ⟨countRank L κ, fun a _ b hb h => countRank_lt L κ hb h⟩)⟩
+
+/-- The tactic's form of `comb_acyclic_of_summary` (valuation `s.val args`, `rfl`-provable environment
+check, as `comb_view`). -/
+theorem comb_acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
+    (hs : d.summary = .ok s) (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env)
+    (hag : s.params.map (fun n => env.vals.lookup n) =
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
+    (ρ : SiteId → Nat) (hrank : s.RankObl ρ (s.val args)) :
+    CombDesign (d.instantiateGD2 args) ∧ Acyclic (d.instantiateGD2 args) :=
+  comb_acyclic_of_summary hs harity h1 (Agrees_of_map hag) hok hauto hin hdisj hrank
+
+/-- … with a lexicographic key. -/
+theorem comb_lex_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
+    (hs : d.summary = .ok s) (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env)
+    (hag : s.params.map (fun n => env.vals.lookup n) =
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
+    (κ : SiteId → Key) (hrank : s.LexObl κ (s.val args)) :
+    CombDesign (d.instantiateGD2 args) ∧ Acyclic (d.instantiateGD2 args) :=
+  comb_acyclic_of_lex hs harity h1 (Agrees_of_map hag) hok hauto hin hdisj hrank
+
+theorem errorDesign_not_comb (n m : String) : ¬ CombDesign (Design2.errorDesign n m) := by
+  intro hc
+  obtain ⟨t, e, ws, hp, -⟩ := hc.assign 0 (Process2.unsupported "Instantiate" m)
+    (by simp [Design2.errorDesign])
+  cases hp
+
+/-- A comb design in the family is the successful instantiation: `CombDesign` rules out the loud
+error designs (`timeout`, `unsupported`) that `instantiateGD2` collapses failures into. -/
+theorem instantiate2_ok_of_comb {d : PDesign} {args : List Int}
+    (hc : CombDesign (d.instantiateGD2 args)) :
+    ∃ m, d.instantiate2 args (PDesign.surfaceFuel args) = .ok m := by
+  unfold PDesign.instantiateGD2 PDesign.instantiateG2 at hc
+  cases h : d.instantiate2 args (PDesign.surfaceFuel args) with
+  | ok m => exact ⟨m, rfl⟩
+  | timeout =>
+    exfalso
+    rw [h] at hc
+    exact errorDesign_not_comb _ _ hc
+  | unsupported msg =>
+    exfalso
+    rw [h] at hc
+    exact errorDesign_not_comb _ _ hc
+
+/-- **The declarations of a comb design of the fragment** are the summary's, evaluated at the
+valuation. Only the parameter stage (`h1`, `hag`) and the structural check (`hok`) are needed: the
+profile `hc` says the instantiation succeeded, and `buildDecls_summary` is the declaration half of
+`Summary.sound`. -/
+theorem decls_of_comb {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
+    {σ : String → Int} {env : IEnv} (h1 : d.paramEnv2 args = .ok env)
+    (hag : Agrees σ env s.params) (hok : s.StructOk)
+    (hc : CombDesign (d.instantiateGD2 args)) :
+    (d.instantiateGD2 args).decls.toList = s.decls.map (DeclT.toDecl σ) := by
+  obtain ⟨m, hm⟩ := instantiate2_ok_of_comb hc
+  rw [instantiateGD2_eq_of_comb hm hc]
+  obtain ⟨env', decls, elems, gens, h1', h2, -, -, -, hdecls, -⟩ :=
+    PDesign.instantiate2_processes hm
+  rw [hdecls]
+  rw [h1] at h1'
+  have henv : env = env' := Res.ok.inj h1'
+  subst henv
+  obtain ⟨-, -, -, -, hsd, -, -, -⟩ := summary_spec hs
+  obtain ⟨-, -, -, -, -, hdecl, -, -⟩ := hok
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n) :=
+    fun dt hdt n hn => hag n (hdecl dt hdt n hn)
+  have h2' := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
+  rw [h2] at h2'
+  exact Res.ok.inj h2'
+
+/-- The tactic's form of `decls_of_comb` (valuation `s.val args`). -/
+theorem decls_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
+    (hs : d.summary = .ok s) (h1 : d.paramEnv2 args = .ok env)
+    (hag : s.params.map (fun n => env.vals.lookup n) =
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hc : CombDesign (d.instantiateGD2 args)) :
+    (d.instantiateGD2 args).decls.toList = s.decls.map (DeclT.toDecl (s.val args)) :=
+  decls_of_comb hs h1 (Agrees_of_map hag) hok hc
+
 /-! ## Rank constructors (design principle 13: ranks over site identities) -/
 
 /-- One-index families (the ripple shape): plain sites by position, family sites by label,

@@ -16,6 +16,8 @@ theorem mul_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (mul_n.sem N) := by
   -- the rank is a LEXICOGRAPHIC key (row, column, phase) over site identities
 theorem mul_acyclic' (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (mul_n.sem N)) : Acyclic (mul_n.sem N) := by
   sv_structure using hc (lexRank := …)   -- the in-range and one-driver goals are not asked again
+theorem ripple_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) ∧ Acyclic (ripple_add.sem N) := by
+  sv_structure (rank := rippleRank …)   -- ONE round of obligations for both (WP-P): `obtain ⟨hc, ha⟩ := ripple_struct N hN`
 sv_structure?            -- prints the families, site identities and the required rank relation
 ```
 
@@ -190,17 +192,41 @@ macro "sv_rowmajor" : tactic =>
   `(tactic| (try simp (disch := omega) only [LeanModels.Sv.CombView.rmN_add_col,
       LeanModels.Sv.CombView.rmN_lt_iff, LeanModels.Sv.CombView.rmN_le_iff] at *))
 
+/-- **Close a decidable structural fact without an auxiliary lemma** (WP-P). `decide +kernel` turns the
+fact into an auxiliary theorem and adds it to the environment synchronously, and in the asynchronous
+elaboration of a file that addition waits for the kernel check of EVERY earlier declaration: the
+`hok`/`hfrag` goals of a late theorem (`sv_interface`, `solution`) then sat idle for as long as the
+heaviest earlier theorem took to elaborate (measured: 31 s of a 34 s `mul_wallace` interface theorem,
+112 s of a 118 s `mul_tree` one, for a step that costs 0.3 s). Here the proposition is evaluated NATIVELY at
+tactic time (`evalExpr` on `Decidable.decide`, milliseconds, with the tactic's own error when it is false),
+and the goal is assigned `of_decide_eq_true _ _ (Eq.refl true)` directly: no environment change, so no
+wait; the kernel evaluates the decision once, when it checks the enclosing theorem (the same work the
+auxiliary lemma did, in the theorem's own asynchronous check). -/
+unsafe def closeByDecide (g : MVarId) (what : String) : MetaM Unit := do
+  let p ← instantiateMVars (← g.getType)
+  let inst ← synthInstance (mkApp (mkConst ``Decidable) p)
+  let d := mkApp2 (mkConst ``Decidable.decide) p inst
+  let b ← evalExpr Bool (mkConst ``Bool) d
+  unless b do throwError "{what}"
+  g.assign (mkApp3 (mkConst ``of_decide_eq_true) p inst (← mkEqRefl (mkConst ``Bool.true)))
+
 /-- Run the structural stage. (`unsafe`: it evaluates the recognizer on the design with
 `evalExpr`, at tactic time only.) -/
 unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly : Bool) : TacticM Unit := do
   let goal ← getMainGoal
   goal.withContext do
     let ty ← instantiateMVars (← goal.getType)
+    -- the bundle `CombDesign D ∧ Acyclic D` (WP-P): one application of `Summary.sound`, one round of
+    -- obligations for both
+    let isBoth := ty.isAppOfArity ``And 2 &&
+      ty.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombDesign &&
+      ty.appArg!.getAppFn.isConstOf ``LeanModels.Sv.Acyclic
     let isComb := ty.getAppFn.isConstOf ``LeanModels.Sv.CombDesign
-    let isAcyc := ty.getAppFn.isConstOf ``LeanModels.Sv.Acyclic
+    let isAcyc := ty.getAppFn.isConstOf ``LeanModels.Sv.Acyclic || isBoth
     unless isComb || isAcyc do
-      throwError "sv_structure: the goal must be `CombDesign (X.sem N)` or `Acyclic (X.sem N)`"
-    let some (pd, args) ← findGD2 ty.appArg! 8
+      throwError "sv_structure: the goal must be `CombDesign (X.sem N)`, `Acyclic (X.sem N)` or their conjunction `CombDesign (X.sem N) ∧ Acyclic (X.sem N)`"
+    let dGoal := if isBoth then ty.appFn!.appArg!.appArg! else ty.appArg!
+    let some (pd, args) ← findGD2 dGoal 8
       | throwError "sv_structure: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConst? pd
       | throwError "sv_structure: the design is not a named constant"
@@ -233,6 +259,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
             some <$> Tactic.elabTermEnsuringType stx rty
       if usingStx?.isSome && !isAcyc then
         throwError "sv_structure: `using hc` is for an `Acyclic` goal (it supplies the one-driver obligation from `CombDesign`)"
+      if usingStx?.isSome && isBoth then
+        throwError "sv_structure: `using hc` is for an `Acyclic` goal alone; the conjunction `CombDesign ∧ Acyclic` derives the one-driver obligation itself"
       if isAcyc && rankE?.isNone && lexE?.isNone then
         throwError "sv_structure: an `Acyclic` goal needs a rank over site identities, e.g. `sv_structure (rank := rippleRank … …)` or a lexicographic key `sv_structure (lexRank := fun | .plain 0 => (0, 0, 0) | …)`; run `sv_structure?` to see the sites and the rank relation they must satisfy"
       -- sampling: genuine violations are reported with the offending sites
@@ -275,6 +303,25 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         evalTactic (← `(tactic|
           refine LeanModels.Sv.CombView.comb_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
             (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)))
+      else if isBoth then
+        if lexE?.isSome then
+          let r ← match lexStx? with
+            | some r => pure r
+            | none => throwError "unreachable"
+          let rT : TSyntax `term := ⟨r⟩
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.comb_lex_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+              (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
+              (κ := $rT) (hrank := ?hrank)))
+        else
+          let r ← match rankStx? with
+            | some r => pure r
+            | none => throwError "unreachable"
+          let rT : TSyntax `term := ⟨r⟩
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.comb_acyclic_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+              (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
+              (ρ := $rT) (hrank := ?hrank)))
       else if lexE?.isSome then
         let r ← match lexStx? with
           | some r => pure r
@@ -323,11 +370,19 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           throwError "sv_structure: {what}\n{e.toMessageData}"
         unless (← getGoals).isEmpty do
           throwError "sv_structure: {what}"
+      let closeDecide (n : Name) (what : String) : TacticM Unit := do
+        setGoals [← find n]
+        try
+          closeByDecide (← getMainGoal) what
+          setGoals []
+        catch _ =>
+          -- false (or not evaluable): the kernel decision, for its own report, as before WP-P
+          closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
       closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
-      closeWith `hok "the structural check failed" (← `(tactic| decide +kernel))
+      closeDecide `hok "the structural check failed"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq) :
           TacticM (List MVarId) := do
@@ -381,3 +436,125 @@ syntax (name := svStructureQ) "sv_structure?" : tactic
     else runSvStructure (some cl[3]) none usingStx? false
 
 @[tactic svStructureQ] unsafe def evalSvStructureQ : Tactic := fun _ => runSvStructure none none none true
+
+/-! ## `sv_interface` (WP-P, P1): the ports of a design of the fragment
+
+```
+theorem add_interface (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (design.sem N)) :
+    SvGolf.Tasks.Add.task.Interface N (design.sem N) := by
+  sv_interface
+```
+
+proves the interface conjunct of a task statement (`t.Interface N (X.sem N)`: the design's input and
+output ports are exactly `t.inputs N` and `t.outputs N`, names, order and widths) for a design the
+recognizer reads, from the profile `hc : CombDesign (X.sem N)` in the context (the product of
+`sv_structure`). Nothing of the soundness machinery is visible: the declarations of `X.sem N` are the
+recognizer's (`decls_view`, whose hypotheses `rfl` and `decide` close: the parameter stage and the
+structural check), and what remains is the arithmetic of the widths, which the tactic closes with
+`simp` and `omega`. It generalizes the 23-line recipe that every proof carried until WP-P (the
+`Summary.sound`/`σL`/`Aff.eval` incantation of svgolf/PROVING.md §2.2) and, unlike it, does not
+re-derive the in-range obligations the profile already stands for. Designs with localparams need no
+change: the valuation is `Summary.val`. -/
+
+/-- Run the interface stage. -/
+unsafe def runSvInterface : TacticM Unit := do
+  let goal ← getMainGoal
+  goal.withContext do
+    let ty ← instantiateMVars (← goal.getType)
+    unless ty.isApp && ty.getAppNumArgs ≥ 3 && ty.getAppFn.isConst do
+      throwError "sv_interface: the goal must be a task's interface statement `t.Interface N (X.sem N)`"
+    let D := ty.appArg!
+    let some (pd, args) ← findGD2 D 8
+      | throwError "sv_interface: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
+    let some pdName := headConst? pd
+      | throwError "sv_interface: the design is not a named constant"
+    -- the profile `CombDesign (X.sem N)` in the context
+    let mut hc? : Option Expr := none
+    for d in ← getLCtx do
+      if d.isImplementationDetail then continue
+      let t ← instantiateMVars d.type
+      if t.getAppFn.isConstOf ``LeanModels.Sv.CombDesign && hc?.isNone then
+        if ← isDefEq t.appArg! D then hc? := some d.toExpr
+    let some hcE := hc?
+      | throwError "sv_interface: no hypothesis `CombDesign (X.sem N)` in the context (prove it with `sv_structure`, or take it from the `CombDesign ∧ Acyclic` bundle)"
+    match ← evalSummary pd with
+    | .error msg => throwError "sv_interface: outside the supported fragment — {msg}"
+    | .ok s =>
+      let probs := s.structProblems
+      unless probs.isEmpty do
+        throwError "sv_interface: structural check failed:\n  {"\n  ".intercalate probs}"
+      let pdId := mkIdent pdName
+      let hcI ← Term.exprToSyntax hcE
+      let keyI := mkIdent `key
+      -- the goal over the unfolded family, so that `key` rewrites it syntactically
+      let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
+      let ty' := ty.replace fun e => if e == D then some D' else none
+      replaceMainGoal [← goal.replaceTargetDefEq ty']
+      evalTactic (← `(tactic|
+        have $keyI:ident := LeanModels.Sv.CombView.decls_view (s := ?s) (env := ?env) (hs := ?hs)
+            (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hc := $hcI)))
+      let goals ← getGoals
+      let named : List Name := [`s, `env, `hs, `h1, `hag, `hok]
+      let mut bodyGoal? : Option MVarId := none
+      for g in goals do
+        unless named.contains (← g.getTag).eraseMacroScopes do
+          if bodyGoal?.isNone then bodyGoal? := some g
+      let some bodyGoal := bodyGoal?
+        | throwError "sv_interface: internal error: no main goal after introducing the declarations"
+      let find (n : Name) : TacticM MVarId := do
+        for g in goals do
+          if (← g.getTag).eraseMacroScopes == n then return g
+        throwError "sv_interface: internal error: goal `{n}` not found"
+      let closeWith (n : Name) (what : String) (tac : TSyntax `tactic) : TacticM Unit := do
+        setGoals [← find n]
+        try
+          evalTactic tac
+        catch e =>
+          throwError "sv_interface: {what}\n{e.toMessageData}"
+        unless (← getGoals).isEmpty do
+          throwError "sv_interface: {what}"
+      let closeDecide (n : Name) (what : String) : TacticM Unit := do
+        setGoals [← find n]
+        try
+          closeByDecide (← getMainGoal) what
+          setGoals []
+        catch _ =>
+          -- false (or not evaluable): the kernel decision, for its own report, as before WP-P
+          closeWith n what (← `(tactic| decide +kernel))
+      closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
+      closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
+      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeDecide `hok "the structural check failed"
+      setGoals [bodyGoal]
+      -- unfold the statement and the task, and evaluate the declarations' widths
+      let headId := mkIdent ty.getAppFn.constName!
+      let taskIds : Array Ident :=
+        match ty.getArg! 0 with
+        | .const n _ => #[mkIdent n]
+        | _ => #[]
+      let taskLemmas ← taskIds.mapM fun i => `(Lean.Parser.Tactic.simpLemma| $i:ident)
+      try
+        -- (`SvGolf` is not imported here: the names are built without macro scopes, resolved in the user's file)
+        let inPorts := mkIdent `SvGolf.inputPorts
+        let outPorts := mkIdent `SvGolf.outputPorts
+        evalTactic (← `(tactic| simp only [$headId:ident, $inPorts:ident, $outPorts:ident]))
+        evalTactic (← `(tactic| rw [$keyI:ident]))
+        evalTactic (← `(tactic|
+          simp [LeanModels.Sv.CombView.DeclT.toDecl, LeanModels.Sv.CombView.DeclT.width,
+            LeanModels.Sv.CombView.dimsW, LeanModels.Sv.CombView.Aff.eval,
+            LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.sub,
+            LeanModels.Sv.CombView.Aff.neg, LeanModels.Sv.CombView.Aff.negTerms,
+            LeanModels.Sv.CombView.Aff.add, LeanModels.Sv.CombView.Aff.var,
+            LeanModels.Sv.CombView.Aff.const, LeanModels.Sv.CombView.Aff.scale,
+            LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.σL,
+            LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv,
+            LeanModels.Sv.CombView.CE.eval, List.lookup_cons, List.lookup_nil, $pdId:ident,
+            List.zip_cons_cons, List.zip_nil_right, List.lookup_cons_self, Option.getD_some,
+            $taskLemmas,*] <;> omega))
+      catch e =>
+        throwError "sv_interface: the declared ports do not match the task's interface (or the width arithmetic is outside `omega`'s reach):\n{e.toMessageData}"
+
+/-- `sv_interface` — see the comment above. -/
+syntax (name := svInterface) "sv_interface" : tactic
+
+@[tactic svInterface] unsafe def evalSvInterface : Tactic := fun _ => runSvInterface

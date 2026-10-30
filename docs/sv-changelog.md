@@ -1,3 +1,10 @@
+# [0.1.256] — 2026-10-30
+
+The generated coverage page now leads with the real grammar census and the
+sv-tests-2 clean-extraction share. The differential table is labelled as
+self-consistency on the selected witness rows, and the initial-only boundary
+is stated before the measurements.
+
 # [0.1.255] — 2026-10-30
 
 The legacy differential corpus now carries a compact packed concatenation and

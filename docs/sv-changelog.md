@@ -1,4 +1,14 @@
-# [0.1.261] — 2026-10-30
+# [0.1.262] — 2026-10-30
+
+Timed conformance now preserves `always_ff` as a distinct positive-edge
+process and admits `always_latch` through the dormant implicit-sensitivity
+path. Latch bodies run at time zero and wake on read changes while retaining
+their value when disabled; procedural edge publication and asynchronous reset
+lists remain loud. The new `always_ff_accept` and `always_latch_accept`
+witnesses are routed through the timed runner.
+Differential coverage grows **533/515/0/18 → 535/517/0/18**; grammar
+coverage grows **236/186/50 → 237/188/49** as the `AlwaysFFBlock` and
+`AlwaysLatchBlock` witnesses match.
 
 Timed conformance now admits single-driver continuous `assign` processes as
 implicit-sensitivity combinational work. The RHS runs at time zero and wakes

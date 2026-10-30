@@ -89,6 +89,22 @@ differential table grows **530/513/0/17 → 533/515/0/18** and the grammar
 census grows **236/160/76 → 236/186/50** as continuous-assignment witnesses
 move through the timed runner.
 
+## `always_ff` and `always_latch` timed conformance — 2026-10-30
+
+The timed loader now preserves `always_ff` as a distinct process kind while
+using the existing retained `@(posedge clk)` continuation, and admits
+`always_latch` as a level-sensitive dormant process. A latch body runs once at
+time zero and wakes when an inferred read signal changes; a disabled latch
+retains its previous value. The legacy self-check path continues to refuse
+both process kinds. Procedural edge publication and asynchronous reset event
+lists remain explicit scheduler boundaries.
+
+The `always_ff_accept` and `always_latch_accept` witnesses cover process
+admission and latch capture through the timed runner. This item adds no second
+event loop or special scheduling path. Differential coverage grows
+**533/515/0/18 → 535/517/0/18**; grammar coverage grows
+**236/186/50 → 237/188/49**.
+
 ## Packed concatenation and replication witness — 2026-10-30
 
 The legacy differential corpus now carries a compact admitted initial-process

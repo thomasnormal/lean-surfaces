@@ -4842,6 +4842,28 @@
       "expect": "refuse",
       "mode": "timed",
       "ticks": 4
+    },
+    {
+      "name": "always_ff_accept",
+      "file": "Examples/system-verilog/always_ff_accept/always_ff_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "always_latch_accept",
+      "file": "Examples/system-verilog/always_latch_accept/always_latch_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_LATCH PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
     }
   ]
 }

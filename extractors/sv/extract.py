@@ -24529,6 +24529,7 @@ def convert_procedural_block(sm, m):
         ProceduralBlockKind.Always,
         ProceduralBlockKind.AlwaysComb,
         ProceduralBlockKind.AlwaysFF,
+        ProceduralBlockKind.AlwaysLatch,
     ):
         return unsupported(
             sm, m, "ProceduralBlockSymbol:" + str(pk).split(".")[-1]
@@ -24562,6 +24563,13 @@ def convert_procedural_block(sm, m):
     if pk == ProceduralBlockKind.AlwaysComb:
         return {
             "kind": "AlwaysComb",
+            "span": span,
+            "body": convert_stmt(sm, m.body),
+        }
+
+    if pk == ProceduralBlockKind.AlwaysLatch:
+        return {
+            "kind": "AlwaysLatch",
             "span": span,
             "body": convert_stmt(sm, m.body),
         }

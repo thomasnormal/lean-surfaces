@@ -1160,7 +1160,9 @@ inductive SProc where
   | initial (body : SStmt)
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
+  | alwaysFF (clock : String) (body : SStmt)
   | alwaysComb (body : SStmt)
+  | alwaysLatch (body : SStmt)
   | assign (target : String) (value : SExpr)
   | other (svKind : String) (text : String)
 deriving Repr, Inhabited
@@ -1199,10 +1201,14 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process '{svKind}' (self-check tier runs initial-only designs)"
   | .alwaysPosedge clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysFF clock _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'Always' (self-check tier runs initial-only designs)"
   | .alwaysComb _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysComb' (self-check tier runs initial-only designs)"
+  | .alwaysLatch _ :: _, _, _, _, _ =>
+      .unsupported "non-initial process 'AlwaysLatch' (self-check tier runs initial-only designs)"
   | .assign _ _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'Assign' (self-check tier runs initial-only designs)"
   | .initial body :: rest, st, nba, out, assignmentOrder => do
@@ -1233,8 +1239,10 @@ def runSelfCheck (d : Design) (fuel : Nat)
       match p with
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
+      | .alwaysFF clock _ => some s!"AlwaysFF:{clock}"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
+      | .alwaysLatch _ => some "AlwaysLatch"
       | .assign _ _ => some "Assign"
       | _ => none then
     return ← .unsupported
@@ -1628,10 +1636,16 @@ def parseSProc (j : Json) : Except String SProc := do
   | "Initial" => return .initial (← parseSStmt (← getF j "body"))
   | "Always" => return .alwaysBody (← parseSStmt (← getF j "body"))
   | "AlwaysPosedge" =>
-      return .alwaysPosedge (← getStrF j "clock")
-        (← parseSStmt (← getF j "body"))
+      let body ← parseSStmt (← getF j "body")
+      let style := (getStrF j "style").toOption.getD "always"
+      if style == "always_ff" then
+        return .alwaysFF (← getStrF j "clock") body
+      else
+        return .alwaysPosedge (← getStrF j "clock") body
   | "AlwaysComb" =>
       return .alwaysComb (← parseSStmt (← getF j "body"))
+  | "AlwaysLatch" =>
+      return .alwaysLatch (← parseSStmt (← getF j "body"))
   | "Assign" =>
       let target ← getF j "target"
       if (getStrF target "kind").toOption != some "Ident" then
@@ -1743,7 +1757,8 @@ def parseModuleD (j : Json) : Except String Design := do
   let moduleNames := decls.toList.map (·.name)
   for p in procs do
     let body? := match p with
-      | .initial body | .alwaysBody body | .alwaysComb body => some body
+      | .initial body | .alwaysBody body | .alwaysComb body
+      | .alwaysLatch body => some body
       | _ => none
     if let some body := body? then
       let ln := localNames body

@@ -37,7 +37,7 @@ construction rather than by inspection.
 
 ## What is deliberately still LOUD
 
-The timed loader admits `always_comb` and single-driver continuous `assign`
+The timed loader admits `always_comb`, `always_latch`, `always_ff`, and single-driver continuous `assign`
 through explicit implicit-sensitivity metadata on `ProcState`: each body runs
 once in Active at time zero, becomes dormant, and is queued again when a read
 signal changes. The legacy `elabDesign`/`runSelfCheck` path remains
@@ -161,8 +161,8 @@ wake rule; external stimulus is currently the only integrated edge source. -/
 def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
   let accesses := d.procs.toList.flatMap fun proc =>
     match proc with
-    | .initial body | .alwaysBody body | .alwaysComb body => timedAccesses body
-    | .alwaysPosedge clock body => (true, clock) :: timedAccesses body
+    | .initial body | .alwaysBody body | .alwaysComb body | .alwaysLatch body => timedAccesses body
+    | .alwaysPosedge clock body | .alwaysFF clock body => (true, clock) :: timedAccesses body
     | .assign _ _ => []
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
@@ -186,6 +186,17 @@ def timedProcOf : SProc → Except String ProcState
              , comb := true
              , combReads := reads
              , combBody := [body] }
+  | .alwaysLatch body =>
+      if hasTimingControl body then
+        .error "timed design rejects timing control inside always_latch"
+      else
+        let writes := SStmt.writeNames body
+        let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+        pure { residual := [body]
+             , status := .ready
+             , comb := true
+             , combReads := reads
+             , combBody := [body] }
   | .assign target value =>
       let body := .assign false target value
       pure { residual := [body]
@@ -193,15 +204,16 @@ def timedProcOf : SProc → Except String ProcState
            , comb := true
            , combReads := value.readNames.eraseDups
            , combBody := [body] }
-  | .alwaysPosedge clock body =>
+  | .alwaysPosedge clock body | .alwaysFF clock body =>
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual }
   | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
 
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
-This surface admits `initial`, plain `always`, `always_comb`, single-driver
-continuous `assign`, and canonical positive-edge processes. Their continuations run through the existing
+This surface admits `initial`, plain `always`, `always_comb`, `always_latch`,
+`always_ff`, single-driver continuous `assign`, and canonical positive-edge
+processes. Their continuations run through the existing
 scheduler with an explicit region oracle. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/

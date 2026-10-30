@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 498 | 486 | 0 | 12 | sv-tests-2 declarations |
+| 499 | 487 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -448,6 +448,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `case_array_widening` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | match | **MATCH** | `ok` | MATCH |
 | `wildcard_case_accept` | `Examples/system-verilog/wildcard_case_accept/wildcard_case_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `case_inside_accept` | `Examples/system-verilog/case_inside_accept/case_inside_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `case_inside_dynamic_accept` | `Examples/system-verilog/case_inside_dynamic_accept/case_inside_dynamic_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_integral_real_conversions` | `Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv` | match | **MATCH** | `ok` | MATCH |
 | `discarded_pure_floating_math` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | match | **MATCH** | `ok` | MATCH |
 | `discarded_pure_real_to_bits` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | match | **MATCH** | `ok` | MATCH |

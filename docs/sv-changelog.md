@@ -1,3 +1,10 @@
+# [0.1.236] — 2026-10-30
+
+The legacy differential corpus now carries a compact dynamic `case (…) inside`
+witness with variable range endpoints, matching and nonmatching paths, and a
+literal `PASS` transcript. Differential coverage grows **498/486/0/12 →
+499/487/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.235] — 2026-10-30
 
 The legacy differential corpus now carries a compact ordinary `case (…) inside`

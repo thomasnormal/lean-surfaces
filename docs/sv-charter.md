@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `case (…) inside` range witness — 2026-10-30
+
+The legacy differential corpus now carries a compact dynamic `case (…) inside`
+fixture with variable range endpoints, matching and nonmatching paths, and a
+literal `PASS` transcript. The existing membership lowering is exercised with
+runtime bounds while source-order selection and the explicit default remain
+unchanged.
+
+Differential coverage grows **498/486/0/12 → 499/487/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Ordinary `case (…) inside` differential witness — 2026-10-30
 
 The legacy differential corpus now carries a compact ordinary `case (…) inside`

@@ -131,6 +131,15 @@
       "expect": "match"
     },
     {
+      "name": "unary_not_accept",
+      "file": "Examples/system-verilog/unary_not_accept/unary_not_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unique_if_dynamic_refuse",
       "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
       "module": "top",

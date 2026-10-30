@@ -1,3 +1,9 @@
+# [0.1.248] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state unary
+bitwise-not witness, covering known and X/Z-propagating values. Coverage grows
+**510/498/0/12 → 511/499/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.247] — 2026-10-30
 
 The legacy differential corpus now carries a unary reduction witness for `|`,

@@ -608,7 +608,7 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(exc["kind"], "Call")
         self.assertEqual(exc["func"]["id"], "ValueError")
 
-    def test_handler_local_binding_refuses_without_order_exemptions(self):
+    def test_typeerror_handler_local_binding_is_deferred(self):
         bodies = (
             "    try:\n        TypeError = 1\n        len(1)\n"
             "    except TypeError:\n        return 9\n",
@@ -632,25 +632,22 @@ class ExtractorTests(unittest.TestCase):
         for body in bodies:
             with self.subTest(body=body):
                 fn = self._first_fn("def f():\n" + body)
-                self.assertEqual(
-                    fn["locals_unsupported"],
-                    "matches locally-bound handler name(s) "
-                    "(static-locals rule): TypeError")
+                self.assertIsNone(fn["locals_unsupported"])
 
-    def test_handler_parameter_binding_refuses(self):
+    def test_typeerror_handler_parameter_binding_is_deferred(self):
         for params in ("TypeError", "TypeError, /", "*, TypeError",
                        "*TypeError", "**TypeError"):
             with self.subTest(params=params):
                 fn = self._first_fn(
                     "def f(" + params + "):\n    try:\n        len(1)\n"
                     "    except TypeError:\n        return 9\n")
-                self.assertIn("locally-bound handler", fn["locals_unsupported"])
+                self.assertIsNone(fn["locals_unsupported"])
 
     def test_handler_guard_preserves_existing_local_refusal_precedence(self):
         fn = self._first_fn(
             "def f():\n    del TypeError\n    try:\n        len(1)\n"
             "    except TypeError:\n        return 9\n")
-        self.assertIn("locally-bound handler", fn["locals_unsupported"])
+        self.assertIsNone(fn["locals_unsupported"])
         fn = self._first_fn(
             "def f():\n    len(1)\n    len = 2\n    try:\n        len(1)\n"
             "    except TypeError:\n        return 9\n    TypeError = 1\n")
@@ -669,7 +666,7 @@ class ExtractorTests(unittest.TestCase):
             "    return 0\n")
         self.assertIsNone(fn["locals_unsupported"])
 
-    def test_handler_rebinding_oracle_reproductions(self):
+    def test_typeerror_handler_rebinding_is_resolved_after_body(self):
         rows = (
             ("def f():\n    try:\n        TypeError = 1\n        len(1)\n"
              "    except TypeError:\n        return 9\n", TypeError),
@@ -685,8 +682,8 @@ class ExtractorTests(unittest.TestCase):
                 exec(source, namespace)
                 with self.assertRaises(exception):
                     namespace["f"]()
-                self.assertIn("locally-bound handler",
-                              self._first_fn(source)["locals_unsupported"])
+                self.assertNotIn("locally-bound handler",
+                                 self._first_fn(source)["locals_unsupported"] or "")
 
     def test_module_handler_rebinding_is_resolved_after_body(self):
         sources = (

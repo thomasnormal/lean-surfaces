@@ -230,7 +230,8 @@ inductive Stmt where
   (`importErrorHandlerMatch`) and the measured builtin exception table
   (`admittedBuiltinExc`/`builtinExcCatches`) when `findClass` misses.
   Other names refuse before the body runs (statically-first admission).
-  Locally bound handler names refuse under the static-locals census. -/
+  Locally bound handler names remain loud under the static-locals census,
+  except for the admitted dynamic `TypeError` slice. -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
   /-- `with` (the context-manager tier): items are evaluated left to right,

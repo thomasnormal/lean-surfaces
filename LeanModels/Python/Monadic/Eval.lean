@@ -1838,10 +1838,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               if names.any (fun name => excHandlerMatches m name e) then
                 execOpenList K m handler.toList
               else raisePy e)
-        else if (Env.lookup st.locals excName).isSome
-            || (lookupG (moduleGlobals m).1 excName).isSome
-            || (Env.lookup st.world.globals excName).isSome
-            || (findFunction m excName).isSome then
+        else if excName != "TypeError" &&
+            ((Env.lookup st.locals excName).isSome
+              || (lookupG (moduleGlobals m).1 excName).isSome
+              || (Env.lookup st.world.globals excName).isSome
+              || (findFunction m excName).isSome) then
           refuse s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
         else
           match findClass m excName with
@@ -1864,8 +1865,18 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                 -- module scope) and a rule spelled twice is a rule that
                 -- drifts. Nothing is inferred from CPython's hierarchy --
                 -- every pair in that table is one the tier can exhibit.
-                tryCatch (execOpenList K m body.toList) (fun e =>
-                  if builtinExcCatches excName e || userExcCatches m excName e then execOpenList K m handler.toList
+                tryCatch (execOpenList K m body.toList) (fun e => do
+                  let st' ← get
+                  if hasUnboundLocal st'.locals excName then
+                    raisePy (.unboundLocalError excName)
+                  else if (Env.lookup st'.locals excName).isSome
+                      || (lookupG (moduleGlobals m).1 excName).isSome
+                      || (Env.lookup st'.world.globals excName).isSome
+                      || (findFunction m excName).isSome then
+                    raisePy (.typeError
+                      "catching classes that do not inherit from BaseException is not allowed")
+                  else if builtinExcCatches excName e || userExcCatches m excName e then
+                    execOpenList K m handler.toList
                   else raisePy e)
               else if refusedAncestorExc.contains excName then
                 refuse s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"

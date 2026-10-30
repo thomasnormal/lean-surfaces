@@ -6831,7 +6831,8 @@ scope boundaries and are intentionally not descended into here. -/
 def unboundLocalMarker (id : String) : String := "<unbound-local>" ++ id
 
 def hasUnboundLocal (locals : Env) (id : String) : Bool :=
-  (Env.lookup locals (unboundLocalMarker id)).isSome
+  (Env.lookup locals id).isNone &&
+    (Env.lookup locals (unboundLocalMarker id)).isSome
 
 def annNoValueName (text : String) : Option String :=
   match text.splitOn ":" with
@@ -6839,6 +6840,18 @@ def annNoValueName (text : String) : Option String :=
       let name := name.trim
       if name == "" then Option.none else some name
   | [] => Option.none
+
+def typeErrorTarget (target : Expr) : Bool :=
+  match target with
+  | .name id _ => id == "TypeError"
+  | _ => false
+
+def typeErrorTargetList : List Expr → Bool
+  | [] => false
+  | target :: rest => typeErrorTarget target || typeErrorTargetList rest
+
+def typeErrorNameList (xs : List String) : Bool :=
+  xs.any (· == "TypeError")
 
 mutual
   /-- Names that make a function-frame binding local before the first
@@ -6850,6 +6863,14 @@ mutual
     | .unsupported "AnnAssign:no-value" text _ =>
         (annNoValueName text).toList
     | .delStmt names _ => names.toList
+    | .assign targets _ _ =>
+        if typeErrorTargetList targets.toList then ["TypeError"] else []
+    | .unpackAssign before star after _ _ =>
+        if typeErrorNameList (before.toList ++ [star] ++ after.toList) then
+          ["TypeError"]
+        else []
+    | .augAssign target _ _ _ =>
+        if typeErrorTarget target then ["TypeError"] else []
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
         stmtUnboundLocalNamesList body.toList
           ++ stmtUnboundLocalNamesList orelse.toList
@@ -6900,6 +6921,10 @@ mutual
   def stmtHasUnboundLocal : Stmt → Bool
     | .unsupported "AnnAssign:no-value" _ _ => true
     | .delStmt names _ => !names.isEmpty
+    | .assign targets _ _ => typeErrorTargetList targets.toList
+    | .unpackAssign before star after _ _ =>
+        typeErrorNameList (before.toList ++ [star] ++ after.toList)
+    | .augAssign target _ _ _ => typeErrorTarget target
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
         stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList orelse.toList
     | .forStmt _ _ body orelse _ =>
@@ -10058,10 +10083,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                  else .exn st' e
              | .timeout => .timeout
              | .unsupported msg => .unsupported msg
-         else if (Env.lookup st.locals excName).isSome
-             || (lookupG (moduleGlobals m).1 excName).isSome
-             || (Env.lookup st.world.globals excName).isSome
-             || (findFunction m excName).isSome then
+         else if excName != "TypeError" &&
+             ((Env.lookup st.locals excName).isSome
+               || (lookupG (moduleGlobals m).1 excName).isSome
+               || (Env.lookup st.world.globals excName).isSome
+               || (findFunction m excName).isSome) then
            .unsupported s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
          else
            match findClass m excName with
@@ -10092,8 +10118,17 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                match execStmts m fuel st body.toList with
                | .ok st' flow => .ok st' flow
                | .exn st' e =>
-                   if builtinExcCatches excName e || userExcCatches m excName e then execStmts m fuel st' handler.toList
-                 else .exn st' e
+                   if hasUnboundLocal st'.locals excName then
+                     .exn st' (.unboundLocalError excName)
+                   else if (Env.lookup st'.locals excName).isSome
+                       || (lookupG (moduleGlobals m).1 excName).isSome
+                       || (Env.lookup st'.world.globals excName).isSome
+                       || (findFunction m excName).isSome then
+                     .exn st' (.typeError
+                       "catching classes that do not inherit from BaseException is not allowed")
+                   else if builtinExcCatches excName e || userExcCatches m excName e then
+                     execStmts m fuel st' handler.toList
+                   else .exn st' e
                | .timeout => .timeout
                | .unsupported msg => .unsupported msg
              else if refusedAncestorExc.contains excName then

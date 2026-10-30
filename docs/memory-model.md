@@ -2722,11 +2722,15 @@ Fuel monotonicity, clock erasure, and payload blindness retain their theorem
 statements. The try statement remains outside `Stmt.heapFree`.
 
 Admission remains statically first and deliberately narrower than Python's
-dynamic exception-class evaluation. Function extraction refuses a named
-handler that Python classifies as a local binding, including an assignment
-after the try or inside its body: those shapes otherwise caught the builtin
-class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`.
-Existing local/global/definition shadow guards remain in force. Module try
+dynamic exception-class evaluation. Function extraction still refuses a named
+handler that Python classifies as a local binding for every exception class
+except the measured `TypeError` slice. For `except TypeError`, the frame now
+installs the static-local marker at entry and validates the handler only after
+the protected body: a never-bound late assignment raises CPython's
+`UnboundLocalError`, while a bound non-class raises the exact handler-matching
+`TypeError`; a successful body never evaluates the handler class. Existing
+local/global/definition shadow guards remain in force for other handler names.
+Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Tuple/attribute patterns,
 observed `as` bindings, wider multiple-handler bodies, effectful `finally`

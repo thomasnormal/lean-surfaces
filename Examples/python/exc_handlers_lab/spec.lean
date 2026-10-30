@@ -42,12 +42,17 @@ set_option maxRecDepth 8192
 
 #guard callFunction exc_handlers_lab "handler_binding" #[] 4096 matches .unsupported _
 #py_check exc_handlers_lab.tuple_handler() = 13
-#guard callFunction exc_handlers_lab "shadowed_handler" #[.int 5] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "local_shadowed_handler" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "body_shadowed_handler" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "body_shadowed_nonmatching" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "late_shadowed_handler" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "nested_def_handler" #[] 4096 matches .unsupported _
+#guard callFunction exc_handlers_lab "shadowed_handler" #[.int 5] 4096 matches
+  .exn (.typeError "catching classes that do not inherit from BaseException is not allowed")
+#guard callFunction exc_handlers_lab "local_shadowed_handler" #[] 4096 matches .ok (.int 1)
+#guard callFunction exc_handlers_lab "body_shadowed_handler" #[] 4096 matches
+  .exn (.typeError "catching classes that do not inherit from BaseException is not allowed")
+#guard callFunction exc_handlers_lab "body_shadowed_nonmatching" #[] 4096 matches
+  .exn (.typeError "catching classes that do not inherit from BaseException is not allowed")
+#guard callFunction exc_handlers_lab "late_shadowed_handler" #[] 4096 matches
+  .exn (.unboundLocalError "TypeError")
+#guard callFunction exc_handlers_lab "nested_def_handler" #[] 4096 matches
+  .exn (.typeError "catching classes that do not inherit from BaseException is not allowed")
 #py_check exc_handlers_lab.base_exception() = 16
 #py_check exc_handlers_lab.arithmetic_ancestor() = 17
 #py_check exc_handlers_lab.lookup_ancestor() = 18

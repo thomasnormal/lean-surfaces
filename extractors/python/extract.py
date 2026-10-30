@@ -1322,16 +1322,19 @@ def _scope_binding_names(scope):
 
 
 def _shadowed_handlers(fn):
-    """Refuse locally-bound handler names without any statement-order exemption.
+    """Find locally-bound handler names outside the dynamic TypeError slice.
 
     Handler names resolve when an exception occurs, whereas the model plans
-    matching before the body. A later binding also creates a static local, so
-    neither initialized shadows nor unbound windows may use builtin matching.
+    matching before the body. The admitted ``TypeError`` handler now defers
+    that check until after the body, where the runtime can reproduce CPython's
+    invalid-class TypeError or unbound-local error. Other handler classes
+    remain statically loud because their dynamic class identity is not in the
+    tier.
     """
     handlers = {node.type.id for node in _walk_scope(fn)
                 if isinstance(node, ast.ExceptHandler)
                 and isinstance(node.type, ast.Name)}
-    return sorted(handlers & _scope_binding_names(fn))
+    return sorted((handlers - {"TypeError"}) & _scope_binding_names(fn))
 
 
 def _shadowed_raises(fn):
@@ -2596,8 +2599,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # "catching classes ..." TypeError.  A definition is different: it
         # enters the module's static function/class table, so keeping that
         # shape loud avoids a static table/live-frame collision. Function-scope
-        # rebinding remains a static-local concern and is rejected by
-        # ``_shadowed_handlers`` on the enclosing function.
+        # rebinding remains static-local for every handler except the admitted
+        # TypeError slice, which is deferred by ``_shadowed_handlers`` and
+        # checked by the runtime after a raise.
         if module_scope and exc_name:
             handler_names = exc_name.split("|")
             definition_names = {

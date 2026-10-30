@@ -1485,6 +1485,8 @@ theorem fuelMono (fuel : Nat) :
                         cases execStmts m k st body.toList with
                         | ok st' flow => exact Run.le_refl _
                         | exn st' e =>
+                          refine Run.le_ite (Run.le_refl _) ?_
+                          refine Run.le_ite (Run.le_refl _) ?_
                           exact Run.le_ite (ihSs m st' handler.toList k hk)
                             (Run.le_refl _)
                         | timeout => exact Run.le_refl _

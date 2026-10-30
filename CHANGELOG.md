@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Function-scope `except TypeError` handlers now resolve after the protected
+  body, reproducing CPython's invalid-handler `TypeError` and late-binding
+  `UnboundLocalError` while preserving the existing loud boundary for other
+  dynamically shadowed exception classes.
+
 - The triad classifier self-test now uses an isolated SystemVerilog fixture,
   so adding a cross-tier example import cannot change the test's one-tier
   expectation.

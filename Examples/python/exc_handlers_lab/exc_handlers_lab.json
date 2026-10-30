@@ -3677,7 +3677,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Try",
@@ -3774,7 +3774,7 @@
         "name": "local_shadowed_handler",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Assign",
@@ -3882,7 +3882,7 @@
         "name": "body_shadowed_handler",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Try",
@@ -4013,7 +4013,7 @@
         "name": "body_shadowed_nonmatching",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Try",
@@ -4144,7 +4144,7 @@
         "name": "late_shadowed_handler",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Try",
@@ -4275,7 +4275,7 @@
         "name": "nested_def_handler",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "matches locally-bound handler name(s) (static-locals rule): TypeError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "NestedDef",

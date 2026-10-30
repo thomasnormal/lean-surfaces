@@ -550,6 +550,11 @@ def check_code(root, data, strict=False, svgolf=None):
             for kind in ("negatives", "attacks"):
                 for name in sorted(tv.get(kind, {})):
                     key = "%s/%s" % (task, name)
+                    # `"advisory": true`: a test of an ADVISORY output of the checker (a warning, a
+                    # pre-check) that sits in `attacks` because the runner is the same; it refuses
+                    # nothing, so the register has nothing to say about it
+                    if tv[kind][name].get("advisory"):
+                        continue
                     if key not in cited:
                         err.append("svgolf/tests/expected.json %s %r is not cited by any svgolf entry" % (kind[:-1], key))
         allnames = {"%s/%s" % (t, n) for t, tv in d.get("tasks", {}).items()

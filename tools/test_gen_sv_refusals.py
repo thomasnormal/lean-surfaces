@@ -286,6 +286,22 @@ class CheckTests(MiniCase):
         self.assertEqual(rc, 1)
         self.assertIn("t/atk1", out)
 
+    def test_advisory_attacks_need_no_citation(self):
+        m = self.fresh()
+        exp = json.loads(json.dumps(EXPECTED))
+        exp["tasks"]["t"]["attacks"]["adv1"] = {"stage": "unproved", "advisory": True}
+        m.put("svgolf/tests/expected.json", json.dumps(exp))
+        m.write()
+        rc, out = m.check()
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("adv1", out)
+        exp["tasks"]["t"]["attacks"]["adv2"] = {"stage": "unproved"}     # not marked: still cited
+        m.put("svgolf/tests/expected.json", json.dumps(exp))
+        rc, out = m.check()
+        self.assertEqual(rc, 1)
+        self.assertIn("t/adv2", out)
+        self.assertNotIn("t/adv1", out)
+
     def test_svgolf_cites_a_name_that_does_not_exist(self):
         m = self.fresh()
         m.reg["svgolf"]["entries"][0]["attacks"].append("t/ghost")

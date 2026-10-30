@@ -1,3 +1,9 @@
+# [0.1.244] — 2026-10-30
+
+The legacy differential corpus now carries a compact logical `&&`/`||`
+witness covering true and false scalar outcomes. Coverage grows
+**506/494/0/12 → 507/495/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.243] — 2026-10-30
 
 The legacy differential corpus now carries a compact scalar conditional

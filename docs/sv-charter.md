@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Logical conjunction and disjunction witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for `&&` and `||`, checking true and false scalar outcomes with a literal
+`PASS` transcript.
+
+Differential coverage grows **506/494/0/12 → 507/495/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Scalar conditional-expression witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

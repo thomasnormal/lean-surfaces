@@ -95,6 +95,15 @@
       "expect": "match"
     },
     {
+      "name": "logical_accept",
+      "file": "Examples/system-verilog/logical_accept/logical_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unique_if_dynamic_refuse",
       "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
       "module": "top",

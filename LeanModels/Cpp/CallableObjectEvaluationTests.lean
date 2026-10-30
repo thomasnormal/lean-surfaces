@@ -4326,6 +4326,40 @@ def callableLocalForInitializationContinueStatementFrameWitness : Bool :=
 
 #guard callableLocalForInitializationContinueStatementFrameWitness
 
+private def localForInitializationContinueFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer : CallableStatement := .assign (handle "0x10") {
+    expression := .integer 2
+    sourceType := intType
+    type := intType}
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .block (.sequence
+    (automaticLiteral "0x11" 5)
+    .continue_)
+  let function := {base with body := .block (.sequence
+    (.forLoop initializer condition step body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 2
+  | _ => false
+
+def callableLocalForInitializationContinueFalseStatementFrameWitness : Bool :=
+  localForInitializationContinueFalseStatementFrame
+
+#guard callableLocalForInitializationContinueFalseStatementFrameWitness
+
 private def localForComputedInitializationContinueStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let initializer : CallableStatement := .assign (handle "0x10") {

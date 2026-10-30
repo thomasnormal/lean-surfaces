@@ -117,6 +117,10 @@ def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
   { w with regionQ := fun r =>
       if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
 
+def appendInactive (w : SvWorld) (indices : List Nat) : SvWorld :=
+  { w with regionQ := fun r =>
+      if r == Region.inactive then w.regionQ r ++ indices else w.regionQ r }
+
 /-- Wake every process whose edge trigger fired between `old` and `new`,
 marking it ready and enqueueing it in Active. -/
 def wakeEdges (old new : SvState) : SvM Unit :=
@@ -203,8 +207,21 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
           let (sigs, nba, out, oc) ←
             liftRes ⟨"4.4"⟩ (stepSStmt fuel w.signals w.nba w.out stmt)
           match oc with
-          | .suspended (.atTime 0) _ =>
-              refuseSv .outOfTier ⟨"9.4.1"⟩ "zero-delay Inactive delivery is not admitted"
+          | .suspended (.atTime 0) tail =>
+              let continuation := tail ++ rest
+              let ps' := { ps with residual := continuation
+                                  , status := .ready
+                                  , registration := none
+                                  , explicitlySuspended := false }
+              let updated := { w with signals := sigs
+                                      , nba := nba
+                                      , out := out
+                                      , procs := w.procs.set! i ps' }
+              set (appendInactive updated [i])
+              if w.signals != sigs then
+                wakeCombs w.signals sigs
+                wakeEdges w.signals sigs
+              pure (.suspended (.atTime 0) continuation)
           | .suspended t continuation =>
               let ps' := { ps with residual := continuation ++ rest
                                   , status := .suspended t

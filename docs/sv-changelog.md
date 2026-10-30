@@ -1,3 +1,12 @@
+# [0.1.264] — 2026-10-30
+
+The timed scheduler now delivers a procedural `#0` through the Inactive
+region of the same time slot. The retained continuation is queued after the
+Active pass, and writes from that continuation use the existing publication
+queue. The zero-delay loop remains fuel-bounded and loud; postponed and
+monitor-region output remain outside the tier. Differential coverage grows
+**535/519/0/16 → 535/520/0/15**.
+
 # [0.1.263] — 2026-10-30
 
 Procedural signal publication is now part of the retained scheduler path.

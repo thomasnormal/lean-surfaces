@@ -1774,8 +1774,10 @@
       "name": "scheduler_zero_delay_inactive",
       "file": "Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv",
       "module": "top",
-      "oracle": "refuse",
-      "expect": "refuse",
+      "oracle": [
+        "SCHED ZERO PASS"
+      ],
+      "expect": "match",
       "mode": "timed",
       "ticks": 2
     },

@@ -22,17 +22,17 @@ until the slot closes; process order inside a region remains the explicit
 visible in Active before a same-slot nonblocking assignment commits in NBA, and
 an `initial` process observes two delayed iterations of a plain `always`.
 
-Three witnesses remain deliberately loud, each naming a scheduler rule that
-is not implemented yet: `#0` inactive delivery (`9.4.1`), procedural
-publication for a zero-delay event loop, and the separate postponed/monitor
-output regions. The `@*`/`@(posedge)` double-change witness now exercises
-publication after each blocking statement, and the NBA witness now exercises
-publication after NBA commit; both are differential matches against their
-pinned reference transcripts. Refusal rows still name the missing event queue
-or region rather than fabricating a result.
+Two witnesses remain deliberately loud, each naming a scheduler rule that is
+not implemented yet: procedural publication for a zero-delay event loop and
+the separate postponed/monitor output regions. The `#0` inactive-region
+witness now resumes in Inactive (`9.4.1`), while the `@*`/`@(posedge)`
+double-change witness exercises publication after each blocking statement and
+the NBA witness exercises publication after NBA commit; all three are
+differential matches against their pinned reference transcripts. Refusal rows
+still name the missing event queue or region rather than fabricating a result.
 
-The scheduler-core rows move differential coverage **526/509/0/17 →
-526/511/0/15** (rows/agree/disagree/recorded refusals). The current grammar
+The scheduler-core rows move differential coverage **526/511/0/15 →
+526/512/0/14** (rows/agree/disagree/recorded refusals). The current grammar
 census is **237/189/48** (witnesses/MATCH/REFUSE); the
 `ImplicitEventControl` witness now matches after the timed implicit-sensitivity
 route is admitted. Continuous assignment,

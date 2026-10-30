@@ -16,13 +16,16 @@ coverage advance independently from the Python tier.
   the body scope and its local declaration are skipped when `i < 2` is false.
 - Added a declaration-initializer `continue` witness: each body iteration
   creates its local declaration, continues, and still executes the loop step.
+- Added a declaration-initializer `break` witness: the first body iteration
+  creates its local declaration and exits the loop while preserving the outer
+  parameter.
 
 ### Measured
 
-- The checked-in corpus now contains **1090 differential rows**: **1073 MATCH**,
+- The checked-in corpus now contains **1091 differential rows**: **1074 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **584**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **585**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

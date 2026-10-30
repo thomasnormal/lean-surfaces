@@ -1,3 +1,10 @@
+# [0.1.232] — 2026-10-30
+
+The legacy differential corpus now pins a dynamic `unique if` chain as a loud
+`ConditionalStatement:Unique` refusal. The admitted literal-equality fallback
+subset remains sound; dynamic overlap behavior is not guessed. Coverage grows
+**494/484/0/10 → 495/484/0/11**; grammar coverage remains **235/113/122**.
+
 # [0.1.231] — 2026-10-30
 
 The legacy differential corpus now pins a dynamic `unique0 case` label as a

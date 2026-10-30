@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `unique if` refusal witness — 2026-10-30
+
+The legacy self-check tier now pins a dynamic `unique if` chain as
+`ConditionalStatement:Unique`. Distinct literal equalities with an explicit
+`else` remain admitted; a dynamic condition leaves the multiple-match diagnostic
+unresolved, so the qualifier stays loud. The `unique_if_dynamic_refuse` fixture,
+generated envelope, and differential row record the refusal.
+
+Differential coverage grows **494/484/0/10 → 495/484/0/11**; grammar coverage
+remains **235/113/122**.
+
+
 ## Dynamic `unique0 case` refusal witness — 2026-10-30
 
 The legacy self-check tier now pins a dynamic `unique0 case` label as

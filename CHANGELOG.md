@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The `bench_statistics` acceptance guards now record the faithful
+  `NameError` raised when its intentionally unvendored `StatisticsError`
+  name is reached on empty input.
+
 - The clock-trace example now checks the modeled `AttributeError` for a
   shadowed `time` receiver, keeping its non-vacuity guard aligned with the
   interpreter.

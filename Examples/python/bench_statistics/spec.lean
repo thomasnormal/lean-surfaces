@@ -89,16 +89,14 @@ Measured live on 3.9.19. -/
   .typeError "median_low() missing 1 required positional argument: 'data'"
 
 /-! Tier-edge documentation: the EMPTY list reaches the vendored
-`raise StatisticsError('no median for empty data')` — the single
-Unsupported node per function — and the interpreter refuses loudly
-(`.unsupported`, never a fake Python result; on the vendored file CPython
-itself raises `NameError: StatisticsError` since the exception class is
-deliberately not vendored). The theorems below never touch it: `data ≠ []`
-makes the guard concretely false. -/
+`raise StatisticsError('no median for empty data')` — the missing exception
+name propagates as the faithful `NameError: StatisticsError` because the
+class is deliberately not vendored. The theorems below never touch it:
+`data ≠ []` makes the guard concretely false. -/
 #guard (callFunction bench_statistics "median_low" #[.list #[]] 4096
-    matches .unsupported _)
+    matches .exn (.nameError "StatisticsError"))
 #guard (callFunction bench_statistics "median_high" #[.list #[]] 4096
-    matches .unsupported _)
+    matches .exn (.nameError "StatisticsError"))
 
 /-! ## The theorems (statements duplicated from proof.lean BY DESIGN —
 `:= by proofs` typechecks the duplication) -/

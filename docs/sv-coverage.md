@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 189 | 237 | 79.7% |
+| grammar syntax kinds (MATCH) | 190 | 237 | 80.2% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 536 | 521 | 0 | 15 | sv-tests-2 declarations |
+| 537 | 522 | 0 | 15 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -221,6 +221,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_blocking_nba` | `Examples/system-verilog/scheduler_blocking_nba/scheduler_blocking_nba.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_inactive` | `Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_loop` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `scheduler_zero_delay_convergent` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -566,7 +567,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 237 | 189 | 48 | pyslang SyntaxKind |
+| 237 | 190 | 47 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -784,7 +785,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | **REFUSE** | `unsupported` scheduler halted: LeanModels.Loud.timeout |
+| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **MATCH** | `ok`  |

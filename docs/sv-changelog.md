@@ -1,3 +1,13 @@
+# [0.1.267] — 2026-10-30
+
+The timed scheduler now publishes guarded procedural NBA writes back into
+Active until a deterministic zero-delay feedback loop settles. The new
+`scheduler_zero_delay_convergent` witness matches `N=3`; the unbounded toggle
+continues to terminate by fuel and remains a loud refusal. Differential
+coverage grows **536/521/0/15 → 537/522/0/15**.
+Grammar coverage grows **237/189/48 → 237/190/47** as the unary-bitwise-not
+witness now runs through the convergent timed loop.
+
 # [0.1.266] — 2026-10-30
 
 The clock-discipline guard (WP-Q0, refusal-only; `LeanModels/Sv/ClockGuard2.lean`,

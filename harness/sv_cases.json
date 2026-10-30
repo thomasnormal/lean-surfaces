@@ -1791,6 +1791,17 @@
       "ticks": 2
     },
     {
+      "name": "scheduler_zero_delay_convergent",
+      "file": "Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv",
+      "module": "top",
+      "oracle": [
+        "N=3"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
       "name": "scheduler_sensitivity_double",
       "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
       "module": "top",

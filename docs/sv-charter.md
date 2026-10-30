@@ -23,19 +23,20 @@ visible in Active before a same-slot nonblocking assignment commits in NBA, and
 an `initial` process observes two delayed iterations of a plain `always`.
 
 One witness remains deliberately loud: `$monitor` registration still needs a
-monitor state and change-trigger rule. Procedural publication for a zero-delay
-event loop remains fuel-bounded and loud. The `#0` inactive-region witness now
-resumes in Inactive (`9.4.1`), while the `@*`/`@(posedge)` double-change
-witness exercises publication after each blocking statement and the NBA
-witness exercises publication after NBA commit; all three are differential
-matches against their pinned reference transcripts. Timed `$strobe` now queues
-and flushes in Postponed (`21.2`), so it observes the final Active/NBA value;
-the `scheduler_region_outputs` row continues to record the missing monitor
-region rather than fabricating one.
+monitor state and change-trigger rule. The deterministic zero-delay feedback
+witness now publishes guarded NBA writes back into Active until `N=3`; the
+unbounded toggle remains a fuel-bounded refusal. The `#0` inactive-region
+witness now resumes in Inactive (`9.4.1`), while the `@*`/`@(posedge)`
+double-change witness exercises publication after each blocking statement and
+the NBA witness exercises publication after NBA commit; all three are
+differential matches against their pinned reference transcripts. Timed
+`$strobe` now queues and flushes in Postponed (`21.2`), so it observes the
+final Active/NBA value; the `scheduler_region_outputs` row continues to record
+the missing monitor region rather than fabricating one.
 
-The scheduler-core rows move differential coverage **535/520/0/15 →
-536/521/0/15** (rows/agree/disagree/recorded refusals). The current grammar
-census is **237/189/48** (witnesses/MATCH/REFUSE); the
+The scheduler-core rows move differential coverage **536/521/0/15 →
+537/522/0/15** (rows/agree/disagree/recorded refusals). The current grammar
+census is **237/190/47** (witnesses/MATCH/REFUSE); the
 `ImplicitEventControl` witness now matches after the timed implicit-sensitivity
 route is admitted. Continuous assignment,
 `always_comb`, `always_latch`, and `always_ff` remain subsequent rungs.

@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Power-operator witness — 2026-10-30
+
+The legacy differential corpus now carries a compact admitted initial-process
+witness for four-state integral power, checking positive and zero exponents as
+well as unknown base and exponent propagation. The existing signed, unsigned,
+and zero-negative power fixtures remain in the corpus; the symbolic
+continuous-assignment witness stays a recorded grammar refusal.
+
+Differential coverage grows **516/504/0/12 → 517/505/0/12**; grammar coverage
+remains **235/120/115**.
+
 ## Integral arithmetic witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

@@ -1,3 +1,12 @@
+# [0.1.254] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state power witness
+for positive and zero exponents plus unknown base and exponent values. The
+existing signed and unsigned power fixtures remain covered alongside it.
+Coverage grows **516/504/0/12 → 517/505/0/12**; grammar coverage remains
+**235/120/115** because the symbolic continuous-assignment witness is still
+the canonical `PowerExpression` row.
+
 # [0.1.253] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state arithmetic

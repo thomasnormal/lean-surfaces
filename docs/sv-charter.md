@@ -72,6 +72,23 @@ subsequent rungs. Differential coverage grows **526/509/0/17 →
 530/513/0/17**; grammar coverage grows **236/159/77 → 236/160/76** as the
 `AlwaysCombBlock` witness moves from REFUSE to MATCH.
 
+## Continuous assignment timed conformance — 2026-10-30
+
+The timed path now admits a single-driver continuous `assign` as a dormant
+combinational process. Its RHS is evaluated in Active at time zero and again
+when an inferred read signal changes, and dependent assignments propagate
+through the same scheduler queue. Multiple drivers remain loud: the scheduler
+does not yet retain per-driver values or apply IEEE four-state net resolution,
+so a last-writer result would be unsound. Delays and selected or concatenated
+continuous targets remain outside this rung.
+
+The `assign_accept` and `assign_chain` witnesses cover time-zero evaluation and
+dependent propagation; `assign_multiple_drivers` records the loud boundary.
+Continuous assignment is the only new timed process family in this item. The
+differential table grows **530/513/0/17 → 533/515/0/18** and the grammar
+census grows **236/160/76 → 236/186/50** as continuous-assignment witnesses
+move through the timed runner.
+
 ## Packed concatenation and replication witness — 2026-10-30
 
 The legacy differential corpus now carries a compact admitted initial-process

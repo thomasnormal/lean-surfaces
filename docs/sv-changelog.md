@@ -1,3 +1,13 @@
+# [0.1.261] — 2026-10-30
+
+Timed conformance now admits single-driver continuous `assign` processes as
+implicit-sensitivity combinational work. The RHS runs at time zero and wakes
+again when a read signal changes; dependent assignments use the same Active
+queue. Multiple drivers remain loud pending a net-driver table and IEEE
+four-state resolution. Differential coverage grows **530/513/0/17 →
+533/515/0/18**; grammar coverage grows **236/160/76 → 236/186/50** as
+continuous-assignment witnesses move through the timed runner.
+
 # [0.1.260] — 2026-10-30
 
 Timed conformance now admits `always_comb` through inferred implicit

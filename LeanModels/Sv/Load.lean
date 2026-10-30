@@ -37,14 +37,16 @@ construction rather than by inspection.
 
 ## What is deliberately still LOUD
 
-The timed loader now admits `always_comb` through explicit implicit-sensitivity
-metadata on `ProcState`: its body runs once in Active at time zero, becomes
-dormant, and is queued again when a read signal changes. The legacy
-`elabDesign`/`runSelfCheck` path remains initial-only, and continuous `assign`
-still has no net-resolution rule, so it stays loud. A comb process that writes
-one of its own read signals is not silently treated as an edge wait; the
-write-name exclusion makes that self-trigger boundary explicit until the
-language-level guard is added.
+The timed loader admits `always_comb` and single-driver continuous `assign`
+through explicit implicit-sensitivity metadata on `ProcState`: each body runs
+once in Active at time zero, becomes dormant, and is queued again when a read
+signal changes. The legacy `elabDesign`/`runSelfCheck` path remains
+initial-only. Multiple continuous drivers stay loud until the scheduler has a
+net-driver table and IEEE four-state resolution; a last-writer approximation
+would be wrong. Delayed assignments and selected/concatenated targets remain
+outside this slice. A comb process that writes one of its own read signals is
+not silently treated as an edge wait; the write-name exclusion makes that
+self-trigger boundary explicit until the language-level guard is added.
 
 The timed region model still refuses level waits, internally published edge
 events, and other scheduler forms outside this slice. The M0 cycle model's
@@ -76,7 +78,7 @@ def procOf : Process → Except String ProcState
   | .alwaysComb _ =>
       .error "always_comb: comb sensitivity ('any read signal changed') has no Trigger; the region model needs a settle rule, and approximating it would be wrong"
   | .assign _ _ =>
-      .error "continuous assign: same comb-sensitivity gap as always_comb"
+      .error "continuous assign: timed scheduler required"
   | .unsupported k t =>
       .error s!"out-of-tier process '{k}': {t}"
 
@@ -161,6 +163,7 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
     match proc with
     | .initial body | .alwaysBody body | .alwaysComb body => timedAccesses body
     | .alwaysPosedge clock body => (true, clock) :: timedAccesses body
+    | .assign _ _ => []
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
   accesses.any fun (watched, name) => watched && writes.contains name
@@ -183,6 +186,13 @@ def timedProcOf : SProc → Except String ProcState
              , comb := true
              , combReads := reads
              , combBody := [body] }
+  | .assign target value =>
+      let body := .assign false target value
+      pure { residual := [body]
+           , status := .ready
+           , comb := true
+           , combReads := value.readNames.eraseDups
+           , combBody := [body] }
   | .alwaysPosedge clock body =>
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual }
@@ -190,8 +200,8 @@ def timedProcOf : SProc → Except String ProcState
 
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
-This surface admits `initial`, plain `always`, `always_comb`, and canonical
-positive-edge processes. Their continuations run through the existing
+This surface admits `initial`, plain `always`, `always_comb`, single-driver
+continuous `assign`, and canonical positive-edge processes. Their continuations run through the existing
 scheduler with an explicit region oracle. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
@@ -200,6 +210,18 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
     throw "timed design rejects time-zero-only $time lowering"
   if requiresInternalEdges d then
     throw "timed design requires procedural edge publication"
+  let assignTargets := d.procs.toList.filterMap fun proc =>
+    match proc with
+    | .assign target _ => some target
+    | _ => none
+  if assignTargets.eraseDups.length != assignTargets.length then
+    throw "continuous assign: multiple drivers require net resolution"
+  for target in assignTargets do
+    match d.decls.toList.find? (fun decl => decl.name == target) with
+    | none => throw s!"continuous assign target '{target}' is undeclared"
+    | some decl =>
+        if !decl.isNet && !decl.isOutput then
+          throw s!"continuous assign target '{target}' is not a net"
   let procs ← d.procs.toList.mapM timedProcOf
   if procs.isEmpty then
     .error "timed design requires at least one procedural process"

@@ -4811,6 +4811,37 @@
       "module": "top",
       "oracle": "refuse",
       "expect": "refuse"
+    },
+    {
+      "name": "assign_accept",
+      "file": "Examples/system-verilog/assign_accept/assign_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ASSIGN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "assign_chain",
+      "file": "Examples/system-verilog/assign_chain/assign_chain.sv",
+      "module": "top",
+      "oracle": [
+        "ASSIGN_CHAIN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "assign_multiple_drivers",
+      "file": "Examples/system-verilog/assign_multiple_drivers/assign_multiple_drivers.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 4
     }
   ]
 }

@@ -1161,6 +1161,7 @@ inductive SProc where
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
   | alwaysComb (body : SStmt)
+  | assign (target : String) (value : SExpr)
   | other (svKind : String) (text : String)
 deriving Repr, Inhabited
 
@@ -1202,6 +1203,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported "non-initial process 'Always' (self-check tier runs initial-only designs)"
   | .alwaysComb _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysComb' (self-check tier runs initial-only designs)"
+  | .assign _ _ :: _, _, _, _, _ =>
+      .unsupported "non-initial process 'Assign' (self-check tier runs initial-only designs)"
   | .initial body :: rest, st, nba, out, assignmentOrder => do
       let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
       if out'.halted then .ok (st', nba', out')
@@ -1232,6 +1235,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
+      | .assign _ _ => some "Assign"
       | _ => none then
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
@@ -1628,7 +1632,12 @@ def parseSProc (j : Json) : Except String SProc := do
         (← parseSStmt (← getF j "body"))
   | "AlwaysComb" =>
       return .alwaysComb (← parseSStmt (← getF j "body"))
-  | "Assign" => return .other kind ""
+  | "Assign" =>
+      let target ← getF j "target"
+      if (getStrF target "kind").toOption != some "Ident" then
+        return .other "Assign" "continuous assignment target is outside the timed tier"
+      else
+        return .assign (← targetName target) (← parseSExpr (← getF j "value"))
   | "Unsupported" =>
       return .other (← getStrF j "sv_kind") (unsupportedText j)
   | other => .error s!"unknown process kind '{other}'"

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The `divmod_lab` proof now keeps its symbolic integer theorem on a bounded
+  simplification path; the float `divmod` case remains covered by its kernel
+  `#py_check` and the dedicated `float_lab` proof, avoiding a duplicate
+  high-memory reduction in hosted CI.
+
 - Hosted full CI now gives each Python Lean source file its own Lake process,
   releasing elaboration state between proof and spec targets to keep the full
   gate below the runner's resource limit.

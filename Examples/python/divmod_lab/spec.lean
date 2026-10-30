@@ -60,10 +60,3 @@ theorem by_one_total (value : PyInt) :
 #py_check divmod_lab.pair(Float64.ofBits 0x3ff0000000000000,
     Float64.ofBits 0x3fb999999999999a) =
     (Float64.ofBits 0x4022000000000000, Float64.ofBits 0x3fb9999999999996)
-
-theorem float_pair_tenth :
-    divmod_lab.pair(Float64.ofBits 0x3ff0000000000000,
-      Float64.ofBits 0x3fb999999999999a) ==>
-      (Float64.ofBits 0x4022000000000000, Float64.ofBits 0x3fb9999999999996) := by proofs
-
-#print axioms float_pair_tenth

@@ -1,3 +1,10 @@
+# [0.1.251] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state binary-bitwise
+witness for `&`, `|`, and `^`, including X-propagating operands. Coverage grows
+**513/501/0/12 → 514/502/0/12**; grammar coverage grows
+**235/116/119 → 235/118/117**.
+
 # [0.1.250] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state integral-shift

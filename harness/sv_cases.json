@@ -158,6 +158,15 @@
       "expect": "match"
     },
     {
+      "name": "bitwise_accept",
+      "file": "Examples/system-verilog/bitwise_accept/bitwise_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unique_if_dynamic_refuse",
       "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
       "module": "top",

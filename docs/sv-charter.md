@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Binary bitwise witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for binary `&`, `|`, and `^`, including X-propagating operands, with a literal
+`PASS` transcript.
+
+Differential coverage grows **513/501/0/12 → 514/502/0/12**; grammar coverage
+grows **235/116/119 → 235/118/117** as the census gains an initial-process
+witness for binary bitwise forms previously represented only by
+continuous-assignment refusals.
+
 ## Integral-shift witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

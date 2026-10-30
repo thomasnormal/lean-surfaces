@@ -536,6 +536,10 @@ the model, Icarus and Xcelium agree except where a declaration says otherwise.
    canonical ranges too (`struct packed {logic [2:0][1:0] arr; logic t;} v`, `v.arr[2]` is a 1-bit select at
    `msb = lsb = 3` instead of the 2-bit element). Found by the U1 verifier outside any cluster; model
    `xxxxx1x` against Xcelium `xxxx01x` on `v.arr[1] = s`. Fix the extractor or refuse loudly.
+   **Closed 2026-10-30 (WP-E1):** the extractor now lowers the select to the flat window of the selected
+   ELEMENTS (`v.arr[1]` is the 2-bit window `[4:3]`), nested chains and writes included, and every select
+   is checked against the compiler's type (`<ExprKind>:window-mismatch`); rows `member_elem_*`, see
+   [sv-envelope-schema.md](sv-envelope-schema.md) "Member selects count elements".
 3. **Shift counts, unpacked-array indices and part-select bases wider than 32 bits** (item 8): the shift
    cluster is undeclared and unwarned in Xcelium; the array-index twin is unchecked in the model.
 4. **The verifier's remaining notes**: Verilator right-aligns a widened streaming-operator target (against the

@@ -1633,6 +1633,36 @@ parameter typed with such an aggregate gets the unrecoverable type
 fixed at every point keeps its encoding (`localparam int L = 3` member widths, a package
 struct; rows `bits_struct_fixed_n*`), and no committed envelope changed.
 
+**Member selects count elements (2026-10-30, WP-E1).** A constant element or
+range select through a member of a packed struct or union is one fixed
+`PartSel` window of the aggregate's `[W-1:0]` vector, and its labels count
+the ELEMENTS of the packed array they select from: `p.bytes[2]` over
+`struct packed { logic [3:0][7:0] bytes; logic [1:0] tag; }` is the 8-bit
+window `[25:18]` (`bytes` is `[33:2]`), `p.bytes[2:1]` is `[25:10]`,
+`p.bytes[1][3:0]` is `[13:10]` and a union's `u.h[1]` over `logic [1:0][15:0] h`
+is `[31:16]`, read or written (an ascending `[0:3]` member puts element 0 at the
+top; chains through nested members and a member of a packed-array element
+compose their offsets). Until then the lowering put a one-bit window at
+`member offset + label` (`p.bytes[2]` was `PartSel[4:4]`, width 1, and a write
+to `out_v.b[0]` a one-bit write): wrong values with `hasUnsupported` false
+(audit hole, Xcelium `xxxx01x` against the model's `xxxxx1x`). A run-time or
+parameter label (a parameter is folded at the default point only) is still
+`ElementSelectExpression:member-index`, an out-of-range one the same, and an
+indexed part select over a member whose elements are wider than one bit is
+`RangeSelectExpression:member-indexed`. Every select the symbolic extractor
+emits (and every legacy select read or target) is now checked against the
+type the compiler resolved (`_sym_select_checked`): a node whose width is not
+`e.type.bitWidth`, a `BitSel` whose base element is not its width (the tier
+reads `Param2.elemOf`), a `PartSel` that does not span its width in base
+elements, or a window outside the aggregate it was cut from is
+`<ExprKind>:window-mismatch`. The guard also refuses the constant nested
+element select of a three-dimensional 2-state array (`bit [1:0][1:0][3:0] a;
+a[1][1]`: a BitSel of a BitSel that the tier read as one bit of `a[1]`;
+Xcelium `1010`, model `0001` before). Rows `member_elem_struct`,
+`member_elem_union`, `member_elem_nested`, `member_elem_shapes`, `member_elem_target` (Xcelium-pinned;
+Icarus 12.0 declares a departure on the last) and the refusal rows
+`member_elem_dyn`, `member_elem_indexed`; no committed envelope changed.
+
 **Default-point cell indices (2026-10-28, WP2 repair).** The same fold
 reached the CELL a constant element select names: slang reports the
 constant of `m[i]` (a genvar) or `m[K]` (an overridable parameter) at the

@@ -8166,13 +8166,15 @@ def _convert_expr(sm, e):
                 "descending": False,
             }
     if _SYM is None and cname in ("ElementSelectExpression", "RangeSelectExpression"):
-        return _convert_selected_read(sm, e, cname)
+        return _sym_select_checked(sm, e, cname,
+                                   _convert_selected_read(sm, e, cname))
     if cname == "CallExpression":
         return _convert_legacy_call(sm, e) if _SYM is None else _convert_sym_call_expr(sm, e)
     if _SYM is not None and cname in (
         "ElementSelectExpression", "RangeSelectExpression", "ReplicationExpression"
     ):
-        return _convert_sym_select_expr(sm, e, cname)
+        return _sym_select_checked(sm, e, cname,
+                                   _convert_sym_select_expr(sm, e, cname))
     return unsupported(sm, e)
 
 
@@ -12308,6 +12310,188 @@ def _sym_wide_index_refusal(sm, e):
     return None
 
 
+def _sym_member_select_window(sm, e, cname):
+    """Constant selects rooted at a packed struct/union MEMBER, as one flat
+    `PartSel` window over the aggregate's storage vector (WP-E1, 2026-10-30).
+
+    The chain `m[i]`, `m[hi:lo]`, `m[i][hi:lo]`, ... is walked from the member
+    outwards. Labels count ELEMENTS of the packed array they select from, so
+    every step scales its label offset by the element width of that array
+    (`logic [3:0][7:0] bytes`: `p.bytes[2]` is an 8-bit window, not bit 2); a
+    step's window sits inside the one before it, and the member's own offset
+    comes from `_packed_struct_member`. Returns the node, an `Unsupported`
+    node (non-literal or out-of-range label, indexed part-select over
+    anything but a canonical one-bit-element range, wrong direction), or None
+    when the chain is not member-rooted or selects from something other than
+    a packed array (the generic path then selects from the converted child).
+    The emitted width must equal the width the compiler resolved for `e`
+    (`:window-mismatch` otherwise), the invariant `_sym_select_checked`
+    enforces on every select."""
+    steps = []
+    node = e
+    while type(node).__name__ in ("ElementSelectExpression",
+                                  "RangeSelectExpression"):
+        steps.append(node)
+        node = node.value
+    if not steps or type(node).__name__ != "MemberAccessExpression":
+        return None
+    member = _packed_struct_member(sm, node)
+    if member is None:
+        return None
+    steps.reverse()
+    if any(type(step.value.type.canonicalType).__name__ != "PackedArrayType"
+           for step in steps):
+        return None
+    base, window_width, window_offset, _two_state = member
+    for step in steps:
+        kind = type(step).__name__
+        source = step.value.type.canonicalType
+        left_bound, right_bound = int(source.range.left), int(source.range.right)
+        low, high = min(left_bound, right_bound), max(left_bound, right_bound)
+        element = int(source.elementType.canonicalType.bitWidth)
+        if element <= 0 or (high - low + 1) * element != window_width:
+            return unsupported(sm, e, kind + ":window-mismatch")
+
+        def local(label):
+            # Element position counted from the least significant element.
+            return (label - right_bound if left_bound > right_bound
+                    else right_bound - label)
+
+        if kind == "ElementSelectExpression":
+            label = _constant_dimension_selector(step.selector)
+            if (label is None or type(step.selector).__name__ not in _ARRAY_SELECT_LITERALS
+                    or label < low or label > high):
+                return unsupported(sm, e, "ElementSelectExpression:member-index")
+            lsb_local, step_width = local(label) * element, element
+        else:
+            selection = str(step.selectionKind).split(".")[-1]
+            if selection in ("IndexedUp", "IndexedDown"):
+                base_label = _constant_dimension_selector(step.left)
+                step_width = _safe_width(step)
+                canonical = (left_bound == int(source.bitWidth) - 1
+                             and right_bound == 0)
+                if (not canonical or base_label is None or
+                        type(step.left).__name__ not in _ARRAY_SELECT_LITERALS or
+                        step_width is None or step_width <= 0):
+                    return unsupported(sm, e, "RangeSelectExpression:member-indexed")
+                if selection == "IndexedUp":
+                    msb_local, lsb_local = base_label + step_width - 1, base_label
+                else:
+                    msb_local, lsb_local = base_label, base_label - step_width + 1
+                if lsb_local < 0 or msb_local >= int(source.bitWidth):
+                    return unsupported(sm, e, "RangeSelectExpression:member-range")
+            else:
+                left = _constant_dimension_selector(step.left)
+                right = _constant_dimension_selector(step.right)
+                if (selection != "Simple" or left is None or right is None
+                        or type(step.left).__name__ not in _ARRAY_SELECT_LITERALS
+                        or type(step.right).__name__ not in _ARRAY_SELECT_LITERALS
+                        or left < low or left > high or right < low or right > high):
+                    return unsupported(sm, e, "RangeSelectExpression:member-range")
+                if local(left) < local(right):
+                    return unsupported(sm, e, "RangeSelectExpression:member-direction")
+                lsb_local = local(right) * element
+                step_width = (local(left) - local(right) + 1) * element
+        window_offset += lsb_local
+        window_width = step_width
+    if window_width != _safe_width(e):
+        return unsupported(sm, e, cname + ":window-mismatch")
+    return {
+        "kind": "PartSel",
+        "span": node_span(sm, e),
+        "width": window_width,
+        "value": _convert_expr(sm, base),
+        "msb": {"kind": "Int", "span": node_span(sm, e),
+                "value": window_offset + window_width - 1},
+        "lsb": {"kind": "Int", "span": node_span(sm, e),
+                "value": window_offset},
+    }
+
+
+def _packed_member_rooted(sm, expression):
+    """Whether `expression` is a packed struct/union member access, or a
+    chain of element/range selects of one: the symbolic lowering emits such a
+    chain as a flat bit window of the AGGREGATE's vector."""
+    while type(expression).__name__ in ("ElementSelectExpression",
+                                        "RangeSelectExpression"):
+        expression = expression.value
+    return (type(expression).__name__ == "MemberAccessExpression"
+            and _packed_struct_member(sm, expression) is not None)
+
+
+def _sym_lean_elem_width(sm, node, source):
+    """The element width the semantic tier (`Param2.elemOf`) gives a select
+    BASE, mirrored over the emitted node: an `Ident` is its declared
+    first-dimension element (`logic [3:0][7:0] a`: 8; one-dimensional and
+    scalar bases: 1), a `PartSel` keeps its base's, a `BitSel` or `Concat` is
+    a flat vector of bits, and so is the vector of a packed aggregate (a
+    struct or union is declared by type name: one-bit elements). `source` is
+    the compiler's expression for the emitted `node`. None = not decidable."""
+    kind = node.get("kind") if isinstance(node, dict) else None
+    if kind in ("BitSel", "Concat"):
+        return 1
+    if kind in ("Ident", "PartSel") and _packed_member_rooted(sm, source):
+        return 1
+    if kind == "PartSel":
+        inner = getattr(source, "value", None)
+        return (_sym_lean_elem_width(sm, node.get("value"), inner)
+                if inner is not None else None)
+    if kind == "Ident":
+        canonical = source.type.canonicalType
+        if type(canonical).__name__ == "PackedArrayType":
+            return int(canonical.elementType.canonicalType.bitWidth)
+        return 1
+    return None
+
+
+def _sym_select_checked(sm, e, cname, node):
+    """The never-silently-wrong invariant of select lowering (WP-E1,
+    2026-10-30): an emitted select must agree with the type the compiler
+    resolved AND with the way the semantic tier reads it. Turned into
+    `<ExprKind>:window-mismatch` (loud) when
+
+    * the node's `width` is not `e.type.bitWidth`;
+    * a `BitSel` selects an element whose width (`_sym_lean_elem_width` of
+      its base) is not its `width`: the tier reads ONE base element;
+    * a `PartSel` with literal bounds does not span `width` bits: the tier
+      reads `(msb - lsb + 1)` base elements;
+    * a window of a packed aggregate's vector (a member-rooted select) lies
+      outside the vector it was cut from.
+
+    The member-rooted multi-dimensional lowering put a 1-bit `PartSel` where
+    the compiler resolved 8 bits, and `hasUnsupported` stayed false."""
+    if not isinstance(node, dict) or node.get("kind") == "Unsupported":
+        return node
+    try:
+        expected = _safe_width(e)
+        width = node.get("width")
+        if isinstance(expected, int) and isinstance(width, int) and width != expected:
+            return unsupported(sm, e, cname + ":window-mismatch")
+        kind = node.get("kind")
+        if kind not in ("BitSel", "PartSel") or not isinstance(width, int):
+            return node
+        element = _sym_lean_elem_width(sm, node.get("value"), e.value)
+        if kind == "BitSel":
+            if isinstance(element, int) and element != width:
+                return unsupported(sm, e, cname + ":window-mismatch")
+            return node
+        msb, lsb = node.get("msb") or {}, node.get("lsb") or {}
+        if msb.get("kind") != "Int" or lsb.get("kind") != "Int":
+            return node
+        msb, lsb = msb["value"], lsb["value"]
+        if isinstance(element, int) and (msb - lsb + 1) * element != width:
+            return unsupported(sm, e, cname + ":window-mismatch")
+        emitted = width_of(node.get("value"))
+        if (_packed_member_rooted(sm, e.value) and isinstance(emitted, int)
+                and not 0 <= lsb <= msb < emitted):
+            return unsupported(sm, e, cname + ":window-mismatch")
+    except Exception:
+        # A type the checks cannot read is "not decidable", not "wrong": the
+        # node keeps the lowering that produced it.
+        return node
+    return node
+
+
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
         if _sym_cell_index_point_dependent(e):
@@ -12321,92 +12505,10 @@ def _convert_sym_select_expr(sm, e, cname):
                 "width": width,
                 "name": name,
             }
-    member = None
-    if (cname != "ReplicationExpression" and
-            type(e.value).__name__ == "MemberAccessExpression"):
-        member = _packed_struct_member(sm, e.value)
-    if member is not None:
-        base, _member_width, parent_offset, _two_state = member
-        member_type = e.value.type.canonicalType
-        if type(member_type).__name__ == "PackedArrayType":
-            declared_left = int(member_type.range.left)
-            declared_right = int(member_type.range.right)
-            low, high = min(declared_left, declared_right), max(declared_left, declared_right)
-
-            def offset(label):
-                return (label - declared_right if declared_left > declared_right
-                        else declared_right - label)
-
-            if cname == "ElementSelectExpression":
-                label = _constant_dimension_selector(e.selector)
-                if (label is None or type(e.selector).__name__ not in
-                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") or
-                        label < low or label > high):
-                    return unsupported(sm, e, "ElementSelectExpression:member-index")
-                bit = parent_offset + offset(label)
-                return {
-                    "kind": "PartSel",
-                    "span": node_span(sm, e),
-                    "width": 1,
-                    "value": _convert_expr(sm, base),
-                    "msb": {"kind": "Int", "span": node_span(sm, e),
-                            "value": bit},
-                    "lsb": {"kind": "Int", "span": node_span(sm, e),
-                            "value": bit},
-                }
-            if cname == "RangeSelectExpression":
-                selection = str(e.selectionKind).split(".")[-1]
-                if selection in ("IndexedUp", "IndexedDown"):
-                    base_label = _constant_dimension_selector(e.left)
-                    width = _safe_width(e)
-                    canonical = (declared_left == int(member_type.bitWidth) - 1
-                                 and declared_right == 0)
-                    if (not canonical or base_label is None or
-                            type(e.left).__name__ not in
-                            ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") or
-                            width <= 0):
-                        return unsupported(sm, e,
-                                           "RangeSelectExpression:member-indexed")
-                    if selection == "IndexedUp":
-                        msb_local, lsb_local = base_label + width - 1, base_label
-                    else:
-                        msb_local, lsb_local = base_label, base_label - width + 1
-                    if (lsb_local < 0 or msb_local >= int(member_type.bitWidth)):
-                        return unsupported(sm, e,
-                                           "RangeSelectExpression:member-range")
-                    return {
-                        "kind": "PartSel",
-                        "span": node_span(sm, e),
-                        "width": width,
-                        "value": _convert_expr(sm, base),
-                        "msb": {"kind": "Int", "span": node_span(sm, e),
-                                "value": parent_offset + msb_local},
-                        "lsb": {"kind": "Int", "span": node_span(sm, e),
-                                "value": parent_offset + lsb_local},
-                    }
-                left = _constant_dimension_selector(e.left)
-                right = _constant_dimension_selector(e.right)
-                if (selection != "Simple" or left is None or right is None
-                        or type(e.left).__name__ not in
-                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
-                        or type(e.right).__name__ not in
-                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
-                        or left < low or left > high or right < low or right > high):
-                    return unsupported(sm, e, "RangeSelectExpression:member-range")
-                msb = parent_offset + offset(left)
-                lsb = parent_offset + offset(right)
-                if msb < lsb:
-                    return unsupported(sm, e, "RangeSelectExpression:member-direction")
-                return {
-                    "kind": "PartSel",
-                    "span": node_span(sm, e),
-                    "width": _safe_width(e),
-                    "value": _convert_expr(sm, base),
-                    "msb": {"kind": "Int", "span": node_span(sm, e),
-                            "value": msb},
-                    "lsb": {"kind": "Int", "span": node_span(sm, e),
-                            "value": lsb},
-                }
+    if cname != "ReplicationExpression":
+        window = _sym_member_select_window(sm, e, cname)
+        if window is not None:
+            return window
     param_root = _sym_param_root_select(sm, e, cname)
     if param_root is not None:
         return param_root
@@ -19556,6 +19658,19 @@ def _invalid_string_unknown_replication(expression):
 
 
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
+    """`_legacy_blocking_target`, with an admitted element/range select
+    target held to the same width invariant as a select read
+    (`_sym_select_checked`)."""
+    target, admitted = _legacy_blocking_target(sm, lhs, concat_leaf)
+    kind = type(lhs).__name__
+    if admitted and kind in ("ElementSelectExpression", "RangeSelectExpression"):
+        checked = _sym_select_checked(sm, lhs, kind, target)
+        if checked is not target:
+            return checked, False
+    return target, admitted
+
+
+def _legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
     if expression_kind == "ElementSelectExpression":
         assoc_cell = _finite_string_assoc_cell(sm, lhs)

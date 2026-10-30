@@ -1,3 +1,27 @@
+# [0.1.256] — 2026-10-30
+
+Silent-wrong-value fix in the symbolic extractor (WP-E1): a constant element or
+range select through a member of a packed struct or union whose type is a
+MULTI-DIMENSIONAL packed array (`p.bytes[2]` over `logic [3:0][7:0] bytes`,
+`u.h[1]`, a write to `out_v.b[0]`, `p.bytes[2:1]`, `p.bytes[1][3:0]`) was
+lowered in bit units: a one-bit `PartSel` at `member offset + label` (or a window
+whose width disagreed with its span), with `hasUnsupported` false. The labels
+count elements, so every such select is now the flat window of the selected
+elements (`_sym_member_select_window`; nested chains and ascending members
+included); run-time, parameter, out-of-range and indexed (`+:`/`-:`) member
+labels stay loud. The same release adds the select-lowering invariant
+`_sym_select_checked`, applied to every symbolic select and to the legacy select
+reads and targets: an emitted width or window that disagrees with the compiler's
+type or with the element width the semantic tier reads the base with is the loud
+`<ExprKind>:window-mismatch` (it also refuses the constant nested element select
+of a three-dimensional 2-state packed array, which was a BitSel of a BitSel read
+as one bit). Differential rows `member_elem_struct`, `member_elem_union`,
+`member_elem_nested`, `member_elem_target`, `member_elem_shapes` (Xcelium-pinned, 474 pinned rows;
+Icarus 12.0 declares a continuous-driver departure on the last) and refusal rows
+`member_elem_dyn`, `member_elem_indexed`. The register's known hole "element
+select of a packed-array member" is closed and `*:window-mismatch` added. No
+committed envelope changed; legacy corpus coverage is unchanged.
+
 # [0.1.255] — 2026-10-30
 
 The legacy differential corpus now carries a compact packed concatenation and

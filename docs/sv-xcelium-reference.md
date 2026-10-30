@@ -206,6 +206,14 @@ Captured 2026-10-29 on vip-ng:
   only the hash keys moved. The six `partsel_dyn*`/`dyn32_part` rows that carry an Xcelium
   declaration report `XREF-DECLARED`; `dyn32` stays an undeclared `XREF-DIFF` (audit 6.4, item 1).
 
+* **WP-E1 (2026-10-30), member element selects**: the five admitted rows `member_elem_struct`,
+  `member_elem_union`, `member_elem_nested`, `member_elem_shapes`, `member_elem_target` were pinned with
+  `xcelium_batch.py prepare/run --case …` into a scratch copy of the golden file
+  (`LS_SV_XCELIUM_REMOTE_ROOT=/tmp/ta-wpe1`) and merged: 474 entries, every existing entry
+  byte-identical, the five new ones `ok`; four are `XREF-MATCH`, the fourth (`member_elem_target`) is
+  `XREF-MATCH` with a declared Icarus departure. The two refusal rows `member_elem_dyn` and
+  `member_elem_indexed` run no simulator.
+
 ## 6. Flags and diagnostics that change or explain the answer
 
 The pin uses Xcelium's DEFAULT flags: `-sv -q -timescale 1ns/1ns` (`xcelium_golden.XRUN_FLAGS`).

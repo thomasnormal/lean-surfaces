@@ -396,11 +396,6 @@
    "source": "docs/sv-xcelium-audit.md 6.4"
   },
   {
-   "name": "Element select of a packed-array member of a packed struct/union",
-   "text": "lowered to a 1-bit PartSel; the model gives wrong values SILENTLY (xxxxx1x vs Xcelium xxxx01x). Fix or refuse.",
-   "source": "docs/sv-xcelium-audit.md 6.4"
-  },
-  {
    "name": "Shift counts wider than 32 bits",
    "text": "Xcelium truncates a shift count silently and nothing refuses it. (Bit-select indexes are refused, Select:wide-index, including the index of a run-time unpacked-array element where the extractor admits one (the lane-A verifier's probe wi_arr), and part-select bases are refused as RangeSelectExpression:dynamic-wide-base.)",
    "source": "docs/sv-xcelium-audit.md 6.4"
@@ -2856,8 +2851,8 @@
    "layers": [
     "extractor"
    ],
-   "trigger": "typedef struct packed {logic [7:0] f; logic [7:0] g;} s_t; s.f[a[0]]  /  s.f[a[1:0] +: 4]  /  s.f[9:6]",
-   "why": "Selects into a packed-struct member are admitted only with literal in-range labels.",
+   "trigger": "typedef struct packed {logic [7:0] f; logic [7:0] g;} s_t; s.f[a[0]]  /  s.f[a[1:0] +: 4]  /  s.f[9:6]  /  s.bytes[i] (run-time label)  /  s.bytes[1 +: 2] (multi-dimensional member)",
+   "why": "Selects into a packed-struct or packed-union member are admitted only with literal in-range labels. Element and range labels count ELEMENTS of the packed array they select from, so a select through a multi-dimensional member (`s.bytes[2]` over `logic [3:0][7:0] bytes`) is the flat multi-bit window of the selected elements (WP-E1, 2026-10-30; it was a one-bit window, silently wrong). An indexed part select over a member whose elements are wider than one bit stays `member-indexed`.",
    "category": "later",
    "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: member selects with run-time or out-of-range labels",
@@ -2878,11 +2873,48 @@
     },
     {
      "file": "extractors/sv/extract.py",
+     "fn": "_sym_member_select_window"
+    },
+    {
+     "file": "extractors/sv/extract.py",
      "fn": "_convert_selected_read"
     }
    ],
    "verified_by_run": true,
-   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+   "notes": "Pinned by cases2 rows member_elem_struct / member_elem_union / member_elem_nested / member_elem_target (Xcelium-pinned) and the refusal rows member_elem_dyn / member_elem_indexed."
+  },
+  {
+   "id": "sel-window-mismatch",
+   "tag": "ElementSelectExpression:window-mismatch | RangeSelectExpression:window-mismatch",
+   "group": "selects",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "H: input bit [1:0][1:0][3:0] a; output bit [3:0] y; assign y = a[1][1];  (a three-dimensional 2-state packed array, constant nested element select)",
+   "why": "The extractor never emits a select whose width or offset disagrees with the type the compiler resolved, or with the element width the semantic tier reads the select's base with (`Param2.elemOf`): the select lowering ends in a guard that turns any such node into this loud kind. `a[1][1]` over a three-dimensional 2-state array was lowered to a BitSel of a BitSel, which the tier reads as ONE bit of `a[1]` where Xcelium reads the 4-bit element (silently wrong before the guard). Also the net under the member-select lowering (a window outside, or of another width than, the selected elements).",
+   "category": "refused-now",
+   "proposed": false,
+   "decided_by": "WP-E1 2026-10-30: refuse rather than emit a window the compiler's type contradicts (lead review pending)",
+   "kinds": {
+    "extractor": [
+     "*:window-mismatch"
+    ]
+   },
+   "where": [
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_sym_select_checked"
+    },
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_sym_member_select_window"
+    }
+   ],
+   "evidence": "extractors/sv/test_symbolic_member_selects.py (SelectGuard); harness/sv/cases2.json rows member_elem_*",
+   "verified_by_run": true,
+   "since": "2026-10-30",
+   "notes": "Measured 2026-10-30: bit [1:0][1:0][3:0] a, y = a[1][1]: Xcelium 24.03-s004 gives 1010 for a = 1010011001011100, the pre-guard model 0001. A 4-state `logic` array of the same shape takes the ArraySel path and is unaffected; supporting the 2-state shape is open (no plan item)."
   },
   {
    "id": "sel-param-root",

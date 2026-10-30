@@ -29779,6 +29779,235 @@
         }
       ],
       "measured": "Round 6 repair, lane A (Xcelium audit T1, the write path at an already-wide default point): w[a] with a 40-bit `a` is a bit-select write whose index is wider than 32 bits. The extractor refuses the select, and a refused select leaves no usable assignment target, so the tag that reaches the envelope is the assignment's, `AssignmentExpression:target`; the read tag `ElementSelectExpression:wide-index` is row wide_index_lit. IEEE 1800-2023 11.5.1 writes nothing for an out-of-range index (the model's reading, Icarus 12.0). Re-measured on this row's own generated testbench (Xcelium 24.03-s004, vip-ng, refsim, 2026-10-29, and Icarus 12.0): both agree in range (a = 3: w = 00001000; a = 1: 00000010), but Xcelium (BIGWBS) writes at the index truncated to 32 bits where Icarus drops the write: w = 00100000 at a = 2^32 + 5 (cycle 2) and 00000010 at a = x0...01 (cycle 4), Icarus 00000000 in both."
+    },
+    {
+      "name": "member_elem_struct",
+      "example": "sem2/member_elem_struct",
+      "top": "member_elem_struct",
+      "signals": [
+        "p_i",
+        "b2_o",
+        "b0_o",
+        "nib_o",
+        "r_o",
+        "tag_o",
+        "top_o"
+      ],
+      "stimulus": [
+        {
+          "p_i": "1000000101000010001001000001100010"
+        },
+        {
+          "p_i": "1010010101011010110000110011110001"
+        },
+        {
+          "p_i": "1111111111111111111111111111111111"
+        },
+        {
+          "p_i": "0011001101x0x0111111xxxx000011111x"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Struct member `bytes` of `struct packed { logic [3:0][7:0] bytes; logic [1:0] tag; }` (bits [33:2]): b2_o = p.bytes[2] = p_i[25:18], b0_o = [9:2], nib_o = p.bytes[1][3:0] = [13:10], r_o = p.bytes[2:1] = [25:10], top_o = p.bytes[3][7] = [33]. The pre-fix envelope carried width-1 windows at bits 4, 2, ... and `hasUnsupported` stayed false."
+    },
+    {
+      "name": "member_elem_union",
+      "example": "sem2/member_elem_union",
+      "top": "member_elem_union",
+      "signals": [
+        "w_i",
+        "swapped_o",
+        "hi_o",
+        "lo_o",
+        "b3_o",
+        "w5_o"
+      ],
+      "stimulus": [
+        {
+          "w_i": "00010010001101000101011001111000"
+        },
+        {
+          "w_i": "10100101110000111111000000001111"
+        },
+        {
+          "w_i": "10000000000000000000000000000001"
+        },
+        {
+          "w_i": "1010xx01111100000000111x01010101"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Packed union `word_u { logic [31:0] w; logic [1:0][15:0] h; logic [3:0][7:0] b; }`: reads in_v.h[1] = [31:16], in_v.b[3] = [31:24], in_v.w[5] = [5] (the one-dimensional member keeps its bit window), and the byte-swap writes out_v.b[i] = in_v.b[3-i] are 8-bit write windows (pre-fix: bit [i])."
+    },
+    {
+      "name": "member_elem_nested",
+      "example": "sem2/member_elem_nested",
+      "top": "member_elem_nested",
+      "signals": [
+        "a_i",
+        "o_i",
+        "a0_o",
+        "a3_o",
+        "a12_o",
+        "n1_o",
+        "z_o",
+        "ix_o"
+      ],
+      "stimulus": [
+        {
+          "a_i": "1000000101000010001001000001100010",
+          "o_i": "1010010111000011"
+        },
+        {
+          "a_i": "1010010101011010110000110011110001",
+          "o_i": "0110100101101001"
+        },
+        {
+          "a_i": "1111111111111111111111111111111111",
+          "o_i": "0000000000000000"
+        },
+        {
+          "a_i": "0011001101x0x0111111xxxx000011111x",
+          "o_i": "10x1010x11000011"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Three shapes: an ASCENDING member range `logic [0:3][7:0] bytes` (element 0 is the most significant: a.bytes[0] = a_i[33:26], a.bytes[3] = [9:2], a.bytes[1:2] = [25:10]); a member of a nested packed struct (o.inn.n[1] = o_i[15:12], o.inn.z = [7:4]); an indexed part select inside a wide element (a.bytes[1][2+:2] = a_i[21:20])."
+    },
+    {
+      "name": "member_elem_target",
+      "example": "sem2/member_elem_target",
+      "top": "member_elem_target",
+      "signals": [
+        "a_i",
+        "b_i",
+        "c_i",
+        "w_o",
+        "v_o"
+      ],
+      "stimulus": [
+        {
+          "a_i": "10100101",
+          "b_i": "01011010",
+          "c_i": "1100001100111100"
+        },
+        {
+          "a_i": "00000001",
+          "b_i": "10000000",
+          "c_i": "0000000011111111"
+        },
+        {
+          "a_i": "1x001100",
+          "b_i": "0011z011",
+          "c_i": "1111xxxx00000000"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Continuous drivers on packed-union member elements: q.b[1] = a_i writes q[15:8], q.b[0] = b_i writes q[7:0], r.h[1] = c_i writes r[31:16], r.h[0] = {b_i, a_i} writes r[15:0] (pre-fix: 1-bit windows at bits 1, 0). Xcelium 24.03-s004 (pinned, row member_elem_target) equals the model in every cycle (w_o = {a_i, b_i}); Icarus 12.0 departs: it lowers the element-select continuous drivers as single-bit writes (w_o = zzzzzzzzzzzzzz10 for a_i = 10100101, b_i = 01011010), declared below.",
+      "oracle_disagreement": {
+        "id": "iverilog-member-elem-target-bitwindow",
+        "sim": "iverilog",
+        "declared": "2026-10-30",
+        "reference": "IEEE 1800-2023 7.4.5 (an element select of a multidimensional packed array selects a whole sub-array), 7.3.1 (packed union members share one layout) and 10.3 (continuous assignments); docs/sv-oracle-disagreements.md",
+        "observed": "Icarus 12.0 (macOS, Homebrew) lowers a continuous assignment to an element select of a packed union member as a ONE-BIT write: with q.b[1] = a_i, q.b[0] = b_i over logic [1:0][7:0] b it drives only q[1] and q[0] (w_o = zzzzzzzzzzzzzz10 for a_i = 10100101, b_i = 01011010) and r.h[1]/r.h[0] only r[1]/r[0] (v_o = z...01). Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row member_elem_target) drives the whole elements and equals the model's trace exactly in every cycle (w_o = {a_i, b_i}), so only Icarus departs. The procedural writes of row member_elem_union are lowered correctly by Icarus; only the continuous-driver form departs.",
+        "retirement_condition": "When Icarus drives the whole selected element of a packed union member from a continuous assignment, this row must fail until its declaration is removed after review.",
+        "source_sha256": "d4569d2db5a5973cc0306d65803b66298ac484d99f3db79b8c14a078dcc968fc",
+        "envelope_sha256": "c65d93d32c5c3ffd645a30f90dd304d2c9884d7282bf8cacc04f7ad043c97585",
+        "case_sha256": "b4435c986f0b174f92420dc9fbe20918b9f19c0a16489d27f0c434e50e37805e",
+        "testbench_sha256": "92fe8594af30a086c49f319bbdce05a5528baff4d13fd7d7c94a31fa3c0f7243",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a_i=10100101 b_i=01011010 c_i=1100001100111100 w_o=zzzzzzzzzzzzzz10 v_o=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz01",
+          "CYCLE 1 a_i=00000001 b_i=10000000 c_i=0000000011111111 w_o=zzzzzzzzzzzzzz10 v_o=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz11",
+          "CYCLE 2 a_i=1x001100 b_i=0011z011 c_i=1111xxxx00000000 w_o=zzzzzzzzzzzzzz01 v_o=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz00"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a_i=10100101 b_i=01011010 c_i=1100001100111100 w_o=1010010101011010 v_o=11000011001111000101101010100101",
+          "CYCLE 1 a_i=00000001 b_i=10000000 c_i=0000000011111111 w_o=0000000110000000 v_o=00000000111111111000000000000001",
+          "CYCLE 2 a_i=1x001100 b_i=0011z011 c_i=1111xxxx00000000 w_o=1x0011000011z011 v_o=1111xxxx000000000011z0111x001100"
+        ]
+      }
+    },
+    {
+      "name": "member_elem_dyn",
+      "example": "sem2/member_elem_loud",
+      "top": "member_elem_loud",
+      "refusal": "ElementSelectExpression:member-index",
+      "signals": [
+        "p_i",
+        "i_i",
+        "dyn_o",
+        "ix_o"
+      ],
+      "stimulus": [
+        {
+          "p_i": "1000000101000010001001000001100010",
+          "i_i": "00"
+        },
+        {
+          "i_i": "01"
+        },
+        {
+          "i_i": "10"
+        },
+        {
+          "i_i": "11"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: the same bit-unit lowering put a 1-bit window under a run-time element label and under an indexed part select of a multi-dimensional packed member; both are now REFUSED, never a wrong window. `p.bytes[i_i]` (run-time label through a struct member) is `ElementSelectExpression:member-index`. Xcelium 24.03-s004 (vip-ng refsim, hand testbench, 2026-10-30) reads the element: i_i = 0..3 gives 00011000, 00100100, 01000010, 10000001 for p_i bytes 81 42 24 18; Icarus 12.0 rejects the design (`Array/part index expressions must be constant here`). The extractor does not lower a run-time label through a member: refused."
+    },
+    {
+      "name": "member_elem_indexed",
+      "example": "sem2/member_elem_loud",
+      "top": "member_elem_loud",
+      "refusal": "RangeSelectExpression:member-indexed",
+      "signals": [
+        "p_i",
+        "i_i",
+        "dyn_o",
+        "ix_o"
+      ],
+      "stimulus": [
+        {
+          "p_i": "1000000101000010001001000001100010",
+          "i_i": "00"
+        },
+        {
+          "i_i": "01"
+        },
+        {
+          "i_i": "10"
+        },
+        {
+          "i_i": "11"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: the same bit-unit lowering put a 1-bit window under a run-time element label and under an indexed part select of a multi-dimensional packed member; both are now REFUSED, never a wrong window. `p.bytes[1+:2]` (an indexed part select counts ELEMENTS of a multi-dimensional member) is `RangeSelectExpression:member-indexed`; only a canonical one-bit-element member keeps the indexed form. Xcelium 24.03-s004 (vip-ng refsim, hand testbench, 2026-10-30) reads elements 2 and 1 (0100001000100100 for p_i bytes 81 42 24 18); not lowered by the extractor: refused."
+    },
+    {
+      "name": "member_elem_shapes",
+      "example": "sem2/member_elem_shapes",
+      "top": "member_elem_shapes",
+      "signals": [
+        "a_i",
+        "n5_o",
+        "n65_o",
+        "r4_o",
+        "r7_o",
+        "m10_o",
+        "m1_o",
+        "m102_o",
+        "ub1_o",
+        "ubn_o"
+      ],
+      "stimulus": [
+        {
+          "a_i": "0111011001011100101011011110001100010010001101001111000011001010"
+        },
+        {
+          "a_i": "1000100110100101011010010101101011000011001111000000111111110000"
+        },
+        {
+          "a_i": "1x10011101x011000101z01111001010110100xx001011011010xx0111100x01"
+        }
+      ],
+      "measured": "WP-E1 2026-10-30: shapes beyond the zero-based `[N-1:0]` member. In `s_t { logic [7:4][3:0] n; logic [4:7][3:0] r; logic [1:0][1:0][3:0] m; u_t u; }` (64 bits) the labels count elements of the array they select from: s.n[5] = a_i[55:52] (range [7:4], element 7 on top), s.n[6:5] = [59:52], s.r[4] = [47:44] (ascending [4:7]: element 4 on top), s.r[7] = [35:32], s.m[1][0] = [27:24], s.m[1] = [31:24], s.m[1][0][2:1] = [26:25], and through the union nested in the struct s.u.b[1] = [15:8], s.u.b[0][7:4] = [7:4]. Pre-fix every one of these was a one-bit window (s.n[5] = PartSel[49:49])."
     }
   ]
 }

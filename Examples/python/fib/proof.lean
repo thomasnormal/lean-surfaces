@@ -50,10 +50,16 @@ theorem fib_total (k : Nat) : fib(k) ==> fibSpec k := by
       unfold callFunction
       rw [callIn.eq_2]
       py_simp [fib, show ¬((k : Int) + 2 < 2) by omega,
-               show (k : Int) + 2 - 1 = ((k + 1 : Nat) : Int) by omega]
-      -- H1 finding: the state THREADS through the first nested call, so the
-      -- second call's name resolution is stuck under its continuation until
-      -- the first splice lands — splice, re-execute, splice, mop up.
+               show (k : Int) + 2 - 1 = ((k + 1 : Nat) : Int) by omega,
+               evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+               setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+               Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
+               Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+               moduleGenFree, funsGenAllocFree, Stmt.genAllocFree,
+               Stmt.genAllocFreeList, Run.bind, Run.liftRes, Run.toPublic,
+               RVal.freezeB, starArgBuiltinName, starListBuiltinName,
+               starTupleBuiltinName, fstringFormatBuiltinName, flattenStarRun,
+               flattenStarCallArgs]
       simp (disch := omega) only [h₁]
       py_simp []
       simp (disch := omega) only [h₂]

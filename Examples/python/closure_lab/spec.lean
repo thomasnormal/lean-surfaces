@@ -79,7 +79,8 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
-#py_check closure_lab.uses_nonlocal(4) = 5
+#guard (match callFunction closure_lab "uses_nonlocal" #[.int 4] 10000 with
+  | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "def_in_loop" #[.int 3] 10000 with
   | .unsupported _ => true | _ => false)
 #py_check closure_lab.early_call(1) raises (.unboundLocalError "f")

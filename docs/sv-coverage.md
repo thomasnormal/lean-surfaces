@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 507 | 495 | 0 | 12 | sv-tests-2 declarations |
+| 508 | 496 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -25,6 +25,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `qualified_if_fallback` | `Examples/system-verilog/qualified_if_fallback/qualified_if_fallback.sv` | match | **MATCH** | `ok` | MATCH |
 | `conditional_accept` | `Examples/system-verilog/conditional_accept/conditional_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `logical_accept` | `Examples/system-verilog/logical_accept/logical_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `unary_plus_arithmetic` | `Examples/system-verilog/unary_plus/arithmetic.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |

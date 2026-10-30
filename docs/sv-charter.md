@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unary-plus arithmetic witness — 2026-10-30
+
+The legacy differential corpus now carries the existing four-state unary-plus
+arithmetic fixture, covering known, unknown, signed, wide, nested, and
+concatenated operands with a literal `PASS` transcript.
+
+Differential coverage grows **507/495/0/12 → 508/496/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Logical conjunction and disjunction witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

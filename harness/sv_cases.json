@@ -104,6 +104,15 @@
       "expect": "match"
     },
     {
+      "name": "unary_plus_arithmetic",
+      "file": "Examples/system-verilog/unary_plus/arithmetic.sv",
+      "module": "unary_plus_arithmetic",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unique_if_dynamic_refuse",
       "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
       "module": "top",

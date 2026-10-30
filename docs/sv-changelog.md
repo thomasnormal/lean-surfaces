@@ -1,3 +1,10 @@
+# [0.1.245] — 2026-10-30
+
+The legacy differential corpus now carries the four-state unary-plus arithmetic
+witness with known, unknown, signed, wide, nested, and concatenated operands.
+Coverage grows **507/495/0/12 → 508/496/0/12**; grammar coverage remains
+**235/113/122**.
+
 # [0.1.244] — 2026-10-30
 
 The legacy differential corpus now carries a compact logical `&&`/`||`

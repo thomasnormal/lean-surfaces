@@ -10,13 +10,15 @@ coverage advance independently from the Python tier.
 - Added a callable plain-`for` declaration-initializer false-path witness:
   `for (int i = 2; i < 2; ++i) ;` skips the loop body and preserves the outer
   parameter.
+- Added a callable plain-`for` declaration-initializer body witness: each
+  iteration enters the body scope and creates its automatic local declaration.
 
 ### Measured
 
-- The checked-in corpus now contains **1087 differential rows**: **1070 MATCH**,
+- The checked-in corpus now contains **1088 differential rows**: **1071 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **581**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **582**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

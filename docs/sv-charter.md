@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Packed concatenation and replication witness — 2026-10-30
+
+The legacy differential corpus now carries a compact admitted initial-process
+witness for packed concatenation and integral replication, with four-state
+values checked through the existing self-check interpreter.
+
+Differential coverage grows **517/505/0/12 → 518/506/0/12**; grammar coverage
+grows **235/120/115 → 235/122/113**, moving both concatenation productions
+from continuous-assignment refusals to matched initial-process witnesses.
+
 ## Power-operator witness — 2026-10-30
 
 The legacy differential corpus now carries a compact admitted initial-process

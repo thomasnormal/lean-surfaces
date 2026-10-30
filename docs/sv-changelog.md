@@ -1,3 +1,11 @@
+# [0.1.255] — 2026-10-30
+
+The legacy differential corpus now carries a compact packed concatenation and
+replication witness. Coverage grows **517/505/0/12 → 518/506/0/12**; grammar
+coverage grows **235/120/115 → 235/122/113** as both `ConcatenationExpression`
+and `MultipleConcatenationExpression` move from continuous-assignment
+refusals to admitted initial-process witnesses.
+
 # [0.1.254] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state power witness

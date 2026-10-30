@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 517 | 505 | 0 | 12 | sv-tests-2 declarations |
+| 518 | 506 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -35,6 +35,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `comparison_accept` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `arithmetic_accept` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `power_accept` | `Examples/system-verilog/power_accept/power_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `concat_accept` | `Examples/system-verilog/concat_accept/concat_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -538,7 +539,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 235 | 120 | 115 | pyslang SyntaxKind |
+| 235 | 122 | 113 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -581,7 +582,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.CastExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CompilationUnit` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/concat_accept/concat_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPattern` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ConditionalPredicate` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -671,7 +672,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ModExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ModuleDeclaration` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ModuleHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/concat_accept/concat_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |

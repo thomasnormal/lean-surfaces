@@ -2199,10 +2199,13 @@ partial def buildCallEvalsTo (ctx : VCCtx) (tg : TripleGoal) (rhs : Lean.Expr) :
       (← mkEq (← mkAppM ``Module.heapFree #[tg.m]) (toExpr true))
     let hListFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
       (← mkEq (← mkAppM ``Val.listFree #[vNF]) (toExpr true))
+    let hStarTy ← mkAppM ``Ne #[fnameE, ← mkAppM ``starArgBuiltinName #[]]
+    let hStar ← Meta.mkDecideProof hStarTy
     let hcall ← appOpt ``EvalsTo.call
       #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
         some vNF, some spf, some spc, some prfL, some hargs, some hworld,
-        some factE', some prfG, some prfNt, some hHeapFree, some hListFree]
+        some factE', some prfG, some prfNt, some hHeapFree, some hListFree,
+        some hStar]
     return (hcall, rvNF, sides)
 
 /-- Handle a `return f(…)`: the call's `EvalsTo` fact spliced through the

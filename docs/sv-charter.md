@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Pure local `let` differential witness — 2026-10-30
+
+The legacy differential corpus now carries a compact pure local `let` fixture
+with repeated calls and literal `PASS` checks. Source-declared let expressions
+remain value-only here; subroutine calls, side effects, and timed let bodies
+stay at their existing loud boundaries.
+
+Differential coverage grows **499/487/0/12 → 500/488/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Dynamic `case (…) inside` range witness — 2026-10-30
 
 The legacy differential corpus now carries a compact dynamic `case (…) inside`

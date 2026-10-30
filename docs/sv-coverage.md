@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 499 | 487 | 0 | 12 | sv-tests-2 declarations |
+| 500 | 488 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -512,6 +512,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `pure_stdout_position_error_statements_adapter` | `Examples/system-verilog/pure_stdout_position_error_statements_adapter/pure_stdout_position_error_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_coverage_nocov_statements_adapter` | `Examples/system-verilog/pure_coverage_nocov_statements_adapter/pure_coverage_nocov_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_qualified_if_fallback_adapter` | `Examples/system-verilog/pure_qualified_if_fallback_adapter/pure_qualified_if_fallback_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `let_accept` | `Examples/system-verilog/let_accept/let_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `let_effects_refuse` | `Examples/system-verilog/let_expressions/effects.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 
 ## Grammar census
@@ -543,8 +544,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentExpression` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.AssignmentPatternExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.AssignmentPatternItem` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
@@ -636,7 +637,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.JumpStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/dist_uniform_literal_bounds/dist_uniform_literal_bounds.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |

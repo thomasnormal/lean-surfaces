@@ -39,13 +39,15 @@ coverage advance independently from the Python tier.
   condition skips the null statement and preserves the controlling value.
 - Added a callable plain-`for` empty-body witness: the null statement runs
   across two iterations and the loop returns its final controlling value.
+- Added a callable plain-`for` declaration-initializer witness: the loop-local
+  declaration runs in the loop scope while the outer parameter remains unchanged.
 
 ### Measured
 
-- The checked-in corpus now contains **1085 differential rows**: **1068 MATCH**,
+- The checked-in corpus now contains **1086 differential rows**: **1069 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **579**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **580**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

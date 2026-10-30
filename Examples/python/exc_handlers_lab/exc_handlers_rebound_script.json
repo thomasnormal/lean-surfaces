@@ -182,7 +182,7 @@
             }
           }
         ],
-        "try_unsupported": "handler name rebound in try body: TypeError"
+        "try_unsupported": null
       }
     ]
   },

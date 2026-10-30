@@ -364,8 +364,21 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
                 -- module scope) and a rule spelled twice is a rule that
                 -- drifts. Nothing is inferred from CPython's hierarchy --
                 -- every pair in that table is one the tier can exhibit.
-                tryCatch (S.stmts body.toList) (fun e =>
-                  if builtinExcCatches excName e || userExcCatches m excName e then S.stmts handler.toList
+                tryCatch (S.stmts body.toList) (fun e => do
+                  -- The handler expression is evaluated after the
+                  -- protected body.  A module-level assignment can replace
+                  -- a builtin class with a scalar before that point; mirror
+                  -- CPython's faithful TypeError instead of matching the
+                  -- statically named builtin.
+                  let st' ← get
+                  if (Env.lookup st'.locals excName).isSome
+                      || (lookupG (moduleGlobals m).1 excName).isSome
+                      || (Env.lookup st'.world.globals excName).isSome
+                      || (findFunction m excName).isSome then
+                    raisePy (.typeError
+                      "catching classes that do not inherit from BaseException is not allowed")
+                  else if builtinExcCatches excName e || userExcCatches m excName e then
+                    S.stmts handler.toList
                   else raisePy e)
               else if refusedAncestorExc.contains excName then
                 refuse s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"

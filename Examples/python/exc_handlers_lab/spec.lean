@@ -63,7 +63,9 @@ set_option maxRecDepth 8192
   | .ok world () => world.stdout == ["3", "[0, 1, 2]"]
   | _ => false
 
-#guard runScript exc_handlers_rebound_script 4096 matches .unsupported _
+#guard match runScript exc_handlers_rebound_script 4096 with
+  | .exn _ (.typeError msg) => msg == "catching classes that do not inherit from BaseException is not allowed"
+  | _ => false
 
 theorem caught_type_identity_total (value : PyInt) :
     exc_handlers_lab.caught_type_identity(value) ==> value := by proofs

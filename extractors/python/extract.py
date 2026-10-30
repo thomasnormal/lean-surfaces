@@ -2589,14 +2589,27 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                              func_scope=func_scope)
         if node.finalbody:
             reasons.append("'finally' clause")
+        # Module-level handler names are resolved after the try body runs,
+        # just as CPython resolves an ``except`` expression at the moment an
+        # exception is handled.  The script executor therefore observes a
+        # rebinding such as ``TypeError = 1`` and produces CPython's faithful
+        # "catching classes ..." TypeError.  A definition is different: it
+        # enters the module's static function/class table, so keeping that
+        # shape loud avoids a static table/live-frame collision. Function-scope
+        # rebinding remains a static-local concern and is rejected by
+        # ``_shadowed_handlers`` on the enclosing function.
         if module_scope and exc_name:
-            body_scope = ast.Module(body=node.body, type_ignores=[])
             handler_names = exc_name.split("|")
-            rebound = [name for name in handler_names
-                        if name in _scope_binding_names(body_scope)]
-            if rebound:
+            definition_names = {
+                n.name for n in ast.walk(ast.Module(body=node.body,
+                                                     type_ignores=[]))
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                  ast.ClassDef))}
+            rebound_defs = [name for name in handler_names
+                            if name in definition_names]
+            if rebound_defs:
                 reasons.append("handler name rebound in try body: "
-                               + ", ".join(rebound))
+                               + ", ".join(rebound_defs))
         # Pass 0 (docs/memory-model.md paragraph "Import forms
         # (Pass 0)"): a top-level try whose single handler is literally
         # `except ImportError:` puts its DIRECT body statements in

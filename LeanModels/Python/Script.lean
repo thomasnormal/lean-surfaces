@@ -797,7 +797,19 @@ mutual
                  match execScriptStmts m fuel st body.toList with
                  | .ok st' flow => .ok st' flow
                  | .exn st' e =>
-                   if builtinExcCatches excName e || userExcCatches m excName e then execScriptStmts m fuel st' handler.toList
+                   -- CPython resolves the handler expression after the
+                   -- protected body raises.  A module-level assignment can
+                   -- therefore replace a builtin class with a scalar before
+                   -- the match; the faithful result is the runtime
+                   -- ``catching classes ...`` TypeError, not a static
+                   -- pre-body refusal or a fabricated handler match.
+                   if (Env.lookup st'.locals excName).isSome
+                       || (lookupG (moduleGlobals m).1 excName).isSome
+                       || (Env.lookup st'.world.globals excName).isSome
+                       || (findFunction m excName).isSome then
+                     .exn st' (.typeError
+                       "catching classes that do not inherit from BaseException is not allowed")
+                   else if builtinExcCatches excName e || userExcCatches m excName e then execScriptStmts m fuel st' handler.toList
                    else .exn st' e
                  | .timeout => .timeout
                  | .unsupported msg => .unsupported msg

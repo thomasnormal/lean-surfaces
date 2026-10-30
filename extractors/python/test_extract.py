@@ -688,22 +688,39 @@ class ExtractorTests(unittest.TestCase):
                 self.assertIn("locally-bound handler",
                               self._first_fn(source)["locals_unsupported"])
 
-    def test_module_handler_rebinding_refuses_before_static_matching(self):
+    def test_module_handler_rebinding_is_resolved_after_body(self):
         sources = (
             "try:\n    TypeError = 1\n    len(1)\n"
             "except TypeError:\n    pass\n",
             "try:\n    while True:\n        TypeError = 1\n        len(1)\n"
             "    else:\n        pass\nexcept TypeError:\n    pass\n",
-            "try:\n    def TypeError():\n        pass\n    len(1)\n"
-            "except TypeError:\n    pass\n",
         )
         for source in sources:
             with self.subTest(source=source):
                 stmt = self._envelope_of(source)["module"]["body"][0]
-                self.assertEqual(stmt["try_unsupported"],
-                                 "handler name rebound in try body: TypeError")
+                self.assertIsNone(stmt["try_unsupported"])
 
-    def test_module_handler_rebinding_guard_stays_scope_local(self):
+    def test_module_definition_handler_rebinding_stays_loud(self):
+        stmt = self._envelope_of(
+            "try:\n    def TypeError():\n        pass\n    len(1)\n"
+            "except TypeError:\n    pass\n"
+        )["module"]["body"][0]
+        self.assertEqual(stmt["try_unsupported"],
+                         "handler name rebound in try body: TypeError")
+
+    def test_module_handler_rebinding_is_runtime_dynamic(self):
+        # Module-level ``except`` expressions are evaluated after the body
+        # raises.  The script executor now sees the live rebinding and emits
+        # CPython's TypeError for a scalar handler instead of refusing the
+        # whole statement during extraction.
+        stmt = self._envelope_of(
+            "try:\n    while True:\n        TypeError = 1\n"
+            "        len(1)\n    else:\n        pass\n"
+            "except TypeError:\n    pass\n"
+        )["module"]["body"][0]
+        self.assertIsNone(stmt["try_unsupported"])
+
+    def test_function_handler_rebinding_guard_stays_scope_local(self):
         stmt = self._envelope_of(
             "try:\n    def helper(TypeError):\n        TypeError = 1\n"
             "    len(1)\nexcept TypeError:\n    pass\n"

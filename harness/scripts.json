@@ -380,8 +380,8 @@
   },
   {
     "file": "Examples/python/exc_handlers_lab/exc_handlers_rebound_script.py",
-    "expect": "unsupported",
-    "note": "A delegated while-else can rebind its handler class before raising without publishing; extraction refuses that binding instead of catching the builtin TypeError namesake."
+    "expect": "match",
+    "note": "A delegated while-else rebinds its handler class before raising; runtime handler resolution reproduces CPython's catching-classes TypeError."
   },
   {
     "file": "Examples/python/exc_ancestors_lab/exc_ancestors_script.py",

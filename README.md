@@ -303,7 +303,8 @@ supplied as a clause to a single `py_vcgen` call:
 
 ```lean
 -- Examples/python/rsa_inverse/proof.lean (the loop clauses)
-  py_vcgen [rsa_inverse]
+  py_vcgen [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    …
     (inv := fun (a b x y lx ly : Int) =>
       0 < a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B ∧
       lx * A + ly * B = a ∧ x * A + y * B = b ∧ EgcdPhase A B a b x y lx ly)

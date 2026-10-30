@@ -37,18 +37,19 @@ construction rather than by inspection.
 
 ## What is deliberately still LOUD
 
-`always_comb` and continuous `assign` are **refused**, not approximated.
-Their sensitivity is *"any signal the body reads changed"*, and `Trigger`
-offers `atTime`, `atEdge` and `onCond` — none of which expresses it. The
-M0 cycle model handles them by running to a fixpoint (`combSettle`); the
-region model would need the same, and inventing a wrong trigger to make
-them load would be worse than refusing. Named here, priced, and NOT
-modelled.
+The timed loader now admits `always_comb` through explicit implicit-sensitivity
+metadata on `ProcState`: its body runs once in Active at time zero, becomes
+dormant, and is queued again when a read signal changes. The legacy
+`elabDesign`/`runSelfCheck` path remains initial-only, and continuous `assign`
+still has no net-resolution rule, so it stays loud. A comb process that writes
+one of its own read signals is not silently treated as an edge wait; the
+write-name exclusion makes that self-trigger boundary explicit until the
+language-level guard is added.
 
-That means designs containing `always_comb` — including the `adder`
-gallery example — do not load yet, while `always_ff` designs do. The
-corpus census says which order is right: `initial` is 98.8% of the anchor
-corpus and `always_*` about 1% each.
+The timed region model still refuses level waits, internally published edge
+events, and other scheduler forms outside this slice. The M0 cycle model's
+fixpoint semantics remain separate; the timed runner uses the retained
+process table and the one Active/Inactive/NBA loop.
 -/
 
 namespace LeanModels.Sv
@@ -131,12 +132,34 @@ private partial def timedAccesses : SStmt → List (Bool × String)
   | .finish | .skip
   | .delay _ | .waitCond _ => []
 
+/-- Timing controls are illegal inside `always_comb`.  Keep that boundary at
+the timed loader rather than letting a suspended comb process become an
+unwakeable dormant process. -/
+private partial def hasTimingControl : SStmt → Bool
+  | .delay _ | .waitEvent _ _ | .waitCond _ => true
+  | .m0 _ | .assign _ _ _ | .selectedAssign _ _ _ _ _ _ _
+  | .selectedNbaAssign _ _ _ _ _ _ _ | .distUniformAssign _ _ _ _ _
+  | .packedAssign _ _ | .packedNbaAssign _ _ | .scanf _ _ _ _
+  | .breakLoop | .continueLoop | .localDecl _ _ _ _ | .sysCall _ _ _
+  | .strobe _ _ | .severity _ | .fatal _ | .finish | .skip => false
+  | .ifStmt _ thenBranch elseBranch =>
+      hasTimingControl thenBranch || (elseBranch.map hasTimingControl).getD false
+  | .block body => body.toList.any hasTimingControl
+  | .forLoop initializers _ steps body =>
+      initializers.toList.any hasTimingControl || steps.toList.any hasTimingControl ||
+        hasTimingControl body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.any hasTimingControl || hasTimingControl body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => hasTimingControl body
+
 /-- An internally written edge source requires the kernel's per-publication
 wake rule; external stimulus is currently the only integrated edge source. -/
 def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
   let accesses := d.procs.toList.flatMap fun proc =>
     match proc with
-    | .initial body | .alwaysBody body => timedAccesses body
+    | .initial body | .alwaysBody body | .alwaysComb body => timedAccesses body
     | .alwaysPosedge clock body => (true, clock) :: timedAccesses body
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
@@ -149,6 +172,17 @@ def timedProcOf : SProc → Except String ProcState
       pure { residual := [body], status := .ready }
   | .alwaysBody body =>
       pure { residual := [.forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[] body], status := .ready }
+  | .alwaysComb body =>
+      if hasTimingControl body then
+        .error "timed design rejects timing control inside always_comb"
+      else
+        let writes := SStmt.writeNames body
+        let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+        pure { residual := [body]
+             , status := .ready
+             , comb := true
+             , combReads := reads
+             , combBody := [body] }
   | .alwaysPosedge clock body =>
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual }
@@ -156,9 +190,9 @@ def timedProcOf : SProc → Except String ProcState
 
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
-This surface admits `initial`, plain `always`, and canonical positive-edge
-processes. Their continuations run through the existing scheduler with an
-explicit region oracle. Time is measured in that
+This surface admits `initial`, plain `always`, `always_comb`, and canonical
+positive-edge processes. Their continuations run through the existing
+scheduler with an explicit region oracle. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
 def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
@@ -208,7 +242,7 @@ private def ffDesign : Design :=
 #guard ((elabDesign ffDesign).toOption.map (fun w => w.procs.size)) == some 1
 #guard ((elabDesign ffDesign).toOption.bind (fun w => (w.procs[0]?).map (·.arm.isSome))) == some true
 
--- always_comb is LOUD rather than approximated
+-- the legacy self-check loader still keeps always_comb loud
 #guard (elabDesign { name := "c", decls := #[], processes := #[.alwaysComb (.blockingAssign "y" (.ident "a"))] }).toOption.isNone
 
 /-! **THE RE-ARM GUARD.** Two posedges, and the process is still alive after

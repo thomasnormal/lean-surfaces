@@ -54,6 +54,24 @@ grammar coverage **235/122/113 → 235/159/76** and differential coverage
 **518/506/0/12 → 519/507/0/12**. No continuous assignment, `always_comb`,
 `always_latch`, or `always_ff` support is claimed by this item.
 
+## `always_comb` timed conformance — 2026-10-30
+
+`always_comb` now uses the scheduler's retained process table with inferred
+implicit sensitivity. Each process runs once in Active at time zero, becomes
+dormant, and wakes in Active when a signal read by its body changes. Written
+signals are removed from that sensitivity set, dependent comb processes are
+queued by the same wake path, and NBA commits use the same wake rule. Timing
+controls inside an `always_comb` body remain loud because the construct's
+execution cannot suspend on the ordinary edge/timer continuation.
+
+The four timed witnesses cover initial execution plus blocking wake, NBA wake,
+dependent comb propagation, and written-signal sensitivity exclusion. The
+legacy self-check path still refuses `AlwaysComb`; the timed path is the only
+admitted surface. Continuous assignment, `always_ff`, and `always_latch` remain
+subsequent rungs. Differential coverage grows **526/509/0/17 →
+530/513/0/17**; grammar coverage grows **236/159/77 → 236/160/76** as the
+`AlwaysCombBlock` witness moves from REFUSE to MATCH.
+
 ## Packed concatenation and replication witness — 2026-10-30
 
 The legacy differential corpus now carries a compact admitted initial-process

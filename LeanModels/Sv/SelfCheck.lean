@@ -349,6 +349,127 @@ inductive SStmt where
   | waitCond (cond : SExpr)
 deriving Repr, BEq, Inhabited
 
+/-! ## Implicit-sensitivity metadata -/
+
+private def addName (name : String) (names : List String) : List String :=
+  if names.contains name then names else names ++ [name]
+
+private def addNames (names : List String) (acc : List String) : List String :=
+  names.foldl (fun seen name => addName name seen) acc
+
+partial def Expr.readNames : Expr → List String
+  | .lit _ | .unsupported _ _ => []
+  | .ident name => [name]
+  | .unary _ arg | .reduce _ arg | .resizeSigned _ arg | .squash2 arg =>
+      Expr.readNames arg
+  | .binary _ left right => Expr.readNames left ++ Expr.readNames right
+  | .ternary cond thenE elseE =>
+      Expr.readNames cond ++ Expr.readNames thenE ++ Expr.readNames elseE
+  | .concat parts => parts.toList.flatMap Expr.readNames
+
+partial def SExpr.readNames : SExpr → List String
+  | .m0 e => Expr.readNames e
+  | .unary _ arg | .resize _ arg | .signedResize _ arg | .squash2 arg
+  | .clog2 arg | .enumName arg _ _ => SExpr.readNames arg
+  | .binary _ left right | .scmp _ left right | .caseEq left right
+  | .caseNe left right | .caseMatch _ left right | .logAnd left right
+  | .logOr left right => SExpr.readNames left ++ SExpr.readNames right
+  | .ternary cond thenE elseE =>
+      SExpr.readNames cond ++ SExpr.readNames thenE ++ SExpr.readNames elseE
+  | .concat parts => parts.toList.flatMap SExpr.readNames
+  | .selectRead _ _ _ value index | .compoundRead _ _ _ value index =>
+      SExpr.readNames value ++ SExpr.readNames index
+  | .bitQuery _ operand controls =>
+      SExpr.readNames operand ++ controls.toList.flatMap SExpr.readNames
+  | .sformatf _ operand _ => SExpr.readNames operand
+  | .arrayDisplay elements =>
+      elements.toList.flatMap fun (element, _) => SExpr.readNames element
+
+partial def Stmt.readNames : Stmt → List String
+  | .blockingAssign _ value | .nbaAssign _ value => Expr.readNames value
+  | .ifStmt cond thenBranch elseBranch =>
+      Expr.readNames cond ++ Stmt.readNames thenBranch ++
+        (elseBranch.map Stmt.readNames |>.getD [])
+  | .block body => body.toList.flatMap Stmt.readNames
+  | .unsupported _ _ => []
+
+partial def SStmt.readNames : SStmt → List String
+  | .m0 s => Stmt.readNames s
+  | .assign _ _ value => SExpr.readNames value
+  | .selectedAssign _ _ _ _ _ index value
+  | .selectedNbaAssign _ _ _ _ _ index value =>
+      SExpr.readNames index ++ SExpr.readNames value
+  | .distUniformAssign _ seed _ _ _ => [seed]
+  | .packedAssign targets value | .packedNbaAssign targets value =>
+      targets.flatMap fun target =>
+        match target with
+        | .whole _ _ _ => []
+        | .selected _ _ _ _ _ index => SExpr.readNames index
+      ++ SExpr.readNames value
+  | .scanf input _ outputs result =>
+      SExpr.readNames input ++
+        (outputs ++ [result]).flatMap fun targets =>
+          targets.flatMap fun target =>
+            match target with
+            | .whole _ _ _ => []
+            | .selected _ _ _ _ _ index => SExpr.readNames index
+  | .ifStmt cond thenBranch elseBranch =>
+      SExpr.readNames cond ++ SStmt.readNames thenBranch ++
+        (elseBranch.map SStmt.readNames |>.getD [])
+  | .block body => body.toList.flatMap SStmt.readNames
+  | .forLoop initializers condition steps body =>
+      initializers.toList.flatMap SStmt.readNames ++ SExpr.readNames condition ++
+        steps.toList.flatMap SStmt.readNames ++ SStmt.readNames body
+  | .forAfterInit condition steps body | .forHeader condition steps body
+  | .forAfterBody condition steps body | .forAfterStep condition steps body =>
+      SExpr.readNames condition ++ steps.toList.flatMap SStmt.readNames ++
+        SStmt.readNames body
+  | .repeatLoop count _ body => SExpr.readNames count ++ SStmt.readNames body
+  | .repeatBody _ body | .repeatAfterBody _ body => SStmt.readNames body
+  | .doWhileLoop condition body => SExpr.readNames condition ++ SStmt.readNames body
+  | .localDecl _ _ _ init => init.map SExpr.readNames |>.getD []
+  | .sysCall _ _ args | .strobe _ args | .severity args | .fatal args =>
+      args.toList.flatMap fun (arg, _) => SExpr.readNames arg
+  | .waitCond condition => SExpr.readNames condition
+  | .breakLoop | .continueLoop | .finish | .skip | .delay _ | .waitEvent _ _ => []
+
+partial def Stmt.writeNames : Stmt → List String
+  | .blockingAssign target _ | .nbaAssign target _ => [target]
+  | .ifStmt _ thenBranch elseBranch =>
+      Stmt.writeNames thenBranch ++ (elseBranch.map Stmt.writeNames |>.getD [])
+  | .block body => body.toList.flatMap Stmt.writeNames
+  | .unsupported _ _ => []
+
+partial def SStmt.writeNames : SStmt → List String
+  | .m0 s => Stmt.writeNames s
+  | .assign _ target _ | .selectedAssign target _ _ _ _ _ _
+  | .selectedNbaAssign target _ _ _ _ _ _ => [target]
+  | .distUniformAssign target seed _ _ _ => [target, seed]
+  | .packedAssign targets _ | .packedNbaAssign targets _ =>
+      targets.map fun target =>
+        match target with
+        | .whole name _ _ | .selected name _ _ _ _ _ => name
+  | .scanf _ _ outputs result =>
+      (outputs ++ [result]).flatMap fun targets =>
+        targets.map fun target =>
+          match target with
+          | .whole name _ _ | .selected name _ _ _ _ _ => name
+  | .ifStmt _ thenBranch elseBranch =>
+      SStmt.writeNames thenBranch ++ (elseBranch.map SStmt.writeNames |>.getD [])
+  | .block body => body.toList.flatMap SStmt.writeNames
+  | .forLoop initializers _ steps body =>
+      initializers.toList.flatMap SStmt.writeNames ++
+        steps.toList.flatMap SStmt.writeNames ++ SStmt.writeNames body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.flatMap SStmt.writeNames ++ SStmt.writeNames body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => SStmt.writeNames body
+  | .localDecl name _ _ _ => [name]
+  | .sysCall _ _ _ | .strobe _ _ | .severity _ | .fatal _
+  | .finish | .skip | .delay _ | .waitEvent _ _ | .waitCond _
+  | .breakLoop | .continueLoop => []
+
 def SStmt.mkAssign (nonblocking : Bool) (target : String) : SExpr → SStmt
   | .m0 e => .m0 (if nonblocking then .nbaAssign target e else .blockingAssign target e)
   | v => .assign nonblocking target v
@@ -1039,6 +1160,7 @@ inductive SProc where
   | initial (body : SStmt)
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
+  | alwaysComb (body : SStmt)
   | other (svKind : String) (text : String)
 deriving Repr, Inhabited
 
@@ -1078,6 +1200,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'Always' (self-check tier runs initial-only designs)"
+  | .alwaysComb _ :: _, _, _, _, _ =>
+      .unsupported "non-initial process 'AlwaysComb' (self-check tier runs initial-only designs)"
   | .initial body :: rest, st, nba, out, assignmentOrder => do
       let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
       if out'.halted then .ok (st', nba', out')
@@ -1107,6 +1231,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
       | .alwaysBody _ => some "Always"
+      | .alwaysComb _ => some "AlwaysComb"
       | _ => none then
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
@@ -1501,7 +1626,9 @@ def parseSProc (j : Json) : Except String SProc := do
   | "AlwaysPosedge" =>
       return .alwaysPosedge (← getStrF j "clock")
         (← parseSStmt (← getF j "body"))
-  | "AlwaysComb" | "Assign" => return .other kind ""
+  | "AlwaysComb" =>
+      return .alwaysComb (← parseSStmt (← getF j "body"))
+  | "Assign" => return .other kind ""
   | "Unsupported" =>
       return .other (← getStrF j "sv_kind") (unsupportedText j)
   | other => .error s!"unknown process kind '{other}'"
@@ -1607,7 +1734,7 @@ def parseModuleD (j : Json) : Except String Design := do
   let moduleNames := decls.toList.map (·.name)
   for p in procs do
     let body? := match p with
-      | .initial body | .alwaysBody body => some body
+      | .initial body | .alwaysBody body | .alwaysComb body => some body
       | _ => none
     if let some body := body? then
       let ln := localNames body

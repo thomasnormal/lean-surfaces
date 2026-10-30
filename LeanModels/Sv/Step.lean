@@ -59,7 +59,7 @@ inductive Trigger where
   | atEdge (sig : String) (edge : Edge)
   /-- `wait (cond)` — resume when `cond` becomes true. -/
   | onCond (cond : SExpr)
-deriving Repr, Inhabited
+deriving Repr, BEq, Inhabited
 
 /-- The result of stepping a process body once.
 

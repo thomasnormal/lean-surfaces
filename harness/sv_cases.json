@@ -1827,6 +1827,50 @@
       "ticks": 4
     },
     {
+      "name": "always_comb_accept_timed",
+      "file": "Examples/system-verilog/always_comb_accept/always_comb_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_nba_timed",
+      "file": "Examples/system-verilog/always_comb_nba/always_comb_nba.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB NBA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_chain_timed",
+      "file": "Examples/system-verilog/always_comb_chain/always_comb_chain.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB CHAIN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_written_excluded_timed",
+      "file": "Examples/system-verilog/always_comb_written_excluded/always_comb_written_excluded.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB EXCLUDE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "delayed_refusal",
       "file": "Examples/system-verilog/time_boundary/delayed.sv",
       "module": "top",

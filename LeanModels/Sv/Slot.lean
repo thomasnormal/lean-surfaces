@@ -76,6 +76,28 @@ def withoutIndex (index : Nat) (xs : List Nat) : List Nat :=
 def removeFromReady (w : SvWorld) (index : Nat) : SvWorld :=
   { w with regionQ := fun r => withoutIndex index (w.regionQ r) }
 
+def signalChanged (old new : SvState) (name : String) : Bool :=
+  SvState.lookup old name != SvState.lookup new name
+
+/-- Wake dormant `always_comb` processes whose inferred sensitivity contains a
+signal that changed.  The process is queued in Active; changes made by one
+comb process therefore trigger dependent comb processes in the same slot. -/
+def wakeCombs (old new : SvState) : SvM Unit :=
+  modify fun w =>
+    let woken : List Nat :=
+      (List.range w.procs.size).filter fun i =>
+        match w.procs[i]? with
+        | some ps => ps.comb && ps.status == .dormant &&
+            ps.combReads.any (signalChanged old new)
+        | none => false
+    let procs' := woken.foldl (fun (ps : Array ProcState) i =>
+      match ps[i]? with
+      | some p => ps.set! i { p with status := .ready }
+      | none => ps) w.procs
+    { w with procs := procs'
+           , regionQ := fun r =>
+               if r == Region.active then w.regionQ r ++ woken else w.regionQ r }
+
 /-- Run process `i`'s residual until it completes or suspends, and write
 the result back into the world.
 
@@ -109,17 +131,26 @@ def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
         let (ps', reArmed) : ProcState × Bool :=
           match oc with
           | .done =>
-              match ps.arm with
-              | some body =>
-                  ({ ps with residual := body, status := .ready, registration := none, explicitlySuspended := false }, true)
-              | none =>
-                  ({ ps with residual := [], status := .finished, registration := none, explicitlySuspended := false }, false)
+              if ps.comb then
+                ({ ps with residual := ps.combBody, status := ProcStatus.dormant, registration := none, explicitlySuspended := false }, false)
+              else match ps.arm with
+                | some body =>
+                    ({ ps with residual := body, status := .ready, registration := none, explicitlySuspended := false }, true)
+                | none =>
+                    ({ ps with residual := [], status := .finished, registration := none, explicitlySuspended := false }, false)
           | .suspended t rest =>
               ({ ps with residual := rest, status := .suspended t, registration := some (WaitTarget.ofTrigger w.time t) }, false)
-        set { w with signals := sigs, nba := nba, out := out
-                   , procs := w.procs.set! i ps'
-                   , regionQ := fun r =>
-                       if reArmed && r == Region.active then w.regionQ r ++ [i] else w.regionQ r }
+        let updated := { w with
+          signals := sigs
+          , nba := nba
+          , out := out
+          , procs := w.procs.set! i ps'
+          , regionQ := fun r =>
+              if reArmed && r == Region.active then w.regionQ r ++ [i]
+              else w.regionQ r }
+        set updated
+        if w.signals != sigs then
+          wakeCombs w.signals sigs
         pure oc
 
 /-! ## One region's pass -/
@@ -306,7 +337,11 @@ def slotStep (σ : RegionOracle) : Nat → SvM Unit
         if w.nba.isEmpty then
           pure ()
         else do
+          let before ← get
           applyNba
+          let after ← get
+          if before.signals != after.signals then
+            wakeCombs before.signals after.signals
           slotStep σ fuel
 
 end LeanModels.Sv

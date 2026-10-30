@@ -70,6 +70,7 @@ def runSlots (σ : RegionOracle) (fuel : Nat) : List SvState → SvM RegionTrace
       -- ready exactly when the stimulus drives that edge. Without this the
       -- ready sets stay empty forever and every trace is silently short.
       let w1 ← get
+      wakeCombs sampled w1.signals
       wakeEdges sampled w1.signals
       wakeTimers
       slotStep σ fuel

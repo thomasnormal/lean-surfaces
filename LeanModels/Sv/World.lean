@@ -117,8 +117,9 @@ def SvRefusal.toCore (r : SvRefusal) (c : SvClause) : RefusalCause SvClause :=
 inductive ProcStatus where
   | ready
   | suspended (t : Trigger)
+  | dormant
   | finished
-deriving Repr, Inhabited
+deriving Repr, BEq, Inhabited
 
 /-! ## Waiting targets -/
 
@@ -156,6 +157,15 @@ structure ProcState where
   which produced a SHORTER TRACE rather than an error — the failure mode
   nobody notices. -/
   arm : Option (List SStmt) := none
+  /-- This process is an `always_comb` body.  Comb processes do not re-arm
+  themselves blindly at the end of a run; they become dormant and are woken
+  when one of their implicit-sensitivity signals changes. -/
+  comb : Bool := false
+  /-- Signals read by an `always_comb` body, in source order without repeats. -/
+  combReads : List String := []
+  /-- The retained body used when an implicit-sensitivity wake re-enters the
+  process. -/
+  combBody : List SStmt := []
   /-- The target that will make a suspended process runnable. -/
   registration : Option WaitTarget := none
   /-- Explicit process-control suspension is distinct from an ordinary wait.

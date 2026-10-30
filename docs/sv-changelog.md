@@ -1,3 +1,15 @@
+# [0.1.260] — 2026-10-30
+
+Timed conformance now admits `always_comb` through inferred implicit
+sensitivity. Each process executes once at time zero, becomes dormant, and is
+woken by blocking or NBA changes to a read signal; written signals are
+excluded, and dependent comb processes propagate through the same scheduler
+queue. Four differential witnesses cover blocking wake, NBA wake, dependent
+propagation, and sensitivity exclusion. Timing controls inside `always_comb`
+remain loud. Differential coverage grows **526/509/0/17 → 530/513/0/17**;
+grammar coverage grows **236/159/77 → 236/160/76** as the
+`AlwaysCombBlock` witness moves from REFUSE to MATCH.
+
 # [0.1.259] — 2026-10-30
 
 The scheduler core is now pinned before the next concurrent-process rung.

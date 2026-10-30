@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Plain `always` timed conformance — 2026-10-30
+
+The scheduler-facing conformance harness now drives retained plain `always`
+processes through `elabTimedDesign` and the existing Active/Inactive/NBA slot
+loop. A time-zero slot is followed by unit advances until `$finish` or the
+bounded observation budget; the process body and its delayed tail are retained
+between slots. The legacy self-check runner remains initial-only, while
+`always_ff` witnesses stay on their separate boundary.
+
+The `always_accept` fixture and timed differential row verify two repetitions
+and the `ALWAYS PASS` transcript. The grammar census sends plain `Always` and
+non-`always_ff` `AlwaysPosedge` witnesses through the timed runner, lifting
+grammar coverage **235/122/113 → 235/159/76** and differential coverage
+**518/506/0/12 → 519/507/0/12**. No continuous assignment, `always_comb`,
+`always_latch`, or `always_ff` support is claimed by this item.
+
 ## Packed concatenation and replication witness — 2026-10-30
 
 The legacy differential corpus now carries a compact admitted initial-process

@@ -26,6 +26,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 CASES = REPO / "harness" / "sv_cases.json"
 RUNNER = REPO / "harness" / "sv" / "conformance" / "runner.lean"
+TIMED_RUNNER = REPO / "harness" / "sv" / "conformance" / "timed_runner.lean"
 def capped(cmd, timeout=600):
     """Run a Lean command under the fleet's cgroup memory/CPU cap.
 
@@ -142,6 +143,43 @@ def run_model(envelopes, fuel):
             pass
 
 
+def run_timed_model(envelopes, fuel, ticks):
+    """Run timed rows through the scheduler-facing conformance runner."""
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+        listing = Path(f.name)
+        for envelope in envelopes:
+            f.write(str(envelope) + "\n")
+    try:
+        p = capped(["lake", "env", "lean", "-j", "1", "--run", str(TIMED_RUNNER),
+                    "--batch", str(listing), "--fuel", str(fuel),
+                    "--ticks", str(ticks)], timeout=1800)
+        if p.returncode != 0:
+            raise RuntimeError("timed self-check runner failed (%d):\n%s\n%s" %
+                               (p.returncode, p.stdout[-3000:], p.stderr[-3000:]))
+        return parse_batch(p.stdout)
+    finally:
+        try:
+            listing.unlink()
+        except OSError:
+            pass
+
+
+def run_models(resolved, fuel):
+    """Run standard and timed rows, preserving one merged path-indexed view."""
+    model = {}
+    standard = [item for item in resolved if item[0].get("mode", "self-check") != "timed"]
+    timed = [item for item in resolved if item[0].get("mode", "self-check") == "timed"]
+    if standard:
+        model.update(run_model([item[2] for item in standard], fuel))
+    by_ticks = {}
+    for item in timed:
+        ticks = int(item[0].get("ticks", 16))
+        by_ticks.setdefault(ticks, []).append(item)
+    for ticks, items in by_ticks.items():
+        model.update(run_timed_model([item[2] for item in items], fuel, ticks))
+    return model
+
+
 def check_row(row, source, envelope, model_entry, oracle):
     status = model_entry["status"]
     lines = model_entry["lines"]
@@ -178,7 +216,7 @@ def main(argv=None):
         oracle, host_rc = run_oracle(row, source)
         resolved.append((row, source, envelope, oracle, host_rc))
         envelopes.append(envelope)
-    model = run_model(envelopes, args.fuel)
+    model = run_models(resolved, args.fuel)
     results = []
     for row, source, envelope, oracle, host_rc in resolved:
         entry = model.get(str(envelope))

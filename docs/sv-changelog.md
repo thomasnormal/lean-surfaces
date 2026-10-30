@@ -1,3 +1,14 @@
+# [0.1.257] — 2026-10-30
+
+The scheduler-facing conformance harness now drives plain `always` processes
+through the retained Active/Inactive/NBA loop until `$finish` or the bounded
+observation budget. The grammar census routes plain `Always` and non-`always_ff`
+edge witnesses through this timed runner; `always_ff` remains a separate
+boundary. Differential coverage grows **518/506/0/12 → 519/507/0/12** and
+grammar coverage grows **235/122/113 → 235/159/76**. The coverage page now
+states that the legacy self-check path remains initial-only while timed plain
+`always` is admitted.
+
 # [0.1.256] — 2026-10-30
 
 The generated coverage page now leads with the real grammar census and the

@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+### Added
+
+- Added a callable plain-`for` shadow-local witness whose initialized inner
+  value is assigned to the outer binding before `break`; the false-condition
+  companion remains covered separately.
+
+### Measured
+
+- The checked-in corpus now contains **1071 differential rows**: **1054 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **565**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.167] — 2026-10-30
 
 ### Added

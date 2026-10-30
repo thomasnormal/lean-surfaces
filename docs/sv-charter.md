@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar conditional-expression witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for scalar `?:` selection, checking both true and false branches with a
+literal `PASS` transcript.
+
+Differential coverage grows **505/493/0/12 → 506/494/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Four-state case equality witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

@@ -4174,6 +4174,15 @@
       "expect": "match"
     },
     {
+      "name": "inside_dynamic_accept",
+      "file": "Examples/system-verilog/inside_dynamic_accept/inside_dynamic_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "display_format_escape_adapter",
       "file": "Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv",
       "module": "top",

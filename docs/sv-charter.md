@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `inside` expression range witness — 2026-10-30
+
+The legacy differential corpus now carries a compact dynamic `inside`
+expression fixture with variable range endpoints, checking both a hit and a
+miss before a literal `PASS` transcript. Runtime bounds use the existing
+integral membership path without adding scheduler or aggregate state.
+
+Differential coverage grows **503/491/0/12 → 504/492/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Ordinary `inside` expression witness — 2026-10-30
 
 The legacy differential corpus now carries a compact ordinary `inside`

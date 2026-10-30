@@ -1,3 +1,10 @@
+# [0.1.241] — 2026-10-30
+
+The legacy differential corpus now carries a compact dynamic `inside`
+expression witness with variable range endpoints and hit/miss checks. Coverage
+grows **503/491/0/12 → 504/492/0/12**; grammar coverage remains
+**235/113/122**.
+
 # [0.1.240] — 2026-10-30
 
 The legacy differential corpus now carries a compact ordinary `inside`

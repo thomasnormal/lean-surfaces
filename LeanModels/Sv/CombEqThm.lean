@@ -529,21 +529,21 @@ theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
   · obtain ⟨E', hE'⟩ := Reach_ReachE E hr
     exact (hmain ls hls σ' E' hE').2
 
-/-- The tactic's form: the valuation is the parameters zipped with the arguments, the environment
-check in a `rfl`-provable form (as `comb_view`). -/
+/-- The tactic's form: the valuation is the parameters zipped with the arguments, then the
+localparams (`s.val args`), the environment check in a `rfl`-provable form (as `comb_view`). -/
 theorem eq_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args)))
-    (hfrag : s.EqFrag) (hwid : s.WidthObl (σL (s.params.zip args)))
-    (hbit : s.BitReadObl (σL (s.params.zip args))) (hcov : s.CoverObl (σL (s.params.zip args)))
-    {st : SvState} (hinK : s.InKnown (σL (s.params.zip args)) st)
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args))
+    (hfrag : s.EqFrag) (hwid : s.WidthObl (s.val args))
+    (hbit : s.BitReadObl (s.val args)) (hcov : s.CoverObl (s.val args))
+    {st : SvState} (hinK : s.InKnown (s.val args) st)
     (hc : CombDesign (d.instantiateGD2 args)) (ha : Acyclic (d.instantiateGD2 args))
     (heqs : CombEqs (d.instantiateGD2 args) st) (hsh : StateShape (d.instantiateGD2 args) st) :
-    s.Eqs (σL (s.params.zip args)) st ∧ s.Knowns (σL (s.params.zip args)) st :=
+    s.Eqs (s.val args) st ∧ s.Knowns (s.val args) st :=
   eq_of_summary hs harity h1 (Agrees_of_map hag) hok hauto hin hfrag hwid hbit hcov hinK hc ha
     heqs hsh
 

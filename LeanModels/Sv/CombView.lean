@@ -20,6 +20,9 @@ plus ANY NUMBER of `generate for` loops `for (g = c0; g < bound; g++)` whose bod
 and, one level down, further `generate for` loops of such assigns (two levels deep, mixed bodies).
 
 * declarations: scalars, 1-D and 2-D packed arrays with affine bounds;
+* localparams (`localparam integer L = e`, `e` an integer constant expression of the parameters and the
+  earlier localparams: `+ - *` by a literal, `/` `%` by a positive literal): one more NAMED CONSTANT,
+  wherever a parameter may stand (`Summary.lps`, `Summary.val`; see "Local parameters" below);
 * accesses (`Acc`): the whole signal, a bit `x[i]`, an element of a 1-D array, a row or an element
   of a 2-D array (`x[i]`, `x[i][j]`), a part `x[hi:lo]` or a part of a row `x[i][hi:lo]`; every
   index and bound AFFINE in the parameters and the enclosing genvars (`i`, `i + 1`, `N`, `2*N - 1`);
@@ -853,29 +856,159 @@ def famsOf? (ds : List DeclT) : List GenItem → Except String (List TFam)
           | .error e => .error e
           | .ok fs => .ok (f :: fs)
 
+/-! ## Local parameters
+
+A `localparam L = <constant expression of the parameters>` enters the view as one more NAMED CONSTANT:
+`Summary.params` lists the module parameters and then the localparams (the names an `Aff` may
+mention), and `Summary.lps` keeps each localparam's definition as a `CE`, a tiny constant-expression
+language (integer literals, references to parameters and EARLIER localparams, `+`, `-`, `*` by a
+literal, `/` and `%` by a positive literal). `Summary.val s args` is the valuation of all the constants:
+the parameters zipped with the arguments, then each localparam evaluated over what precedes it.
+
+Nothing here is trusted. `Summary.sound` and everything built on it need only
+`Agrees σ env s.params` for the environment `paramEnv2` really produced; the tactics close that by
+`rfl` per design (the localparam really sits in `env.vals`, bound by `bindLocal`, at the value
+`CE.eval` computes), so a `CE` that disagreed with the instantiation makes `hag` fail to close. The
+operations are `evalInt`'s own (`Int.tdiv`/`Int.tmod`, the operand order of `+ - *`), which is what
+lets `rfl` see through the symbolic parameter. -/
+
+/-- The definition of a localparam. -/
+inductive CE where
+  | lit (v : Int)
+  | ref (n : String)
+  | add (a b : CE)
+  | sub (a b : CE)
+  | mul (a b : CE)
+  | divK (a : CE) (k : Int)
+  | modK (a : CE) (k : Int)
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- The value of a definition, with `evalInt`'s own operations (`/` and `%` truncate toward zero). -/
+def CE.eval (σ : String → Int) : CE → Int
+  | .lit v => v
+  | .ref n => σ n
+  | .add a b => a.eval σ + b.eval σ
+  | .sub a b => a.eval σ - b.eval σ
+  | .mul a b => a.eval σ * b.eval σ
+  | .divK a k => (a.eval σ).tdiv k
+  | .modK a k => (a.eval σ).tmod k
+
+/-- The bindings of the localparams, each evaluated over the bindings before it (latest first). -/
+def lpEnv : List (String × CE) → List (String × Int) → List (String × Int)
+  | [], acc => acc
+  | (n, c) :: rest, acc => lpEnv rest ((n, c.eval (σL acc)) :: acc)
+
+def CE.isLit : CE → Bool
+  | .lit _ => true
+  | _ => false
+
+def ceMul (nm : String) (a b : CE) : Except String CE :=
+  if a.isLit || b.isLit then .ok (.mul a b)
+  else .error s!"localparam `{nm}`: a product of two non-constant factors is outside the v1 fragment (`*` needs an integer-literal factor, so that the obligations stay linear)"
+
+def ceBin (nm : String) : SymBinOp → CE → CE → Except String CE
+  | .m0 .add, a, b => .ok (.add a b)
+  | .m0 .sub, a, b => .ok (.sub a b)
+  | .mul, a, b => ceMul nm a b
+  | .m0 .mul, a, b => ceMul nm a b
+  | .div, a, .lit k =>
+      if 0 < k then .ok (.divK a k)
+      else .error s!"localparam `{nm}`: `/` by the literal {k} is outside the v1 fragment (a positive literal divisor is required)"
+  | .div, _, _ =>
+      .error s!"localparam `{nm}`: `/` by a non-literal is outside the v1 fragment (a localparam may divide by an integer literal)"
+  | .mod, a, .lit k =>
+      if 0 < k then .ok (.modK a k)
+      else .error s!"localparam `{nm}`: `%` by the literal {k} is outside the v1 fragment (a positive literal divisor is required)"
+  | .mod, _, _ =>
+      .error s!"localparam `{nm}`: `%` by a non-literal is outside the v1 fragment (a localparam may take a remainder by an integer literal)"
+  | op, _, _ =>
+      .error s!"localparam `{nm}`: operator `{op.sym}` is outside the v1 fragment (a localparam may use + - *, and / % by an integer literal)"
+
+/-- Recognize a localparam's initializer, in the scope of the names bound before it. -/
+def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
+  | .int v => .ok (.lit v)
+  | .paramRef n none =>
+      if scope.contains n then .ok (.ref n)
+      else .error s!"localparam `{nm}`: `{n}` is neither a parameter nor an earlier localparam"
+  | .binary op l r =>
+      match ceOf? nm scope l with
+      | .error e => .error e
+      | .ok a =>
+          match ceOf? nm scope r with
+          | .error e => .error e
+          | .ok b => ceBin nm op a b
+  | .squash2 _ a =>
+      match ceOf? nm scope a with
+      | .error e => .error e
+      | .ok _ =>
+          .error s!"localparam `{nm}`: a 2-state `int` localparam initialised by `/` or `%` is squashed to 2 states and wraps at 2^31 in the elaborated design (its closed arithmetic form would be false for huge parameters); declare it `localparam integer {nm} = …;` (outside the v1 fragment)"
+  | .sysCall .clog2 _ =>
+      .error s!"localparam `{nm}`: `$clog2` is outside the v1 fragment (it is not a linear function of the parameters; a localparam may use + - *, and / % by an integer literal)"
+  | .sysCall .. =>
+      .error s!"localparam `{nm}`: a system call is outside the v1 fragment (a localparam may use + - *, and / % by an integer literal)"
+  | _ =>
+      .error s!"localparam `{nm}`: the initializer is outside the v1 fragment (a localparam may use integer literals, parameters, earlier localparams, + - *, and / % by an integer literal)"
+
+/-- The localparam's declared type: `int`/`integer` (packed `[31:0]`, signed or default) or none — the
+INT class, which `bindLocal` binds in `IEnv.vals`, where the parameters are. -/
+def lpTypeOk (lp : PLocalParam) : Bool :=
+  lp.signed? != some false &&
+    match lp.type? with
+    | none => true
+    | some (.packed [⟨.int 31, .int 0⟩] _) => true
+    | _ => false
+
+def lpOf? (scope : List String) (lp : PLocalParam) : Except String CE :=
+  if !lpTypeOk lp then
+    .error s!"localparam `{lp.name}`: only `int`/`integer` (32-bit signed) localparams are in the v1 fragment"
+  else ceOf? lp.name scope lp.expr
+
+def lpsOf? : List String → List PLocalParam → Except String (List (String × CE))
+  | _, [] => .ok []
+  | scope, lp :: rest =>
+      match lpOf? scope lp with
+      | .error e => .error e
+      | .ok c =>
+          match lpsOf? (scope ++ [lp.name]) rest with
+          | .error e => .error e
+          | .ok cs => .ok ((lp.name, c) :: cs)
+
 /-! ## The summary -/
 
 structure Summary where
+  /-- The constant names: the module parameters, then the localparams. -/
   params : List String
   decls : List DeclT
   statics : List TSite
   fams : List TFam
+  /-- The localparams and their definitions (empty for a design without any). -/
+  lps : List (String × CE) := []
 deriving Repr, Inhabited
 
+/-- The valuation of all the constants at the arguments: the parameters zipped with `args`
+(`List.zip` stops at the parameters), then the localparams. For a design without localparams this IS
+`σL (s.params.zip args)`. -/
+def Summary.val (s : Summary) (args : List Int) : String → Int :=
+  σL (lpEnv s.lps (s.params.zip args))
+
 def _root_.LeanModels.Sv.PDesign.summary (d : PDesign) : Except String Summary :=
-  if !d.localParams.isEmpty then .error "local parameters are outside the v1 fragment"
-  else if !d.enums.isEmpty then .error "enums are outside the v1 fragment"
-  else if !d.others.isEmpty then .error "out-of-tier module members are present"
-  else
-    match declsOf? d.decls with
-    | .error e => .error e
-    | .ok ds =>
-        match sitesOf? ds "plain" 0 d.processes with
+  match lpsOf? (d.params.map (·.name)) d.localParams with
+  | .error e => .error e
+  | .ok lps =>
+      if !d.enums.isEmpty then .error "enums are outside the v1 fragment"
+      else if !d.others.isEmpty then .error "out-of-tier module members are present"
+      else
+        match declsOf? d.decls with
         | .error e => .error e
-        | .ok sts =>
-            match famsOf? ds d.generates with
+        | .ok ds =>
+            match sitesOf? ds "plain" 0 d.processes with
             | .error e => .error e
-            | .ok fs => .ok ⟨d.params.map (·.name), ds, sts, fs⟩
+            | .ok sts =>
+                match famsOf? ds d.generates with
+                | .error e => .error e
+                | .ok fs =>
+                    .ok { params := d.params.map (·.name) ++ lps.map Prod.fst, decls := ds,
+                          statics := sts, fams := fs, lps := lps }
 
 /-- A site together with the loops that enclose it (outermost first) and the label of the
 innermost enclosing block (`"plain"` for a module-level process). -/

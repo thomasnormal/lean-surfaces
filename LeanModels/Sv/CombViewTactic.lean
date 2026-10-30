@@ -152,16 +152,30 @@ macro "sv_norm_core" : tactic =>
       LeanModels.Sv.CombView.KLt, Nat.lt_irrefl, imp_false,
       Bool.not_eq_true, LeanModels.Sv.Win.overlaps_eq_true, Nat.lt_add_right_iff_pos,
       Nat.lt_add_left_iff_pos, Int.sub_add_cancel, Int.toNat_lt',
-      Int.ofNat_toNat, LeanModels.Sv.CombView.Summary.RankObl, LeanModels.Sv.CombView.rippleRank]))
+      Int.ofNat_toNat, LeanModels.Sv.CombView.Summary.RankObl, LeanModels.Sv.CombView.rippleRank,
+      LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv, List.lookup_cons, List.lookup_nil,
+      LeanModels.Sv.CombView.CE.eval]))
 
 /-- `sv_norm [f, g]`: the normalization, with the player's own rank/key definitions `f`, `g`
 unfolded. -/
 syntax "sv_norm" ("[" Lean.Parser.Tactic.simpLemma,* "]")? : tactic
 
+/-- The truncating `/` and `%` of a localparam's definition (`Int.tdiv`, `Int.tmod`: C semantics, what
+the elaborated design computes) as the floor `/` and `%` that `omega` understands, where the
+numerator is provably non-negative from the hypotheses in context (`hN : 1 ≤ N`). A numerator that
+may be negative stays as `Int.tdiv`/`Int.tmod` in the goal (they really differ there). A no-op for a
+design without localparams. -/
+macro "sv_lp_norm" : tactic =>
+  `(tactic| (try simp (disch := omega) only [Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg]))
+
+/-- … on a hypothesis. -/
+macro "sv_lp_norm_at" h:ident : tactic =>
+  `(tactic| (try simp (disch := omega) only [Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg] at $h:ident))
+
 macro_rules
-  | `(tactic| sv_norm) => `(tactic| (sv_norm_core; try simp))
+  | `(tactic| sv_norm) => `(tactic| (sv_norm_core; sv_lp_norm; try simp))
   | `(tactic| sv_norm [$ids,*]) =>
-      `(tactic| (sv_norm_core; (try simp (config := { maxSteps := 4000000 }) only [$ids,*]); try simp))
+      `(tactic| (sv_norm_core; sv_lp_norm; (try simp (config := { maxSteps := 4000000 }) only [$ids,*]); try simp))
 
 /-- **Row-major bookkeeping, explicitly.** The 2-D windows of a packed array `x[R-1:0][W-1:0]` are
 flat offsets `rmN W r c = r * W + c`, and every obligation about two of them (disjointness of two
@@ -226,8 +240,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         let lits := fvs.map fun _ => (mkNatLit k)
         let argsK := args.replaceFVars (fvs.map mkFVar) lits
         let argVals ← evalArgs argsK
-        let σ := σL (s.params.zip argVals)
-        let ctxMsg := s!"(sampled at {s.params} = {argVals}; a genuine violation, not a missing proof, unless your hypotheses exclude this point)"
+        let σ := s.val argVals
+        let ctxMsg := s!"(sampled at {s.pnames} = {argVals}; a genuine violation, not a missing proof, unless your hypotheses exclude this point)"
         if let some m := s.accCounterexample σ then
           throwError "sv_structure: in-range obligation fails — {m} {ctxMsg}"
         if let some m := s.rangeCounterexample σ then

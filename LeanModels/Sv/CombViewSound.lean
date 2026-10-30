@@ -161,21 +161,37 @@ theorem famsOf?_spec {ds : List DeclT} :
           · exact ⟨h2, h3⟩
           · exact k2 y hm
 
+theorem lpsOf?_names : ∀ {scope : List String} {lps : List PLocalParam} {cs : List (String × CE)},
+    lpsOf? scope lps = .ok cs → cs.map Prod.fst = lps.map (·.name)
+  | _, [], cs, h => by
+      simp only [lpsOf?, Except.ok.injEq] at h
+      subst h
+      rfl
+  | scope, lp :: rest, cs, h => by
+      simp only [lpsOf?] at h
+      rcases hl : lpOf? scope lp with e | c
+      · simp [hl] at h
+      · rcases hr : lpsOf? (scope ++ [lp.name]) rest with e | cs'
+        · simp [hl, hr] at h
+        · simp only [hl, hr, Except.ok.injEq] at h
+          subst h
+          simp [lpsOf?_names hr]
+
 theorem summary_spec {d : PDesign} {s : Summary} (h : d.summary = .ok s) :
-    d.localParams = [] ∧ d.enums = [] ∧ d.others = [] ∧ s.params = d.params.map (·.name) ∧
+    s.lps.map Prod.fst = d.localParams.map (·.name) ∧ d.enums = [] ∧ d.others = [] ∧
+    s.params = d.params.map (·.name) ++ s.lps.map Prod.fst ∧
     declsOf? d.decls = .ok s.decls ∧ sitesOf? s.decls "plain" 0 d.processes = .ok s.statics ∧
     d.generates = s.fams.map TFam.toGen ∧ s.SpecOk := by
   unfold PDesign.summary at h
-  split at h
-  · simp at h
-  rename_i h1
+  rcases hl : lpsOf? (d.params.map (·.name)) d.localParams with e | lps
+  · simp [hl] at h
+  simp only [hl] at h
   split at h
   · simp at h
   rename_i h2
   split at h
   · simp at h
   rename_i h3
-  have hl : d.localParams = [] := by simpa using h1
   have he : d.enums = [] := by simpa using h2
   have ho : d.others = [] := by simpa using h3
   rcases hd : declsOf? d.decls with e | ds
@@ -187,7 +203,8 @@ theorem summary_spec {d : PDesign} {s : Summary} (h : d.summary = .ok s) :
   simp only [hd, hp, hg, Except.ok.injEq] at h
   subst h
   obtain ⟨k1, k2⟩ := famsOf?_spec hg
-  exact ⟨hl, he, ho, rfl, rfl, hp, k1.symm, k2⟩
+  have hnames : lps.map Prod.fst = d.localParams.map (·.name) := lpsOf?_names hl
+  exact ⟨hnames, he, ho, rfl, rfl, hp, k1.symm, k2⟩
 
 theorem surfaceFuel_gt (args : List Int) (x : Nat) (hx : x ≤ 4 * (args.map Int.natAbs).sum + 60) :
     x < PDesign.surfaceFuel args := by

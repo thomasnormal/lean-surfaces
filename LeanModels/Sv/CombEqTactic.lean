@@ -68,7 +68,8 @@ private partial def findGD2' (e : Expr) (fuel : Nat) : MetaM (Option (Expr × Ex
 /-- The normalization of the netlist view (a hypothesis `at`), extending `sv_norm_core`'s set with
 the equation vocabulary. -/
 macro "sv_eq_norm_at" h:ident : tactic =>
-  `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
+  `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv, List.lookup_cons, List.lookup_nil, LeanModels.Sv.CombView.CE.eval,
+      LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
       LeanModels.Sv.CombView.Aff.var, LeanModels.Sv.CombView.Aff.const, List.append_nil,
       Int.zero_add, LeanModels.Sv.CombView.Aff.sub, LeanModels.Sv.CombView.Aff.neg,
       LeanModels.Sv.CombView.Aff.negTerms, Int.reduceNeg, Int.reduceAdd,
@@ -134,11 +135,12 @@ macro "sv_eq_norm_at" h:ident : tactic =>
       LeanModels.Sv.CombView.Summary.WidthObl, LeanModels.Sv.CombView.Summary.BitReadObl,
       LeanModels.Sv.CombView.Summary.CoverObl, LeanModels.Sv.CombView.Summary.SrcS,
       LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk,
-      LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit] at $h:ident))
+      LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit] at $h:ident; sv_lp_norm_at $h))
 
 /-- … on the goal (for the obligations that mention the new vocabulary). -/
 macro "sv_eq_norm" : tactic =>
-  `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
+  `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv, List.lookup_cons, List.lookup_nil, LeanModels.Sv.CombView.CE.eval,
+      LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
       LeanModels.Sv.CombView.Aff.var, LeanModels.Sv.CombView.Aff.const, List.append_nil,
       Int.zero_add, LeanModels.Sv.CombView.Aff.sub, LeanModels.Sv.CombView.Aff.neg,
       LeanModels.Sv.CombView.Aff.negTerms, Int.reduceNeg, Int.reduceAdd,
@@ -203,7 +205,7 @@ macro "sv_eq_norm" : tactic =>
       LeanModels.Sv.CombView.Summary.WidthObl, LeanModels.Sv.CombView.Summary.BitReadObl,
       LeanModels.Sv.CombView.Summary.CoverObl, LeanModels.Sv.CombView.Summary.SrcS,
       LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk,
-      LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit]))
+      LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit]; sv_lp_norm))
 
 /-- The number of conjuncts of a right-nested `∧`. -/
 private partial def countAnd (e : Expr) : Nat :=

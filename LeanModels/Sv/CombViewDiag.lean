@@ -25,6 +25,23 @@ def Aff.showR (a : Aff) (rn : String → String) : String :=
 
 def Aff.show (a : Aff) : String := a.showR id
 
+/-- A localparam's definition, printed with the minimal parentheses (`0`: anywhere; `1`: an operand
+of a product or a quotient on the left, or the right operand of a sum; `2`: the right operand of a
+product). -/
+def CE.showP : Nat → CE → String
+  | _, .lit v => if v < 0 then s!"({v})" else toString v
+  | _, .ref n => n
+  | p, .add a b => let t := s!"{a.showP 0} + {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  | p, .sub a b => let t := s!"{a.showP 0} - {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  | p, .mul a b => let t := s!"{a.showP 1} * {b.showP 2}"; if p ≥ 2 then s!"({t})" else t
+  | p, .divK a k => let t := s!"{a.showP 1} / {k}"; if p ≥ 2 then s!"({t})" else t
+  | p, .modK a k => let t := s!"{a.showP 1} % {k}"; if p ≥ 2 then s!"({t})" else t
+
+def CE.show (c : CE) : String := c.showP 0
+
+/-- The module parameters (the constants `args` binds), without the localparams. -/
+def Summary.pnames (s : Summary) : List String := s.params.take (s.params.length - s.lps.length)
+
 /-- An access, with its index variables renamed. -/
 def Acc.showR (rn : String → String) : Acc → String
   | .whole n => n
@@ -73,7 +90,12 @@ def LSite.label (ls : LSite) (rn : String → String) : String :=
 
 /-- The `sv_structure?` text. -/
 def Summary.describe (s : Summary) : String := Id.run do
-  let mut out := s!"sv_structure: parameters {s.params}\ndeclarations:\n"
+  let mut out := s!"sv_structure: parameters {s.pnames}\n"
+  if !s.lps.isEmpty then
+    out := out ++ "localparams:\n"
+    for (n, c) in s.lps do
+      out := out ++ s!"  {n} = {c.show}\n"
+  out := out ++ "declarations:\n"
   for dt in s.decls do
     out := out ++ s!"  {dt.show}\n"
   out := out ++ "plain sites (module-level assigns):\n"

@@ -657,7 +657,7 @@ theorem acyclic_of_lex {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {arg
   exact realized_acyclic hR hok hauto hin hrank
     (fun L => ⟨countRank L κ, fun a _ b hb h => countRank_lt L κ hb h⟩)
 
-/-! ## The forms the tactic uses: the valuation is the parameters zipped with the arguments -/
+/-! ## The forms the tactic uses: the valuation is the parameters zipped with the arguments, then the localparams -/
 
 theorem Agrees_of_map {σ : String → Int} {env : IEnv} {ns : List String}
     (h : ns.map (fun n => env.vals.lookup n) = ns.map (fun n => some (σ n))) :
@@ -665,15 +665,16 @@ theorem Agrees_of_map {σ : String → Int} {env : IEnv} {ns : List String}
   intro n hn
   exact List.map_inj_left.mp h n hn
 
-/-- `comb_of_summary` at the canonical valuation `σL (params.zip args)`, the environment check
-in a `rfl`-provable form. -/
+/-- `comb_of_summary` at the canonical valuation `s.val args` (the parameters zipped with the
+arguments, then the localparams: `σL (params.zip args)` for a design without any), the environment
+check in a `rfl`-provable form. -/
 theorem comb_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args))) (hdisj : s.DisjObl (σL (s.params.zip args))) :
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args)) :
     CombDesign (d.instantiateGD2 args) :=
   comb_of_summary hs harity h1 (Agrees_of_map hag) hok hauto hin hdisj
 
@@ -681,10 +682,10 @@ theorem acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args))) (hdisj : s.DisjObl (σL (s.params.zip args)))
-    (ρ : SiteId → Nat) (hrank : s.RankObl ρ (σL (s.params.zip args))) :
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
+    (ρ : SiteId → Nat) (hrank : s.RankObl ρ (s.val args)) :
     Acyclic (d.instantiateGD2 args) :=
   acyclic_of_summary hs harity h1 (Agrees_of_map hag) hok hauto hin hdisj hrank
 
@@ -692,10 +693,10 @@ theorem lex_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args))) (hdisj : s.DisjObl (σL (s.params.zip args)))
-    (κ : SiteId → Key) (hrank : s.LexObl κ (σL (s.params.zip args))) :
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
+    (κ : SiteId → Key) (hrank : s.LexObl κ (s.val args)) :
     Acyclic (d.instantiateGD2 args) :=
   acyclic_of_lex hs harity h1 (Agrees_of_map hag) hok hauto hin hdisj hrank
 
@@ -741,11 +742,11 @@ theorem acyclic_view_using {d : PDesign} {s : Summary} {args : List Int} {env : 
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args)))
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args))
     (hc : CombDesign (d.instantiateGD2 args))
-    (ρ : SiteId → Nat) (hrank : s.RankObl ρ (σL (s.params.zip args))) :
+    (ρ : SiteId → Nat) (hrank : s.RankObl ρ (s.val args)) :
     Acyclic (d.instantiateGD2 args) :=
   acyclic_using hs harity h1 (Agrees_of_map hag) hok hauto hin hc hrank
     (fun _ => ⟨ρ, fun _ _ _ _ h => h⟩)
@@ -754,11 +755,11 @@ theorem lex_view_using {d : PDesign} {s : Summary} {args : List Int} {env : IEnv
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
     (hag : s.params.map (fun n => env.vals.lookup n) =
-      s.params.map (fun n => some (σL (s.params.zip args) n)))
-    (hok : s.StructOk) (hauto : s.AutoObl (σL (s.params.zip args)) args)
-    (hin : s.InRangeObl (σL (s.params.zip args)))
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args))
     (hc : CombDesign (d.instantiateGD2 args))
-    (κ : SiteId → Key) (hrank : s.LexObl κ (σL (s.params.zip args))) :
+    (κ : SiteId → Key) (hrank : s.LexObl κ (s.val args)) :
     Acyclic (d.instantiateGD2 args) :=
   acyclic_using hs harity h1 (Agrees_of_map hag) hok hauto hin hc hrank
     (fun L => ⟨countRank L κ, fun a _ b hb h => countRank_lt L κ hb h⟩)

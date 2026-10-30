@@ -1,4 +1,4 @@
-# Implicit event controls — repricing boundary
+# Implicit event controls — admitted `@*` path
 
 IEEE §9.4.2 and §12.6.4 define `@*`/`@(*)` by deriving a sensitivity set from
 the variables read by the controlled statement. The process waits for any
@@ -6,18 +6,15 @@ change in that inferred set, executes the body, and re-arms the same implicit
 control. Reads in branches, case items, indexes and concatenations participate
 in the set, while identifiers used only by nested timing controls are excluded.
 
-## Why implicit sensitivity remains a boundary
+## The retained sensitivity path
 
-The envelope can represent fixed edge and bare-signal waits, but it has no
-inferred read-set node or process rearming state. Treating `@*` as a fixed edge,
-running it once, or treating every identifier in the source as sensitive would
-change wakeups and same-time-slot behavior. Nested controls add a second
-retained continuation, and body effects still use the existing scheduler.
-
-The public tier therefore keeps every implicit event control loud. No source
-order shortcut, guessed sensitivity list, or second scheduler is introduced;
-the existing `Always` and `WaitEvent` contracts remain the dependencies for a
-future lowering.
+`AlwaysImplicit` stores the inferred read set and retained body in the same
+timed process table as the other concurrent processes. It runs once at time
+zero, becomes dormant, and wakes when a read signal changes. Blocking writes
+publish after each statement and NBA commits publish through the same edge
+queue, so two changes in one time slot are observable without a second
+scheduler. Empty bodies remain loud, as do event lists, `iff`, and level waits
+that require a different admission rule.
 
 ## 2026-10-22 census and decision
 

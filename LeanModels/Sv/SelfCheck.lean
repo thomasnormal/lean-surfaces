@@ -1161,6 +1161,7 @@ inductive SProc where
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
   | alwaysFF (clock : String) (body : SStmt)
+  | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
   | assign (target : String) (value : SExpr)
@@ -1203,6 +1204,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFF clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysImplicit _ :: _, _, _, _, _ =>
+      .unsupported "non-initial process 'AlwaysImplicit' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'Always' (self-check tier runs initial-only designs)"
   | .alwaysComb _ :: _, _, _, _, _ =>
@@ -1240,6 +1243,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
       | .alwaysFF clock _ => some s!"AlwaysFF:{clock}"
+      | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
       | .alwaysLatch _ => some "AlwaysLatch"
@@ -1635,6 +1639,8 @@ def parseSProc (j : Json) : Except String SProc := do
   match kind with
   | "Initial" => return .initial (← parseSStmt (← getF j "body"))
   | "Always" => return .alwaysBody (← parseSStmt (← getF j "body"))
+  | "AlwaysImplicit" =>
+      return .alwaysImplicit (← parseSStmt (← getF j "body"))
   | "AlwaysPosedge" =>
       let body ← parseSStmt (← getF j "body")
       let style := (getStrF j "style").toOption.getD "always"
@@ -1757,7 +1763,8 @@ def parseModuleD (j : Json) : Except String Design := do
   let moduleNames := decls.toList.map (·.name)
   for p in procs do
     let body? := match p with
-      | .initial body | .alwaysBody body | .alwaysComb body
+      | .initial body | .alwaysBody body | .alwaysImplicit body
+      | .alwaysComb body
       | .alwaysLatch body => some body
       | _ => none
     if let some body := body? then

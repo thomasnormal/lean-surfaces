@@ -18,9 +18,11 @@ than reporting successful completion.
 The canonical top-level `always @(posedge signal)` encoding remains
 `AlwaysPosedge`, using its existing wait/body/arm representation. Bare and
 negative-edge controls in the new general body use existing `WaitEvent`
-nodes. Implicit sensitivity, event lists, `iff`, level `wait` statements and
-unsupported control/body forms retain their refusals; see [implicit event
-controls](sv-implicit-events.md) for the `@*` boundary. `always_ff`,
+nodes. Plain `always @*` is represented as `AlwaysImplicit`; its read set is
+inferred at elaboration and the retained scheduler re-arms it after each wake.
+Event lists, `iff`, level `wait` statements and unsupported control/body forms
+retain their refusals; see [implicit event controls](sv-implicit-events.md) for
+the admitted `@*` path. `always_ff`,
 `always_comb`, `always_latch` and the symbolic schema keep their existing
 separate boundaries. Invalid frontend compilations containing the lowering
 are refused, so synthetic repetition cannot legitimize an illegal source
@@ -30,16 +32,15 @@ Static scalar declarations now initialize once before entry; actual automatic
 scalars initialize at each fresh entry. Initializer and lifetime boundaries are
 listed in [procedural lifetimes](sv-procedural-lifetimes.md).
 Already-admitted automatic fixed-array cells reinitialize on each body entry.
-The timed loader scans the new bodies for internally written edge sources
-and retains its procedural-publication barrier. Time-zero-only clock queries
-and zero-delay Inactive delivery also remain loud.
+Blocking writes and NBA commits publish changed signals through the shared edge
+and implicit-sensitivity wake queue, including writes from the initial process.
+Time-zero-only clock queries and zero-delay Inactive delivery remain loud.
 
 The authored fixtures check time-zero prefixes, retained delayed tails and
 live four-state values, independent process periods, automatic array
 reinitialization in an always-only design, and permanently blocked bare and
-negative-edge waits. Four complete transcripts agree with an independent
-simulator under both region oracles. A fifth fixture preserves the internal
-edge-publication refusal. Four kernel theorems, bound to actual parsed source
+negative-edge waits. The internal edge-publication fixture now completes under
+both region oracles. Four kernel theorems, bound to actual parsed source
 bodies, establish the single-process compilation and delay/event retention
 and rearming rules; their axioms are printed in the proof file.
 

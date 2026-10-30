@@ -171,6 +171,9 @@ structure ProcState where
   /-- Explicit process-control suspension is distinct from an ordinary wait.
   Only the waiting edge/timer subset is admitted by the public rule. -/
   explicitlySuspended : Bool := false
+  /-- Edge publications that arrived while this retained process was already
+  queued in Active.  They are consumed in order after the current body. -/
+  pendingEdges : Nat := 0
 deriving Repr, Inhabited
 
 /-- The world — `W`.

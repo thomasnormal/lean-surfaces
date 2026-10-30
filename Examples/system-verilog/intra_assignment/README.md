@@ -10,8 +10,8 @@ both source and reverse schedule oracles in `proof.lean`.
 
 `zero.sv` independently confirms Active/Inactive/NBA ordering, but the model
 refuses it because Inactive delivery is not admitted. `events.sv` independently
-confirms repeated and single event behavior, but its procedural clock writes
-require an internal edge-publication rule. Neither is an execution match.
+confirms repeated and single event behavior; procedural clock writes now publish
+through the retained edge queue and the receipt executes the complete transcript.
 
 Three kernel theorems cover capture-before-wait, copyback at the resumed
 index, and saved repeat control. Compiled-statement certificates connect

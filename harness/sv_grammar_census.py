@@ -136,7 +136,7 @@ def needs_timed_runner(envelope):
         payload = json.loads(Path(envelope).read_text(encoding="utf-8"))
         modules = payload.get("design", {}).get("modules", [])
         processes = modules[0].get("processes", []) if len(modules) == 1 else []
-        return any(p.get("kind") in ("Always", "AlwaysComb", "AlwaysLatch", "Assign") or
+        return any(p.get("kind") in ("Always", "AlwaysImplicit", "AlwaysComb", "AlwaysLatch", "Assign") or
                    (p.get("kind") == "AlwaysPosedge") for p in processes)
     except (OSError, ValueError, TypeError):
         return False

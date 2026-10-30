@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv",
-  "source_sha256": "a129776a2534932a5939599644f6778fa2f82aa91e036c885c74f6af17df9fc7",
+  "source_sha256": "79708792bd64d4e27ad3b03b02267719232bcda0d5b14a8089641a97912ee7c7",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,7 +15,7 @@
         "span": {
           "line": 3,
           "col": 1,
-          "end_line": 11,
+          "end_line": 12,
           "end_col": 10
         },
         "name": "top",
@@ -124,7 +124,7 @@
             "span": {
               "line": 6,
               "col": 3,
-              "end_line": 10,
+              "end_line": 11,
               "end_col": 6
             },
             "body": {
@@ -132,25 +132,56 @@
               "span": {
                 "line": 6,
                 "col": 11,
-                "end_line": 10,
+                "end_line": 11,
                 "end_col": 6
               },
               "stmts": [
                 {
-                  "kind": "Delay",
+                  "kind": "BlockingAssign",
                   "span": {
                     "line": 7,
                     "col": 5,
                     "end_line": 7,
+                    "end_col": 14
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 6
+                    },
+                    "width": 1,
+                    "name": "a"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 9,
+                      "end_line": 7,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
                     "end_col": 8
                   },
                   "amount": 1,
                   "body": {
                     "kind": "Empty",
                     "span": {
-                      "line": 7,
+                      "line": 8,
                       "col": 7,
-                      "end_line": 7,
+                      "end_line": 8,
                       "end_col": 8
                     }
                   }
@@ -158,9 +189,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 8,
+                    "line": 9,
                     "col": 5,
-                    "end_line": 8,
+                    "end_line": 9,
                     "end_col": 27
                   },
                   "name": "$display",
@@ -171,9 +202,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 9,
+                    "line": 10,
                     "col": 5,
-                    "end_line": 9,
+                    "end_line": 10,
                     "end_col": 13
                   },
                   "name": "$finish",

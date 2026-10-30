@@ -96,7 +96,7 @@
         ],
         "processes": [
           {
-            "kind": "Always",
+            "kind": "AlwaysImplicit",
             "span": {
               "line": 7,
               "col": 3,
@@ -104,17 +104,36 @@
               "end_col": 21
             },
             "body": {
-              "kind": "Unsupported",
+              "kind": "BlockingAssign",
               "span": {
                 "line": 7,
-                "col": 10,
+                "col": 13,
                 "end_line": 7,
                 "end_col": 21
               },
-              "sv_kind": "TimedStatement:ImplicitEventControl",
-              "text": "@* a = clk;"
-            },
-            "always_lowered": true
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 13,
+                  "end_line": 7,
+                  "end_col": 14
+                },
+                "width": 1,
+                "name": "a"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 17,
+                  "end_line": 7,
+                  "end_col": 20
+                },
+                "width": 1,
+                "name": "clk"
+              }
+            }
           },
           {
             "kind": "AlwaysPosedge",

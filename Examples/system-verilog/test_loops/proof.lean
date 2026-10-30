@@ -62,7 +62,6 @@ theorem first_wait_retains (state : SvState) (pending : NbaQueue) (output : Out)
 #print axioms break_skips_test
 #print axioms first_wait_retains
 #print axioms stepSStmt_done_agrees
-#print axioms elabTimedDesign_requiresInternalEdges
 
 -- SYNTHETIC-ORACLE: tests=internal-edge-admission | origin=spec | authority=timed-loader-contract | map=possible-procedural-write:requires-publication-rule
 private def needsPublication (body : SStmt) : Bool :=
@@ -105,11 +104,22 @@ def fixtureReceipt : IO Unit := do
   unless waitStatements.contains waiting do
     throw (IO.userError "first-wait certificate differs from extracted source")
   unless requiresInternalEdges internalEdges do
-    throw (IO.userError "internal edge publication requirement was lost")
-  unless match elabTimedDesign 4096 internalEdges with
-    | .error _ => true
-    | .ok _ => false do
-    throw (IO.userError "internal edge source silently lost a waiter")
+    throw (IO.userError "internal edge census was lost")
+  for oracle in [ρ_src, ρ_rev] do
+    let .ok world := elabTimedDesign 4096 internalEdges
+      | throw (IO.userError "test-loop edge fixture failed to elaborate")
+    let .ok (.ok _, world) := SvM.exec (slotStep oracle 4096) world
+      | throw (IO.userError "test-loop edge initial slot refused")
+    let mut world := world
+    for _ in List.range 5 do
+      if world.out.halted then break
+      let .ok (.ok _, next) := SvM.exec
+          (do advanceTime 1; wakeTimers; slotStep oracle 4096) world
+        | throw (IO.userError "test-loop edge resumed slot refused")
+      world := next
+    unless world.out.halted && world.out.flush ==
+        ["while_wait 2", "do_wait 2", "event 2 2"] do
+      throw (IO.userError s!"test-loop edge transcript differs: {repr world.out.flush}")
   let .ok waits := loadEnvelopeDesign
       (← IO.FS.readFile "Examples/system-verilog/test_loops/timers.sv.json")
     | throw (IO.userError "test-loop timers failed to load")

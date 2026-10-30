@@ -1792,8 +1792,10 @@
       "name": "scheduler_sensitivity_double",
       "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
       "module": "top",
-      "oracle": "refuse",
-      "expect": "refuse",
+      "oracle": [
+        "SCHED SENS PASS"
+      ],
+      "expect": "match",
       "mode": "timed",
       "ticks": 3
     },
@@ -1801,8 +1803,10 @@
       "name": "scheduler_nba_retrigger",
       "file": "Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv",
       "module": "top",
-      "oracle": "refuse",
-      "expect": "refuse",
+      "oracle": [
+        "SCHED NBA RETRIGGER PASS"
+      ],
+      "expect": "match",
       "mode": "timed",
       "ticks": 3
     },

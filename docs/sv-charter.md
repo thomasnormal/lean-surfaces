@@ -12,7 +12,7 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
-## Scheduler core rung — 2026-10-30
+## Scheduler core rung — 2026-10-30 (publication closure)
 
 Before adding another concurrent process family, the scheduler's ordering
 surface is pinned against the declared self-check oracle. The existing loop is
@@ -22,20 +22,20 @@ until the slot closes; process order inside a region remains the explicit
 visible in Active before a same-slot nonblocking assignment commits in NBA, and
 an `initial` process observes two delayed iterations of a plain `always`.
 
-Five witnesses are deliberately loud, each naming a scheduler rule that is
-not implemented yet: `#0` inactive delivery (`9.4.1`), procedural publication
-for a zero-delay event loop, publication for `@*`/`@(posedge)` when a signal
-changes twice in one time step, NBA publication that would re-trigger an
-active waiter, and the separate postponed/monitor output regions. These rows
-are differential witnesses too: the pinned reference declares their expected
-behavior, while the tier records the missing event queue or region rather than
-fabricating a result.
+Three witnesses remain deliberately loud, each naming a scheduler rule that
+is not implemented yet: `#0` inactive delivery (`9.4.1`), procedural
+publication for a zero-delay event loop, and the separate postponed/monitor
+output regions. The `@*`/`@(posedge)` double-change witness now exercises
+publication after each blocking statement, and the NBA witness now exercises
+publication after NBA commit; both are differential matches against their
+pinned reference transcripts. Refusal rows still name the missing event queue
+or region rather than fabricating a result.
 
-The scheduler-core rows move differential coverage **519/507/0/12 →
-526/509/0/17** (rows/agree/disagree/recorded refusals). Adding the
-`ImplicitEventControl` witness makes the grammar census **235/159/76 →
-236/159/77** (witnesses/MATCH/REFUSE); the new kind is counted as uncovered
-because its scheduler machinery remains loud. Continuous assignment,
+The scheduler-core rows move differential coverage **526/509/0/17 →
+526/511/0/15** (rows/agree/disagree/recorded refusals). The current grammar
+census is **237/189/48** (witnesses/MATCH/REFUSE); the
+`ImplicitEventControl` witness now matches after the timed implicit-sensitivity
+route is admitted. Continuous assignment,
 `always_comb`, `always_latch`, and `always_ff` remain subsequent rungs.
 
 ## Plain `always` timed conformance — 2026-10-30

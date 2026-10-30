@@ -161,7 +161,8 @@ wake rule; external stimulus is currently the only integrated edge source. -/
 def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
   let accesses := d.procs.toList.flatMap fun proc =>
     match proc with
-    | .initial body | .alwaysBody body | .alwaysComb body | .alwaysLatch body => timedAccesses body
+    | .initial body | .alwaysBody body | .alwaysImplicit body
+    | .alwaysComb body | .alwaysLatch body => timedAccesses body
     | .alwaysPosedge clock body | .alwaysFF clock body => (true, clock) :: timedAccesses body
     | .assign _ _ => []
     | .other _ _ => []
@@ -175,6 +176,14 @@ def timedProcOf : SProc → Except String ProcState
       pure { residual := [body], status := .ready }
   | .alwaysBody body =>
       pure { residual := [.forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[] body], status := .ready }
+  | .alwaysImplicit body =>
+      let writes := SStmt.writeNames body
+      let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+      pure { residual := [body]
+           , status := .ready
+           , comb := true
+           , combReads := reads
+           , combBody := [body] }
   | .alwaysComb body =>
       if hasTimingControl body then
         .error "timed design rejects timing control inside always_comb"
@@ -220,8 +229,6 @@ module's time-unit ticks; physical unit conversion is not inferred.
 def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
   if d.requiresTimeZero then
     throw "timed design rejects time-zero-only $time lowering"
-  if requiresInternalEdges d then
-    throw "timed design requires procedural edge publication"
   let assignTargets := d.procs.toList.filterMap fun proc =>
     match proc with
     | .assign target _ => some target
@@ -251,13 +258,6 @@ theorem elabTimedDesign_requiresTimeZero (fuel : Nat) (d : SelfCheck.Design)
     (restricted : d.requiresTimeZero = true) :
     elabTimedDesign fuel d = .error "timed design rejects time-zero-only $time lowering" := by
   simp [elabTimedDesign, restricted]
-  rfl
-
-/-- Internal procedural edges cannot silently lose a waiting continuation. -/
-theorem elabTimedDesign_requiresInternalEdges (fuel : Nat) (d : SelfCheck.Design)
-    (timeOk : d.requiresTimeZero = false) (restricted : requiresInternalEdges d = true) :
-    elabTimedDesign fuel d = .error "timed design requires procedural edge publication" := by
-  simp [elabTimedDesign, timeOk, restricted]
   rfl
 
 /-! ## Guards -/

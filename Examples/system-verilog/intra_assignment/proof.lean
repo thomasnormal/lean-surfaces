@@ -120,9 +120,23 @@ def fixtureReceipt : IO Unit := do
   let .ok internalEdges := loadEnvelopeDesign
       (← IO.FS.readFile "Examples/system-verilog/intra_assignment/events.sv.json")
     | throw (IO.userError "event fixture failed to load")
-  -- SYNTHETIC-ORACLE: tests=intra-assignment-edge-publication | origin=spec | authority=timed-loader-contract | map=procedural-clock-write:requires-publication-rule
-  unless requiresInternalEdges internalEdges && !(elabTimedDesign 4096 internalEdges).isOk do
-    throw (IO.userError "internal edge publication boundary disappeared")
+  -- SYNTHETIC-ORACLE: tests=intra-assignment-edge-publication | origin=spec | authority=timed-slot-contract | map=procedural-clock-write:published-edge-wakes-retained-wait
+  unless requiresInternalEdges internalEdges do
+    throw (IO.userError "internal edge census disappeared")
+  for oracle in [ρ_src, ρ_rev] do
+    let .ok world := elabTimedDesign 4096 internalEdges
+      | throw (IO.userError "event fixture failed to elaborate")
+    let .ok (.ok _, world) := SvM.exec (slotStep oracle 4096) world
+      | throw (IO.userError "event fixture initial slot refused")
+    let mut world := world
+    for _ in List.range 4 do
+      if world.out.halted then break
+      let .ok (.ok _, next) := SvM.exec
+          (do advanceTime 1; wakeTimers; slotStep oracle 4096) world
+        | throw (IO.userError "event fixture resumed slot refused")
+      world := next
+    unless world.out.halted do
+      throw (IO.userError "event fixture did not finish after four ticks")
 
 #eval fixtureReceipt
 

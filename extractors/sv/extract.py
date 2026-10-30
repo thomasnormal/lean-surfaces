@@ -24560,11 +24560,35 @@ def convert_procedural_block(sm, m):
                 "(drop the initializer, or write the variable from a plain "
                 "`always` procedure)" % (style, written[1], style))
 
+    body = m.body
     if pk == ProceduralBlockKind.AlwaysComb:
         return {
             "kind": "AlwaysComb",
             "span": span,
             "body": convert_stmt(sm, m.body),
+        }
+
+    # Plain `always @*` has the same inferred read sensitivity as
+    # `always_comb`, but remains a distinct surface process for the timed
+    # scheduler and grammar census.
+    if (pk == ProceduralBlockKind.Always
+            and type(body).__name__ == "TimedStatement"
+            and type(body.timing).__name__ == "ImplicitEventControl"):
+        implicit_stmt = body.stmt
+        # An event control with no procedural work is still the old loud
+        # boundary.  Keep the newly admitted node for real @* bodies only;
+        # this also rejects an empty `begin end` shell without making the
+        # scheduler invent a runnable process.
+        if (type(implicit_stmt).__name__ == "EmptyStatement"
+                or (type(implicit_stmt).__name__ == "BlockStatement"
+                    and len(getattr(getattr(implicit_stmt, "body", None),
+                                   "list", ())) == 0)):
+            return unsupported(
+                sm, m, "ProceduralBlockSymbol:ImplicitEventControl")
+        return {
+            "kind": "AlwaysImplicit",
+            "span": span,
+            "body": convert_stmt(sm, implicit_stmt),
         }
 
     if pk == ProceduralBlockKind.AlwaysLatch:
@@ -24578,7 +24602,6 @@ def convert_procedural_block(sm, m):
     # — or, in symbolic mode, @(posedge clk or negedge rst_n) (the async
     # active-low reset event list every clocked CV32E40P module uses).
     style = "always_ff" if pk == ProceduralBlockKind.AlwaysFF else "always"
-    body = m.body
     if (_SYM is None and pk == ProceduralBlockKind.Always
             and not (type(body).__name__ == "TimedStatement"
                      and type(body.timing).__name__ == "SignalEventControl"

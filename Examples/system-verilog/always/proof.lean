@@ -134,11 +134,21 @@ def fixtureReceipt : IO Unit := do
       (← IO.FS.readFile "Examples/system-verilog/always/internal_edges.sv.json")
     | throw (IO.userError "edge source failed to load")
   unless requiresInternalEdges edges do
-    throw (IO.userError "plain always lost internal-edge barrier")
-  unless match elabTimedDesign 32768 edges with
-      | .error "timed design requires procedural edge publication" => true
-      | _ => false do
-    throw (IO.userError "internal procedural edge silently admitted")
+    throw (IO.userError "plain always lost internal-edge census")
+  for oracle in [ρ_src, ρ_rev] do
+    let .ok world := elabTimedDesign 32768 edges
+      | throw (IO.userError "internal-edge design failed to elaborate")
+    let .ok (.ok _, world) := SvM.exec (slotStep oracle 32768) world
+      | throw (IO.userError "internal-edge initial slot refused")
+    let mut world := world
+    for _ in List.range 3 do
+      if world.out.halted then break
+      let .ok (.ok _, next) := SvM.exec
+          (do advanceTime 1; wakeTimers; slotStep oracle 32768) world
+        | throw (IO.userError "internal-edge resumed slot refused")
+      world := next
+    unless world.out.halted && world.out.flush == ["edges 2 1"] do
+      throw (IO.userError s!"internal-edge transcript differs: {repr world.out.flush}")
   -- Even an earlier initial $finish must not hide the source Always kind.
   let stopped : SelfCheck.Design := { edges with procs := #[.initial .finish, .alwaysBody eventBody] }
   unless match runSelfCheck stopped 32768 with

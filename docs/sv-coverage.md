@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 188 | 237 | 79.3% |
+| grammar syntax kinds (MATCH) | 189 | 237 | 79.7% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 535 | 517 | 0 | 18 | sv-tests-2 declarations |
+| 535 | 519 | 0 | 16 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -221,8 +221,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_blocking_nba` | `Examples/system-verilog/scheduler_blocking_nba/scheduler_blocking_nba.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_inactive` | `Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_zero_delay_loop` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
-| `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
-| `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
+| `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_initial_always` | `Examples/system-verilog/scheduler_initial_always/scheduler_initial_always.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_comb_accept_timed` | `Examples/system-verilog/always_comb_accept/always_comb_accept.sv` | match | **MATCH** | `ok` | MATCH |
@@ -565,7 +565,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 237 | 188 | 49 | pyslang SyntaxKind |
+| 237 | 189 | 48 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -666,7 +666,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ImmediateAssumeStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateCoverStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitAnsiPort` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ImplicitEventControl` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | **REFUSE** | `unsupported` timed design requires procedural edge publication |
+| `SyntaxKind.ImplicitEventControl` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitNonAnsiPort` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitType` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InequalityExpression` | `Examples/system-verilog/assoc_system_size_history/assoc_system_size_history.sv` | **MATCH** | `ok`  |
@@ -783,7 +783,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | **REFUSE** | `unsupported` timed design requires procedural edge publication |
+| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | **REFUSE** | `unsupported` scheduler halted: LeanModels.Loud.timeout |
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **MATCH** | `ok`  |

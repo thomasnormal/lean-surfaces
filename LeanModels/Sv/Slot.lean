@@ -98,12 +98,139 @@ def wakeCombs (old new : SvState) : SvM Unit :=
            , regionQ := fun r =>
                if r == Region.active then w.regionQ r ++ woken else w.regionQ r }
 
+/-! ## Edge detection and waking -/
+
+/-- §9.4.2 edge on a 1-bit value.  The shared `Basic` predicates include
+the IEEE x/z transitions; this selector supplies the process-level `Edge`
+case. -/
+def edgeOn (e : Edge) (old new : Logic) : Bool :=
+  match e with
+  | .pos => isPosedge old new
+  | .neg => isNegedge old new
+  | .any => old != new
+
+/-- Did `sig` see the given edge between `old` and `new`? -/
+def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
+  edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
+
+def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
+  { w with regionQ := fun r =>
+      if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
+
+/-- Wake every process whose edge trigger fired between `old` and `new`,
+marking it ready and enqueueing it in Active. -/
+def wakeEdges (old new : SvState) : SvM Unit :=
+  modify fun w =>
+    let triggered : List Nat :=
+      (List.range w.procs.size).filter fun i =>
+        match w.procs[i]? with
+        | some ps =>
+            match targetOf ps with
+            | some (.edge sig e) =>
+                !ps.explicitlySuspended && sawEdge old new sig e &&
+                  (match ps.status with
+                   | .suspended _ | .ready => true
+                   | _ => false)
+            | _ => false
+        | none => false
+    let woken := triggered.filter fun i =>
+      match w.procs[i]? with
+      | some ps => match ps.status with
+          | .suspended _ => true
+          | _ => false
+      | none => false
+    let procs' := triggered.foldl (fun (ps : Array ProcState) i =>
+        match ps[i]? with
+        | some p =>
+            ps.set! i { p with status := .ready
+                              , pendingEdges := p.pendingEdges + 1 }
+        | none => ps) w.procs
+    appendActive { w with procs := procs' } woken
+
 /-- Run process `i`'s residual until it completes or suspends, and write
 the result back into the world.
 
 The residual IS the continuation (`Step.lean`): on suspension we store
 what is left and the trigger that will wake it; on completion we store the
 empty residual and mark it finished. -/
+partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
+    (residual : List SStmt) : SvM StepOutcome :=
+  match fuel with
+  | 0 => exhausted
+  | fuel + 1 => do
+      let w ← get
+      match residual with
+      | [] =>
+          let (ps', reArmed) :=
+            if ps.comb then
+              ({ ps with residual := ps.combBody
+                       , status := .dormant
+                       , registration := none
+                       , explicitlySuspended := false }, false)
+            else match ps.arm with
+              | some body =>
+                  if ps.pendingEdges > 1 then
+                    ({ ps with residual := body.drop 1
+                             , status := .ready
+                             , registration := none
+                             , explicitlySuspended := false
+                             , pendingEdges := ps.pendingEdges - 1 }, true)
+                  else
+                    ({ ps with residual := body
+                             , status := .ready
+                             , registration := none
+                             , explicitlySuspended := false
+                             , pendingEdges := 0 }, true)
+              | none =>
+                  ({ ps with residual := []
+                           , status := .finished
+                           , registration := none
+                           , explicitlySuspended := false
+                           , pendingEdges := 0 }, false)
+          set { w with procs := w.procs.set! i ps'
+                       , regionQ := fun r =>
+                           if reArmed && r == Region.active then w.regionQ r ++ [i]
+                           else w.regionQ r }
+          pure .done
+      | .block body :: rest =>
+          -- Preserve the scheduler's publication point between statements
+          -- in a process block.  `stepSStmt` deliberately treats a block as
+          -- one pure step for the legacy runner; the retained timed process
+          -- instead exposes each statement to the same wake path so two
+          -- blocking writes in one active process can produce two edges.
+          runProcResidual fuel i ps (body.toList ++ rest)
+      | stmt :: rest =>
+          let (sigs, nba, out, oc) ←
+            liftRes ⟨"4.4"⟩ (stepSStmt fuel w.signals w.nba w.out stmt)
+          match oc with
+          | .suspended (.atTime 0) _ =>
+              refuseSv .outOfTier ⟨"9.4.1"⟩ "zero-delay Inactive delivery is not admitted"
+          | .suspended t continuation =>
+              let ps' := { ps with residual := continuation ++ rest
+                                  , status := .suspended t
+                                  , registration := some (WaitTarget.ofTrigger w.time t) }
+              set { w with signals := sigs
+                         , nba := nba
+                         , out := out
+                         , procs := w.procs.set! i ps' }
+              if w.signals != sigs then
+                wakeCombs w.signals sigs
+                wakeEdges w.signals sigs
+              pure (.suspended t (continuation ++ rest))
+          | .done =>
+              let ps' := { ps with residual := rest
+                                  , status := .ready
+                                  , registration := none
+                                  , explicitlySuspended := false }
+              set { w with signals := sigs
+                         , nba := nba
+                         , out := out
+                         , procs := w.procs.set! i ps' }
+              if w.signals != sigs then
+                wakeCombs w.signals sigs
+                wakeEdges w.signals sigs
+              runProcResidual fuel i ps' rest
+
 def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
   let w ← get
   match w.procs[i]? with
@@ -112,46 +239,7 @@ def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
       if ps.explicitlySuspended then
         refuseSv .outOfTier ⟨"9.7"⟩ "explicitly suspended process is not runnable"
       else
-        let (sigs, nba, out, oc) ←
-          liftRes ⟨"4.4"⟩ (stepSStmts fuel w.signals w.nba w.out ps.residual)
-        match oc with
-        | .suspended (.atTime 0) _ =>
-            refuseSv .outOfTier ⟨"9.4.1"⟩ "zero-delay Inactive delivery is not admitted"
-        | _ => pure ()
-        -- RE-ARM or finish. An `always` body completing is the end of one
-        -- iteration, not of the process; an `initial` body completing is the
-        -- end of the process.
-        --
-        -- A re-armed process must also be RE-ENQUEUED. `ProcStatus.ready` is
-        -- not what `stepRegion` reads — it reads `regionQ` — so marking the
-        -- process ready without scheduling it leaves it permanently idle:
-        -- it never reaches its `@(posedge clk)` again, and therefore can
-        -- never be woken again either. The re-entry is what turns "re-armed"
-        -- into "runs a second time".
-        let (ps', reArmed) : ProcState × Bool :=
-          match oc with
-          | .done =>
-              if ps.comb then
-                ({ ps with residual := ps.combBody, status := ProcStatus.dormant, registration := none, explicitlySuspended := false }, false)
-              else match ps.arm with
-                | some body =>
-                    ({ ps with residual := body, status := .ready, registration := none, explicitlySuspended := false }, true)
-                | none =>
-                    ({ ps with residual := [], status := .finished, registration := none, explicitlySuspended := false }, false)
-          | .suspended t rest =>
-              ({ ps with residual := rest, status := .suspended t, registration := some (WaitTarget.ofTrigger w.time t) }, false)
-        let updated := { w with
-          signals := sigs
-          , nba := nba
-          , out := out
-          , procs := w.procs.set! i ps'
-          , regionQ := fun r =>
-              if reArmed && r == Region.active then w.regionQ r ++ [i]
-              else w.regionQ r }
-        set updated
-        if w.signals != sigs then
-          wakeCombs w.signals sigs
-        pure oc
+        runProcResidual fuel i ps ps.residual
 
 /-! ## One region's pass -/
 
@@ -181,43 +269,6 @@ def stepRegion (σ : RegionOracle) (fuel : Nat) (r : Region) : SvM Bool := do
       for i in ready do
         let _ ← runProcOnce fuel i
       pure true
-
-/-! ## Edge detection and waking -/
-
-/-- §9.4.2 edge on a 1-bit value.
-
-    posedge : 0→1, 0→x, 0→z, x→1, z→1
-    negedge : 1→0, 1→x, 1→z, x→0, z→0
-
-So an `x`/`z` transition **is** an edge whenever the other end is a level:
-leaving a known 0 is a posedge even if the destination is unknown, and
-arriving at a known 1 is a posedge even if the origin was. Only `x→z`,
-`z→x` and a value to itself are edgeless — neither end is a level.
-
-**The rule itself lives in `Basic`**, as `isPosedge`/`isNegedge`, because
-the M1 cycle model needs the same one for its async-reset phase and sits
-ABOVE this module in the import graph. It was written twice — once here,
-once there — and the two spellings disagreed on `x`/`z`. This function is
-now only the `Edge`-indexed selector over that one rule, which is the part
-`Basic` cannot express: `Edge` is a `SelfCheck` type. -/
-def edgeOn (e : Edge) (old new : Logic) : Bool :=
-  match e with
-  | .pos => isPosedge old new
-  | .neg => isNegedge old new
-  | .any => old != new
-
-/-- Did `sig` see the given edge between two states?
-
-Reads the clock through `SvState.bit0` — the same accessor the M1 reset
-phase uses, rather than the private copy this function used to carry. An
-absent or width-0 signal reads `x`, and `x` against `x` is not an edge, so
-an undeclared name can never wake anything. -/
-def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
-  edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
-
-def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
-  { w with regionQ := fun r =>
-      if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
 
 /-- Deliver delay registrations whose absolute deadline has arrived.
 
@@ -294,28 +345,6 @@ def resumeProcess (index : Nat) : SvM Unit := do
         | _, _ =>
             refuseSv .outOfTier ⟨"9.7"⟩ "resume target is not an admitted waiter"
 
-/-- Wake every process whose edge trigger fired between `old` and `new`,
-marking it ready and **enqueueing it in Active**.
-
-This is the half `stepRegion` was missing: it drains `regionQ`, and this
-is what fills it. -/
-def wakeEdges (old new : SvState) : SvM Unit :=
-  modify fun w =>
-    let woken : List Nat :=
-      (List.range w.procs.size).filter fun i =>
-        match w.procs[i]? with
-        | some ps =>
-            match ps.status, targetOf ps with
-            | .suspended _, some (.edge sig e) =>
-                !ps.explicitlySuspended && sawEdge old new sig e
-            | _, _ => false
-        | none => false
-    let procs' := woken.foldl (fun (ps : Array ProcState) i =>
-        match ps[i]? with
-        | some p => ps.set! i { p with status := .ready, registration := none }
-        | none => ps) w.procs
-    appendActive { w with procs := procs' } woken
-
 /-! ## The slot -/
 
 /-- One time slot: Active, then Inactive, then the NBA commit, **looping**
@@ -342,6 +371,7 @@ def slotStep (σ : RegionOracle) : Nat → SvM Unit
           let after ← get
           if before.signals != after.signals then
             wakeCombs before.signals after.signals
+            wakeEdges before.signals after.signals
           slotStep σ fuel
 
 end LeanModels.Sv

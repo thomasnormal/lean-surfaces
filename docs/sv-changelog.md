@@ -1,3 +1,14 @@
+# [0.1.263] — 2026-10-30
+
+Procedural signal publication is now part of the retained scheduler path.
+Blocking writes are published after each statement in a timed process block,
+and NBA commits publish their changed signals through the same edge and
+implicit-sensitivity wake queue. The `@*`/double-change and NBA re-trigger
+witnesses now match their pinned transcripts; zero-delay loops, `#0`, and
+postponed output remain loud. Differential coverage grows **535/517/0/18 →
+535/519/0/16** after the two existing scheduler rows are admitted, and the
+grammar census routes `AlwaysImplicit` through the timed runner.
+
 # [0.1.262] — 2026-10-30
 
 Timed conformance now preserves `always_ff` as a distinct positive-edge

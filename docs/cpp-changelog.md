@@ -11,13 +11,15 @@ coverage advance independently from the Python tier.
   declaration and returns the enclosing callable's outer parameter.
 - Added the false-condition companion for declaration-initializer `return`:
   the body declaration and return are skipped when `i < 2` is false.
+- Added the false-condition companion for declaration-initializer `continue`:
+  the body declaration and continuation are skipped when `i < 2` is false.
 
 ### Measured
 
-- The checked-in corpus now contains **1093 differential rows**: **1076 MATCH**,
+- The checked-in corpus now contains **1094 differential rows**: **1077 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **587**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **588**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

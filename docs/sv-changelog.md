@@ -1,3 +1,10 @@
+# [0.1.252] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state comparison
+witness for equality, inequality, and relational operators, including unknown
+results. Coverage grows **514/502/0/12 → 515/503/0/12**; grammar coverage
+remains **235/118/117**.
+
 # [0.1.251] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state binary-bitwise

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 514 | 502 | 0 | 12 | sv-tests-2 declarations |
+| 515 | 503 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -32,6 +32,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `unary_logical_not_accept` | `Examples/system-verilog/unary_logical_not_accept/unary_logical_not_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `shift_accept` | `Examples/system-verilog/shift_accept/shift_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `bitwise_accept` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `comparison_accept` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -624,8 +625,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.GenerateBlock` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.GenerateRegion` | `Examples/system-verilog/mul2d/mul2d.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/elaborated_generate/loops.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/dist_uniform_literal_bounds/dist_uniform_literal_bounds.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/dist_uniform_variable_bounds/dist_uniform_variable_bounds.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchicalInstance` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.HierarchyInstantiation` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.IdentifierName` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -649,7 +650,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.InterfaceHeader` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InvocationExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.JumpStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/dist_uniform_literal_bounds/dist_uniform_literal_bounds.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |

@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Equality and relational comparison witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for `==`, `!=`, `<`, `<=`, `>`, and `>=`, including unknown comparison
+results, with a literal `PASS` transcript.
+
+Differential coverage grows **514/502/0/12 → 515/503/0/12**; grammar coverage
+remains **235/118/117** after regeneration.
+
 ## Binary bitwise witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

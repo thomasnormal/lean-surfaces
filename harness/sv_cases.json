@@ -2272,6 +2272,13 @@
       "expect": "refuse"
     },
     {
+      "name": "priority_case_dynamic_refuse",
+      "file": "Examples/system-verilog/priority_case_dynamic_refuse/priority_case_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
       "name": "assoc_string_cells",
       "file": "Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv",
       "module": "top",

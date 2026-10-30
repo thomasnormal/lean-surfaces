@@ -1,3 +1,10 @@
+# [0.1.230] — 2026-10-30
+
+The legacy differential corpus now pins a `priority case` without a `default`
+as a loud `CaseStatement:Priority` refusal. The no-match diagnostic path stays
+explicit instead of being erased by first-match lowering. Coverage grows
+**492/484/0/8 → 493/484/0/9**; grammar coverage remains **235/113/122**.
+
 # [0.1.229] — 2026-10-30
 
 The legacy differential corpus now pins a dynamic `unique case … inside`

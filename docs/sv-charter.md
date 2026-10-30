@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## `priority case` no-default refusal witness — 2026-10-30
+
+The legacy self-check tier now pins the existing loud boundary for a dynamic
+`priority case` without a `default`. The missing fallback leaves an observable
+no-match diagnostic, so `CaseStatement:Priority` remains unsupported rather than
+being erased into an ordinary first-match chain. The
+`priority_case_dynamic_refuse` fixture, generated envelope, and differential row
+record the refusal.
+
+Differential coverage grows **492/484/0/8 → 493/484/0/9**; grammar coverage
+remains **235/113/122**.
+
+
 ## Dynamic `unique case … inside` refusal witness — 2026-10-30
 
 The legacy self-check tier now pins the existing loud boundary for a dynamic

@@ -1,3 +1,9 @@
+# [0.1.246] — 2026-10-30
+
+The legacy differential corpus now carries a compact unary-minus witness over
+known and unknown four-state operands. Coverage grows **508/496/0/12 →
+509/497/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.245] — 2026-10-30
 
 The legacy differential corpus now carries the four-state unary-plus arithmetic

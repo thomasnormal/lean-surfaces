@@ -35,13 +35,15 @@ coverage advance independently from the Python tier.
 - Added a callable plain-`for` literal-initialization `return` false-path
   witness: the false condition skips the literal body and preserves the
   controlling value.
+- Added a callable plain-`for` empty-body false-path witness: a false loop
+  condition skips the null statement and preserves the controlling value.
 
 ### Measured
 
-- The checked-in corpus now contains **1083 differential rows**: **1066 MATCH**,
+- The checked-in corpus now contains **1084 differential rows**: **1067 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **577**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **578**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

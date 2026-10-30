@@ -7573,6 +7573,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-for-initialization-empty-body-false",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalForInitializationEmptyBodyFalseStatementFrameWitness",
+    "cpp_source": "int local_for_initialization_empty_body_false_statement_frame_witness(int value) { for (value = 2; value < 2; ++value) ; return value; } bool callable_witness() { return local_for_initialization_empty_body_false_statement_frame_witness(9) == 2; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-do-while-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

@@ -1,4 +1,5 @@
 import LeanModels.Python.Surface
+import LeanModels.Python.VCTactic
 import LeanModels.Python.Delab
 
 namespace Examples.python.int_string.proof
@@ -21,14 +22,30 @@ theorem grouped_offset_total (offset : PyInt) :
   refine ⟨64, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase, grouped_decimal, add_ne_bitAnd]
+  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase,
+    grouped_decimal, add_ne_bitAnd, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+    RVal.freezeB]
 
 theorem signed_adjustment_total (offset : PyInt) :
     int_string.signed_adjustment(offset) ==> offset - 2048 := by
   refine ⟨64, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase, signed_decimal, add_ne_bitAnd]
+  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase,
+    signed_decimal, add_ne_bitAnd, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+    RVal.freezeB]
   omega
 
 private theorem hexadecimal :
@@ -43,7 +60,15 @@ theorem hex_offset_total (offset : PyInt) :
   refine ⟨64, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase, hexadecimal, hexadecimal_str, add_ne_bitAnd]
+  py_simp [int_string, lenMultBuiltinName, intCastArgs, intCastVal, intCastBase,
+    hexadecimal, hexadecimal_str, add_ne_bitAnd, evalBinOpH,
+    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree,
+    FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
+    Expr.heapFree, hasUnboundLocal, unboundLocalMarker, moduleGenFree,
+    funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+    starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+    fstringFormatBuiltinName, flattenStarRun, flattenStarCallArgs, Run.bind,
+    Run.liftRes, Run.toPublic, RVal.freezeB]
 
 theorem grouped_offset_result (offset result : PyInt)
     (run : int_string.grouped_offset(offset) ⇓ result) : result = 1024 + offset :=

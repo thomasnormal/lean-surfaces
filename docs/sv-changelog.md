@@ -1,3 +1,9 @@
+# [0.1.249] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state logical-not
+witness, covering zero, one, and unknown operands. Coverage grows
+**511/499/0/12 → 512/500/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.248] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state unary

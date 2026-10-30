@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unary logical-not witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for logical-not over zero, one, and unknown four-state operands, with a literal
+`PASS` transcript.
+
+Differential coverage grows **511/499/0/12 → 512/500/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## Unary bitwise-not witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

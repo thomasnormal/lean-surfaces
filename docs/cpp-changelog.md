@@ -12,13 +12,15 @@ coverage advance independently from the Python tier.
   parameter.
 - Added a callable plain-`for` declaration-initializer body witness: each
   iteration enters the body scope and creates its automatic local declaration.
+- Added the false-condition companion for the declaration-initializer body:
+  the body scope and its local declaration are skipped when `i < 2` is false.
 
 ### Measured
 
-- The checked-in corpus now contains **1088 differential rows**: **1071 MATCH**,
+- The checked-in corpus now contains **1089 differential rows**: **1072 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **582**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **583**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

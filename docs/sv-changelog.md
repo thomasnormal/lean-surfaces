@@ -1,3 +1,11 @@
+# [0.1.233] — 2026-10-30
+
+The legacy differential corpus now pins a dynamic `priority if` chain without
+a final `else` as a loud `ConditionalStatement:Priority` refusal. The admitted
+fallback subset remains sound; no-match diagnostic behavior is not erased.
+Coverage grows **495/484/0/11 → 496/484/0/12**; grammar coverage remains
+**235/113/122**.
+
 # [0.1.232] — 2026-10-30
 
 The legacy differential corpus now pins a dynamic `unique if` chain as a loud

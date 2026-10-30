@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `priority if` no-fallback refusal witness — 2026-10-30
+
+The legacy self-check tier now pins a dynamic `priority if` chain without a
+final `else` as `ConditionalStatement:Priority`. A fallback makes the
+no-match path unobservable and remains admitted; without it, the qualifier stays
+loud. The `priority_if_dynamic_refuse` fixture, generated envelope, and
+differential row record the refusal.
+
+Differential coverage grows **495/484/0/11 → 496/484/0/12**; grammar coverage
+remains **235/113/122**.
+
+
 ## Dynamic `unique if` refusal witness — 2026-10-30
 
 The legacy self-check tier now pins a dynamic `unique if` chain as

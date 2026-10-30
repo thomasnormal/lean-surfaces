@@ -1,0 +1,259 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv",
+  "source_sha256": "a4961ceb4a62bc963caadb5b7064965b0a9a525415b8f5a651095f9eda5089a6",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 9,
+              "end_line": 4,
+              "end_col": 14
+            },
+            "name": "value",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true,
+            "static_local_storage": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 14
+            },
+            "name": "label",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true,
+            "static_local_storage": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 9,
+              "end_line": 6,
+              "end_col": 15
+            },
+            "name": "result",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true,
+            "static_local_storage": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 4,
+                    "col": 9,
+                    "end_line": 4,
+                    "end_col": 14
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 5,
+                    "col": 9,
+                    "end_line": 5,
+                    "end_col": 14
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 6,
+                    "col": 9,
+                    "end_line": 6,
+                    "end_col": 15
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "value",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 13,
+                        "end_line": 7,
+                        "end_col": 14
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "label",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 8,
+                        "col": 13,
+                        "end_line": 8,
+                        "end_col": 14
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "name": "result",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 9,
+                        "col": 14,
+                        "end_line": 9,
+                        "end_col": 15
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    }
+                  }
+                },
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 18
+                  },
+                  "sv_kind": "ConditionalStatement:Priority",
+                  "text": "priority if (value == label)\n      result = 1;\n    else if (value == 1)\n      result = 2;"
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -93,6 +93,13 @@
       "expect": "refuse"
     },
     {
+      "name": "priority_if_dynamic_refuse",
+      "file": "Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
       "name": "string_case_assignment",
       "file": "Examples/system-verilog/string_case_assignment/string_case_assignment.sv",
       "module": "top",

@@ -1,3 +1,14 @@
+# [0.1.259] — 2026-10-30
+
+The scheduler core is now pinned before the next concurrent-process rung.
+Timed differential witnesses cover blocking-versus-NBA ordering and initial /
+`always` interaction, while five IEEE §4 gaps remain explicit loud refusals:
+`#0` inactive delivery, procedural edge publication, NBA re-triggering,
+double-change sensitivity, and postponed/monitor output regions. Differential
+coverage grows **519/507/0/12 → 526/509/0/17**; grammar coverage grows
+**235/159/76 → 236/159/77** because the new implicit-event-control witness is
+counted as REFUSE.
+
 # [0.1.258] — 2026-10-30
 
 Silent-wrong-value fix in the symbolic extractor (WP-E1): a constant element or

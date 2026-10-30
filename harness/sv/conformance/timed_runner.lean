@@ -45,7 +45,11 @@ def runTimedOne (path : String) (fuel ticks : Nat) :
       | .error e => return ("unsupported", e, [])
       | .ok world =>
           match drive fuel ticks true world with
-          | .error e => return ("error", e, [])
+          -- A scheduler refusal is a loud, classified boundary.  Preserve
+          -- it as `unsupported` so differential rows can record the exact
+          -- missing region/event rule; `error` remains reserved for load or
+          -- runner failures before a world exists.
+          | .error e => return ("unsupported", e, [])
           | .ok final => return ("ok", "", final.out.flush)
 
 def parseNatArg : String → Option Nat := fun s => s.toNat?

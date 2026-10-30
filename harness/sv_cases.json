@@ -1760,6 +1760,73 @@
       "ticks": 4
     },
     {
+      "name": "scheduler_blocking_nba",
+      "file": "Examples/system-verilog/scheduler_blocking_nba/scheduler_blocking_nba.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED BLOCKING NBA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "scheduler_zero_delay_inactive",
+      "file": "Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_zero_delay_loop",
+      "file": "Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_sensitivity_double",
+      "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_nba_retrigger",
+      "file": "Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_region_outputs",
+      "file": "Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_initial_always",
+      "file": "Examples/system-verilog/scheduler_initial_always/scheduler_initial_always.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED INITIAL ALWAYS PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "delayed_refusal",
       "file": "Examples/system-verilog/time_boundary/delayed.sv",
       "module": "top",

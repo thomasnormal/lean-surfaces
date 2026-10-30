@@ -149,6 +149,15 @@
       "expect": "match"
     },
     {
+      "name": "shift_accept",
+      "file": "Examples/system-verilog/shift_accept/shift_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unique_if_dynamic_refuse",
       "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
       "module": "top",

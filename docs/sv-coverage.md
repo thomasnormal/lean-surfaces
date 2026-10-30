@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 512 | 500 | 0 | 12 | sv-tests-2 declarations |
+| 513 | 501 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -30,6 +30,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `reduction_accept` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unary_not_accept` | `Examples/system-verilog/unary_not_accept/unary_not_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unary_logical_not_accept` | `Examples/system-verilog/unary_logical_not_accept/unary_logical_not_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `shift_accept` | `Examples/system-verilog/shift_accept/shift_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -533,7 +534,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 235 | 115 | 120 | pyslang SyntaxKind |
+| 235 | 116 | 119 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -548,7 +549,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArgumentList` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ArithmeticLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArithmeticRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ArithmeticShiftLeftExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.ArithmeticShiftLeftExpression` | `Examples/system-verilog/shift_accept/shift_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArithmeticShiftRightExpression` | `Examples/system-verilog/sem2/fold_psgn/fold_psgn.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |

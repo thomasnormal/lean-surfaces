@@ -1,3 +1,9 @@
+# [0.1.250] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state integral-shift
+witness for logical and arithmetic left/right shifts. Coverage grows
+**512/500/0/12 → 513/501/0/12**; grammar coverage grows **235/115/120 → 235/116/119**.
+
 # [0.1.249] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state logical-not

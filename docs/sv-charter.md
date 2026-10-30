@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Integral-shift witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for logical and arithmetic left/right shifts, including signed arithmetic
+right-shift fill, with a literal `PASS` transcript.
+
+Differential coverage grows **512/500/0/12 → 513/501/0/12**; grammar coverage
+grows **235/115/120 → 235/116/119**.
+
 ## Unary logical-not witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

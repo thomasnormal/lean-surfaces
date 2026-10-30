@@ -20,13 +20,15 @@ coverage advance independently from the Python tier.
   initializer equal to the loop bound skips the body and preserves the value.
 - Added a callable plain-`for` computed-initialization assignment false-path
   witness: an initializer equal to the loop bound skips the computed body.
+- Added a callable plain-`for` computed-initialization assignment `continue`
+  false-path witness: the false condition skips the computed body entirely.
 
 ### Measured
 
-- The checked-in corpus now contains **1076 differential rows**: **1059 MATCH**,
+- The checked-in corpus now contains **1077 differential rows**: **1060 MATCH**,
   **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
   census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
-  Rung-4 statement rows increased to **570**. Pinned Clang/LLVM 21.1.8
+  Rung-4 statement rows increased to **571**. Pinned Clang/LLVM 21.1.8
   supplies the native witness results; the ten explicit ORACLE rows are the
   unavailable TinyXML-2 source-call inputs.
 

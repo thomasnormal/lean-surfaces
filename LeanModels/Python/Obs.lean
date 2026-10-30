@@ -1732,15 +1732,21 @@ theorem fuelMono (fuel : Nat) :
         | brk _ => simp only [execStmt]; exact Run.le_refl _
         | cont _ => simp only [execStmt]; exact Run.le_refl _
         | unsupported pyKind text _ =>
-          simp [execStmt]
-          by_cases h : pyKind == "AnnAssign:no-value"
-          · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+          simp only [execStmt]
+          by_cases ht : pyKind == "TypeErrorHandler"
+          · have hstr : pyKind = "TypeErrorHandler" := by simpa using ht
             subst pyKind
-            simp [h, annNoValueName]
+            simp [execStmt]
             exact Run.le_refl _
-          · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
-            simp [hn]
-            exact Run.le_refl _
+          · by_cases h : pyKind == "AnnAssign:no-value"
+            · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+              subst pyKind
+              simp [execStmt, h, annNoValueName]
+              exact Run.le_refl _
+            · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
+              have htn : pyKind ≠ "TypeErrorHandler" := by simpa using ht
+              simp [execStmt, hn, htn]
+              exact Run.le_refl _
     -- execStmts
     · intro m st ss fuel' hf
       cases fuel' with
@@ -3445,15 +3451,21 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | cont _ => simp only [execStmt]; exact .okF rfl _
       | unsupported pyKind text _ =>
         simp only [execStmt]
-        by_cases h : pyKind == "AnnAssign:no-value"
-        · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+        by_cases ht : pyKind == "TypeErrorHandler"
+        · have hstr : pyKind = "TypeErrorHandler" := by simpa using ht
           subst pyKind
-          cases hn : annNoValueName text with
-          | some id => simp [hn]; exact .okF rfl _
-          | none => simp [hn]; exact .unsupported
-        · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
-          simp [hn]
-          exact .unsupported
+          simp only [execStmt]
+          exact .okF rfl _
+        · by_cases h : pyKind == "AnnAssign:no-value"
+          · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+            subst pyKind
+            cases hn : annNoValueName text with
+            | some id => simp [hn]; exact .okF rfl _
+            | none => simp [hn]; exact .unsupported
+          · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
+            have htn : pyKind ≠ "TypeErrorHandler" := by simpa using ht
+            simp [hn, htn]
+            exact .unsupported
     -- execStmts
     · intro st ss hfree
       cases ss with

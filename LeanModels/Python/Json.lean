@@ -524,6 +524,10 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     -- control-flow shapes remain represented as `AugAssign` and therefore
     -- refuse loudly until the heap-threading boundary is wired.
     let body := lowerBoundaryAugRepeat params body
+    let body :=
+      if Stmt.hasTypeErrorHandlerList body.toList then
+        #[.unsupported "TypeErrorHandler" "" span] ++ body
+      else body
     return { name, params, argsOk := argsUnsupported.isNone,
              localsOk := localsUnsupported.isNone, hasGlobal, isGenerator,
              body, span }
@@ -1625,7 +1629,12 @@ mutual
             yfForbidden := (body.toList.map yfNames).flatten
             walrusForbidden := params.toList.map Param.arg ++ captures.toList
               ++ (body.toList.map stmtNamesXW).flatten }
-        return .defStmt name params ao lo hg ig (← lowerStmts ctx' body) captures sp
+        let body' ← lowerStmts ctx' body
+        let body' :=
+          if Stmt.hasTypeErrorHandlerList body'.toList then
+            #[.unsupported "TypeErrorHandler" "" sp] ++ body'
+          else body'
+        return .defStmt name params ao lo hg ig body' captures sp
 
   /-- Elementwise `lowerStmt`. -/
   private partial def lowerStmts (ctx : LowerCtx) (ss : Array Stmt) :

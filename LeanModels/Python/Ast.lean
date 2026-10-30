@@ -282,6 +282,30 @@ inductive Stmt where
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Stmt`; derived BEq suffices.
 
+mutual
+  /-- The ingestion marker for the late `except TypeError` local census.
+  Nested function definitions are separate scopes and are deliberately not
+  descended into. -/
+  def Stmt.hasTypeErrorHandler : Stmt → Bool
+    | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
+        Stmt.hasTypeErrorHandlerList body.toList ||
+          Stmt.hasTypeErrorHandlerList orelse.toList
+    | .forStmt _ _ body orelse _ =>
+        Stmt.hasTypeErrorHandlerList body.toList ||
+          Stmt.hasTypeErrorHandlerList orelse.toList
+    | .tryStmt body excName handler _ _ =>
+        (excName == "TypeError") ||
+          Stmt.hasTypeErrorHandlerList body.toList ||
+          Stmt.hasTypeErrorHandlerList handler.toList
+    | .withStmt _ body _ _ => Stmt.hasTypeErrorHandlerList body.toList
+    | .defStmt .. => false
+    | _ => false
+
+  def Stmt.hasTypeErrorHandlerList : List Stmt → Bool
+    | [] => false
+    | s :: ss => Stmt.hasTypeErrorHandler s || Stmt.hasTypeErrorHandlerList ss
+end
+
 /-- A module-level function definition (schema `FunctionDef`).
 `argsOk` is DESIGN.md's `paramsOk`: `false` iff the schema's `args_unsupported`
 was non-null (NON-literal defaults / `*args` / kw-only / `**kwargs` /

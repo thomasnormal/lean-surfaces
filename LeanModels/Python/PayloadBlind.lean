@@ -4307,10 +4307,11 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
               | timeout => exact PBF.timeout
               | unsupported msg => exact PBF.unsupported
             · refine PBF.ite (c :=
-                  ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
-                    (lookupG (moduleGlobals m).1 excName).isSome ||
-                    (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||
-                    (findFunction m excName).isSome) = true)
+                  ((excName != "TypeError") &&
+                    ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
+                      (lookupG (moduleGlobals m).1 excName).isSome ||
+                      (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||
+                      (findFunction m excName).isSome)) = true)
                 (fun _ => PBF.unsupported) (fun _ => ?_)
               cases findClass m excName with
           | none =>
@@ -4348,6 +4349,14 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                         obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).2 st' e hrun
                         rw [hy]
                         simp only [Run.bindE]
+                        refine PBF.ite (c := hasUnboundLocal st'.locals excName = true)
+                          (fun _ => PBF.exn hslot' _) (fun _ => ?_)
+                        refine PBF.ite (c :=
+                              ((Env.lookup st'.locals excName).isSome ||
+                                (lookupG (moduleGlobals m).1 excName).isSome ||
+                                (Env.lookup st'.world.globals excName).isSome ||
+                                (findFunction m excName).isSome) = true)
+                          (fun _ => PBF.exn hslot' _) (fun _ => ?_)
                         by_cases hc : (builtinExcCatches excName e || userExcCatches m excName e) = true
                         · simp only [if_pos hc]; exact ihSs m st' handler.toList hslot'
                         · simp only [if_neg hc]; exact PBF.exn hslot' _
@@ -4400,8 +4409,12 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
             simp [han]
             exact PBF.ok (st := { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none })
               hslot _
-      · simp [execStmt, hpy]
-        exact PBF.unsupported
+      · by_cases htype : pyKind = "TypeErrorHandler"
+        · subst pyKind
+          simp only [execStmt]
+          exact PBF.ok hslot _
+        · simp [execStmt, hpy, htype]
+          exact PBF.unsupported
 
 set_option maxHeartbeats 1600000 in
 /-- **The block's largest member**, 1047 of its 1976 lines, and the arm

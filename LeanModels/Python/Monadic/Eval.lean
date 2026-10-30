@@ -1672,6 +1672,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
         else
           refuse "unsupported statement 'Nonlocal'"
       else if pyKind == "AnnAssign:no-value" then pure .next
+      else if pyKind == "TypeErrorHandler" then pure .next
       else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"

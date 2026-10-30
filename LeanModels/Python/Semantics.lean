@@ -6854,6 +6854,33 @@ def typeErrorNameList (xs : List String) : Bool :=
   xs.any (· == "TypeError")
 
 mutual
+  /-- The target-side half of the late `TypeError` local census.  It is only
+  called after `stmtHasTypeErrorHandlerList` succeeds, so ordinary functions
+  never traverse their assignment targets during proof reduction. -/
+  def stmtHasTypeErrorTarget : Stmt → Bool
+    | .assign targets _ _ => typeErrorTargetList targets.toList
+    | .unpackAssign before star after _ _ =>
+        typeErrorNameList (before.toList ++ [star] ++ after.toList)
+    | .augAssign target _ _ _ => typeErrorTarget target
+    | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
+        stmtHasTypeErrorTargetList body.toList ||
+          stmtHasTypeErrorTargetList orelse.toList
+    | .forStmt _ _ body orelse _ =>
+        stmtHasTypeErrorTargetList body.toList ||
+          stmtHasTypeErrorTargetList orelse.toList
+    | .tryStmt body _ handler _ _ =>
+        stmtHasTypeErrorTargetList body.toList ||
+          stmtHasTypeErrorTargetList handler.toList
+    | .withStmt _ body _ _ => stmtHasTypeErrorTargetList body.toList
+    | .defStmt .. => false
+    | _ => false
+
+  def stmtHasTypeErrorTargetList : List Stmt → Bool
+    | [] => false
+    | s :: ss => stmtHasTypeErrorTarget s || stmtHasTypeErrorTargetList ss
+end
+
+mutual
   /-- Names that make a function-frame binding local before the first
   runtime statement.  This is deliberately a structural walker (rather than
   a `partial def` over `Array.map`): the kernel can unfold it on literal
@@ -6921,10 +6948,6 @@ mutual
   def stmtHasUnboundLocal : Stmt → Bool
     | .unsupported "AnnAssign:no-value" _ _ => true
     | .delStmt names _ => !names.isEmpty
-    | .assign targets _ _ => typeErrorTargetList targets.toList
-    | .unpackAssign before star after _ _ =>
-        typeErrorNameList (before.toList ++ [star] ++ after.toList)
-    | .augAssign target _ _ _ => typeErrorTarget target
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
         stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList orelse.toList
     | .forStmt _ _ body orelse _ =>
@@ -6947,17 +6970,28 @@ def hasLateRaiseNames : List Stmt → Bool
       | some id => hasDirectAssignAfter id rest || hasLateRaiseNames rest
       | none => hasLateRaiseNames rest
 
+def hasTypeErrorHandlerMarker : List Stmt → Bool
+  | .unsupported "TypeErrorHandler" _ _ :: _ => true
+  | _ => false
+
 def markUnboundLocals (body : List Stmt) (env : Env) : Env :=
   if stmtHasUnboundLocalList body || hasLateRaiseNames body then
     (stmtUnboundLocalNamesList body ++ lateRaiseNames body).foldl
+      (fun env id => Env.set env (unboundLocalMarker id) RVal.none) env
+  else if hasTypeErrorHandlerMarker body && stmtHasTypeErrorTargetList body then
+    (stmtUnboundLocalNamesList body).foldl
       (fun env id => Env.set env (unboundLocalMarker id) RVal.none) env
   else env
 
 theorem markUnboundLocals_noop {body : List Stmt} {env : Env}
     (hbody : stmtHasUnboundLocalList body = false)
-    (hraise : hasLateRaiseNames body = false) :
+    (hraise : hasLateRaiseNames body = false)
+    (htype : hasTypeErrorHandlerMarker body = false ∨
+      stmtHasTypeErrorTargetList body = false) :
     markUnboundLocals body env = env := by
-  simp [markUnboundLocals, hbody, hraise]
+  rcases htype with hhandler | htarget
+  · simp [markUnboundLocals, hbody, hraise, hhandler]
+  · simp [markUnboundLocals, hbody, hraise, htarget]
 
 /-- Extract names from the extractor's retained `Unsupported Global` text.
 The declaration has no runtime action; its names are the compile-time scope
@@ -10170,6 +10204,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       | some id =>
           .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
       | Option.none => .unsupported "unsupported statement 'AnnAssign:no-value'"
+    | .unsupported "TypeErrorHandler" _ _ => .ok st .next
     | .unsupported pyKind _ _ => .unsupported s!"unsupported statement '{pyKind}'"
   termination_by structural fuel
 

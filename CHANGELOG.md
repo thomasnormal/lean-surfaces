@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- TypeError-handler local analysis is now computed once during ingestion and
+  marked only on affected functions, keeping ordinary proof reductions fast
+  while preserving the handler's late-binding behavior.
+
 - Function-scope `except TypeError` handlers now resolve after the protected
   body, reproducing CPython's invalid-handler `TypeError` and late-binding
   `UnboundLocalError` while preserving the existing loud boundary for other

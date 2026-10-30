@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Typed local `let` formals — 2026-10-30
+
+The legacy differential corpus now carries a compact typed local `let` witness
+with repeated calls and literal `PASS` checks. Typed value-only formals reuse
+the admitted let expansion path; effectful and unsupported forms retain their
+existing loud boundaries.
+
+Differential coverage grows **501/489/0/12 → 502/490/0/12**; grammar coverage
+remains **235/113/122**.
+
 ## `let` defaults and named actuals — 2026-10-30
 
 The legacy differential corpus now carries a compact pure local `let` witness

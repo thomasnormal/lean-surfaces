@@ -1,3 +1,9 @@
+# [0.1.239] — 2026-10-30
+
+The legacy differential corpus now carries a compact typed local `let` witness
+with repeated calls and literal `PASS` checks. Differential coverage grows
+**501/489/0/12 → 502/490/0/12**; grammar coverage remains **235/113/122**.
+
 # [0.1.238] — 2026-10-30
 
 The legacy differential corpus now carries a compact pure local `let` witness

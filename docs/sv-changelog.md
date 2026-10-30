@@ -1,3 +1,20 @@
+# [0.1.270] — 2026-10-30
+
+Proof library: the lowering of `always_comb` bodies, first stage (WP-G, G2.1). Two NEW modules,
+`LeanModels/Sv/CombProcStmt.lean` and `LeanModels/Sv/CombProc.lean`, additive: nothing imports them yet, no
+existing declaration changed, the semantics, the loader and the extractor are untouched. They prove, for
+`always_comb` bodies of the first fragment (`begin..end`, whole-signal and window targets, `if`/`else`/`else if`
+trees, one written window, no latch, no self-read), what `Design2.lowerComb` does: the self-read guard admits
+the body when no read window overlaps the written window (a zero-width window intersection gives
+`BWin.subAll = []`, so no symbolic window arithmetic enters), the process lowers to one
+`assign {W} = {ifGuard ? .. : ..}` tree, and every hypothesis of that lowering follows from the facts the
+`sv_comb` summary already carries (`AccOK`, `RdOK`, `instLhs_acc_w`). Includes the template recognizer
+`treeStmt?` with its refusal messages and its inversion `treeStmt?_spec`, and the carry cell of the
+`add_proc` design lowered at symbolic `N` and bit `k < N` (`carry_lowers`). Every theorem has a
+`#print axioms` pin (at most `propext`, `Classical.choice`, `Quot.sound`), no `set_option` beyond a linter
+switch, default heartbeats. The tactics do not use the modules yet; the register entry for procedural
+`always_comb` bodies in the fragment is unchanged until they do.
+
 # [0.1.269] — 2026-10-30
 
 The binary XNOR `~^` / `^~` in the symbolic tier (WP-L2; register `ex-xnor`). The extractor refused it

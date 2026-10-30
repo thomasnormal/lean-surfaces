@@ -7489,7 +7489,9 @@
      "_example/unique_rare",
      "_example/unique_first_const",
      "_example/unique0_nomatch",
-     "_example/priority_nomatch"
+     "_example/priority_nomatch",
+     "aes_sbox/unique_case_partial",
+     "aes_sbox/unique_zero_ge"
     ]
    },
    {
@@ -7598,7 +7600,9 @@
      "_example/zeq_pair_if",
      "add/z_case_item",
      "add/eqx_x",
-     "add/zpair_add_rare"
+     "add/zpair_add_rare",
+     "aes_sbox/case_missing_x",
+     "aes_sbox/x_default"
     ],
     "value_rank": 16,
     "value_note": "don't-care assignments (`'x`) to save area, via the x-taint feature"
@@ -7974,7 +7978,8 @@
      "_example/undriven_mux",
      "add/eqx_undriven",
      "_example/reads_x",
-     "add/dead_clock"
+     "add/dead_clock",
+     "aes_sbox/undriven_bit"
     ]
    },
    {
@@ -8029,7 +8034,10 @@
      }
     ],
     "verified_by_run": true,
-    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+    "attacks": [
+     "aes_sbox/case_missing_nodefault"
+    ]
    },
    {
     "id": "sg-fs-unreadable",
@@ -8393,7 +8401,8 @@
      "add/wide_s",
      "mul/narrow_out",
      "fdiv16/rm_pin",
-     "fdiv16/inexact_flag"
+     "fdiv16/inexact_flag",
+     "aes_sbox/wrong_names"
     ]
    },
    {
@@ -8493,7 +8502,11 @@
      "fdiv16/const_nan",
      "fdiv16/ftz",
      "fdiv16/no_sticky",
-     "fdiv16/zero_by_zero_inf"
+     "fdiv16/zero_by_zero_inf",
+     "aes_sbox/no_constant",
+     "aes_sbox/one_entry",
+     "aes_sbox/reversed_bits",
+     "aes_sbox/inverse_sbox"
     ]
    },
    {

@@ -291,6 +291,16 @@ theorem bind {x : Run FrameState α} {y : List Int → Run FrameState α}
     · cases h
     · cases h
 
+theorem flattenStarRun {x : Run FrameState (List RVal)}
+    {y : List Int → Run FrameState (List RVal)}
+    (h : ClockErasedF x y) :
+    ClockErasedF (flattenStarRun x)
+      (fun tr => flattenStarRun (y tr)) := by
+  change ClockErasedF
+    (x.bind (fun st vs => .ok st (flattenStarCallArgs vs)))
+    (fun tr => (y tr).bind (fun st vs => .ok st (flattenStarCallArgs vs)))
+  exact bind h (fun st vs hs => ok hs (flattenStarCallArgs vs))
+
 /-- `bindE` congruence (the exceptions-tier bind: `stepIter`'s
 close-on-exn) — both continuations at the same syntactic shape. -/
 theorem bindE {x : Run FrameState α} {y : List Int → Run FrameState α}
@@ -869,7 +879,7 @@ theorem ceCallIn_succ (ih : CE fuel) : CECallIn (fuel + 1) := by
     refine .ite .unsupported (.ite .unsupported (.ite (.exn h _) (.ite ?_ ?_)))
     · exact .of_seed (fun tr => by simp) (by simp only [World.withClock_self h])
     · refine ClockErasedF.toWorld
-        (.bind (ihSs m ⟨w, mkCallEnv f.params args⟩ f.body.toList h)
+        (.bind (ihSs m ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩ f.body.toList h)
           fun s flow hs => ?_)
       cases flow with
       | ret v => exact .ok hs _
@@ -1274,6 +1284,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
           cases hop : op == .mult with
           | false => exact .unsupported
           | true =>
+            simp [hop]
             cases hobj : Heap.get? st.world.heap a with
             | none => exact .unsupported
             | some obj =>
@@ -1283,11 +1294,13 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                 cases hav : asInt v with
                 | none => exact .exn hs2 _
                 | some n =>
+                  simp only [hav]
                   cases hpost : Heap.get? s2.world.heap a with
                   | none => exact .unsupported
                   | some obj2 =>
                     cases obj2 with
                     | list xs2 =>
+                      simp only [FrameState.withClock_world, World.withClock_heap, hpost]
                       refine .bind (.liftRes hs2 (heapListRepeatUpdate s2.world.heap a xs2 n))
                         fun s3 h3 hs3 => ?_
                       ce_norm
@@ -1391,7 +1404,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
         -- pins it to the un-updated frame (defeq at .world.clock but not
         -- syntactically the ok-state), the H3 eager-unification trap
         exact ClockErasedF.ok (st := { st with locals := env }) h RFlow.next
-      | some n => exact .unsupported
+      | some n => exact .exn h (PyErr.unboundLocalError n)
   | raiseStmt exc cause sp =>
     simp only [execStmt]
     ce_norm
@@ -1403,12 +1416,20 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
       | some e2 =>
         cases e2 <;> try exact .unsupported
         case name id sp2 =>
-          refine .ite .unsupported ?_
-          cases hfc : findClass m id with
-          | none => exact .ite (.exn h _) (.ite (.exn h _) .unsupported)
-          | some pr =>
-            cases pr with
-            | mk ci cdef => exact .ite (.exn h _) .unsupported
+          refine .ite (.exn h _) ?_
+          cases hl : Env.lookup st.locals id with
+          | some v =>
+            cases v <;> try exact .exn h _
+            case ref a => exact .unsupported
+          | none =>
+            refine .ite .unsupported ?_
+            cases hfc : findClass m id with
+            | none =>
+              refine .ite (.exn h _) ?_
+              refine .ite (.exn h _) .unsupported
+            | some pr =>
+              cases pr with
+              | mk ci cdef => exact .ite (.exn h _) .unsupported
         case call func args kwargs cu _ =>
           cases func with
           | name id _ =>
@@ -1453,23 +1474,25 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                     | some nt => simp [hfc, hnt]; exact .unsupported
                     | none =>
                       simp [hfc, hnt]
-                      cases args.toList with
-                      | nil => exact .unsupported
-                      | cons arg rest =>
-                        cases rest with
-                        | cons _ _ => simp; exact .unsupported
-                        | nil =>
-                          cases arg with
-                          | constant c _ =>
-                            cases c with
-                            | str msg =>
-                              cases hbe : builtinExcWithMessage id msg with
-                              | some e => simp [hbe]; exact .exn h _
-                              | none =>
-                                simp [hbe]
-                                split <;> exact .unsupported
+                      split
+                      · exact .exn h _
+                      · cases args.toList with
+                        | nil => exact .unsupported
+                        | cons arg rest =>
+                          cases rest with
+                          | cons _ _ => simp; exact .unsupported
+                          | nil =>
+                            cases arg with
+                            | constant c _ =>
+                              cases c with
+                              | str msg =>
+                                cases hbe : builtinExcWithMessage id msg with
+                                | some e => simp [hbe]; exact .exn h _
+                                | none =>
+                                  simp [hbe]
+                                  split <;> exact .unsupported
+                              | _ => exact .unsupported
                             | _ => exact .unsupported
-                          | _ => exact .unsupported
           | _ => exact .unsupported
   | tryStmt body excName handler tryUnsupported sp =>
     simp only [execStmt]
@@ -1477,75 +1500,122 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
     cases tryUnsupported with
     | some reason => exact .unsupported
     | none =>
-      refine .ite ?_ ?_
+      refine ClockErasedF.ite (c := excName.isEmpty = true) ?_ ?_
       · simpa only using (.matchBindE (ihSs m st body.toList h)
           (fun _ flow hs => .ok hs flow)
           (fun s _ hs => ihSs m s handler.toList hs))
-      · refine .ite .unsupported ?_
-        cases hfc : findClass m excName with
-      | none =>
-        refine .ite ?_ ?_
-        · exact .bindE (ihSs m st body.toList h)
-            (fun _ _ hs => .ok hs _) (fun _ _ hs => .exn hs _)
-        ·
-          -- Pass 0 (§import forms): the pinned import-error table branch —
-          -- the class branch's shape below, with no cid ite (every
-          -- `.importError` matches either pinned name)
-          refine .ite ?_ ?_
-          · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
-            cases hrun : execStmts m fuel st body.toList with
-            | ok s2 fl =>
-              obtain ⟨h2, hy⟩ := hok s2 fl hrun
-              simp only [hy]
-              exact .ok h2 _
-            | exn s2 e =>
-              obtain ⟨h2, hy⟩ := hexn s2 e hrun
-              simp only [hy]
-              cases e <;> try exact .exn h2 _
-              case importError mod =>
-                exact ihSs m s2 handler.toList h2
-            | timeout =>
-              simp only [hto hrun]
-              exact .timeout
-            | unsupported msg => exact .unsupported
-          · refine .ite ?_ (.ite .unsupported .unsupported)
-            obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
-            cases hrun : execStmts m fuel st body.toList with
-            | ok s2 fl =>
-              obtain ⟨h2, hy⟩ := hok s2 fl hrun
-              simp only [hy]
-              exact .ok h2 _
-            | exn s2 e =>
-              obtain ⟨h2, hy⟩ := hexn s2 e hrun
-              simp only [hy]
-              exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
-            | timeout =>
-              simp only [hto hrun]
-              exact .timeout
-            | unsupported msg => exact .unsupported
-      | some pr =>
-        cases pr with
-        | mk ci cdef =>
-          dsimp only
-          refine .ite .unsupported ?_
-          obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
-          cases hrun : execStmts m fuel st body.toList with
-          | ok s2 fl =>
-            obtain ⟨h2, hy⟩ := hok s2 fl hrun
-            simp only [hy]
-            exact .ok h2 _
-          | exn s2 e =>
-            obtain ⟨h2, hy⟩ := hexn s2 e hrun
-            simp only [hy]
-            cases e <;> try exact .exn h2 _
-            case user cid nm =>
-              exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
-            case userMessage cid nm msg =>
-              exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
-          | timeout =>
-            simp only [hto hrun]
-            exact .timeout
+      · refine ClockErasedF.ite (c := excHandlerTuple excName = true) ?_ ?_
+        · refine ClockErasedF.ite
+            (c := (excHandlerNames excName).any (fun name =>
+              (Env.lookup st.locals name).isSome ||
+                (lookupG (moduleGlobals m).1 name).isSome ||
+                (Env.lookup st.world.globals name).isSome ||
+                (findFunction m name).isSome) = true) ?_ ?_
+          · exact .unsupported
+          · refine ClockErasedF.ite
+              (c := (excHandlerNames excName).any (fun name =>
+                !excHandlerAdmitted m name) = true) ?_ ?_
+            · exact .unsupported
+            · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+              cases hrun : execStmts m fuel st body.toList with
+              | ok s2 fl =>
+                obtain ⟨h2, hy⟩ := hok s2 fl hrun
+                simp only [hy]
+                exact .ok h2 _
+              | exn s2 e =>
+                obtain ⟨h2, hy⟩ := hexn s2 e hrun
+                simp only [hy]
+                refine ClockErasedF.ite
+                    (c := (excHandlerNames excName).any
+                      (fun name => excHandlerMatches m name e) = true) ?_ ?_
+                · exact ihSs m s2 handler.toList h2
+                · exact .exn h2 _
+              | timeout =>
+                simp only [hto hrun]
+                exact .timeout
               | unsupported msg => exact .unsupported
+        · refine ClockErasedF.ite
+            (c := ((Env.lookup st.locals excName).isSome ||
+              (lookupG (moduleGlobals m).1 excName).isSome ||
+              (Env.lookup st.world.globals excName).isSome ||
+              (findFunction m excName).isSome) = true) ?_ ?_
+          · exact .unsupported
+          · cases hfc : findClass m excName with
+            | none =>
+              refine ClockErasedF.ite
+                  (c := (findNamedTuple m excName).isSome = true) ?_ ?_
+              · exact .bindE (ihSs m st body.toList h)
+                  (fun _ flow hs => .ok hs flow)
+                  (fun _ _ hs => .exn hs _)
+              · refine ClockErasedF.ite
+                  (c := importErrorHandlerMatch excName = true) ?_ ?_
+                · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+                  cases hrun : execStmts m fuel st body.toList with
+                  | ok s2 fl =>
+                    obtain ⟨h2, hy⟩ := hok s2 fl hrun
+                    simp only [hy]
+                    exact .ok h2 _
+                  | exn s2 e =>
+                    obtain ⟨h2, hy⟩ := hexn s2 e hrun
+                    simp only [hy]
+                    cases e with
+                    | importError mod => exact ihSs m s2 handler.toList h2
+                    | _ => exact .exn h2 _
+                  | timeout =>
+                    simp only [hto hrun]
+                    exact .timeout
+                  | unsupported msg => exact .unsupported
+                · refine ClockErasedF.ite
+                    (c := admittedBuiltinExc.contains excName = true) ?_ ?_
+                  · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+                    cases hrun : execStmts m fuel st body.toList with
+                    | ok s2 fl =>
+                      obtain ⟨h2, hy⟩ := hok s2 fl hrun
+                      simp only [hy]
+                      exact .ok h2 _
+                    | exn s2 e =>
+                      obtain ⟨h2, hy⟩ := hexn s2 e hrun
+                      simp only [hy]
+                      refine ClockErasedF.ite
+                          (c := (builtinExcCatches excName e ||
+                            userExcCatches m excName e) = true) ?_ ?_
+                      · exact ihSs m s2 handler.toList h2
+                      · exact .exn h2 _
+                    | timeout =>
+                      simp only [hto hrun]
+                      exact .timeout
+                    | unsupported msg => exact .unsupported
+                  · refine ClockErasedF.ite
+                      (c := refusedAncestorExc.contains excName = true) ?_ ?_
+                    · exact .unsupported
+                    · exact .unsupported
+            | some pr =>
+              obtain ⟨ci, cdef⟩ := pr
+              refine ClockErasedF.ite (c := (!cdef.isExc) = true) ?_ ?_
+              · exact .unsupported
+              · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+                cases hrun : execStmts m fuel st body.toList with
+                | ok s2 fl =>
+                  obtain ⟨h2, hy⟩ := hok s2 fl hrun
+                  simp only [hy]
+                  exact .ok h2 _
+                | exn s2 e =>
+                  obtain ⟨h2, hy⟩ := hexn s2 e hrun
+                  simp only [hy]
+                  cases e with
+                  | user cid' nm =>
+                    refine ClockErasedF.ite (c := (cid' == ci) = true) ?_ ?_
+                    · exact ihSs m s2 handler.toList h2
+                    · exact .exn h2 _
+                  | userMessage cid' nm msg =>
+                    refine ClockErasedF.ite (c := (cid' == ci) = true) ?_ ?_
+                    · exact ihSs m s2 handler.toList h2
+                    · exact .exn h2 _
+                  | _ => exact .exn h2 _
+                | timeout =>
+                  simp only [hto hrun]
+                  exact .timeout
+                | unsupported msg => exact .unsupported
   | withStmt items body withUnsupported sp =>
     cases withUnsupported with
     | some reason => simp only [execStmt]; exact .unsupported
@@ -1579,18 +1649,22 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                 | none =>
                   cases hclass : findContextClass m fname with
                   | none =>
-                    simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
+                    try simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
                     exact .unsupported
                   | some pr =>
                     obtain ⟨ci, cdef⟩ := pr
-                    by_cases hargsfree :
-                        (findFunction m (fname ++ ".__exit__")).map
-                            FunctionDefn.withExitExceptionArgsFree == some true
-                          || (findFunction m (fname ++ ".__exit__")).map
-                            FunctionDefn.withExitExceptionTypeTest == some true
-                    · simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass,
-                        hargsfree]
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                    simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
+                    refine ClockErasedF.ite
+                        (c :=
+                          (∀ x : FunctionDefn,
+                            findFunction m (fname ++ ".__exit__") = some x →
+                              x.withExitExceptionArgsFree = false) ∧
+                          (∀ x : FunctionDefn,
+                            findFunction m (fname ++ ".__exit__") = some x →
+                              x.withExitExceptionTypeTest = false)) ?_ ?_
+                    · exact .unsupported
+                    · refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h))
+                        fun s2 vs hs2 => ?_
                       let a := s2.world.heap.size
                       let s2' := { s2 with world :=
                         { s2.world with heap := s2.world.heap.push (.instance ci (instanceAttrs m ci)) } }
@@ -1612,15 +1686,16 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                             exact .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s5.world (fname ++ ".__exit__")
-                                  (withExitArgs
-                                    ((findFunction m (fname ++ ".__exit__")).map
-                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  #[.ref a, .none, .none, .none]
                                   (by simpa using hs5)))
                               (fun s6 _ hs6 => .ok hs6 _)
                           · refine .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s5.world (fname ++ ".__exit__")
-                                  #[.ref a, .none, .none, .none] (by simpa using hs5)))
+                                  (withExitArgs
+                                    ((findFunction m (fname ++ ".__exit__")).map
+                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  (by simpa using hs5)))
                               (fun s6 exitValue hs6 => ?_)
                             refine .bind
                               (ClockErasedF.liftRes hs6 (truthyH s6.world.heap exitValue))
@@ -1639,15 +1714,16 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                             exact .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s6.world (fname ++ ".__exit__")
-                                  (withExitArgs
-                                    ((findFunction m (fname ++ ".__exit__")).map
-                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  #[.ref a, .none, .none, .none]
                                   (by simpa using hs6)))
                               (fun s7 _ hs7 => .ok hs7 _)
                           · refine .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s6.world (fname ++ ".__exit__")
-                                  #[.ref a, .none, .none, .none] (by simpa using hs6)))
+                                  (withExitArgs
+                                    ((findFunction m (fname ++ ".__exit__")).map
+                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  (by simpa using hs6)))
                               (fun s7 exitValue hs7 => ?_)
                             refine .bind
                               (ClockErasedF.liftRes hs7 (truthyH s7.world.heap exitValue))
@@ -1658,9 +1734,6 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                       | cons v rest =>
                         exact .of_seed (fun tr => by simp [s2', a, Run.seedF])
                           (by simp [s2', a, FrameState.withClock_self hs2])
-                    · simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass,
-                        hargsfree]
-                      exact .unsupported
             | _ => simp [execStmt, hitems, hrest, hctx, hfunc]; exact .unsupported
           | _ => simp [execStmt, hitems, hrest, hctx]; exact .unsupported
   | importFrom mod names star sp =>
@@ -1806,7 +1879,13 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
           cases hg : lookupG (moduleGlobals m).1 id with
           | some ov =>
             cases ov with
-            | some v => exact .ok h _
+            | some v =>
+              exact .of_seed (fun tr => by
+                by_cases hid : id = "__name__"
+                · cases hd : Env.lookup st.world.globals (deletedModuleDunderMarker "__name__")
+                  <;> simp [hid, hd, Run.seedF]
+                · simp [hid, Run.seedF])
+                (by simp [FrameState.withClock_self h])
             | none =>
               cases hlive : Env.lookup st.world.globals id with
               | some v => exact .ok h _
@@ -1912,12 +1991,26 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
         cases f <;> try exact .unsupported
         case name fname sp2 =>
           ce_norm
-          cases hl : Env.lookup st.locals fname with
+          refine .ite ?_ ?_
+          · cases args.toList with
+            | nil => exact .unsupported
+            | cons arg rest =>
+              cases rest with
+              | cons _ _ => exact .unsupported
+              | nil =>
+                cases kwargs.toList with
+                | cons _ _ => exact .unsupported
+                | nil =>
+                  refine .bind (ihE m st arg h) fun s2 v hs2 => ?_
+                  refine .bind (.liftRes hs2 (unpackAllStar s2.world.heap v))
+                    fun s3 xs hs3 => ?_
+                  exact .ok hs3 _
+          · cases hl : Env.lookup st.locals fname with
           | some v0 =>
             cases v0 <;> try
-              exact .bind (ihEs m st args.toList h) fun s2 vs hs2 => .exn hs2 _
+              exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => .exn hs2 _
             case ref a =>
-              refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+              refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
               refine .ite (.exn hs2 _) ?_
               ce_norm
               cases hh : Heap.get? s2.world.heap a with
@@ -1931,20 +2024,21 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   exact ClockErasedW.withLocals
                     (ihClosure m s'.world nm ps ao lo ig bd cap' vs.toArray hs')
           | none =>
+            refine .ite (.exn h _) ?_
             cases hg : lookupG (moduleGlobals m).1 fname with
             | some ov =>
               cases ov with
               | some vv =>
                 cases vv <;>
-                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 => .exn hs2 _
+                  exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => .exn hs2 _
               | none =>
                 cases hlive : Env.lookup st.world.globals fname with
                 | none => exact .unsupported
                 | some lv =>
                   cases lv <;> try
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 => .exn hs2 _
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => .exn hs2 _
                   case ref a =>
-                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                    refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                     refine .ite (.exn hs2 _) ?_
                     ce_norm
                     cases hh : Heap.get? s2.world.heap a with
@@ -1960,7 +2054,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
             | none =>
               refine .ite (.ite .unsupported ?fcall) ?classes
               case fcall =>
-                refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                 ce_norm
                 exact ClockErasedW.withLocals (ihCall m s2.world fname vs.toArray hs2)
               case classes =>
@@ -1974,12 +2068,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     | some nt =>
                       refine .ite .unsupported (.ite .unsupported (.ite .unsupported ?ctor))
                       case ctor =>
-                        exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                        exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                           .ite (.ok hs2 _) (.exn hs2 _)
                     | none =>
                       refine .ite .unsupported (.ite .unsupported ?inst)
                       case inst =>
-                        refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                        refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                         try dsimp only
                         ce_norm
                         cases hi : classMethodQname m ci "__init__" with
@@ -1998,10 +2092,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 | none =>
                   cases hnt : findNamedTuple m fname with
                   | some nt =>
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .ite (.ok hs2 _) (.exn hs2 _)
                   | none =>
-                    refine .ite ?blenmult (.ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
+                    refine .ite ?bfstring (.ite ?blenmult (.ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bround (.ite ?bint
                       (.ite ?bfloat (.ite ?bbool
                       (.ite ?bdivmod
@@ -2010,9 +2104,32 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
                       (.ite ?bord (.ite ?bchr (.ite ?bhex (.ite ?bformat (.ite ?bstr (.ite ?brepr
                       (.ite ?binput (.ite ?bprint (.ite ?bdunder ?blive)))))))))))))))))))))))))))
-                    )))
+                    ))))
+                    case bfstring =>
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h))
+                        fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .exn hs2 _
+                      | cons v rest =>
+                        cases rest with
+                        | nil => exact .exn hs2 _
+                        | cons spec tail =>
+                          cases tail with
+                          | cons _ _ => simp; exact .exn hs2 _
+                          | nil =>
+                            cases spec with
+                            | str s =>
+                              simp
+                              change ClockErasedF (Run.liftRes s2 (formatSpecH v s))
+                                (fun tr => (Run.liftRes s2 (formatSpecH v s)).seedF tr)
+                              exact ClockErasedF.of_seed (fun _ => rfl)
+                                (by
+                                  cases hres : formatSpecH v s <;>
+                                    simp [Run.seedF, Run.liftRes, hres,
+                                      FrameState.withClock_self hs2])
+                            | _ => simp; exact .exn hs2 _
                     case blenmult =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | cons left rest =>
                         cases rest with
@@ -2038,7 +2155,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => exact .exn hs2 _
                       | nil => exact .exn hs2 _
                     case blen =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2046,7 +2163,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => ce_norm; exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
                     case bsorted =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2163,7 +2280,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               obtain ⟨h2, r2⟩ := hr
                               exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
                     case bmax =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => ce_norm; exact .liftRes hs2 _
                       | cons v t =>
@@ -2184,7 +2301,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                   fun s3 vals hs3 => ?_
                                 exact .liftRes hs3 _
                     case bmin =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => ce_norm; exact .liftRes hs2 _
                       | cons v t =>
@@ -2205,7 +2322,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                   fun s3 vals hs3 => ?_
                                 exact .liftRes hs3 _
                     case banyall =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2234,7 +2351,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                   fun s3 b hs3 => ?_
                                 exact .ok hs3 _
                     case bset =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil =>
                         exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs2, hs2])
@@ -2301,7 +2418,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 refine .bind (.liftRes hs3 _) fun s4 es hs4 => ?_
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs4, hs4])
                     case babs =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2309,7 +2426,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
                     case bround =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2319,19 +2436,19 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           all_goals exact .ok hs2 _
                         | cons d t2 => exact .unsupported
                     case bint =>
-                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                         .liftRes hs2 _
                     case bfloat =>
-                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                         .liftRes hs2 _
                     case bbool =>
-                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                         .liftRes hs2 _
                     case bdivmod =>
-                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                         .liftRes hs2 _
                     case bpow =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons _ rest =>
@@ -2345,7 +2462,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             | nil => exact .liftRes hs2 _
                             | cons _ _ => exact .exn hs2 _
                     case bsum =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases hsa : sumArgs vs with
                       | none => exact .exn hs2 _
                       | some pr =>
@@ -2378,7 +2495,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case int value => exact .exn hs2 _
                           case float value => exact .exn hs2 _
                     case btuple =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .ok hs2 _
                       | cons v t =>
@@ -2414,7 +2531,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       -- constructed leaf is `allocList`, and the generator
                       -- arm drains UNGUARDED — the call is outside
                       -- heapFree, so there is no `moduleGenFree` ite.
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .allocList hs2 _
                       | cons v t =>
@@ -2446,7 +2563,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     case bdict =>
                       -- the dict CONSTRUCTOR: an allocation on every
                       -- decided leaf, and the copy arm reads only the heap
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .allocDict hs2 _
                       | cons v t =>
@@ -2488,10 +2605,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               case «instance» cid attrs => exact .exn hs2 _
                               case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                     case brange =>
-                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                         .liftRes hs2 _
                     case benum =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v rest =>
@@ -2514,14 +2631,14 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | timeout => exact .timeout
                           | unsupported msg => exact .unsupported
                     case bcount =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases hca : countArgsVal vs with
                       | none => exact .liftRes hs2 _
                       | some pr =>
                         obtain ⟨start, step⟩ := pr
                         exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs2, hs2])
                     case bnext =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2552,7 +2669,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               | some v2 => exact .ok hs3 _
                               | none => exact .ok hs3 _
                     case bord =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2560,7 +2677,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
                     case bchr =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2568,7 +2685,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
                     case bhex =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2576,7 +2693,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
                     case bformat =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>
@@ -2598,7 +2715,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | cons d t3 =>
                             cases t3 <;> simp only [evalExpr] <;> exact .exn hs2 _
                     case bstr =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
                       | nil => exact .ok hs2 _
                       | cons v t =>
@@ -2609,7 +2726,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil => ce_norm; exact .liftRes hs2 _
                         | cons d t2 => exact .unsupported
                     case brepr =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       ce_norm
                       exact .liftRes hs2 _
                     case binput => exact .unsupported
@@ -2631,10 +2748,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
                       | some lv =>
                         cases lv <;> try
-                          exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                          exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                             .exn hs2 _
                         case ref a =>
-                          refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                          refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                           refine .ite (.exn hs2 _) ?_
                           ce_norm
                           cases hh : Heap.get? s2.world.heap a with
@@ -2664,7 +2781,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               try dsimp only
               cases hp : ntupleCallPlan m tn fs attr with
               | instMethod qname =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 ce_norm
                 exact ClockErasedW.withLocals (ihCall m s3.world qname _ hs3)
               | attrMissing => exact .exn hs2 _
@@ -2681,27 +2798,27 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               try dsimp only
               cases hp : strCallPlan attr with
               | swapcase =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .liftRes hs3 _
                 | cons v t => exact .exn hs3 _
               | isupper =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .liftRes hs3 _
                 | cons v t => exact .exn hs3 _
               | islower =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .liftRes hs3 _
                 | cons v t => exact .exn hs3 _
               | upper =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .liftRes hs3 _
                 | cons v t => exact .exn hs3 _
               | index =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .exn hs3 _
                 | cons v t =>
@@ -2721,7 +2838,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         case str sub => ce_norm; exact .liftRes hs3 _
                       | cons _ _ => cases v <;> ce_norm <;> exact .exn hs3 _
               | join =>
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .exn hs3 _
                 | cons v rest =>
@@ -2747,7 +2864,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               cases hattr : attr == "is_integer" with
               | true =>
                 simp only [hattr]
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 => ?_
                 cases vs with
                 | nil => exact .ok hs3 _
                 | cons _ _ => exact .exn hs3 _
@@ -2760,11 +2877,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
           cases hl : Env.lookup st.locals fname with
           | some v0 =>
             cases v0 <;> try
-              exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+              exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                 .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                   .exn hs3 _
             case ref a =>
-              refine .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+              refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                 .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
               ce_norm
               cases hh : Heap.get? s3.world.heap a with
@@ -2779,7 +2896,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               cases ov with
               | some vv =>
                 cases vv <;>
-                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                  exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                     .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                       .exn hs3 _
               | none => exact .unsupported
@@ -2789,7 +2906,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 try dsimp only
                 refine .ite .unsupported (.ite .unsupported ?merge)
                 case merge =>
-                  refine .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                  refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                     .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
                   refine .bind (.liftRes hs3 _) fun s4 full hs4 => ?_
                   ce_norm
@@ -2806,7 +2923,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 case bntuple =>
                   cases findNamedTuple m fname with
                   | some nt =>
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                         .bind (.liftRes hs3 _) fun s4 full hs4 =>
                           .ok hs4 _
@@ -2820,11 +2937,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   cases hfk : kwargs.toList.find? (fun kv => kv.1 != "reverse") with
                   | some kv =>
                     obtain ⟨k0, v0⟩ := kv
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                         .exn hs3 _
                   | none =>
-                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
                     cases vs with
                     | nil => exact .exn hs3 _
@@ -2950,21 +3067,21 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 obtain ⟨h2, r2⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs5, hs5])
                 case bfloat =>
-                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                  exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                     .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                       .exn hs3 _
                 case bdivmod =>
-                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                  exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                     .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                       .exn hs3 _
                 case brepr =>
                   by_cases hi : fname == "int"
                   · simp only [hi, if_true]
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                         .liftRes hs3 _
                   · simp only [hi, if_false]
-                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                         .exn hs3 _
                 case livekw =>
@@ -2984,7 +3101,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some fdefn =>
                 try dsimp only
                 refine .ite .unsupported ?_
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 =>
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 =>
                   .bind (ihEs m s3 (kwargs.toList.map (·.2)) hs3) fun s4 kvs hs4 => ?_
                 refine .bind (.liftRes hs4 _) fun s5 full hs5 => ?_
                 ce_norm
@@ -3009,7 +3126,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some fdefn =>
                 try dsimp only
                 refine .ite .unsupported ?_
-                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 =>
+                refine .bind (ClockErasedF.flattenStarRun (ihEs m s2 args.toList hs2)) fun s3 vs hs3 =>
                   .bind (ihEs m s3 (kwargs.toList.map (·.2)) hs3) fun s4 kvs hs4 => ?_
                 refine .bind (.liftRes hs4 _) fun s5 full hs5 => ?_
                 ce_norm

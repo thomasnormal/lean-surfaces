@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The clock-erasure proof now tracks starred positional arguments, static-local
+  markers, faithful missing-local errors, exception-handler dispatch, and the
+  current context-manager exit arguments across the stateful interpreter.
+
 - README now renders one progress bar per supported language from the checked-in
   coverage pages; CI fails when the percentages or row counts go stale.
 

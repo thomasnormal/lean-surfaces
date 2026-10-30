@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 515 | 503 | 0 | 12 | sv-tests-2 declarations |
+| 516 | 504 | 0 | 12 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -33,6 +33,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `shift_accept` | `Examples/system-verilog/shift_accept/shift_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `bitwise_accept` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `comparison_accept` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `arithmetic_accept` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_if_dynamic_refuse` | `Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `priority_if_dynamic_refuse` | `Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `string_case_assignment` | `Examples/system-verilog/string_case_assignment/string_case_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -536,7 +537,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 235 | 118 | 117 | pyslang SyntaxKind |
+| 235 | 120 | 115 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -574,7 +575,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CastExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
@@ -594,7 +595,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.DelayControl` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DescendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.DivideExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.DivideExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ElabSystemTask` | `Examples/system-verilog/sem2/multi_top/multi_top.sv` | **REFUSE** | `error` expected exactly one module in the envelope, got 2 |
@@ -666,12 +667,12 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MinTypMaxExpression` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.ModAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ModExpression` | `Examples/system-verilog/remainder/remainder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.ModExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ModuleDeclaration` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ModuleHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
@@ -702,7 +703,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ParameterValueAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ParenExpressionList` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedEventExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ParenthesizedExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ParenthesizedExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedSequenceExpr` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.PortDeclaration` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
 | `SyntaxKind.PortReference` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
@@ -741,7 +742,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.StructUnionMember` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructuredAssignmentPattern` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compilation_unit_parameter/compilation_unit_parameter.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.SubtractExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |

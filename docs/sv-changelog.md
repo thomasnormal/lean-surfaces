@@ -1,3 +1,10 @@
+# [0.1.253] — 2026-10-30
+
+The legacy differential corpus now carries a compact four-state arithmetic
+witness for `+`, `-`, `*`, `/`, and `%`, including an unknown add result.
+Coverage grows **515/503/0/12 → 516/504/0/12**; grammar coverage grows
+**235/118/117 → 235/120/115** in the regenerated census.
+
 # [0.1.252] — 2026-10-30
 
 The legacy differential corpus now carries a compact four-state comparison

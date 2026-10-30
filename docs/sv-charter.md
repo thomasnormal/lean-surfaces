@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Integral arithmetic witness — 2026-10-30
+
+The legacy differential corpus now carries a compact initial-process witness
+for `+`, `-`, `*`, `/`, and `%`, including an unknown add result, with a literal
+`PASS` transcript.
+
+Differential coverage grows **515/503/0/12 → 516/504/0/12**; grammar coverage
+grows **235/118/117 → 235/120/115** in the regenerated census.
+
 ## Equality and relational comparison witness — 2026-10-30
 
 The legacy differential corpus now carries a compact initial-process witness

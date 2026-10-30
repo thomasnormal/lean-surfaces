@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 491 | 484 | 0 | 7 | sv-tests-2 declarations |
+| 492 | 484 | 0 | 8 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -265,6 +265,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `struct_array_ordering_with_tuple` | `Examples/system-verilog/struct_array_ordering_with_tuple/struct_array_ordering_with_tuple.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_literal_loop_fifo` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_case_complete` | `Examples/system-verilog/unique_case_complete/unique_case_complete.sv` | match | **MATCH** | `ok` | MATCH |
+| `unique_case_dynamic_refuse` | `Examples/system-verilog/unique_case_dynamic_refuse/unique_case_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `assoc_string_cells` | `Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_exists_cells` | `Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_exists_dynamic_refuse` | `Examples/system-verilog/assoc_exists_dynamic_refuse/assoc_exists_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |

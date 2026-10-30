@@ -1,3 +1,11 @@
+# [0.1.229] — 2026-10-30
+
+The legacy differential corpus now pins a dynamic `unique case … inside`
+refusal. Wildcard patterns retain the extractor's `CaseStatement:Unique`
+boundary rather than erasing the qualifier or guessing a diagnostic channel.
+Coverage grows **491/484/0/7 → 492/484/0/8**; grammar coverage remains
+**235/113/122**.
+
 # [0.1.228] — 2026-10-29
 
 The differential corpus now records the existing loud refusal for a

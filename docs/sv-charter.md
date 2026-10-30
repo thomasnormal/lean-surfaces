@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic `unique case … inside` refusal witness — 2026-10-30
+
+The legacy self-check tier now pins the existing loud boundary for a dynamic
+`unique case … inside` with wildcard patterns. The extractor retains
+`CaseStatement:Unique`; no qualifier diagnostic is fabricated and no first-match
+lowering is claimed for this form. The `unique_case_dynamic_refuse` fixture,
+generated envelope, and differential row record the refusal.
+
+Differential coverage grows **491/484/0/7 → 492/484/0/8**; grammar coverage
+remains **235/113/122**.
+
+
 ## Side-effecting `let` expansion refusal fixture — 2026-10-29
 
 The differential corpus now pins the existing loud boundary for a `let`

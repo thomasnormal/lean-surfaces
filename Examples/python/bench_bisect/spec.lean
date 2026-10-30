@@ -14,13 +14,12 @@ shipped source, with both parameter defaults engaged (`lo=0`,
 
 Tier facts (envelope, post-F1/F2 re-extraction 2026-07-30):
 * Both functions: `args_unsupported: null`; `lo`/`hi` carry literal
-  `default` payloads; `hi is None` is an in-tier `Compare [Is]`; the SOLE
-  `Unsupported` node per function is the `raise ValueError` guard behind
-  `if lo < 0` — unreachable at the default (`lo = 0`), so the two-argument
-  theorems below cover the byte-verbatim body with its exception path
-  intact (rsa_inverse precedent). The `#guard … matches .unsupported`
-  lines document the edge: an explicit negative `lo` DOES reach the raise
-  and the interpreter refuses loudly.
+  `default` payloads; `hi is None` is an in-tier `Compare [Is]`; the
+  `raise ValueError` guard behind `if lo < 0` is unreachable at the
+  default (`lo = 0`), so the two-argument theorems below cover the
+  byte-verbatim body with its exception path intact (rsa_inverse
+  precedent). The edge guards below document that an explicit negative
+  `lo` reaches the faithful `ValueError` result.
 * Both loop bodies CREATE `mid` on the first iteration, so the loop
   tactics' v1 recipe does not apply — the proofs hand-instantiate the
   generic while rule (see proof.lean header and the growing-environment
@@ -73,14 +72,14 @@ installed C-accelerated module). -/
 #py_check bench_bisect.bisect_left([5, 7, 7, 9], -3) = 0
 
 /-! Tier-edge documentation: a NEGATIVE explicit `lo` reaches the vendored
-`raise ValueError('lo must be non-negative')` — the single Unsupported
-node per function — and the interpreter refuses loudly (`.unsupported`,
-not a Python result). The theorems below never touch it: the default
+`raise ValueError('lo must be non-negative')` — the exception edge per
+function — and the interpreter carries the faithful `.valueError` result.
+The theorems below never touch it: the default
 `lo = 0` makes the guard concretely false. -/
 #guard (callFunction bench_bisect "bisect_left"
-    #[.list #[.int 1, .int 2, .int 3], .int 2, .int (-1)] 4096 matches .unsupported _)
+    #[.list #[.int 1, .int 2, .int 3], .int 2, .int (-1)] 4096 matches .exn (.valueError _))
 #guard (callFunction bench_bisect "bisect_right"
-    #[.list #[.int 1, .int 2, .int 3], .int 2, .int (-1)] 4096 matches .unsupported _)
+    #[.list #[.int 1, .int 2, .int 3], .int 2, .int (-1)] 4096 matches .exn (.valueError _))
 
 /-! ## `bisect_left` -/
 

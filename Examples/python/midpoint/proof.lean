@@ -18,7 +18,7 @@ load_program midpoint from "Examples/python/midpoint/midpoint.json"
 reduces `evalBinOp .floorDiv` to `Int.fdiv` and discharges the `2 = 0`
 divisor guard). -/
 theorem midpoint_spec (a b : PyInt) : midpoint(a, b) ==> Int.fdiv (a + b) 2 := by
-  py_prove [midpoint]
+  py_prove [midpoint, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
 
 set_option linter.unusedVariables false in
 /-- The `/` form, derived from `midpoint_spec` by the value bridge

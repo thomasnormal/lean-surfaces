@@ -6754,3 +6754,21 @@ A bare `raise StopAsyncIteration` therefore uses the existing
 DECIDED: admit only the payload-free `StopAsyncIteration` class identity and its
 ordinary `Exception` catch; retain loud behavior for payload constructors and
 async execution constructs.
+
+## 2026-10-31-pycomplete-209 — fix admitted exception coverage reporting
+
+The coverage generator now reads `admittedBuiltinExc` directly when rendering
+the exception-name table. This includes the three identities handled by the
+generic exact-match fallback (`SystemExit`, `KeyboardInterrupt`, and
+`GeneratorExit`) alongside the explicit matcher arms, so the generated page no
+longer calls admitted names refused.
+
+| Measurement | Result |
+|---|---|
+| Generated table | 23 admitted exception names and 44 refused CPython builtin names; the three previously misclassified identities moved to the admitted list |
+| Freshness | `coverage_page.py --check`, docs check, language-progress check, backlog index, and `git diff --check` pass |
+| Scope | Documentation generator and generated coverage page only; interpreter behavior unchanged |
+
+DECIDED: derive the exception coverage list from the admission table rather
+than the syntactic shape of the matcher, preserving accurate generated status
+when generic fallback arms admit additional identities.

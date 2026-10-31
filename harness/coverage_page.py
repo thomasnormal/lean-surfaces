@@ -12,9 +12,10 @@ Every number on the page is produced by a run, never typed by hand:
 * the GRAMMAR TABLE is `harness/refusal_census.py --grammar` (one witness
   program per CPython 3.9 `ast` production, run through both), verdict and
   refusal message per row;
-* the BUILTIN TABLES are read from the two name tables in
+* the BUILTIN TABLES are read from the name tables in
   `LeanModels/Python/Ast.lean` (`isBuiltinName`: the names the interpreter
-  dispatches; `isPyBuiltinName`: every name CPython 3.9 binds). A name in
+  dispatches; `isPyBuiltinName`: every name CPython 3.9 binds; and
+  `admittedBuiltinExc`: exception identities accepted by `except`). A name in
   the second and not the first refuses loudly when used.
 
 `--check` regenerates the page and exits 1 if it differs from the committed
@@ -60,8 +61,8 @@ def builtin_tables():
                               lean_def_body(src, "isBuiltinName")))
     cpython = set(re.findall(r'"([^"]+)"',
                              lean_def_body(src, "isPyBuiltinName")))
-    catches = set(re.findall(r'^\s*\|\s*"([A-Za-z]+)"\s*,',
-                             lean_def_body(src, "builtinExcCatches"), re.M))
+    catches = set(re.findall(r'"([A-Za-z]+)"',
+                             lean_def_body(src, "admittedBuiltinExc")))
     if not modelled or not cpython or not catches:
         raise SystemExit("coverage_page: a builtin table parsed empty")
     stray = sorted(modelled - cpython - {"count"})

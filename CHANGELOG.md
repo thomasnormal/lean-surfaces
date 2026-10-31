@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The generated Python coverage page now lists every admitted builtin exception identity, including `SystemExit`, `KeyboardInterrupt`, and `GeneratorExit`, instead of treating generic matcher fallbacks as refusals.
+
 - Bare `StopAsyncIteration` raises now use the admitted builtin exception identity and are caught by `except Exception:`; payload-bearing constructors remain outside the tier.
 
 - `EnvironmentError` and `IOError` now raise and match as CPython's canonical

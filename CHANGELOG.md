@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Bare `UnicodeError` raises now use the admitted builtin exception identity
+  and are caught by `except Exception:`; payload-bearing Unicode error
+  constructors remain outside the tier.
+
 - Bare `Warning` raises now use the admitted builtin exception identity and are caught by `except Exception:`; payload-bearing warning constructors remain outside the tier.
 
 - The generated Python coverage page now counts the separately modelled `ImportError` and `ModuleNotFoundError` handler identities alongside the admitted builtin exception table.

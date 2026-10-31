@@ -6804,3 +6804,21 @@ payload-bearing constructors remain loud.
 
 DECIDED: admit only the payload-free `Warning` class identity and its ordinary
 `Exception` catch; retain loud behavior for warning payload constructors.
+
+## 2026-10-31-pycomplete-212 — admit bare `UnicodeError`
+
+The builtin exception table now admits the leaf `UnicodeError` identity. A
+bare `raise UnicodeError` therefore uses the existing `.builtinException`
+representation and participates in the already-modelled `except Exception:`
+hierarchy, while payload-bearing Unicode error constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Exception` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,790 cases: 3,753 matched / 37 recorded refusals / 0 failed |
+| Full proof differential | 3,790 cases: 3,652 matched / 138 refusals / 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `leanmodels-run` and `builtin_raise_lab.spec` build passed; extractor 150/150; generated coverage/progress and `git diff --check` passed |
+
+DECIDED: admit only the payload-free `UnicodeError` class identity and its
+ordinary `Exception` catch; retain loud behavior for payload constructors.

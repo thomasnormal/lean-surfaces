@@ -243,6 +243,17 @@ def catch_Warning(value):
         return value
 
 
+def raise_UnicodeError():
+    raise UnicodeError
+
+
+def catch_UnicodeError(value):
+    try:
+        raise UnicodeError
+    except Exception:
+        return value
+
+
 def base_not_exception():
     try:
         try:

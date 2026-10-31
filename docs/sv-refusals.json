@@ -1505,7 +1505,7 @@
     "extractor"
    ],
    "trigger": "H: always_ff @(posedge c iff b[0]) y <= a;",
-   "why": "Plain timed `always` and `always_ff` clocks admit a scalar identifier `iff` guard and sample it when the adjacent edge is published; compound guards and guarded reset lists remain loud.",
+   "why": "Plain timed `always` and positive- or negative-edge `always_ff` clocks admit a scalar identifier `iff` guard and sample it when the adjacent edge is published; compound guards and guarded reset lists remain loud.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",

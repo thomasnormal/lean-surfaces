@@ -4,8 +4,8 @@
 an `iff` condition. The event must occur first and the guard is sampled when
 that event arrives; changing the guard alone does not wake the process. The
 timed slice admits scalar identifier guards on plain `always` events and
-positive-edge `always_ff` clocks; the marker remains explicit for compound
-guards, guarded negative-edge clocks, and guarded reset lists.
+positive- or negative-edge `always_ff` clocks; the marker remains explicit for
+compound guards and guarded reset lists.
 
 ## Why the remaining conditional event controls stay loud
 
@@ -14,9 +14,8 @@ registration, wake-up filtering and re-arming. The retained event-list
 registration now carries a scalar identifier guard and applies it at the
 publication point. Compound expressions still need a general evaluator, and
 `always_ff` guards are retained on the clock registration and preserve its
-inferred-clock and single-driver rules. Compound expressions still need a
-general evaluator. No second scheduler or guessed guard evaluation is
-introduced.
+inferred-clock and single-driver rules. No second scheduler or guessed guard
+evaluation is introduced.
 
 ## 2026-10-22 census and decision
 

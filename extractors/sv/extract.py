@@ -24716,8 +24716,6 @@ def convert_procedural_block(sm, m):
         guard = convert_expr(sm, timing.iffCondition)
         if guard.get("kind") != "Ident" or guard.get("width") != 1:
             return unsupported(sm, m, "SignalEventControl:iff")
-        if timing.edge != EdgeKind.PosEdge:
-            return unsupported(sm, m, "SignalEventControl:iff")
     clk = convert_expr(sm, timing.expr)
     if clk.get("kind") != "Ident" or clk.get("width") != 1:
         return unsupported(sm, m, "SignalEventControl:clock")

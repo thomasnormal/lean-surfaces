@@ -46,6 +46,16 @@ class PlainAlways(unittest.TestCase):
                          ("AlwaysPosedge", "always_ff", "clk"))
         self.assertEqual(process["iff"]["name"], "en")
 
+    def test_always_ff_negative_scalar_iff_guard_is_retained(self):
+        design = lower(
+            "module top; logic clk, en, q; "
+            "always_ff @(negedge clk iff en) q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["style"], process["clock"],
+                          process["edge"]),
+                         ("AlwaysPosedge", "always_ff", "clk", "neg"))
+        self.assertEqual(process["iff"]["name"], "en")
+
     def test_plain_multi_signal_event_list_is_retained(self):
         design = lower(
             "module top; logic a,b,y; always @(a or b) y = a ^ b; endmodule")

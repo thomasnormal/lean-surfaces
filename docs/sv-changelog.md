@@ -10,6 +10,14 @@ vector (`wpg_logic`), the last-write-wins order of one body (`wpg_order`), the c
 refusal (`unknown statement kind "LocalDecl"`) and is not pinned. Pinned on Xcelium 24.03 (`xcelium_golden.json`
 503 → 513 rows, purely additive; 288 cycles, 0 mismatches against the transcription of the ls-sv rules); all ten
 pinned rows are XREF-MATCH against the Lean model (`diff_test2.py --golden`), none whitelisted.
+# [0.1.285] — 2026-10-31
+
+Timed `always_ff @(negedge clk iff en)` now retains its scalar guard alongside
+the negative-edge clock and filters wake-up before the ordinary NBA body runs.
+The `always_ff_event_iff_neg` witness checks a disabled falling edge followed by
+an enabled capture and MATCHes; compound guards and guarded reset lists remain
+loud. Differential coverage grows **549/535/0/14 → 550/536/0/14**; grammar
+coverage remains **240/212/28**.
 
 # [0.1.283] — 2026-10-31
 

@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar `iff` guards on negative-edge timed `always_ff` clocks — 2026-10-31
+
+Timed `always_ff @(negedge clk iff en)` now retains both the negative-edge
+clock and its scalar guard. The existing edge wake-up samples `en` at the
+published falling edge before the body enters the ordinary Active/Inactive/NBA
+path; a disabled falling edge leaves the process armed for the next one.
+Compound guards and guarded clock-plus-reset lists remain loud.
+
+The `always_ff_event_iff_neg` witness checks a disabled falling edge followed by
+an enabled capture and MATCHes its pinned transcript. Differential coverage
+grows **549/535/0/14 → 550/536/0/14**; grammar coverage remains **240/212/28**.
+
 ## Scalar `iff` guards on timed `always_ff` clocks — 2026-10-31
 
 Timed `always_ff @(posedge clk iff en)` retains the scalar guard on its

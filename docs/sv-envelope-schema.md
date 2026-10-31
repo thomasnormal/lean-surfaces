@@ -254,9 +254,8 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 the optional `edge` records a negative-edge clock and its absence means
 positive edge. The `areset_n`/`areset` fields record the admitted
 two-event `posedge` clock plus active-low/active-high reset forms. A scalar
-identifier `iff` guard is sampled at a positive-edge clock publication;
-compound guards, guarded negative-edge clocks and guarded reset lists remain
-loud.
+identifier `iff` guard is sampled at a positive- or negative-edge clock
+publication; compound guards and guarded reset lists remain loud.
 `style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
 other sensitivity stays unsupported in the M0 cycle path. The legacy
@@ -3699,9 +3698,9 @@ see [invalid hierarchies](sv-invalid-hierarchies.md).
 ## Conditional event controls
 
 `SignalEventControl:iff` remains an explicit unsupported event control when an
-occurrence-time `iff` guard qualifies an ordinary or `always_ff` event. The
-envelope does not drop the guard, turn it into a separate event or fabricate
-an inferred clock; see [conditional events](sv-event-iff.md).
+occurrence-time `iff` guard uses a compound expression or qualifies an
+unsupported reset list. Scalar guards on ordinary and `always_ff` clocks are
+retained in the envelope and sampled at publication; see [conditional events](sv-event-iff.md).
 
 ## Invalid static locals
 

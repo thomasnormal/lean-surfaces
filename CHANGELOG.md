@@ -100,6 +100,8 @@
 
 - Switch default computed initialization now preserves the enclosing value when the fallthrough default arm is skipped.
 
+- Switch default computed initialization now records the enclosing return after fallthrough assignment.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

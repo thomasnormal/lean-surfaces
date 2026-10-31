@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The generated Python coverage page now records the admitted bare import
+  exception identities accurately, including their payload boundary.
+
 - Bare `ImportError` and `ModuleNotFoundError` raises now use the admitted
   builtin exception identity and are caught by `except Exception:`; payload
   constructors and direct import-handler matching remain loud.

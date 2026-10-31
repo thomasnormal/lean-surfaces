@@ -27,7 +27,11 @@ producer theorem `CombEq.eq_view` (the parameter stage, the structural facts and
 are closed by `rfl` and `decide`), normalizes the netlist view `s.Eqs ∧ s.Knowns` to one named
 hypothesis per assign (`eq_<signal>_<block>_<position>`, `known_…`; and the STABLE ALIASES
 `eq_<signal>_<k>`, `known_<signal>_<k>`, `k` the ordinal of the assign among those that write the
-signal: `stableAliases`), and returns the obligations it does not discharge, tagged:
+signal: `stableAliases`), and returns the obligations it does not discharge, tagged. (The view has one
+conjunct per site, in site order, and a site's knownness fact may itself be a conjunction, so the sites
+are the first `n` conjuncts of each spine: the spine may be longer than `n` when the LAST site drives a
+bit of a vector target. The tactic runs with `maxRecDepth` raised to 100000 (`withDeepRec`), so a netlist
+of a hundred sites needs no `set_option maxRecDepth` in the player's file.)
 
 * `auto`, `inRange` — as for `sv_structure` (reads/targets inside their declared vectors);
 * `width` — every operand is exactly as wide as the target (no implicit `resize`);
@@ -216,7 +220,8 @@ macro "sv_eq_norm" : tactic =>
       LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk,
       LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit]; sv_lp_norm))
 
-/-- The number of conjuncts of a right-nested `∧`. -/
+/-- The number of conjuncts of a right-nested `∧` (on the right spine: a conjunct that is itself a
+conjunction counts once, except the LAST one, whose own parts continue the spine). -/
 private partial def countAnd (e : Expr) : Nat :=
   if e.isAppOfArity ``And 2 then 1 + countAnd e.appArg! else 1
 
@@ -252,7 +257,7 @@ private def peelNames (h : Ident) (names : List String) : TacticM Unit := do
       peelNames h rest
 
 /-- Run the equations stage. (`unsafe`: it evaluates the recognizer with `evalExpr`.) -/
-unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
+unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
   let goal ← getMainGoal
   let saved ← saveState
   let report : Array String ← goal.withContext do
@@ -387,7 +392,11 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
       let isAnd := kt.isAppOfArity ``And 2
       let nE := if isAnd then countAnd kt.appFn!.appArg! else 0
       let nK := if isAnd then countAnd kt.appArg! else 0
-      if isAnd && nE == eqNames.length && nK == knNames.length then
+      -- The view has one conjunct per site, in site order, so the sites are the first `n` conjuncts of
+      -- each spine: the spine may be LONGER than `n` when the last site's own fact is a conjunction (a
+      -- bit of a vector target states `∃ v, … ∧ …` and `KnownBit …`: two spine nodes for one site).
+      -- `peelNames` takes the first `n - 1` by `obtain` and leaves the rest as the last hypothesis.
+      if isAnd && eqNames.length ≤ nE && knNames.length ≤ nK then
         evalTactic (← `(tactic| obtain ⟨$(mkIdent `keyE):ident, $(mkIdent `keyK):ident⟩ := $keyI))
         peelNames (mkIdent `keyE) eqNames
         peelNames (mkIdent `keyK) knNames
@@ -418,7 +427,7 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := do
             if aliasNames.contains n then continue
             if n.startsWith "eq_" || n.startsWith "known_" || n == "key" then
               ls := ls.push s!"  {n} : {← ppExpr (← instantiateMVars d.type)}"
-          if isAnd && nE == eqNames.length && nK == knNames.length then
+          if isAnd && eqNames.length ≤ nE && knNames.length ≤ nK then
             ls := ls.push "  stable aliases (copies of the above; same statements):"
             for (ae, oe, ak, ok) in stableAliases sites do
               ls := ls.push s!"    {ae} := {oe}    {ak} := {ok}"
@@ -437,6 +446,10 @@ syntax (name := svEquations) "sv_equations" : tactic
 
 /-- `sv_equations?` prints the equations and obligations it would produce, and changes nothing. -/
 syntax (name := svEquationsQ) "sv_equations?" : tactic
+
+/-- `sv_equations`, run with the deep recursion limit of `withDeepRec`: the normalization of a view of a
+hundred sites recurses once per site. -/
+unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := withDeepRec (runSvEquationsCore hintOnly)
 
 @[tactic svEquations] unsafe def evalSvEquations : Tactic := fun _ => runSvEquations false
 

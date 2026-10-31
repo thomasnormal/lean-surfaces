@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/flat_net/flat_net.sv",
-      "sha256": "4dce7a4ef8e6b2b73e7b9a2af276eca75d2bd20bd579afef69f45a22e5b91ef1"
+      "sha256": "f4a57a5998c0a57826f50ae319ff8a8f8c5f57234215cb20f61b5d45a024985c"
     }
   ],
   "packages": [],
@@ -20,9 +20,9 @@
       {
         "kind": "Module",
         "span": {
-          "line": 5,
+          "line": 6,
           "col": 1,
-          "end_line": 22,
+          "end_line": 23,
           "end_col": 10
         },
         "name": "flat_net",
@@ -33,9 +33,9 @@
           {
             "kind": "Port",
             "span": {
-              "line": 6,
+              "line": 7,
               "col": 22,
-              "end_line": 6,
+              "end_line": 7,
               "end_col": 23
             },
             "name": "a",
@@ -47,9 +47,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 6,
+                      "line": 7,
                       "col": 17,
-                      "end_line": 6,
+                      "end_line": 7,
                       "end_col": 18
                     },
                     "value": 3,
@@ -58,50 +58,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 6,
+                      "line": 7,
                       "col": 19,
-                      "end_line": 6,
-                      "end_col": 20
-                    },
-                    "value": 0,
-                    "resolved_width": null
-                  }
-                }
-              ],
-              "resolved": 4
-            }
-          },
-          {
-            "kind": "Port",
-            "span": {
-              "line": 6,
-              "col": 25,
-              "end_line": 6,
-              "end_col": 26
-            },
-            "name": "b",
-            "dir": "in",
-            "width": {
-              "kind": "PackedType",
-              "packed": [
-                {
-                  "msb": {
-                    "kind": "Int",
-                    "span": {
-                      "line": 6,
-                      "col": 17,
-                      "end_line": 6,
-                      "end_col": 18
-                    },
-                    "value": 3,
-                    "resolved_width": null
-                  },
-                  "lsb": {
-                    "kind": "Int",
-                    "span": {
-                      "line": 6,
-                      "col": 19,
-                      "end_line": 6,
+                      "end_line": 7,
                       "end_col": 20
                     },
                     "value": 0,
@@ -116,28 +75,12 @@
             "kind": "Port",
             "span": {
               "line": 7,
-              "col": 22,
+              "col": 25,
               "end_line": 7,
-              "end_col": 25
+              "end_col": 26
             },
-            "name": "cin",
+            "name": "b",
             "dir": "in",
-            "width": {
-              "kind": "PackedType",
-              "packed": [],
-              "resolved": 1
-            }
-          },
-          {
-            "kind": "Port",
-            "span": {
-              "line": 8,
-              "col": 22,
-              "end_line": 8,
-              "end_col": 23
-            },
-            "name": "s",
-            "dir": "out",
             "width": {
               "kind": "PackedType",
               "packed": [
@@ -145,9 +88,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 8,
+                      "line": 7,
                       "col": 17,
-                      "end_line": 8,
+                      "end_line": 7,
                       "end_col": 18
                     },
                     "value": 3,
@@ -156,9 +99,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 8,
+                      "line": 7,
                       "col": 19,
-                      "end_line": 8,
+                      "end_line": 7,
                       "end_col": 20
                     },
                     "value": 0,
@@ -172,9 +115,66 @@
           {
             "kind": "Port",
             "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 25
+            },
+            "name": "cin",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
               "line": 9,
               "col": 22,
               "end_line": 9,
+              "end_col": 23
+            },
+            "name": "s",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 22,
+              "end_line": 10,
               "end_col": 26
             },
             "name": "cout",
@@ -190,9 +190,9 @@
           {
             "kind": "Var",
             "span": {
-              "line": 11,
+              "line": 12,
               "col": 15,
-              "end_line": 11,
+              "end_line": 12,
               "end_col": 16
             },
             "name": "c",
@@ -203,9 +203,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 11,
+                      "line": 12,
                       "col": 10,
-                      "end_line": 11,
+                      "end_line": 12,
                       "end_col": 11
                     },
                     "value": 4,
@@ -214,9 +214,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 11,
+                      "line": 12,
                       "col": 12,
-                      "end_line": 11,
+                      "end_line": 12,
                       "end_col": 13
                     },
                     "value": 0,
@@ -233,26 +233,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 12,
+              "line": 13,
               "col": 10,
-              "end_line": 12,
+              "end_line": 13,
               "end_col": 21
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 12,
+                "line": 13,
                 "col": 10,
-                "end_line": 12,
+                "end_line": 13,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 12,
+                  "line": 13,
                   "col": 10,
-                  "end_line": 12,
+                  "end_line": 13,
                   "end_col": 11
                 },
                 "width": 5,
@@ -261,9 +261,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 12,
+                  "line": 13,
                   "col": 12,
-                  "end_line": 12,
+                  "end_line": 13,
                   "end_col": 13
                 },
                 "value": 0,
@@ -273,9 +273,9 @@
             "value": {
               "kind": "Ident",
               "span": {
-                "line": 12,
+                "line": 13,
                 "col": 18,
-                "end_line": 12,
+                "end_line": 13,
                 "end_col": 21
               },
               "width": 1,
@@ -285,26 +285,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 13,
+              "line": 14,
               "col": 10,
-              "end_line": 13,
+              "end_line": 14,
               "end_col": 36
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 13,
+                "line": 14,
                 "col": 10,
-                "end_line": 13,
+                "end_line": 14,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 13,
+                  "line": 14,
                   "col": 10,
-                  "end_line": 13,
+                  "end_line": 14,
                   "end_col": 11
                 },
                 "width": 4,
@@ -313,9 +313,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 13,
+                  "line": 14,
                   "col": 12,
-                  "end_line": 13,
+                  "end_line": 14,
                   "end_col": 13
                 },
                 "value": 0,
@@ -325,9 +325,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 13,
+                "line": 14,
                 "col": 18,
-                "end_line": 13,
+                "end_line": 14,
                 "end_col": 36
               },
               "width": 1,
@@ -335,9 +335,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 13,
+                  "line": 14,
                   "col": 18,
-                  "end_line": 13,
+                  "end_line": 14,
                   "end_col": 29
                 },
                 "width": 1,
@@ -345,18 +345,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 13,
+                    "line": 14,
                     "col": 18,
-                    "end_line": 13,
+                    "end_line": 14,
                     "end_col": 22
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 13,
+                      "line": 14,
                       "col": 18,
-                      "end_line": 13,
+                      "end_line": 14,
                       "end_col": 19
                     },
                     "width": 4,
@@ -365,9 +365,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 13,
+                      "line": 14,
                       "col": 20,
-                      "end_line": 13,
+                      "end_line": 14,
                       "end_col": 21
                     },
                     "value": 0,
@@ -377,18 +377,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 13,
+                    "line": 14,
                     "col": 25,
-                    "end_line": 13,
+                    "end_line": 14,
                     "end_col": 29
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 13,
+                      "line": 14,
                       "col": 25,
-                      "end_line": 13,
+                      "end_line": 14,
                       "end_col": 26
                     },
                     "width": 4,
@@ -397,9 +397,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 13,
+                      "line": 14,
                       "col": 27,
-                      "end_line": 13,
+                      "end_line": 14,
                       "end_col": 28
                     },
                     "value": 0,
@@ -410,18 +410,18 @@
               "right": {
                 "kind": "BitSel",
                 "span": {
-                  "line": 13,
+                  "line": 14,
                   "col": 32,
-                  "end_line": 13,
+                  "end_line": 14,
                   "end_col": 36
                 },
                 "width": 1,
                 "value": {
                   "kind": "Ident",
                   "span": {
-                    "line": 13,
+                    "line": 14,
                     "col": 32,
-                    "end_line": 13,
+                    "end_line": 14,
                     "end_col": 33
                   },
                   "width": 5,
@@ -430,9 +430,9 @@
                 "index": {
                   "kind": "Int",
                   "span": {
-                    "line": 13,
+                    "line": 14,
                     "col": 34,
-                    "end_line": 13,
+                    "end_line": 14,
                     "end_col": 35
                   },
                   "value": 0,
@@ -444,26 +444,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 14,
+              "line": 15,
               "col": 10,
-              "end_line": 14,
+              "end_line": 15,
               "end_col": 56
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 14,
+                "line": 15,
                 "col": 10,
-                "end_line": 14,
+                "end_line": 15,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 14,
+                  "line": 15,
                   "col": 10,
-                  "end_line": 14,
+                  "end_line": 15,
                   "end_col": 11
                 },
                 "width": 5,
@@ -472,9 +472,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 14,
+                  "line": 15,
                   "col": 12,
-                  "end_line": 14,
+                  "end_line": 15,
                   "end_col": 13
                 },
                 "value": 1,
@@ -484,9 +484,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 14,
+                "line": 15,
                 "col": 18,
-                "end_line": 14,
+                "end_line": 15,
                 "end_col": 56
               },
               "width": 1,
@@ -494,9 +494,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 14,
+                  "line": 15,
                   "col": 19,
-                  "end_line": 14,
+                  "end_line": 15,
                   "end_col": 30
                 },
                 "width": 1,
@@ -504,18 +504,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 14,
+                    "line": 15,
                     "col": 19,
-                    "end_line": 14,
+                    "end_line": 15,
                     "end_col": 23
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 19,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 20
                     },
                     "width": 4,
@@ -524,9 +524,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 21,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 22
                     },
                     "value": 0,
@@ -536,18 +536,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 14,
+                    "line": 15,
                     "col": 26,
-                    "end_line": 14,
+                    "end_line": 15,
                     "end_col": 30
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 26,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 27
                     },
                     "width": 4,
@@ -556,9 +556,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 28,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 29
                     },
                     "value": 0,
@@ -569,9 +569,9 @@
               "right": {
                 "kind": "Binary",
                 "span": {
-                  "line": 14,
+                  "line": 15,
                   "col": 35,
-                  "end_line": 14,
+                  "end_line": 15,
                   "end_col": 55
                 },
                 "width": 1,
@@ -579,18 +579,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 14,
+                    "line": 15,
                     "col": 35,
-                    "end_line": 14,
+                    "end_line": 15,
                     "end_col": 39
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 35,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 36
                     },
                     "width": 5,
@@ -599,9 +599,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 37,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 38
                     },
                     "value": 0,
@@ -611,9 +611,9 @@
                 "right": {
                   "kind": "Binary",
                   "span": {
-                    "line": 14,
+                    "line": 15,
                     "col": 43,
-                    "end_line": 14,
+                    "end_line": 15,
                     "end_col": 54
                   },
                   "width": 1,
@@ -621,18 +621,18 @@
                   "left": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 43,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 47
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 14,
+                        "line": 15,
                         "col": 43,
-                        "end_line": 14,
+                        "end_line": 15,
                         "end_col": 44
                       },
                       "width": 4,
@@ -641,9 +641,9 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 14,
+                        "line": 15,
                         "col": 45,
-                        "end_line": 14,
+                        "end_line": 15,
                         "end_col": 46
                       },
                       "value": 0,
@@ -653,18 +653,18 @@
                   "right": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 14,
+                      "line": 15,
                       "col": 50,
-                      "end_line": 14,
+                      "end_line": 15,
                       "end_col": 54
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 14,
+                        "line": 15,
                         "col": 50,
-                        "end_line": 14,
+                        "end_line": 15,
                         "end_col": 51
                       },
                       "width": 4,
@@ -673,9 +673,9 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 14,
+                        "line": 15,
                         "col": 52,
-                        "end_line": 14,
+                        "end_line": 15,
                         "end_col": 53
                       },
                       "value": 0,
@@ -689,26 +689,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 15,
+              "line": 16,
               "col": 10,
-              "end_line": 15,
+              "end_line": 16,
               "end_col": 36
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 15,
+                "line": 16,
                 "col": 10,
-                "end_line": 15,
+                "end_line": 16,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 15,
+                  "line": 16,
                   "col": 10,
-                  "end_line": 15,
+                  "end_line": 16,
                   "end_col": 11
                 },
                 "width": 4,
@@ -717,9 +717,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 15,
+                  "line": 16,
                   "col": 12,
-                  "end_line": 15,
+                  "end_line": 16,
                   "end_col": 13
                 },
                 "value": 1,
@@ -729,9 +729,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 15,
+                "line": 16,
                 "col": 18,
-                "end_line": 15,
+                "end_line": 16,
                 "end_col": 36
               },
               "width": 1,
@@ -739,9 +739,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 15,
+                  "line": 16,
                   "col": 18,
-                  "end_line": 15,
+                  "end_line": 16,
                   "end_col": 29
                 },
                 "width": 1,
@@ -749,18 +749,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 15,
+                    "line": 16,
                     "col": 18,
-                    "end_line": 15,
+                    "end_line": 16,
                     "end_col": 22
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 15,
+                      "line": 16,
                       "col": 18,
-                      "end_line": 15,
+                      "end_line": 16,
                       "end_col": 19
                     },
                     "width": 4,
@@ -769,9 +769,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 15,
+                      "line": 16,
                       "col": 20,
-                      "end_line": 15,
+                      "end_line": 16,
                       "end_col": 21
                     },
                     "value": 1,
@@ -781,18 +781,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 15,
+                    "line": 16,
                     "col": 25,
-                    "end_line": 15,
+                    "end_line": 16,
                     "end_col": 29
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 15,
+                      "line": 16,
                       "col": 25,
-                      "end_line": 15,
+                      "end_line": 16,
                       "end_col": 26
                     },
                     "width": 4,
@@ -801,9 +801,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 15,
+                      "line": 16,
                       "col": 27,
-                      "end_line": 15,
+                      "end_line": 16,
                       "end_col": 28
                     },
                     "value": 1,
@@ -814,18 +814,18 @@
               "right": {
                 "kind": "BitSel",
                 "span": {
-                  "line": 15,
+                  "line": 16,
                   "col": 32,
-                  "end_line": 15,
+                  "end_line": 16,
                   "end_col": 36
                 },
                 "width": 1,
                 "value": {
                   "kind": "Ident",
                   "span": {
-                    "line": 15,
+                    "line": 16,
                     "col": 32,
-                    "end_line": 15,
+                    "end_line": 16,
                     "end_col": 33
                   },
                   "width": 5,
@@ -834,9 +834,9 @@
                 "index": {
                   "kind": "Int",
                   "span": {
-                    "line": 15,
+                    "line": 16,
                     "col": 34,
-                    "end_line": 15,
+                    "end_line": 16,
                     "end_col": 35
                   },
                   "value": 1,
@@ -848,26 +848,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 16,
+              "line": 17,
               "col": 10,
-              "end_line": 16,
+              "end_line": 17,
               "end_col": 56
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 16,
+                "line": 17,
                 "col": 10,
-                "end_line": 16,
+                "end_line": 17,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 16,
+                  "line": 17,
                   "col": 10,
-                  "end_line": 16,
+                  "end_line": 17,
                   "end_col": 11
                 },
                 "width": 5,
@@ -876,9 +876,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 16,
+                  "line": 17,
                   "col": 12,
-                  "end_line": 16,
+                  "end_line": 17,
                   "end_col": 13
                 },
                 "value": 2,
@@ -888,9 +888,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 16,
+                "line": 17,
                 "col": 18,
-                "end_line": 16,
+                "end_line": 17,
                 "end_col": 56
               },
               "width": 1,
@@ -898,9 +898,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 16,
+                  "line": 17,
                   "col": 19,
-                  "end_line": 16,
+                  "end_line": 17,
                   "end_col": 30
                 },
                 "width": 1,
@@ -908,18 +908,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 16,
+                    "line": 17,
                     "col": 19,
-                    "end_line": 16,
+                    "end_line": 17,
                     "end_col": 23
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 19,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 20
                     },
                     "width": 4,
@@ -928,9 +928,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 21,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 22
                     },
                     "value": 1,
@@ -940,18 +940,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 16,
+                    "line": 17,
                     "col": 26,
-                    "end_line": 16,
+                    "end_line": 17,
                     "end_col": 30
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 26,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 27
                     },
                     "width": 4,
@@ -960,9 +960,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 28,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 29
                     },
                     "value": 1,
@@ -973,9 +973,9 @@
               "right": {
                 "kind": "Binary",
                 "span": {
-                  "line": 16,
+                  "line": 17,
                   "col": 35,
-                  "end_line": 16,
+                  "end_line": 17,
                   "end_col": 55
                 },
                 "width": 1,
@@ -983,18 +983,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 16,
+                    "line": 17,
                     "col": 35,
-                    "end_line": 16,
+                    "end_line": 17,
                     "end_col": 39
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 35,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 36
                     },
                     "width": 5,
@@ -1003,9 +1003,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 37,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 38
                     },
                     "value": 1,
@@ -1015,9 +1015,9 @@
                 "right": {
                   "kind": "Binary",
                   "span": {
-                    "line": 16,
+                    "line": 17,
                     "col": 43,
-                    "end_line": 16,
+                    "end_line": 17,
                     "end_col": 54
                   },
                   "width": 1,
@@ -1025,18 +1025,18 @@
                   "left": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 43,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 47
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 16,
+                        "line": 17,
                         "col": 43,
-                        "end_line": 16,
+                        "end_line": 17,
                         "end_col": 44
                       },
                       "width": 4,
@@ -1045,9 +1045,9 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 16,
+                        "line": 17,
                         "col": 45,
-                        "end_line": 16,
+                        "end_line": 17,
                         "end_col": 46
                       },
                       "value": 1,
@@ -1057,18 +1057,18 @@
                   "right": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 16,
+                      "line": 17,
                       "col": 50,
-                      "end_line": 16,
+                      "end_line": 17,
                       "end_col": 54
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 16,
+                        "line": 17,
                         "col": 50,
-                        "end_line": 16,
+                        "end_line": 17,
                         "end_col": 51
                       },
                       "width": 4,
@@ -1077,9 +1077,9 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 16,
+                        "line": 17,
                         "col": 52,
-                        "end_line": 16,
+                        "end_line": 17,
                         "end_col": 53
                       },
                       "value": 1,
@@ -1093,26 +1093,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 17,
+              "line": 18,
               "col": 10,
-              "end_line": 17,
+              "end_line": 18,
               "end_col": 36
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 17,
+                "line": 18,
                 "col": 10,
-                "end_line": 17,
+                "end_line": 18,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 17,
+                  "line": 18,
                   "col": 10,
-                  "end_line": 17,
+                  "end_line": 18,
                   "end_col": 11
                 },
                 "width": 4,
@@ -1121,9 +1121,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 17,
+                  "line": 18,
                   "col": 12,
-                  "end_line": 17,
+                  "end_line": 18,
                   "end_col": 13
                 },
                 "value": 2,
@@ -1133,9 +1133,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 17,
+                "line": 18,
                 "col": 18,
-                "end_line": 17,
+                "end_line": 18,
                 "end_col": 36
               },
               "width": 1,
@@ -1143,9 +1143,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 17,
+                  "line": 18,
                   "col": 18,
-                  "end_line": 17,
+                  "end_line": 18,
                   "end_col": 29
                 },
                 "width": 1,
@@ -1153,18 +1153,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 17,
+                    "line": 18,
                     "col": 18,
-                    "end_line": 17,
+                    "end_line": 18,
                     "end_col": 22
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 17,
+                      "line": 18,
                       "col": 18,
-                      "end_line": 17,
+                      "end_line": 18,
                       "end_col": 19
                     },
                     "width": 4,
@@ -1173,9 +1173,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 17,
+                      "line": 18,
                       "col": 20,
-                      "end_line": 17,
+                      "end_line": 18,
                       "end_col": 21
                     },
                     "value": 2,
@@ -1185,18 +1185,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 17,
+                    "line": 18,
                     "col": 25,
-                    "end_line": 17,
+                    "end_line": 18,
                     "end_col": 29
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 17,
+                      "line": 18,
                       "col": 25,
-                      "end_line": 17,
+                      "end_line": 18,
                       "end_col": 26
                     },
                     "width": 4,
@@ -1205,9 +1205,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 17,
+                      "line": 18,
                       "col": 27,
-                      "end_line": 17,
+                      "end_line": 18,
                       "end_col": 28
                     },
                     "value": 2,
@@ -1218,18 +1218,18 @@
               "right": {
                 "kind": "BitSel",
                 "span": {
-                  "line": 17,
+                  "line": 18,
                   "col": 32,
-                  "end_line": 17,
+                  "end_line": 18,
                   "end_col": 36
                 },
                 "width": 1,
                 "value": {
                   "kind": "Ident",
                   "span": {
-                    "line": 17,
+                    "line": 18,
                     "col": 32,
-                    "end_line": 17,
+                    "end_line": 18,
                     "end_col": 33
                   },
                   "width": 5,
@@ -1238,9 +1238,9 @@
                 "index": {
                   "kind": "Int",
                   "span": {
-                    "line": 17,
+                    "line": 18,
                     "col": 34,
-                    "end_line": 17,
+                    "end_line": 18,
                     "end_col": 35
                   },
                   "value": 2,
@@ -1252,26 +1252,26 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 18,
+              "line": 19,
               "col": 10,
-              "end_line": 18,
+              "end_line": 19,
               "end_col": 56
             },
             "target": {
               "kind": "BitSel",
               "span": {
-                "line": 18,
+                "line": 19,
                 "col": 10,
-                "end_line": 18,
+                "end_line": 19,
                 "end_col": 14
               },
               "width": 1,
               "value": {
                 "kind": "Ident",
                 "span": {
-                  "line": 18,
+                  "line": 19,
                   "col": 10,
-                  "end_line": 18,
+                  "end_line": 19,
                   "end_col": 11
                 },
                 "width": 5,
@@ -1280,9 +1280,9 @@
               "index": {
                 "kind": "Int",
                 "span": {
-                  "line": 18,
+                  "line": 19,
                   "col": 12,
-                  "end_line": 18,
+                  "end_line": 19,
                   "end_col": 13
                 },
                 "value": 3,
@@ -1292,9 +1292,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 18,
+                "line": 19,
                 "col": 18,
-                "end_line": 18,
+                "end_line": 19,
                 "end_col": 56
               },
               "width": 1,
@@ -1302,9 +1302,9 @@
               "left": {
                 "kind": "Binary",
                 "span": {
-                  "line": 18,
+                  "line": 19,
                   "col": 19,
-                  "end_line": 18,
+                  "end_line": 19,
                   "end_col": 30
                 },
                 "width": 1,
@@ -1312,18 +1312,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 18,
+                    "line": 19,
                     "col": 19,
-                    "end_line": 18,
+                    "end_line": 19,
                     "end_col": 23
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 19,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 20
                     },
                     "width": 4,
@@ -1332,9 +1332,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 21,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 22
                     },
                     "value": 2,
@@ -1344,18 +1344,18 @@
                 "right": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 18,
+                    "line": 19,
                     "col": 26,
-                    "end_line": 18,
+                    "end_line": 19,
                     "end_col": 30
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 26,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 27
                     },
                     "width": 4,
@@ -1364,9 +1364,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 28,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 29
                     },
                     "value": 2,
@@ -1377,9 +1377,9 @@
               "right": {
                 "kind": "Binary",
                 "span": {
-                  "line": 18,
+                  "line": 19,
                   "col": 35,
-                  "end_line": 18,
+                  "end_line": 19,
                   "end_col": 55
                 },
                 "width": 1,
@@ -1387,18 +1387,18 @@
                 "left": {
                   "kind": "BitSel",
                   "span": {
-                    "line": 18,
+                    "line": 19,
                     "col": 35,
-                    "end_line": 18,
+                    "end_line": 19,
                     "end_col": 39
                   },
                   "width": 1,
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 35,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 36
                     },
                     "width": 5,
@@ -1407,9 +1407,9 @@
                   "index": {
                     "kind": "Int",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 37,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 38
                     },
                     "value": 2,
@@ -1419,9 +1419,9 @@
                 "right": {
                   "kind": "Binary",
                   "span": {
-                    "line": 18,
+                    "line": 19,
                     "col": 43,
-                    "end_line": 18,
+                    "end_line": 19,
                     "end_col": 54
                   },
                   "width": 1,
@@ -1429,18 +1429,18 @@
                   "left": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 43,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 47
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 18,
+                        "line": 19,
                         "col": 43,
-                        "end_line": 18,
+                        "end_line": 19,
                         "end_col": 44
                       },
                       "width": 4,
@@ -1449,9 +1449,9 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 18,
+                        "line": 19,
                         "col": 45,
-                        "end_line": 18,
+                        "end_line": 19,
                         "end_col": 46
                       },
                       "value": 2,
@@ -1461,18 +1461,18 @@
                   "right": {
                     "kind": "BitSel",
                     "span": {
-                      "line": 18,
+                      "line": 19,
                       "col": 50,
-                      "end_line": 18,
+                      "end_line": 19,
                       "end_col": 54
                     },
                     "width": 1,
                     "value": {
                       "kind": "Ident",
                       "span": {
-                        "line": 18,
+                        "line": 19,
                         "col": 50,
-                        "end_line": 18,
+                        "end_line": 19,
                         "end_col": 51
                       },
                       "width": 4,
@@ -1481,174 +1481,15 @@
                     "index": {
                       "kind": "Int",
                       "span": {
-                        "line": 18,
+                        "line": 19,
                         "col": 52,
-                        "end_line": 18,
+                        "end_line": 19,
                         "end_col": 53
                       },
                       "value": 2,
                       "resolved_width": 32
                     }
                   }
-                }
-              }
-            }
-          },
-          {
-            "kind": "Assign",
-            "span": {
-              "line": 19,
-              "col": 10,
-              "end_line": 19,
-              "end_col": 36
-            },
-            "target": {
-              "kind": "BitSel",
-              "span": {
-                "line": 19,
-                "col": 10,
-                "end_line": 19,
-                "end_col": 14
-              },
-              "width": 1,
-              "value": {
-                "kind": "Ident",
-                "span": {
-                  "line": 19,
-                  "col": 10,
-                  "end_line": 19,
-                  "end_col": 11
-                },
-                "width": 4,
-                "name": "s"
-              },
-              "index": {
-                "kind": "Int",
-                "span": {
-                  "line": 19,
-                  "col": 12,
-                  "end_line": 19,
-                  "end_col": 13
-                },
-                "value": 3,
-                "resolved_width": 32
-              }
-            },
-            "value": {
-              "kind": "Binary",
-              "span": {
-                "line": 19,
-                "col": 18,
-                "end_line": 19,
-                "end_col": 36
-              },
-              "width": 1,
-              "op": "^",
-              "left": {
-                "kind": "Binary",
-                "span": {
-                  "line": 19,
-                  "col": 18,
-                  "end_line": 19,
-                  "end_col": 29
-                },
-                "width": 1,
-                "op": "^",
-                "left": {
-                  "kind": "BitSel",
-                  "span": {
-                    "line": 19,
-                    "col": 18,
-                    "end_line": 19,
-                    "end_col": 22
-                  },
-                  "width": 1,
-                  "value": {
-                    "kind": "Ident",
-                    "span": {
-                      "line": 19,
-                      "col": 18,
-                      "end_line": 19,
-                      "end_col": 19
-                    },
-                    "width": 4,
-                    "name": "a"
-                  },
-                  "index": {
-                    "kind": "Int",
-                    "span": {
-                      "line": 19,
-                      "col": 20,
-                      "end_line": 19,
-                      "end_col": 21
-                    },
-                    "value": 3,
-                    "resolved_width": 32
-                  }
-                },
-                "right": {
-                  "kind": "BitSel",
-                  "span": {
-                    "line": 19,
-                    "col": 25,
-                    "end_line": 19,
-                    "end_col": 29
-                  },
-                  "width": 1,
-                  "value": {
-                    "kind": "Ident",
-                    "span": {
-                      "line": 19,
-                      "col": 25,
-                      "end_line": 19,
-                      "end_col": 26
-                    },
-                    "width": 4,
-                    "name": "b"
-                  },
-                  "index": {
-                    "kind": "Int",
-                    "span": {
-                      "line": 19,
-                      "col": 27,
-                      "end_line": 19,
-                      "end_col": 28
-                    },
-                    "value": 3,
-                    "resolved_width": 32
-                  }
-                }
-              },
-              "right": {
-                "kind": "BitSel",
-                "span": {
-                  "line": 19,
-                  "col": 32,
-                  "end_line": 19,
-                  "end_col": 36
-                },
-                "width": 1,
-                "value": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 19,
-                    "col": 32,
-                    "end_line": 19,
-                    "end_col": 33
-                  },
-                  "width": 5,
-                  "name": "c"
-                },
-                "index": {
-                  "kind": "Int",
-                  "span": {
-                    "line": 19,
-                    "col": 34,
-                    "end_line": 19,
-                    "end_col": 35
-                  },
-                  "value": 3,
-                  "resolved_width": 32
                 }
               }
             }
@@ -1947,6 +1788,165 @@
                 },
                 "value": 4,
                 "resolved_width": 32
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 22,
+              "col": 10,
+              "end_line": 22,
+              "end_col": 36
+            },
+            "target": {
+              "kind": "BitSel",
+              "span": {
+                "line": 22,
+                "col": 10,
+                "end_line": 22,
+                "end_col": 14
+              },
+              "width": 1,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 22,
+                  "col": 10,
+                  "end_line": 22,
+                  "end_col": 11
+                },
+                "width": 4,
+                "name": "s"
+              },
+              "index": {
+                "kind": "Int",
+                "span": {
+                  "line": 22,
+                  "col": 12,
+                  "end_line": 22,
+                  "end_col": 13
+                },
+                "value": 3,
+                "resolved_width": 32
+              }
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 22,
+                "col": 18,
+                "end_line": 22,
+                "end_col": 36
+              },
+              "width": 1,
+              "op": "^",
+              "left": {
+                "kind": "Binary",
+                "span": {
+                  "line": 22,
+                  "col": 18,
+                  "end_line": 22,
+                  "end_col": 29
+                },
+                "width": 1,
+                "op": "^",
+                "left": {
+                  "kind": "BitSel",
+                  "span": {
+                    "line": 22,
+                    "col": 18,
+                    "end_line": 22,
+                    "end_col": 22
+                  },
+                  "width": 1,
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 22,
+                      "col": 18,
+                      "end_line": 22,
+                      "end_col": 19
+                    },
+                    "width": 4,
+                    "name": "a"
+                  },
+                  "index": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 20,
+                      "end_line": 22,
+                      "end_col": 21
+                    },
+                    "value": 3,
+                    "resolved_width": 32
+                  }
+                },
+                "right": {
+                  "kind": "BitSel",
+                  "span": {
+                    "line": 22,
+                    "col": 25,
+                    "end_line": 22,
+                    "end_col": 29
+                  },
+                  "width": 1,
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 22,
+                      "col": 25,
+                      "end_line": 22,
+                      "end_col": 26
+                    },
+                    "width": 4,
+                    "name": "b"
+                  },
+                  "index": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 27,
+                      "end_line": 22,
+                      "end_col": 28
+                    },
+                    "value": 3,
+                    "resolved_width": 32
+                  }
+                }
+              },
+              "right": {
+                "kind": "BitSel",
+                "span": {
+                  "line": 22,
+                  "col": 32,
+                  "end_line": 22,
+                  "end_col": 36
+                },
+                "width": 1,
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 22,
+                    "col": 32,
+                    "end_line": 22,
+                    "end_col": 33
+                  },
+                  "width": 5,
+                  "name": "c"
+                },
+                "index": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 22,
+                    "col": 34,
+                    "end_line": 22,
+                    "end_col": 35
+                  },
+                  "value": 3,
+                  "resolved_width": 32
+                }
               }
             }
           }

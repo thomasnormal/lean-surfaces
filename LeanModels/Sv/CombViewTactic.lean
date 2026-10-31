@@ -220,6 +220,16 @@ unsafe def closeByDecide (g : MVarId) (what : String) : MetaM Unit := do
   unless b do throwError "{what}"
   g.assign (mkApp3 (mkConst ``of_decide_eq_true) p inst (← mkEqRefl (mkConst ``Bool.true)))
 
+/-- **Deep recursion for the tactics' own work** (WP-P3b). A netlist of a hundred or more sites makes the
+`simp` normalizations of the obligations recurse once per site (a right-nested conjunction of one fact
+per site), and Lean's default `maxRecDepth` (512) stops them with `maximum recursion depth has been
+reached` long before the work is large: the player had to write `set_option maxRecDepth 100000 in`
+before the theorem. The tactics run their own steps with `maxRecDepth` raised to 100000 (the value
+the references used), scoped to the tactic call through `Core.Context`: nothing in the player's file
+changes, and a limit the player set higher is kept. -/
+def withDeepRec {α : Type} (x : TacticM α) : TacticM α :=
+  withTheReader Core.Context (fun c => { c with maxRecDepth := max c.maxRecDepth 100000 }) x
+
 /-- Run the structural stage. (`unsafe`: it evaluates the recognizer on the design with
 `evalExpr`, at tactic time only.) -/
 unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly : Bool) : TacticM Unit := do
@@ -468,13 +478,13 @@ syntax (name := svStructureQ) "sv_structure?" : tactic
 @[tactic svStructure] unsafe def evalSvStructure : Tactic := fun stx => do
   let usingStx? : Option Syntax := if stx[2].isNone then none else some stx[2][1]
   if stx[1].isNone then
-    runSvStructure none none usingStx? false
+    withDeepRec (runSvStructure none none usingStx? false)
   else
     let cl := stx[1][0]
-    if cl[1].getAtomVal == "lexRank" then runSvStructure none (some cl[3]) usingStx? false
-    else runSvStructure (some cl[3]) none usingStx? false
+    if cl[1].getAtomVal == "lexRank" then withDeepRec (runSvStructure none (some cl[3]) usingStx? false)
+    else withDeepRec (runSvStructure (some cl[3]) none usingStx? false)
 
-@[tactic svStructureQ] unsafe def evalSvStructureQ : Tactic := fun _ => runSvStructure none none none true
+@[tactic svStructureQ] unsafe def evalSvStructureQ : Tactic := fun _ => withDeepRec (runSvStructure none none none true)
 
 /-! ## `sv_interface` (WP-P, P1): the ports of a design of the fragment
 
@@ -596,4 +606,4 @@ unsafe def runSvInterface : TacticM Unit := do
 /-- `sv_interface` — see the comment above. -/
 syntax (name := svInterface) "sv_interface" : tactic
 
-@[tactic svInterface] unsafe def evalSvInterface : Tactic := fun _ => runSvInterface
+@[tactic svInterface] unsafe def evalSvInterface : Tactic := fun _ => withDeepRec runSvInterface

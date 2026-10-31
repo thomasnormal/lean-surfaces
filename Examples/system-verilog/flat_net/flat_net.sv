@@ -1,7 +1,8 @@
 // A FLAT netlist: a 4-bit ripple-carry adder written out gate by gate. No parameter, no generate loop:
 // every site is plain (`plain#0` ... `plain#9`, in source order). `sv_structure` closes the structural
 // obligations of such a design by deciding closed statements about the site list instead of normalizing
-// them (WP-P3b); see `comb_view.lean`.
+// them (WP-P3b); see `comb_view.lean`. The LAST assign drives a bit of a vector output, the shape that
+// used to make `sv_equations` give up naming its equations (`comb_hint.lean`).
 module flat_net (
   input  logic [3:0] a, b,
   input  logic       cin,
@@ -16,7 +17,7 @@ module flat_net (
   assign c[2]  = (a[1] & b[1]) | (c[1] & (a[1] ^ b[1]));
   assign s[2]  = a[2] ^ b[2] ^ c[2];
   assign c[3]  = (a[2] & b[2]) | (c[2] & (a[2] ^ b[2]));
-  assign s[3]  = a[3] ^ b[3] ^ c[3];
   assign c[4]  = (a[3] & b[3]) | (c[3] & (a[3] ^ b[3]));
   assign cout  = c[4];
+  assign s[3]  = a[3] ^ b[3] ^ c[3];   // LAST in source order, and a bit of a vector output
 endmodule

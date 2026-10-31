@@ -501,18 +501,18 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
 @[tactic svStructure] unsafe def evalSvStructureL : Tactic := fun stx => guardL do
   unless stx[2].isNone do throwUnsupportedSyntax
   if stx[1].isNone then
-    runSvStructureL none none false
+    withDeepRec (runSvStructureL none none false)
   else
     let cl := stx[1][0]
-    if cl[1].getAtomVal == "lexRank" then runSvStructureL none (some cl[3]) false
-    else runSvStructureL (some cl[3]) none false
+    if cl[1].getAtomVal == "lexRank" then withDeepRec (runSvStructureL none (some cl[3]) false)
+    else withDeepRec (runSvStructureL (some cl[3]) none false)
 
 @[tactic svStructureQ] unsafe def evalSvStructureQL : Tactic := fun _ => guardL do
   let goal ← getMainGoal
   goal.withContext do
     let ty ← instantiateMVars (← goal.getType)
     unless ty.isAppOfArity ``Exists 2 do throwUnsupportedSyntax
-  runSvStructureL none none true
+  withDeepRec (runSvStructureL none none true)
 
 /-! ## `sv_interface` -/
 
@@ -601,7 +601,7 @@ unsafe def runSvInterfaceL : TacticM Unit := do
       catch e =>
         throwError "sv_interface: the declared ports do not match the task's interface (or the width arithmetic is outside `omega`'s reach):\n{e.toMessageData}"
 
-@[tactic svInterface] unsafe def evalSvInterfaceL : Tactic := fun _ => guardL runSvInterfaceL
+@[tactic svInterface] unsafe def evalSvInterfaceL : Tactic := fun _ => guardL (withDeepRec runSvInterfaceL)
 
 /-! ## `sv_equations` -/
 
@@ -757,9 +757,11 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
         let some d := (← getLCtx).findFromUserName? `key | throwError "sv_equations: internal error: no `key`"
         return d.type)
       let isAnd := kt.isAppOfArity ``And 2
+      -- (as in `sv_equations`: the spine may be longer than the number of sites when the last site's
+      -- own fact is a conjunction)
       let nE := if isAnd then countAndL kt.appFn!.appArg! else 0
       let nK := if isAnd then countAndL kt.appArg! else 0
-      if isAnd && nE == eqNames.length && nK == knNames.length then
+      if isAnd && eqNames.length ≤ nE && knNames.length ≤ nK then
         evalTactic (← `(tactic| obtain ⟨$(mkIdent `keyE):ident, $(mkIdent `keyK):ident⟩ := $keyI))
         peelNamesL (mkIdent `keyE) eqNames
         peelNamesL (mkIdent `keyK) knNames
@@ -788,7 +790,7 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
             if aliasNames.contains n then continue
             if n.startsWith "eq_" || n.startsWith "known_" || n == "key" then
               ls := ls.push s!"  {n} : {← ppExpr (← instantiateMVars d.type)}"
-          if isAnd && nE == eqNames.length && nK == knNames.length then
+          if isAnd && eqNames.length ≤ nE && knNames.length ≤ nK then
             ls := ls.push "  stable aliases (copies of the above; same statements):"
             for (ae, oe, ak, ok) in stableAliases sites do
               ls := ls.push s!"    {ae} := {oe}    {ak} := {ok}"
@@ -802,6 +804,6 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
     saved.restore
     logInfo m!"sv_equations: the netlist view and the obligations (lowered design)\n  (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)\n{"\n".intercalate report.toList}"
 
-@[tactic svEquations] unsafe def evalSvEquationsL : Tactic := fun _ => guardL (runSvEquationsL false)
+@[tactic svEquations] unsafe def evalSvEquationsL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL false))
 
-@[tactic svEquationsQ] unsafe def evalSvEquationsQL : Tactic := fun _ => guardL (runSvEquationsL true)
+@[tactic svEquationsQ] unsafe def evalSvEquationsQL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL true))

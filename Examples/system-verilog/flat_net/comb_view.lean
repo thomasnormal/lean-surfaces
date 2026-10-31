@@ -21,8 +21,8 @@ open Examples.«system-verilog».flat_net.gen
 namespace Examples.«system-verilog».flat_net.comb_view
 
 /-- The rank of a site is its depth: `c[0]` 0, then the sum and carry cells of bit `k` at `k + 1`,
-`cout` last. -/
-def depth : List Nat := [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]
+`cout` after `c[4]`, and `s[3]`, the last assign of the file, level with `c[4]`. -/
+def depth : List Nat := [0, 1, 1, 2, 2, 3, 3, 4, 5, 4]
 
 /-- `CombDesign` alone: no goal left. -/
 theorem flat_comb : CombDesign flat_net.sem := by

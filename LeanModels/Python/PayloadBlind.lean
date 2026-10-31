@@ -507,6 +507,18 @@ theorem ite {c : Prop} [Decidable c] {x y z u : Run FrameState α}
   · rw [if_pos hc, if_pos hc]; exact ht hc
   · rw [if_neg hc, if_neg hc]; exact he hc
 
+theorem ite₂ {c d : Prop} [Decidable c] [Decidable d]
+    {x y z u : Run FrameState α} (hcd : c ↔ d)
+    (ht : c → PBF a o₀ o x y) (he : ¬c → PBF a o₀ o z u) :
+    PBF a o₀ o (if c then x else z) (if d then y else u) := by
+  by_cases hc : c
+  · have hd : d := hcd.mp hc
+    rw [if_pos hc, if_pos hd]
+    exact ht hc
+  · have hd : ¬d := fun h => hc (hcd.mpr h)
+    rw [if_neg hc, if_neg hd]
+    exact he hc
+
 /-- Return from a call: the frame's locals die, the world survives. -/
 theorem toWorld {x y : Run FrameState α} (h : PBF a o₀ o x y) :
     PBW a o₀ o x.toWorld y.toWorld := by
@@ -4306,12 +4318,20 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                     (fun _ => PBF.exn hslot' _)
               | timeout => exact PBF.timeout
               | unsupported msg => exact PBF.unsupported
-            · refine PBF.ite (c :=
+            · refine PBF.ite₂
+                (c :=
+                  ((excName != "TypeError") &&
+                    ((Env.lookup st.locals excName).isSome ||
+                      (lookupG (moduleGlobals m).1 excName).isSome ||
+                      (Env.lookup st.world.globals excName).isSome ||
+                      (findFunction m excName).isSome)) = true)
+                (d :=
                   ((excName != "TypeError") &&
                     ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
                       (lookupG (moduleGlobals m).1 excName).isSome ||
                       (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||
                       (findFunction m excName).isSome)) = true)
+                (by simp)
                 (fun _ => PBF.unsupported) (fun _ => ?_)
               cases findClass m excName with
           | none =>

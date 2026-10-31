@@ -6662,3 +6662,20 @@ does not materialize the range.
 
 DECIDED: admit immediate range slices; keep range-valued formatting and
 attribute access loud.
+
+## 2026-10-31-pycomplete-204 — repair payload-blind TypeError census proof
+
+The TypeError handler census landed with a heap-swapped-frame proof gap in
+`PayloadBlind.pbExecStmt_succ`: the new shadow predicate has equivalent but
+non-definitional conditions on the original and swapped frames. A two-condition
+payload-blind `ite` bridge now carries that equivalence explicitly, restoring
+the proof target and its dependent quickstart theorem.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean build | `LeanModels.Python.PayloadBlind` passed (14 jobs) |
+| Hosted failure reproduced | `PayloadBlind.lean:4309` type mismatch; dependent `VCTests` and tri quickstarts failed |
+| Scope | Proof repair only; no interpreter behavior change |
+
+DECIDED: keep the handler census semantics and repair the frame proof with an
+explicit equivalent-condition bridge.

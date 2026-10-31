@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Payload-blind proofs now preserve the TypeError handler census across the
+  heap-swapped frame, restoring the full proof and quickstart build after the
+  handler-resolution change.
+
 - Callable plain-`for` declaration initializers now preserve body-local assignment effects before loop exit, including the enclosing frame's returned value.
 
 - Range slicing now composes the source progression exactly, including

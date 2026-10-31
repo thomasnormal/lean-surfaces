@@ -1384,5 +1384,7 @@
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_UnicodeWarning", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_UnicodeWarning", "args": [[0], [23], [-7]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_UserWarning", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_UserWarning", "args": [[0], [23], [-7]], "expect": "match"}
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_UserWarning", "args": [[0], [23], [-7]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_RuntimeWarning", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_RuntimeWarning", "args": [[0], [23], [-7]], "expect": "match"}
 ]

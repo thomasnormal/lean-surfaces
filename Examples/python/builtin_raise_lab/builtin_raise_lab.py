@@ -276,6 +276,17 @@ def catch_UserWarning(value):
         return value
 
 
+def raise_RuntimeWarning():
+    raise RuntimeWarning
+
+
+def catch_RuntimeWarning(value):
+    try:
+        raise RuntimeWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

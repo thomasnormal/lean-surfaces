@@ -24807,7 +24807,25 @@ def _iff_guard_allowed(expr):
     if kind == "Ident":
         return expr.get("width") == 1
     if kind == "Literal":
-        return expr.get("width") == 1
+        width = expr.get("width")
+        if width == 1:
+            return True
+        # An unsized decimal 0/1 is elaborated as a zero-extended 32-bit
+        # literal.  It is still a scalar comparison operand, even though
+        # its envelope width is wider than one bit.
+        bits = expr.get("bits")
+        return (isinstance(width, int) and width > 1
+                and isinstance(bits, str) and len(bits) == width
+                and bits[:-1].strip("0") == ""
+                and bits[-1] in "01")
+    if kind == "Resize":
+        # Unsized scalar comparisons (for example ``iff enable == 1``)
+        # carry the normal expression-context resize around the scalar
+        # operand.  Keep the wrapper explicit so the timed evaluator applies
+        # the same width rule as an ordinary condition.
+        width = expr.get("width")
+        return (isinstance(width, int) and width > 0
+                and _iff_guard_allowed(expr.get("operand", {})))
     if kind == "Concat":
         parts = expr.get("parts", [])
         count = expr.get("replication_count")

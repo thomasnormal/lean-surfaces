@@ -110,6 +110,17 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual(process["kind"], "AlwaysPosedge")
         self.assertEqual(process["iff"]["op"], "==")
 
+    def test_unsized_scalar_comparison_iff_guard_is_retained(self):
+        design = lower(
+            "module top; logic clk, en, q; "
+            "always @(posedge clk iff en == 1) q = 1'b1; endmodule",
+            require_valid=False)
+        process, = design["modules"][0]["processes"]
+        guard = process["events"][0]["iff"]
+        self.assertEqual((guard["kind"], guard["op"]), ("Binary", "=="))
+        self.assertEqual((guard["left"]["kind"], guard["left"]["width"]),
+                         ("Resize", 32))
+
     def test_always_ff_async_reset_clock_iff_is_retained(self):
         design = lower(
             "module top; logic clk, rst_n, en, q; "

@@ -3477,3 +3477,10 @@ side-effect-free `!en || mode` lowering and existing logical evaluator. The
 `always_ff_event_iff_implication` witness covers false and true implications.
 Differential coverage grows **562/548/0/14 → 563/549/0/14**; grammar coverage
 remains **240/212/28**.
+# [0.1.299] — 2026-10-31
+
+Width-normalized scalar comparisons in `iff` guards, such as `iff en == 1`,
+now retain their expression-context `Resize` nodes and use the existing guard
+evaluator. The `always_event_iff_unsized` witness covers disabled and enabled
+edges. Differential coverage grows **563/549/0/14 → 564/550/0/14**; grammar
+coverage remains **240/212/28**.

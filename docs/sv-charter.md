@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Width-normalized scalar `iff` comparisons — 2026-10-31
+
+Unsized scalar comparisons such as `iff en == 1` retain the extractor's
+expression-context `Resize` node and use the existing timed guard evaluator.
+The `always_event_iff_unsized` witness covers a disabled edge followed by an
+enabled edge. Differential coverage grows **563/549/0/14 → 564/550/0/14**;
+grammar coverage remains **240/212/28**.
+
 ## Logical implication `iff` guards — 2026-10-31
 
 Logical implication guards such as `iff en -> mode` use the extractor's

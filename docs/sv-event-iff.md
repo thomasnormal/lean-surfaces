@@ -99,6 +99,12 @@ side-effect-free `!en || mode` lowering and the ordinary logical evaluator.
 The `always_ff_event_iff_implication` witness covers a false implication
 followed by a true one.
 
+Unsized scalar comparisons such as `iff en == 1` retain the normal
+expression-context `Resize` around the scalar operand. The existing evaluator
+therefore compares the same zero-extended values as an ordinary condition;
+the `always_event_iff_unsized` witness covers a disabled edge followed by an
+enabled edge.
+
 ## Scalar comparison guards — 2026-10-31
 
 The timed slice now retains `iff en == 1'b1`, `iff en != 1'b0`, and the
@@ -108,9 +114,9 @@ an unknown result does not wake the process. The `always_ff_event_iff_cmp`
 witness exercises a disabled edge followed by an enabled comparison and
 MATCHes. Indexed, called, and otherwise unsupported guards remain loud.
 
-The read-only corpus repricer after this admission reports **6** sole
-`SignalEventControl:iff` files and **6** spans (down from 7/7); one remaining
-`always_ff` span is still outside this scalar guard vocabulary.
+The read-only corpus repricer after this admission reports **0** sole
+`SignalEventControl:iff` files and **0** spans (down from 6/6); the remaining
+event-control refusals now have another recorded boundary besides `iff`.
 
 ## Scalar logical guards — 2026-10-31
 

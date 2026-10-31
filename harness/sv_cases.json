@@ -5184,6 +5184,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 5
+    },
+    {
+      "name": "always_event_iff_unsized",
+      "file": "Examples/system-verilog/always_event_iff_unsized/always_event_iff_unsized.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS IFF UNSIZED PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
     }
   ]
 }

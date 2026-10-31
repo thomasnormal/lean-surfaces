@@ -1728,7 +1728,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                         if (findNamedTuple m id).isSome then
                           raisePy (.typeError "exceptions must derive from BaseException")
                         else if admittedBuiltinRaise.contains id then
-                          raisePy (.builtinException id)
+                          raisePy (.builtinException (builtinExceptionIdentity id))
                         else
                           refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
         | some (.call (.name id _) args kwargs callUnsupported _) => do

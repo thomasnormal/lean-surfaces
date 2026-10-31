@@ -819,7 +819,7 @@ def admittedBuiltinExc : List String :=
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
-   "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError"]
+   "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError", "IOError"]
 
 /-- Builtin identities that may be raised directly.  `OSError` is admitted as
 an empty class-identity raise even though no in-tier operation produces an
@@ -830,8 +830,15 @@ def admittedBuiltinRaise : List String :=
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
-   "KeyboardInterrupt", "GeneratorExit", "OSError", "ImportError",
-   "ModuleNotFoundError"]
+   "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError",
+   "IOError", "ImportError", "ModuleNotFoundError"]
+
+/-- CPython 3.9 exposes `EnvironmentError` and `IOError` as aliases of
+  `OSError`. Keep one exception identity in the model so bare raises and
+  handler matching report the canonical runtime class. -/
+def builtinExceptionIdentity : String → String
+  | "EnvironmentError" | "IOError" => "OSError"
+  | name => name
 
 /-- The measured one-string constructor surface for explicit `raise`.  These
   are exactly the builtin exception representations that retain a String
@@ -932,11 +939,16 @@ def builtinExcCatches : String → PyErr → Bool
   | "OSError",            .builtinException raised => raised == "OSError"
   | "EnvironmentError",   .builtinException raised =>
       raised == "OSError" || raised == "EnvironmentError"
-  | name,                 .builtinException raised => name == raised
+  | "IOError",             .builtinException raised =>
+      builtinExceptionIdentity raised == "OSError"
+  | name,                 .builtinException raised =>
+      builtinExceptionIdentity name == builtinExceptionIdentity raised
   | _,                   _                   => false
 
 /-- Subsumption for a user exception class with one measured builtin base. -/
 def builtinExcNameCatches (handler base : String) : Bool :=
+  let handler := builtinExceptionIdentity handler
+  let base := builtinExceptionIdentity base
   handler == "BaseException" ||
   (handler == "Exception" && base != "BaseException"
     && base != "SystemExit" && base != "KeyboardInterrupt"

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `EnvironmentError` and `IOError` now raise and match as CPython's canonical
+  `OSError` identity, including exact alias handler coverage.
+
 - The generated Python coverage page now records the admitted bare import
   exception identities accurately, including their payload boundary.
 

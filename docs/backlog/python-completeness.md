@@ -6717,3 +6717,21 @@ identity cannot be represented by the pinned `.importError` payload.
 DECIDED: admit only bare import exception identities and their admitted
 `Exception` ancestor catch; retain the separate import-error and payload
 boundaries until measured independently.
+
+## 2026-10-31-pycomplete-207 — canonicalize OSError exception aliases
+
+The admitted exception table now includes CPython's `EnvironmentError` and
+`IOError` aliases. Bare raises and handler matching canonicalize both names to
+the existing `OSError` identity, while import-error payloads and other
+constructor forms remain unchanged.
+
+| Measurement | Result |
+|---|---|
+| New differential rows | Four rows: two alias raises and two exact alias catches (eight argument cases) |
+| Focused proof/native harnesses | 8/8 MATCH in each interpreter; no refusals or divergences |
+| Full differential | 3,778 rows: 3,741 native matches, 3,640 proof matches, 0 failures |
+| Script/refusal census | 142 scripts: 140 matches, 2 registered loud refusals; 37 call refusals and 2 script refusals, 0 drift |
+| Scope | Exception identity aliases only; payload-bearing OSError constructors remain loud |
+
+DECIDED: canonicalize the two historical OSError aliases; retain loud
+behavior for payload and OS-derived exception constructors.

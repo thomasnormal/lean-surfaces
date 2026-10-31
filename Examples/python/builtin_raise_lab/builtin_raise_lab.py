@@ -199,6 +199,28 @@ def catch_ModuleNotFoundError(value):
         return value
 
 
+def raise_EnvironmentError():
+    raise EnvironmentError
+
+
+def catch_EnvironmentError(value):
+    try:
+        raise OSError
+    except EnvironmentError:
+        return value
+
+
+def raise_IOError():
+    raise IOError
+
+
+def catch_IOError(value):
+    try:
+        raise OSError
+    except IOError:
+        return value
+
+
 def base_not_exception():
     try:
         try:

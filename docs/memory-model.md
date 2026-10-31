@@ -4586,9 +4586,9 @@ statically-first order) and then matches only `.user cid` — so
 and catches nothing builtin). Bare `raise ImportError` and
 `raise ModuleNotFoundError` now use the existing `.builtinException`
 identity representation. They are caught by the already-admitted
-`except Exception:` path; payload-bearing constructors and direct
-`except ImportError:` matching remain on the pinned import-error path until
-a separate constructor/handler identity slice is measured.
+`except Exception:` path; payload-bearing constructors remain loud, while
+direct `except ImportError:` and `except ModuleNotFoundError:` matching keeps
+using the pinned `.importError` path.
 
 ### `from X import *`
 
@@ -5712,10 +5712,12 @@ boundary values, high octets, error paths, consumers, and dictionary keys.
 
 ## Bare builtin raises (2026-10-19)
 
-`raise N` now accepts the same 17 builtin names as `admittedBuiltinExc` when
-no local, module binding, function or user class shadows the name. An admitted
+`raise N` now accepts the admitted builtin identities when no local, module
+binding, function or user class shadows the name. The `EnvironmentError` and
+`IOError` aliases canonicalize to `OSError`, while `ImportError` and
+`ModuleNotFoundError` retain their own identities. An admitted
 user exception class resolves first and keeps its class identity. Builtin raises
-use `PyErr.builtinException name`, preserving both the class and the empty
+use `PyErr.builtinException` with the canonical identity, preserving both the class and the empty
 message without inventing a first-class exception value. The existing explicit
 hierarchy table handles these errors; `Exception` excludes a raised
 `BaseException`. The extractor admits one direct assignment after every bare
@@ -5728,8 +5730,9 @@ A namedtuple used as a handler class raises the separate catching-class
 both script shells retain the body's published effects before the error.
 
 The empty `OSError` class identity is included even though no in-tier operation
-produces an OS error; payload-bearing and OS-derived constructors remain loud,
-and `EnvironmentError` remains a handler-only alias.
+produces an OS error. CPython's `EnvironmentError` and `IOError` aliases now
+raise and catch using that same canonical `OSError` identity; payload-bearing
+and OS-derived constructors remain loud.
 
 PEP 479 applies at generator exit: `generatorEscape` maps either representation
 of `StopIteration` to `RuntimeError("generator raised StopIteration")` after the

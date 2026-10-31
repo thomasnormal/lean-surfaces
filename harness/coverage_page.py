@@ -240,12 +240,14 @@ def render(diff, proof, grammar, tables):
     L.append("")
     exc = sorted(catches)
     L.append("**Exception classes `except` can name (%d):** %s. "
-             "`ImportError` and `ModuleNotFoundError` additionally work as "
-             "handler names and as bare class-identity raises. Payload-bearing "
-             "constructors remain loud, while the separate import-error handler "
-             "path preserves CPython's `.importError` payload. Other builtin "
-             "exception names refuse; the empty `OSError` class identity is also "
-             "admitted for direct raises. An unknown constructor name in "
+             "`EnvironmentError` and `IOError` are aliases of `OSError` for "
+             "bare identity raises and handlers. `ImportError` and "
+             "`ModuleNotFoundError` additionally work as handler names and as "
+             "bare class-identity raises. Payload-bearing constructors remain "
+             "loud, while the separate import-error handler path preserves "
+             "CPython's `.importError` payload. Other builtin exception names "
+             "refuse; the empty `OSError` class identity is also admitted for "
+             "direct raises. An unknown constructor name in "
              "`raise Missing(args…)` produces CPython's exact `NameError` before "
              "its arguments run. User classes `class E(Exception): pass` and the measured direct "
              "builtin-ancestor shapes are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))

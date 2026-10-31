@@ -2,6 +2,7 @@ import Lean
 import LeanModels.Sv.CombViewTactic
 import LeanModels.Sv.CombEqThm
 import LeanModels.Sv.CombEqPlain
+import LeanModels.Sv.CombBridge
 
 /-!
 # `sv_equations` / `sv_equations?` / `sv_cover`: the equations stage of the `sv_comb` tactic (v0)

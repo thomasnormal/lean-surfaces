@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Callable plain-`for` declaration initializers now preserve body-local assignment effects before loop exit, including the enclosing frame's returned value.
+
 - Nested function definitions inside loops now use the enclosing frame's
   shared closure cell, matching CPython's late-bound capture on each call;
   unsupported deeper scopes and generator rebinding edges remain loud.

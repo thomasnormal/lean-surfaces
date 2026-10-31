@@ -5046,6 +5046,42 @@ def callableLocalForDeclarationInitializationBreakFalseStatementFrameWitness : B
 
 #guard callableLocalForDeclarationInitializationBreakFalseStatementFrameWitness
 
+private def localForDeclarationInitializationAssignmentStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer := automaticLiteral "0x12" 0
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x12"), sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x12")
+    sourceType := intType
+    type := intType}
+  let body := .block (.sequence
+    (automaticLiteral "0x13" 5)
+    (.sequence
+      (.assign (handle "0x10") {
+        expression := .parameter (handle "0x13")
+        sourceType := intType
+        type := intType})
+      .break_))
+  let function := {base with body := .block (.sequence
+    (.forLoop initializer condition step body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalForDeclarationInitializationAssignmentStatementFrameWitness : Bool :=
+  localForDeclarationInitializationAssignmentStatementFrame
+
+#guard callableLocalForDeclarationInitializationAssignmentStatementFrameWitness
+
 private def localDoWhileInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

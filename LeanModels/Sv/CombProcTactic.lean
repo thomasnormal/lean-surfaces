@@ -176,7 +176,8 @@ macro "svL_eq_norm_at" h:ident : tactic =>
       LeanModels.Sv.CombEq.lvec_width_l0, Nat.not_lt_zero, Nat.sub_zero, Nat.add_sub_cancel, Nat.zero_lt_succ, List.sum_cons, List.sum_nil, List.map_cons, List.map_nil,
       LeanModels.Sv.CombView.Summary.WidthObl, LeanModels.Sv.CombView.Summary.BitReadObl,
       LeanModels.Sv.CombView.Summary.CoverObl, LeanModels.Sv.CombView.Summary.SrcS,
-      LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk,
+      LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk, LeanModels.Sv.CombEq.Sk.SelfOk, LeanModels.Sv.CombEq.Sk.width,
+      LeanModels.Sv.XF.red, LeanModels.Sv.XF.any_one, LeanModels.Sv.XF.eqv_one,
       LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit] at $h:ident; sv_lp_norm_at $h))
 
 macro "svL_eq_norm" : tactic =>
@@ -245,7 +246,8 @@ macro "svL_eq_norm" : tactic =>
       LeanModels.Sv.CombEq.lvec_width_l0, Nat.not_lt_zero, Nat.sub_zero, Nat.add_sub_cancel, Nat.zero_lt_succ, List.sum_cons, List.sum_nil, List.map_cons, List.map_nil,
       LeanModels.Sv.CombView.Summary.WidthObl, LeanModels.Sv.CombView.Summary.BitReadObl,
       LeanModels.Sv.CombView.Summary.CoverObl, LeanModels.Sv.CombView.Summary.SrcS,
-      LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk,
+      LeanModels.Sv.CombEq.LoopsE, LeanModels.Sv.CombEq.accBitUpper, LeanModels.Sv.CombEq.Sk.WidthOk, LeanModels.Sv.CombEq.Sk.SelfOk, LeanModels.Sv.CombEq.Sk.width,
+      LeanModels.Sv.XF.red, LeanModels.Sv.XF.any_one, LeanModels.Sv.XF.eqv_one,
       LeanModels.Sv.CombEq.Part.wid, LeanModels.Sv.CombEq.Part.bit]; sv_lp_norm))
 
 /-- `svL_norm [f, g]`: the normalization, with the player's own rank/key definitions `f`, `g` unfolded. -/
@@ -702,7 +704,7 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
       closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
       closeDecide `hok "the structural check failed"
-      closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (a gate tree of `&`, `|`, `^` over accesses and known literals, a concatenation of accesses and known literals, or a fill `'0`/`'1`; in an `always_comb`, the same at every leaf and a gate tree as the condition)"
+      closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`; in an `always_comb`, the same at every leaf and a one-bit such expression as the condition)"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq) :
           TacticM (List MVarId) := do

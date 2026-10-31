@@ -159,69 +159,223 @@ theorem leaf_fit (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   obtain ⟨hsw, hin, hrig⟩ := leaf_eq C hdw h ha
   rw [fitExpr2_of_rigid_eq hrig (by rw [hsw, hw]), hin]
 
-/-! ## Gate trees -/
+/-! ## Expressions of the fragment -/
 
-theorem gate_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+/-- `rigidMax2` of an access leaf is its self-determined width. -/
+theorem rm_leaf {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e = .ok a) :
+    rigidMax2 E elems e = selfWidth2 E elems e := by
+  cases e <;> simp [leafRd?, rigidMax2] at h ⊢
+
+/-- **The shape of an expression of the fragment** (WP-G S2; `gate_shape`, `cond_shape` and `skT_selfWidth` are
+its corollaries): for an accepted expression `v` whose skeleton fits width `w`, the self-determined width and
+`rigidMax2` are `w`, and instantiation at no context, at `w`, and the fit to `w` are all `Sk.low`. The operands of
+the self-determined operators are lowered at their own width (`Sk.SelfOk`, `Sk.low_irrel`). -/
+theorem skT_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOf? ds v = .ok rs → fragG v = true →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ∀ tw, (skT v rs).WidthOk σ dw tw →
+        selfWidth2 E elems v = some tw ∧ rigidMax2 E elems v = some tw ∧
+        instExpr2 E elems none v = (skT v rs).low σ tw ∧
+        instExpr2 E elems (some tw) v = (skT v rs).low σ tw ∧
         fitExpr2 E elems (some tw) v = (skT v rs).low σ tw
   | .lit lv, rs, h, _, _, tw, hw => by
       simp only [rdsOf?, Except.ok.injEq] at h
       subst h
       simp only [skT, Sk.WidthOk] at hw
+      refine ⟨by simp [hw], by simp [rigidMax2, hw], by simp [skT, Sk.low, instExpr2],
+        by simp [skT, Sk.low, instExpr2], ?_⟩
       rw [fitExpr2_lit, if_pos hw]
       simp [skT, Sk.low]
   | .binary op l r, rs, h, hf, hacc, tw, hw => by
       simp only [fragG, Bool.and_eq_true] at hf
-      simp only [rdsOf?] at h
+      obtain ⟨hb, ra, rb, hl, hr, rfl⟩ := rdsOf?_binary h
+      have hla := rdsOf?_len l ra hl hf.1
+      have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+      have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+      have hacl : ∀ a ∈ ra, AccOK σ DW DG EW ns a := fun a ha => hacc a (List.mem_append_left _ ha)
+      have hacr : ∀ a ∈ rb, AccOK σ DW DG EW ns a := fun a ha => hacc a (List.mem_append_right _ ha)
       rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr] at h
-          · simp only [hg, hl, hr, Except.ok.injEq] at h
-            subst h
-            obtain ⟨rfl, hb⟩ := gateOf_cases hg
-            have hla := rdsOf?_len l ra hl hf.1
-            have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
-            have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
-            have ihl := gate_shape C hdw l ra hl hf.1
-              (fun a ha => hacc a (List.mem_append_left _ ha)) tw
-            have ihr := gate_shape C hdw r rb hr hf.2
-              (fun a ha => hacc a (List.mem_append_right _ ha)) tw
-            rcases hb with rfl | rfl | rfl <;>
-              simp only [skT, hg, e1, e2, mkGate, Sk.WidthOk] at hw ⊢ <;>
-              simp only [fitExpr2_binary, instExpr2_and, instExpr2_or, instExpr2_xor, Sk.low,
-                Gate.op, ihl hw.1, ihr hw.2]
+      · -- `&&`, `||`, `==`, `!=`: 1 bit, self-determined operands
+        rcases binOk_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+        · simp [gateOf] at hg
+        · simp [gateOf] at hg
+        · simp [gateOf] at hg
+        · have hsk : skT (.binary .land l r) (ra ++ rb) = .land (skT l ra) (skT r rb) := by
+            simp [skT, gateOf, e1, e2]
+          rw [hsk] at hw ⊢
+          obtain ⟨rfl, hsl, hsr⟩ := hw
+          obtain ⟨Sl, -, -, I1l, -⟩ := skT_shape C hdw l ra hl hf.1 hacl _ (Sk.selfOk_widthOk σ dw _ hsl)
+          obtain ⟨Sr, -, -, I1r, -⟩ := skT_shape C hdw r rb hr hf.2 hacr _ (Sk.selfOk_widthOk σ dw _ hsr)
+          have key : ∀ ctx, instExpr2 E elems ctx (.binary .land l r) =
+              Sk.low σ 1 (.land (skT l ra) (skT r rb)) := by
+            intro ctx
+            rw [ie_land, Sl, Sr, I1l, I1r, Sk.low_irrel σ dw (skT l ra) hsl _ 0,
+              Sk.low_irrel σ dw (skT r rb) hsr _ 0]
+            rfl
+          exact ⟨sw_land l r, rm_land l r, key none, key _, by rw [fitExpr2_binary]; exact key _⟩
+        · have hsk : skT (.binary .lor l r) (ra ++ rb) = .lor (skT l ra) (skT r rb) := by
+            simp [skT, gateOf, e1, e2]
+          rw [hsk] at hw ⊢
+          obtain ⟨rfl, hsl, hsr⟩ := hw
+          obtain ⟨Sl, -, -, I1l, -⟩ := skT_shape C hdw l ra hl hf.1 hacl _ (Sk.selfOk_widthOk σ dw _ hsl)
+          obtain ⟨Sr, -, -, I1r, -⟩ := skT_shape C hdw r rb hr hf.2 hacr _ (Sk.selfOk_widthOk σ dw _ hsr)
+          have key : ∀ ctx, instExpr2 E elems ctx (.binary .lor l r) =
+              Sk.low σ 1 (.lor (skT l ra) (skT r rb)) := by
+            intro ctx
+            rw [ie_lor, Sl, Sr, I1l, I1r, Sk.low_irrel σ dw (skT l ra) hsl _ 0,
+              Sk.low_irrel σ dw (skT r rb) hsr _ 0]
+            rfl
+          exact ⟨sw_lor l r, rm_lor l r, key none, key _, by rw [fitExpr2_binary]; exact key _⟩
+        · have hsk : skT (.binary (.m0 .eq) l r) (ra ++ rb) = .eqv (skT l ra) (skT r rb) := by
+            simp [skT, gateOf, e1, e2]
+          rw [hsk] at hw ⊢
+          obtain ⟨rfl, hsl, hsr, hwe⟩ := hw
+          obtain ⟨Sl, -, -, -, Fl⟩ := skT_shape C hdw l ra hl hf.1 hacl _ (Sk.selfOk_widthOk σ dw _ hsl)
+          obtain ⟨Sr, -, -, -, Fr⟩ := skT_shape C hdw r rb hr hf.2 hacr _
+            (Sk.selfOk_widthOk σ dw _ hsr)
+          rw [← hwe] at Sr Fr
+          have key : ∀ ctx, instExpr2 E elems ctx (.binary (.m0 .eq) l r) =
+              Sk.low σ 1 (.eqv (skT l ra) (skT r rb)) := by
+            intro ctx
+            rw [ie_eq ctx _ l r Sl Sr, Fl, Fr, Sk.low_irrel σ dw (skT l ra) hsl _ 0,
+              Sk.low_irrel σ dw (skT r rb) hsr _ 0]
+            rfl
+          exact ⟨sw_eq l r, rm_eq l r, key none, key _, by rw [fitExpr2_binary]; exact key _⟩
+        · have hsk : skT (.binary (.m0 .ne) l r) (ra ++ rb) = .nev (skT l ra) (skT r rb) := by
+            simp [skT, gateOf, e1, e2]
+          rw [hsk] at hw ⊢
+          obtain ⟨rfl, hsl, hsr, hwe⟩ := hw
+          obtain ⟨Sl, -, -, -, Fl⟩ := skT_shape C hdw l ra hl hf.1 hacl _ (Sk.selfOk_widthOk σ dw _ hsl)
+          obtain ⟨Sr, -, -, -, Fr⟩ := skT_shape C hdw r rb hr hf.2 hacr _
+            (Sk.selfOk_widthOk σ dw _ hsr)
+          rw [← hwe] at Sr Fr
+          have key : ∀ ctx, instExpr2 E elems ctx (.binary (.m0 .ne) l r) =
+              Sk.low σ 1 (.nev (skT l ra) (skT r rb)) := by
+            intro ctx
+            rw [ie_ne ctx _ l r Sl Sr, Fl, Fr, Sk.low_irrel σ dw (skT l ra) hsl _ 0,
+              Sk.low_irrel σ dw (skT r rb) hsr _ 0]
+            rfl
+          exact ⟨sw_ne l r, rm_ne l r, key none, key _, by rw [fitExpr2_binary]; exact key _⟩
+      · -- a bitwise gate
+        obtain ⟨rfl, hbb⟩ := gateOf_cases hg
+        have ihl := skT_shape C hdw l ra hl hf.1 hacl tw
+        have ihr := skT_shape C hdw r rb hr hf.2 hacr tw
+        rcases hbb with rfl | rfl | rfl <;>
+          (simp only [skT, hg, e1, e2, mkGate, Sk.WidthOk] at hw ⊢
+           obtain ⟨Sl, Rl, I0l, I1l, Fl⟩ := ihl hw.1
+           obtain ⟨Sr, Rr, I0r, I1r, Fr⟩ := ihr hw.2
+           refine ⟨by simp [selfWidth2, Sl, Sr], by simp [rigidMax2, Rl, Rr],
+             by simp [instExpr2, Sl, Sr, Fl, Fr, Sk.low, Gate.op],
+             by simp only [instExpr2_and, instExpr2_or, instExpr2_xor, Sk.low, Gate.op, Fl, Fr],
+             ?_⟩
+           rw [fitExpr2_binary]
+           simp only [instExpr2_and, instExpr2_or, instExpr2_xor, Sk.low, Gate.op, Fl, Fr])
+  | .unary op a, rs, h, hf, hacc, tw, hw => by
+      obtain ⟨hop, ha⟩ := rdsOf?_unary h
+      simp only [fragG] at hf
+      rcases hop with rfl | rfl
+      · have hsk : skT (.unary (.m0 .bnot) a) rs = .bnot (skT a rs) := by simp [skT]
+        rw [hsk] at hw ⊢
+        simp only [Sk.WidthOk] at hw
+        obtain ⟨Sa, Ra, I0a, I1a, Fa⟩ := skT_shape C hdw a rs ha hf hacc tw hw
+        have hrm : (rigidMax2 E elems a).getD tw ≤ tw := by rw [Ra]; simp
+        have I1 : instExpr2 E elems (some tw) (.unary (.m0 .bnot) a) = Sk.low σ tw (.bnot (skT a rs)) := by
+          rw [ie_bnot_some tw a hrm, Fa]; rfl
+        refine ⟨by rw [sw_bnot]; exact Sa, by rw [rm_bnot]; exact Ra, ?_, I1, ?_⟩
+        · rw [ie_bnot_none, Sa, I1a]; rfl
+        · rw [fitExpr2_of_not_rigid tw (rigidExpr_unary _ _)]; exact I1
+      · have hsk : skT (.unary (.m0 .lnot) a) rs = .lnot (skT a rs) := by simp [skT]
+        rw [hsk] at hw ⊢
+        obtain ⟨rfl, hsa⟩ := hw
+        obtain ⟨-, -, I0a, -, -⟩ := skT_shape C hdw a rs ha hf hacc _ (Sk.selfOk_widthOk σ dw _ hsa)
+        have key : ∀ ctx, instExpr2 E elems ctx (.unary (.m0 .lnot) a) = Sk.low σ 1 (.lnot (skT a rs)) := by
+          intro ctx
+          rw [ie_lnot, I0a, Sk.low_irrel σ dw (skT a rs) hsa _ 0]
+          rfl
+        exact ⟨sw_lnot a, rm_lnot a, key none, key _, by rw [fitExpr2_of_not_rigid 1 (rigidExpr_unary _ _)]; exact key _⟩
+  | .ternary c t f, rs, h, hf, hacc, tw, hw => by
+      obtain ⟨rc, rt, rf, hc, ht, hfe, rfl⟩ := rdsOf?_ternary h
+      simp only [fragG, Bool.and_eq_true] at hf
+      have hc' := rdsOf?_len c rc hc hf.1.1
+      have ht' := rdsOf?_len t rt ht hf.1.2
+      have e1 : (rc ++ rt ++ rf).take (cnt c) = rc := by
+        rw [List.append_assoc]; exact List.take_left' hc'
+      have e2 : (rc ++ rt ++ rf).drop (cnt c) = rt ++ rf := by
+        rw [List.append_assoc]; exact List.drop_left' hc'
+      have e3 : (rt ++ rf).take (cnt t) = rt := List.take_left' ht'
+      have e4 : (rt ++ rf).drop (cnt t) = rf := List.drop_left' ht'
+      have hsk : skT (.ternary c t f) (rc ++ rt ++ rf) = .tern (skT c rc) (skT t rt) (skT f rf) := by
+        simp only [skT, e1, e2, e3, e4]
+      rw [hsk] at hw ⊢
+      obtain ⟨hsc, hwc, hwt, hwf⟩ := hw
+      have hc1 : (skT c rc).WidthOk σ dw 1 := by
+        have := Sk.selfOk_widthOk σ dw _ hsc
+        rwa [hwc] at this
+      obtain ⟨-, -, I0c, -, -⟩ := skT_shape C hdw c rc hc hf.1.1
+        (fun x hx => hacc x (List.mem_append_left _ (List.mem_append_left _ hx))) 1 hc1
+      obtain ⟨St, Rt, -, -, Ft⟩ := skT_shape C hdw t rt ht hf.1.2
+        (fun x hx => hacc x (List.mem_append_left _ (List.mem_append_right _ hx))) tw hwt
+      obtain ⟨Sf, Rf, -, -, Ff⟩ := skT_shape C hdw f rf hfe hf.2
+        (fun x hx => hacc x (List.mem_append_right _ hx)) tw hwf
+      have I1 : instExpr2 E elems (some tw) (.ternary c t f) =
+          Sk.low σ tw (.tern (skT c rc) (skT t rt) (skT f rf)) := by
+        rw [ie_ternary_some, I0c, Ft, Ff]
+        simp only [Sk.low, Sk.low_irrel σ dw _ hsc 1 0]
+      refine ⟨sw_ternary tw c t f St Sf, rm_ternary tw c t f Rt Rf, ?_, I1, ?_⟩
+      · rw [ie_ternary_none tw c t f St Sf, I0c, Ft, Ff]
+        simp only [Sk.low, Sk.low_irrel σ dw _ hsc 1 0]
+      · rw [fitExpr2_of_not_rigid tw (rigidExpr_ternary _ _ _)]; exact I1
+  | .reduce op a, rs, h, hf, hacc, tw, hw => by
+      simp only [fragG] at hf
+      have ha := rdsOf?_reduce h
+      have hsk : skT (.reduce op a) rs = .red op (skT a rs) := by simp [skT]
+      rw [hsk] at hw ⊢
+      obtain ⟨rfl, hsa⟩ := hw
+      obtain ⟨Sa, -, -, I1a, -⟩ := skT_shape C hdw a rs ha hf hacc _ (Sk.selfOk_widthOk σ dw _ hsa)
+      have key : ∀ ctx, instExpr2 E elems ctx (.reduce op a) = Sk.low σ 1 (.red op (skT a rs)) := by
+        intro ctx
+        rw [ie_reduce, Sa, I1a, Sk.low_irrel σ dw (skT a rs) hsa _ 0]
+        rfl
+      exact ⟨sw_reduce op a, rm_reduce op a, key none, key _, by
+        rw [fitExpr2_of_rigid_eq (rigidExpr_reduce op a) (sw_reduce op a)]; exact key _⟩
   | .ident n, rs, h, _, hacc, tw, hw => by
       obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
       simp only [skT, List.headD_cons, Sk.WidthOk, Sk.low] at hw ⊢
-      exact leaf_fit C hdw hl (hacc a (by simp)) hw
+      obtain ⟨hsw, hin, -⟩ := leaf_eq C hdw hl (hacc a (by simp))
+      exact ⟨by rw [hsw, hw], by rw [rm_leaf hl, hsw, hw], hin none, hin _, leaf_fit C hdw hl (hacc a (by simp)) hw⟩
   | .bitSel b i, rs, h, _, hacc, tw, hw => by
       obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
       simp only [skT, List.headD_cons, Sk.WidthOk, Sk.low] at hw ⊢
-      exact leaf_fit C hdw hl (hacc a (by simp)) hw
+      obtain ⟨hsw, hin, -⟩ := leaf_eq C hdw hl (hacc a (by simp))
+      exact ⟨by rw [hsw, hw], by rw [rm_leaf hl, hsw, hw], hin none, hin _, leaf_fit C hdw hl (hacc a (by simp)) hw⟩
   | .arrayElem n is, rs, h, _, hacc, tw, hw => by
       obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
       simp only [skT, List.headD_cons, Sk.WidthOk, Sk.low] at hw ⊢
-      exact leaf_fit C hdw hl (hacc a (by simp)) hw
+      obtain ⟨hsw, hin, -⟩ := leaf_eq C hdw hl (hacc a (by simp))
+      exact ⟨by rw [hsw, hw], by rw [rm_leaf hl, hsw, hw], hin none, hin _, leaf_fit C hdw hl (hacc a (by simp)) hw⟩
   | .arrayPart n is m a b, rs, h, _, hacc, tw, hw => by
       obtain ⟨a', hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
       simp only [skT, List.headD_cons, Sk.WidthOk, Sk.low] at hw ⊢
-      exact leaf_fit C hdw hl (hacc a' (by simp)) hw
+      obtain ⟨hsw, hin, -⟩ := leaf_eq C hdw hl (hacc a' (by simp))
+      exact ⟨by rw [hsw, hw], by rw [rm_leaf hl, hsw, hw], hin none, hin _, leaf_fit C hdw hl (hacc a' (by simp)) hw⟩
   | .concat _, _, _, hf, _, _, _ => by simp [fragG] at hf
   | .fill _, _, _, hf, _, _, _ => by simp [fragG] at hf
   | .paramRef .., rs, h, _, _, _, _ | .genvarRef .., rs, h, _, _, _, _
   | .enumRef .., rs, h, _, _, _, _
-  | .int .., rs, h, _, _, _, _ | .unary .., rs, h, _, _, _, _ | .ternary .., rs, h, _, _, _, _
+  | .int .., rs, h, _, _, _, _
   | .resize .., rs, h, _, _, _, _ | .signedResize .., rs, h, _, _, _, _
   | .squash2 .., rs, h, _, _, _, _
   | .sysCall .., rs, h, _, _, _, _ | .partSel .., rs, h, _, _, _, _ | .repl .., rs, h, _, _, _, _
-  | .reduce .., rs, h, _, _, _, _ | .cast .., rs, h, _, _, _, _
+  | .cast .., rs, h, _, _, _, _
   | .unsupported .., rs, h, _, _, _, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
+
+theorem gate_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
+    ∀ (v : PExpr) (rs : List Acc), rdsOf? ds v = .ok rs → fragG v = true →
+      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ∀ tw, (skT v rs).WidthOk σ dw tw →
+        fitExpr2 E elems (some tw) v = (skT v rs).low σ tw :=
+  fun v rs h hf hacc tw hw => (skT_shape C hdw v rs h hf hacc tw hw).2.2.2.2
 
 /-! ## Concatenations -/
 
@@ -404,6 +558,54 @@ theorem expr_xfBits {m : Design2} {σ : String → Int} (a : Acc) (env : String 
     (k : Nat) : (accExpr σ a).xfBits m env k = accBit σ env a k := by
   cases a <;> simp [accExpr, accBit, Acc.name, Acc.lo, Expr2.xfBits]
 
+/-! ### Boolean reductions respect agreement below the width -/
+
+theorem _root_.LeanModels.Sv.XF.any_one (f : Nat → Bool) : XF.any 1 f = f 0 := by
+  simp only [XF.any]
+  cases h : f 0 <;> simp [h]
+
+theorem _root_.LeanModels.Sv.XF.any_congr {w : Nat} {f g : Nat → Bool} (h : ∀ k, k < w → f k = g k) :
+    XF.any w f = XF.any w g := by
+  simp only [XF.any]
+  apply decide_eq_decide.mpr
+  constructor
+  · rintro ⟨k, hk, hf⟩; exact ⟨k, hk, by rw [← h k hk]; exact hf⟩
+  · rintro ⟨k, hk, hf⟩; exact ⟨k, hk, by rw [h k hk]; exact hf⟩
+
+theorem _root_.LeanModels.Sv.XF.eqv_one (f g : Nat → Bool) : XF.eqv 1 f g = decide (f 0 = g 0) := by
+  simp only [XF.eqv]
+  apply decide_eq_decide.mpr
+  constructor
+  · intro h; exact h 0 (by omega)
+  · intro h k hk
+    obtain rfl : k = 0 := by omega
+    exact h
+
+theorem _root_.LeanModels.Sv.XF.all_congr {w : Nat} {f g : Nat → Bool} (h : ∀ k, k < w → f k = g k) :
+    XF.all w f = XF.all w g := by
+  simp only [XF.all]
+  apply decide_eq_decide.mpr
+  constructor
+  · intro hf k hk; rw [← h k hk]; exact hf k hk
+  · intro hf k hk; rw [h k hk]; exact hf k hk
+
+theorem _root_.LeanModels.Sv.XF.parity_congr {w : Nat} {f g : Nat → Bool} (h : ∀ k, k < w → f k = g k) :
+    XF.parity w f = XF.parity w g := by
+  have : (fun i : Fin w => f i.val) = fun i => g i.val := funext fun i => h i.val i.isLt
+  simp only [XF.parity, this]
+
+theorem _root_.LeanModels.Sv.XF.red_congr (op : RedOp) {w : Nat} {f g : Nat → Bool} (h : ∀ k, k < w → f k = g k) :
+    XF.red op w f = XF.red op w g := by
+  cases op <;> simp [XF.red, XF.any_congr h, XF.all_congr h, XF.parity_congr h]
+
+theorem _root_.LeanModels.Sv.XF.eqv_congr {w : Nat} {f g f' g' : Nat → Bool} (h : ∀ k, k < w → f k = f' k)
+    (h' : ∀ k, k < w → g k = g' k) : XF.eqv w f g = XF.eqv w f' g' := by
+  simp only [XF.eqv]
+  apply decide_eq_decide.mpr
+  constructor
+  · intro hf k hk; rw [← h k hk, ← h' k hk]; exact hf k hk
+  · intro hf k hk; rw [h k hk, h' k hk]; exact hf k hk
+
 theorem partLeaves_cons_rd (a : Acc) (ps : List Part) :
     partLeaves (.rd a :: ps) = a :: partLeaves ps := rfl
 
@@ -428,52 +630,206 @@ theorem cat_low {m : Design2} {σ : String → Int} {dw : String → Nat}
       · simp [Expr2.xfWidthSum, Part.expr, Part.wid, expr_xfWidth hA, ih1, Nat.add_comm]
       · simp [Expr2.catBits, catBit, Part.expr, Part.wid, ih1, ih2, expr_xfBits, Part.bit]
 
-/-- **The lowered right-hand side is in the x-free fragment at the target width.** -/
-theorem low_xfWidth {m : Design2} {σ : String → Int} {dw : String → Nat} {tw : Nat} :
-    ∀ (sk : Sk), sk.knownB = true → sk.WidthOk σ dw tw → (∀ a ∈ sk.leaves, LeafOk m σ dw a) →
-      (sk.low σ tw).xfWidth m = some tw
-  | .lit v, hk, hw, _ => by
+/-! ### x-free width and bits of the new `Expr2` nodes -/
+
+section xfops
+variable {m : Design2}
+
+theorem xf_lnot {e : Expr2} {w : Nat} (h : e.xfWidth m = some w) :
+    (Expr2.unary .lnot e).xfWidth m = some 1 := by
+  simp [Expr2.xfWidth, h]
+
+theorem xfb_lnot {e : Expr2} {w : Nat} (h : e.xfWidth m = some w) (env : String → Nat → Bool)
+    (k : Nat) : (Expr2.unary .lnot e).xfBits m env k = !XF.any w (e.xfBits m env) := by
+  simp [Expr2.xfBits, h]
+
+theorem xf_red {e : Expr2} {w : Nat} (op : RedOp) (h : e.xfWidth m = some w) :
+    (Expr2.reduce op e).xfWidth m = some 1 := by
+  simp [Expr2.xfWidth, h]
+
+theorem xfb_red {e : Expr2} {w : Nat} (op : RedOp) (h : e.xfWidth m = some w)
+    (env : String → Nat → Bool) (k : Nat) :
+    (Expr2.reduce op e).xfBits m env k = XF.red op w (e.xfBits m env) := by
+  simp [Expr2.xfBits, h]
+
+theorem xf_logical {l r : Expr2} {wl wr : Nat} (b : Bool) (hl : l.xfWidth m = some wl)
+    (hr : r.xfWidth m = some wr) : (Expr2.logical b l r).xfWidth m = some 1 := by
+  simp [Expr2.xfWidth, hl, hr]
+
+theorem xfb_land {l r : Expr2} {wl wr : Nat} (hl : l.xfWidth m = some wl)
+    (hr : r.xfWidth m = some wr) (env : String → Nat → Bool) (k : Nat) :
+    (Expr2.logical true l r).xfBits m env k =
+      (XF.any wl (l.xfBits m env) && XF.any wr (r.xfBits m env)) := by
+  simp [Expr2.xfBits, hl, hr]
+
+theorem xfb_lor {l r : Expr2} {wl wr : Nat} (hl : l.xfWidth m = some wl)
+    (hr : r.xfWidth m = some wr) (env : String → Nat → Bool) (k : Nat) :
+    (Expr2.logical false l r).xfBits m env k =
+      (XF.any wl (l.xfBits m env) || XF.any wr (r.xfBits m env)) := by
+  simp [Expr2.xfBits, hl, hr]
+
+theorem xf_tern {c t f : Expr2} {w : Nat} (hc : c.xfWidth m = some 1) (ht : t.xfWidth m = some w)
+    (hf : f.xfWidth m = some w) : (Expr2.ternary c t f).xfWidth m = some w := by
+  simp [Expr2.xfWidth, hc, ht, hf, XF.same]
+
+theorem xfb_tern {c t f : Expr2} (hc : c.xfWidth m = some 1) (env : String → Nat → Bool)
+    (k : Nat) : (Expr2.ternary c t f).xfBits m env k =
+      if c.xfBits m env 0 = true then t.xfBits m env k else f.xfBits m env k := by
+  simp [Expr2.xfBits, hc, XF.any_one]
+
+theorem xf_eq {l r : Expr2} {w : Nat} (hl : l.xfWidth m = some w) (hr : r.xfWidth m = some w) :
+    (Expr2.binary .eq l r).xfWidth m = some 1 := by
+  simp [Expr2.xfWidth, hl, hr, XF.same]
+
+theorem xf_ne {l r : Expr2} {w : Nat} (hl : l.xfWidth m = some w) (hr : r.xfWidth m = some w) :
+    (Expr2.binary .ne l r).xfWidth m = some 1 := by
+  simp [Expr2.xfWidth, hl, hr, XF.same]
+
+theorem xfb_eq {l r : Expr2} {w : Nat} (hl : l.xfWidth m = some w) (env : String → Nat → Bool)
+    (k : Nat) : (Expr2.binary .eq l r).xfBits m env k = XF.eqv w (l.xfBits m env) (r.xfBits m env) := by
+  simp [Expr2.xfBits, hl]
+
+theorem xfb_ne {l r : Expr2} {w : Nat} (hl : l.xfWidth m = some w) (env : String → Nat → Bool)
+    (k : Nat) : (Expr2.binary .ne l r).xfBits m env k = !XF.eqv w (l.xfBits m env) (r.xfBits m env) := by
+  simp [Expr2.xfBits, hl]
+
+end xfops
+
+/-- **The lowered expression is in the x-free fragment at its width, and its Boolean bits are the skeleton's**
+(both statements in one induction: the operands of the self-determined operators are lowered at their own
+width, so the width is an argument of the recursion). -/
+theorem low_xf_gen {m : Design2} {σ : String → Int} {dw : String → Nat} :
+    ∀ (sk : Sk) (tw : Nat), sk.knownB = true → sk.WidthOk σ dw tw →
+      (∀ a ∈ sk.leaves, LeafOk m σ dw a) → ∀ env : String → Nat → Bool,
+      (sk.low σ tw).xfWidth m = some tw ∧
+        ∀ k, k < tw → (sk.low σ tw).xfBits m env k = sk.bit σ dw env k
+  | .lit v, tw, hk, hw, _, env => by
       simp only [Sk.knownB] at hk
       simp only [Sk.WidthOk] at hw
-      simp [Sk.low, Expr2.xfWidth, hk, hw]
-  | .rd a, _, hw, hL => by
+      exact ⟨by simp [Sk.low, Expr2.xfWidth, hk, hw], fun k _ => by simp [Sk.low, Sk.bit, Expr2.xfBits]⟩
+  | .rd a, tw, _, hw, hL, env => by
       simp only [Sk.WidthOk] at hw
-      rw [Sk.low, expr_xfWidth (hL a (by simp [Sk.leaves])), hw]
-  | .gate g l r, hk, hw, hL => by
+      exact ⟨by rw [Sk.low, expr_xfWidth (hL a (by simp [Sk.leaves])), hw],
+        fun k _ => by simp [Sk.low, Sk.bit, expr_xfBits]⟩
+  | .gate g l r, tw, hk, hw, hL, env => by
       simp only [Sk.knownB, Bool.and_eq_true] at hk
       simp only [Sk.WidthOk] at hw
-      have h1 := low_xfWidth l hk.1 hw.1 (fun a ha => hL a (by simp [Sk.leaves, ha]))
-      have h2 := low_xfWidth r hk.2 hw.2 (fun a ha => hL a (by simp [Sk.leaves, ha]))
-      cases g <;> simp [Sk.low, Gate.op, Expr2.xfWidth, h1, h2, XF.same]
-  | .cat ps, hk, hw, hL => by
+      obtain ⟨h1, b1⟩ := low_xf_gen l tw hk.1 hw.1 (fun a ha => hL a (by simp [Sk.leaves, ha])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen r tw hk.2 hw.2 (fun a ha => hL a (by simp [Sk.leaves, ha])) env
+      refine ⟨by cases g <;> simp [Sk.low, Gate.op, Expr2.xfWidth, h1, h2, XF.same], fun k hk' => ?_⟩
+      cases g <;> simp [Sk.low, Sk.bit, Gate.op, Expr2.xfBits, b1 k hk', b2 k hk']
+  | .cat ps, tw, hk, hw, hL, env => by
       simp only [Sk.WidthOk] at hw
-      obtain ⟨h1, -⟩ := cat_low (m := m) (σ := σ) (dw := dw) (fun _ _ => false) ps hk hL
-      simp [Sk.low, Expr2.xfWidth, h1, hw]
-  | .fill b, hk, hw, _ => by
+      obtain ⟨h1, h2⟩ := cat_low (m := m) (σ := σ) (dw := dw) env ps hk hL
+      exact ⟨by simp [Sk.low, Expr2.xfWidth, h1, hw], fun k _ => by simp [Sk.low, Sk.bit, Expr2.xfBits, h2]⟩
+  | .fill b, tw, hk, hw, _, env => by
       simp only [Sk.knownB] at hk
       have hknown : (LVec.replicate tw b).knownB = true := by
         simp [LVec.knownB, LVec.replicate, hk]
+      refine ⟨?_, fun k hk' => by simp [Sk.low, Sk.bit, Expr2.xfBits, LVec.boolAt, LVec.replicate, hk']⟩
       simp only [Sk.low, Expr2.xfWidth, hknown, if_true]
       simp [LVec.width, LVec.replicate]
+  | .bnot a, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB] at hk
+      simp only [Sk.WidthOk] at hw
+      obtain ⟨h1, b1⟩ := low_xf_gen a tw hk hw (fun x hx => hL x (by simpa [Sk.leaves] using hx)) env
+      exact ⟨by simp [Sk.low, Expr2.xfWidth, h1], fun k hk' => by
+        simp [Sk.low, Sk.bit, Expr2.xfBits, b1 k hk']⟩
+  | .lnot a, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB] at hk
+      obtain ⟨rfl, hsa⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen a _ hk (Sk.selfOk_widthOk σ dw a hsa)
+        (fun x hx => hL x (by simpa [Sk.leaves] using hx)) env
+      rw [Sk.low_irrel σ dw a hsa _ 0] at h1 b1
+      refine ⟨xf_lnot h1, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_lnot h1, XF.any_congr b1]
+  | .red op a, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB] at hk
+      obtain ⟨rfl, hsa⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen a _ hk (Sk.selfOk_widthOk σ dw a hsa)
+        (fun x hx => hL x (by simpa [Sk.leaves] using hx)) env
+      rw [Sk.low_irrel σ dw a hsa _ 0] at h1 b1
+      refine ⟨xf_red op h1, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_red op h1, XF.red_congr op b1]
+  | .land l r, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨rfl, hsl, hsr⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen l _ hk.1 (Sk.selfOk_widthOk σ dw l hsl)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen r _ hk.2 (Sk.selfOk_widthOk σ dw r hsr)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      rw [Sk.low_irrel σ dw l hsl _ 0] at h1 b1
+      rw [Sk.low_irrel σ dw r hsr _ 0] at h2 b2
+      refine ⟨xf_logical true h1 h2, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_land h1 h2, XF.any_congr b1, XF.any_congr b2]
+  | .lor l r, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨rfl, hsl, hsr⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen l _ hk.1 (Sk.selfOk_widthOk σ dw l hsl)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen r _ hk.2 (Sk.selfOk_widthOk σ dw r hsr)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      rw [Sk.low_irrel σ dw l hsl _ 0] at h1 b1
+      rw [Sk.low_irrel σ dw r hsr _ 0] at h2 b2
+      refine ⟨xf_logical false h1 h2, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_lor h1 h2, XF.any_congr b1, XF.any_congr b2]
+  | .tern c a b, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨hsc, hwc, hwa, hwb⟩ := hw
+      have hc1 : c.WidthOk σ dw 1 := by
+        have := Sk.selfOk_widthOk σ dw c hsc
+        rwa [hwc] at this
+      obtain ⟨h1, b1⟩ := low_xf_gen c 1 hk.1.1 hc1
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen a tw hk.1.2 hwa (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h3, b3⟩ := low_xf_gen b tw hk.2 hwb (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      rw [Sk.low_irrel σ dw c hsc 1 0] at h1 b1
+      refine ⟨xf_tern h1 h2 h3, fun k hk' => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_tern h1, b1 0 (by omega), b2 k hk', b3 k hk']
+  | .eqv l r, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨rfl, hsl, hsr, hwe⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen l _ hk.1 (Sk.selfOk_widthOk σ dw l hsl)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen r _ hk.2 (Sk.selfOk_widthOk σ dw r hsr)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      rw [Sk.low_irrel σ dw l hsl _ 0] at h1 b1
+      rw [Sk.low_irrel σ dw r hsr _ 0] at h2 b2
+      rw [← hwe] at h2 b2
+      refine ⟨xf_eq h1 h2, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_eq h1, XF.eqv_congr b1 b2]
+  | .nev l r, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨rfl, hsl, hsr, hwe⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_gen l _ hk.1 (Sk.selfOk_widthOk σ dw l hsl)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_gen r _ hk.2 (Sk.selfOk_widthOk σ dw r hsr)
+        (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      rw [Sk.low_irrel σ dw l hsl _ 0] at h1 b1
+      rw [Sk.low_irrel σ dw r hsr _ 0] at h2 b2
+      rw [← hwe] at h2 b2
+      refine ⟨xf_ne h1 h2, fun k _ => ?_⟩
+      simp only [Sk.low, Sk.bit]
+      rw [xfb_ne h1, XF.eqv_congr b1 b2]
+
+/-- **The lowered right-hand side is in the x-free fragment at the target width.** -/
+theorem low_xfWidth {m : Design2} {σ : String → Int} {dw : String → Nat} {tw : Nat} :
+    ∀ (sk : Sk), sk.knownB = true → sk.WidthOk σ dw tw → (∀ a ∈ sk.leaves, LeafOk m σ dw a) →
+      (sk.low σ tw).xfWidth m = some tw :=
+  fun sk hk hw hL => (low_xf_gen sk tw hk hw hL (fun _ _ => false)).1
 
 /-- **… and its `Expr2.xfBits` is the skeleton's Boolean reading** (below the target width). -/
 theorem low_xfBits {m : Design2} {σ : String → Int} {dw : String → Nat} {tw : Nat}
     (env : String → Nat → Bool) :
     ∀ (sk : Sk), sk.knownB = true → sk.WidthOk σ dw tw → (∀ a ∈ sk.leaves, LeafOk m σ dw a) →
-      ∀ k, k < tw → (sk.low σ tw).xfBits m env k = sk.bit σ dw env k
-  | .lit v, _, _, _, k, _ => by simp [Sk.low, Sk.bit, Expr2.xfBits]
-  | .rd a, _, _, _, k, _ => by simp [Sk.low, Sk.bit, expr_xfBits]
-  | .gate g l r, hk, hw, hL, k, hk' => by
-      simp only [Sk.knownB, Bool.and_eq_true] at hk
-      simp only [Sk.WidthOk] at hw
-      have h1 := low_xfBits env l hk.1 hw.1 (fun a ha => hL a (by simp [Sk.leaves, ha])) k hk'
-      have h2 := low_xfBits env r hk.2 hw.2 (fun a ha => hL a (by simp [Sk.leaves, ha])) k hk'
-      cases g <;> simp [Sk.low, Sk.bit, Gate.op, Expr2.xfBits, h1, h2]
-  | .cat ps, hk, hw, hL, k, _ => by
-      obtain ⟨-, h2⟩ := cat_low (m := m) (σ := σ) (dw := dw) env ps hk hL
-      simp [Sk.low, Sk.bit, Expr2.xfBits, h2]
-  | .fill b, hk, hw, _, k, hk' => by
-      simp [Sk.low, Sk.bit, Expr2.xfBits, LVec.boolAt, LVec.replicate, hk']
+      ∀ k, k < tw → (sk.low σ tw).xfBits m env k = sk.bit σ dw env k :=
+  fun sk hk hw hL => (low_xf_gen sk tw hk hw hL env).2
 
 /-! ## Axiom pins -/
 

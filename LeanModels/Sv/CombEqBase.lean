@@ -72,6 +72,20 @@ inductive Sk where
   | gate (g : Gate) (l r : Sk)
   | cat (ps : List Part)
   | fill (b : Logic)
+  /-- `~a` (WP-G S2): bitwise, context-determined. -/
+  | bnot (a : Sk)
+  /-- `!a`: logical, a 1-bit result over a self-determined operand. -/
+  | lnot (a : Sk)
+  /-- A reduction `|a`, `&a`, `^a`, `~|a`, `~&a`, `~^a`: 1 bit, self-determined operand. -/
+  | red (op : RedOp) (a : Sk)
+  /-- `l && r`, `l || r`: 1 bit, self-determined operands. -/
+  | land (l r : Sk)
+  | lor (l r : Sk)
+  /-- `c ? a : b`: the condition is a self-determined 1-bit value, the arms are context-determined. -/
+  | tern (c a b : Sk)
+  /-- `l == r`, `l != r` over operands of one width (WP-G S2d): 1 bit. -/
+  | eqv (l r : Sk)
+  | nev (l r : Sk)
 
 /-- The skeleton of a gate over two skeletons (`gateOf` only produces `&`, `|`, `^`). -/
 def mkGate : BinOp → Sk → Sk → Sk
@@ -84,6 +98,9 @@ def mkGate : BinOp → Sk → Sk → Sk
 def cnt : PExpr → Nat
   | .lit _ => 0
   | .binary _ l r => cnt l + cnt r
+  | .unary _ a => cnt a
+  | .reduce _ a => cnt a
+  | .ternary c t e => cnt c + cnt t + cnt e
   | _ => 1
 
 /-- The gate-tree skeleton of `v`, taking one access of `as` per leaf, left to right. -/
@@ -92,7 +109,22 @@ def skT : PExpr → List Acc → Sk
   | .binary op l r, as =>
       match gateOf op with
       | some g => mkGate g (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
-      | none => .fill .l0
+      | none =>
+          match op with
+          | .land => .land (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .lor => .lor (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .m0 .eq => .eqv (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .m0 .ne => .nev (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | _ => .fill .l0
+  | .unary op a, as =>
+      match op with
+      | .m0 .bnot => .bnot (skT a as)
+      | .m0 .lnot => .lnot (skT a as)
+      | _ => .fill .l0
+  | .reduce op a, as => .red op (skT a as)
+  | .ternary c t e, as =>
+      .tern (skT c (as.take (cnt c))) (skT t ((as.drop (cnt c)).take (cnt t)))
+        (skT e ((as.drop (cnt c)).drop (cnt t)))
   | _, as => .rd (as.headD (.whole ""))
 
 /-- The parts of a concatenation: a literal part is itself, every other part takes the next access. -/
@@ -120,6 +152,9 @@ def rhsOf : PProcess → PExpr
 def fragG : PExpr → Bool
   | .lit _ => true
   | .binary _ l r => fragG l && fragG r
+  | .unary _ a => fragG a
+  | .reduce _ a => fragG a
+  | .ternary c t e => fragG c && fragG t && fragG e
   | .concat _ => false
   | .fill _ => false
   | _ => true
@@ -153,6 +188,23 @@ def catBit (σ : String → Int) (dw : String → Nat) (rd : String → Nat → 
       if k < (ps.map (Part.wid σ dw)).sum then catBit σ dw rd ps k
       else p.bit σ rd (k - (ps.map (Part.wid σ dw)).sum)
 
+/-- The self-determined width of a skeleton (WP-G S2): a gate or conditional has the width of its first
+operand (`Sk.SelfOk` / `Sk.WidthOk` say the others agree), the 1-bit operators have width 1. -/
+def Sk.width (σ : String → Int) (dw : String → Nat) : Sk → Nat
+  | .lit v => v.width
+  | .rd a => (a.win σ dw).2.2
+  | .gate _ l _ => l.width σ dw
+  | .cat ps => (ps.map (Part.wid σ dw)).sum
+  | .fill _ => 0
+  | .bnot a => a.width σ dw
+  | .lnot _ => 1
+  | .red _ _ => 1
+  | .land _ _ => 1
+  | .lor _ _ => 1
+  | .tern _ a _ => a.width σ dw
+  | .eqv _ _ => 1
+  | .nev _ _ => 1
+
 /-- Bit `k` of the skeleton. -/
 def Sk.bit (σ : String → Int) (dw : String → Nat) (rd : String → Nat → Bool) : Sk → Nat → Bool
   | .lit v, k => v.boolAt k
@@ -162,6 +214,16 @@ def Sk.bit (σ : String → Int) (dw : String → Nat) (rd : String → Nat → 
   | .gate .xor l r, k => l.bit σ dw rd k ^^ r.bit σ dw rd k
   | .cat ps, k => catBit σ dw rd ps k
   | .fill b, _ => b == Logic.l1
+  | .bnot a, k => !(a.bit σ dw rd k)
+  | .lnot a, _ => !(XF.any (a.width σ dw) (a.bit σ dw rd))
+  | .red op a, _ => XF.red op (a.width σ dw) (a.bit σ dw rd)
+  | .land l r, _ =>
+      XF.any (l.width σ dw) (l.bit σ dw rd) && XF.any (r.width σ dw) (r.bit σ dw rd)
+  | .lor l r, _ =>
+      XF.any (l.width σ dw) (l.bit σ dw rd) || XF.any (r.width σ dw) (r.bit σ dw rd)
+  | .tern c a b, k => if c.bit σ dw rd 0 then a.bit σ dw rd k else b.bit σ dw rd k
+  | .eqv l r, _ => XF.eqv (l.width σ dw) (l.bit σ dw rd) (r.bit σ dw rd)
+  | .nev l r, _ => !XF.eqv (l.width σ dw) (l.bit σ dw rd) (r.bit σ dw rd)
 
 /-! ## Lowering -/
 
@@ -180,21 +242,60 @@ def Part.expr (σ : String → Int) : Part → Expr2
   | .lit v => .lit v
   | .rd a => accExpr σ a
 
-/-- The expression `instantiate2` builds for the skeleton at target width `tw`. -/
+/-- The expression `instantiate2` builds for the skeleton at target width `tw`. `tw` is read only by `.fill`; the
+operands of the self-determined operators (`!`, reductions, `&&`, `||`, `==`, the `?:` condition) are lowered
+at the dummy width `0` (they contain no `.fill`: `Sk.SelfOk`, `Sk.low_irrel`). -/
 def Sk.low (σ : String → Int) (tw : Nat) : Sk → Expr2
   | .lit v => .lit v
   | .rd a => accExpr σ a
   | .gate g l r => .binary g.op (l.low σ tw) (r.low σ tw)
   | .cat ps => .concat (ps.map (Part.expr σ)).toArray
   | .fill b => .lit (LVec.replicate tw b)
+  | .bnot a => .unary .bnot (a.low σ tw)
+  | .lnot a => .unary .lnot (a.low σ 0)
+  | .red op a => .reduce op (a.low σ 0)
+  | .land l r => .logical true (l.low σ 0) (r.low σ 0)
+  | .lor l r => .logical false (l.low σ 0) (r.low σ 0)
+  | .tern c a b => .ternary (c.low σ 0) (a.low σ tw) (b.low σ tw)
+  | .eqv l r => .binary .eq (l.low σ 0) (r.low σ 0)
+  | .nev l r => .binary .ne (l.low σ 0) (r.low σ 0)
 
-/-- Every operand is exactly as wide as the target (no `resize` is inserted). -/
+/-- A skeleton in a self-determined position (WP-G S2): no `.fill`, and every gate, comparison and
+conditional has operands of one width (the arms of a `?:` agree, its condition is one bit). -/
+def Sk.SelfOk (σ : String → Int) (dw : String → Nat) : Sk → Prop
+  | .lit _ => True
+  | .rd _ => True
+  | .gate _ l r => l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw
+  | .cat _ => True
+  | .fill _ => False
+  | .bnot a => a.SelfOk σ dw
+  | .lnot a => a.SelfOk σ dw
+  | .red _ a => a.SelfOk σ dw
+  | .land l r => l.SelfOk σ dw ∧ r.SelfOk σ dw
+  | .lor l r => l.SelfOk σ dw ∧ r.SelfOk σ dw
+  | .tern c a b =>
+      c.SelfOk σ dw ∧ c.width σ dw = 1 ∧ a.SelfOk σ dw ∧ b.SelfOk σ dw ∧ a.width σ dw = b.width σ dw
+  | .eqv l r => l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw
+  | .nev l r => l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw
+
+/-- Every operand is exactly as wide as the target (no `resize` is inserted); the self-determined operands
+of `!`, reductions, `&&`, `||`, `==`, `!=` and the `?:` condition are consistent among themselves, and the
+1-bit operators sit at width one. -/
 def Sk.WidthOk (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → Prop
   | .lit v => v.width = tw
   | .rd a => (a.win σ dw).2.2 = tw
   | .gate _ l r => l.WidthOk σ dw tw ∧ r.WidthOk σ dw tw
   | .cat ps => (ps.map (Part.wid σ dw)).sum = tw
   | .fill _ => True
+  | .bnot a => a.WidthOk σ dw tw
+  | .lnot a => tw = 1 ∧ a.SelfOk σ dw
+  | .red _ a => tw = 1 ∧ a.SelfOk σ dw
+  | .land l r => tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw
+  | .lor l r => tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw
+  | .tern c a b =>
+      c.SelfOk σ dw ∧ c.width σ dw = 1 ∧ a.WidthOk σ dw tw ∧ b.WidthOk σ dw tw
+  | .eqv l r => tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw
+  | .nev l r => tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw
 
 /-- The access leaves. -/
 def partLeaves : List Part → List Acc
@@ -208,6 +309,14 @@ def Sk.leaves : Sk → List Acc
   | .gate _ l r => l.leaves ++ r.leaves
   | .cat ps => partLeaves ps
   | .fill _ => []
+  | .bnot a => a.leaves
+  | .lnot a => a.leaves
+  | .red _ a => a.leaves
+  | .land l r => l.leaves ++ r.leaves
+  | .lor l r => l.leaves ++ r.leaves
+  | .tern c a b => c.leaves ++ a.leaves ++ b.leaves
+  | .eqv l r => l.leaves ++ r.leaves
+  | .nev l r => l.leaves ++ r.leaves
 
 /-- Literals and fills carry no `x`/`z`. -/
 def partKnown : List Part → Bool
@@ -221,6 +330,60 @@ def Sk.knownB : Sk → Bool
   | .gate _ l r => l.knownB && r.knownB
   | .cat ps => partKnown ps
   | .fill b => b.isKnown
+  | .bnot a => a.knownB
+  | .lnot a => a.knownB
+  | .red _ a => a.knownB
+  | .land l r => l.knownB && r.knownB
+  | .lor l r => l.knownB && r.knownB
+  | .tern c a b => c.knownB && a.knownB && b.knownB
+  | .eqv l r => l.knownB && r.knownB
+  | .nev l r => l.knownB && r.knownB
+
+/-! ## Self-determined skeletons (WP-G S2) -/
+
+/-- `Sk.low` reads its width argument only at a `.fill`: a skeleton in a self-determined position has none. -/
+theorem Sk.low_irrel (σ : String → Int) (dw : String → Nat) :
+    ∀ (sk : Sk), sk.SelfOk σ dw → ∀ t1 t2, sk.low σ t1 = sk.low σ t2
+  | .lit _, _, _, _ => rfl
+  | .rd _, _, _, _ => rfl
+  | .gate g l r, h, t1, t2 => by
+      simp only [Sk.low, Sk.low_irrel σ dw l h.1 t1 t2, Sk.low_irrel σ dw r h.2.1 t1 t2]
+  | .cat _, _, _, _ => rfl
+  | .fill _, h, _, _ => by simp [Sk.SelfOk] at h
+  | .bnot a, h, t1, t2 => by simp only [Sk.low, Sk.low_irrel σ dw a h t1 t2]
+  | .lnot _, _, _, _ => rfl
+  | .red _ _, _, _, _ => rfl
+  | .land _ _, _, _, _ => rfl
+  | .lor _ _, _, _, _ => rfl
+  | .tern c a b, h, t1, t2 => by
+      simp only [Sk.low, Sk.low_irrel σ dw a h.2.2.1 t1 t2, Sk.low_irrel σ dw b h.2.2.2.1 t1 t2]
+  | .eqv _ _, _, _, _ => rfl
+  | .nev _ _, _, _, _ => rfl
+
+/-- A self-determined skeleton is well formed at its own width. -/
+theorem Sk.selfOk_widthOk (σ : String → Int) (dw : String → Nat) :
+    ∀ (sk : Sk), sk.SelfOk σ dw → sk.WidthOk σ dw (sk.width σ dw)
+  | .lit _, _ => rfl
+  | .rd _, _ => rfl
+  | .gate g l r, h => by
+      refine ⟨Sk.selfOk_widthOk σ dw l h.1, ?_⟩
+      have h2 := Sk.selfOk_widthOk σ dw r h.2.1
+      show r.WidthOk σ dw (l.width σ dw)
+      rw [h.2.2]; exact h2
+  | .cat _, _ => rfl
+  | .fill _, h => by simp [Sk.SelfOk] at h
+  | .bnot a, h => Sk.selfOk_widthOk σ dw a h
+  | .lnot _, h => ⟨rfl, h⟩
+  | .red _ _, h => ⟨rfl, h⟩
+  | .land _ _, h => ⟨rfl, h.1, h.2⟩
+  | .lor _ _, h => ⟨rfl, h.1, h.2⟩
+  | .tern c a b, h => by
+      refine ⟨h.1, h.2.1, Sk.selfOk_widthOk σ dw a h.2.2.1, ?_⟩
+      have h2 := Sk.selfOk_widthOk σ dw b h.2.2.2.1
+      show b.WidthOk σ dw (a.width σ dw)
+      rw [h.2.2.2.2]; exact h2
+  | .eqv _ _, h => ⟨rfl, h.1, h.2.1, h.2.2⟩
+  | .nev _ _, h => ⟨rfl, h.1, h.2.1, h.2.2⟩
 
 /-! ## Simp lemmas the netlist view is normalized with -/
 
@@ -252,16 +415,20 @@ theorem rdsOf?_len {ds : List DeclT} :
   | .lit _, rs, h, _ => by simp [rdsOf?] at h; subst h; simp [cnt]
   | .binary op l r, rs, h, hf => by
       simp only [fragG, Bool.and_eq_true] at hf
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr] at h
-          · simp only [hg, hl, hr, Except.ok.injEq] at h
-            subst h
-            simp [cnt, rdsOf?_len l ra hl hf.1, rdsOf?_len r rb hr hf.2]
+      obtain ⟨-, ra, rb, hl, hr, rfl⟩ := rdsOf?_binary h
+      simp [cnt, rdsOf?_len l ra hl hf.1, rdsOf?_len r rb hr hf.2]
+  | .unary op a, rs, h, hf => by
+      obtain ⟨-, ha⟩ := rdsOf?_unary h
+      simp only [fragG] at hf
+      simp [cnt, rdsOf?_len a rs ha hf]
+  | .ternary c t e, rs, h, hf => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
+      simp only [fragG, Bool.and_eq_true] at hf
+      simp [cnt, rdsOf?_len c rc hc hf.1.1, rdsOf?_len t rt ht hf.1.2, rdsOf?_len e re he hf.2,
+        Nat.add_assoc]
+  | .reduce op a, rs, h, hf => by
+      simp only [fragG] at hf
+      simp [cnt, rdsOf?_len a rs (rdsOf?_reduce h) hf]
   | .ident n, rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h; subst h; simp [cnt]
   | .bitSel b i, rs, h, _ => by
@@ -285,34 +452,48 @@ theorem rdsOf?_len {ds : List DeclT} :
   | .concat _, _, _, hf => by simp [fragG] at hf
   | .fill _, _, _, hf => by simp [fragG] at hf
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
-  | .int .., rs, h, _ | .unary .., rs, h, _ | .ternary .., rs, h, _
+  | .int .., rs, h, _
   | .resize .., rs, h, _ | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _ | .partSel .., rs, h, _ | .repl .., rs, h, _
-  | .reduce .., rs, h, _ | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
-/-- On an accepted gate tree the skeleton's leaves are exactly the reads. -/
+/-- On an accepted expression the skeleton's leaves are exactly the reads. -/
 theorem skT_leaves {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOf? ds v = .ok rs → fragG v = true →
       (skT v rs).leaves = rs
   | .lit _, rs, h, _ => by simp [rdsOf?] at h; subst h; simp [skT, Sk.leaves]
   | .binary op l r, rs, h, hf => by
       simp only [fragG, Bool.and_eq_true] at hf
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr] at h
-          · simp only [hg, hl, hr, Except.ok.injEq] at h
-            subst h
-            have hla := rdsOf?_len l ra hl hf.1
-            obtain ⟨-, hb⟩ := gateOf_cases hg
-            have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
-            have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
-            rcases hb with rfl | rfl | rfl <;>
-              simp [skT, hg, e1, e2, mkGate, Sk.leaves, skT_leaves l ra hl hf.1, skT_leaves r rb hr hf.2]
+      obtain ⟨hb, ra, rb, hl, hr, rfl⟩ := rdsOf?_binary h
+      have hla := rdsOf?_len l ra hl hf.1
+      have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+      have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+      have ihl := skT_leaves l ra hl hf.1
+      have ihr := skT_leaves r rb hr hf.2
+      rcases binOk_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+        simp [skT, gateOf, mkGate, e1, e2, Sk.leaves, ihl, ihr]
+  | .unary op a, rs, h, hf => by
+      obtain ⟨hop, ha⟩ := rdsOf?_unary h
+      simp only [fragG] at hf
+      have ih := skT_leaves a rs ha hf
+      rcases hop with rfl | rfl <;> simp [skT, Sk.leaves, ih]
+  | .ternary c t e, rs, h, hf => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
+      simp only [fragG, Bool.and_eq_true] at hf
+      have hc' := rdsOf?_len c rc hc hf.1.1
+      have ht' := rdsOf?_len t rt ht hf.1.2
+      have e1 : (rc ++ rt ++ re).take (cnt c) = rc := by
+        rw [List.append_assoc]; exact List.take_left' hc'
+      have e2 : (rc ++ rt ++ re).drop (cnt c) = rt ++ re := by
+        rw [List.append_assoc]; exact List.drop_left' hc'
+      have e3 : (rt ++ re).take (cnt t) = rt := List.take_left' ht'
+      have e4 : (rt ++ re).drop (cnt t) = re := List.drop_left' ht'
+      simp only [skT, e1, e2, e3, e4, Sk.leaves, skT_leaves c rc hc hf.1.1, skT_leaves t rt ht hf.1.2,
+        skT_leaves e re he hf.2]
+  | .reduce op a, rs, h, hf => by
+      simp only [fragG] at hf
+      simp [skT, Sk.leaves, skT_leaves a rs (rdsOf?_reduce h) hf]
   | .ident n, rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h; subst h; simp [skT, Sk.leaves]
   | .bitSel b i, rs, h, _ => by
@@ -336,10 +517,10 @@ theorem skT_leaves {ds : List DeclT} :
   | .concat _, _, _, hf => by simp [fragG] at hf
   | .fill _, _, _, hf => by simp [fragG] at hf
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
-  | .int .., rs, h, _ | .unary .., rs, h, _ | .ternary .., rs, h, _
+  | .int .., rs, h, _
   | .resize .., rs, h, _ | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _ | .partSel .., rs, h, _ | .repl .., rs, h, _
-  | .reduce .., rs, h, _ | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 end CombEq

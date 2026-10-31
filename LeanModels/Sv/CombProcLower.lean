@@ -57,26 +57,6 @@ theorem RdOK.ifGuard {σ : String → Int} {rs : List Acc} {c : Expr2} (h : RdOK
   · simp only [Expr2.ifGuard, Expr2.idents, List.append_nil] at hi
     exact h3 i hi
 
-theorem RdOK.ternary {σ : String → Int} {ra rb rc : List Acc} {g a b : Expr2} (hg : RdOK σ ra g)
-    (ha : RdOK σ rb a) (hb : RdOK σ rc b) : RdOK σ (ra ++ rb ++ rc) (.ternary g a b) := by
-  obtain ⟨g1, g2, g3⟩ := hg
-  obtain ⟨a1, a2, a3⟩ := ha
-  obtain ⟨b1, b2, b3⟩ := hb
-  refine ⟨?_, fun r hr => ?_, fun i hi => ?_⟩
-  · simp [Expr2.unsupportedFree, g1, a1, b1]
-  · simp only [Expr2.reads, List.mem_append] at hr
-    simp only [List.map_append, List.mem_append]
-    rcases hr with (h | h) | h
-    · exact Or.inl (Or.inl (g2 r h))
-    · exact Or.inl (Or.inr (a2 r h))
-    · exact Or.inr (b2 r h)
-  · simp only [Expr2.idents, List.mem_append] at hi
-    simp only [List.map_append, List.mem_append]
-    rcases hi with (h | h) | h
-    · exact Or.inl (Or.inl (g3 i h))
-    · exact Or.inl (Or.inr (a3 i h))
-    · exact Or.inr (b3 i h)
-
 section site
 variable {σ : String → Int} {E : IEnv} {elems : List (String × Nat)}
   {DW : String → Option Nat} {DG : String → Option (List (Int × Int))}

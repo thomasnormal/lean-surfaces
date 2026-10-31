@@ -272,133 +272,23 @@ theorem instExpr2_gate_none (b : BinOp) (hb : b = .and ∨ b = .or ∨ b = .xor)
       .binary b (fitExpr2 E elems (some w) l) (fitExpr2 E elems (some w) r) := by
   rcases hb with rfl | rfl | rfl <;> simp [instExpr2, hl, hr]
 
-/-- A gate tree whose leaves are all `tw` bits wide has self-determined width `tw`. -/
+/-- An expression of the fragment whose skeleton fits `tw` has self-determined width `tw`
+(WP-G S2: a corollary of `skT_shape`). -/
 theorem skT_selfWidth (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOf? ds v = .ok rs → fragG v = true →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ∀ tw, (skT v rs).WidthOk σ dw tw →
-        selfWidth2 E elems v = some tw
-  | .lit lv, rs, h, _, _, tw, hw => by
-      simp only [rdsOf?, Except.ok.injEq] at h
-      subst h
-      simp only [skT, Sk.WidthOk] at hw
-      simp [hw]
-  | .binary op l r, rs, h, hf, hacc, tw, hw => by
-      simp only [fragG, Bool.and_eq_true] at hf
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr] at h
-          · simp only [hg, hl, hr, Except.ok.injEq] at h
-            subst h
-            obtain ⟨rfl, hb⟩ := gateOf_cases hg
-            have hla := rdsOf?_len l ra hl hf.1
-            have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
-            have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
-            have ihl := skT_selfWidth C hdw l ra hl hf.1
-              (fun a ha => hacc a (List.mem_append_left _ ha)) tw
-            have ihr := skT_selfWidth C hdw r rb hr hf.2
-              (fun a ha => hacc a (List.mem_append_right _ ha)) tw
-            rcases hb with rfl | rfl | rfl <;>
-              simp only [skT, hg, e1, e2, mkGate, Sk.WidthOk] at hw <;>
-              simp [selfWidth2, ihl hw.1, ihr hw.2]
-  | .ident n, rs, h, _, hacc, tw, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.WidthOk] at hw
-      rw [(leaf_eq C hdw hl (hacc a (by simp))).1, hw]
-  | .bitSel b i, rs, h, _, hacc, tw, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.WidthOk] at hw
-      rw [(leaf_eq C hdw hl (hacc a (by simp))).1, hw]
-  | .arrayElem n is, rs, h, _, hacc, tw, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.WidthOk] at hw
-      rw [(leaf_eq C hdw hl (hacc a (by simp))).1, hw]
-  | .arrayPart n is m a b, rs, h, _, hacc, tw, hw => by
-      obtain ⟨a', hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.WidthOk] at hw
-      rw [(leaf_eq C hdw hl (hacc a' (by simp))).1, hw]
-  | .concat _, _, _, hf, _, _, _ => by simp [fragG] at hf
-  | .fill _, _, _, hf, _, _, _ => by simp [fragG] at hf
-  | .paramRef .., rs, h, _, _, _, _ | .genvarRef .., rs, h, _, _, _, _
-  | .enumRef .., rs, h, _, _, _, _
-  | .int .., rs, h, _, _, _, _ | .unary .., rs, h, _, _, _, _ | .ternary .., rs, h, _, _, _, _
-  | .resize .., rs, h, _, _, _, _ | .signedResize .., rs, h, _, _, _, _
-  | .squash2 .., rs, h, _, _, _, _
-  | .sysCall .., rs, h, _, _, _, _ | .partSel .., rs, h, _, _, _, _ | .repl .., rs, h, _, _, _, _
-  | .reduce .., rs, h, _, _, _, _ | .cast .., rs, h, _, _, _, _
-  | .unsupported .., rs, h, _, _, _, _ => by
-      simp [rdsOf?, rdsLeaf?, leafRd?] at h
+        selfWidth2 E elems v = some tw :=
+  fun v rs h hf hacc tw hw => (skT_shape C hdw v rs h hf hacc tw hw).1
 
-/-- **A condition instantiates to its skeleton at width one** (self-determined: the context is `none`). -/
+/-- **A condition instantiates to its skeleton at width one** (self-determined: the context is `none`; WP-G S2:
+a corollary of `skT_shape`, so the conditions are the expressions of the fragment, `!`, `&&`, `==`, ... included). -/
 theorem cond_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOf? ds v = .ok rs → fragG v = true →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → (skT v rs).WidthOk σ dw 1 →
-        instExpr2 E elems none v = (skT v rs).low σ 1
-  | .lit lv, rs, h, _, _, hw => by
-      simp only [rdsOf?, Except.ok.injEq] at h
-      subst h
-      simp [skT, Sk.low]
-  | .binary op l r, rs, h, hf, hacc, hw => by
-      simp only [fragG, Bool.and_eq_true] at hf
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr] at h
-          · simp only [hg, hl, hr, Except.ok.injEq] at h
-            subst h
-            obtain ⟨rfl, hb⟩ := gateOf_cases hg
-            have hla := rdsOf?_len l ra hl hf.1
-            have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
-            have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
-            have hacl : ∀ a ∈ ra, AccOK σ DW DG EW ns a :=
-              fun a ha => hacc a (List.mem_append_left _ ha)
-            have hacr : ∀ a ∈ rb, AccOK σ DW DG EW ns a :=
-              fun a ha => hacc a (List.mem_append_right _ ha)
-            have hw' : (skT l ra).WidthOk σ dw 1 ∧ (skT r rb).WidthOk σ dw 1 := by
-              rcases hb with rfl | rfl | rfl <;>
-                simpa only [skT, hg, e1, e2, mkGate, Sk.WidthOk] using hw
-            have hsl := skT_selfWidth C hdw l ra hl hf.1 hacl 1 hw'.1
-            have hsr := skT_selfWidth C hdw r rb hr hf.2 hacr 1 hw'.2
-            have ihl := gate_shape C hdw l ra hl hf.1 hacl 1 hw'.1
-            have ihr := gate_shape C hdw r rb hr hf.2 hacr 1 hw'.2
-            rw [instExpr2_gate_none b hb l r 1 hsl hsr, ihl, ihr]
-            rcases hb with rfl | rfl | rfl <;>
-              simp [skT, hg, e1, e2, mkGate, Sk.low, Gate.op]
-  | .ident n, rs, h, _, hacc, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.low]
-      exact (leaf_eq C hdw hl (hacc a (by simp))).2.1 none
-  | .bitSel b i, rs, h, _, hacc, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.low]
-      exact (leaf_eq C hdw hl (hacc a (by simp))).2.1 none
-  | .arrayElem n is, rs, h, _, hacc, hw => by
-      obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.low]
-      exact (leaf_eq C hdw hl (hacc a (by simp))).2.1 none
-  | .arrayPart n is m a b, rs, h, _, hacc, hw => by
-      obtain ⟨a', hl, rfl⟩ := rdsLeaf_cases (by simpa [rdsOf?] using h)
-      simp only [skT, List.headD_cons, Sk.low]
-      exact (leaf_eq C hdw hl (hacc a' (by simp))).2.1 none
-  | .concat _, _, _, hf, _, _ => by simp [fragG] at hf
-  | .fill _, _, _, hf, _, _ => by simp [fragG] at hf
-  | .paramRef .., rs, h, _, _, _ | .genvarRef .., rs, h, _, _, _
-  | .enumRef .., rs, h, _, _, _
-  | .int .., rs, h, _, _, _ | .unary .., rs, h, _, _, _ | .ternary .., rs, h, _, _, _
-  | .resize .., rs, h, _, _, _ | .signedResize .., rs, h, _, _, _
-  | .squash2 .., rs, h, _, _, _
-  | .sysCall .., rs, h, _, _, _ | .partSel .., rs, h, _, _, _ | .repl .., rs, h, _, _, _
-  | .reduce .., rs, h, _, _, _ | .cast .., rs, h, _, _, _
-  | .unsupported .., rs, h, _, _, _ => by
-      simp [rdsOf?, rdsLeaf?, leafRd?] at h
+        instExpr2 E elems none v = (skT v rs).low σ 1 :=
+  fun v rs h hf hacc hw => (skT_shape C hdw v rs h hf hacc 1 hw).2.2.1
 
 end cond
 
@@ -943,7 +833,7 @@ theorem eq_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 #guard_msgs (whitespace := lax) in
 #print axioms instExpr2_gate_none
 
-/-- info: 'LeanModels.Sv.CombEq.skT_selfWidth' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'LeanModels.Sv.CombEq.skT_selfWidth' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms skT_selfWidth
 

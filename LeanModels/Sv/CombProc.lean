@@ -174,38 +174,66 @@ theorem inst_parts_idxFree (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat
           rw [instParts2_cons]
           simp [Expr2.listIdxFree, h1, h2]
 
-/-- A gate tree instantiates to an expression with no `index` node, at any context. -/
+/-- A fit of an `index`-free instantiation has no `index` node. -/
+theorem fit_idxFree {e : PExpr} (hs : e.signedCast = false)
+    (h : ∀ c, (instExpr2 E elems c e).idxFree = true) (ctx : Option Nat) :
+    (fitExpr2 E elems ctx e).idxFree = true := by
+  rcases fitExpr2_cases E elems ctx e hs with ⟨c', hc⟩ | ⟨w, c', hc⟩
+  · rw [hc]; exact h c'
+  · rw [hc]; simpa [Expr2.idxFree] using h c'
+
+/-- An expression of the fragment instantiates to an expression with no `index` node, at any context. -/
 theorem inst_idxFree (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
     ∀ (e : PExpr) (rs : List Acc), rdsOf? ds e = .ok rs → (∀ a ∈ rs, AccOK σ DW DG EW ns a) →
       ∀ ctx, (instExpr2 E elems ctx e).idxFree = true
   | .lit v, rs, h, _, ctx => by simp [Expr2.idxFree]
   | .binary op l r, rs, h, hacc, ctx => by
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr' : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr'] at h
-          · simp only [hg, hl, hr', Except.ok.injEq] at h
-            subst h
-            obtain ⟨rfl, hb⟩ := gateOf_cases hg
-            have ihl := inst_idxFree C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-            have ihr := inst_idxFree C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
-            have hfl : ∀ c, (fitExpr2 E elems c l).idxFree = true := by
-              intro c
-              rcases fitExpr2_cases E elems c l (signedCast_of_rds hl) with ⟨c', hc⟩ | ⟨w, c', hc⟩
-              · rw [hc]; exact ihl c'
-              · rw [hc]; simpa [Expr2.idxFree] using ihl c'
-            have hfr : ∀ c, (fitExpr2 E elems c r).idxFree = true := by
-              intro c
-              rcases fitExpr2_cases E elems c r (signedCast_of_rds hr') with ⟨c', hc⟩ | ⟨w, c', hc⟩
-              · rw [hc]; exact ihr c'
-              · rw [hc]; simpa [Expr2.idxFree] using ihr c'
-            obtain ⟨c, hc⟩ := instExpr2_gate E elems ctx b hb l r
-            rw [hc]
-            simp [Expr2.idxFree, hfl c, hfr c]
+      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOf?_binary h
+      have ihl := inst_idxFree C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+      have ihr := inst_idxFree C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      have hfl := fit_idxFree (E := E) (elems := elems) (signedCast_of_rds hl) ihl
+      have hfr := fit_idxFree (E := E) (elems := elems) (signedCast_of_rds hr') ihr
+      have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor) →
+          (instExpr2 E elems ctx (.binary (.m0 g) l r)).idxFree = true := by
+        intro g hg
+        obtain ⟨c, hc⟩ := instExpr2_gate E elems ctx g hg l r
+        rw [hc]
+        simp [Expr2.idxFree, hfl c, hfr c]
+      rcases binOk_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+      · exact gate .and (Or.inl rfl)
+      · exact gate .or (Or.inr (Or.inl rfl))
+      · exact gate .xor (Or.inr (Or.inr rfl))
+      · rw [ie_land]; simp [Expr2.idxFree, ihl, ihr]
+      · rw [ie_lor]; simp [Expr2.idxFree, ihl, ihr]
+      · obtain ⟨c, hc⟩ := ie_eq_cases (env := E) (elems := elems) ctx l r
+        rw [hc]; simp [Expr2.idxFree, hfl c, hfr c]
+      · obtain ⟨c, hc⟩ := ie_ne_cases (env := E) (elems := elems) ctx l r
+        rw [hc]; simp [Expr2.idxFree, hfl c, hfr c]
+  | .unary op a, rs, h, hacc, ctx => by
+      obtain ⟨hop, ha⟩ := rdsOf?_unary h
+      have iha := inst_idxFree C hdw a rs ha hacc
+      have hfa := fit_idxFree (E := E) (elems := elems) (signedCast_of_rds ha) iha
+      rcases hop with rfl | rfl
+      · rcases ie_bnot_cases (env := E) (elems := elems) ctx a with ⟨c, hc⟩ | ⟨c, hc⟩ | ⟨w, c, hc⟩
+        · rw [hc]; simpa [Expr2.idxFree] using iha c
+        · rw [hc]; simpa [Expr2.idxFree] using hfa c
+        · rw [hc]; simpa [Expr2.idxFree] using hfa c
+      · rw [ie_lnot]; simpa [Expr2.idxFree] using iha none
+  | .ternary c t f, rs, h, hacc, ctx => by
+      obtain ⟨rc, rt, rf, hc, ht, hfe, rfl⟩ := rdsOf?_ternary h
+      have ihc := inst_idxFree C hdw c rc hc
+        (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
+      have iht := inst_idxFree C hdw t rt ht
+        (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha)))
+      have ihf := inst_idxFree C hdw f rf hfe (fun a ha => hacc a (List.mem_append_right _ ha))
+      obtain ⟨a0, ha0⟩ := ie_ternary_cases (env := E) (elems := elems) ctx c t f
+      rw [ha0]
+      simp [Expr2.idxFree, ihc none, fit_idxFree (signedCast_of_rds ht) iht a0,
+        fit_idxFree (signedCast_of_rds hfe) ihf a0]
+  | .reduce op a, rs, h, hacc, ctx => by
+      have iha := inst_idxFree C hdw a rs (rdsOf?_reduce h) hacc
+      rw [ie_reduce]; simpa [Expr2.idxFree] using iha _
   | .concat ps, rs, h, hacc, ctx => by
       simp only [rdsOf?] at h
       rw [instExpr2_concat]
@@ -215,9 +243,8 @@ theorem inst_idxFree (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .arrayElem n is, rs, h, hacc, ctx => inst_rdsLeaf_idxFree C hdw (by simpa [rdsOf?] using h) hacc ctx
   | .arrayPart n is m a b, rs, h, hacc, ctx =>
       inst_rdsLeaf_idxFree C hdw (by simpa [rdsOf?] using h) hacc ctx
-  | .unary .., rs, h, _, _ | .ternary .., rs, h, _, _
   | .partSel .., rs, h, _, _ | .repl .., rs, h, _, _
-  | .reduce .., rs, h, _, _ | .paramRef .., rs, h, _, _
+  | .paramRef .., rs, h, _, _
   | .genvarRef .., rs, h, _, _ | .enumRef .., rs, h, _, _
   | .int .., rs, h, _, _ | .fill .., rs, h, _, _
   | .resize .., rs, h, _, _ | .signedResize .., rs, h, _, _
@@ -437,7 +464,7 @@ def treeStmt? (ds : List DeclT) : PStmt → Except String (Acc × PTR)
                 | .ok (t2, b) =>
                     if t1 = t2 then .ok (t1, .ite c rc a b)
                     else .error "always_comb writes more than one window (the first fragment has one written window per process: split it into one always_comb per target)"
-          else .error "`if` condition outside the v1 fragment (a gate tree of `&`, `|`, `^` over one-bit accesses)"
+          else .error "`if` condition outside the v1 fragment (a one-bit expression of accesses and literals built from `& | ^`, `~ !`, reductions, `&& ||`, `== !=` and `?:`)"
   | .ifStmt _ _ none =>
       .error "always_comb does not assign its target on every path (an `if` without `else` is a latch)"
   | .block ss => treeStmts? ds ss
@@ -611,6 +638,28 @@ private def pp : PExpr := .bitSel (.ident "p") (.genvarRef "i")
 -- a whole-signal statement and an `else if` chain are accepted
 #guard refusal (.alwaysComb (.block [.ifStmt pp (.blockingAssign "cout" cc)
     (some (.ifStmt aa (.blockingAssign "cout" cc) (some (.blockingAssign "cout" aa))))])) == "accepted"
+
+-- WP-G S2: `!`, `~`, `&&`, `||`, `==`, reductions and `?:` are in the fragment, as conditions and in leaves
+#guard refusal (.alwaysComb (.block [.ifStmt (.unary (.m0 .lnot) pp) (.blockingAssignL carryLhs cc)
+    (some (.blockingAssignL carryLhs aa))])) == "accepted"
+#guard refusal (.alwaysComb (.block [.ifStmt (.binary .land pp (.binary .lor aa cc))
+    (.blockingAssignL carryLhs (.unary (.m0 .bnot) cc))
+    (some (.blockingAssignL carryLhs (.ternary pp cc aa)))])) == "accepted"
+#guard refusal (.alwaysComb (.block [.ifStmt (.reduce .or (.ident "a"))
+    (.blockingAssignL carryLhs (.binary (.m0 .eq) cc aa))
+    (some (.blockingAssignL carryLhs aa))])) == "accepted"
+-- the leaves of such a body, condition first, in the order of the skeleton
+#guard match procTree? apDecls (.alwaysComb (.block [.ifStmt (.unary (.m0 .lnot) pp)
+    (.blockingAssignL carryLhs (.ternary pp cc aa)) (some (.blockingAssignL carryLhs aa))])) with
+  | .ok (_, ptr) =>
+      ptr.rds == [.bit "p" ⟨[("i", 1)], 0⟩, .bit "p" ⟨[("i", 1)], 0⟩, .bit "c" ⟨[("i", 1)], 0⟩,
+        .bit "a" ⟨[("i", 1)], 0⟩, .bit "a" ⟨[("i", 1)], 0⟩]
+  | .error _ => false
+-- arithmetic and ordering operators stay outside the fragment
+#guard (refusal (.alwaysComb (.block [.ifStmt (.binary (.m0 .add) pp aa) (.blockingAssignL carryLhs cc)
+    (some (.blockingAssignL carryLhs aa))]))).startsWith "operator `+` is outside the v1 fragment"
+#guard (refusal (.alwaysComb (.block [.ifStmt (.unary (.m0 .neg) pp) (.blockingAssignL carryLhs cc)
+    (some (.blockingAssignL carryLhs aa))]))).startsWith "unary operator `-` or `+`"
 
 /-- The declarations of the lowering, at a symbolic width (the lowering reads names and widths only). -/
 def apDesign (N : Nat) : Design2 where

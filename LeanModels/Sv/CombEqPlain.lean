@@ -25,6 +25,45 @@ instance (dwv : String → Nat) (σ' : String → Int) (a : CombView.Acc) : Deci
   unfold accBitUpper
   split <;> infer_instance
 
+/-- `Sk.SelfOk` is decidable (structural recursion on the skeleton). -/
+def Sk.decSelfOk (σ : String → Int) (dw : String → Nat) : (sk : Sk) → Decidable (sk.SelfOk σ dw)
+  | .lit _ => inferInstanceAs (Decidable True)
+  | .rd _ => inferInstanceAs (Decidable True)
+  | .gate _ l r =>
+      haveI := Sk.decSelfOk σ dw l
+      haveI := Sk.decSelfOk σ dw r
+      inferInstanceAs (Decidable (l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw))
+  | .cat _ => inferInstanceAs (Decidable True)
+  | .fill _ => inferInstanceAs (Decidable False)
+  | .bnot a => Sk.decSelfOk σ dw a
+  | .lnot a => Sk.decSelfOk σ dw a
+  | .red _ a => Sk.decSelfOk σ dw a
+  | .land l r =>
+      haveI := Sk.decSelfOk σ dw l
+      haveI := Sk.decSelfOk σ dw r
+      inferInstanceAs (Decidable (l.SelfOk σ dw ∧ r.SelfOk σ dw))
+  | .lor l r =>
+      haveI := Sk.decSelfOk σ dw l
+      haveI := Sk.decSelfOk σ dw r
+      inferInstanceAs (Decidable (l.SelfOk σ dw ∧ r.SelfOk σ dw))
+  | .tern c a b =>
+      haveI := Sk.decSelfOk σ dw c
+      haveI := Sk.decSelfOk σ dw a
+      haveI := Sk.decSelfOk σ dw b
+      inferInstanceAs (Decidable (c.SelfOk σ dw ∧ c.width σ dw = 1 ∧ a.SelfOk σ dw ∧ b.SelfOk σ dw ∧
+        a.width σ dw = b.width σ dw))
+  | .eqv l r =>
+      haveI := Sk.decSelfOk σ dw l
+      haveI := Sk.decSelfOk σ dw r
+      inferInstanceAs (Decidable (l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw))
+  | .nev l r =>
+      haveI := Sk.decSelfOk σ dw l
+      haveI := Sk.decSelfOk σ dw r
+      inferInstanceAs (Decidable (l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw))
+
+instance (σ : String → Int) (dw : String → Nat) (sk : Sk) : Decidable (sk.SelfOk σ dw) :=
+  Sk.decSelfOk σ dw sk
+
 /-- `Sk.WidthOk` is decidable (structural recursion on the skeleton). -/
 def Sk.decWidthOk (σ : String → Int) (dw : String → Nat) (tw : Nat) : (sk : Sk) → Decidable (sk.WidthOk σ dw tw)
   | .lit v => inferInstanceAs (Decidable (v.width = tw))
@@ -35,6 +74,20 @@ def Sk.decWidthOk (σ : String → Int) (dw : String → Nat) (tw : Nat) : (sk :
       inferInstanceAs (Decidable (l.WidthOk σ dw tw ∧ r.WidthOk σ dw tw))
   | .cat ps => inferInstanceAs (Decidable ((ps.map (Part.wid σ dw)).sum = tw))
   | .fill _ => inferInstanceAs (Decidable True)
+  | .bnot a => Sk.decWidthOk σ dw tw a
+  | .lnot a => inferInstanceAs (Decidable (tw = 1 ∧ a.SelfOk σ dw))
+  | .red _ a => inferInstanceAs (Decidable (tw = 1 ∧ a.SelfOk σ dw))
+  | .land l r => inferInstanceAs (Decidable (tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw))
+  | .lor l r => inferInstanceAs (Decidable (tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw))
+  | .tern c a b =>
+      haveI := Sk.decWidthOk σ dw tw a
+      haveI := Sk.decWidthOk σ dw tw b
+      inferInstanceAs (Decidable (c.SelfOk σ dw ∧ c.width σ dw = 1 ∧ a.WidthOk σ dw tw ∧
+        b.WidthOk σ dw tw))
+  | .eqv l r =>
+      inferInstanceAs (Decidable (tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw))
+  | .nev l r =>
+      inferInstanceAs (Decidable (tw = 1 ∧ l.SelfOk σ dw ∧ r.SelfOk σ dw ∧ l.width σ dw = r.width σ dw))
 
 instance (σ : String → Int) (dw : String → Nat) (tw : Nat) (sk : Sk) : Decidable (sk.WidthOk σ dw tw) :=
   Sk.decWidthOk σ dw tw sk

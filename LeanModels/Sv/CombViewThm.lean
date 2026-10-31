@@ -206,6 +206,55 @@ theorem signedCast_of_rds {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rds
     e.signedCast = false := by
   cases e <;> first | rfl | (simp [rdsOf?, rdsLeaf?, leafRd?] at h)
 
+/-! ### The operators of the fragment (WP-G S2): inversions of the recognizer -/
+
+theorem binOk_cases {op : SymBinOp} (h : binOk op = true) :
+    op = .m0 .and ∨ op = .m0 .or ∨ op = .m0 .xor ∨ op = .land ∨ op = .lor ∨ op = .m0 .eq ∨
+      op = .m0 .ne := by
+  cases op with
+  | m0 b => cases b <;> simp_all [binOk]
+  | _ => simp_all [binOk]
+
+theorem rdsOf?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : List Acc}
+    (h : rdsOf? ds (.binary op l r) = .ok rs) :
+    binOk op = true ∧ ∃ ra rb, rdsOf? ds l = .ok ra ∧ rdsOf? ds r = .ok rb ∧ rs = ra ++ rb := by
+  simp only [rdsOf?] at h
+  by_cases hb : binOk op = true
+  · rw [if_pos hb] at h
+    rcases hl : rdsOf? ds l with e1 | ra
+    · simp [hl] at h
+    · rcases hr : rdsOf? ds r with e2 | rb
+      · simp [hl, hr] at h
+      · simp only [hl, hr, Except.ok.injEq] at h
+        exact ⟨hb, ra, rb, rfl, rfl, h.symm⟩
+  · rw [if_neg hb] at h
+    simp at h
+
+theorem rdsOf?_unary {ds : List DeclT} {op : SymUnaryOp} {a : PExpr} {rs : List Acc}
+    (h : rdsOf? ds (.unary op a) = .ok rs) :
+    (op = .m0 .bnot ∨ op = .m0 .lnot) ∧ rdsOf? ds a = .ok rs := by
+  cases op with
+  | m0 u => cases u <;> simp_all [rdsOf?]
+  | _ => simp [rdsOf?] at h
+
+theorem rdsOf?_ternary {ds : List DeclT} {c t e : PExpr} {rs : List Acc}
+    (h : rdsOf? ds (.ternary c t e) = .ok rs) :
+    ∃ rc rt re, rdsOf? ds c = .ok rc ∧ rdsOf? ds t = .ok rt ∧ rdsOf? ds e = .ok re ∧
+      rs = rc ++ rt ++ re := by
+  simp only [rdsOf?] at h
+  rcases hc : rdsOf? ds c with e1 | rc
+  · simp [hc] at h
+  · rcases ht : rdsOf? ds t with e2 | rt
+    · simp [hc, ht] at h
+    · rcases he : rdsOf? ds e with e3 | re
+      · simp [hc, ht, he] at h
+      · simp only [hc, ht, he, Except.ok.injEq] at h
+        exact ⟨rc, rt, re, rfl, rfl, rfl, h.symm⟩
+
+theorem rdsOf?_reduce {ds : List DeclT} {op : RedOp} {a : PExpr} {rs : List Acc}
+    (h : rdsOf? ds (.reduce op a) = .ok rs) : rdsOf? ds a = .ok rs := by
+  simpa [rdsOf?] using h
+
 /-! ## Derived definitions on the summary -/
 
 /-- Structural well-formedness of a summary: decidable closed data, discharged by `decide`. -/
@@ -330,6 +379,59 @@ theorem RdOK.resize {σ : String → Int} {rs : List Acc} {x : Expr2} (w : Nat)
     fun r hr => h2 r (by simpa [Expr2.reads] using hr),
     fun i hi => h3 i (by simpa [Expr2.idents] using hi)⟩
 
+theorem RdOK.unary {σ : String → Int} {rs : List Acc} {x : Expr2} (op : UnaryOp)
+    (h : RdOK σ rs x) : RdOK σ rs (.unary op x) := by
+  obtain ⟨h1, h2, h3⟩ := h
+  exact ⟨by simpa [Expr2.unsupportedFree] using h1,
+    fun r hr => h2 r (by simpa [Expr2.reads] using hr),
+    fun i hi => h3 i (by simpa [Expr2.idents] using hi)⟩
+
+theorem RdOK.reduce {σ : String → Int} {rs : List Acc} {x : Expr2} (op : RedOp)
+    (h : RdOK σ rs x) : RdOK σ rs (.reduce op x) := by
+  obtain ⟨h1, h2, h3⟩ := h
+  exact ⟨by simpa [Expr2.unsupportedFree] using h1,
+    fun r hr => h2 r (by simpa [Expr2.reads] using hr),
+    fun i hi => h3 i (by simpa [Expr2.idents] using hi)⟩
+
+theorem RdOK.logical {σ : String → Int} {ra rb : List Acc} {x y : Expr2} (isAnd : Bool)
+    (hx : RdOK σ ra x) (hy : RdOK σ rb y) : RdOK σ (ra ++ rb) (.logical isAnd x y) := by
+  obtain ⟨hx1, hx2, hx3⟩ := hx
+  obtain ⟨hy1, hy2, hy3⟩ := hy
+  refine ⟨?_, ?_, ?_⟩
+  · simp [Expr2.unsupportedFree, hx1, hy1]
+  · intro r hr
+    simp only [Expr2.reads, List.mem_append] at hr
+    simp only [List.map_append, List.mem_append]
+    rcases hr with h | h
+    · exact Or.inl (hx2 r h)
+    · exact Or.inr (hy2 r h)
+  · intro i hi
+    simp only [Expr2.idents, List.mem_append] at hi
+    simp only [List.map_append, List.mem_append]
+    rcases hi with h | h
+    · exact Or.inl (hx3 i h)
+    · exact Or.inr (hy3 i h)
+
+theorem RdOK.ternary {σ : String → Int} {ra rb rc : List Acc} {g a b : Expr2} (hg : RdOK σ ra g)
+    (ha : RdOK σ rb a) (hb : RdOK σ rc b) : RdOK σ (ra ++ rb ++ rc) (.ternary g a b) := by
+  obtain ⟨g1, g2, g3⟩ := hg
+  obtain ⟨a1, a2, a3⟩ := ha
+  obtain ⟨b1, b2, b3⟩ := hb
+  refine ⟨?_, fun r hr => ?_, fun i hi => ?_⟩
+  · simp [Expr2.unsupportedFree, g1, a1, b1]
+  · simp only [Expr2.reads, List.mem_append] at hr
+    simp only [List.map_append, List.mem_append]
+    rcases hr with (h | h) | h
+    · exact Or.inl (Or.inl (g2 r h))
+    · exact Or.inl (Or.inr (a2 r h))
+    · exact Or.inr (b2 r h)
+  · simp only [Expr2.idents, List.mem_append] at hi
+    simp only [List.map_append, List.mem_append]
+    rcases hi with (h | h) | h
+    · exact Or.inl (Or.inl (g3 i h))
+    · exact Or.inl (Or.inr (a3 i h))
+    · exact Or.inr (b3 i h)
+
 theorem RdOK.concat_cons {σ : String → Int} {ra rb : List Acc} {x : Expr2} {l : List Expr2}
     (hx : RdOK σ ra x) (hl : RdOK σ rb (.concat l.toArray)) :
     RdOK σ (ra ++ rb) (.concat (x :: l).toArray) := by
@@ -400,6 +502,154 @@ theorem instExpr2_gate (E : IEnv) (elems : List (String × Nat)) (ctx : Option N
       .binary bop (fitExpr2 E elems c l) (fitExpr2 E elems c r) := by
   rcases hb with rfl | rfl | rfl <;> cases ctx <;> simp [instExpr2] <;>
     first | exact ⟨_, rfl, rfl⟩ | exact ⟨_, rfl⟩
+
+/-! ## The new operators of the fragment (WP-G S2): `instExpr2` / `selfWidth2` / `rigidMax2` equations
+
+One equation per constructor, the facts the combined shape theorem (`CombEq.skT_shape`) and the read lemmas
+rest on. Spike: `svgolf/design/always-comb/spike/S2Spike.lean`. -/
+
+section s2eqns
+variable {env : IEnv} {elems : List (String × Nat)}
+
+theorem ie_lnot (ctx : Option Nat) (a : PExpr) :
+    instExpr2 env elems ctx (.unary (.m0 .lnot) a) = .unary .lnot (instExpr2 env elems none a) := by
+  simp [instExpr2]
+
+theorem ie_bnot_some (w : Nat) (a : PExpr) (h : (rigidMax2 env elems a).getD w ≤ w) :
+    instExpr2 env elems (some w) (.unary (.m0 .bnot) a) =
+      .unary .bnot (fitExpr2 env elems (some w) a) := by
+  simp [instExpr2, h]
+
+theorem ie_bnot_none (a : PExpr) :
+    instExpr2 env elems none (.unary (.m0 .bnot) a) =
+      .unary .bnot (instExpr2 env elems (selfWidth2 env elems a) a) := by
+  simp [instExpr2]
+
+/-- `~a` at any context: `~` over an instantiation or a fit of `a`, possibly under one `resize`. -/
+theorem ie_bnot_cases (ctx : Option Nat) (a : PExpr) :
+    (∃ c, instExpr2 env elems ctx (.unary (.m0 .bnot) a) = .unary .bnot (instExpr2 env elems c a)) ∨
+    (∃ c, instExpr2 env elems ctx (.unary (.m0 .bnot) a) = .unary .bnot (fitExpr2 env elems c a)) ∨
+    (∃ w c, instExpr2 env elems ctx (.unary (.m0 .bnot) a) =
+      .resize w (.unary .bnot (fitExpr2 env elems c a))) := by
+  cases ctx with
+  | none => exact Or.inl ⟨selfWidth2 env elems a, ie_bnot_none a⟩
+  | some w =>
+      by_cases h : (rigidMax2 env elems a).getD w ≤ w
+      · exact Or.inr (Or.inl ⟨some w, ie_bnot_some w a h⟩)
+      · exact Or.inr (Or.inr ⟨w, some ((rigidMax2 env elems a).getD w), by simp [instExpr2, h]⟩)
+
+theorem ie_ternary_some (w : Nat) (c t e : PExpr) :
+    instExpr2 env elems (some w) (.ternary c t e) =
+      .ternary (instExpr2 env elems none c) (fitExpr2 env elems (some w) t)
+        (fitExpr2 env elems (some w) e) := by
+  simp [instExpr2]
+
+theorem ie_ternary_none (w : Nat) (c t e : PExpr)
+    (ht : selfWidth2 env elems t = some w) (he : selfWidth2 env elems e = some w) :
+    instExpr2 env elems none (.ternary c t e) =
+      .ternary (instExpr2 env elems none c) (fitExpr2 env elems (some w) t)
+        (fitExpr2 env elems (some w) e) := by
+  simp [instExpr2, ht, he]
+
+theorem ie_ternary_cases (ctx : Option Nat) (c t e : PExpr) :
+    ∃ a, instExpr2 env elems ctx (.ternary c t e) =
+      .ternary (instExpr2 env elems none c) (fitExpr2 env elems a t) (fitExpr2 env elems a e) := by
+  cases ctx <;> simp [instExpr2] <;> first | exact ⟨_, rfl, rfl⟩ | exact ⟨_, rfl⟩
+
+theorem ie_land (ctx : Option Nat) (l r : PExpr) :
+    instExpr2 env elems ctx (.binary .land l r) =
+      .logical true (instExpr2 env elems (selfWidth2 env elems l) l)
+        (instExpr2 env elems (selfWidth2 env elems r) r) := by
+  simp [instExpr2] <;> rfl
+
+theorem ie_lor (ctx : Option Nat) (l r : PExpr) :
+    instExpr2 env elems ctx (.binary .lor l r) =
+      .logical false (instExpr2 env elems (selfWidth2 env elems l) l)
+        (instExpr2 env elems (selfWidth2 env elems r) r) := by
+  simp [instExpr2] <;> rfl
+
+theorem ie_reduce (ctx : Option Nat) (op : RedOp) (a : PExpr) :
+    instExpr2 env elems ctx (.reduce op a) =
+      .reduce op (instExpr2 env elems (selfWidth2 env elems a) a) := by
+  simp [instExpr2]
+
+theorem ie_eq_cases (ctx : Option Nat) (l r : PExpr) :
+    ∃ c, instExpr2 env elems ctx (.binary (.m0 .eq) l r) =
+      .binary .eq (fitExpr2 env elems c l) (fitExpr2 env elems c r) := by
+  cases ctx <;> simp [instExpr2] <;> first | exact ⟨_, rfl, rfl⟩ | exact ⟨_, rfl⟩
+
+theorem ie_ne_cases (ctx : Option Nat) (l r : PExpr) :
+    ∃ c, instExpr2 env elems ctx (.binary (.m0 .ne) l r) =
+      .binary .ne (fitExpr2 env elems c l) (fitExpr2 env elems c r) := by
+  cases ctx <;> simp [instExpr2] <;> first | exact ⟨_, rfl, rfl⟩ | exact ⟨_, rfl⟩
+
+theorem ie_eq (ctx : Option Nat) (w : Nat) (l r : PExpr) (hl : selfWidth2 env elems l = some w)
+    (hr : selfWidth2 env elems r = some w) :
+    instExpr2 env elems ctx (.binary (.m0 .eq) l r) =
+      .binary .eq (fitExpr2 env elems (some w) l) (fitExpr2 env elems (some w) r) := by
+  simp [instExpr2, hl, hr]
+
+theorem ie_ne (ctx : Option Nat) (w : Nat) (l r : PExpr) (hl : selfWidth2 env elems l = some w)
+    (hr : selfWidth2 env elems r = some w) :
+    instExpr2 env elems ctx (.binary (.m0 .ne) l r) =
+      .binary .ne (fitExpr2 env elems (some w) l) (fitExpr2 env elems (some w) r) := by
+  simp [instExpr2, hl, hr]
+
+theorem sw_lnot (a : PExpr) : selfWidth2 env elems (.unary (.m0 .lnot) a) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_bnot (a : PExpr) :
+    selfWidth2 env elems (.unary (.m0 .bnot) a) = selfWidth2 env elems a := by
+  simp [selfWidth2]
+
+theorem sw_land (l r : PExpr) : selfWidth2 env elems (.binary .land l r) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_lor (l r : PExpr) : selfWidth2 env elems (.binary .lor l r) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_eq (l r : PExpr) : selfWidth2 env elems (.binary (.m0 .eq) l r) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_ne (l r : PExpr) : selfWidth2 env elems (.binary (.m0 .ne) l r) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_reduce (op : RedOp) (a : PExpr) : selfWidth2 env elems (.reduce op a) = some 1 := by
+  simp [selfWidth2]
+
+theorem sw_ternary (w : Nat) (c t e : PExpr)
+    (ht : selfWidth2 env elems t = some w) (he : selfWidth2 env elems e = some w) :
+    selfWidth2 env elems (.ternary c t e) = some w := by
+  simp [selfWidth2, ht, he]
+
+theorem rm_bnot (a : PExpr) :
+    rigidMax2 env elems (.unary (.m0 .bnot) a) = rigidMax2 env elems a := by
+  simp [rigidMax2]
+
+theorem rm_lnot (a : PExpr) : rigidMax2 env elems (.unary (.m0 .lnot) a) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_land (l r : PExpr) : rigidMax2 env elems (.binary .land l r) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_lor (l r : PExpr) : rigidMax2 env elems (.binary .lor l r) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_eq (l r : PExpr) : rigidMax2 env elems (.binary (.m0 .eq) l r) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_ne (l r : PExpr) : rigidMax2 env elems (.binary (.m0 .ne) l r) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_reduce (op : RedOp) (a : PExpr) : rigidMax2 env elems (.reduce op a) = some 1 := by
+  simp [rigidMax2, selfWidth2]
+
+theorem rm_ternary (w : Nat) (c t e : PExpr)
+    (ht : rigidMax2 env elems t = some w) (he : rigidMax2 env elems e = some w) :
+    rigidMax2 env elems (.ternary c t e) = some w := by
+  simp [rigidMax2, ht, he]
+
+end s2eqns
 
 /-! ## The environment facts the site lemmas read -/
 
@@ -578,7 +828,7 @@ theorem inst_parts (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
           rw [instParts2_cons]
           exact RdOK.concat_cons h1 h2
 
-/-- **The reads of a gate tree**, at any context. -/
+/-- **The reads of an expression of the fragment**, at any context. -/
 theorem inst_rd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
     ∀ (e : PExpr) (rs : List Acc), rdsOf? ds e = .ok rs →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ∀ ctx, RdOK σ rs (instExpr2 E elems ctx e)
@@ -587,23 +837,51 @@ theorem inst_rd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
       subst h
       simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   | .binary op l r, rs, h, hacc, ctx => by
-      simp only [rdsOf?] at h
-      rcases hg : gateOf op with _ | b
-      · simp [hg] at h
-      · rcases hl : rdsOf? ds l with e1 | ra
-        · simp [hg, hl] at h
-        · rcases hr' : rdsOf? ds r with e2 | rb
-          · simp [hg, hl, hr'] at h
-          · simp only [hg, hl, hr', Except.ok.injEq] at h
-            subst h
-            obtain ⟨rfl, hb⟩ := gateOf_cases hg
-            have ihl := inst_rd C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-            have ihr := inst_rd C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
-            have hfl := RdOK.fit (E := E) (elems := elems) (signedCast_of_rds hl) ihl
-            have hfr := RdOK.fit (E := E) (elems := elems) (signedCast_of_rds hr') ihr
-            obtain ⟨c, hc⟩ := instExpr2_gate E elems ctx b hb l r
-            rw [hc]
-            exact RdOK.binary _ (hfl c) (hfr c)
+      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOf?_binary h
+      have ihl := inst_rd C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+      have ihr := inst_rd C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      have hfl := RdOK.fit (E := E) (elems := elems) (signedCast_of_rds hl) ihl
+      have hfr := RdOK.fit (E := E) (elems := elems) (signedCast_of_rds hr') ihr
+      have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor) →
+          RdOK σ (ra ++ rb) (instExpr2 E elems ctx (.binary (.m0 g) l r)) := by
+        intro g hg
+        obtain ⟨c, hc⟩ := instExpr2_gate E elems ctx g hg l r
+        rw [hc]
+        exact RdOK.binary _ (hfl c) (hfr c)
+      rcases binOk_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+      · exact gate .and (Or.inl rfl)
+      · exact gate .or (Or.inr (Or.inl rfl))
+      · exact gate .xor (Or.inr (Or.inr rfl))
+      · rw [ie_land]; exact RdOK.logical true (ihl _) (ihr _)
+      · rw [ie_lor]; exact RdOK.logical false (ihl _) (ihr _)
+      · obtain ⟨c, hc⟩ := ie_eq_cases (env := E) (elems := elems) ctx l r
+        rw [hc]; exact RdOK.binary _ (hfl c) (hfr c)
+      · obtain ⟨c, hc⟩ := ie_ne_cases (env := E) (elems := elems) ctx l r
+        rw [hc]; exact RdOK.binary _ (hfl c) (hfr c)
+  | .unary op a, rs, h, hacc, ctx => by
+      obtain ⟨hop, ha⟩ := rdsOf?_unary h
+      have iha := inst_rd C a rs ha hacc
+      rcases hop with rfl | rfl
+      · have hs := signedCast_of_rds ha
+        rcases ie_bnot_cases (env := E) (elems := elems) ctx a with ⟨c, hc⟩ | ⟨c, hc⟩ | ⟨w, c, hc⟩
+        · rw [hc]; exact RdOK.unary _ (iha c)
+        · rw [hc]; exact RdOK.unary _ (RdOK.fit hs iha c)
+        · rw [hc]; exact RdOK.resize w (RdOK.unary _ (RdOK.fit hs iha c))
+      · rw [ie_lnot]; exact RdOK.unary _ (iha none)
+  | .ternary c t e, rs, h, hacc, ctx => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
+      have ihc := inst_rd C c rc hc
+        (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
+      have iht := inst_rd C t rt ht
+        (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha)))
+      have ihe := inst_rd C e re he (fun a ha => hacc a (List.mem_append_right _ ha))
+      obtain ⟨a0, ha0⟩ := ie_ternary_cases (env := E) (elems := elems) ctx c t e
+      rw [ha0]
+      exact RdOK.ternary (ihc none) (RdOK.fit (signedCast_of_rds ht) iht a0)
+        (RdOK.fit (signedCast_of_rds he) ihe a0)
+  | .reduce op a, rs, h, hacc, ctx => by
+      have iha := inst_rd C a rs (rdsOf?_reduce h) hacc
+      rw [ie_reduce]; exact RdOK.reduce _ (iha _)
   | .concat ps, rs, h, hacc, ctx => by
       simp only [rdsOf?] at h
       rw [instExpr2_concat]
@@ -612,9 +890,8 @@ theorem inst_rd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
   | .bitSel b i, rs, h, hacc, ctx => inst_rdsLeaf C (by simpa [rdsOf?] using h) hacc ctx
   | .arrayElem n is, rs, h, hacc, ctx => inst_rdsLeaf C (by simpa [rdsOf?] using h) hacc ctx
   | .arrayPart n is m a b, rs, h, hacc, ctx => inst_rdsLeaf C (by simpa [rdsOf?] using h) hacc ctx
-  | .unary .., rs, h, _, _ | .ternary .., rs, h, _, _
   | .partSel .., rs, h, _, _ | .repl .., rs, h, _, _
-  | .reduce .., rs, h, _, _ | .paramRef .., rs, h, _, _
+  | .paramRef .., rs, h, _, _
   | .genvarRef .., rs, h, _, _ | .enumRef .., rs, h, _, _
   | .int .., rs, h, _, _ | .fill .., rs, h, _, _
   | .resize .., rs, h, _, _ | .signedResize .., rs, h, _, _

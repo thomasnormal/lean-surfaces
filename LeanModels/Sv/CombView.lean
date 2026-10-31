@@ -598,11 +598,12 @@ def leafRd? (ds : List DeclT) : PExpr → Except String Acc
       | _ => .error "bit select of a non-identifier base"
   | .arrayElem n is => elemAcc? ds n is
   | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
-  | .unary .. => .error "unary operator (outside the v1 fragment)"
-  | .ternary .. => .error "conditional expression `?:` (outside the v1 fragment)"
+  | .unary .. => .error "unary operator in this position (outside the v1 fragment: `~` and `!` are allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
+  | .ternary .. => .error "conditional expression `?:` in this position (outside the v1 fragment: allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
   | .partSel .. => .error "legacy part select (outside the v1 fragment)"
   | .repl .. => .error "replication (outside the v1 fragment)"
-  | .reduce .. => .error "reduction (outside the v1 fragment)"
+  | .reduce .. => .error "reduction in this position (outside the v1 fragment: allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
+  | .resize .. | .signedResize .. => .error "width conversion (an operand is not as wide as its context at the default parameters, so slang inserted an implicit zero-extension or truncation; the v1 fragment needs every operand exactly as wide as its target: widen or narrow it explicitly)"
   | .fill _ => .error "unbased unsized literal `'0`/`'1` inside an expression (outside the v1 fragment; allowed as a whole right-hand side)"
   | _ => .error "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
 
@@ -628,19 +629,43 @@ def partsRd? (ds : List DeclT) : List PExpr → Except String (List Acc)
           | .error e => .error e
           | .ok b => .ok (a ++ b)
 
-/-- The reads of an expression of the fragment, or the reason it is outside it. -/
+/-- The binary operators of the fragment: the bitwise gates `& | ^`, logical `&&` `||` and `==` `!=`
+(WP-G S2). -/
+def binOk : SymBinOp → Bool
+  | .m0 .and | .m0 .or | .m0 .xor | .land | .lor | .m0 .eq | .m0 .ne => true
+  | _ => false
+
+/-- The reads of an expression of the fragment, or the reason it is outside it.
+
+WP-G S2: besides the gate trees of `& | ^` the fragment has `~` and `!`, the reductions, `&&` and `||`,
+`==` and `!=`, and the conditional expression `c ? a : b` (reads in textual order: `c`, `a`, `b`). -/
 def rdsOf? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .lit _ => .ok []
   | .binary op l r =>
-      match gateOf op with
-      | none => .error s!"operator `{op.sym}` is not a bitwise gate (`&`, `|`, `^`)"
-      | some _ =>
-          match rdsOf? ds l with
-          | .error e => .error e
-          | .ok a =>
-              match rdsOf? ds r with
-              | .error e => .error e
-              | .ok b => .ok (a ++ b)
+      if binOk op then
+        match rdsOf? ds l with
+        | .error e => .error e
+        | .ok a =>
+            match rdsOf? ds r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
+      else .error s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the logical `&&`, `||` and `==`, `!=`; arithmetic, ordering comparisons and shifts are word-level operators)"
+  | .unary op a =>
+      match op with
+      | .m0 .bnot => rdsOf? ds a
+      | .m0 .lnot => rdsOf? ds a
+      | _ => .error "unary operator `-` or `+` (outside the v1 fragment: it has `~` and `!`)"
+  | .ternary c t e =>
+      match rdsOf? ds c with
+      | .error m => .error m
+      | .ok a =>
+          match rdsOf? ds t with
+          | .error m => .error m
+          | .ok b =>
+              match rdsOf? ds e with
+              | .error m => .error m
+              | .ok d => .ok (a ++ b ++ d)
+  | .reduce _ a => rdsOf? ds a
   | .concat ps => partsRd? ds ps
   | e => rdsLeaf? ds e
 

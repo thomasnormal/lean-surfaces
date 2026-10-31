@@ -342,6 +342,17 @@ def catch_ResourceWarning(value):
         return value
 
 
+def raise_SyntaxWarning():
+    raise SyntaxWarning
+
+
+def catch_SyntaxWarning(value):
+    try:
+        raise SyntaxWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

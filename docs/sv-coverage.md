@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 540 | 526 | 0 | 14 | sv-tests-2 declarations |
+| 541 | 527 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -561,6 +561,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assign_multiple_drivers` | `Examples/system-verilog/assign_multiple_drivers/assign_multiple_drivers.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `assign_net_resolution` | `Examples/system-verilog/assign_net_resolution/assign_net_resolution.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_accept` | `Examples/system-verilog/always_ff_accept/always_ff_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_capture` | `Examples/system-verilog/always_ff_capture/always_ff_capture.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_accept` | `Examples/system-verilog/always_latch_accept/always_latch_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `wait_accept` | `Examples/system-verilog/wait_accept/wait_accept.sv` | match | **MATCH** | `ok` | MATCH |
 
@@ -608,7 +609,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_latch_accept/always_latch_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_ff_capture/always_ff_capture.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |

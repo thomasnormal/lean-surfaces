@@ -4911,6 +4911,17 @@
       "ticks": 2
     },
     {
+      "name": "always_ff_capture",
+      "file": "Examples/system-verilog/always_ff_capture/always_ff_capture.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF CAPTURE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
       "name": "always_latch_accept",
       "file": "Examples/system-verilog/always_latch_accept/always_latch_accept.sv",
       "module": "top",

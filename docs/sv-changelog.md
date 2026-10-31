@@ -1,3 +1,12 @@
+# [0.1.274] — 2026-10-31
+
+The `always_ff_capture` timed witness now toggles its clock twice and checks both
+positive-edge nonblocking captures. This exercises the retained `always_ff`
+process through the existing event registration and NBA commit path; no
+construct-specific scheduler was added. Differential coverage grows
+**540/526/0/14 → 541/527/0/14** while grammar coverage remains **239/210/29**
+and the clean extraction headline remains **5,901/22,071**.
+
 # [0.1.273] — 2026-10-31
 
 Timed continuous assignments now retain per-process driver samples and resolve

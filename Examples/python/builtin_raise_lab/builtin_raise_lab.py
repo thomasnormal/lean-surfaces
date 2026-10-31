@@ -221,6 +221,17 @@ def catch_IOError(value):
         return value
 
 
+def raise_StopAsyncIteration():
+    raise StopAsyncIteration
+
+
+def catch_StopAsyncIteration(value):
+    try:
+        raise StopAsyncIteration
+    except Exception:
+        return value
+
+
 def base_not_exception():
     try:
         try:

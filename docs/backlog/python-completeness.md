@@ -6735,3 +6735,22 @@ constructor forms remain unchanged.
 
 DECIDED: canonicalize the two historical OSError aliases; retain loud
 behavior for payload and OS-derived exception constructors.
+
+## 2026-10-31-pycomplete-208 — admit bare `StopAsyncIteration`
+
+The builtin exception table now admits the leaf `StopAsyncIteration` identity.
+A bare `raise StopAsyncIteration` therefore uses the existing
+`.builtinException` representation and participates in the already-modelled
+`except Exception:` hierarchy, while payload-bearing constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Exception` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,782 cases: 3,745 matched / 37 recorded refusals / 0 failed |
+| Full proof differential | 3,782 cases: 3,644 matched / 138 refusals / 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; 37 call rows in 12 classes and 2 script rows, 0 drifts |
+| Build and checks | Managed `lake build leanmodels-run`, extractor tests (150), generated coverage/progress/backlog checks, and `git diff --check` passed |
+
+DECIDED: admit only the payload-free `StopAsyncIteration` class identity and its
+ordinary `Exception` catch; retain loud behavior for payload constructors and
+async execution constructs.

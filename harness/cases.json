@@ -1319,6 +1319,8 @@
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_EnvironmentError", "args": [[0], [23], [-7]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_IOError", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_IOError", "args": [[0], [23], [-7]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_StopAsyncIteration", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_StopAsyncIteration", "args": [[0], [23], [-7]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "base_not_exception", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "wrong_sibling", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "retained_state", "args": [[]], "expect": "match"},

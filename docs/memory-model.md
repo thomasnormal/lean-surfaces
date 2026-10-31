@@ -5715,7 +5715,8 @@ boundary values, high octets, error paths, consumers, and dictionary keys.
 `raise N` now accepts the admitted builtin identities when no local, module
 binding, function or user class shadows the name. The `EnvironmentError` and
 `IOError` aliases canonicalize to `OSError`, while `ImportError` and
-`ModuleNotFoundError` retain their own identities. An admitted
+`ModuleNotFoundError` retain their own identities; `StopAsyncIteration` is an
+admitted leaf `Exception` identity. An admitted
 user exception class resolves first and keeps its class identity. Builtin raises
 use `PyErr.builtinException` with the canonical identity, preserving both the class and the empty
 message without inventing a first-class exception value. The existing explicit

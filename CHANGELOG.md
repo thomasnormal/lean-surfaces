@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Bare `StopAsyncIteration` raises now use the admitted builtin exception identity and are caught by `except Exception:`; payload-bearing constructors remain outside the tier.
+
 - `EnvironmentError` and `IOError` now raise and match as CPython's canonical
   `OSError` identity, including exact alias handler coverage.
 

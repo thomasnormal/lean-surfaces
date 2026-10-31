@@ -1,3 +1,11 @@
+# [0.1.290] — 2026-10-31
+
+`sv_bridge` no longer loops on a pair it cannot split (WP-P3/P4 follow-up): two sides of different shape (a design that
+writes a constant where the arithmetic reads a net, the `drop_carry` negative) are reported as such ("the goal and the
+equation have different shapes here", both sides printed) instead of running the elaborator out of heartbeats; its
+`congrN` call no longer runs the default-transparency `rfl` that unfolded `boolAt`. Only a failing proof reaches that
+path. Pinned in `Examples/system-verilog/comb_bridge/bridge.lean` (`bridge_shape`).
+
 # [0.1.289] — 2026-10-31
 
 Direct scalar bit-select `iff` guards such as `always_ff @(posedge clk iff

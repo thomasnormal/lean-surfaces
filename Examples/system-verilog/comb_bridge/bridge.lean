@@ -67,6 +67,21 @@ theorem bridge_wrong (st : SvState) (N : Nat) (hN : 1 ≤ N)
       st.cell "S" (2 * (N : Int)) (2 * k + 2) c = st.boolAt "X" c := by
   sv_bridge e
 
+-- A design that writes a constant where the arithmetic reads another net (`drop_carry`: `s[i][N] = 1'b0` instead of
+-- `c[i][N]`) is an error that names the two sides, not a search that runs out of heartbeats.
+/--
+error: sv_bridge: the goal and the equation have different shapes here
+  false
+against
+  st.boolAt "c" (rmN (↑N + 1) ↑i✝ ↑N)
+-/
+#guard_msgs (whitespace := lax) in
+theorem bridge_shape (st : SvState) (N : Nat)
+    (e : ∀ i : Nat, 1 ≤ (i : Int) → i < N →
+      st.boolAt "s" (rmN ((N : Int) + 1) (i : Int) (N : Int)) = false) :
+    ∀ i, 1 ≤ i → i < N → st.cell "s" ((N : Int) + 1) i N = st.cell "c" ((N : Int) + 1) i N := by
+  sv_bridge e
+
 /-- info: 'Examples.«system-verilog».comb_bridge.bridge.bridge_casts' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms bridge_casts

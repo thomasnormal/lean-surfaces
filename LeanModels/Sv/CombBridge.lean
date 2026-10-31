@@ -87,7 +87,19 @@ partial def bridgeEq (g : MVarId) (read : Option (Lean.Expr × Lean.Expr) := non
       return
     let read := if a.getAppFn.isConstOf ``LeanModels.Sv.SvState.boolAt then some (a, b) else read
     let g' ← g.replaceTargetDefEq (← mkEq a b)
-    let gs ← g'.congrN (depth := 1) (closePre := true) (closePost := true)
+    -- `closePost := false`: the default-transparency `rfl` that `congrN` tries on a pair it cannot split
+    -- unfolds `SvState.boolAt` and is wasted work here
+    let gs ← g'.congrN (depth := 1) (closePre := true) (closePost := false)
+    -- no progress (the sides have different heads, e.g. a constant against a read): `congrN` returns the goal
+    -- itself, and recursing on it would loop until the heartbeat limit hides the message (a wrong design)
+    let noProgress ← match gs with
+      | [g1] => pure ((← instantiateMVars (← g1.getType)) == (← instantiateMVars (← g'.getType)))
+      | _ => pure false
+    if noProgress then
+      let rd := match read with
+        | some (ra, rb) => m!"\nwhile matching the read{indentExpr ra}\nof the goal against{indentExpr rb}\nof the equation"
+        | none => m!""
+      throwError "sv_bridge: the goal and the equation have different shapes here{indentExpr a}\nagainst{indentExpr b}{rd}"
     for g'' in gs do bridgeEq g'' read
 
 /-- `sv_bridge e` / `sv_bridge e with h₁, …, hₙ` — see the module docstring. -/

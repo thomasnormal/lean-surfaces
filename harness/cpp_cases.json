@@ -12817,6 +12817,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-switch-default-initialization-fallthrough-assignment",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalSwitchDefaultInitializationFallthroughAssignmentStatementFrameWitness",
+    "cpp_source": "int local_switch_default_initialization_fallthrough_assignment_statement_frame_witness(int value) { switch (value) { default: { int local = 5; value = local; } case 1: break; } return value; } bool callable_witness() { return local_switch_default_initialization_fallthrough_assignment_statement_frame_witness(0) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-switch-initialization-assignment-return",
     "kind": "statement",
     "corpus": "rung-4 witness",

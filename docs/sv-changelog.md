@@ -1,3 +1,26 @@
+# [0.1.278] — 2026-10-31
+
+Proof tactics: flat netlists scale (WP-P3b; register `tl-sv-structure-fragment`). Two NEW modules, additive:
+`CombViewPlain` (`Summary.disjObl_of_plain`, `rankObl'_of_plain` for an arbitrary relation `R`,
+`autoObl_of_plain`, `inRangeObl_of_plain`, and the `Decidable` instances for `DimNum`/`InR`/`InWin`) and
+`CombEqPlain` (`widthObl_of_plain`, `bitReadObl_of_plain`, `coverObl_of_plain` through the decidable
+`SrcPlain` and `SrcPlain.srcS`). When EVERY site is plain (no generate loop) and the goal has no free
+parameter, `sv_structure` and `sv_equations` decide the closed obligations (`closeByDecide`: the kernel
+evaluates them) instead of normalizing them with `simp`, whose cost was quadratic in the number of sites
+(113 gates: a failure after 4 minutes, now about 12 s and 122 M heartbeats at the default
+`maxHeartbeats 200000`; `sv_equations` 58.6 s to 11.3 s). Such a design leaves no `hauto`/`hin`/`hdisj`/`hrank`
+goal and no `width`/`cover_k` goal; any failure (a loop, a parameter, a false statement) restores the state and
+takes the old route with the old goals. `sv_equations` also names the equations of a netlist whose last site
+drives a bit of a vector (the alias condition is `n ≤` the spine length, not `=`) and every tactic of the
+chain runs with `maxRecDepth` raised inside the tactic (`withDeepRec`, `Core.Context`), so a 113-site player
+file needs no `set_option`. `sv_cover` closes a coverage goal whose witness is a site (`∃ b, (b = site₀ ∨ …) ∧
+…`) by picking the writer by name. The second elaborator `CombProcTactic` gets the same naming and
+`withDeepRec` and falls through as before. Goal dumps of the 24 files that use the tactics (6 references and 18
+Examples) are byte-identical before and after. Examples: `flat_net` (10-gate netlist: structure, hint, the
+`always_comb` last-site naming, a parameterized 26-site adder for `sv_cover`). Every new theorem has a
+`#print axioms` pin (at most `propext`, `Classical.choice`, `Quot.sound`). Not covered: the `always_comb`
+(lowered) path has no fast path.
+
 # [0.1.277] — 2026-10-31
 
 Timed `always_ff @(negedge clk)` now registers a negative-edge clock in the

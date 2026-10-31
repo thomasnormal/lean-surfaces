@@ -23144,6 +23144,37 @@ def callableLocalWhileInitializationAssignmentBreakStatementFrameWitness : Bool 
 
 #guard callableLocalWhileInitializationAssignmentBreakStatementFrameWitness
 
+private def localWhileInitializationAssignmentBreakFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .block (.sequence
+    (automaticLiteral "0x11" 5)
+    (.sequence
+      (.assign (handle "0x10") {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType})
+      .break_))
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
+def callableLocalWhileInitializationAssignmentBreakFalseStatementFrameWitness : Bool :=
+  localWhileInitializationAssignmentBreakFalseStatementFrame
+
+#guard callableLocalWhileInitializationAssignmentBreakFalseStatementFrameWitness
+
 private def localDoWhileInitializationAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

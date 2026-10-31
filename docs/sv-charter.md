@@ -23,6 +23,14 @@ expressions remain loud. Differential coverage grows **564/550/0/14 →
 witness set from **240/212/28** to **240/209/31**; no new grammar production
 was added by this item.
 
+## Edge-qualified constant bit-select events — 2026-10-31
+
+`always @(posedge bus[2])` now uses the sampled constant-select registration;
+the scheduler applies the existing four-state edge rule to the selected bit.
+The `always_event_bit_select_posedge` witness covers a 0-to-1 edge.
+Differential coverage grows **565/551/0/14 → 566/552/0/14**; the grammar
+census remains at the freshly regenerated **240/209/31**.
+
 ## Width-normalized scalar `iff` comparisons — 2026-10-31
 
 Unsized scalar comparisons such as `iff en == 1` retain the extractor's

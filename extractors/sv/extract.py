@@ -24691,6 +24691,16 @@ def convert_procedural_block(sm, m):
         if event_process is not None:
             return event_process
 
+    # Edge-qualified sampled expressions use the same retained registration;
+    # the timed scheduler applies the edge to the sampled value's LSB.
+    if (_SYM is None and pk == ProceduralBlockKind.Always
+            and type(body).__name__ == "TimedStatement"
+            and type(body.timing).__name__ == "SignalEventControl"
+            and body.timing.edge in (EdgeKind.PosEdge, EdgeKind.NegEdge)):
+        event_process = _single_event_process(sm, m, body, body.timing)
+        if event_process is not None and "expr" in event_process["events"][0]:
+            return event_process
+
     if pk == ProceduralBlockKind.AlwaysLatch:
         return {
             "kind": "AlwaysLatch",

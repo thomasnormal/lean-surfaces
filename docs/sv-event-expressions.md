@@ -19,9 +19,14 @@ Other sampled expressions, including part-selects, reductions, concatenations,
 conditionals, and operators, remain loud until their dependency and edge rules
 are represented.
 
-The read-only corpus repricer now finds **26** sole
-`SignalEventControl:clock` files and **26** spans, down from **27/27**; the
+The read-only corpus repricer now finds **22** sole
+`SignalEventControl:clock` files and **22** spans, down from **27/27**; the
 `always_event_bit_select` witness covers the retained value-change path.
+
+Edge-qualified constant selects use the same sampled registration. For
+`always @(posedge bus[2])`, the scheduler applies `posedge` to the selected
+value's least-significant bit and re-arms after the body; the
+`always_event_bit_select_posedge` witness covers a 0-to-1 selected-bit edge.
 
 ## Why expression event controls remain a boundary
 

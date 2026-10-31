@@ -3510,3 +3510,11 @@ witness covers wake-up on a changed selected bit. Differential coverage grows
 **564/550/0/14 → 565/551/0/14**. The fresh grammar page remeasures the
 committed witness set at **240/209/31** (from the stale **240/212/28** page);
 no new syntax production is introduced here.
+# [0.1.301] — 2026-10-31
+
+Edge-qualified constant packed-select events such as `always @(posedge
+bus[2])` now use the retained sampled-expression registration and existing
+four-state edge rule. The `always_event_bit_select_posedge` witness covers a
+0-to-1 selected-bit edge. Differential coverage grows **565/551/0/14 →
+566/552/0/14**; grammar coverage remains **240/209/31**. The read-only event
+expression repricer moves from **26/26** to **22/22** sole files/spans.

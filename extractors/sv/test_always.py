@@ -83,6 +83,14 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual((event["expr"]["kind"], event["expr"]["width"]),
                          ("SelectRead", 1))
 
+    def test_edge_constant_bit_select_event_is_retained(self):
+        design = lower(
+            "module top; logic [3:0] bus; logic seen; "
+            "always @(posedge bus[2]) seen = 1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["events"][0]["edge"], "posedge")
+        self.assertEqual(process["events"][0]["expr"]["kind"], "SelectRead")
+
     def test_plain_scalar_iff_guard_is_retained(self):
         design = lower(
             "module top; logic clk, en, seen; "

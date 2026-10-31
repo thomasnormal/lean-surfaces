@@ -158,9 +158,8 @@ The authored forever fixtures check finite transfers, nesting, automatic
 array reinitialization, live four-state payloads across delays and a blocked
 event body. Their kernel proofs bind to exact compiled source subtrees.
 No scheduler rule or evaluator constructor is added. Named-block `disable`,
-procedural edge publication, timed clock queries, zero-delay Inactive delivery,
-unsupported declaration lifetimes and symbolic-mode loops retain their existing
-refusals.
+procedural edge publication, timed clock queries, unsupported declaration
+lifetimes and symbolic-mode loops retain their existing refusals.
 
 Static scalar declarations initialize once before process entry; actual automatic
 scalars initialize at each fresh sequential entry and retain their values through

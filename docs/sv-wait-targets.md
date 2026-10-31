@@ -23,8 +23,9 @@ current interface. Those branches remain loud rather than being approximated.
 Already queued nonblocking assignments remain in the world queue and are not
 process activations.
 
-The zero-delay `#0` path remains loud: delivering it in Inactive rather than
-Active needs a separate region rule and is not smuggled into this target rule.
+The zero-delay `#0` path is delivered through Inactive and then returns to
+Active through the shared slot loop; it is governed by the scheduler core,
+not by a separate waiting-target shortcut.
 
 The extractor and timed loader also admit a simple nested `@(posedge sig)`,
 `@(negedge sig)`, or bare `@(sig)` statement for a 1-bit identifier. It

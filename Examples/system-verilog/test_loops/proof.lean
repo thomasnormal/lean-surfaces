@@ -118,7 +118,7 @@ def fixtureReceipt : IO Unit := do
         | throw (IO.userError "test-loop edge resumed slot refused")
       world := next
     unless world.out.halted && world.out.flush ==
-        ["while_wait 2", "do_wait 2", "event 2 2"] do
+        ["while_wait 1", "do_wait 1", "event 1 1"] do
       throw (IO.userError s!"test-loop edge transcript differs: {repr world.out.flush}")
   let .ok waits := loadEnvelopeDesign
       (← IO.FS.readFile "Examples/system-verilog/test_loops/timers.sv.json")
@@ -129,12 +129,13 @@ def fixtureReceipt : IO Unit := do
     let .ok (.ok _, world) := SvM.exec (slotStep oracle 4096) world
       | throw (IO.userError "test-loop initial slot refused")
     let mut world := world
-    for _ in List.range 4 do
+    for _ in List.range 8 do
+      if world.out.halted then break
       let .ok (.ok _, next) := SvM.exec
           (do advanceTime 1; wakeTimers; slotStep oracle 4096) world
         | throw (IO.userError "test-loop resumed slot refused")
       world := next
-    unless world.out.flush == ["while_wait 2", "do_wait 2"] do
+    unless world.out.flush == ["while_wait 1", "do_wait 1"] do
       throw (IO.userError s!"test-loop resumed transcript disagrees: {repr world.out.flush}")
 
 #eval fixtureReceipt

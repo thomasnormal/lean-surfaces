@@ -113,7 +113,7 @@ def duplicateWorld : SvWorld :=
   == some (some true)
 
 #guard (worldOf (do suspendProcess 0; resumeProcess 0; wakeEdges [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)]) edgeWorld).map
-  (fun w => (w.procs[0]?).map (fun p => match p.status with | .ready => p.registration.isNone && w.regionQ .active == [0] | _ => false)) == some (some true)
+  (fun w => (w.procs[0]?).map (fun p => match p.status with | .ready => edgeRegistered p && w.regionQ .active == [0] | _ => false)) == some (some true)
 
 #guard (worldOf (do suspendProcess 0; resumeProcess 0) timerWorld).map
   (fun w => (w.procs[0]?).map (fun p => !p.explicitlySuspended && timerWaiting p)) == some (some true)
@@ -147,7 +147,8 @@ def duplicateWorld : SvWorld :=
 #guard (worldOf (runProcOnce 32 0) delayWorld).map
   (fun w => (w.procs[0]?).map timerWaiting) == some (some true)
 
-#guard refused (runProcOnce 32 0) zeroDelayWorld
+#guard (worldOf (runProcOnce 32 0) zeroDelayWorld).map
+  (fun w => w.regionQ .inactive == [0]) == some true
 
 #guard refused (suspendProcess 0) readyWorld
 #guard refused (suspendProcess 0) levelWorld

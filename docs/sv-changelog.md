@@ -1,3 +1,12 @@
+# [0.1.271] — 2026-10-31
+
+Scheduler proof receipts now follow the delivered Active/Inactive behavior:
+`#0` fixtures assert Inactive publication, loop transcripts record the live
+retained continuations, and the six affected SystemVerilog proof targets
+build cleanly after the `$monitor` state extension. The delay, waiting-target,
+loop, `always`, and intra-assignment documentation now describe the same
+boundary.
+
 # [0.1.270] — 2026-10-30
 
 Proof library: the lowering of `always_comb` bodies, first stage (WP-G, G2.1). Two NEW modules,

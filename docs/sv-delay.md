@@ -17,9 +17,9 @@ reconstructed.
 
 The time-zero self-check executor deliberately remains loud on `Delay`: it
 has no scheduler and therefore cannot silently claim a timed program ran.
-The scheduler path currently refuses zero-delay `#0` delivery because IEEE
-1800-2023 §9.4.1 requires the Inactive region, which this public tier does not
-implement. Dynamic or arithmetic delay expressions, negative or unknown
+The scheduler path delivers zero-delay `#0` through the Inactive region of
+the same time slot, preserving the retained continuation and prior effects.
+Dynamic or arithmetic delay expressions, negative or unknown
 values, real/time-literal conversions, symbolic delay extraction, event
 controls, continuous-assignment delays, and other process shapes remain loud.
 This is a source-to-retained-continuation bridge, not an automatic time-wheel

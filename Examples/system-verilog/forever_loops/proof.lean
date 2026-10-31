@@ -25,11 +25,11 @@ theorem event_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output eventLoop =
       .ok (state, pending, output, .suspended (.atEdge "trigger" .pos)
         [.forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer, monitors := monitors }
     trueCondition #[] eventBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,
@@ -42,11 +42,11 @@ theorem timer_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output timedLoop =
       .ok (state, pending, output, .suspended (.atTime 2)
         [.breakLoop, .forAfterBody trueCondition #[] breakBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer, monitors := monitors }
     trueCondition #[] breakBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,
@@ -59,7 +59,7 @@ theorem resumed_break_exits (state : SvState) (pending : NbaQueue) (output : Out
     stepSStmts (fuel + 12) state pending output
         [.breakLoop, .forAfterBody trueCondition #[] breakBody] =
       .ok (state, pending, { output with transfer := .normal }, .done) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   rfl
@@ -73,13 +73,13 @@ theorem next_iteration_rearms (state : SvState) (pending : NbaQueue) (output : O
       .ok (state, pending, { output with transfer := .normal },
         .suspended (.atEdge "trigger" .pos)
           [.forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change transfer = .normal at normal
   subst transfer
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := .normal }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := .normal, monitors := monitors }
     trueCondition #[] eventBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,
@@ -115,7 +115,7 @@ def fixtureReceipt : IO Unit := do
     throw (IO.userError "forever values complete transcript differs")
   for (name, certificate, expected) in [
       ("timers", timedLoop, ["visit 1 1xz0", "visit 2 z01x", "visit 3 z01x",
-        "visit 4 10xz", "done 4 8 2 10xz", "after_break 4"]),
+        "visit 4 10xz", "done 4 10 4 10xz", "after_break 4"]),
       ("waits", eventLoop, ["blocked 0"])] do
     let .ok design := loadEnvelopeDesign
         (← IO.FS.readFile s!"Examples/system-verilog/forever_loops/{name}.sv.json")
@@ -130,14 +130,14 @@ def fixtureReceipt : IO Unit := do
       let .ok (.ok _, world) := SvM.exec (slotStep oracle 32768) world
         | throw (IO.userError s!"{name} initial slot refused")
       let mut world := world
-      for _ in List.range 12 do
+      for _ in List.range 20 do
         if world.out.halted then break
         let .ok (.ok _, next) := SvM.exec
             (do advanceTime 1; wakeTimers; slotStep oracle 32768) world
           | throw (IO.userError s!"{name} resumed slot refused")
         world := next
       unless world.out.halted && world.out.flush == expected do
-        throw (IO.userError s!"{name} complete transcript differs")
+        throw (IO.userError s!"{name} complete transcript differs: halted={world.out.halted} time={world.time} flush={repr world.out.flush}")
 
 #eval fixtureReceipt
 

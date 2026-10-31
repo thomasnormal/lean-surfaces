@@ -4037,8 +4037,8 @@ timer. Waking the timer returns the same process to Active with its prior
 effects and remaining body; no source prefix is rerun.
 
 This is not a second scheduler and does not claim full timing support. Zero
-delay remains loud because Inactive delivery is not in the public kernel path;
-dynamic, arithmetic, negative, unknown, real/time-literal,
+delay is delivered through the shared Inactive-region path; dynamic,
+arithmetic, negative, unknown, real/time-literal,
 event-list and other unsupported timing forms remain unsupported. The legacy self-check
 runner stays time-zero-only and refuses timed nodes. See `docs/sv-delay.md` and
 `Examples/system-verilog/delay/proof.lean` for the executable boundary.
@@ -6063,10 +6063,11 @@ is where every race in every real design lives.
 4: comb-settle to fixpoint (σ-ordered) → edge phase (σ-ordered,
 blocking assigns immediate) → NBA commit → comb-settle again. That is a
 faithful projection of the Active/NBA split *at cycle granularity*, and
-it is enough for the six M0 designs and the CV32E40P modules. It does
-**not** model the full region semantics: the timed loader has only the narrow
-positive-literal `initial`/`#d` bridge documented above; the Inactive region,
-Observed / Reactive (so no clocking blocks, no program blocks), or Postponed.
+it is enough for the six M0 designs and the CV32E40P modules. The timed
+loader now has the narrow positive-literal `initial`/`#d` bridge, the
+Inactive delivery path, and the postponed `$strobe`/`$monitor` close
+documented above; Observed / Reactive (so no clocking blocks or program
+blocks) remain outside the public tier.
 Unsupported timing forms remain loud.
 
 **Price to go from the cycle collapse to the full region ladder: this
@@ -7490,7 +7491,7 @@ Normal completion and `continue` start the next iteration; `break` exits
 only the nearest loop. Delay/event waits retain the current body tail and
 loop boundary. No evaluator or scheduler changed. See [the loop contract](sv-loops.md).
 Unmodelled body lifetimes, named-block `disable`, procedural edge publication,
-timed clocks, zero-delay Inactive delivery and symbolic-mode loops remain loud.
+timed clocks and symbolic-mode loops remain loud.
 
 The paired **22,035**-path census gains **21 clean files** without losses:
 **3,329 → 3,350 clean**, **18,640 → 18,619 partial**, **66 include skips**,

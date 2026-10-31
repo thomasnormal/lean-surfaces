@@ -55,8 +55,10 @@ def timedDelayReceipt : IO Unit := do
     | throw (IO.userError "zero-delay fixture failed to load")
   let .ok zeroWorld := elabTimedDesign 4096 zeroDesign
     | throw (IO.userError "zero-delay fixture failed to elaborate")
-  unless refused (stepRegion ρ_src 64 .active) zeroWorld do
-    throw (IO.userError "zero-delay control escaped the loud Inactive-region boundary")
+  let some afterZero := worldOf (stepRegion ρ_src 64 .active) zeroWorld
+    | throw (IO.userError "zero-delay control did not enter Inactive")
+  unless afterZero.regionQ .inactive == [0] do
+    throw (IO.userError "zero-delay control did not enqueue Inactive")
 
 #eval timedDelayReceipt
 

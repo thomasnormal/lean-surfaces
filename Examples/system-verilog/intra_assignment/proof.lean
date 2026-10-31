@@ -113,10 +113,10 @@ def fixtureReceipt : IO Unit := do
     | throw (IO.userError "zero-delay design failed to elaborate")
   -- SYNTHETIC-ORACLE: tests=intra-assignment-zero-delay | origin=spec | authority=timed-slot-contract | map=zero-delay:requires-inactive-delivery-rule
   match SvM.exec (slotStep ρ_src 4096) zeroWorld with
-  | .error (.unsupported (.unsupported clause) _ _) =>
-      unless clause.clause == "9.4.1" do
-        throw (IO.userError "zero delay refused under a different clause")
-  | _ => throw (IO.userError "zero-delay delivery boundary disappeared")
+  | .ok (.ok _, world) =>
+      unless !world.out.flush.isEmpty do
+        throw (IO.userError "zero-delay delivery produced no observable work")
+  | _ => throw (IO.userError "zero-delay delivery unexpectedly refused")
   let .ok internalEdges := loadEnvelopeDesign
       (← IO.FS.readFile "Examples/system-verilog/intra_assignment/events.sv.json")
     | throw (IO.userError "event fixture failed to load")

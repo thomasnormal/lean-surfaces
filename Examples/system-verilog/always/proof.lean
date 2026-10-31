@@ -32,11 +32,11 @@ theorem delay_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output (loop delayedBody) =
       .ok (state, pending, output, .suspended (.atTime 2)
         [increment "fast", .forAfterBody trueCondition #[] delayedBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer, monitors := monitors }
     trueCondition #[] delayedBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,
@@ -49,11 +49,11 @@ theorem event_retains (state : SvState) (pending : NbaQueue) (output : Out)
     stepSStmt (fuel + 12) state pending output (loop eventBody) =
       .ok (state, pending, output, .suspended (.atEdge "trigger" .any)
         [increment "changes", .forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := transfer, monitors := monitors }
     trueCondition #[] eventBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,
@@ -69,13 +69,13 @@ theorem event_rearms (state : SvState) (pending : NbaQueue) (output : Out)
       .ok (state, pending, { output with transfer := .normal },
         .suspended (.atEdge "trigger" .any)
           [increment "changes", .forAfterBody trueCondition #[] eventBody]) := by
-  rcases output with ⟨lines, current, strobes, halted, transfer, _⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer, monitors⟩
   change halted = false at running
   subst halted
   change transfer = .normal at normal
   subst transfer
   change stepForLoop (fuel + 11) state pending
-    { lines := lines, cur := current, pending := strobes, halted := false, transfer := .normal }
+    { lines := lines, cur := current, pending := strobes, halted := false, transfer := .normal, monitors := monitors }
     trueCondition #[] eventBody = _
   rw [stepForLoop.eq_def]
   simp only [Bool.false_eq_true, if_false, evalForCondition, trueCondition,

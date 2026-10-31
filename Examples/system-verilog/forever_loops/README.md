@@ -25,5 +25,5 @@ LEAN_NUM_THREADS=2 prlimit --as=17179869184 lake env lean -j2 Examples/system-ve
 `Forever.body` compiles to the existing `forLoop` with a true condition and
 empty initializer/step lists. No scheduler or evaluator constructor is added.
 Named-block disable, procedural edge publication, timed clock queries,
-zero-delay Inactive delivery, unmodelled scalar body lifetimes and symbolic
-loops retain their existing refusals. A loop that runs without suspending or exiting exhausts fuel as timeout.
+unmodelled scalar body lifetimes and symbolic loops retain their existing
+refusals. A loop that runs without suspending or exiting exhausts fuel as timeout.

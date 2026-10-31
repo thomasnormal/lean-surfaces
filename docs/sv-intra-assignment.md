@@ -28,8 +28,9 @@ pending NBA work and the ordinary statement continuation. No evaluator,
 statement constructor, storage primitive or scheduler changes.
 
 Extraction and execution have different boundaries. `#0` remains a real
-delay checkpoint; the timed slot refuses it because Inactive delivery is
-not admitted. It is never erased or replaced with an immediate assignment.
+delay checkpoint; the timed slot delivers it through Inactive and then
+resumes the retained continuation. It is never erased or replaced with an
+immediate assignment.
 Procedural writes to watched clocks still require the existing internal
 edge-publication rule. Timed designs with time-zero-only `$time` lowering
 remain refused. The time-zero self-check runner refuses waits.

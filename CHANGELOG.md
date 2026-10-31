@@ -30,6 +30,8 @@
 
 - Callable plain-`for` declaration initializers now retain body-local assignment effects across `continue` and the loop step.
 
+- Callable plain-`for` declaration initializers now retain body-local assignment effects across `break`.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

@@ -820,7 +820,7 @@ def admittedBuiltinExc : List String :=
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError", "IOError",
-   "StopAsyncIteration", "Warning", "UnicodeError"]
+   "StopAsyncIteration", "Warning", "UnicodeError", "UnicodeWarning"]
 
 /-- Builtin identities that may be raised directly.  `OSError` is admitted as
 an empty class-identity raise even though no in-tier operation produces an
@@ -833,7 +833,7 @@ def admittedBuiltinRaise : List String :=
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError",
    "IOError", "ImportError", "ModuleNotFoundError", "StopAsyncIteration", "Warning",
-   "UnicodeError"]
+   "UnicodeError", "UnicodeWarning"]
 
 /-- CPython 3.9 exposes `EnvironmentError` and `IOError` as aliases of
   `OSError`. Keep one exception identity in the model so bare raises and
@@ -946,7 +946,7 @@ def builtinExcCatches : String → PyErr → Bool
   | "StopAsyncIteration",  .builtinException raised =>
       raised == "StopAsyncIteration"
   | "Warning",             .builtinException raised =>
-      raised == "Warning"
+      raised == "Warning" || raised == "UnicodeWarning"
   | "UnicodeError",        .builtinException raised =>
       raised == "UnicodeError"
   | name,                 .builtinException raised =>

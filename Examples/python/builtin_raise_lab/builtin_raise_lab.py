@@ -331,6 +331,17 @@ def catch_PendingDeprecationWarning(value):
         return value
 
 
+def raise_ResourceWarning():
+    raise ResourceWarning
+
+
+def catch_ResourceWarning(value):
+    try:
+        raise ResourceWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

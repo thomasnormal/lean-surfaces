@@ -6956,3 +6956,22 @@ remain loud.
 DECIDED: admit only the payload-free `PendingDeprecationWarning` class
 identity and its measured `Warning` hierarchy catch; retain loud behavior for
 payload constructors.
+
+## 2026-10-31-pycomplete-220 — admit bare `ResourceWarning`
+
+The builtin exception table now admits the leaf `ResourceWarning` identity. A
+bare `raise ResourceWarning` uses the existing `.builtinException`
+representation, and the warning hierarchy now lets `except Warning:` catch it
+faithfully; payload-bearing warning constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Warning` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,822 cases: 3,785 decided and matched, 0 failed, and 37 recorded refusals |
+| Full proof differential | 3,822 cases: 3,684 matched, 138 recorded refusals, and 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `leanmodels-run` and `builtin_raise_lab.spec` build passed; extractor 150/150; generated coverage/progress and differential checks passed |
+
+DECIDED: admit only the payload-free `ResourceWarning` class identity and
+its measured `Warning` hierarchy catch; retain loud behavior for payload
+constructors.

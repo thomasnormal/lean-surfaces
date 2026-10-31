@@ -822,7 +822,7 @@ def admittedBuiltinExc : List String :=
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError", "IOError",
    "StopAsyncIteration", "Warning", "UnicodeError", "UnicodeWarning", "UserWarning",
    "RuntimeWarning", "DeprecationWarning", "FutureWarning", "ImportWarning",
-   "PendingDeprecationWarning"]
+   "PendingDeprecationWarning", "ResourceWarning"]
 
 /-- Builtin identities that may be raised directly.  `OSError` is admitted as
 an empty class-identity raise even though no in-tier operation produces an
@@ -836,7 +836,7 @@ def admittedBuiltinRaise : List String :=
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError",
    "IOError", "ImportError", "ModuleNotFoundError", "StopAsyncIteration", "Warning",
    "UnicodeError", "UnicodeWarning", "UserWarning", "RuntimeWarning", "DeprecationWarning",
-   "FutureWarning", "ImportWarning", "PendingDeprecationWarning"]
+   "FutureWarning", "ImportWarning", "PendingDeprecationWarning", "ResourceWarning"]
 
 /-- CPython 3.9 exposes `EnvironmentError` and `IOError` as aliases of
   `OSError`. Keep one exception identity in the model so bare raises and
@@ -952,7 +952,7 @@ def builtinExcCatches : String → PyErr → Bool
       raised == "Warning" || raised == "UnicodeWarning" || raised == "UserWarning" ||
       raised == "RuntimeWarning" || raised == "DeprecationWarning" ||
       raised == "FutureWarning" || raised == "ImportWarning" ||
-      raised == "PendingDeprecationWarning"
+      raised == "PendingDeprecationWarning" || raised == "ResourceWarning"
   | "UnicodeError",        .builtinException raised =>
       raised == "UnicodeError"
   | name,                 .builtinException raised =>

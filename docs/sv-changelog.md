@@ -3451,3 +3451,10 @@ uses the existing `SelectRead` and unary evaluator. The
 `always_ff_event_iff_vector_bnot` witness covers nonzero and zero vectors.
 Differential coverage grows **561/547/0/14 → 562/548/0/14**; grammar coverage
 remains **240/212/28**.
+# [0.1.298] — 2026-10-31
+
+Logical implication `iff` guards such as `iff en -> mode` now use the
+side-effect-free `!en || mode` lowering and existing logical evaluator. The
+`always_ff_event_iff_implication` witness covers false and true implications.
+Differential coverage grows **562/548/0/14 → 563/549/0/14**; grammar coverage
+remains **240/212/28**.

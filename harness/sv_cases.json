@@ -5173,6 +5173,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_implication",
+      "file": "Examples/system-verilog/always_ff_event_iff_implication/always_ff_event_iff_implication.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF IMPLICATION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
     }
   ]
 }

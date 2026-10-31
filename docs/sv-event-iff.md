@@ -94,6 +94,11 @@ uses the same `SelectRead` and unary evaluator. The
 `always_ff_event_iff_vector_bnot` witness covers a nonzero vector followed by
 an all-zero vector.
 
+Logical implication guards such as `iff en -> mode` use the extractor's
+side-effect-free `!en || mode` lowering and the ordinary logical evaluator.
+The `always_ff_event_iff_implication` witness covers a false implication
+followed by a true one.
+
 ## Scalar comparison guards — 2026-10-31
 
 The timed slice now retains `iff en == 1'b1`, `iff en != 1'b0`, and the

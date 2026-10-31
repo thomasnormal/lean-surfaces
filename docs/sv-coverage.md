@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 562 | 548 | 0 | 14 | sv-tests-2 declarations |
+| 563 | 549 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -585,6 +585,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_replication` | `Examples/system-verilog/always_ff_event_iff_replication/always_ff_event_iff_replication.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_vector_not` | `Examples/system-verilog/always_ff_event_iff_vector_not/always_ff_event_iff_vector_not.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_vector_bnot` | `Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_implication` | `Examples/system-verilog/always_ff_event_iff_implication/always_ff_event_iff_implication.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -715,7 +716,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/always_ff_async_reset_high/always_ff_async_reset_high.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/always_ff_event_iff_implication/always_ff_event_iff_implication.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |

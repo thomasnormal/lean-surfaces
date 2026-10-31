@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Logical implication `iff` guards — 2026-10-31
+
+Logical implication guards such as `iff en -> mode` use the extractor's
+side-effect-free `!en || mode` lowering and existing logical evaluator. The
+`always_ff_event_iff_implication` witness covers false and true implications.
+Differential coverage grows **562/548/0/14 → 563/549/0/14**; grammar coverage
+remains **240/212/28**.
+
 ## Bitwise inversion of vector `iff` guards — 2026-10-31
 
 Bitwise inversion of an admitted packed vector, such as `iff ~en[1:0]`, now

@@ -6787,3 +6787,20 @@ identities instead of mentioning them only in prose.
 
 DECIDED: derive the coverage exception list from both semantic handler tables,
 keeping the status page aligned with every accepted `except` identity.
+## 2026-10-31-pycomplete-211 — admit bare `Warning`
+
+The builtin exception table now admits the leaf `Warning` identity. A bare
+`raise Warning` therefore uses the existing `.builtinException` representation
+and participates in the already-modelled `except Exception:` hierarchy, while
+payload-bearing constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Exception` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,786 cases: 3,749 matched / 37 recorded refusals / 0 failed |
+| Full proof differential | 3,786 cases: 3,648 matched / 138 refusals / 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `leanmodels-run` and `builtin_raise_lab.spec` build passed; extractor 150/150; generated docs, docs check, and `git diff --check` passed |
+
+DECIDED: admit only the payload-free `Warning` class identity and its ordinary
+`Exception` catch; retain loud behavior for warning payload constructors.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Bare `Warning` raises now use the admitted builtin exception identity and are caught by `except Exception:`; payload-bearing warning constructors remain outside the tier.
+
 - The generated Python coverage page now counts the separately modelled `ImportError` and `ModuleNotFoundError` handler identities alongside the admitted builtin exception table.
 
 - The generated Python coverage page now lists every admitted builtin exception identity, including `SystemExit`, `KeyboardInterrupt`, and `GeneratorExit`, instead of treating generic matcher fallbacks as refusals.

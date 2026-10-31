@@ -1376,5 +1376,7 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "join_dict", "args": [[{"t": "str", "v": "|"}]], "expect": "match"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "join_bad_item", "args": [[{"t": "str", "v": "-"}]], "expect": "match"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "join_bad_arity", "args": [[{"t": "str", "v": "-"}]], "expect": "match"},
-  {"file": "Examples/python/str_lab/str_lab.py", "function": "join_generator", "args": [[{"t": "str", "v": "-"}]], "expect": "match"}
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "join_generator", "args": [[{"t": "str", "v": "-"}]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_Warning", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_Warning", "args": [[0], [23], [-7]], "expect": "match"}
 ]

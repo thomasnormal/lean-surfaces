@@ -232,6 +232,17 @@ def catch_StopAsyncIteration(value):
         return value
 
 
+def raise_Warning():
+    raise Warning
+
+
+def catch_Warning(value):
+    try:
+        raise Warning
+    except Exception:
+        return value
+
+
 def base_not_exception():
     try:
         try:

@@ -8,6 +8,8 @@
 
 - Callable plain-`for` declaration initializers now preserve body-local assignment effects before loop exit, including the enclosing frame's returned value.
 
+- Callable plain-`for` declaration initializers now retain the enclosing value when a false loop condition skips a body-local assignment.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

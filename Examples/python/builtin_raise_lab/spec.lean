@@ -129,6 +129,11 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.catch_FutureWarning(23) = 23
 
+#py_check builtin_raise_lab.raise_ImportWarning() raises
+  (.builtinException "ImportWarning")
+
+#py_check builtin_raise_lab.catch_ImportWarning(23) = 23
+
 #py_check builtin_raise_lab.base_not_exception() = 2
 
 #py_check builtin_raise_lab.wrong_sibling() = 2

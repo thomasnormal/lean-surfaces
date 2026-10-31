@@ -309,6 +309,17 @@ def catch_FutureWarning(value):
         return value
 
 
+def raise_ImportWarning():
+    raise ImportWarning
+
+
+def catch_ImportWarning(value):
+    try:
+        raise ImportWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

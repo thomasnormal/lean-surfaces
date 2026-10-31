@@ -254,8 +254,8 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 the optional `edge` records a negative-edge clock and its absence means
 positive edge. The `areset_n`/`areset` fields record the admitted
 two-event `posedge` clock plus active-low/active-high reset forms. A scalar
-identifier, comparison, logical, or direct scalar bit-select `iff` guard is sampled at a positive- or
-negative-edge clock publication. In a two-edge asynchronous-reset form the
+identifier, comparison, logical, or constant-index packed `SelectRead` `iff`
+guard is sampled at a positive- or negative-edge clock publication. In a two-edge asynchronous-reset form the
 `iff` field qualifies the clock event and `reset_iff` qualifies the reset event;
 each is sampled only when its adjacent edge is published.
 `style` records which keyword the source used —

@@ -24814,7 +24814,9 @@ def _iff_guard_allowed(expr):
         # packed-signal value plus a scalar literal/identifier index.
         value = expr.get("value", {})
         index = expr.get("index", {})
-        return (expr.get("width") == 1
+        width = expr.get("width")
+        return ((width == 1 or (isinstance(width, int) and width > 1
+                                and index.get("kind") == "Literal"))
                 and not expr.get("descending", False)
                 and value.get("kind") == "Ident"
                 and index.get("kind") in ("Ident", "Literal"))

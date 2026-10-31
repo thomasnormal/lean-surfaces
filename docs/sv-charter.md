@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Constant packed-vector `iff` guards — 2026-10-31
+
+The timed guard slice admits constant-index packed-vector `SelectRead` guards,
+such as `iff en[1:0]`, using the existing vector truthiness in
+`eventGuardPass`. Dynamic indexed and aggregate selectors remain loud. The
+`always_ff_event_iff_vector` witness covers the disabled and enabled edges.
+Differential coverage grows **555/541/0/14 → 556/542/0/14**; grammar coverage
+remains **240/212/28**.
+
 ## Scalar guards on asynchronous-reset edges — 2026-10-31
 
 The timed `always_ff` envelope retains `reset_iff` for a scalar guard on the

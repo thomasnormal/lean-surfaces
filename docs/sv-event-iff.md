@@ -5,19 +5,19 @@
  that event arrives; changing the guard alone does not wake the process. The
  timed slice admits scalar identifier, comparison, and logical guards on plain
 `always` events, positive- or negative-edge `always_ff` clocks, and both events
-of a two-edge asynchronous-reset `always_ff`; a direct scalar bit-select such
-as `en[0]` is also admitted. The marker remains explicit for unsupported
-expressions.
+of a two-edge asynchronous-reset `always_ff`; constant-index packed selects
+such as `en[0]` and `en[1:0]` are also admitted. The marker remains explicit
+for unsupported expressions.
 
 ## Why the remaining conditional event controls stay loud
 
 IEEE 1800-2023 §§9.2.2.4 and 9.4.2.3 make the guard part of event
 registration, wake-up filtering and re-arming. The retained event-list
 registration now carries a side-effect-free scalar guard and applies it at the
-publication point. The retained evaluator covers identifiers, literals, direct
-scalar bit-selects, scalar equality/inequality comparisons, and logical `&&`/`||`
-combinations; calls, part-selects, and other general expressions still need a
-broader evaluator. `always_ff` guards
+publication point. The retained evaluator covers identifiers, literals,
+constant-index packed selects, scalar equality/inequality comparisons, and
+logical `&&`/`||` combinations; calls, dynamic or aggregate selects, and other
+general expressions still need a broader evaluator. `always_ff` guards
 remain on the clock registration and preserve its inferred-clock and
 single-driver rules. In a guarded clock-plus-reset list, `iff` filters the
 clock edge and `reset_iff` filters the reset edge independently. No second
@@ -53,6 +53,14 @@ remain loud.
 
 The `always_ff_async_reset_iff_bit` witness checks a disabled bit-select clock
 edge, an unconditional reset edge, and an enabled clock edge.
+
+## Constant packed-vector guards — 2026-10-31
+
+The same `SelectRead` path now admits a constant-index packed-vector guard such
+as `iff en[1:0]`; `eventGuardPass` uses the vector's ordinary truthiness, so any
+known `1` wakes the process. Dynamic indexed part-selects and aggregate
+selectors remain loud. The `always_ff_event_iff_vector` witness covers a zero
+vector followed by a one-containing vector.
 
 ## Scalar comparison guards — 2026-10-31
 

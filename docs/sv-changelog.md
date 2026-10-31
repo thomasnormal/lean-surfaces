@@ -3394,3 +3394,10 @@ adapter regressions, generated envelope, Lean receipt, and differential row
 cover the family. Differential coverage grows **455/449/0/6 → 456/450/0/6**;
 grammar coverage remains **235/113/122**. The temporary public sv-tests audit
 remains **380 clean / 421 partial / 111 include skips**.
+# [0.1.291] — 2026-10-31
+
+Constant-index packed-vector `iff` guards such as `iff en[1:0]` now use the
+existing `SelectRead` truthiness path. Dynamic indexed and aggregate selectors
+remain loud. The `always_ff_event_iff_vector` witness covers disabled and
+enabled clock publications. Differential coverage grows **555/541/0/14 →
+556/542/0/14**; grammar coverage remains **240/212/28**.

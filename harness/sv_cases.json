@@ -5096,6 +5096,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_vector",
+      "file": "Examples/system-verilog/always_ff_event_iff_vector/always_ff_event_iff_vector.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF VECTOR PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
     }
   ]
 }

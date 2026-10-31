@@ -4898,6 +4898,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 3
+    },
+    {
+      "name": "wait_accept",
+      "file": "Examples/system-verilog/wait_accept/wait_accept.sv",
+      "module": "top",
+      "oracle": [
+        "WAIT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
     }
   ]
 }

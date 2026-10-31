@@ -40,8 +40,25 @@ The scheduler-core rows move differential coverage **537/522/0/15 →
 witness. The current grammar
 census is **237/190/47** (witnesses/MATCH/REFUSE); the
 `ImplicitEventControl` witness now matches after the timed implicit-sensitivity
-route is admitted. Continuous assignment,
-`always_comb`, `always_latch`, and `always_ff` remain subsequent rungs.
+route is admitted. The timed `always_comb`, continuous-assignment,
+`always_latch`, and `always_ff` rungs are now landed; multiple-driver net
+resolution remains a separate boundary.
+
+## Level-sensitive `wait` — 2026-10-31
+
+The retained scheduler now admits a literal `wait (condition)` in timed
+processes. The condition is sampled at the wait site; a false or unknown
+condition suspends the process, and publication of a signal in its static
+read set requeues the retained continuation in Active for a fresh sample.
+When the condition is already true, the process continues in the same Active
+pass. The M0 self-check path and event-triggered waits remain loud, and no
+second event loop or synthetic polling process was added.
+
+The `wait_accept` witness covers a blocked initial process, a delayed signal
+publication, and the resumed body. The time-zero self-check path can evaluate
+an already-true condition, but still refuses a wait that would suspend; event
+triggers remain loud. The measured differential and grammar coverage deltas
+are recorded in the lane journal for this item.
 
 ## Plain `always` timed conformance — 2026-10-30
 

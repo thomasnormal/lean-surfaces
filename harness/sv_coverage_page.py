@@ -46,7 +46,7 @@ def render(diff, grammar, provenance, census):
         "The legacy self-check runner remains initial-only; the timed "
         "conformance path now admits plain `always`, `always_comb`, "
         "`always_latch`, `always_ff`, and single-driver continuous `assign` "
-        "processes, while other "
+        "processes plus literal level-sensitive `wait (condition)`, while other "
         "non-initial processes remain refused. This page therefore leads with "
         "grammar and corpus measurements, then reports differential "
         "self-consistency separately. It is generated from the SystemVerilog "

@@ -68,6 +68,7 @@ def targetOf (ps : ProcState) : Option WaitTarget :=
   | none =>
       match ps.status with
       | .suspended (.atEdge signal edgeKind) => some (.edge signal edgeKind)
+      | .suspended (.onCond condition) => some (.level condition)
       | _ => none
 
 def withoutIndex (index : Nat) (xs : List Nat) : List Nat :=
@@ -78,6 +79,10 @@ def removeFromReady (w : SvWorld) (index : Nat) : SvWorld :=
 
 def signalChanged (old new : SvState) (name : String) : Bool :=
   SvState.lookup old name != SvState.lookup new name
+
+def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
+  { w with regionQ := fun r =>
+      if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
 
 /-- Wake dormant `always_comb` processes whose inferred sensitivity contains a
 signal that changed.  The process is queued in Active; changes made by one
@@ -98,6 +103,30 @@ def wakeCombs (old new : SvState) : SvM Unit :=
            , regionQ := fun r =>
                if r == Region.active then w.regionQ r ++ woken else w.regionQ r }
 
+/-- Wake level-sensitive `wait (condition)` continuations after a relevant
+signal publication.  The condition itself is sampled by the retained
+stepper, so a false re-check simply suspends the process again.  Filtering
+by the condition's static read set avoids spurious scheduler work while
+preserving the IEEE rule that a wait is re-evaluated after updates to a
+signal it reads. -/
+def wakeLevels (old new : SvState) : SvM Unit :=
+  modify fun w =>
+    let woken : List Nat :=
+      (List.range w.procs.size).filter fun i =>
+        match w.procs[i]? with
+        | some ps =>
+            match ps.status, targetOf ps with
+            | .suspended (.onCond condition), some (.level _) =>
+                !ps.explicitlySuspended &&
+                  (SExpr.readNames condition).any (signalChanged old new)
+            | _, _ => false
+        | none => false
+    let procs' := woken.foldl (fun (ps : Array ProcState) i =>
+      match ps[i]? with
+      | some p => ps.set! i { p with status := .ready, registration := none }
+      | none => ps) w.procs
+    appendActive { w with procs := procs' } woken
+
 /-! ## Edge detection and waking -/
 
 /-- §9.4.2 edge on a 1-bit value.  The shared `Basic` predicates include
@@ -112,10 +141,6 @@ def edgeOn (e : Edge) (old new : Logic) : Bool :=
 /-- Did `sig` see the given edge between `old` and `new`? -/
 def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
   edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
-
-def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
-  { w with regionQ := fun r =>
-      if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
 
 def appendInactive (w : SvWorld) (indices : List Nat) : SvWorld :=
   { w with regionQ := fun r =>
@@ -220,6 +245,7 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
               set (appendInactive updated [i])
               if w.signals != sigs then
                 wakeCombs w.signals sigs
+                wakeLevels w.signals sigs
                 wakeEdges w.signals sigs
               pure (.suspended (.atTime 0) continuation)
           | .suspended t continuation =>
@@ -232,6 +258,7 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
                          , procs := w.procs.set! i ps' }
               if w.signals != sigs then
                 wakeCombs w.signals sigs
+                wakeLevels w.signals sigs
                 wakeEdges w.signals sigs
               pure (.suspended t (continuation ++ rest))
           | .done =>
@@ -245,6 +272,7 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
                          , procs := w.procs.set! i ps' }
               if w.signals != sigs then
                 wakeCombs w.signals sigs
+                wakeLevels w.signals sigs
                 wakeEdges w.signals sigs
               runProcResidual fuel i ps' rest
 
@@ -401,6 +429,7 @@ def slotStep (σ : RegionOracle) : Nat → SvM Unit
           let after ← get
           if before.signals != after.signals then
             wakeCombs before.signals after.signals
+            wakeLevels before.signals after.signals
             wakeEdges before.signals after.signals
           slotStep σ fuel
 

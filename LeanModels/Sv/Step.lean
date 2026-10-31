@@ -139,7 +139,12 @@ def stepSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
       -- Suspension: stop here, with nothing of THIS statement left to do.
       | .delay amount => .ok (st, nba, out, .suspended (.atTime amount) [])
       | .waitEvent sig edge => .ok (st, nba, out, .suspended (.atEdge sig edge) [])
-      | .waitCond cond => .ok (st, nba, out, .suspended (.onCond cond) [])
+      | .waitCond cond => do
+          let value ← evalSExpr fuel st cond
+          if value.condTrue then
+            .ok (st, nba, out, .done)
+          else
+            .ok (st, nba, out, .suspended (.onCond cond) [])
       -- Compound: recurse, because a nested statement may suspend.
       | .ifStmt cond thenB elseB => do
           let c ← evalSExpr fuel st cond
@@ -369,7 +374,19 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
       rw [SelfCheck.execSStmt.eq_def]; simp only [hh, if_true]; simp_all
     · next hh =>
       split at h
-      case h_1 | h_2 | h_3 => simp at h
+      case h_1 | h_2 => simp at h
+      case h_3 cond =>
+        rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
+        cases hc : evalSExpr fuel st cond with
+        | timeout => simp [hc] at h
+        | unsupported message => simp [hc] at h
+        | ok value =>
+          simp only [hc, Res.ok_bind] at h ⊢
+          by_cases hct : value.condTrue = true
+          · simp only [hct, if_true] at h ⊢
+            simpa using h
+          · simp only [hct] at h
+            simp at h
       case h_4 cond thenB elseB =>
         rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
         cases hc : evalSExpr fuel st cond with

@@ -20969,6 +20969,24 @@ def _convert_stmt(sm, s):
             return _convert_wait_event_statement(sm, s)
         return unsupported(sm, s, "TimedStatement:" + type(s.timing).__name__)
 
+    if cname == "WaitStatement":
+        # A level-sensitive wait is a scheduler suspension, so keep it out of
+        # the symbolic path while admitting the literal condition to the
+        # timed envelope.  The retained scheduler samples the condition at
+        # the wait site and re-checks it after signal publication.
+        if _SYM is not None:
+            return unsupported(sm, s)
+        condition = convert_expr(sm, s.cond)
+        if condition.get("kind") == "Unsupported":
+            return condition
+        wait = {"kind": "WaitCond", "span": node_span(sm, s),
+                "condition": condition}
+        body = convert_stmt(sm, s.stmt)
+        if body.get("kind") == "Empty":
+            return wait
+        return {"kind": "Block", "span": node_span(sm, s),
+                "stmts": [wait, body]}
+
     if cname == "CaseStatement" and _SYM is None:
         return _convert_ordinary_case(sm, s)
 

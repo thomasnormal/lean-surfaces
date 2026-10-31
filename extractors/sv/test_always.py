@@ -29,9 +29,18 @@ class PlainAlways(unittest.TestCase):
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
     def test_implicit_compound_and_iff_sensitivities_stay_loud(self):
-        for body in ("@*;", "@(a or b);", "@(negedge a iff b);", "wait(a);"):
+        for body in ("@*;", "@(a or b);", "@(negedge a iff b);"):
             design = lower("module top; logic a,b; always " + body + " endmodule")
             self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
+    def test_level_wait_is_retained_for_timed_path(self):
+        design = lower(
+            "module top; logic ready; always begin wait (ready); ready = 1; end endmodule"
+        )
+        body = design["modules"][0]["processes"][0]["body"]
+        self.assertEqual(body["kind"], "Block")
+        self.assertEqual(body["stmts"][0]["kind"], "WaitCond")
+        self.assertEqual(body["stmts"][0]["condition"]["name"], "ready")
 
     def test_repeated_static_scalar_is_initialized_once(self):
         design = lower("module top; always begin int value=1; #2; value++; end endmodule")

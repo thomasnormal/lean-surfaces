@@ -1108,8 +1108,12 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           .unsupported "#delay: the self-check tier runs at time 0 (no scheduler)"
       | .waitEvent _ _ =>
           .unsupported "@(event): the self-check tier runs at time 0 (no scheduler)"
-      | .waitCond _ =>
-          .unsupported "wait(cond): the self-check tier runs at time 0 (no scheduler)" 
+      | .waitCond condition => do
+          let value ← evalSExpr fuel st condition
+          if value.condTrue then
+            .ok (st, nba, out)
+          else
+            .unsupported "wait(cond): the self-check tier runs at time 0 (no scheduler)"
       | .localDecl name width twoState init => do
           let v ← match init with
             | none => pure (if twoState then LVec.ofNat width 0 else LVec.xVec width)
@@ -1614,6 +1618,8 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
       | "negedge" => return .waitEvent signal .neg
       | "any" => return .waitEvent signal .any
       | _ => throw "unsupported WaitEvent edge"
+  | "WaitCond" =>
+      return .waitCond (← parseSExpr (← getF j "condition"))
   | "Break" => return .breakLoop
   | "Continue" => return .continueLoop
   | "LocalDecl" =>

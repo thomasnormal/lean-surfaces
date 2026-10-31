@@ -29,6 +29,14 @@ build cleanly after the `$monitor` state extension. The delay, waiting-target,
 loop, `always`, and intra-assignment documentation now describe the same
 boundary.
 
+Timed conformance now admits literal level-sensitive `wait (condition)`.
+Conditions are sampled immediately and rechecked after publication of a
+signal they read; false or unknown conditions retain the process continuation
+until a later update, while an already-true condition proceeds in Active.
+The `wait_accept` differential witness covers delayed publication and
+resumption through the existing scheduler loop. Event-triggered waits and
+the legacy self-check path remain explicit boundaries.
+
 # [0.1.270] — 2026-10-30
 
 Proof library: the lowering of `always_comb` bodies, first stage (WP-G, G2.1). Two NEW modules,

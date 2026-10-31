@@ -48,8 +48,8 @@ outside this slice. A comb process that writes one of its own read signals is
 not silently treated as an edge wait; the write-name exclusion makes that
 self-trigger boundary explicit until the language-level guard is added.
 
-The timed region model still refuses level waits, internally published edge
-events, and other scheduler forms outside this slice. The M0 cycle model's
+The timed region model admits literal level waits, while internally published
+edge events and other scheduler forms outside this slice remain loud. The M0 cycle model's
 fixpoint semantics remain separate; the timed runner uses the retained
 process table and the one Active/Inactive/NBA loop.
 -/
@@ -121,6 +121,7 @@ private partial def timedAccesses : SStmt → List (Bool × String)
   | .packedAssign targets _ | .packedNbaAssign targets _ => targets.map targetWrite
   | .scanf _ _ outputs result => (outputs.flatten ++ result).map targetWrite
   | .waitEvent signal _ => [(true, signal)]
+  | .waitCond condition => (SExpr.readNames condition).map (fun name => (true, name))
   | .ifStmt _ t e => timedAccesses t ++ (e.toList.flatMap timedAccesses)
   | .block body => body.toList.flatMap timedAccesses
   | .forLoop initializers _ steps body =>
@@ -133,7 +134,7 @@ private partial def timedAccesses : SStmt → List (Bool × String)
   | .doWhileLoop _ body => timedAccesses body
   | .breakLoop | .continueLoop | .sysCall _ _ _ | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _
   | .finish | .skip
-  | .delay _ | .waitCond _ => []
+  | .delay _ => []
 
 /-- Timing controls are illegal inside `always_comb`.  Keep that boundary at
 the timed loader rather than letting a suspended comb process become an

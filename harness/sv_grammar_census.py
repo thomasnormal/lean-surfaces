@@ -131,13 +131,26 @@ def run_timed_batch(envelopes, fuel, ticks=16):
 
 
 def needs_timed_runner(envelope):
-    """Use the scheduler for plain/clocked `always`, retaining other refusals."""
+    """Use the scheduler for retained process and timing-control witnesses."""
     try:
         payload = json.loads(Path(envelope).read_text(encoding="utf-8"))
         modules = payload.get("design", {}).get("modules", [])
         processes = modules[0].get("processes", []) if len(modules) == 1 else []
-        return any(p.get("kind") in ("Always", "AlwaysImplicit", "AlwaysComb", "AlwaysLatch", "Assign") or
-                   (p.get("kind") == "AlwaysPosedge") for p in processes)
+        process_kinds = {"Always", "AlwaysImplicit", "AlwaysComb", "AlwaysLatch",
+                         "Assign", "AlwaysPosedge", "AlwaysFF"}
+
+        def has_timing(node):
+            if isinstance(node, dict):
+                if node.get("kind") in ("Delay", "WaitEvent", "WaitCond", "Strobe",
+                                         "Monitor"):
+                    return True
+                return any(has_timing(value) for value in node.values())
+            if isinstance(node, list):
+                return any(has_timing(value) for value in node)
+            return False
+
+        return any(p.get("kind") in process_kinds or has_timing(p.get("body"))
+                   for p in processes)
     except (OSError, ValueError, TypeError):
         return False
 

@@ -126,9 +126,9 @@ deriving Repr, BEq, Inhabited
 /-- The scheduler-side registration retained with a suspended process.
 
 An edge keeps its fixed sensitivity, while a delay is converted to an
-absolute deadline when the suspension is reached. Level waits are carried
-so that the unsupported re-evaluation branch remains explicit rather than
-being mistaken for an edge wake. -/
+absolute deadline when the suspension is reached. Level waits retain their
+condition so the scheduler can re-sample them after a relevant publication,
+separately from edge delivery. -/
 inductive WaitTarget where
   | edge (signal : String) (edge : Edge)
   | timer (deadline : Nat)

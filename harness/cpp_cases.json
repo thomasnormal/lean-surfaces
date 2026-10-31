@@ -12505,6 +12505,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-switch-computed-initialization-return",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalSwitchComputedInitializationReturnStatementFrameWitness",
+    "cpp_source": "int local_switch_computed_initialization_return_statement_frame_witness(int value) { int outer = 3; switch (value) { case 1: { int local = outer + 2; return local; } default: break; } return outer; } bool callable_witness() { return local_switch_computed_initialization_return_statement_frame_witness(1) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-switch-computed-initialization-assignment-return",
     "kind": "statement",
     "corpus": "rung-4 witness",

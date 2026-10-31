@@ -3431,3 +3431,10 @@ existing `SExpr.concat` truthiness path. Replications and other aggregate
 selectors remain loud. The `always_ff_event_iff_concat` witness covers disabled
 and enabled clock publications. Differential coverage grows **558/544/0/14 →
 559/545/0/14**; grammar coverage remains **240/212/28**.
+# [0.1.295] — 2026-10-31
+
+Constant replication `iff` guards such as `iff {2{en}}` now use the existing
+`SExpr.concat` truthiness path. Calls and other aggregate selectors remain
+loud. The `always_ff_event_iff_replication` witness covers disabled and enabled
+clock publications. Differential coverage grows **559/545/0/14 → 560/546/0/14**;
+grammar coverage remains **240/212/28**.

@@ -199,12 +199,14 @@ class PlainAlways(unittest.TestCase):
         process, = design["modules"][0]["processes"]
         self.assertEqual(process["iff"]["kind"], "Concat")
 
-    def test_always_ff_concat_replication_iff_stays_loud(self):
+    def test_always_ff_concat_replication_iff_is_retained(self):
         design = lower(
             "module top; logic clk, q; logic en; "
             "always_ff @(posedge clk iff {2{en}}) q <= 1'b0; endmodule",
             require_valid=False)
-        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["iff"]["kind"], "Concat")
+        self.assertEqual(process["iff"]["replication_count"], 2)
 
     def test_logical_iff_guard_is_retained(self):
         design = lower(

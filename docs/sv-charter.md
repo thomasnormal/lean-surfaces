@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Constant replication `iff` guards — 2026-10-31
+
+Constant replications of admitted guard parts, such as `iff {2{en}}`, now use
+the existing `SExpr.concat` truthiness path. Calls and other aggregate
+selectors remain loud. The `always_ff_event_iff_replication` witness covers
+disabled and enabled edges. Differential coverage grows **559/545/0/14 →
+560/546/0/14**; grammar coverage remains **240/212/28**.
+
 ## Packed concatenation `iff` guards — 2026-10-31
 
 Concatenations of admitted scalar or packed-select parts, such as

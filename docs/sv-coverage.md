@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 559 | 545 | 0 | 14 | sv-tests-2 declarations |
+| 560 | 546 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -582,6 +582,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_dynamic` | `Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_dynamic_neg` | `Examples/system-verilog/always_ff_event_iff_dynamic_neg/always_ff_event_iff_dynamic_neg.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_concat` | `Examples/system-verilog/always_ff_event_iff_concat/always_ff_event_iff_concat.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_replication` | `Examples/system-verilog/always_ff_event_iff_replication/always_ff_event_iff_replication.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -726,7 +727,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ModExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ModuleDeclaration` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ModuleHeader` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/concat_accept/concat_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/always_ff_event_iff_replication/always_ff_event_iff_replication.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |

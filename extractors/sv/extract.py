@@ -24816,7 +24816,7 @@ def _iff_guard_allowed(expr):
         index = expr.get("index", {})
         width = expr.get("width")
         return ((width == 1 or (isinstance(width, int) and width > 1
-                                and index.get("kind") == "Literal"))
+                                and index.get("kind") in ("Ident", "Literal")))
                 and not expr.get("descending", False)
                 and value.get("kind") == "Ident"
                 and index.get("kind") in ("Ident", "Literal"))

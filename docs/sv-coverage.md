@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 556 | 542 | 0 | 14 | sv-tests-2 declarations |
+| 557 | 543 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -579,6 +579,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_async_reset_iff_bit` | `Examples/system-verilog/always_ff_async_reset_iff_bit/always_ff_async_reset_iff_bit.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_async_reset_iff_reset` | `Examples/system-verilog/always_ff_async_reset_iff_reset/always_ff_async_reset_iff_reset.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_vector` | `Examples/system-verilog/always_ff_event_iff_vector/always_ff_event_iff_vector.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_dynamic` | `Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -609,7 +610,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentExpression` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |

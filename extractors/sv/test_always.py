@@ -174,10 +174,19 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual(process["iff"]["kind"], "SelectRead")
         self.assertEqual(process["iff"]["width"], 2)
 
-    def test_always_ff_dynamic_vector_iff_stays_loud(self):
+    def test_always_ff_dynamic_vector_iff_is_retained(self):
         design = lower(
             "module top; logic clk, q; logic [3:0] en; integer i; "
             "always_ff @(posedge clk iff en[i +: 2]) q <= 1'b0; endmodule",
+            require_valid=False)
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["iff"]["kind"], "SelectRead")
+        self.assertEqual(process["iff"]["width"], 2)
+
+    def test_always_ff_descending_dynamic_vector_iff_stays_loud(self):
+        design = lower(
+            "module top; logic clk, q; logic [3:0] en; integer i; "
+            "always_ff @(posedge clk iff en[i -: 2]) q <= 1'b0; endmodule",
             require_valid=False)
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 

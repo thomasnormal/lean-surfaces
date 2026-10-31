@@ -1,3 +1,19 @@
+# [0.1.292] — 2026-10-31
+
+Ascending dynamic packed part-select `iff` guards such as `iff en[idx +: 2]`
+now use the existing `SelectRead` truthiness path. Descending dynamic and
+aggregate selectors remain loud. The `always_ff_event_iff_dynamic` witness
+covers disabled and enabled clock publications. Differential coverage grows
+**556/542/0/14 → 557/543/0/14**; grammar coverage remains **240/212/28**.
+
+# [0.1.291] — 2026-10-31
+
+Constant-index packed-vector `iff` guards such as `iff en[1:0]` now use the
+existing `SelectRead` truthiness path. Dynamic indexed and aggregate selectors
+remain loud. The `always_ff_event_iff_vector` witness covers disabled and
+enabled clock publications. Differential coverage grows **555/541/0/14 →
+556/542/0/14**; grammar coverage remains **240/212/28**.
+
 # [0.1.290] — 2026-10-31
 
 Scalar `reset_iff` guards on active-low and active-high asynchronous-reset

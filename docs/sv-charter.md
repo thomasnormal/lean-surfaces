@@ -15962,3 +15962,8 @@ operator, which is the `~` item of the always_comb work; once `~` is in the frag
 covered by it. Regression evidence: every committed symbolic envelope re-extracts byte-identical
 (the lowering only fires where the extractor emitted an Unsupported before).
 
+## Dynamic whole-net continuous-driver resolution — 2026-10-31
+
+The timed scheduler now retains one sampled value per live whole-net `assign` process and resolves the target after each driver publication. Ordinary strength-free four-state resolution follows the IEEE net rule for this admitted shape: all `z` drivers produce `z`, equal known drivers preserve that value, and an `x` or disagreement produces `x`. The resolved signal is therefore no longer the last process to run; later Active ordering cannot erase an earlier driver's contribution. The driver table is initialized with the process table and threaded through blocking, delayed, and re-armed process completions. Literal/static overlaps keep their existing folding rules, while selected or concatenated dynamic targets and variable multiple-driver forms remain loud; the existing `assign_multiple_drivers` refusal is unchanged.
+
+`assign_net_resolution` drives an internal `wire y` from live `a = 0` and `b = 1` sources and observes `1'bx` after a delay. The extractor preserves both dynamic whole-net `Assign` processes, the loader checks declared net targets, and the timed runner resolves the two samples. Differential coverage moves **539/525/0/14 → 540/526/0/14** (rows/agree/disagree/recorded refusals); grammar coverage remains **239/210/29**, and the sv-tests-2 extraction census remains **5,901 clean of 22,071 paths**.

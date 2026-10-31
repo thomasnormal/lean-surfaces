@@ -1,3 +1,14 @@
+# [0.1.273] — 2026-10-31
+
+Timed continuous assignments now retain per-process driver samples and resolve
+dynamic whole-net overlaps with strength-free four-state semantics (`z` for no
+known driver, equal known values preserved, disagreement or `x` resolving to
+`x`). The new `assign_net_resolution` fixture differentially matches the
+two-driver `wire` case. Literal/static folds and variable multiple-driver
+refusals remain unchanged. Differential coverage grows **539/525/0/14 →
+540/526/0/14**; grammar coverage remains **239/210/29** and the generated
+coverage page records the unchanged **5,901/22,071** clean extraction census.
+
 # [0.1.272] — 2026-10-31
 
 Proof library and tactics: `always_comb` bodies in the `sv_comb` fragment (WP-G, G2.2; register

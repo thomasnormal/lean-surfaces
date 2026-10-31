@@ -4889,6 +4889,17 @@
       "ticks": 4
     },
     {
+      "name": "assign_net_resolution",
+      "file": "Examples/system-verilog/assign_net_resolution/assign_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "NET RESOLUTION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
       "name": "always_ff_accept",
       "file": "Examples/system-verilog/always_ff_accept/always_ff_accept.sv",
       "module": "top",

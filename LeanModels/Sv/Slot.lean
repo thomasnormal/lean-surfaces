@@ -80,6 +80,62 @@ def removeFromReady (w : SvWorld) (index : Nat) : SvWorld :=
 def signalChanged (old new : SvState) (name : String) : Bool :=
   SvState.lookup old name != SvState.lookup new name
 
+/-! ## Continuous-driver resolution -/
+
+/-- Strength-free ordinary-net resolution for one bit.  An un-driven or
+all-high-impedance bit is `z`; equal known drivers preserve their value; an
+`x` or a disagreement among known drivers yields `x`. -/
+def resolveDriverBit (bits : List Logic) : Logic :=
+  let active := bits.filter (fun bit => bit != .lz)
+  if active.isEmpty then
+    .lz
+  else if active.any (fun bit => bit == .lx) then
+    .lx
+  else
+    match active with
+    | [] => .lz
+    | bit :: rest => if rest.all (fun other => other == bit) then bit else .lx
+
+/-- Resolve sampled driver vectors bit by bit.  Every value is already sized
+by the frontend's declaration conversion, so this function only combines
+corresponding positions. -/
+def resolveDriverVec (width : Nat) (values : List LVec) : LVec :=
+  ⟨Array.ofFn (n := width) fun index =>
+    resolveDriverBit (values.filterMap fun value => value.bits[index.val]?)⟩
+
+/-- Sampled values for all continuous drivers of one target. -/
+def driverValues (w : SvWorld) (target : String) : List LVec :=
+  (List.range w.procs.size).filterMap fun index =>
+    match w.procs[index]? with
+    | some ps =>
+        if ps.driverTarget == some target then
+          match w.drivers[index]? with
+          | some (some value) => some value
+          | _ => none
+        else none
+    | none => none
+
+/-- Replace one driver's sample and publish the resolved target value. -/
+def publishDriver (w : SvWorld) (index : Nat) (target : String)
+    (value : LVec) : SvWorld :=
+  let drivers := w.drivers.set! index (some value)
+  let values := driverValues { w with drivers := drivers } target
+  let width := Option.getD ((SvState.lookup w.signals target).map LVec.width) value.width
+  { w with drivers := drivers
+         , signals := SvState.set w.signals target (resolveDriverVec width values) }
+
+/-- Apply a stepped process result, routing continuous assignments through the
+driver table while leaving ordinary procedural writes untouched. -/
+def publishStep (w : SvWorld) (index : Nat) (ps : ProcState)
+    (signals : SvState) (nba : NbaQueue) (out : Out) : SvWorld :=
+  let base := { w with signals := signals, nba := nba, out := out }
+  match ps.driverTarget with
+  | some target =>
+      match SvState.lookup signals target with
+      | some value => publishDriver base index target value
+      | none => base
+  | none => base
+
 def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
   { w with regionQ := fun r =>
       if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
@@ -238,42 +294,36 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
                                   , status := .ready
                                   , registration := none
                                   , explicitlySuspended := false }
-              let updated := { w with signals := sigs
-                                      , nba := nba
-                                      , out := out
-                                      , procs := w.procs.set! i ps' }
+              let updated := publishStep w i ps sigs nba out
+              let updated := { updated with procs := updated.procs.set! i ps' }
               set (appendInactive updated [i])
-              if w.signals != sigs then
-                wakeCombs w.signals sigs
-                wakeLevels w.signals sigs
-                wakeEdges w.signals sigs
+              if w.signals != updated.signals then
+                wakeCombs w.signals updated.signals
+                wakeLevels w.signals updated.signals
+                wakeEdges w.signals updated.signals
               pure (.suspended (.atTime 0) continuation)
           | .suspended t continuation =>
               let ps' := { ps with residual := continuation ++ rest
                                   , status := .suspended t
                                   , registration := some (WaitTarget.ofTrigger w.time t) }
-              set { w with signals := sigs
-                         , nba := nba
-                         , out := out
-                         , procs := w.procs.set! i ps' }
-              if w.signals != sigs then
-                wakeCombs w.signals sigs
-                wakeLevels w.signals sigs
-                wakeEdges w.signals sigs
+              let updated := publishStep w i ps sigs nba out
+              set { updated with procs := updated.procs.set! i ps' }
+              if w.signals != updated.signals then
+                wakeCombs w.signals updated.signals
+                wakeLevels w.signals updated.signals
+                wakeEdges w.signals updated.signals
               pure (.suspended t (continuation ++ rest))
           | .done =>
               let ps' := { ps with residual := rest
                                   , status := .ready
                                   , registration := none
                                   , explicitlySuspended := false }
-              set { w with signals := sigs
-                         , nba := nba
-                         , out := out
-                         , procs := w.procs.set! i ps' }
-              if w.signals != sigs then
-                wakeCombs w.signals sigs
-                wakeLevels w.signals sigs
-                wakeEdges w.signals sigs
+              let updated := publishStep w i ps sigs nba out
+              set { updated with procs := updated.procs.set! i ps' }
+              if w.signals != updated.signals then
+                wakeCombs w.signals updated.signals
+                wakeLevels w.signals updated.signals
+                wakeEdges w.signals updated.signals
               runProcResidual fuel i ps' rest
 
 def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do

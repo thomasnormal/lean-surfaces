@@ -76,6 +76,15 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual([p["kind"] for p in processes], ["AlwaysComb", "Initial"])
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
+    def test_dynamic_net_resolution_fixture_retains_all_drivers(self):
+        path = (Path(__file__).resolve().parents[2] /
+                "Examples/system-verilog/assign_net_resolution/assign_net_resolution.sv")
+        design = lower(path.read_text())
+        processes = design["modules"][0]["processes"]
+        self.assertEqual([p["kind"] for p in processes], ["Assign", "Assign", "Initial"])
+        self.assertEqual([p["target"]["name"] for p in processes[:2]], ["y", "y"])
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

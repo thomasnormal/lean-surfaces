@@ -214,7 +214,8 @@ def timedProcOf : SProc → Except String ProcState
            , status := .ready
            , comb := true
            , combReads := value.readNames.eraseDups
-           , combBody := [body] }
+           , combBody := [body]
+           , driverTarget := some target }
   | .alwaysPosedge clock body | .alwaysFF clock body =>
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual }
@@ -235,8 +236,6 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
     match proc with
     | .assign target _ => some target
     | _ => none
-  if assignTargets.eraseDups.length != assignTargets.length then
-    throw "continuous assign: multiple drivers require net resolution"
   for target in assignTargets do
     match d.decls.toList.find? (fun decl => decl.name == target) with
     | none => throw s!"continuous assign target '{target}' is undeclared"
@@ -253,6 +252,7 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
   let procs := procs.toArray
   return { signals := signals
          , procs := procs
+         , drivers := Array.replicate procs.size (none : Option LVec)
          , regionQ := fun r => if r == Region.active then List.range procs.size else []
          , out := {} }
 

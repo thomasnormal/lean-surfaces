@@ -25147,6 +25147,19 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
             for old_base, old_low, old_high in windows
         )
         if conflict:
+            # Dynamic whole-net drivers are scheduler-owned: preserve every
+            # driver so the timed loader can retain its sampled values and
+            # apply IEEE four-state resolution. Literal overlaps were folded
+            # above (or remain a deliberate static refusal), and selected or
+            # concatenated dynamic targets stay on their existing boundary.
+            dynamic_net_driver = (
+                resolvable_nets is not None
+                and any(target_base in resolvable_nets
+                        for target_base, _lo, _hi in current)
+                and not process.get("continuous_literal_source")
+                and process.get("target", {}).get("kind") == "Ident")
+            if dynamic_net_driver:
+                continue
             processes[index] = {
                 "kind": "Unsupported",
                 "span": process.get("span"),

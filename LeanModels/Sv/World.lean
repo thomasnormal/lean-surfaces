@@ -166,6 +166,10 @@ structure ProcState where
   /-- The retained body used when an implicit-sensitivity wake re-enters the
   process. -/
   combBody : List SStmt := []
+  /-- Target of a timed continuous driver, when this process is an `assign`.
+  The scheduler keeps the driver's sampled value separately from the
+  resolved signal so multiple drivers never collapse to last-writer order. -/
+  driverTarget : Option String := none
   /-- The target that will make a suspended process runnable. -/
   registration : Option WaitTarget := none
   /-- Explicit process-control suspension is distinct from an ordinary wait.
@@ -190,6 +194,10 @@ structure SvWorld where
   signals : SvState := []
   /-- The process table. -/
   procs : Array ProcState := #[]
+  /-- One sampled value per process slot for continuous drivers.  `none`
+  means that driver has not executed in the current run yet and contributes
+  high impedance to an ordinary wire. -/
+  drivers : Array (Option LVec) := #[]
   /-- Ready set per region; the oracle orders WITHIN one of these. -/
   regionQ : Region → List Nat := fun _ => []
   /-- Which region is executing. -/

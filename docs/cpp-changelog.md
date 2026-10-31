@@ -5,6 +5,23 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.178] — 2026-10-31
+
+### Added
+
+- Added callable while and do-while declaration-initializer assignment
+  `break` witnesses, including true and false condition paths.
+- Added the zero-computed while initialization `break` false-path witness.
+
+### Measured
+
+- The checked-in corpus now contains **1135 differential rows**: **1118 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **629**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.177] — 2026-10-31
 
 ### Added

@@ -6945,11 +6945,11 @@
    "layers": [
     "lean-proof-tooling"
    ],
-   "trigger": "declaration initializer, localparams, enums, out-of-tier members, non-affine indexes or bounds, unary / ?: / replication / reduction / arithmetic operators, part-select or concat targets, always_* processes, nested generate loops deeper than two, conditional generate, instances",
-   "why": "The v1 recognizer covers the gate-level assign fragment of the adder and array multiplier with affine geometry; anything else cannot be summarized soundly. Reported as `sv_structure: outside the supported fragment`.",
+   "trigger": "declaration initializer, localparams, enums, out-of-tier members, non-affine indexes or bounds, unary / ?: / replication / reduction / arithmetic operators, part-select or concat targets, always_ff / always_latch / always @ processes, an always_comb body outside the first fragment (more than one written window, `case`, a latch (an `if` without `else`), temporaries or default-then-override, `?:` / `!` / `~` / reductions in a body, nonblocking assignment), nested generate loops deeper than two, conditional generate, instances",
+   "why": "The v1 recognizer covers the gate-level assign fragment of the adder and array multiplier with affine geometry, and (WP-G, `PDesign.summaryP`) an `always_comb` body that is an if/else tree writing ONE window, whose leaves are right-hand sides of that fragment and whose conditions are gate trees; anything else cannot be summarized soundly. Reported as `sv_structure: outside the supported fragment`, with the site and the reason (e.g. site `g_bit#1`: always_comb statement `case`).",
    "category": "later",
    "proposed": false,
-   "prerequisite": "stage-2 lanes: localparams via the parameter stage, deeper arrays, part-select / concat targets, nested loops, instances; arithmetic and always_comb are separate lanes (comb2 lowering, sv_equations)",
+   "prerequisite": "stage-2 lanes: localparams via the parameter stage, deeper arrays, part-select / concat targets, nested loops, instances; arithmetic is a separate lane (sv_equations); always_comb bodies beyond the first fragment: S1b multi-window bodies, S2 `?:` `!` `~` and reductions in bodies, S3 default-then-override and temporaries (svgolf/design/always-comb/README.md)",
    "decided_by": "Thomas 2026-10-29: build the tactic (the fragment extension itself is the lead's plan); Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "plan": "STAGE2",
    "where": [
@@ -6976,11 +6976,19 @@
     {
      "file": "LeanModels/Sv/CombView.lean",
      "fn": "itemOf?"
+    },
+    {
+     "file": "LeanModels/Sv/CombProc.lean",
+     "fn": "treeStmt?"
+    },
+    {
+     "file": "LeanModels/Sv/CombProcSummary.lean",
+     "fn": "siteOfP?"
     }
    ],
    "unverified": true,
    "verified_by_run": false,
-   "notes": "Line numbers in flux (stage-2 workflow running). A signed or 2-state declaration is outside the fragment: CombView.declOf? refuses it ('declaration `x` is signed or 2-state'), by sv_structure and sv_equations; Expr2.squash2 is outside the x-free knownness fragment (CombKnownBits). The comb proof layer covers four-state declarations and input ports only (CombDesign.inFourState)."
+   "notes": "Line numbers in flux (stage-2 workflow running). A signed or 2-state declaration is outside the fragment: CombView.declOf? refuses it ('declaration `x` is signed or 2-state'), by sv_structure and sv_equations; Expr2.squash2 is outside the x-free knownness fragment (CombKnownBits). The comb proof layer covers four-state declarations and input ports only (CombDesign.inFourState). WP-G (G2.2): the always_comb first fragment is accepted by the proc-aware layer (CombProcSummary/CombProcLower/CombProcEq/CombProcTactic; tasks/add/reference/add_proc.lean); its refusals are tactic errors naming the site, and the tactic errors of the new elaborators are logged with the goal admitted so that a refused proof can never be accepted (tests/add/negative/add_proc_case)."
   },
   {
    "id": "tl-sv-structure-check",
@@ -8628,7 +8636,7 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "theorem t : ... := by sorry",
+    "trigger": "theorem t : ... := by sorry; also a goal ADMITTED by a tactic after it logged an error (the WP-G tactic elaborators log their refusal and admit the goal, so the proof compiles with an error and depends on sorryAx)",
     "why": "The proof depends on sorryAx, which the allow list excludes.",
     "category": "never",
     "proposed": true,
@@ -8646,7 +8654,10 @@
      }
     ],
     "unverified": true,
-    "verified_by_run": false
+    "verified_by_run": false,
+    "attacks": [
+     "add/add_proc_case"
+    ]
    },
    {
     "id": "sg-native-decide",

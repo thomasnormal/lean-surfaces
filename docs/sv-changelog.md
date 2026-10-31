@@ -1,3 +1,25 @@
+# [0.1.272] — 2026-10-31
+
+Proof library and tactics: `always_comb` bodies in the `sv_comb` fragment (WP-G, G2.2; register
+`tl-sv-structure-fragment`). Four NEW modules, additive: `CombProcSummary` (the proc-aware summary
+`siteOfP?`/`PDesign.summaryP`), `CombProcLower` (`Summary.soundL`: the summary's facts plus the new
+`NoSelfRead` obligation give `lowerComb = some d'` and the lowered `Realized`; `driversOk_of_lowered`;
+`struct_of_summaryL`/`struct_of_rankL`/`struct_of_lexL`), `CombProcEq` (the skeleton `PSk` with a choice node,
+`eq_of_summaryL`: the equation of a procedural site is `st.boolAt n (lo+k) = if c then e1 else e2`, nested) and
+`CombProcTactic` (a SECOND elaborator on the existing `sv_structure`, `sv_interface`, `sv_equations` syntax
+nodes, tried first, `throwUnsupportedSyntax` unless the goal has the lowered shape `∃ d', (X.sem N).lowerComb =
+some d' ∧ CombDesign d' ∧ Acyclic d'`; a refused body logs the planned tactic message and admits the goal, so
+the proof fails to build and shows `sorryAx`). Fragment S1: `always_comb`, blocking whole-signal or window
+assignments, `if`/`else`/`else if` trees, one written window, no latch, no self-read. NO existing LeanModels
+file was edited, so every existing proof elaborates exactly as before (goal dumps of the five svGolf
+references are byte-identical with and without the new tactic module); the old and the new chain share
+nothing but definitions, and `G22-NOTE.md` (svGolf tree) lists which declarations are copies for a later
+consolidation. Examples: `comb_proc` (gen non-vacuity, structure by rank/lexRank/comb-only, equation hint, five
+negative designs pinned verbatim). Every theorem has a `#print axioms` pin (at most `propext`,
+`Classical.choice`, `Quot.sound`), default heartbeats, no `set_option`. The first user: an adder written with
+`always_comb` and `if`/`else`, proved for every width by the existing tactics. Not covered: several windows in
+one body, `case`, temporaries, `?:`/`!`/`~` in bodies, `check.py --tactics` probing the lowered shape.
+
 # [0.1.271] — 2026-10-31
 
 Scheduler proof receipts now follow the delivered Active/Inactive behavior:

@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 543 | 529 | 0 | 14 | sv-tests-2 declarations |
+| 544 | 530 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -563,6 +563,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_accept` | `Examples/system-verilog/always_ff_accept/always_ff_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_capture` | `Examples/system-verilog/always_ff_capture/always_ff_capture.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_async_reset` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_negedge` | `Examples/system-verilog/always_ff_negedge/always_ff_negedge.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_accept` | `Examples/system-verilog/always_latch_accept/always_latch_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_wake` | `Examples/system-verilog/always_latch_wake/always_latch_wake.sv` | match | **MATCH** | `ok` | MATCH |
 | `wait_accept` | `Examples/system-verilog/wait_accept/wait_accept.sv` | match | **MATCH** | `ok` | MATCH |
@@ -694,7 +695,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/always_ff_negedge/always_ff_negedge.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |

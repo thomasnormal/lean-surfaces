@@ -1468,13 +1468,13 @@
   },
   {
    "id": "pr-edge-other",
-   "tag": "SignalEventControl:NegEdge | :BothEdges | :None_",
+   "tag": "SignalEventControl:BothEdges | :None_",
    "group": "processes",
    "layers": [
     "extractor"
    ],
-   "trigger": "H: always_ff @(negedge c) y <= a;  /  @(edge c)  /  always @(c) ...",
-   "why": "Only posedge (and the posedge + negedge reset list) is modelled.",
+   "trigger": "H: always_ff @(edge c) y <= a;  /  always_ff @(c)  /  always @(c) ...",
+   "why": "Standalone always_ff negedge is modelled; both-edge and bare-signal clock controls still lack the retained edge contract.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",

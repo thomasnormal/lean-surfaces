@@ -1,3 +1,12 @@
+# [0.1.277] — 2026-10-31
+
+Timed `always_ff @(negedge clk)` now registers a negative-edge clock in the
+existing retained scheduler and re-arms through the ordinary Active/Inactive/
+NBA path. The `always_ff_negedge` witness matches two falling-edge captures;
+the initial-only runner still refuses the non-initial process. Differential
+coverage grows **543/529/0/14 → 544/530/0/14** and grammar coverage remains
+**239/210/29**.
+
 # [0.1.276] — 2026-10-31
 
 Timed `always_ff @(posedge clk or negedge rst_n)` now registers its

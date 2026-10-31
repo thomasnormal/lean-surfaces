@@ -1180,7 +1180,9 @@ inductive SProc where
   | initial (body : SStmt)
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
+  | alwaysNegedge (clock : String) (body : SStmt)
   | alwaysFF (clock : String) (body : SStmt)
+  | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
@@ -1223,8 +1225,12 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process '{svKind}' (self-check tier runs initial-only designs)"
   | .alwaysPosedge clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysNegedge clock _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysNegedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFF clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysFFNegedge clock _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFFNegedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFFReset clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
@@ -1286,7 +1292,9 @@ def runSelfCheck (d : Design) (fuel : Nat)
       match p with
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
+      | .alwaysNegedge clock _ => some s!"AlwaysNegedge:{clock}"
       | .alwaysFF clock _ => some s!"AlwaysFF:{clock}"
+      | .alwaysFFNegedge clock _ => some s!"AlwaysFFNegedge:{clock}"
       | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
@@ -1706,9 +1714,17 @@ def parseSProc (j : Json) : Except String SProc := do
         let clock ← getStrF j "clock"
         match (getStrF j "areset_n").toOption with
         | some reset => return .alwaysFFReset clock reset body
-        | none => return .alwaysFF clock body
+        | none =>
+            match (getStrF j "edge").toOption.getD "pos" with
+            | "pos" => return .alwaysFF clock body
+            | "neg" => return .alwaysFFNegedge clock body
+            | edge => throw s!"AlwaysPosedge: unknown edge '{edge}'"
       else
-        return .alwaysPosedge (← getStrF j "clock") body
+        let clock ← getStrF j "clock"
+        match (getStrF j "edge").toOption.getD "pos" with
+        | "pos" => return .alwaysPosedge clock body
+        | "neg" => return .alwaysNegedge clock body
+        | edge => throw s!"AlwaysPosedge: unknown edge '{edge}'"
   | "AlwaysComb" =>
       return .alwaysComb (← parseSStmt (← getF j "body"))
   | "AlwaysLatch" =>

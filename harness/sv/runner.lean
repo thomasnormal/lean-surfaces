@@ -114,6 +114,14 @@ def parseProcessE (j : Json) : Except String Process := do
   | "AlwaysPosedge" =>
       let clock ← getStrF j "clock"
       let body ← parseStmtE (← getF j "body")
+      let edge := (getFOpt j "edge").bind (·.getStr?.toOption) |>.getD "pos"
+      if edge != "pos" then
+        if edge == "neg" then
+          return .unsupported "SignalEventControl:NegEdge"
+            "negative-edge clock is outside the M0 cycle harness"
+        else
+          return .unsupported "SignalEventControl:edge"
+            s!"unknown clock edge '{edge}'"
       match ← getStrF j "style" with
       | "always_ff" => return .alwaysFF clock body
       | "always" => return .alwaysPlain clock body

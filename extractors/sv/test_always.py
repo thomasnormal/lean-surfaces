@@ -23,6 +23,12 @@ class PlainAlways(unittest.TestCase):
         process, = design["modules"][0]["processes"]
         self.assertEqual((process["kind"], process["clock"], process["style"]), ("AlwaysPosedge", "clk", "always"))
 
+    def test_always_ff_negative_edge_is_retained(self):
+        design = lower("module top; logic clk; logic q; always_ff @(negedge clk) q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["clock"], process["style"], process["edge"]),
+                         ("AlwaysPosedge", "clk", "always_ff", "neg"))
+
     def test_always_ff_is_not_reinterpreted_as_general_repetition(self):
         design = lower("module top; logic q; always_ff begin #2 q=1; end endmodule", require_valid=False)
         self.assertFalse(any(n.get("kind") == "Always" for n in nodes(design)))

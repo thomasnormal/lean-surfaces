@@ -4933,6 +4933,17 @@
       "ticks": 7
     },
     {
+      "name": "always_ff_negedge",
+      "file": "Examples/system-verilog/always_ff_negedge/always_ff_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
       "name": "always_latch_accept",
       "file": "Examples/system-verilog/always_latch_accept/always_latch_accept.sv",
       "module": "top",

@@ -165,7 +165,9 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
     match proc with
     | .initial body | .alwaysBody body | .alwaysImplicit body
     | .alwaysComb body | .alwaysLatch body => timedAccesses body
-    | .alwaysPosedge clock body | .alwaysFF clock body => (true, clock) :: timedAccesses body
+    | .alwaysPosedge clock body | .alwaysNegedge clock body
+    | .alwaysFF clock body | .alwaysFFNegedge clock body =>
+        (true, clock) :: timedAccesses body
     | .alwaysFFReset clock reset body =>
         (true, clock) :: (true, reset) :: timedAccesses body
     | .assign _ _ => []
@@ -220,6 +222,9 @@ def timedProcOf : SProc → Except String ProcState
            , driverTarget := some target }
   | .alwaysPosedge clock body | .alwaysFF clock body =>
       let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual }
+  | .alwaysNegedge clock body | .alwaysFFNegedge clock body =>
+      let residual := [.waitEvent clock .neg, body]
       pure { residual, status := .ready, arm := some residual }
   | .alwaysFFReset clock reset body =>
       let residual := [.waitEvent clock .pos, body]

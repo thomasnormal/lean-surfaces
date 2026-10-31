@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Negative-edge timed `always_ff` — 2026-10-31
+
+Timed `always_ff @(negedge clk)` now retains a negative-edge clock
+registration and re-arms the same process after each body. The edge marker is
+carried in the existing `AlwaysPosedge` envelope vocabulary for compatibility;
+omitting it remains the positive-edge form. Both edges use the same
+Active/Inactive/NBA scheduler and nonblocking publication path, with no
+clock-specific shortcut. The legacy self-check runner continues to refuse
+non-initial processes.
+
+The `always_ff_negedge` witness changes data between two falling edges and
+checks both captures. Differential coverage grows **543/529/0/14 →
+544/530/0/14**; grammar coverage remains **239/210/29**.
+
 ## Asynchronous active-low reset for timed `always_ff` — 2026-10-31
 
 Timed `always_ff @(posedge clk or negedge rst_n)` now retains both event

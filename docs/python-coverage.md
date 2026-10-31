@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3814 | 3777 | 0 | 37 |
+| 3818 | 3781 | 0 | 37 |
 
-Of the 3777 rows the model decides, 3777 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3781 rows the model decides, 3781 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3814 | 3676 | 0 | 138 |
+| 3818 | 3680 | 0 | 138 |
 
 ## Grammar
 
@@ -215,6 +215,6 @@ Also modelled: `count` (from `from itertools import count`).
 
 **Modelled constants:** `Ellipsis`, `False`, `None`, `True`. `Ellipsis` and `...` denote the same singleton; ordinary name shadowing still applies.
 
-**Exception classes `except` can name (33):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `DeprecationWarning`, `EnvironmentError`, `Exception`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndexError`, `KeyError`, `KeyboardInterrupt`, `LookupError`, `ModuleNotFoundError`, `NameError`, `OSError`, `OverflowError`, `RecursionError`, `RuntimeError`, `RuntimeWarning`, `StopAsyncIteration`, `StopIteration`, `SystemExit`, `TypeError`, `UnicodeError`, `UnicodeWarning`, `UserWarning`, `ValueError`, `Warning`, `ZeroDivisionError`. `EnvironmentError` and `IOError` are aliases of `OSError` for bare identity raises and handlers. `ImportError` and `ModuleNotFoundError` additionally work as handler names and as bare class-identity raises. Payload-bearing constructors remain loud, while the separate import-error handler path preserves CPython's `.importError` payload. Other builtin exception names refuse; the empty `OSError` class identity is also admitted for direct raises. An unknown constructor name in `raise Missing(args…)` produces CPython's exact `NameError` before its arguments run. User classes `class E(Exception): pass` and the measured direct builtin-ancestor shapes are admitted.
+**Exception classes `except` can name (34):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `DeprecationWarning`, `EnvironmentError`, `Exception`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndexError`, `KeyError`, `KeyboardInterrupt`, `LookupError`, `ModuleNotFoundError`, `NameError`, `OSError`, `OverflowError`, `PendingDeprecationWarning`, `RecursionError`, `RuntimeError`, `RuntimeWarning`, `StopAsyncIteration`, `StopIteration`, `SystemExit`, `TypeError`, `UnicodeError`, `UnicodeWarning`, `UserWarning`, `ValueError`, `Warning`, `ZeroDivisionError`. `EnvironmentError` and `IOError` are aliases of `OSError` for bare identity raises and handlers. `ImportError` and `ModuleNotFoundError` additionally work as handler names and as bare class-identity raises. Payload-bearing constructors remain loud, while the separate import-error handler path preserves CPython's `.importError` payload. Other builtin exception names refuse; the empty `OSError` class identity is also admitted for direct raises. An unknown constructor name in `raise Missing(args…)` produces CPython's exact `NameError` before its arguments run. User classes `class E(Exception): pass` and the measured direct builtin-ancestor shapes are admitted.
 
-**Other CPython builtin names (34)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `EOFError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `MemoryError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeTranslateError`.
+**Other CPython builtin names (33)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `EOFError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `MemoryError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeTranslateError`.

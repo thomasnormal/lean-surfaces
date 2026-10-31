@@ -134,6 +134,11 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.catch_ImportWarning(23) = 23
 
+#py_check builtin_raise_lab.raise_PendingDeprecationWarning() raises
+  (.builtinException "PendingDeprecationWarning")
+
+#py_check builtin_raise_lab.catch_PendingDeprecationWarning(23) = 23
+
 #py_check builtin_raise_lab.base_not_exception() = 2
 
 #py_check builtin_raise_lab.wrong_sibling() = 2

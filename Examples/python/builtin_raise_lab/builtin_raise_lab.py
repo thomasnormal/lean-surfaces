@@ -320,6 +320,17 @@ def catch_ImportWarning(value):
         return value
 
 
+def raise_PendingDeprecationWarning():
+    raise PendingDeprecationWarning
+
+
+def catch_PendingDeprecationWarning(value):
+    try:
+        raise PendingDeprecationWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

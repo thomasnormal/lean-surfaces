@@ -1392,5 +1392,7 @@
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_FutureWarning", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_FutureWarning", "args": [[0], [23], [-7]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_ImportWarning", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_ImportWarning", "args": [[0], [23], [-7]], "expect": "match"}
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_ImportWarning", "args": [[0], [23], [-7]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_PendingDeprecationWarning", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_PendingDeprecationWarning", "args": [[0], [23], [-7]], "expect": "match"}
 ]

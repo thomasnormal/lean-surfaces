@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Bare `PendingDeprecationWarning` raises now use the admitted builtin
+  exception identity and are caught by `except Warning:`; payload-bearing
+  warning constructors remain outside the tier.
+
 - Bare `ImportWarning` raises now use the admitted builtin exception identity
   and are caught by `except Warning:`; payload-bearing warning constructors
   remain outside the tier.

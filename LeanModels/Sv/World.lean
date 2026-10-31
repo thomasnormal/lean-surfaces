@@ -131,6 +131,8 @@ condition so the scheduler can re-sample them after a relevant publication,
 separately from edge delivery. -/
 inductive WaitTarget where
   | edge (signal : String) (edge : Edge)
+  /-- A generic event-list wait wakes when any listed signal edge occurs. -/
+  | edges (events : List (String × Edge))
   | timer (deadline : Nat)
   | level (condition : SExpr)
 deriving Repr, Inhabited
@@ -184,6 +186,8 @@ structure ProcState where
   /-- Edge publications that arrived while this retained process was already
   queued in Active.  They are consumed in order after the current body. -/
   pendingEdges : Nat := 0
+  /-- Generic event-list sensitivity for a retained plain `always` process. -/
+  eventEdges : List (String × Edge) := []
 deriving Repr, Inhabited
 
 /-- The world — `W`.

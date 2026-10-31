@@ -6,14 +6,18 @@ occurs; edge descriptors select transitions, and `iff` filters the adjacent
 event at occurrence time. The event expression is then re-armed as the same
 process continuation.
 
-## Why event lists remain a boundary
+## The retained event-list slice
 
-The public wait representation admits one bare signal or one simple edge
-event. It has no multi-event registration, per-event `iff` guard or retained
-rearming state. Lowering an event list to the first signal, one edge, or a
-single sequential wait changes which event wakes the process and how repeated
-wakes behave. The public tier therefore keeps every
-`TimedStatement:EventListControl` loud and adds no second scheduler.
+The timed envelope now admits a plain `always` list with at least two scalar
+identifier events. Each entry retains its `any`, `posedge`, or `negedge`
+polarity, and the process stores the whole list while suspended. A publication
+wakes it when any listed edge fires; completion re-arms the same body through
+the existing Active/Inactive/NBA loop. This is one multi-event registration,
+not a second scheduler.
+
+`always_ff` lists continue to use the narrower asynchronous-reset forms.
+Empty lists, `iff`, non-scalar expressions, and other clock/reset shapes remain
+loud because they need guards or sequential rules that are not represented.
 
 ## 2026-10-22 census and decision
 

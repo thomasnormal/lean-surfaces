@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 545 | 531 | 0 | 14 | sv-tests-2 declarations |
+| 546 | 532 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -222,6 +222,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_zero_delay_inactive` | `Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_loop` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_zero_delay_convergent` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_event_list` | `Examples/system-verilog/always_event_list/always_event_list.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | match | **MATCH** | `ok` | MATCH |
@@ -605,15 +606,15 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.AssignmentPatternExpression` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternItem` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryAndExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.BinaryEventExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.BinaryEventExpression` | `Examples/system-verilog/always_event_list/always_event_list.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryOrExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryXnorExpression` | `Examples/system-verilog/sem2/xnor_bin/xnor_bin.sv` | **REFUSE** | `unsupported` scheduler halted: LeanModels.Loud.unsupported (LeanModels.RefusalCause.unsupported { clause := "4.4" }) "unsupported expression 'BinaryExpression:BinaryXnor'" none |
-| `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/always_event_list/always_event_list.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BitSelect` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_event_list/always_event_list.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |

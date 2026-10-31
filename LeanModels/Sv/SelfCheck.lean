@@ -1185,6 +1185,7 @@ inductive SProc where
   | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
   | alwaysFFResetHigh (clock : String) (reset : String) (body : SStmt)
+  | alwaysEvent (events : List (String × Edge)) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
@@ -1236,6 +1237,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysFFResetHigh clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}' (self-check tier runs initial-only designs)"
+  | .alwaysEvent events _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysEvent:{events.length}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysImplicit' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
@@ -1300,6 +1303,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysFFNegedge clock _ => some s!"AlwaysFFNegedge:{clock}"
       | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
       | .alwaysFFResetHigh clock reset _ => some s!"AlwaysFF:{clock}+posedge {reset}"
+      | .alwaysEvent events _ => some s!"AlwaysEvent:{events.length}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
@@ -1732,6 +1736,20 @@ def parseSProc (j : Json) : Except String SProc := do
         | "pos" => return .alwaysPosedge clock body
         | "neg" => return .alwaysNegedge clock body
         | edge => throw s!"AlwaysPosedge: unknown edge '{edge}'"
+  | "AlwaysEvent" =>
+      let eventJson ← getArrF j "events"
+      let events ← eventJson.toList.mapM fun event => do
+        let signal ← getStrF event "signal"
+        let edgeName := (getStrF event "edge").toOption.getD "any"
+        let edge ← match edgeName with
+          | "posedge" => pure Edge.pos
+          | "negedge" => pure Edge.neg
+          | "any" => pure Edge.any
+          | other => throw s!"AlwaysEvent: unknown edge '{other}'"
+        pure (signal, edge)
+      if events.isEmpty then
+        throw "AlwaysEvent: empty event list"
+      return .alwaysEvent events (← parseSStmt (← getF j "body"))
   | "AlwaysComb" =>
       return .alwaysComb (← parseSStmt (← getF j "body"))
   | "AlwaysLatch" =>
@@ -1849,7 +1867,8 @@ def parseModuleD (j : Json) : Except String Design := do
     let body? := match p with
       | .initial body | .alwaysBody body | .alwaysImplicit body
       | .alwaysComb body
-      | .alwaysLatch body => some body
+      | .alwaysLatch body
+      | .alwaysEvent _ body => some body
       | _ => none
     if let some body := body? then
       let ln := localNames body

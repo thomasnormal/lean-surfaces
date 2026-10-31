@@ -24623,7 +24623,7 @@ def convert_procedural_block(sm, m):
     # Plain `always @*` has the same inferred read sensitivity as
     # `always_comb`, but remains a distinct surface process for the timed
     # scheduler and grammar census.
-    if (pk == ProceduralBlockKind.Always
+    if (_SYM is None and pk == ProceduralBlockKind.Always
             and type(body).__name__ == "TimedStatement"
             and type(body.timing).__name__ == "ImplicitEventControl"):
         implicit_stmt = body.stmt
@@ -24642,6 +24642,17 @@ def convert_procedural_block(sm, m):
             "span": span,
             "body": convert_stmt(sm, implicit_stmt),
         }
+
+    # A plain `always @(a or b)` is a retained process with a generic
+    # multi-signal event list.  Keep the event controls explicit so the timed
+    # scheduler can wake the body on any listed edge; clocked `always_ff`
+    # lists continue through the narrower asynchronous-reset recognizer below.
+    if (_SYM is None and pk == ProceduralBlockKind.Always
+            and type(body).__name__ == "TimedStatement"
+            and type(body.timing).__name__ == "EventListControl"):
+        event_process = _event_list_process(sm, m, body, body.timing, "always")
+        if event_process is not None:
+            return event_process
 
     if pk == ProceduralBlockKind.AlwaysLatch:
         return {
@@ -24738,6 +24749,53 @@ def _sym_areset_process(sm, m, body, timing, style):
         del result["areset_n"]
         result["areset"] = rst_name
     return result
+
+
+def _event_list_process(sm, m, body, timing, style):
+    """Admit a plain `always` with a finite list of scalar signal events.
+
+    Each event may be level/any-edge, `posedge`, or `negedge`; the retained
+    timed process wakes when any one fires.  Empty event controls and lists
+    with non-scalar or conditional events stay in the loud Unsupported path.
+    """
+    if style != "always":
+        return None
+    try:
+        events = list(timing.events)
+    except Exception:
+        return None
+    if len(events) < 2:
+        return None
+    encoded = []
+    for ev in events:
+        if type(ev).__name__ != "SignalEventControl":
+            return None
+        if getattr(ev, "iffCondition", None) is not None:
+            return None
+        signal = convert_expr(sm, ev.expr)
+        if signal.get("kind") != "Ident" or signal.get("width") != 1:
+            return None
+        if ev.edge == EdgeKind.PosEdge:
+            edge = "posedge"
+        elif ev.edge == EdgeKind.NegEdge:
+            edge = "negedge"
+        elif ev.edge == EdgeKind.None_:
+            edge = "any"
+        else:
+            return None
+        encoded.append({"signal": signal["name"], "edge": edge})
+    statement = body.stmt
+    if type(statement).__name__ == "EmptyStatement":
+        return None
+    if (type(statement).__name__ == "BlockStatement"
+            and len(getattr(getattr(statement, "body", None), "list", ())) == 0):
+        return None
+    return {
+        "kind": "AlwaysEvent",
+        "span": sym_span(sm, m),
+        "events": encoded,
+        "body": convert_stmt(sm, statement),
+    }
 
 
 def _symbolic_concat_target(sm, lhs):

@@ -172,6 +172,8 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
         (true, clock) :: (true, reset) :: timedAccesses body
     | .alwaysFFResetHigh clock reset body =>
         (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysEvent events body =>
+        events.map (fun (name, _) => (true, name)) ++ timedAccesses body
     | .assign _ _ => []
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
@@ -236,13 +238,22 @@ def timedProcOf : SProc → Except String ProcState
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual
            , resetTarget := some reset, resetEdge := .pos }
+  | .alwaysEvent events body =>
+      match events with
+      | [] => .error "timed design rejects an empty event list"
+      | (signal, edge) :: _ =>
+          let trigger := Trigger.atEdge signal edge
+          pure { residual := [body], status := .suspended trigger
+               , arm := some [body]
+               , eventEdges := events
+               , registration := some (.edges events) }
   | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
 
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
 This surface admits `initial`, plain `always`, `always_comb`, `always_latch`,
-`always_ff`, single-driver continuous `assign`, and canonical positive-edge
-processes. Their continuations run through the existing
+`always_ff`, finite scalar event-list `always`, single-driver continuous
+`assign`, and canonical positive-edge processes. Their continuations run through the existing
 scheduler with an explicit region oracle. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
@@ -267,10 +278,14 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
     | .timeout => .error "timed design declaration initialization exhausted fuel"
     | .unsupported msg => .error s!"timed design declaration initialization: {msg}"
   let procs := procs.toArray
+  let readyIndices := (List.range procs.size).filter fun i =>
+    match procs[i]? with
+    | some ps => ps.status == .ready
+    | none => false
   return { signals := signals
          , procs := procs
          , drivers := Array.replicate procs.size (none : Option LVec)
-         , regionQ := fun r => if r == Region.active then List.range procs.size else []
+         , regionQ := fun r => if r == Region.active then readyIndices else []
          , out := {} }
 
 /-- A time-zero approximation cannot enter the timed executor at any fuel. -/

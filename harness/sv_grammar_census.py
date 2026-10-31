@@ -136,7 +136,7 @@ def needs_timed_runner(envelope):
         payload = json.loads(Path(envelope).read_text(encoding="utf-8"))
         modules = payload.get("design", {}).get("modules", [])
         processes = modules[0].get("processes", []) if len(modules) == 1 else []
-        process_kinds = {"Always", "AlwaysImplicit", "AlwaysComb", "AlwaysLatch",
+        process_kinds = {"Always", "AlwaysEvent", "AlwaysImplicit", "AlwaysComb", "AlwaysLatch",
                          "Assign", "AlwaysPosedge", "AlwaysFF"}
 
         def has_timing(node):

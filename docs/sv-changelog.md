@@ -1,3 +1,12 @@
+# [0.1.280] — 2026-10-31
+
+Plain timed `always @(a or b)` event lists now retain every scalar event and
+wake through one multi-event registration in the existing Active/Inactive/NBA
+slot loop. The `always_event_list` witness changes one of two listed signals
+and MATCHes; conditional, non-scalar, and unsupported clock/reset lists remain
+loud. Differential coverage grows **545/531/0/14 → 546/532/0/14** and grammar
+coverage grows **239/210/29 → 239/211/28**.
+
 # [0.1.279] — 2026-10-31
 
 Timed `always_ff @(posedge clk or posedge rst)` now retains an active-high

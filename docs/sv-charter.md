@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Generic multi-signal event lists for timed `always` — 2026-10-31
+
+Plain `always @(a or b)` event lists now retain every listed scalar signal and
+its `any`, `posedge`, or `negedge` polarity. The process sleeps in one
+multi-event registration, wakes when any listed edge is published, and
+re-arms through the existing Active/Inactive/NBA slot loop. The scheduler's
+single loop remains the authority; no polling or event-list-specific loop was
+introduced.
+
+`always_ff` keeps the narrower clock-plus-reset forms. Empty lists, conditional
+events, non-scalar expressions, and unsupported three-event clock/reset shapes
+remain loud. The `always_event_list` witness checks a change on one of two
+signals and MATCHes its pinned transcript. Differential coverage grows
+**545/531/0/14 → 546/532/0/14**; grammar coverage grows
+**239/210/29 → 239/211/28**.
+
 ## Active-high asynchronous reset for timed `always_ff` — 2026-10-31
 
 Timed `always_ff @(posedge clk or posedge rst)` now retains a positive-edge

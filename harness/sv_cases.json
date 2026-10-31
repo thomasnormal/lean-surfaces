@@ -1802,6 +1802,17 @@
       "ticks": 2
     },
     {
+      "name": "always_event_list",
+      "file": "Examples/system-verilog/always_event_list/always_event_list.sv",
+      "module": "top",
+      "oracle": [
+        "EVENT LIST PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "scheduler_sensitivity_double",
       "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
       "module": "top",

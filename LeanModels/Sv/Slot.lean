@@ -218,6 +218,12 @@ def wakeEdges (old new : SvState) : SvM Unit :=
                   (match ps.status with
                    | .suspended _ | .ready => true
                    | _ => false)
+            | some (.edges events) =>
+                !ps.explicitlySuspended &&
+                  events.any (fun (sig, e) => sawEdge old new sig e) &&
+                  (match ps.status with
+                   | .suspended _ | .ready => true
+                   | _ => false)
             | _ => false
         | none => false
     let woken := triggered.filter fun i =>
@@ -256,7 +262,23 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
                        , explicitlySuspended := false }, false)
             else match ps.arm with
               | some body =>
-                  if ps.pendingEdges > 1 then
+                  if !ps.eventEdges.isEmpty then
+                    if ps.pendingEdges > 1 then
+                      ({ ps with residual := body
+                               , status := .ready
+                               , registration := none
+                               , explicitlySuspended := false
+                               , pendingEdges := ps.pendingEdges - 1 }, true)
+                    else
+                      let trigger := match ps.eventEdges with
+                        | (signal, edge) :: _ => Trigger.atEdge signal edge
+                        | [] => Trigger.atEdge "" .any
+                      ({ ps with residual := body
+                               , status := .suspended trigger
+                               , registration := some (.edges ps.eventEdges)
+                               , explicitlySuspended := false
+                               , pendingEdges := 0 }, false)
+                  else if ps.pendingEdges > 1 then
                     ({ ps with residual := body.drop 1
                              , status := .ready
                              , registration := none

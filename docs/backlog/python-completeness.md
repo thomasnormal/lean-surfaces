@@ -6679,3 +6679,22 @@ the proof target and its dependent quickstart theorem.
 
 DECIDED: keep the handler census semantics and repair the frame proof with an
 explicit equivalent-condition bridge.
+
+## 2026-10-31-pycomplete-205 — refresh clock erasure after handler and range drift
+
+The stateful clock-erasure induction now matches the current interpreter after
+the cached function-scope `TypeError` handler census and immediate range-slice
+support. Synthetic `TypeErrorHandler` markers are erased as ordinary no-op
+statements, and the built-in exception branch transports the retained frame's
+static-local and dynamic-shadow checks before deciding whether to enter the
+handler. Existing range-slice state transport remains clock-free.
+
+| Measurement | Result |
+|---|---|
+| Focused managed build | `lake build LeanModels.Python.ClockErase`: passed, 12 jobs |
+| Scope | Proof layer only; interpreter behavior unchanged |
+| Hygiene | `git diff --check` passed |
+
+DECIDED: keep the handler census and range-slice semantics, with clock erasure
+tracking their stateful proof paths; continue with the next measured Python
+gap after dependent targets pass.

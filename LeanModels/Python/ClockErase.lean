@@ -1535,10 +1535,11 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                 exact .timeout
               | unsupported msg => exact .unsupported
         · refine ClockErasedF.ite
-            (c := ((Env.lookup st.locals excName).isSome ||
+            (c := (excName != "TypeError" &&
+              ((Env.lookup st.locals excName).isSome ||
               (lookupG (moduleGlobals m).1 excName).isSome ||
               (Env.lookup st.world.globals excName).isSome ||
-              (findFunction m excName).isSome) = true) ?_ ?_
+              (findFunction m excName).isSome)) = true) ?_ ?_
           · exact .unsupported
           · cases hfc : findClass m excName with
             | none =>
@@ -1577,10 +1578,19 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                       obtain ⟨h2, hy⟩ := hexn s2 e hrun
                       simp only [hy]
                       refine ClockErasedF.ite
-                          (c := (builtinExcCatches excName e ||
-                            userExcCatches m excName e) = true) ?_ ?_
-                      · exact ihSs m s2 handler.toList h2
+                          (c := hasUnboundLocal s2.locals excName = true) ?_ ?_
                       · exact .exn h2 _
+                      · refine ClockErasedF.ite
+                            (c := ((Env.lookup s2.locals excName).isSome ||
+                              (lookupG (moduleGlobals m).1 excName).isSome ||
+                              (Env.lookup s2.world.globals excName).isSome ||
+                              (findFunction m excName).isSome) = true) ?_ ?_
+                        · exact .exn h2 _
+                        · refine ClockErasedF.ite
+                            (c := (builtinExcCatches excName e ||
+                              userExcCatches m excName e) = true) ?_ ?_
+                          · exact ihSs m s2 handler.toList h2
+                          · exact .exn h2 _
                     | timeout =>
                       simp only [hto hrun]
                       exact .timeout
@@ -1753,8 +1763,12 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
       | some id =>
         refine .of_seed (fun tr => by simp [han, Run.seedF]) ?_
         simp [han, FrameState.withClock_self h]
-    · simp [execStmt, hpy]
-      exact .unsupported
+    · by_cases htype : pyKind = "TypeErrorHandler"
+      · subst pyKind
+        simp only [execStmt]
+        exact .ok h _
+      · simp [execStmt, hpy, htype]
+        exact .unsupported
 
 
 theorem ceExecAttrCall_succ (ih : CE fuel) : CEExecAttrCall (fuel + 1) := by

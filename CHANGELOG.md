@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The clock-erasure proof now follows the cached function-scope `TypeError`
+  handler census, including its synthetic no-op marker and retained-frame
+  local/shadow checks, so the complete Python proof target builds again.
+
 - Payload-blind proofs now preserve the TypeError handler census across the
   heap-swapped frame, restoring the full proof and quickstart build after the
   handler-resolution change.

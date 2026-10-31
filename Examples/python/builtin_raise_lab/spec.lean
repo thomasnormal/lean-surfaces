@@ -149,6 +149,11 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.catch_SyntaxWarning(23) = 23
 
+#py_check builtin_raise_lab.raise_SyntaxError() raises
+  (.builtinException "SyntaxError")
+
+#py_check builtin_raise_lab.catch_SyntaxError(23) = 23
+
 #py_check builtin_raise_lab.base_not_exception() = 2
 
 #py_check builtin_raise_lab.wrong_sibling() = 2

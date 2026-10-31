@@ -353,6 +353,17 @@ def catch_SyntaxWarning(value):
         return value
 
 
+def raise_SyntaxError():
+    raise SyntaxError
+
+
+def catch_SyntaxError(value):
+    try:
+        raise SyntaxError
+    except Exception:
+        return value
+
+
 def base_not_exception():
     try:
         try:

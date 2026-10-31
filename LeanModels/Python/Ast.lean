@@ -822,7 +822,7 @@ def admittedBuiltinExc : List String :=
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError", "IOError",
    "StopAsyncIteration", "Warning", "UnicodeError", "UnicodeWarning", "UserWarning",
    "RuntimeWarning", "DeprecationWarning", "FutureWarning", "ImportWarning",
-   "PendingDeprecationWarning", "ResourceWarning", "SyntaxWarning"]
+   "PendingDeprecationWarning", "ResourceWarning", "SyntaxWarning", "SyntaxError"]
 
 /-- Builtin identities that may be raised directly.  `OSError` is admitted as
 an empty class-identity raise even though no in-tier operation produces an
@@ -837,7 +837,7 @@ def admittedBuiltinRaise : List String :=
    "IOError", "ImportError", "ModuleNotFoundError", "StopAsyncIteration", "Warning",
    "UnicodeError", "UnicodeWarning", "UserWarning", "RuntimeWarning", "DeprecationWarning",
    "FutureWarning", "ImportWarning", "PendingDeprecationWarning", "ResourceWarning",
-   "SyntaxWarning"]
+   "SyntaxWarning", "SyntaxError"]
 
 /-- CPython 3.9 exposes `EnvironmentError` and `IOError` as aliases of
   `OSError`. Keep one exception identity in the model so bare raises and

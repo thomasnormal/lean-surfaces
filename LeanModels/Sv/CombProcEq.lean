@@ -1,3 +1,5 @@
+import Lean.Elab.Command
+import Lean.Util.CollectAxioms
 import LeanModels.Sv.CombProcLower
 import LeanModels.Sv.CombEqThm
 
@@ -900,6 +902,41 @@ theorem eq_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 /-- info: 'LeanModels.Sv.CombEq.eq_viewL' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms eq_viewL
+
+open Lean Elab Command in
+/-- `#pin_axioms c₁ c₂ …`: an error unless every named constant depends on at most `propext`,
+`Classical.choice` and `Quot.sound`; silent when it does. -/
+elab "#pin_axioms " ids:ident* : command => do
+  for id in ids do
+    let n ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo id
+    let axs ← collectAxioms n
+    for a in axs do
+      unless a == ``propext || a == ``Classical.choice || a == ``Quot.sound do
+        throwErrorAt id m!"'{n}' depends on the axiom '{a}'"
+
+/-! ## Axiom pins for the lemmas of the second fragment (WP-G S2)
+
+`#pin_axioms` is silent when every named constant depends on at most `propext`, `Classical.choice` and
+`Quot.sound`, and an error naming the constant and the axiom otherwise (`sorryAx` included). It stands
+for one `#print axioms` pin per lemma; the lemmas below are the ones WP-G S2 added to `CombViewThm`,
+`CombEqBase`, `CombEqShape` and `CombProc`. -/
+
+#pin_axioms CombView.binOk_cases CombView.rdsOf?_binary CombView.rdsOf?_unary
+  CombView.rdsOf?_ternary CombView.rdsOf?_reduce CombView.RdOK.unary CombView.RdOK.reduce
+  CombView.RdOK.logical CombView.RdOK.ternary CombView.ie_lnot CombView.ie_bnot_some
+  CombView.ie_bnot_none CombView.ie_bnot_cases CombView.ie_ternary_some CombView.ie_ternary_none
+  CombView.ie_ternary_cases CombView.ie_land CombView.ie_lor CombView.ie_reduce CombView.ie_eq_cases
+  CombView.ie_ne_cases CombView.ie_eq CombView.ie_ne CombView.sw_lnot CombView.sw_bnot
+  CombView.sw_land CombView.sw_lor CombView.sw_eq CombView.sw_ne CombView.sw_reduce
+  CombView.sw_ternary CombView.rm_bnot CombView.rm_lnot CombView.rm_land CombView.rm_lor
+  CombView.rm_eq CombView.rm_ne CombView.rm_reduce CombView.rm_ternary
+
+#pin_axioms rdsOf?_len skT_leaves Sk.low_irrel Sk.selfOk_widthOk rm_leaf skT_shape gate_shape
+  XF.any_one XF.any_congr XF.eqv_one XF.all_congr XF.parity_congr XF.red_congr XF.eqv_congr xf_lnot
+  xfb_lnot xf_red xfb_red xf_logical xfb_land xfb_lor xf_tern xfb_tern xf_eq xf_ne xfb_eq xfb_ne
+  low_xf_gen
+
+#pin_axioms CombProc.fit_idxFree
 
 end CombEq
 end LeanModels.Sv

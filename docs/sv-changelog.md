@@ -1,3 +1,22 @@
+# [0.1.299] — 2026-10-31
+
+Proof tactics: the second `sv_comb` fragment, operators (WP-G step 2, S2 and S2d; register `tl-sv-structure-fragment`).
+`sv_structure` / `sv_equations` (the generic elaborator and the `always_comb` one) now read unary `~` and `!`, the six
+reductions, `&&` and `||`, `==` and `!=` of equal-width operands, and the conditional `c ? a : b`, in assigns and in
+`always_comb` bodies. Six new `Sk` skeleton constructors; the Boolean reading equals `Expr2.xfBits` (a `?:` prints as the
+`if` an `always_comb` already printed, so `c ? a : b` and `if (c) y = a; else y = b;` give the same equation); the
+width rules become `WidthObl` cases through two new structural definitions (`Sk.width`, `Sk.SelfOk`); one combined shape
+theorem (`skT_shape`) now proves the five instance facts for the new constructors, and `gate_shape`, `cond_shape`,
+`skT_selfWidth` and `low_xfWidth`/`low_xfBits` keep their statements as corollaries (the pin of `skT_selfWidth` gains
+`Classical.choice`). Additive signatures: `Sk.low` and `Sk.bit` are unchanged (a dummy operand width and the lemma
+`Sk.low_irrel`), so word-level operators can thread the context width once. The knownness theorem is untouched. The
+flat-netlist fast path (`CombEqPlain`) decides the new constructors. A multi-bit `?:` or `if` condition leaves a
+deliberately false `width_k` goal (write `|v ? a : b`); fill and concat arms and a width conversion of an operand are
+refused with named messages (follow-up). `RdOK.ternary` moved from `CombProcLower` to `CombViewThm`. One `#pin_axioms`
+block (`CombProcEq.lean`) checks the 80 new lemmas against `propext`, `Classical.choice`, `Quot.sound`. Examples:
+`comb_ops` (generic, flat and `always_comb` designs with all operators, a hint pin, eight negative designs pinned
+verbatim, a proof). The 24 goal dumps of the existing designs are byte-identical.
+
 # [0.1.292] — 2026-10-31
 
 Ascending dynamic packed part-select `iff` guards such as `iff en[idx +: 2]`

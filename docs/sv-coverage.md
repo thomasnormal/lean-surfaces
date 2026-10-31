@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 561 | 547 | 0 | 14 | sv-tests-2 declarations |
+| 562 | 548 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -584,6 +584,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_concat` | `Examples/system-verilog/always_ff_event_iff_concat/always_ff_event_iff_concat.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_replication` | `Examples/system-verilog/always_ff_event_iff_replication/always_ff_event_iff_replication.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_vector_not` | `Examples/system-verilog/always_ff_event_iff_vector_not/always_ff_event_iff_vector_not.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_vector_bnot` | `Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -811,7 +812,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **MATCH** | `ok`  |

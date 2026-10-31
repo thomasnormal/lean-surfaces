@@ -5162,6 +5162,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_vector_bnot",
+      "file": "Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF VECTOR BNOT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
     }
   ]
 }

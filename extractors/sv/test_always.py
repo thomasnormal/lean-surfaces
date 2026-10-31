@@ -208,6 +208,14 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual(process["iff"]["kind"], "Concat")
         self.assertEqual(process["iff"]["replication_count"], 2)
 
+    def test_always_ff_vector_bitwise_not_iff_is_retained(self):
+        design = lower(
+            "module top; logic clk, q; logic [1:0] en; "
+            "always_ff @(posedge clk iff ~en[1:0]) q <= 1'b0; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["iff"]["kind"], "Unary")
+        self.assertEqual(process["iff"]["width"], 2)
+
     def test_logical_iff_guard_is_retained(self):
         design = lower(
             "module top; logic clk, en, mode, seen; "

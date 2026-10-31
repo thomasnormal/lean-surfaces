@@ -24827,8 +24827,10 @@ def _iff_guard_allowed(expr):
                 and value.get("kind") == "Ident"
                 and index.get("kind") in ("Ident", "Literal"))
     if kind == "Unary":
-        return (expr.get("width") == 1
-                and expr.get("op") in ("!", "~")
+        width = expr.get("width")
+        op = expr.get("op")
+        return ((width == 1 or (op == "~" and isinstance(width, int) and width > 1))
+                and op in ("!", "~")
                 and _iff_guard_allowed(expr.get("operand", {})))
     if kind == "Binary":
         return (expr.get("width") == 1

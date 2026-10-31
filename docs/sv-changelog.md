@@ -3444,3 +3444,10 @@ Logical negation of admitted vector `iff` guards such as `iff !en[1:0]` now
 uses the existing vector truthiness path. The `always_ff_event_iff_vector_not`
 witness covers nonzero and zero vectors. Differential coverage grows
 **560/546/0/14 → 561/547/0/14**; grammar coverage remains **240/212/28**.
+# [0.1.297] — 2026-10-31
+
+Bitwise inversion of admitted vector `iff` guards such as `iff ~en[1:0]` now
+uses the existing `SelectRead` and unary evaluator. The
+`always_ff_event_iff_vector_bnot` witness covers nonzero and zero vectors.
+Differential coverage grows **561/547/0/14 → 562/548/0/14**; grammar coverage
+remains **240/212/28**.

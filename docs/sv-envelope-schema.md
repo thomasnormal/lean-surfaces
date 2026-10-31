@@ -260,8 +260,8 @@ other sensitivity stays unsupported in the M0 cycle path. The legacy
 scheduler envelope can instead carry `Initial` or plain `Always` processes;
 the latter retains its complete source body, including admitted delay, bare
 signal and negative-edge controls. Unsupported body nodes remain visible.
-`AlwaysEvent` is the timed-only encoding for a plain `always @(a or b)`-style
-list of at least two scalar identifiers. Its retained process wakes when any
+`AlwaysEvent` is the timed-only encoding for a plain `always @(a)` or
+`always @(a or b)`-style list of one or more scalar identifiers. Its retained process wakes when any
 listed edge fires through the same Active/Inactive/NBA loop. Other event-list
 forms, `iff`, level waits and `always_latch` remain loud; see [the
 implicit-event boundary](sv-implicit-events.md) for the inferred-read-set

@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 546 | 532 | 0 | 14 | sv-tests-2 declarations |
+| 547 | 533 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -222,6 +222,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_zero_delay_inactive` | `Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_loop` | `Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_zero_delay_convergent` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_event_bare` | `Examples/system-verilog/always_event_bare/always_event_bare.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_event_list` | `Examples/system-verilog/always_event_list/always_event_list.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |

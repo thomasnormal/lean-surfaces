@@ -1802,6 +1802,17 @@
       "ticks": 2
     },
     {
+      "name": "always_event_bare",
+      "file": "Examples/system-verilog/always_event_bare/always_event_bare.sv",
+      "module": "top",
+      "oracle": [
+        "BARE EVENT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "always_event_list",
       "file": "Examples/system-verilog/always_event_list/always_event_list.sv",
       "module": "top",

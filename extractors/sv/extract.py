@@ -24654,6 +24654,18 @@ def convert_procedural_block(sm, m):
         if event_process is not None:
             return event_process
 
+    # A bare signal control, `always @(trigger)`, is the one-entry form of
+    # the retained event-list process.  Keep the clocked `always_ff` and
+    # positive/negedge paths below distinct; only plain `always` gets this
+    # level/any-edge admission.
+    if (_SYM is None and pk == ProceduralBlockKind.Always
+            and type(body).__name__ == "TimedStatement"
+            and type(body.timing).__name__ == "SignalEventControl"
+            and body.timing.edge == EdgeKind.None_):
+        event_process = _single_event_process(sm, m, body, body.timing)
+        if event_process is not None:
+            return event_process
+
     if pk == ProceduralBlockKind.AlwaysLatch:
         return {
             "kind": "AlwaysLatch",
@@ -24794,6 +24806,27 @@ def _event_list_process(sm, m, body, timing, style):
         "kind": "AlwaysEvent",
         "span": sym_span(sm, m),
         "events": encoded,
+        "body": convert_stmt(sm, statement),
+    }
+
+
+def _single_event_process(sm, m, body, timing):
+    """Admit a plain `always @(signal)` any-edge control."""
+    if getattr(timing, "iffCondition", None) is not None:
+        return None
+    signal = convert_expr(sm, timing.expr)
+    if signal.get("kind") != "Ident" or signal.get("width") != 1:
+        return None
+    statement = body.stmt
+    if type(statement).__name__ == "EmptyStatement":
+        return None
+    if (type(statement).__name__ == "BlockStatement"
+            and len(getattr(getattr(statement, "body", None), "list", ())) == 0):
+        return None
+    return {
+        "kind": "AlwaysEvent",
+        "span": sym_span(sm, m),
+        "events": [{"signal": signal["name"], "edge": "any"}],
         "body": convert_stmt(sm, statement),
     }
 

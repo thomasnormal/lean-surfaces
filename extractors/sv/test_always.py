@@ -47,6 +47,13 @@ class PlainAlways(unittest.TestCase):
             {"signal": "b", "edge": "any"},
         ])
 
+    def test_plain_bare_signal_event_is_retained(self):
+        design = lower(
+            "module top; logic trigger, seen; always @(trigger) seen = 1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "AlwaysEvent")
+        self.assertEqual(process["events"], [{"signal": "trigger", "edge": "any"}])
+
     def test_always_ff_is_not_reinterpreted_as_general_repetition(self):
         design = lower("module top; logic q; always_ff begin #2 q=1; end endmodule", require_valid=False)
         self.assertFalse(any(n.get("kind") == "Always" for n in nodes(design)))

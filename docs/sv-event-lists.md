@@ -8,8 +8,8 @@ process continuation.
 
 ## The retained event-list slice
 
-The timed envelope now admits a plain `always` list with at least two scalar
-identifier events. Each entry retains its `any`, `posedge`, or `negedge`
+The timed envelope now admits a plain `always` list with one or more scalar
+identifier events, including the bare `always @(signal)` spelling. Each entry retains its `any`, `posedge`, or `negedge`
 polarity, and the process stores the whole list while suspended. A publication
 wakes it when any listed edge fires; completion re-arms the same body through
 the existing Active/Inactive/NBA loop. This is one multi-event registration,

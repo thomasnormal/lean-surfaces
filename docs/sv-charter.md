@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Bare-signal event controls for timed `always` — 2026-10-31
+
+Plain `always @(trigger)` now uses the same retained event registration as a
+multi-signal list, with one `any`-edge entry. The process sleeps until the
+signal changes, runs its body, and re-arms through the existing
+Active/Inactive/NBA slot loop. `always_ff @(trigger)` and conditional `iff`
+controls remain loud because their clocked or guarded contracts are separate.
+
+The `always_event_bare` witness changes `trigger` after a delay and MATCHes its
+pinned transcript. Differential coverage grows **546/532/0/14 → 547/533/0/14**;
+grammar coverage remains **239/211/28**.
+
 ## Generic multi-signal event lists for timed `always` — 2026-10-31
 
 Plain `always @(a or b)` event lists now retain every listed scalar signal and

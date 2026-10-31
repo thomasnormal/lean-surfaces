@@ -1,3 +1,11 @@
+# [0.1.281] — 2026-10-31
+
+Plain timed `always @(trigger)` now retains a one-entry any-edge registration
+through the same Active/Inactive/NBA slot loop. The `always_event_bare`
+witness changes the signal after a delay and MATCHes; clocked `always_ff`
+bare controls and `iff` forms remain loud. Differential coverage grows
+**546/532/0/14 → 547/533/0/14**; grammar coverage remains **239/211/28**.
+
 # [0.1.280] — 2026-10-31
 
 Plain timed `always @(a or b)` event lists now retain every scalar event and

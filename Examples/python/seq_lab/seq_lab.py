@@ -3,7 +3,7 @@
 Tuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),
 and range as an immediate value (materialize-per-use). Range equality now
 compares sequences without materialization; range values cross the public
-boundary, while list slices remain pinned by a refusal probe. String repetition now
+boundary, and range slices compose the source progression without materializing; String repetition now
 has its own acceptance tier.
 """
 
@@ -429,3 +429,19 @@ def bitwise_all(a, b):
 
 def matmul_type_error(a, b):
     return a @ b
+
+
+def range_slice(n):
+    return range(n)[1:-1:2]
+
+
+def range_slice_reverse():
+    return range(10, 0, -2)[1:4:2]
+
+
+def range_slice_empty():
+    return range(5)[100:100]
+
+
+def range_slice_zero_step():
+    return range(5)[::0]

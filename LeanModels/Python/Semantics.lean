@@ -3820,6 +3820,50 @@ def seqSliceList (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
   seqSliceValues xs lv uv sv >>= fun values =>
     .ok (.listV values.toArray)
 
+/-! ### Range slices
+
+`range` slicing is the one sequence slice that returns another immutable
+sequence object rather than a materialized container.  Normalize the slice
+against the source range's logical length, then compose the two affine
+progressions.  The resulting stop preserves the source slice boundary, so
+the visible `range` representation stays CPython-exact even for reverse
+slices and empty results. -/
+
+def rangeSlice (lo hi step : Int) (lv uv sv : RVal) : Res RVal :=
+  match asSliceIdx sv with
+  | Option.none =>
+      .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+  | some st =>
+    let sliceStep := st.getD 1
+    if sliceStep == 0 then
+      .exn (.valueError "slice step cannot be zero")
+    else
+      match asSliceIdx lv with
+      | Option.none =>
+          .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+      | some l =>
+        match asSliceIdx uv with
+        | Option.none =>
+            .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+        | some u =>
+          let length : Int := rangeLen lo hi step
+          let positive := 0 < sliceStep
+          let start := match l with
+            | some i => sliceAdj i length positive
+            | Option.none => if positive then 0 else length - 1
+          let stop := match u with
+            | some i => sliceAdj i length positive
+            | Option.none => if positive then length else -1
+          let count := sliceCount start stop sliceStep
+          let newStart := lo + step * start
+          let newStep := step * sliceStep
+          -- CPython preserves the source slice's stopping boundary when it
+          -- constructs the resulting range.  Using the selected count here
+          -- would describe the same values but produce a different visible
+          -- `range(..., stop, ...)` for reverse slices.
+          let newStop := lo + step * stop
+          .ok (.rangeV (.int newStart) (.int newStop) (.int newStep))
+
 def bytesSlice (xs : Array UInt8) (lv uv sv : RVal) : Res RVal :=
   let values := xs.toList.map (fun byte => .int byte.toNat)
   seqSliceValues values.toArray lv uv sv >>= fun selected =>
@@ -3849,8 +3893,7 @@ def sliceVal (v lv uv sv : RVal) : Res RVal :=
   -- survive slicing).
   | .tuple xs => seqSlice xs lv uv sv
   | .ntuple _ _ xs => seqSlice xs lv uv sv
-  | .rangeV .. =>
-    .unsupported "slicing a range is outside the tier (CPython yields a range; docs/memory-model.md §module-init execution)"
+  | .rangeV lo hi step => rangeSlice lo.toInt hi.toInt step.toInt lv uv sv
   | v => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
 
 /-- Heap-aware slice dispatch. Heap-list slices allocate a fresh list object;

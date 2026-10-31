@@ -9,8 +9,9 @@ str start is CPython's special-cased `TypeError`), `tuple(it)`, and
 `range` as the immediate `RVal.rangeV` — materialize-per-use, which is
 what makes RE-ITERATION exact (`range_reiter`). Range equality compares the
 integer sequence without materializing it. Range values also cross the public
-boundary as `Val.range`; heap-list slices allocate a fresh list and cross the
-boundary as a `Val.list` snapshot.
+boundary as `Val.range`; range slices compose the source progression, while
+heap-list slices allocate a fresh list and cross the boundary as a `Val.list`
+snapshot.
 -/
 
 open LeanModels LeanModels.Python
@@ -89,6 +90,14 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_index_oob(3) raises (.indexErrorRange)
 #py_check seq_lab.range_index_type() raises
   (.typeError "range indices must be integers or slices, not str")
+#py_check seq_lab.range_slice(8) =
+  (Val.range (.int 1) (.int 7) (.int 2))
+#py_check seq_lab.range_slice_reverse() =
+  (Val.range (.int 8) (.int 2) (.int (-4)))
+#py_check seq_lab.range_slice_empty() =
+  (Val.range (.int 5) (.int 5) (.int 1))
+#py_check seq_lab.range_slice_zero_step() raises
+  (.valueError "slice step cannot be zero")
 #py_check seq_lab.range_in(5) = true
 #py_check seq_lab.range_in_step() = true
 #py_check seq_lab.range_in_float() = true

@@ -6644,3 +6644,21 @@ runs through the ordinary pure worker outside that theorem's assumptions.
 DECIDED: admit heap-backed list repetition on the proof surface while keeping
 allocation and mutation outside `worldInv`; retain list concatenation and other
 unmodeled heap operations as loud boundaries.
+
+## 2026-10-30-pycomplete-203 — admit range slices
+
+Range subscripting now accepts a `slice` and returns the exact immutable range
+that CPython constructs. The implementation normalizes omitted and negative
+bounds against the source range length, composes the source and slice steps,
+and preserves the source slice boundary for the resulting stop. It preserves
+the shared slice validation messages for non-index bounds and zero steps and
+does not materialize the range.
+
+| Measurement | Result |
+|---|---|
+| Differential cases | Four new `seq_lab` rows: forward, reverse-step, empty, and zero-step error |
+| Proof surface | Four new `#py_check` guards for `Val.range` results and the faithful `ValueError` |
+| Hygiene | extractor envelope regenerated with pinned CPython 3.9 |
+
+DECIDED: admit immediate range slices; keep range-valued formatting and
+attribute access loud.

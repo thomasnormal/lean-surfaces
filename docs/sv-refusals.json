@@ -13,7 +13,7 @@
  "principles": [
   {
    "id": "P-SAME-PROGRAM",
-   "text": "Proof and score read ONE program: a construct the two frontends (slang for the proof, Yosys for the score) read differently, that slang rejects, or that Yosys cannot read, cannot be admitted."
+   "text": "Proof and score read ONE program: a construct the two frontends (slang for the proof, Yosys for the score) read differently, that slang rejects (Thomas, 2026-10-31: \"a good reason to reject\"), or that Yosys cannot read, cannot be admitted."
   },
   {
    "id": "P-NO-TOOL-DIRECTIVES",
@@ -25,19 +25,23 @@
   },
   {
    "id": "P-SYNTHESIZABLE",
-   "text": "Not synthesizable hardware: classes, dynamic memory, strings, reals, file I/O, fork/join, program blocks, DPI; the scored artifact is a Yosys gate netlist."
+   "text": "Not synthesizable hardware, for a design task whose scored artifact is a gate netlist from Yosys `read_verilog -sv`: class declarations, dynamic memory (queues, dynamic and associative arrays), `string` variables and parameters, `real` variables, fork/join, program blocks. The frontend does not read them (measured by `harness/sv/tools_split_audit/yosys_frontend.py`; a constant `real` in a parameter expression IS read), so they are out of scope for now; revisit if a different synthesis frontend is adopted (Thomas, 2026-10-31, about classes: a future mox-synth frontend may change that). Host access (file I/O, system calls, DPI) is refused by its own policy, not by this principle."
   },
   {
    "id": "P-NO-SILENT-PICK",
-   "text": "The tools split (Icarus, Xcelium, Verilator, Yosys, slang give different values for the same text) and no consistent reading exists: refuse loudly, never decide for one side."
+   "text": "The PIPELINE tools split (slang / ls-sv for the proof, Yosys for the score, Verilator and Xcelium as simulators give different values for the same text) and no consistent reading exists: refuse loudly, never decide for one side. A split in which only Icarus differs is not a refusal but a declared departure (Thomas, 2026-10-31)."
   },
   {
    "id": "P-DETERMINISM",
-   "text": "Nondeterministic or scheduling-dependent results: a combinational result must be a function of the inputs, whatever the schedule."
+   "text": "A combinational result must be a function of the inputs, whatever the schedule: randomness is refused, and so is a design with no completed run (it never satisfies `Terminates2`). Where the LRM itself leaves the schedule open (IEEE 4.7) Thomas's ruling of 2026-10-31 is that the construct is to be modelled and the golfer proves the output the same in every legal run, not that it is refused for that reason. A simulator-versus-synthesizer mismatch (self-reading `always_comb`: the LRM's answer is deterministic, the synthesizers compute another) is not that case."
   },
   {
    "id": "P-TRUSTED-BASE",
    "text": "(added by the register authors, to confirm) The evidence a verdict rests on (checker, trusted statement, generated Goal, axiom set, toolchain) must not be changeable by the submission; a proof is accepted by the kernel from the allowed axioms alone."
+  },
+  {
+   "id": "P-NO-HOST-ACCESS",
+   "text": "(added by the register authors, to confirm: Thomas's 2026-10-31 ruling names the READING of files; the rest of the family is their extension) The SystemVerilog text of a submission cannot read or write host files, run programs, read the environment or call native code: the checker runs untrusted text on the organizer's machine (Yosys's read_verilog itself opens the file of a $readmemh). The Lean file of a submission is NOT covered (the svGolf limit \"There is no sandbox\"; known hole \"Host access from the Lean file of a submission\")."
   }
  ],
  "policies": [
@@ -47,8 +51,8 @@
    "decided_by_thomas": true
   },
   {
-   "policy": "Refuse where the tools split: where Icarus, Xcelium, Verilator, Yosys and slang differ on the same text, or the model would follow one oracle against explicit LRM text, refuse LOUDLY. Refusal-only rounds: a fix may add a loud refusal, revert to HEAD, or correct a value only where Icarus, the Yosys netlist and slang agree; nothing becomes newly admitted. Over-refusal is accepted over a silent wrong value.",
-   "source": "docs/sv-xcelium-audit.md section 6 ('The policy (Thomas)'); memory xcelium-access; svgolf/PLAN.md Round 5",
+   "policy": "Refuse where the tools split: where Icarus, Xcelium, Verilator, Yosys and slang differ on the same text, or the model would follow one oracle against explicit LRM text, refuse LOUDLY. Refusal-only rounds: a fix may add a loud refusal, revert to HEAD, or correct a value only where Icarus, the Yosys netlist and slang agree; nothing becomes newly admitted. Over-refusal is accepted over a silent wrong value. AMENDED 2026-10-31 (Thomas): the split must be among the PIPELINE tools (slang / ls-sv, Yosys, Verilator, Xcelium); a split in which only Icarus differs is a declared departure, not a refusal.",
+   "source": "docs/sv-xcelium-audit.md section 6 ('The policy (Thomas)'); memory xcelium-access; svgolf/PLAN.md Round 5; Thomas 2026-10-31 (rulings on the register's never rows)",
    "decided_by_thomas": true
   },
   {
@@ -58,7 +62,7 @@
   },
   {
    "policy": "Icarus-only splits (Icarus departs from the LRM while Xcelium, Yosys and the model agree) are DECLARED departures (hash-bound `oracle_disagreement` rows in harness/sv/cases2.json), not refusals; Icarus is an optional 4-state witness.",
-   "source": "docs/sv-oracle-disagreements.md; docs/sv-xcelium-audit.md 6.1 item 9 (relayed by the lead as recorded; no verbatim Thomas sentence found in the docs)",
+   "source": "docs/sv-oracle-disagreements.md; docs/sv-xcelium-audit.md 6.1 item 9; CONFIRMED by Thomas 2026-10-31 (\"if Verilator, Yosys and Xcelium (and slang) agree, that's all we need\")",
    "decided_by_thomas": true
   },
   {
@@ -105,6 +109,51 @@
    "policy": "A refusal on either side of a cross-check is never agreement; stages fail closed (unconfirmed / refused / frontendRejects verdicts; postsynth rejects incomplete runs or x/z in ls-sv outputs).",
    "source": "docs/sv-charter.md CX 'Verdicts'; svgolf/README.md postsynth",
    "decided_by_thomas": true
+  },
+  {
+   "policy": "Classes are out of scope for design tasks whose scored artifact is a Yosys gate netlist: the frontend `read_verilog -sv` has no classes. Ignore them for now; a different synthesis frontend (mox-synth) may change that later. ls-sv keeps classes as `later`.",
+   "source": "Thomas 2026-10-31 (rulings on the register's never rows); the wider list is principle P-SYNTHESIZABLE (not decided)",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "If slang reports a program illegal, that is a good reason to reject it. LRM = the IEEE 1800 Language Reference Manual; the register cites the clause where there is one.",
+   "source": "Thomas 2026-10-31 (rulings on the register's never rows); docs/sv-tools-split-audit.md",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "PROPOSAL: \"slang reports a program illegal\" means the full slang driver, parse, elaboration AND ANALYSIS errors (`multiple-always-assigns`, `mixed-var-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\"). Today the extractor, `fourstate` and `banlist` read `Compilation.getAllDiagnostics()`, which omits the analysis errors, so the rule holds for those shapes only through Yosys `check` (fourstate) and the Lean driver guards (and, for `initial` plus `always_comb`, only because the Lean loader has no `Initial` process kind yet; see `holes`).",
+   "source": "docs/sv-tools-split-audit.md section 5 (findings 2 and 6); adversarial review 2026-10-31",
+   "decided_by_thomas": false
+  },
+  {
+   "policy": "Tools-split refusals need a split among the pipeline tools (slang / ls-sv, Yosys, Verilator, Xcelium). Where those agree and only Icarus (or another non-pipeline tool) differs, the construct is admissible and Icarus is a declared departure.",
+   "source": "Thomas 2026-10-31; docs/sv-tools-split-audit.md",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "LRM-legal nondeterminism is modelled in Lean: a golfer who uses a nondeterministic-but-legal construct proves that the circuit's final output is deterministic (the same in every legal run), unless the task does not require it.",
+   "source": "Thomas 2026-10-31 (rulings on the register's never rows)",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "PROPOSAL: which runs the model covers is open (svgolf/design/nondeterminism/NOTE.md, questions 1 and 2). Self-reading `always_comb` is NOT LRM nondeterminism (IEEE 9.2.2.2.1(b) makes the simulation answer deterministic and the synthesizers compute another), so the ruling does not by itself move that row; the first construct a run-set model would admit has not been identified. Settling combinational loops are not an ls-sv refusal and stay refused by svGolf's fourstate stage.",
+   "source": "adversarial review 2026-10-31 of package C; svgolf/design/nondeterminism/NOTE.md",
+   "decided_by_thomas": false
+  },
+  {
+   "policy": "Mathlib is allowed in svGolf submissions: advanced arithmetic proofs often need it.",
+   "source": "Thomas 2026-10-31; enforced by the import allowlist (`IMPORT_ALLOW`, `PACKAGE_ROOTS` in svgolf/check.py; row `sg-imports`)",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "File reading is disallowed in the SystemVerilog text of a submission: no construct that makes the checker read a host file ($readmemh, $readmemb, and the file-reading tasks of LRM 21.3 such as $fopen for reading, $fscanf, $fgets, $fread). It is dangerous because Yosys's read_verilog opens the file of a $readmemh itself while it reads the design, on the organizer's machine, so a host file (a salt, an oracle) could be pulled into the netlist and leaked through the score.",
+   "source": "Thomas 2026-10-31 (rulings on the register's never rows: 'Stuff like reading files sounds dangerous. Maybe it's best to disallow those. Unless there are some very good reasons to keep them'; no good reason is known); svgolf/PLAN2.md",
+   "decided_by_thomas": true
+  },
+  {
+   "policy": "(proposed, to confirm) The rest of the host-access family follows the same principle in the SystemVerilog text: no construct that WRITES a host file ($writememh, $writememb, $fdisplay*, $fwrite*, ...), runs a program ($system), reads the environment or command line ($test$plusargs, $value$plusargs, $getenv), writes a dump, coverage, SDF or Annex D file, or calls native code (DPI). Recorded as svGolf never rows (the rows beyond the memory-file and file I/O ones carry proposed = true). The Lean file of a submission is not covered (the svGolf limit \"There is no sandbox\"; known hole \"Host access from the Lean file of a submission\").",
+   "source": "the register authors' extension of Thomas's 2026-10-31 file-reading ruling; svgolf/PLAN2.md; awaiting his confirmation",
+   "decided_by_thomas": false
   }
  ],
  "groups": [
@@ -328,6 +377,18 @@
    "title": "window-level symbolic state and termination rank for always_comb lowering (partial overlap, concat/dynamic targets, latches)",
    "source": "docs/sv-charter.md 'always_comb in the comb settle theorem' (Open)",
    "decided_by_thomas": false
+  },
+  {
+   "id": "NONDET",
+   "title": "run-set semantics for LRM-legal nondeterminism: the golfer proves the output the same in every legal run (svgolf/design/nondeterminism/NOTE.md; which runs, and which rows it would admit, are open questions)",
+   "source": "direction from Thomas 2026-10-31 (model nondeterminism in Lean); scope and rows are a proposal of svgolf/design/nondeterminism/NOTE.md",
+   "decided_by_thomas": false
+  },
+  {
+   "id": "ICARUS",
+   "title": "Icarus-only splits become declared departures (hash-bound oracle_disagreement rows) instead of refusals",
+   "source": "Thomas 2026-10-31; docs/sv-oracle-disagreements.md; docs/sv-tools-split-audit.md",
+   "decided_by_thomas": true
   }
  ],
  "docs": [
@@ -424,6 +485,16 @@
    "name": "x/z digits inside a casez/casex item EXPRESSION (svGolf gate)",
    "text": "x/z digits are exempt anywhere inside a casez/casex item, not only as the item's own literal; `casez (a[1:0]) (a[0] == 1'bz) ? 2'b00 : 2'b01: ...` passes the gate (svgolf/score/tests/gate/casez_expr.sv). Whether ls-sv and Yosys then differ was not measured.",
    "source": "svgolf/score/srcgate.py (xz_literal_findings); measured by the register authors"
+  },
+  {
+   "name": "slang analysis-pass errors are not read by the extractor, fourstate or banlist",
+   "text": "`multiple-always-assigns`, `mixed-var-assigns`, \"cannot assign to input port\" and \"'always' procedure does not advance time\" are reported by the slang driver's analysis pass; `Compilation.getAllDiagnostics()`, which the extractor, `fourstate.py` and `banlist.py` use, does not contain them (it returns [] for `assign a = b` on an input, two `always_comb` writers, `always y = a;` and mixed variable assigns). The rule \"a program slang rejects is rejected\" therefore holds only through Yosys `check` and the Lean driver guards. Measured (audit case init_comb_proc): `initial y = 0; always_comb y = a;` is a slang error (multiple-always-assigns) and an Xcelium error (MULAXX) that the extractor (it emits an `Initial` node) and fourstate (Yosys accepts the netlist) both admit; run2 refuses it only because the envelope loader has no `Initial` process kind (`envelope: module: Initial: unknown process kind`). It becomes a real gap the day `initial` is admitted (R1 inch 4a), unless `driversOk` counts `initial` as another process by then.",
+   "source": "docs/sv-tools-split-audit.md section 5; adversarial review 2026-10-31"
+  },
+  {
+   "name": "Host access from the Lean file of a submission (svGolf)",
+   "text": "The source gate's host-access rule (`P-NO-HOST-ACCESS`) covers the SystemVerilog text only. A Solution.lean compiles with the checker's privileges and `import Lean` is allowed: a reference solution with an added `#eval IO.FS.readFile \"/etc/hosts\"` and an `IO.FS.writeFile` was ACCEPTED (stage done), read the file, wrote another one, and what the `#eval` printed came back in `stages.solution.messages`. Whether to gate the Lean file (`#eval`, `IO`, `run_cmd`, `elab`, `initialize`, `unsafe`) is an open question for Thomas; until then the integrity snapshot is a tripwire and the advice is a throwaway container.",
+   "source": "svgolf/README.md Checker v0 limits (No sandbox); measured by the register authors"
   }
  ],
  "schema": [
@@ -1135,9 +1206,9 @@
     "extractor"
    ],
    "trigger": "H: always_comb begin y = zzz; end (undefined name; also `a == b;` as a statement)",
-   "why": "slang marks a statement it rejected as bad; the extractor continues after frontend errors, so the bad node stays loud.",
+   "why": "slang reports an error (undeclared identifier; an expression is not a statement) and so do Icarus, Verilator and Xcelium; Yosys accepts `y = zzz` as an undriven implicit wire, so only the slang error stands between the design and a score (IEEE 6.10: implicit nets exist only for port connections and the left side of continuous assignments).",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
@@ -1150,8 +1221,10 @@
      "fn": "_convert_stmt"
     }
    ],
-   "evidence": "docs/sv-invalid-statements.md; extract.py process_symbolic (nerr warning)",
-   "verified_by_run": true
+   "evidence": "docs/sv-tools-split-audit.md (a_st_invalid, a_st_invalid2); docs/sv-invalid-statements.md; svGolf `fourstate` rejects both",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)",
+   "notes": "Class (a). The extractor keeps the node loud per node (it continues past slang errors); svGolf's fourstate stage already rejects every slang elaboration error for every task."
   },
   {
    "id": "st-immediate-assert",
@@ -1588,10 +1661,10 @@
     "extractor"
    ],
    "trigger": "H: always y = a;  /  always_ff y <= a;",
-   "why": "A zero-delay `always` without event control never yields: a non-terminating process.",
+   "why": "IEEE 9.2.2.1: an always procedure with no control for simulation time creates a simulation deadlock, and 9.2.2.4: always_ff contains one and only one event control. slang reports both as errors, Icarus refuses both, Xcelium hangs on `always y = a;` at run time and rejects `always_ff y <= a;`; Yosys and Verilator silently read `always y = a;` as a wire.",
    "category": "never",
    "proposed": true,
-   "principle": "P-DETERMINISM",
+   "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
      "ProceduralBlockSymbol:NoEventControl"
@@ -1604,7 +1677,8 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "Module-level `assert property` / `cover property` are reported under the same tag; see ProceduralBlockSymbol:NoEventControl (concurrent assertion)."
+   "notes": "Module-level `assert property` / `cover property` are reported under the same tag; see ProceduralBlockSymbol:NoEventControl (concurrent assertion). Class (a); the principle was P-DETERMINISM (a non-terminating process), but the decisive fact is that slang rejects it while Yosys scores a different program. Still `proposed`.",
+   "evidence": "docs/sv-tools-split-audit.md (alw_nocontrol, alw_nocontrol_ff)"
   },
   {
    "id": "pr-concurrent-assert",
@@ -1703,7 +1777,7 @@
     "extractor"
    ],
    "trigger": "logic [7:0] q = 8'd1; always_comb q = a;  (also always_ff writing q)",
-   "why": "The initializer counts as a procedural write (LRM 6.5, 10.5): Xcelium rejects the design (MULAXX) where Icarus, Yosys and slang run it. The common FPGA idiom `logic q = 0; always_ff ... q <= ...` is refused too (a recorded over-refusal).",
+   "why": "IEEE 6.5 counts a declared variable initialization as a procedural assignment for the continuous-versus-procedural mixture rule only; whether an initializer is a process that 9.2.2.2 forbids next to an always_comb / always_ff writer is not stated (docs/sv-oracle-disagreements.md item 5). Xcelium 24.03 rejects the design (MULAXX) on every variant measured; Verilator warns MULTIDRIVEN citing 9.2.2.2 on the whole-variable form (init_whole) and PROCASSINIT on the procedural write over an initializer; slang, Yosys and Icarus accept with identical values. The common FPGA idiom `logic q = 0; always_ff ... q <= ...` is refused too (a recorded over-refusal).",
    "category": "never",
    "proposed": false,
    "principle": "P-NO-SILENT-PICK",
@@ -1720,9 +1794,9 @@
      "fn": "convert_procedural_block"
     }
    ],
-   "evidence": "docs/sv-envelope-schema.md Declaration initializers; docs/sv-oracle-disagreements.md item 5",
+   "evidence": "docs/sv-envelope-schema.md Declaration initializers; docs/sv-oracle-disagreements.md item 5; docs/sv-tools-split-audit.md (vg_initc, vg_initf, vg_initq, vh_initcomb, pr_init_fpga)",
    "verified_by_run": true,
-   "notes": "Stands while the tools split; narrows only if Xcelium changes."
+   "notes": "AUDIT 2026-10-31, class (c): re-measured on 7 designs. slang, Yosys and Icarus accept with identical values; Verilator accepts the cited fixtures with identical values (a lint WARNING, MULTIDRIVEN, on the whole-variable form); Xcelium 24.03 alone REJECTS (*E,MULAXX) on all of them, the FPGA idiom `logic r = 0; always_ff r <= d;` included, and accepts the same shapes with a plain `always @*` writer. NOT an Icarus-only split. The LRM is silent on whether an initializer is a writing process. Unsure whether one reference-simulator lint (plus a Verilator warning) should block the construct: left `never` for Thomas (NOTE question 5). If the answer is no this row, with its recorded FPGA over-refusal, becomes `later`."
   },
   {
    "id": "ex-inside",
@@ -2087,7 +2161,7 @@
    ],
    "evidence": "docs/sv-call-expressions.md (M0 tier)",
    "verified_by_run": true,
-   "notes": "$urandom / $random are P-DETERMINISM, $fopen P-SYNTHESIZABLE, $time P-NO-TIME.",
+   "notes": "$urandom / $random are P-DETERMINISM, $fopen is host access (svGolf: P-NO-HOST-ACCESS, row sg-host-fileio; the host-access policy of 2026-10-31), $time P-NO-TIME.",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
@@ -2208,9 +2282,9 @@
     "extractor"
    ],
    "trigger": "H: assign y = zzz;  /  child output connected to y[k] with a run-time k",
-   "why": "Frontend-rejected expression kept loud.",
+   "why": "slang reports an error (undeclared identifier in an expression) and so do Icarus, Verilator and Xcelium; Yosys accepts `assign y = zzz;` as an undriven implicit wire (IEEE 6.10: an undeclared name on the right side is an error).",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
@@ -2233,9 +2307,10 @@
      "fn": "_sym_port_conn"
     }
    ],
-   "evidence": "docs/sv-invalid-continuous-assignments.md",
+   "evidence": "docs/sv-tools-split-audit.md (a_ex_invalid); docs/sv-invalid-continuous-assignments.md; svGolf `fourstate` rejects it",
    "verified_by_run": true,
-   "notes": "The bare InvalidExpression tag itself was not isolated by a run."
+   "notes": "Class (a). The bare InvalidExpression tag itself was not isolated by a run before the audit; `ContinuousAssignSymbol:InvalidExpression` was (a_ex_invalid).",
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)"
   },
   {
    "id": "ex-op-invalid-compilation",
@@ -2245,9 +2320,9 @@
     "extractor"
    ],
    "trigger": "H: assign y = a / b;  plus any unrelated frontend error, e.g. assign q = zzz2;",
-   "why": "The extractor continues after slang errors with a warning; the lowerings whose divergence from slang's recovery is unverified stay loud.",
+   "why": "slang reports an error anywhere in the compilation (here an unrelated undeclared name) and so do Icarus, Verilator and Xcelium; Yosys accepts and synthesizes the division. A program slang rejects is rejected, so the lowerings' divergence from slang's error recovery never matters: fix the source.",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
@@ -2272,9 +2347,10 @@
      "fn": "_sym_convert_definition"
     }
    ],
-   "evidence": "docs/sv-envelope-schema.md; docs/sv-division.md",
+   "evidence": "docs/sv-tools-split-audit.md (a_ex_op_invalid); docs/sv-envelope-schema.md; docs/sv-division.md; svGolf `fourstate` rejects it",
    "verified_by_run": true,
-   "notes": "Fix the source; a program slang rejects is not one program for proof and score."
+   "notes": "Class (a). The extractor stays per-node loud; the row is a documentation collapse into the front-door rule, not an extractor change.",
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)"
   },
   {
    "id": "cv-width",
@@ -2565,7 +2641,7 @@
     "extractor"
    ],
    "trigger": "H: assign y = \"\\a\";  (also \\v, \\f)  /  a character beyond latin-1",
-   "why": "Frontends and simulators disagree on the named control escapes \\a \\v \\f; non-latin-1 text is not representable as bytes.",
+   "why": "IEEE 5.9.1 Table 5-1 lists \\a \\v \\f (7, 11, 12). slang, Icarus 12, Verilator 5.042 and Yosys 0.53 give the table's values; Xcelium 24.03 reads each as the plain letter. The pipeline tools that matter for the score agree: only the reference simulator dissents. (The hex escape \\xdd, where Yosys is the dissenter against slang, is the separate row lit-string-hex.)",
    "category": "never",
    "proposed": true,
    "principle": "P-NO-SILENT-PICK",
@@ -2583,7 +2659,36 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "Never applies to the disputed escapes; :encoding and :width would be later (non-ASCII text)."
+   "notes": "AUDIT 2026-10-31, class (c) for \\a \\v \\f (Xcelium-only dissent; policy of 2026-10-29: where Xcelium departs from explicit LRM text, refuse). Category left `never` for Thomas (NOTE question 5). :encoding and :width (non-ASCII text) are refused earlier by the svGolf source gate and would be later. What would lift \\a \\v \\f: Thomas rules Xcelium 24.03's pre-2009 escape handling non-binding (then they become `later`: slang, Yosys, Verilator and Icarus agree), or an Xcelium that implements Table 5-1.",
+   "evidence": "docs/sv-tools-split-audit.md (lit_str_a, lit_str_v, lit_str_f, lit_str_o101)"
+  },
+  {
+   "id": "lit-string-hex",
+   "tag": "StringLiteral:hex-escape",
+   "group": "literals",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "H: assign y = \"\\x41\";  (also \"\\x4\", and a hex escape confined to a rare region: assign y = (a == 16'hBEEF) ? \"\\x41\" : 8'h41;)",
+   "why": "IEEE 5.9.1 Table 5-1 lists \\xdd. slang, Icarus and Verilator give the byte (`\"\\x41\"` is 8'h41), Yosys 0.53 and Xcelium 24.03 read the letter x and the digits (8'h31; `\"\\x4\"` is 8'h34 against 8'h04). Yosys is the dissenter against slang, so the proof and the score read different programs.",
+   "category": "never",
+   "proposed": true,
+   "principle": "P-SAME-PROGRAM",
+   "kinds": {
+    "extractor": [
+     "StringLiteral:hex-escape"
+    ]
+   },
+   "where": [
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_convert_string_expr"
+    }
+   ],
+   "evidence": "docs/sv-tools-split-audit.md (lit_str_x41, lit_str_x4, hex_guard); extractors/sv/test_selected_types.py (test_hex_escapes_stay_loud)",
+   "verified_by_run": true,
+   "since": "2026-10-31",
+   "notes": "CLOSED 2026-10-31 after the adversarial review of the first audit draft: until then `_disputed_string_escape` checked only a, v, f, so the extractor, the source gate and fourstate all admitted a hex escape and only the post-synthesis check, on vectors that reach the constant, could catch it (the hex_guard probe confines the difference to a == 16'hBEEF, the attack the fourstate docstring describes). Refused at the extractor now, so at every svGolf design stage too. The octal escape `\\101` and an escaped backslash before x are plain in every tool and stay admitted. A StringLiteral without a source token cannot show a hex escape (the decoded byte is indistinguishable); every literal from source text has one."
   },
   {
    "id": "lit-time",
@@ -2682,7 +2787,7 @@
    ],
    "evidence": "docs/sv-call-statements.md",
    "verified_by_run": true,
-   "notes": "svGolf never: file / IO / simulator control is P-SYNTHESIZABLE, $urandom is P-DETERMINISM.",
+   "notes": "svGolf never: simulator control is P-SYNTHESIZABLE, $urandom is P-DETERMINISM; file I/O and the tasks that reach the host ($readmemh, $fopen, $system, ...) are host access (P-NO-HOST-ACCESS, the host-access policy of 2026-10-31) in the source gate (rows sg-host-*).",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
@@ -3515,19 +3620,45 @@
   },
   {
    "id": "dc-port-init",
-   "tag": "PortSymbol:initializer | PortSymbol:explicit-expression",
+   "tag": "PortSymbol:initializer",
    "group": "declarations",
    "layers": [
     "extractor"
    ],
-   "trigger": "module t(input logic [7:0] a, output wire [7:0] y = 8'd3);  /  module t(.q(y), input logic [7:0] a); output logic [7:0] y;",
-   "why": "A net output initializer is a continuous driver in disguise; an explicit port expression splits the port from its internal storage (Verilator and Yosys do not parse it).",
+   "trigger": "module t(input logic [7:0] a, output wire [7:0] y = 8'd3);",
+   "why": "A net output port with an initializer is a slang ERROR (DisallowedPortDefault: \"only 'output' variable port declarations may have an initializer expression\"). IEEE 23.2.2.4: \"Defaults can be specified only for input ports and only in ANSI style declarations\" (read in the local copy of IEEE 1800-2023); 6.8 covers the variable initialization that is allowed. Xcelium, Verilator and Yosys accept the net form as a continuous driver, Icarus rejects it.",
    "category": "never",
    "proposed": true,
-   "principle": "P-NO-SILENT-PICK",
+   "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
-     "PortSymbol:initializer",
+     "PortSymbol:initializer"
+    ]
+   },
+   "where": [
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "convert_port_sym"
+    }
+   ],
+   "evidence": "docs/sv-envelope-schema.md lines 1967, 2203; docs/sv-tools-split-audit.md (dc_port_net_init, dc_port_net_init2)",
+   "verified_by_run": true,
+   "notes": "Class (a): a program slang rejects. Measured on dc_port_net_init and dc_port_net_init2 in five tools."
+  },
+  {
+   "id": "dc-port-explicit",
+   "tag": "PortSymbol:explicit-expression",
+   "group": "declarations",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "module t (a, .q(y)); input a; output y; logic y; assign y = a; endmodule",
+   "why": "An explicit port expression `.q(y)` (IEEE 23.2.1) is legal; slang, Icarus and Xcelium read it with equal values, but Yosys `read_verilog -sv` and Verilator fail on it with a syntax error: a program the scored frontend cannot read, so no score exists for it.",
+   "category": "later",
+   "proposed": true,
+   "prerequisite": "The scored frontend reads explicit port expressions (a Yosys / Verilator change, or a different synthesis frontend such as mox-synth). The same reasoning as for classes (Thomas, 2026-10-31): legal, out of scope while Yosys `read_verilog -sv` is the frontend.",
+   "kinds": {
+    "extractor": [
      "PortSymbol:explicit-expression"
     ]
    },
@@ -3537,8 +3668,11 @@
      "fn": "convert_port_sym"
     }
    ],
-   "evidence": "docs/sv-envelope-schema.md lines 1967, 2203",
-   "verified_by_run": true
+   "evidence": "docs/sv-envelope-schema.md lines 1967, 2203; docs/sv-tools-split-audit.md (pi_explicit)",
+   "verified_by_run": true,
+   "since": "2026-10-31",
+   "decided_by": "split from dc-port-init on 2026-10-31; the move never to later is a proposal (class (e) of the audit)",
+   "notes": "Class (e): legal, the scored frontend cannot read it. Was half of `dc-port-init` (`never`, P-SAME-PROGRAM); a conditional category fits better, as for classes. Unsure: the move is by analogy with Thomas's classes ruling, he did not rule on this construct."
   },
   {
    "id": "dc-net-kinds",
@@ -3775,20 +3909,46 @@
   },
   {
    "id": "hi-override-context",
-   "tag": "InstanceSymbol:override-context | :override-untyped-width",
+   "tag": "InstanceSymbol:override-context",
    "group": "hierarchy",
    "layers": [
     "extractor"
    ],
-   "trigger": "child #(.P(N << 40)) into a typed parameter whose type depends on another parameter; an untyped child parameter overridden by an expression Icarus widens",
-   "why": "Icarus and Yosys / slang disagree on the typed or untyped override context. The tools split.",
+   "trigger": "child #(.P(N << 40)) into a typed parameter whose type depends on another parameter; child #(.P(U + 8'd100)) into a 16-bit typed parameter",
+   "why": "A typed parameter override is an assignment-like context (IEEE 10.8): the expression is evaluated at the parameter's type. slang, Icarus and Xcelium do; Yosys and Verilator evaluate at the operands' own width (44 against 300; 0 against -2^40). The score reads a different program than the proof.",
    "category": "never",
    "proposed": false,
-   "principle": "P-NO-SILENT-PICK",
+   "principle": "P-SAME-PROGRAM",
    "decided_by": "policy: refuse where the tools split (Thomas)",
    "kinds": {
     "extractor": [
-     "InstanceSymbol:override-context",
+     "InstanceSymbol:override-context"
+    ]
+   },
+   "where": [
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_sym_override_root"
+    }
+   ],
+   "evidence": "docs/sv-oracle-disagreements.md; sem2/fold_ovr, fold_ovrw; docs/sv-tools-split-audit.md (fold_ovr, fold_ovrw_n1, fold_ovrw_n24)",
+   "verified_by_run": true,
+   "notes": "Class (c): Yosys and Verilator against slang, Icarus and Xcelium. The untyped-width half of this row is now `hi-override-untyped-width`. What would lift it: Yosys and Verilator evaluating a typed override at the parameter's type."
+  },
+  {
+   "id": "hi-override-untyped-width",
+   "tag": "InstanceSymbol:override-untyped-width",
+   "group": "hierarchy",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "child #(.W(N + 1)) into an UNTYPED parameter W, read as {a, W}; child #(.W(1 << N)) into an untyped W",
+   "why": "An untyped parameter takes the override's type (IEEE 6.20.2), 32 bits for an int expression: slang, Yosys, Verilator and Xcelium agree (W = 9, `0xf00000009`); Icarus keeps the lossless 33-bit width (`0x1e00000009`). The tools do not split: only Icarus differs.",
+   "category": "later",
+   "proposed": true,
+   "decided_by": "Thomas 2026-10-31 (ruling on Icarus-only splits); this row's classification is a proposal",
+   "kinds": {
+    "extractor": [
      "InstanceSymbol:override-untyped-width"
     ]
    },
@@ -3798,8 +3958,11 @@
      "fn": "_sym_override_root"
     }
    ],
-   "evidence": "docs/sv-oracle-disagreements.md; sem2/fold_ovr, fold_uwovr",
-   "verified_by_run": true
+   "evidence": "docs/sv-oracle-disagreements.md item (13), (14); sem2/fold_uwovr, fold_sho; docs/sv-tools-split-audit.md (fold_uwovr, fold_sho_n1, fold_sho_n40)",
+   "verified_by_run": true,
+   "notes": "Class (b), split from hi-override-context on 2026-10-31. Proposed: Thomas's ruling is that an Icarus-only split is a declared departure.",
+   "prerequisite": "Lift the extractor refusal for this tag (`_sym_override_root` / `_sym_icarus_widens`; the model followed Yosys here before round 6) and add a declared Icarus departure row (`oracle_disagreement`, plan ICARUS) for fold_uwovr and fold_sho; the pipeline tools agree, so no model rule changes. The Xcelium traces of fold_uwovr and fold_sho_n1 / fold_sho_n40 are measured (audit) but NOT pinned in harness/sv/xcelium_golden.json; they must be pinned (xcelium_batch.py pins simulated rows only, so with the lift).",
+   "plan": "ICARUS"
   },
   {
    "id": "hi-instance-array",
@@ -3866,9 +4029,9 @@
     "extractor"
    ],
    "trigger": "nomod u(.a(a), .y(y));  (no such module), or an instance in a generate branch not taken at the default parameters",
-   "why": "A module with no definition cannot be part of the proved design; an untaken branch slang does not bind is the later case.",
+   "why": "A module with no definition: slang (unknown module), Icarus, Verilator, Xcelium and Yosys all reject. An instance of an undefined module in a generate branch that is NOT taken is accepted by all five tools (measured, a_hi_uninst_gen) but still reaches the extractor as UninstantiatedDef.",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "extractor": [
@@ -3881,9 +4044,10 @@
      "fn": "_convert_member_sym"
     }
    ],
-   "evidence": "docs/sv-envelope-schema.md lines 1930-1936",
+   "evidence": "docs/sv-tools-split-audit.md (a_hi_uninst, a_hi_uninst_gen); docs/sv-envelope-schema.md lines 1930-1936",
    "verified_by_run": true,
-   "notes": "The untaken-branch case is later."
+   "notes": "Class (a) for the no-definition case. The untaken-branch case is later: all five tools agree it is legal (only elaborated blocks are checked), but the extractor cannot tell it from the first case without the point's branch choice.",
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)"
   },
   {
    "id": "hi-module-elab",
@@ -4004,7 +4168,8 @@
     }
    ],
    "verified_by_run": true,
-   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+   "evidence": "docs/sv-tools-split-audit.md (ctx_const40: all five tools sign-extend, so this is not a tools split)"
   },
   {
    "id": "hi-init-driver",
@@ -4014,11 +4179,11 @@
     "extractor"
    ],
    "trigger": "logic [7:0] q = 8'd1; assign q = a;  /  a child output connected to such a variable  /  input [7:0] a; logic [7:0] a = 8'd1;",
-   "why": "A declaration initializer plus a continuous driver is illegal (6.5); Icarus, Xcelium, Yosys and Verilator resolve it differently. The tools split.",
+   "why": "IEEE 6.5: a declared variable initialization is considered a procedural assignment, and a mixture of procedural and continuous assignments to a longest static prefix shall be an error. slang (mixed-var-assigns), Xcelium (ICDDIV) and Icarus reject the variable forms; Yosys and Verilator accept them silently with different values (Yosys keeps the initializer, Verilator follows the driver). A non-ANSI input with a separately declared initialized variable is a slang error (23.3.3.2). The NET forms (a net declaration assignment plus another driver; an input net with an initializer) are legal contention nets: Xcelium and Icarus resolve both drivers, Yosys and Verilator keep one constant; not synthesizable.",
    "category": "never",
    "proposed": false,
-   "principle": "P-NO-SILENT-PICK",
-   "decided_by": "policy: refuse where the tools split (Thomas)",
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "policy: refuse where the tools split (Thomas); audit 2026-10-31: the variable forms are slang errors (class (a)), the net forms stay refused (class (c), contention)",
    "kinds": {
     "extractor": [
      "PortConnection:initialized-*",
@@ -4040,8 +4205,9 @@
      "fn": "convert_port_sym"
     }
    ],
-   "evidence": "docs/sv-envelope-schema.md lines 1991, 2201-2238; sem2/vh_init, vg_init, vg_initn, pi_in_init",
-   "verified_by_run": true
+   "evidence": "docs/sv-envelope-schema.md lines 1991, 2201-2238; sem2/vh_init, vg_init, vg_initn, pi_in_init, pi_in_net; docs/sv-tools-split-audit.md",
+   "verified_by_run": true,
+   "notes": "What would lift the net forms: a resolved multi-driver net model (plan NETRES) AND hardware the scored flow can synthesize; the variable forms are permanently illegal."
   },
   {
    "id": "hi-port-misc",
@@ -4398,11 +4564,11 @@
    "layers": [
     "lean-model"
    ],
-   "trigger": "H: child u(.i(a + b))  with 2-bit a, b into a 4-bit port;  also an INT-class constant actual into a port wider than 32 bits",
-   "why": "Icarus and Yosys evaluate the actual self-determined and zero-pad; slang and Verilator evaluate it at the port width (p+q = 0101 vs 0001). The tools split.",
+   "trigger": "H: child u(.i(a + b))  with 2-bit a, b into a 4-bit port",
+   "why": "A port connection is an assignment-like context (IEEE 10.8, 23.3.3): the actual is evaluated at the wider of port and actual. slang, Verilator and Xcelium evaluate `p + q` (2-bit operands) at the 4-bit port width (0101 for p=2, q=3); Yosys and Icarus evaluate it self-determined and zero-pad (0001). The score (Yosys) reads a different program than the proof (slang).",
    "category": "never",
    "proposed": false,
-   "principle": "P-NO-SILENT-PICK",
+   "principle": "P-SAME-PROGRAM",
    "decided_by": "policy: refuse where the tools split (Thomas)",
    "kinds": {
     "lean": [
@@ -4423,9 +4589,9 @@
      "fn": "PExpr.portSafe"
     }
    ],
-   "evidence": "docs/sv-oracle-disagreements.md 'Port connection width context'",
+   "evidence": "docs/sv-oracle-disagreements.md 'Port connection width context'; docs/sv-tools-split-audit.md (ctx_pq, ctx_const40)",
    "verified_by_run": true,
-   "notes": "Admitted subset: PExpr.portSafe, or an actual at least as wide as the port."
+   "notes": "Class (c), the core P-SAME-PROGRAM case, re-measured in all five tools (ctx_pq). Admitted subset: PExpr.portSafe, or an actual at least as wide as the port. An INT-class constant actual into a port wider than 32 bits is NOT part of this row: ctx_const40 (`-1` into 40 bits) is sign-extended by all five tools, so there is no tools split. It is refused anyway, by the extractor under hi-port-int-width (`PortConnection:int-width`, `later`) and, measured by run2, by this row's Lean tag as well: an over-refusal of the Lean guard relative to this row's reason, which belongs to hi-port-int-width. What would lift the row: Yosys evaluating a port actual at the port width (a Yosys change), or a second elaboration profile (the golfer proves both readings give equal outputs; not proposed, it admits only what portSafe already admits)."
   },
   {
    "id": "le-portconn-missing",
@@ -4622,9 +4788,9 @@
     "lean-guard"
    ],
    "trigger": "always_comb y[0]=a; assign y[0]=b;",
-   "why": "IEEE 6.5 forbids the mixture on one longest static prefix; not a legal program, Xcelium rejects it.",
+   "why": "IEEE 6.5: it shall be an error to have a mixture of procedural and continuous assignments to any term of a longest static prefix. slang reports mixed-var-assigns as an ERROR, Xcelium rejects (ICDPAV) and Icarus rejects (\"Bit 0 is already driven\"); Verilator warns and Yosys warns and synthesizes garbage.",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "lean": [
@@ -4641,9 +4807,11 @@
      "fn": "driversMsg"
     }
    ],
-   "evidence": "row drv_mix_k0; sem2/drv_mix",
-   "unverified": true,
-   "verified_by_run": false
+   "evidence": "docs/sv-tools-split-audit.md (drv_mix_k0, a_drv_mix_plain); row drv_mix_k0; sem2/drv_mix",
+   "unverified": false,
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)",
+   "notes": "Class (a). The Lean guard (`driversOk`) is the ls-sv refusal; slang's analysis-pass error is not in `getAllDiagnostics()`, svGolf's fourstate catches the shape through Yosys `check`."
   },
   {
    "id": "le-driver-input",
@@ -4653,9 +4821,9 @@
     "lean-guard"
    ],
    "trigger": "an input written by an assign or procedurally; an instance output into the module's own input",
-   "why": "23.3.3.2: an input port's one driver is its connection (or the testbench at the top).",
+   "why": "IEEE 23.3.3.2: assignments to variables declared as input ports are illegal. slang reports \"cannot assign to input port\" for a continuous assign, a procedural write and a child output connected to it; Verilator rejects (ASSIGNIN); Xcelium accepts the assign and instance forms as a net coerced to inout (23.3.3.1, warning) and rejects the procedural form; Yosys accepts with a conflicting-driver warning.",
    "category": "never",
-   "proposed": true,
+   "proposed": false,
    "principle": "P-SAME-PROGRAM",
    "kinds": {
     "lean": [
@@ -4672,8 +4840,11 @@
      "fn": "driversMsg"
     }
    ],
-   "unverified": true,
-   "verified_by_run": false
+   "unverified": false,
+   "verified_by_run": true,
+   "evidence": "docs/sv-tools-split-audit.md (a_drv_input_assign, a_drv_input_proc, a_drv_input_inst)",
+   "decided_by": "Thomas 2026-10-31: a program slang rejects is rejected (audit docs/sv-tools-split-audit.md)",
+   "notes": "Class (a). Measured in the audit; svGolf's fourstate rejects all three through Yosys `check`."
   },
   {
    "id": "le-driver-procs",
@@ -4683,10 +4854,10 @@
     "lean-guard"
    ],
    "trigger": "always_comb y[0]=a; always_comb y[0]=b;",
-   "why": "9.2.2.2 / 9.2.2.4: no other process may write such a procedure's variables; Icarus gives the first block's value, Sem2 the last, Xcelium rejects. Conservatively over-refuses a plain `always @(posedge clk or negedge rn)`.",
+   "why": "IEEE 9.2.2.2 and 9.2.2.4: the variables an always_comb / always_ff writes shall not be assigned by any other process (an `initial` block and a plain `always` are processes too). slang reports an ERROR (multiple-always-assigns) for two always_comb or two always_ff writers of one bit, and for one of them plus any other process; Xcelium rejects (MULAXX); Icarus runs it and keeps the first block's value, Verilator warns, Yosys warns of conflicting drivers. A program slang rejects is rejected. Conservatively over-refuses a plain `always @(posedge clk or negedge rn)` that shares a bit with another process (`alwaysFFR` counts as exclusive, Hier2.lean `Process2.exclusive`); the single-process form is not refused (drv_pw_plain_always).",
    "category": "never",
    "proposed": true,
-   "principle": "P-DETERMINISM",
+   "principle": "P-SAME-PROGRAM",
    "kinds": {
     "lean": [
      "PortConn:driver"
@@ -4706,9 +4877,10 @@
      "fn": "driversMsg"
     }
    ],
-   "evidence": "rows drv_pw_lit, drv_pw_gv, drv_pw_par_k0, drv_pw_ff",
-   "unverified": true,
-   "verified_by_run": false
+   "evidence": "docs/sv-tools-split-audit.md (drv_pw_lit, drv_pw_gv, drv_pw_par_k0, drv_pw_ff); rows drv_pw_lit, drv_pw_gv, drv_pw_par_k0, drv_pw_ff; docs/sv-tools-split-audit.md (two_plain, two_plain_ac, init_comb_proc)",
+   "unverified": false,
+   "verified_by_run": true,
+   "notes": "Class (a); the principle was P-DETERMINISM (Icarus and Sem2 disagree on which block wins), which describes a program that is simply illegal. Still `proposed`: confirm that Thomas's slang ruling covers the analysis-pass errors. Two PLAIN `always @*` writers of one bit are a different case: legal text, slang-clean, and a genuine race (Icarus, Verilator, the Yosys netlist and Xcelium give four different traces on the audit probe two_plain), so by the nondeterminism ruling the construct is in principle one to model; today nothing admits it, because the extractor refuses `always @*` (`TimedStatement:ImplicitEventControl`) and svGolf's fourstate rejects it (Yosys `check`: multiple conflicting drivers). The `initial` plus `always_comb` pair (init_comb_proc) is a slang error that the extractor and fourstate admit and that run2 refuses only because the loader has no `Initial` process kind: see `holes`."
   },
   {
    "id": "le-library-missing",
@@ -5991,10 +6163,9 @@
     "lean-loader"
    ],
    "trigger": "H: always_comb begin y = t; t = a; end   /   if (c) t = a; y = t; t = b;   (a bit read before it is written, written later)",
-   "why": "IEEE 9.2.2.2.1 leaves variables the block writes out of its sensitivity list: Icarus 12 and Xcelium keep the previous run's value, Verilator and the Yosys netlist give the settled one. The proof and the score would read different programs.",
+   "why": "IEEE 9.2.2.2.1(b) leaves any expression the block itself writes out of its implicit sensitivity list, so the LRM's simulation answer for `y = t; t = a;` is deterministic: the block does not re-run on its own write of `t`, and `y` stays one change behind `a`. Icarus 12 and Xcelium 24.03 follow it; Verilator and the Yosys netlist give the settled value (`y = a`). The event-driven simulators and the synthesizers split, so the proof and the score would read different programs. This is NOT an Icarus-only split and NOT LRM nondeterminism.",
    "category": "never",
    "proposed": false,
-   "principle": "P-NO-SILENT-PICK",
    "decided_by": "Thomas 2026-10-28 (the refusal); it stands while the tools split",
    "kinds": {
     "lean": [
@@ -6023,9 +6194,10 @@
      "fn": "load_design_sv2"
     }
    ],
-   "evidence": "9 cases2 refusal rows rbw_*; sem2/rbw_*; docs/sv-oracle-disagreements.md 'Self-reading always_comb: refused'; docs/sv-charter.md WP4",
+   "evidence": "9 cases2 refusal rows rbw_*; sem2/rbw_*; docs/sv-oracle-disagreements.md 'Self-reading always_comb: refused'; docs/sv-charter.md WP4; docs/sv-tools-split-audit.md",
    "verified_by_run": true,
-   "notes": "Latches that never re-write the bits they read stay admitted. Recorded over-refusals: statically infeasible path combinations, dead reads, a run-time index read of a partly written signal."
+   "notes": "Latches that never re-write the bits they read stay admitted. Recorded over-refusals: statically infeasible path combinations, dead reads, a run-time index read of a partly written signal. AUDIT 2026-10-31 (corrected after review), class (c): re-measured on all 9 rows (Xcelium = Icarus from cycle 1 on, `xx` at cycle 0; Verilator and the Yosys netlist settled). The first draft of the audit moved this row to `later` on the nondeterminism ruling; that was wrong. The LRM's answer is deterministic, so the ruling does not apply, and a run-set lift would be EMPTY for a genuine self-read: `CombTask.Computes` quantifies over every run, the stale run gives y_k = a_(k-1) where the task demands fn(a_k), so the theorem is unprovable; what a lift admits is only the over-refusal residue above, which a sharper guard admits for far less. The real question is Thomas's (NOTE question 1): which reading does the proof follow, the LRM's simulation (stale) or the synthesizers' (settled)? Following the synthesizers means departing from explicit LRM text for Icarus AND Xcelium, which the 2026-10-29 policy forbids unless he amends it. Not a candidate for `later` until he answers.",
+   "principle": "P-NO-SILENT-PICK"
   },
   {
    "id": "gu-alias-read",
@@ -6036,11 +6208,10 @@
     "lean-loader"
    ],
    "trigger": "H: assign w = t; always_comb begin y = w; t = a; end   (also assign chains, ~ and slice copies, port loops formed after flattening)",
-   "why": "An always_comb reads a bit downstream, through a continuous assign, of a bit it writes at or after the read: Icarus propagates the copy inside the block's run and loses the wake-up (y lags); Xcelium, Verilator and the settle semantics defer it (y = a). The tools split.",
-   "category": "never",
-   "proposed": false,
-   "principle": "P-NO-SILENT-PICK",
-   "decided_by": "Thomas 2026-10-29 (CombAlias2.lean header); it stands while the tools split",
+   "why": "An always_comb reads a bit downstream, through a continuous assign, of a bit it writes at or after the read: Icarus propagates the copy inside the block's run and loses the wake-up (y lags); Xcelium, Verilator, the Yosys netlist and the settle semantics defer it (y = a). Only Icarus differs; IEEE 4.7/4.8 (a procedural statement need not execute as one event, update events may be taken in any order) arguably make Icarus's order legal too.",
+   "category": "later",
+   "proposed": true,
+   "decided_by": "Thomas 2026-10-29 (refusal, CombAlias2.lean header); category moved never to later 2026-10-31 on his Icarus-only ruling (proposal, confirm)",
    "kinds": {
     "lean": [
      "AlwaysComb:alias-read"
@@ -6069,9 +6240,10 @@
     }
    ],
    "evidence": "LeanModels/Sv/CombAlias2.lean; svgolf/PLAN.md Round 6; docs/sv-xcelium-audit.md 6.1 item 9",
-   "verified_by_run": false,
+   "verified_by_run": true,
    "since": "2026-10-29",
-   "notes": "Landed uncommitted in the working tree when this register was generated. Admitted: write-then-read, a SEPARATE always_comb copy, a copy of an unwritten variable. The two declared Icarus departures acg_alias_assign and acg_alias_port become refusals."
+   "notes": "Landed uncommitted in the working tree when this register was generated. Admitted: write-then-read, a SEPARATE always_comb copy, a copy of an unwritten variable. The two declared Icarus departures acg_alias_assign and acg_alias_port become refusals. AUDIT 2026-10-31, class (b)(d): re-measured on all 7 refused rows and 2 admitted twins in four tools; Xcelium settled on 7 of 7 (pinned for acg_alias_assign and acg_alias_port).",
+   "prerequisite": "Icarus alone is stale; Xcelium, Verilator and the Yosys netlist agree with the settle semantics (class (b)). Two routes, Thomas to pick (NOTE question 2). (A) His Icarus-only ruling applies directly: re-add the two declarations retired in round 6 (iverilog-comb-assign-alias-sensitivity, iverilog-comb-port-loop-sensitivity) on the now-simulated rows and disable AlwaysComb:alias-read for them (plan ICARUS); the model stays settled-only, so Icarus's order, which is arguably LRM-legal, is declared a departure and not a run that binds the golfer. (B) The run-set model (plan NONDET), where the lost-wake-up order is a run. Either way the Xcelium traces must be pinned: the golden file holds 2 of the 7 refused rows (acg_alias_assign, acg_alias_port, left from when they were simulated); chain, not, bits, hier and thru are measured (audit) but unpinned, and xcelium_batch.py pins only SIMULATED rows (a row with a `refusal` is skipped), so the pins arrive with the lift itself."
   },
   {
    "id": "gu-clock-source",
@@ -6312,11 +6484,10 @@
    "layers": [
     "lean-loader"
    ],
-   "trigger": "assign a = ~a;",
-   "why": "combSettle2 re-runs processes to a fixpoint within fuel; an oscillation has no value. Settling cycles are accepted by run2 but proofs need an Acyclic certificate.",
+   "trigger": "assign a = en ? ~a : 1'b0;  (a true oscillator once en = 1: run2 answers timeout, no completed run)",
+   "why": "combSettle2 re-runs processes to a fixpoint within fuel; an oscillating loop has no completed run. Measured: a true oscillator hangs Icarus, aborts Verilator (\"did not converge\") and ends at an arbitrary value in Xcelium, so there is no value for the tools to agree on, and such a design can never satisfy `Terminates2`. A loop that SETTLES is not this row: run2 completes it (mux feedback, SR latch, a structural loop computing a = b = d, and `assign a = ~a`, which settles at x). Mux feedback and the structural loop give identical traces in all five tools; the NOR latch agrees except at the (1,1) then (0,0) transition, a genuine race on which Verilator and Xcelium end in different states and Icarus hangs.",
    "category": "never",
    "proposed": true,
-   "principle": "P-DETERMINISM",
    "where": [
     {
      "file": "LeanModels/Sv/Sem2.lean",
@@ -6327,9 +6498,11 @@
      "fn": "main"
     }
    ],
-   "unverified": true,
-   "verified_by_run": false,
-   "notes": "Oscillating loops are never meaningful; settling cycles need `Acyclic`."
+   "unverified": false,
+   "verified_by_run": true,
+   "notes": "AUDIT 2026-10-31 (corrected after review), class (d) in the narrow sense: no completed run, so there is nothing to lift. The first draft moved the row to `later` on the strength of the SETTLING loops, which run2 already admits: they are not an ls-sv refusal. They are refused downstream by svGolf's fourstate stage (Yosys `check`: found logic loop; svGolf rows sg-fs-conflict and sg-terminates), and that refusal is load-bearing: the probe loop_lat_if (`always_comb if (y) t = a; else t = 1'b0;` and `always_comb y = t;`, a loop that spans two blocks) runs in the model as the constant 0 (run2 on two stimuli; by hand for every stimulus: the start is x and `if (y)` takes the else branch), while the scored netlist is `y = y & a`, which holds state (two stable states at a = 1). Terminates2 and Computes do not reject it. See NOTE section 7.",
+   "evidence": "docs/sv-tools-split-audit.md (loop_osc, loop_osc2, loop_mux, loop_fn, loop_sr, loop_lat_if); svgolf/score/svgolf.ys run on the loops",
+   "principle": "P-DETERMINISM"
   },
   {
    "id": "gu-carrier",
@@ -7079,12 +7252,12 @@
    {
     "id": "imports",
     "what": "checks the Lean file's imports against an allowlist",
-    "refuses": "any import outside Init, Std, Lean, LeanModels.Sv.*, SvGolf.*, tasks.*, spec.*, Submission.Design; a second file; `module` / `prelude` headers"
+    "refuses": "any import outside Init, Std, Lean, LeanModels.Sv.*, SvGolf.*, tasks.*, spec.*, Submission.Design and the Mathlib packages (Mathlib, Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient), read from the header as Lean reads it (a comment between two imports separates them) and checked again against the imports Lean recorded in the compiled solution; a second file; `module` / `prelude` headers; a module no package has a source for (a stale name) is a rejection, a package or module missing from the machine (not built, not on the search path, a checkout not at the pinned revision) is an infrastructure error"
    },
    {
     "id": "source",
     "what": "`score/srcgate.py`: makes the proved program and the scored program ONE text and strips every comment",
-    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters"
+    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters, host access (file, process, environment, dump and DPI constructs)"
    },
    {
     "id": "extract",
@@ -7144,20 +7317,22 @@
   ],
   "policies": [
    "**Combinational tasks only for now.** Clocked designs, registers and pipelines are refused until the sequential layer exists (Thomas, 2026-10-29).",
-   "**Where the tools split, the design is refused**, never decided for one side: Icarus, Xcelium, Verilator, Yosys and slang are compared, and a shape they read differently is a loud refusal (Thomas).",
+   "**Where the pipeline tools split, the design is refused**, never decided for one side: slang / ls-sv (the proof), Yosys (the score), Verilator and Xcelium are compared, and a shape they read differently is a loud refusal (Thomas). A difference that only Icarus shows is a declared departure, not a refusal (Thomas, 2026-10-31).",
+   "**A program slang rejects is rejected, and LRM-legal nondeterminism is to be modelled rather than forbidden** (Thomas, 2026-10-31). No construct is admitted on the second ruling yet: the model does not exist, and the audit found that the rows it was first thought to cover are not LRM nondeterminism (self-reading `always_comb`: the LRM's answer is deterministic and the synthesizers compute another; settling combinational loops: refused by fourstate, and some hold state).",
    "**Everything the proof and the score could read differently is refused exactly, before any proof is tried** (the x/z rules, the source gate), and the post-synthesis check is the backstop for the disagreements nobody has found.",
    "**No other restrictions.** Beyond the per-task operator banlist and these safety gates, write any SystemVerilog ls-sv can load.",
    "**Contestants may add features to ls-sv by pull request, and Thomas approves every such PR.** See 'How a refusal becomes allowed'.",
-   "**Proofs are symbolic and parametric** (for all N). `bv_decide` only for fixed-size subgoals and only once the checker can verify it; `native_decide` is banned in submissions."
+   "**Proofs are symbolic and parametric** (for all N). `bv_decide` only for fixed-size subgoals and only once the checker can verify it; `native_decide` is banned in submissions.",
+   "**No host access in the SystemVerilog text.** A submitted design cannot read host files (Thomas, 2026-10-31); by the same principle (proposed, to confirm) it cannot write them, run programs, read the environment, write dumps or call native code. The source gate refuses the constructs; the console tasks (`$display`, `$write`, `$finish`, ...) stay. The Lean file is not covered (see the limits)."
   ],
   "groups": [
    {
     "id": "g-source",
     "stage": "source",
     "title": "Stage `source`: one program for both tools",
-    "intro": "Yosys and slang (the frontend your proof is about) read the same file differently when it contains directives, attributes or pragma comments. The gate refuses those and hands every later stage one canonical text with all comments stripped.",
+    "intro": "Yosys and slang (the frontend your proof is about) read the same file differently when it contains directives, attributes or pragma comments. The gate refuses those and hands every later stage one canonical text with all comments stripped. It also refuses every construct that reaches the machine the checker runs on (`$readmemh`, `$fopen`, `$system`, `$value$plusargs`, `$dumpfile`, DPI, ...): Yosys opens a `$readmemh` file itself while it reads the design.",
     "write_ok": "`timescale 1ns/1ps\nmodule band #(parameter int N = 4)(input logic [N-1:0] a, b, output logic [N-1:0] y);\n  // comments are fine: they are stripped\n  assign y = a & b;\nendmodule",
-    "refused_example": "`ifdef SYNTHESIS\n  assign y = a & b;     // Yosys defines SYNTHESIS, slang does not\n`else\n  assign y = a | b;\n`endif\n(* keep *) wire t;      // attribute: Yosys gives it a meaning\n// synopsys translate_off"
+    "refused_example": "`ifdef SYNTHESIS\n  assign y = a & b;     // Yosys defines SYNTHESIS, slang does not\n`else\n  assign y = a | b;\n`endif\n(* keep *) wire t;      // attribute: Yosys gives it a meaning\n// synopsys translate_off\ninitial $readmemh(\"/etc/hosts\", mem);   // host file: refused\ninitial $system(\"id\");                 // host program: refused\nimport \"DPI-C\" function int c_fn(int x);   // native code: refused"
    },
    {
     "id": "g-x",
@@ -7187,9 +7362,9 @@
     "id": "g-imports",
     "stage": "imports",
     "title": "Stage `imports`: the proof file",
-    "intro": "The checker builds only SvGolf, the task modules and the evaluator; any other module is unaudited code outside the trusted base. One solution file in v0.",
-    "write_ok": "import Submission.Design\nimport LeanModels.Sv.Ingest2\nimport SvGolf.Comb",
-    "refused_example": "import Mathlib.Tactic\nimport MyHelpers"
+    "intro": "The checker builds only SvGolf, the task modules and the evaluator; a module outside the allowlist is unaudited code outside the trusted base. Mathlib and its packages (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient) are on the allowlist. One solution file in v0.",
+    "write_ok": "import Submission.Design\nimport LeanModels.Sv.Ingest2\nimport SvGolf.Comb\nimport Mathlib.Tactic.Ring",
+    "refused_example": "import Examples.python.tri.proof\nimport LeanModels.Python.Semantics\nimport Mathlib2.Tactic     -- a lookalike\nimport MyHelpers"
    },
    {
     "id": "g-statement",
@@ -7225,10 +7400,12 @@
    }
   ],
   "never_summary": [
-   "Anything the tools read differently (the policy: `P-NO-SILENT-PICK`): self-reading and alias-reading `always_comb`, narrow net actuals into wider net inputs, partly out-of-range part selects, bit-select indexes wider than 32 bits, context-width port actuals, initialized variables with a second writer.",
+   "Anything the PIPELINE tools read differently (slang and ls-sv for the proof, Yosys for the score, Verilator and Xcelium as simulators; `P-NO-SILENT-PICK`, and `P-SAME-PROGRAM` where Yosys differs from slang): narrow net actuals into wider net inputs, partly out-of-range part selects, bit-select indexes wider than 32 bits, context-width port actuals, instance-parameter overrides evaluated at different widths, initialized variables with a second writer, string escapes the tools read differently (`\\a \\v \\f` in Xcelium, `\\xHH` in Yosys and Xcelium), self-reading `always_comb` (the event-driven simulators against the synthesizers). A difference that only Icarus shows is a declared departure, not a refusal.",
+   "Programs slang rejects (`P-SAME-PROGRAM`; what the slang driver reports: parse and elaboration errors always, analysis errors by a proposal, with the gap listed under 'limits'): undeclared names, two writers of one bit when one of them is `always_comb`/`always_ff`, writing an input port, an undefined module, an `always` without timing control. Yosys alone would accept several of them silently.",
    "Tool directives of any kind (`P-NO-TOOL-DIRECTIVES`): `ifdef SYNTHESIS, attributes, synthesis-pragma comments.",
-   "Delays, timing and randomness in a combinational task (`P-NO-TIME`, `P-DETERMINISM`); non-hardware constructs such as classes, strings, reals, dynamic memory, file I/O and `fork`/`join` (`P-SYNTHESIZABLE`).",
-   "Anything that lets a submission change what the checker trusts (`P-TRUSTED-BASE`): `sorry`, user axioms, `extern` / `implemented_by`, a player-supplied envelope."
+   "Delays, timing and randomness in a combinational task (`P-NO-TIME`, `P-DETERMINISM`); non-hardware constructs such as classes, strings, reals, dynamic memory and `fork`/`join` (`P-SYNTHESIZABLE`: out of scope while the scored frontend is Yosys `read_verilog -sv`). Host access (reading files, system calls, DPI) is disallowed by its own policy (Thomas, 2026-10-31).",
+   "Anything that lets a submission change what the checker trusts (`P-TRUSTED-BASE`): `sorry`, user axioms, `extern` / `implemented_by`, a player-supplied envelope.",
+   "Anything in the SystemVerilog text that reaches the machine the checker runs on (`P-NO-HOST-ACCESS`; the Lean file is not covered, see the limits): `$readmemh` / `$readmemb` / `$writemem*`, `$fopen` and the file I/O family, `$system`, `$test$plusargs` / `$value$plusargs`, dump writers (`$dumpfile`, ...), DPI imports and exports, and escaped `$`-names that Yosys reads as system tasks."
   ],
   "lifting": [
    "Every refusal above has a state. `refused-now` means no change is planned. `later` names the prerequisite that has to exist first; when it exists, the refusal is lifted by a pull request.",
@@ -7239,7 +7416,8 @@
   ],
   "limits": [
    "The post-synthesis check is sampling (fixed corners, task corners, harvested comparison constants, seeded random): a difference confined to a region no comparison constant selects can pass (`oob_rare.sv`, `zpair_add_rare.sv` pass it alone; the static rules are the only line there).",
-   "There is no sandbox: `import Lean` is allowed, so a Solution.lean can run `#eval` with checker privileges. The integrity snapshot is a tripwire, not a defence. Run untrusted submissions in a throwaway container.",
+   "There is no sandbox: `import Lean` is allowed, so a Solution.lean can run `#eval` with checker privileges. The integrity snapshot is a tripwire, not a defence. Run untrusted submissions in a throwaway container. Measured (2026-10-31): a reference Solution.lean with an added `#eval IO.FS.readFile \"/etc/hosts\"` and an `IO.FS.writeFile` was ACCEPTED and did both, so the host-access refusals (`P-NO-HOST-ACCESS`) are a rule about the SystemVerilog text only.",
+   "Open (Thomas): should the Lean file be gated against host access too (`#eval`, `IO`, `run_cmd`, `elab`, `initialize`, `unsafe`; `import Lean` is allowed)? Nothing gates it today.",
    "The parameter's declared type is not pinned by the statement; the multi-point cross-check at the scoring point keeps the scored design one ls-sv and slang agree on, elsewhere the statement is about ls-sv's reading.",
    "The banlist front check is heuristic (a variable copied from a loop counter counts as run-time); the Yosys backstop covers the scored points only.",
    "The fourstate stage checks the SCORING POINT only (not the probe points) and filters `tri-state` warnings out of Yosys `check`. Its run-time index rule reasons from index TYPES: `a[i-1]` with a 2-bit `i` is a 32-bit index and is refused on any declared range (over-refusal), as is any procedural loop counter used as an index.",
@@ -7248,7 +7426,8 @@
    "`ARITH_PRIMITIVES` (`$alu $macc $macc_v2 $lcu $fa`) in the banlist backstop are dead entries: the backstop reads without `-icells`, so instantiating one fails earlier with `yosys failed`.",
    "`--no-gate` in `score.py` and `postsynth.py` is a research flag: the result says `gated: false` and is not a svGolf score. Missing Verilator, make, a C++ compiler, Yosys or `svgolf-eval` is an infrastructure error (exit 2), never a rejection.",
    "Open policy question: comparisons are not banned in `add` / `mul`; a carry written as a comparison is Yosys's own alu logic and scores lower depth than the proved ripple reference.",
-   "Open: must challenge proofs be parametric (for all N)? The README treats it as decided; `svgolf/PLAN.md` still lists it as a question for Thomas."
+   "Open: must challenge proofs be parametric (for all N)? The README treats it as decided; `svgolf/PLAN.md` still lists it as a question for Thomas.",
+   "slang's ANALYSIS-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") are not read by the extractor, `fourstate` or `banlist` (they use `getAllDiagnostics()`); \"a program slang rejects is rejected\" holds for them only through Yosys `check` and the Lean driver guards (and, for `initial` plus `always_comb` writing one variable, only because the Lean loader has no `Initial` process kind yet; docs/sv-tools-split-audit.md)."
   ],
   "links": [
    {
@@ -7272,6 +7451,10 @@
     "what": "the attacks, one paragraph each"
    },
    {
+    "path": "svgolf/design/nondeterminism/NOTE.md",
+    "what": "design note: how LRM-legal nondeterminism would be modelled, and what the golfer would prove"
+   },
+   {
     "path": "docs/sv-refusals.md",
     "what": "(lean-surfaces) the register of the language tier's refusals"
    },
@@ -7286,6 +7469,10 @@
    {
     "path": "docs/sv-envelope-schema.md",
     "what": "(lean-surfaces) the envelope contract and the Unsupported vocabulary"
+   },
+   {
+    "path": "docs/sv-tools-split-audit.md",
+    "what": "(lean-surfaces) the tools-split audit behind the 2026-10-31 category changes"
    }
   ],
   "entries": [
@@ -7595,6 +7782,232 @@
      }
     ],
     "verified_by_run": true
+   },
+   {
+    "id": "sg-host-memfile",
+    "tag": "memory-file tasks `$readmemh`, `$readmemb`, `$writememh`, `$writememb`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "initial $readmemh(\"/etc/hosts\", mem);  /  $readmemb  /  $writememh  /  $writememb",
+    "why": "Yosys's read_verilog opens the file of a $readmemh/$readmemb itself while it reads the design (Yosys 0.53, measured: the contents become the memory's initial value; one text scores 9.331 GE with one host file and 0 GE with another; a missing file is an error). The pinned flow reads with plain `read_verilog -sv` (no `-defer`), and then Yosys opens the file in a module the top never instantiates as well, but not in a function nobody calls or in a generate branch that is not taken; the gate refuses all of them, because it reads the text. On the organizer's machine that pulls a host file (a salt, an oracle) into the netlist and leaks bits of it through the score; the proof never sees the file. Yosys 0.53 rejects $writememh/$writememb (\"Can't resolve task name\"), but the gate refuses them first and with a file:line:col.",
+    "category": "never",
+    "proposed": false,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access:"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_readmemh.sv, host_memfile_write.sv, host_dead_code.sv, host_macro.sv; tests/run.py GATE_FIXTURES",
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-31: file reading is dangerous, disallow it (rulings on the never rows)",
+    "notes": "Thomas's ruling is about READING files ($readmemh, $readmemb); $writememh and $writememb are the same family and ride on the principle (policy: the proposed part), awaiting his confirmation"
+   },
+   {
+    "id": "sg-host-fileio",
+    "tag": "file I/O system tasks `$fopen`, `$fclose`, `$fdisplay*`, `$fwrite*`, `$fstrobe*`, `$fmonitor*`, `$fscanf`, `$fgets`, `$fgetc`, `$fread`, `$fseek`, `$ftell`, `$feof`, `$fflush`, `$rewind`, `$ungetc`, `$ferror`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "integer fd; initial begin fd = $fopen(\"/tmp/x\", \"w\"); $fdisplay(fd, \"hi\"); $fclose(fd); end  /  $fscanf(fd, ...)  /  $fgets  /  $fread",
+    "why": "Opens, reads, writes or repositions a host file (LRM 21.3). Yosys 0.53 has none of these tasks (\"Can't resolve function name `\\$fopen'\"), so without the gate they are rejected late, at the `banlist` stage (at `fourstate` for a task with no banned operators), as an ordinary rejection with Yosys's message and its line in the canonical text but no column and no reason; the gate refuses them at the `source` stage with a file:line:col and the principle, and would still refuse them under a Yosys that accepts them.",
+    "category": "never",
+    "proposed": false,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access:"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_fopen.sv, host_fread.sv",
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-31: file reading is dangerous, disallow it (rulings on the never rows)",
+    "notes": "Thomas's ruling is about READING files ($fopen for reading, $fscanf, $fgets, $fread, ...); the write-side tasks ($fdisplay*, $fwrite*, ...) are the same family and ride on the principle (policy: the proposed part), awaiting his confirmation"
+   },
+   {
+    "id": "sg-host-process",
+    "tag": "process and environment access `$system`, `$test$plusargs`, `$value$plusargs`, `$getenv`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "initial $system(\"id\");  /  initial if ($value$plusargs(\"X=%d\", v)) ...  /  $test$plusargs(\"X\")  /  $getenv(\"HOME\")",
+    "why": "Runs a host program or reads the host process's environment or command line (LRM 21.6; $system and $getenv are tool extensions). The checker would execute or read them on the organizer's machine. Yosys 0.53 rejects all of them (\"Can't resolve task name\"); the gate refuses them first.",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access:"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_system.sv, host_plusargs.sv",
+    "verified_by_run": true,
+    "notes": "proposed: the rest of the host-access family follows Thomas's 2026-10-31 file-reading ruling and awaits his confirmation"
+   },
+   {
+    "id": "sg-host-dump",
+    "tag": "wave and dump writers `$dumpfile`, `$dumpvars`, `$dumpon`, `$dumpoff`, `$dumpall`, `$dumplimit`, `$dumpflush`, `$dumpports*`, `$fsdb*`, `$shm_*`, `$vcdplus*`, `$wlf*`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "always_comb begin $dumpfile(\"/tmp/x.vcd\"); $dumpvars(0, band); y = a & b; end  /  initial begin $dumpfile(\"/tmp/x.vcd\"); $dumpvars(0, band); end",
+    "why": "Writes a waveform file on the host (LRM 21.7 and vendor extensions). The one family the pinned Yosys 0.53 ACCEPTS and ignores ($dumpfile, $dumpvars, $dumpon, $dumpoff, $dumpall: a warning only; a design with $dumpfile/$dumpvars scored 5.332 GE like the plain one, measured). Before the gate the form in an `initial` block stopped at the `design` stage (ls-sv has no `initial`, \"unknown process kind Initial\"; the fixture with the whole family stopped even earlier, at `banlist`, because Yosys rejects $dumpports and $fsdb*), but the form in an `always_comb` block passed every stage up to the proof (score 21.328 GE at N = 16, the same as the plain a & b): the ls-sv extractor lowers a `$dumpfile(...)` / `$dumpvars(...)` statement there to an empty statement, so ls-sv does NOT refuse these two outside `initial`, and the post-synthesis check cannot see them (it simulates the netlist). The other names of the family are errors in Yosys 0.53.",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access:"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_dump_comb.sv (the form that passed every stage), host_dump.sv (the whole family in an `initial` block)",
+    "verified_by_run": true,
+    "notes": "proposed: the rest of the host-access family follows Thomas's 2026-10-31 file-reading ruling and awaits his confirmation"
+   },
+   {
+    "id": "sg-host-dpi",
+    "tag": "DPI `import \"DPI-C\"`, `export \"DPI-C\"`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "import \"DPI-C\" pure function int c_fn(input int x);  /  export \"DPI-C\" function f;",
+    "why": "Native code (LRM 35): an imported function runs whatever the host library does, and an export lets native code call back in. Neither slang's meaning nor Yosys's (a syntax error in Yosys 0.53) is the call's; refused at the gate in the compilation unit and in a module alike.",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access: DPI"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_dpi_import.sv, host_dpi_export.sv",
+    "verified_by_run": true,
+    "notes": "proposed: the rest of the host-access family follows Thomas's 2026-10-31 file-reading ruling and awaits his confirmation"
+   },
+   {
+    "id": "sg-host-other-files",
+    "tag": "`$sdf_annotate`, `$coverage_save`, `$coverage_merge`, `$set_coverage_db_name`, `$load_coverage_db`, and the Annex D file tasks `$input`, `$log`, `$nolog`, `$key`, `$nokey`, `$save`, `$restart`, `$incsave`",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "initial begin $sdf_annotate(\"/tmp/x.sdf\"); $coverage_save(0, \"/tmp/cov\"); $input(\"/tmp/cmds\"); $log(\"/tmp/out.log\"); $save(\"/tmp/ckpt\"); end",
+    "why": "Each reads or writes a host file (an SDF file, a coverage database, a command, log, key or checkpoint file; LRM Annex D and the coverage clause). Yosys 0.53 rejects all of them; the gate refuses them first.",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-NO-HOST-ACCESS",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "host access:"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_other_files.sv",
+    "verified_by_run": true,
+    "notes": "proposed: the rest of the host-access family follows Thomas's 2026-10-31 file-reading ruling and awaits his confirmation"
+   },
+   {
+    "id": "sg-escaped-dollar",
+    "tag": "escaped identifier that begins with `$` (`\\$readmemh `, `\\$clog2 `)",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "initial \\$readmemh (\"/etc/hosts\", mem);  /  function automatic integer \\$clog2 (input integer v); ... localparam integer W = \\$clog2 (16);",
+    "why": "Yosys's lexer gives the escaped identifier the very name of the system task of that spelling (measured: it runs $readmemh and reads the file), while slang reads an ordinary identifier. So even an ADMITTED system name can mean two things: a user function \\$clog2 returning 0 is the user's for slang (W = 0, y = 0) and the builtin for Yosys (W = 4, scored as a & b, 5.332 GE). Refused whatever the name.",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-SAME-PROGRAM",
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "escaped identifier"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "gate_text"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "_slang_scan"
+     }
+    ],
+    "evidence": "svgolf/README.md Rules (No host access); score/tests/gate/host_escaped.sv, host_escaped_shadow.sv",
+    "verified_by_run": true,
+    "notes": "proposed: the rest of the host-access family follows Thomas's 2026-10-31 file-reading ruling and awaits his confirmation (the same-program half is not host access; it is the principle the register already has)"
    },
    {
     "id": "sg-xz-literal",
@@ -8042,7 +8455,9 @@
       "fn": "yosys_check"
      }
     ],
-    "verified_by_run": true
+    "verified_by_run": true,
+    "notes": "Measured 2026-10-31: the pinned scoring flow itself ACCEPTS and prices combinational loops (mux feedback `y = s ? d : y`: one MUX, 2.333 GE, depth 1; NOR latch 3.333 GE, depth 2), and run2 completes the settling ones, so this stage is what refuses them. It must stay until an obligation excludes state-holding loops: loop_lat_if is a loop the model computes as constant 0 and the netlist `y = y & a` holds state in, and postsynth cannot see it (Verilator gets --x-initial 0, randReset(0)). svgolf/design/nondeterminism/NOTE.md section 7.",
+    "evidence": "svgolf/score/fourstate.py --selftest (tests/fourstate/loop_state.sv, loop_settling.sv); docs/sv-tools-split-audit.md (loop_lat_if, loop_mux)"
    },
    {
     "id": "sg-fs-latch",
@@ -8300,8 +8715,8 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "import Mathlib.Tactic;  import LeanModels.Python.Semantics;  import Examples.python.tri.proof",
-    "why": "The checker builds only SvGolf, tasks and svgolf-eval; any other module is unaudited code outside the trusted base (Mathlib is not built in the svGolf package).",
+    "trigger": "import LeanModels.Python.Semantics;  import Examples.python.tri.proof;  import Mathlib2.Tactic;  import Lake",
+    "why": "The checker builds only SvGolf, tasks and svgolf-eval, so a module outside the allowlist is code nobody audited and stays outside the trusted base. Mathlib and the packages its import closure reaches (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient: the module roots, pinned by lean-surfaces' lake-manifest.json) ARE admitted since 2026-10-31 (Thomas): a proof that uses them is accepted on the same terms as any other, by the kernel from the task's allowed axioms alone. The comparator walks the dependency closure for axioms (a `native_decide` behind a Mathlib lemma is rejected like one in the file) and REPLAYS that closure, minus the toolchain and the submission's own modules, through the kernel, so a package olean whose declaration was added without kernel checking is rejected; toolchain modules must resolve into the toolchain; the integrity tripwire watches the Lean search path (`.olean` files of the packages, entries that do not exist) for every solution; the imports Lean recorded in the compiled solution are compared with the header the checker read.",
     "category": "never",
     "proposed": true,
     "principle": "P-TRUSTED-BASE",
@@ -8317,8 +8732,9 @@
       "fn": "check"
      }
     ],
-    "evidence": "README Submitting; tests/run.py ATTACKS bad_import",
-    "verified_by_run": true
+    "evidence": "README Submitting and \"Mathlib in submissions\"; tests/imports/test_allowlist.py; tests/checker/test_import_packages.py; tests/checker/test_comparator.py (the replay of a planted `False`); tests/run.py ATTACKS bad_import, bad_import_python, bad_import_lookalike, mathlib_lookalike and mathlib_glued_lookalike (refused), mathlib_band and mathlib_tactics_* (accepted), mathlib_native_decide, mathlib_decide_native, mathlib_plant_free, mathlib_plant_importing",
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-31: Mathlib is allowed in submissions (the allowlist admits it; any other unaudited module stays refused)"
    },
    {
     "id": "sg-multifile",

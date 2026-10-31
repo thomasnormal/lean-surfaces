@@ -8599,21 +8599,32 @@ def _convert_integer_expr(sm, e, cname):
     })
 
 
-def _disputed_string_escape(expression):
-    """Keep named control escapes loud while frontend/simulator disagree.
+def _disputed_string_escape(expression, letters="avfx"):
+    r"""Keep disputed string escapes loud while frontend/simulator disagree.
 
-    Inspect token spelling, not decoded bytes: octal/hex controls and an
-    escaped backslash followed by an ordinary a/v/f are distinct cases.
+    The letters after a backslash: `a v f` are the named control escapes (IEEE
+    Table 5-1), which Xcelium 24.03 reads as the plain letter; `x` is the hex
+    escape `\xdd` (same table), which Yosys 0.53 and Xcelium read as the letter
+    `x` and the digits, so `"\x41"` is 8'h31 in the scored netlist and 8'h41 in
+    slang, Icarus and Verilator.  Yosys is the dissenter against slang there, so
+    the hex refusal is a P-SAME-PROGRAM one.
+
+    Inspect token spelling, not decoded bytes: octal controls and an escaped
+    backslash followed by an ordinary letter are distinct cases.  Without a
+    token the decoded value can still show a named control character, but never
+    a hex escape (it is indistinguishable from the byte it spells).
     """
     if type(expression).__name__ != "StringLiteral":
         return False
     syntax = getattr(expression, "syntax", None)
     if syntax is None:
-        return any(char in expression.value for char in "\a\v\f")
+        return any(char in expression.value
+                   for char, letter in (("\a", "a"), ("\v", "v"), ("\f", "f"))
+                   if letter in letters)
     escaped = False
     for char in str(syntax):
         if escaped:
-            if char in "avf":
+            if char in letters:
                 return True
             escaped = False
         elif char == "\\":
@@ -8633,8 +8644,10 @@ def _contains_disputed_string_escape(expression):
 
 
 def _convert_string_expr(sm, e):
-    if _disputed_string_escape(e):
+    if _disputed_string_escape(e, "avf"):
         return unsupported(sm, e, "StringLiteral:named-control-escape")
+    if _disputed_string_escape(e, "x"):
+        return unsupported(sm, e, "StringLiteral:hex-escape")
     try:
         data = e.value.encode("latin-1")
     except (UnicodeEncodeError, Exception):

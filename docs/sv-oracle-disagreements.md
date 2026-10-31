@@ -442,6 +442,10 @@ extractor's refusals.
 
 ## Refused where the oracles split (2026-10-28)
 
+*(2026-10-31: the register rows that cite this section were re-audited against Thomas's rulings of that day, in five
+tools, in [sv-tools-split-audit.md](sv-tools-split-audit.md). Items (4) and (5) below are the `hi-override-context` and
+`pr-init-var` rows there; where only Icarus differs the item becomes a declared departure, not a refusal.)*
+
 Two select shapes, and (since the round 3 folds) one operand shape and one
 instance-override shape, and (since round 4) one legality question, and
 (since round 5) a second override shape and an untyped constant's width,

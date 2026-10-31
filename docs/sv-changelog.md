@@ -1,3 +1,21 @@
+# [0.1.300] — 2026-10-31
+
+Refusal register review, with Thomas's rulings of 2026-10-31 (no semantics change except one extractor refusal).
+The string literal `"\x41"` is now a loud `StringLiteral:hex-escape` refusal in the symbolic-tier extractor: the pinned
+Yosys 0.53 reads `\xdd` as the letter `x` and the two digits (`"\x41"` is `8'h31` in the scored netlist), while slang,
+Icarus and Verilator read it as the byte `8'h41`, so a proof and a score could be about different circuits. New
+`docs/sv-tools-split-audit.md` and `harness/sv/tools_split_audit/`: the per-tool table (slang, Yosys, Verilator,
+Xcelium, Icarus and the ls-sv model) for every register row whose reason is a split among the tools or a program
+the LRM forbids, with the class of each (illegal / only a non-pipeline tool dissents / pipeline split /
+nondeterministic). `docs/sv-refusals.json`: policies for the 2026-10-31 rulings (classes ignored while the scored
+frontend is Yosys `read_verilog -sv`; a slang-illegal program is rejected; a tools-split refusal needs a split among
+the pipeline tools, Icarus-only splits are declared departures; LRM-legal nondeterminism is modelled and the golfer
+proves the output deterministic; host access is disallowed; Mathlib is allowed in submissions), the new principle
+`P-NO-HOST-ACCESS`, `P-SYNTHESIZABLE` reworded to design tasks, the svGolf host-access rows `sg-host-*` and
+`sg-escaped-dollar`, the Mathlib rows, and two known holes (slang analysis-pass errors are not read by the extractor,
+and the Lean file of a submission is not covered by the host-access gate). Row categories moved only where the audit
+evidence is clear; the rows it is unsure of are listed in the audit page.
+
 # [0.1.299] — 2026-10-31
 
 Proof tactics: the second `sv_comb` fragment, operators (WP-G step 2, S2 and S2d; register `tl-sv-structure-fragment`).

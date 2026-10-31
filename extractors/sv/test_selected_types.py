@@ -82,12 +82,38 @@ class SelectedTypes(unittest.TestCase):
                     self.assertTrue(any(n.get("sv_kind") == "StringLiteral:named-control-escape"
                                         for n in nodes(design)))
 
-    def test_escaped_backslash_and_numeric_controls_are_distinct(self):
-        for spelling in (r'"\\a"', r'"\007\013\014"', r'"\x07\x0b\x0c"'):
+    def test_escaped_backslash_and_octal_controls_are_distinct(self):
+        # an escaped backslash before an ordinary letter (also x) and the octal
+        # spellings of the controls are plain bytes in every tool
+        for spelling in (r'"\\a"', r'"\007\013\014"', r'"\\x41"'):
             with self.subTest(spelling=spelling):
                 design = extract_source("module top; bit [23:0] value; "
                                         "initial value = " + spelling + "; endmodule")
                 self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
+    def test_hex_escapes_stay_loud(self):
+        # IEEE Table 5-1 `\xdd`: slang, Icarus and Verilator give the byte, Yosys 0.53 and
+        # Xcelium 24.03 read the letter x and the digits ("\x41" is 8'h31 in the scored
+        # netlist), so the extractor must not admit it (tools-split audit, 2026-10-31).
+        for spelling in (r'"\x41"', r'"\x4"', r'"\x07\x0b\x0c"', r'"A\x41"'):
+            for width in (8, 16, 24):
+                with self.subTest(spelling=spelling, width=width):
+                    design = extract_source("module top; bit [" + str(width-1) +
+                        ":0] value; initial value = " + spelling + "; endmodule")
+                    self.assertTrue(any(n.get("sv_kind") == "StringLiteral:hex-escape"
+                                        for n in nodes(design)))
+
+    def test_hex_escape_confined_to_a_rare_region_stays_loud(self):
+        # the attack the fourstate docstring describes: the disputed constant only matters
+        # on one input value, where a sampled post-synthesis check may not look
+        design = extract_source("module top(input logic [15:0] a, output logic [7:0] y); "
+                                "assign y = (a == 16'hBEEF) ? \"\\x41\" : 8'h41; endmodule")
+        self.assertTrue(any(n.get("sv_kind") == "StringLiteral:hex-escape" for n in nodes(design)))
+
+    def test_named_control_escape_keeps_its_own_tag(self):
+        design = extract_source("module top; bit [7:0] value; initial value = \"\\a\"; endmodule")
+        kinds = {n.get("sv_kind") for n in nodes(design) if n.get("kind") == "Unsupported"}
+        self.assertEqual(kinds, {"StringLiteral:named-control-escape"})
 
 
 if __name__ == "__main__":

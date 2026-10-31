@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Bare `EOFError` raises now use the admitted builtin exception identity
+  and are caught by `except Exception:`; payload-bearing end-of-file
+  constructors remain outside the tier.
+
 - Bare `SyntaxError` raises now use the admitted builtin exception identity
   and are caught by `except Exception:`; payload-bearing syntax-error
   constructors remain outside the tier.

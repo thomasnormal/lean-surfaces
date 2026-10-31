@@ -67,6 +67,11 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.catch_AssertionError(23) = 23
 
+#py_check builtin_raise_lab.raise_EOFError() raises
+  (.builtinException "EOFError")
+
+#py_check builtin_raise_lab.catch_EOFError(23) = 23
+
 #py_check builtin_raise_lab.raise_StopIteration() raises (.builtinException "StopIteration")
 
 #py_check builtin_raise_lab.catch_StopIteration(23) = 23

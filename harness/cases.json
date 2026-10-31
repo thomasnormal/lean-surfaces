@@ -1400,5 +1400,7 @@
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_SyntaxWarning", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_SyntaxWarning", "args": [[0], [23], [-7]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_SyntaxError", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_SyntaxError", "args": [[0], [23], [-7]], "expect": "match"}
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_SyntaxError", "args": [[0], [23], [-7]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raise_EOFError", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "catch_EOFError", "args": [[0], [23], [-7]], "expect": "match"}
 ]

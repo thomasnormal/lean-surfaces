@@ -166,6 +166,17 @@ def catch_AssertionError(value):
         return value
 
 
+def raise_EOFError():
+    raise EOFError
+
+
+def catch_EOFError(value):
+    try:
+        raise EOFError
+    except Exception:
+        return value
+
+
 def raise_StopIteration():
     raise StopIteration
 

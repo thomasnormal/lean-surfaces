@@ -7013,3 +7013,22 @@ payload-bearing syntax-error constructors remain loud.
 DECIDED: admit only the payload-free `SyntaxError` class identity and its
 measured `Exception` hierarchy catch; retain loud behavior for payload
 constructors.
+
+## 2026-10-31-pycomplete-223 — admit bare `EOFError`
+
+The builtin exception table now admits the leaf `EOFError` identity. A bare
+`raise EOFError` uses the existing `.builtinException` representation, and
+the exception hierarchy now lets `except Exception:` catch it faithfully;
+payload-bearing end-of-file constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Exception` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,834 cases: 3,797 decided and matched, 0 failed, and 37 recorded refusals |
+| Full proof differential | 3,834 cases: 3,696 matched, 138 recorded refusals, and 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `builtin_raise_lab.spec` build passed; focused axiom census found 0 native and 0 `sorry` dependencies; Python gates passed except the known stale-coverage, duplicate-declaration census, and missing-`nbformat` environment checks |
+
+DECIDED: admit only the payload-free `EOFError` class identity and its
+measured `Exception` hierarchy catch; retain loud behavior for payload
+constructors.

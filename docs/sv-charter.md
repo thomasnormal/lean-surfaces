@@ -60,6 +60,14 @@ an already-true condition, but still refuses a wait that would suspend; event
 triggers remain loud. The measured differential and grammar coverage deltas
 are recorded in the lane journal for this item.
 
+## `always_comb` same-slot publication — 2026-10-31
+
+The inferred-sensitivity process is now exercised after two blocking writes to
+its source in one Active process. Both publications use the existing wake queue;
+the final value is observed after the slot settles, with no polling or second
+scheduler. `always_comb_double_write_timed` pins the transcript and keeps the
+single scheduler authoritative for same-time propagation.
+
 ## Plain `always` timed conformance — 2026-10-30
 
 The scheduler-facing conformance harness now drives retained plain `always`

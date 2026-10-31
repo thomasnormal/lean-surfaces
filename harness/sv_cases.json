@@ -1905,6 +1905,17 @@
       "ticks": 4
     },
     {
+      "name": "always_comb_double_write_timed",
+      "file": "Examples/system-verilog/always_comb_double_write/always_comb_double_write.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB DOUBLE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
       "name": "delayed_refusal",
       "file": "Examples/system-verilog/time_boundary/delayed.sv",
       "module": "top",

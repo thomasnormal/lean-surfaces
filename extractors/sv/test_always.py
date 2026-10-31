@@ -68,6 +68,14 @@ class PlainAlways(unittest.TestCase):
             self.assertTrue(any(n.get("kind") == "Always" for n in nodes(design)))
             self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
+    def test_same_slot_double_write_fixture_is_timed_and_clean(self):
+        path = (Path(__file__).resolve().parents[2] /
+                "Examples/system-verilog/always_comb_double_write/always_comb_double_write.sv")
+        design = lower(path.read_text())
+        processes = design["modules"][0]["processes"]
+        self.assertEqual([p["kind"] for p in processes], ["AlwaysComb", "Initial"])
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

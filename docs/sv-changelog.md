@@ -37,6 +37,17 @@ The `wait_accept` differential witness covers delayed publication and
 resumption through the existing scheduler loop. Event-triggered waits and
 the legacy self-check path remain explicit boundaries.
 
+The `always_comb_double_write_timed` witness now covers two source changes in
+one Active process. The existing inferred-sensitivity queue re-runs the comb
+body after each publication and settles on the final value.
+
+The generated grammar page was refreshed with the census's deterministic
+lexical first-witness rule. It exposes a stale committed page: five generate
+rows had previously retained simpler witnesses, while the current first paths
+are `comb_proc/add_proc.sv` and correctly refuse on its unrelated continuous
+assignments. The page now records the measured **239/210/29**
+(witnesses/MATCH/REFUSE) result rather than preserving that stale number.
+
 # [0.1.270] — 2026-10-30
 
 Proof library: the lowering of `always_comb` bodies, first stage (WP-G, G2.1). Two NEW modules,

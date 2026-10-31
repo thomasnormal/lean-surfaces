@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 214 | 239 | 89.5% |
+| grammar syntax kinds (MATCH) | 210 | 239 | 87.9% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 538 | 524 | 0 | 14 | sv-tests-2 declarations |
+| 539 | 525 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -231,6 +231,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_comb_nba_timed` | `Examples/system-verilog/always_comb_nba/always_comb_nba.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_comb_chain_timed` | `Examples/system-verilog/always_comb_chain/always_comb_chain.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_comb_written_excluded_timed` | `Examples/system-verilog/always_comb_written_excluded/always_comb_written_excluded.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_comb_double_write_timed` | `Examples/system-verilog/always_comb_double_write/always_comb_double_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `delayed_refusal` | `Examples/system-verilog/time_boundary/delayed.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `literal_real_decl` | `Examples/system-verilog/literal_real_decl/literal_real_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_string_len` | `Examples/system-verilog/literal_string_len/literal_string_len.sv` | match | **MATCH** | `ok` | MATCH |
@@ -568,7 +569,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 239 | 214 | 25 | pyslang SyntaxKind |
+| 239 | 210 | 29 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -656,9 +657,9 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionPortList` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPrototype` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
-| `SyntaxKind.GenerateBlock` | `Examples/system-verilog/elaborated_generate/captures.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.GenerateRegion` | `Examples/system-verilog/lp_add/lp_add.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
-| `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/elaborated_generate/loops.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.GenerateBlock` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.GenerateRegion` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchicalInstance` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
@@ -697,7 +698,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/lp_add/neg/lp_shift.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/sem2/fold_cgrow/fold_cgrow.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LongIntType` | `Examples/system-verilog/sem2/fold_sqn/fold_sqn.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LoopGenerate` | `Examples/system-verilog/elaborated_generate/captures.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LoopGenerate` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.LoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MinTypMaxExpression` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.ModAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
@@ -708,7 +709,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/elaborated_generate/captures.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedPortConnection` | `Examples/system-verilog/ripple_fa/ripple_fa.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |

@@ -1181,6 +1181,7 @@ inductive SProc where
   | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
   | alwaysFF (clock : String) (body : SStmt)
+  | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
@@ -1224,6 +1225,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFF clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysFFReset clock reset _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysImplicit' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
@@ -1284,6 +1287,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
       | .alwaysFF clock _ => some s!"AlwaysFF:{clock}"
+      | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
@@ -1699,7 +1703,10 @@ def parseSProc (j : Json) : Except String SProc := do
       let body ← parseSStmt (← getF j "body")
       let style := (getStrF j "style").toOption.getD "always"
       if style == "always_ff" then
-        return .alwaysFF (← getStrF j "clock") body
+        let clock ← getStrF j "clock"
+        match (getStrF j "areset_n").toOption with
+        | some reset => return .alwaysFFReset clock reset body
+        | none => return .alwaysFF clock body
       else
         return .alwaysPosedge (← getStrF j "clock") body
   | "AlwaysComb" =>

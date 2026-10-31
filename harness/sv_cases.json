@@ -4922,6 +4922,17 @@
       "ticks": 5
     },
     {
+      "name": "always_ff_async_reset",
+      "file": "Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
       "name": "always_latch_accept",
       "file": "Examples/system-verilog/always_latch_accept/always_latch_accept.sv",
       "module": "top",

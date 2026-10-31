@@ -1,3 +1,14 @@
+# [0.1.276] — 2026-10-31
+
+Timed `always_ff @(posedge clk or negedge rst_n)` now registers its
+active-low asynchronous reset with the existing retained scheduler. A reset
+negedge wakes the process and commits its nonblocking reset assignment through
+the ordinary NBA path; a later clock edge captures the released value. The
+`always_ff_async_reset` witness matches the pinned transcript, while the
+initial-only path continues to refuse the non-initial process explicitly.
+Differential coverage grows **542/528/0/14 → 543/529/0/14** and grammar
+coverage remains **239/210/29**.
+
 # [0.1.275] — 2026-10-31
 
 The `always_latch_wake` timed witness now changes enable and data after time

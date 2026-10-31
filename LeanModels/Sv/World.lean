@@ -170,6 +170,10 @@ structure ProcState where
   The scheduler keeps the driver's sampled value separately from the
   resolved signal so multiple drivers never collapse to last-writer order. -/
   driverTarget : Option String := none
+  /-- Optional asynchronous active-low reset for an `always_ff` process.
+  The process remains registered on its positive clock edge; a negedge of
+  this signal also wakes the retained body. -/
+  resetTarget : Option String := none
   /-- The target that will make a suspended process runnable. -/
   registration : Option WaitTarget := none
   /-- Explicit process-control suspension is distinct from an ordinary wait.

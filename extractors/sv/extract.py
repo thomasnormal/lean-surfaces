@@ -24666,7 +24666,7 @@ def convert_procedural_block(sm, m):
     if type(body).__name__ != "TimedStatement":
         return unsupported(sm, m, "ProceduralBlockSymbol:NoEventControl")
     timing = body.timing
-    if type(timing).__name__ == "EventListControl" and _SYM is not None:
+    if type(timing).__name__ == "EventListControl":
         d = _sym_areset_process(sm, m, body, timing, style)
         if d is not None:
             return d

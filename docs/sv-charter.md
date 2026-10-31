@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Asynchronous active-low reset for timed `always_ff` — 2026-10-31
+
+Timed `always_ff @(posedge clk or negedge rst_n)` now retains both event
+registrations in the existing scheduler. A negedge of the active-low reset
+wakes the same process continuation, so its nonblocking reset assignment is
+committed through the ordinary NBA path; a later positive clock edge captures
+the released value. The event-list conversion is enabled for ordinary and
+symbolic extraction, while the legacy initial-only self-check runner keeps the
+construct loud with its explicit reset edge in the refusal.
+
+The `always_ff_async_reset` witness checks reset between clock captures and
+then verifies capture after release. It adds no reset-specific event loop or
+shortcut. Differential coverage grows **542/528/0/14 → 543/529/0/14**;
+grammar coverage remains **239/210/29**.
+
 ## Scheduler core rung — 2026-10-30 (publication closure)
 
 Before adding another concurrent process family, the scheduler's ordering

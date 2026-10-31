@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 210 | 239 | 87.9% |
+| grammar syntax kinds (MATCH) | 211 | 239 | 88.3% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 542 | 528 | 0 | 14 | sv-tests-2 declarations |
+| 543 | 529 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -562,6 +562,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assign_net_resolution` | `Examples/system-verilog/assign_net_resolution/assign_net_resolution.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_accept` | `Examples/system-verilog/always_ff_accept/always_ff_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_capture` | `Examples/system-verilog/always_ff_capture/always_ff_capture.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_async_reset` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_accept` | `Examples/system-verilog/always_latch_accept/always_latch_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_wake` | `Examples/system-verilog/always_latch_wake/always_latch_wake.sv` | match | **MATCH** | `ok` | MATCH |
 | `wait_accept` | `Examples/system-verilog/wait_accept/wait_accept.sv` | match | **MATCH** | `ok` | MATCH |
@@ -572,7 +573,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 239 | 210 | 29 | pyslang SyntaxKind |
+| 239 | 211 | 28 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -602,7 +603,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.AssignmentPatternExpression` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternItem` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryAndExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.BinaryEventExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` continuous assign target 'PmSel_S' is not a net |
+| `SyntaxKind.BinaryEventExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryOrExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryXnorExpression` | `Examples/system-verilog/sem2/xnor_bin/xnor_bin.sv` | **REFUSE** | `unsupported` scheduler halted: LeanModels.Loud.unsupported (LeanModels.RefusalCause.unsupported { clause := "4.4" }) "unsupported expression 'BinaryExpression:BinaryXnor'" none |
 | `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
@@ -610,7 +611,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_ff_capture/always_ff_capture.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
@@ -795,7 +796,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryMinusExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPlusExpression` | `Examples/system-verilog/unary_plus/arithmetic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPredecrementExpression` | `Examples/system-verilog/increment/incdec.sv` | **MATCH** | `ok`  |

@@ -5,6 +5,30 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.171] — 2026-10-31
+
+### Added
+
+- Added a declaration-initializer body-assignment witness: the loop-local
+  declaration assigns the enclosing value before `break`.
+- Added the false-condition companion for declaration-initializer assignment:
+  the body assignment and `break` are skipped when `i < 2` is false.
+- Added a declaration-initializer assignment `return` witness: the assigned
+  body-local value is returned immediately.
+- Added the false-condition companion for declaration-initializer assignment
+  `return`: the skipped body preserves the enclosing value.
+- Added a declaration-initializer assignment `continue` witness: the body
+  assignment persists across `continue` and the loop step.
+
+### Measured
+
+- The checked-in corpus now contains **1100 differential rows**: **1083 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **594**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.170] — 2026-10-30
 
 ### Added

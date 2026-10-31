@@ -46,6 +46,8 @@
 
 - Do-while declaration initializers now preserve body-local assignment results when the post-body condition is false before a `return`.
 
+- Do-while declaration initializers now preserve body-local assignment results across `continue` when the initial condition is false.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

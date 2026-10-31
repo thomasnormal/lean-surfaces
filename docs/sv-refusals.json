@@ -1532,8 +1532,8 @@
    "layers": [
     "extractor"
    ],
-   "trigger": "H: always_ff @(posedge c or negedge rst_n iff en) y <= a;",
-   "why": "A scalar `iff` guard is admitted on the clock event of an asynchronous-reset list, but the reset event is unconditional. Guarding the reset edge needs a separate reset qualification rule and remains loud.",
+   "trigger": "H: always_ff @(posedge c or negedge rst_n iff f(en));",
+   "why": "Scalar `reset_iff` guards on active-low or active-high asynchronous reset events are retained and sampled at the reset edge; unsupported reset guard expressions remain loud under the same scalar vocabulary.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",
@@ -1551,7 +1551,7 @@
    ],
    "evidence": "docs/sv-event-iff.md",
    "verified_by_run": true,
-   "decided_by": "Thomas 2026-10-31: reset-side iff remains an explicit boundary"
+   "decided_by": "Thomas 2026-10-31: scalar reset-side iff is retained; unsupported reset guard expressions remain loud"
   },
   {
    "id": "pr-clock-wide",
@@ -7537,7 +7537,7 @@
     "layers": [
      "svgolf-gate"
     ],
-    "trigger": "string s = \"héllo\"; a form feed; a stray 0xFF byte",
+    "trigger": "string s = \"h\u00e9llo\"; a form feed; a stray 0xFF byte",
     "why": "Identifier and string lexing of non-ASCII text is each tool's business; the gate refuses rather than assume the tools agree (non-ASCII INSIDE a comment passes).",
     "category": "refused-now",
     "proposed": false,
@@ -9037,7 +9037,7 @@
    },
    {
     "id": "sg-ps-failclosed",
-    "tag": "fail-closed postsynth conditions: x/z in an ls-sv output, an unknown-valued constant in the netlist, a netlist Verilator will not lint / build / run, σ_src ≠ σ_rev, port sets that differ, a netlist that does not re-read, an inout port, a non-plain identifier",
+    "tag": "fail-closed postsynth conditions: x/z in an ls-sv output, an unknown-valued constant in the netlist, a netlist Verilator will not lint / build / run, \u03c3_src \u2260 \u03c3_rev, port sets that differ, a netlist that does not re-read, an inout port, a non-plain identifier",
     "group": "g-score",
     "layers": [
      "svgolf-checker"
@@ -9104,7 +9104,7 @@
     ],
     "unverified": true,
     "verified_by_run": false,
-    "notes": "σ_src ≠ σ_rev (two ls-sv schedules disagree) is P-DETERMINISM (never, proposed)."
+    "notes": "\u03c3_src \u2260 \u03c3_rev (two ls-sv schedules disagree) is P-DETERMINISM (never, proposed)."
    },
    {
     "id": "sg-task-ban-op",

@@ -19,19 +19,18 @@ re-arms the same body through the existing Active/Inactive/NBA loop. This is
 one multi-event registration, not a second scheduler.
 
 `always_ff` lists continue to use the narrower asynchronous-reset forms. Their
-clock event may carry the same scalar `iff` guard; the reset event is
-unconditional. Empty lists, unsupported or non-scalar `iff` expressions, and
-other clock/reset shapes remain loud because they need guards or sequential
-rules that are not represented.
+clock event may carry the same scalar `iff` guard, and the reset event may carry
+an independent scalar `reset_iff` guard. Empty lists, unsupported or non-scalar
+guard expressions, and other clock/reset shapes remain loud because they need
+guards or sequential rules that are not represented.
 
 ## Guarded asynchronous-reset lists — 2026-10-31
 
 The retained two-edge `always_ff` registration now separates the clock and
 reset edge tests. A scalar guard on the clock event filters only clock wakeups;
-an active-low or active-high asynchronous reset still wakes the body regardless
-of that guard. A reset-side `iff` remains an explicit refusal. Part-select and
-other indexed guard forms remain loud until their selector and width rules are
-represented.
+an active-low or active-high asynchronous reset has its own `reset_iff` filter.
+Part-select and other indexed guard forms remain loud until their selector and
+width rules are represented.
 
 ## 2026-10-22 census and decision
 

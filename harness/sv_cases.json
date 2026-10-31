@@ -5085,6 +5085,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 6
+    },
+    {
+      "name": "always_ff_async_reset_iff_reset",
+      "file": "Examples/system-verilog/always_ff_async_reset_iff_reset/always_ff_async_reset_iff_reset.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET IFF RESET PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
     }
   ]
 }

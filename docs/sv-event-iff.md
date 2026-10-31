@@ -4,10 +4,10 @@
  an `iff` condition. The event must occur first and the guard is sampled when
  that event arrives; changing the guard alone does not wake the process. The
  timed slice admits scalar identifier, comparison, and logical guards on plain
-`always` events, positive- or negative-edge `always_ff` clocks, and the clock
-event of a two-edge asynchronous-reset `always_ff`; a direct scalar bit-select
-such as `en[0]` is also admitted. The marker remains explicit for unsupported
-expressions and guards placed on the reset event.
+`always` events, positive- or negative-edge `always_ff` clocks, and both events
+of a two-edge asynchronous-reset `always_ff`; a direct scalar bit-select such
+as `en[0]` is also admitted. The marker remains explicit for unsupported
+expressions.
 
 ## Why the remaining conditional event controls stay loud
 
@@ -19,8 +19,8 @@ scalar bit-selects, scalar equality/inequality comparisons, and logical `&&`/`||
 combinations; calls, part-selects, and other general expressions still need a
 broader evaluator. `always_ff` guards
 remain on the clock registration and preserve its inferred-clock and
-single-driver rules. In a guarded clock-plus-reset list, only the clock edge is
-filtered; the asynchronous reset edge remains unconditional. No second
+single-driver rules. In a guarded clock-plus-reset list, `iff` filters the
+clock edge and `reset_iff` filters the reset edge independently. No second
 scheduler or guessed guard evaluation is introduced.
 
 ## Guarded asynchronous-reset lists — 2026-10-31
@@ -29,12 +29,19 @@ scheduler or guessed guard evaluation is introduced.
 on the clock event while keeping the asynchronous reset edge unconditional.
 The reset edge therefore still wakes the process when `en` is false, and a
 clock edge wakes it only when the guard is true. Active-high `areset` uses the
-same representation with its positive reset polarity. A guard attached to the
-reset event itself remains loud because it needs a separate reset qualification
-rule.
+same representation with its positive reset polarity. A scalar guard attached
+to the reset event is retained in `reset_iff` and sampled at that reset edge.
 
 The `always_ff_async_reset_iff` witness exercises a disabled clock edge, an
 unguarded reset edge, and an enabled clock edge through the existing scheduler.
+
+## Guarded asynchronous-reset edges — 2026-10-31
+
+The envelope now retains `reset_iff` for a scalar guard on the reset event,
+such as `negedge rst_n iff en`. The existing `resetGuard` field samples it at
+the reset publication; no clock guard is implied. The
+`always_ff_async_reset_iff_reset` witness first publishes a disabled reset edge
+and then an enabled one.
 
 ## Indexed scalar guards — 2026-10-31
 

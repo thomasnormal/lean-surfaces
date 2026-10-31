@@ -1,5 +1,13 @@
 # [0.1.290] — 2026-10-31
 
+Scalar `reset_iff` guards on active-low and active-high asynchronous-reset
+events are now retained and sampled at the reset edge. The
+`always_ff_async_reset_iff_reset` witness covers disabled and enabled reset
+publications. Differential coverage grows **554/540/0/14 → 555/541/0/14**;
+grammar coverage remains **240/212/28**.
+
+# [0.1.290] — 2026-10-31
+
 `sv_bridge` no longer loops on a pair it cannot split (WP-P3/P4 follow-up): two sides of different shape (a design that
 writes a constant where the arithmetic reads a net, the `drop_carry` negative) are reported as such ("the goal and the
 equation have different shapes here", both sides printed) instead of running the elaborator out of heartbeats; its

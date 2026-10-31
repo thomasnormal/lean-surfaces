@@ -1186,8 +1186,12 @@ inductive SProc where
   | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
   | alwaysFFResetGuarded (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
+  | alwaysFFResetGuardedReset (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
+  | alwaysFFResetDualGuarded (clock : String) (reset : String) (clockGuard : SExpr) (resetGuard : SExpr) (body : SStmt)
   | alwaysFFResetHigh (clock : String) (reset : String) (body : SStmt)
   | alwaysFFResetHighGuarded (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
+  | alwaysFFResetHighGuardedReset (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
+  | alwaysFFResetHighDualGuarded (clock : String) (reset : String) (clockGuard : SExpr) (resetGuard : SExpr) (body : SStmt)
   /-- Plain `always` event lists.  The optional `iff` expression is retained
   with each event so the timed scheduler can sample it at publication time.
   The extractor currently admits scalar identifier guards; keeping the full
@@ -1246,10 +1250,18 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysFFResetGuarded clock reset _ _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}:iff' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetGuardedReset clock reset _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}:reset-iff' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetDualGuarded clock reset _ _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}:dual-iff' (self-check tier runs initial-only designs)"
   | .alwaysFFResetHigh clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysFFResetHighGuarded clock reset _ _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}:iff' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetHighGuardedReset clock reset _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}:reset-iff' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetHighDualGuarded clock reset _ _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}:dual-iff' (self-check tier runs initial-only designs)"
   | .alwaysEvent events _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysEvent:{events.length}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
@@ -1317,8 +1329,12 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysFFNegedge clock _ => some s!"AlwaysFFNegedge:{clock}"
       | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
       | .alwaysFFResetGuarded clock reset _ _ => some s!"AlwaysFF:{clock}+negedge {reset}:iff"
+      | .alwaysFFResetGuardedReset clock reset _ _ => some s!"AlwaysFF:{clock}+negedge {reset}:reset-iff"
+      | .alwaysFFResetDualGuarded clock reset _ _ _ => some s!"AlwaysFF:{clock}+negedge {reset}:dual-iff"
       | .alwaysFFResetHigh clock reset _ => some s!"AlwaysFF:{clock}+posedge {reset}"
       | .alwaysFFResetHighGuarded clock reset _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:iff"
+      | .alwaysFFResetHighGuardedReset clock reset _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:reset-iff"
+      | .alwaysFFResetHighDualGuarded clock reset _ _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:dual-iff"
       | .alwaysEvent events _ => some s!"AlwaysEvent:{events.length}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
@@ -1738,15 +1754,31 @@ def parseSProc (j : Json) : Except String SProc := do
         let clock ← getStrF j "clock"
         match (getStrF j "areset_n").toOption with
         | some reset =>
-            match getFOpt j "iff" with
-            | some guard => return .alwaysFFResetGuarded clock reset (← parseSExpr guard) body
-            | none => return .alwaysFFReset clock reset body
+            let clockGuard ← match getFOpt j "iff" with
+              | some guard => pure (some (← parseSExpr guard))
+              | none => pure none
+            let resetGuard ← match getFOpt j "reset_iff" with
+              | some guard => pure (some (← parseSExpr guard))
+              | none => pure none
+            match clockGuard, resetGuard with
+            | some cg, some rg => return .alwaysFFResetDualGuarded clock reset cg rg body
+            | some cg, none => return .alwaysFFResetGuarded clock reset cg body
+            | none, some rg => return .alwaysFFResetGuardedReset clock reset rg body
+            | none, none => return .alwaysFFReset clock reset body
         | none =>
             match (getStrF j "areset").toOption with
             | some reset =>
-                match getFOpt j "iff" with
-                | some guard => return .alwaysFFResetHighGuarded clock reset (← parseSExpr guard) body
-                | none => return .alwaysFFResetHigh clock reset body
+                let clockGuard ← match getFOpt j "iff" with
+                  | some guard => pure (some (← parseSExpr guard))
+                  | none => pure none
+                let resetGuard ← match getFOpt j "reset_iff" with
+                  | some guard => pure (some (← parseSExpr guard))
+                  | none => pure none
+                match clockGuard, resetGuard with
+                | some cg, some rg => return .alwaysFFResetHighDualGuarded clock reset cg rg body
+                | some cg, none => return .alwaysFFResetHighGuarded clock reset cg body
+                | none, some rg => return .alwaysFFResetHighGuardedReset clock reset rg body
+                | none, none => return .alwaysFFResetHigh clock reset body
             | none =>
                 let edge ← match (getStrF j "edge").toOption.getD "pos" with
                   | "pos" => pure Edge.pos

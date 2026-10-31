@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar guards on asynchronous-reset edges — 2026-10-31
+
+The timed `always_ff` envelope retains `reset_iff` for a scalar guard on the
+asynchronous reset event, alongside the existing clock-event `iff`. The
+existing `ProcState.resetGuard` and `wakeEdges` path sample the reset guard only
+when its reset edge is published; unsupported guard expressions remain loud.
+The `always_ff_async_reset_iff_reset` witness covers a disabled reset edge and
+an enabled reset edge. Differential coverage grows **554/540/0/14 →
+555/541/0/14**; grammar coverage remains **240/212/28**.
+
 ## Indexed scalar `iff` guards — 2026-10-31
 
 The timed event guard slice admits a direct one-bit packed-vector select such

@@ -142,11 +142,27 @@ class PlainAlways(unittest.TestCase):
                          ("AlwaysPosedge", "always_ff", "clk", "rst"))
         self.assertEqual(process["iff"]["name"], "en")
 
-    def test_always_ff_async_reset_iff_on_reset_is_loud(self):
+    def test_always_ff_async_reset_iff_on_reset_is_retained(self):
         design = lower(
             "module top; logic clk, rst_n, en, q; "
             "always_ff @(posedge clk or negedge rst_n iff en) "
             "q <= 1'b0; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["reset_iff"]["name"], "en")
+
+    def test_always_ff_async_reset_active_high_iff_on_reset_is_retained(self):
+        design = lower(
+            "module top; logic clk, rst, en, q; "
+            "always_ff @(posedge clk or posedge rst iff en) "
+            "q <= 1'b0; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["reset_iff"]["name"], "en")
+
+    def test_always_ff_async_reset_iff_call_stays_loud(self):
+        design = lower(
+            "module top; logic clk, rst_n, en, q; "
+            "always_ff @(posedge clk or negedge rst_n iff f(en)) "
+            "q <= 1'b0; endmodule", require_valid=False)
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
     def test_always_ff_vector_range_iff_stays_loud(self):

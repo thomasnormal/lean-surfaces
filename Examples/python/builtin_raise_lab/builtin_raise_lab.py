@@ -298,6 +298,17 @@ def catch_DeprecationWarning(value):
         return value
 
 
+def raise_FutureWarning():
+    raise FutureWarning
+
+
+def catch_FutureWarning(value):
+    try:
+        raise FutureWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

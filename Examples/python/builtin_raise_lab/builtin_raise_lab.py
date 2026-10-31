@@ -177,6 +177,28 @@ def catch_StopIteration(value):
         return value
 
 
+def raise_ImportError():
+    raise ImportError
+
+
+def catch_ImportError(value):
+    try:
+        raise ImportError
+    except Exception:
+        return value
+
+
+def raise_ModuleNotFoundError():
+    raise ModuleNotFoundError
+
+
+def catch_ModuleNotFoundError(value):
+    try:
+        raise ModuleNotFoundError
+    except Exception:
+        return value
+
+
 def base_not_exception():
     try:
         try:

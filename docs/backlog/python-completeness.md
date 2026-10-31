@@ -6698,3 +6698,22 @@ handler. Existing range-slice state transport remains clock-free.
 DECIDED: keep the handler census and range-slice semantics, with clock erasure
 tracking their stateful proof paths; continue with the next measured Python
 gap after dependent targets pass.
+
+## 2026-10-31-pycomplete-206 — admit bare import exception identities
+
+The exception table now admits bare `raise ImportError` and
+`raise ModuleNotFoundError` as the existing `.builtinException` identities.
+They are therefore caught by the already-modelled `except Exception`
+hierarchy, while payload-bearing constructors and the separate direct
+`except ImportError:` import-error path remain unchanged and loud where their
+identity cannot be represented by the pinned `.importError` payload.
+
+| Measurement | Result |
+|---|---|
+| New differential rows | Four rows: two bare raises and two `except Exception` catches |
+| Proof guards | Four `#py_check` rows in `builtin_raise_lab` |
+| Scope | Existing builtin exception identity; no new runtime representation |
+
+DECIDED: admit only bare import exception identities and their admitted
+`Exception` ancestor catch; retain the separate import-error and payload
+boundaries until measured independently.

@@ -71,6 +71,15 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.catch_StopIteration(23) = 23
 
+#py_check builtin_raise_lab.raise_ImportError() raises (.builtinException "ImportError")
+
+#py_check builtin_raise_lab.catch_ImportError(23) = 23
+
+#py_check builtin_raise_lab.raise_ModuleNotFoundError() raises
+  (.builtinException "ModuleNotFoundError")
+
+#py_check builtin_raise_lab.catch_ModuleNotFoundError(23) = 23
+
 #py_check builtin_raise_lab.base_not_exception() = 2
 
 #py_check builtin_raise_lab.wrong_sibling() = 2

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Bare `ImportError` and `ModuleNotFoundError` raises now use the admitted
+  builtin exception identity and are caught by `except Exception:`; payload
+  constructors and direct import-handler matching remain loud.
+
 - The clock-erasure proof now follows the cached function-scope `TypeError`
   handler census, including its synthetic no-op marker and retained-frame
   local/shadow checks, so the complete Python proof target builds again.

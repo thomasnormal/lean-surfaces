@@ -830,7 +830,8 @@ def admittedBuiltinRaise : List String :=
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
-   "KeyboardInterrupt", "GeneratorExit", "OSError"]
+   "KeyboardInterrupt", "GeneratorExit", "OSError", "ImportError",
+   "ModuleNotFoundError"]
 
 /-- The measured one-string constructor surface for explicit `raise`.  These
   are exactly the builtin exception representations that retain a String

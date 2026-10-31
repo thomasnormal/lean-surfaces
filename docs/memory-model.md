@@ -4583,10 +4583,12 @@ builtin exception name beyond the admitted table, tuple patterns,
 statically-first order) and then matches only `.user cid` — so
 `.importError` propagates through it, which is CPython's behavior too
 (an admitted `class ImportError(Exception): pass` is a different class
-and catches nothing builtin). `raise ImportError` stays refused: `raise`
-admits only admitted user classes, unchanged. No battery row pins the
-old static-refusal message (checked: no row, no `#guard` names it), so
-nothing flips in exc_lab.
+and catches nothing builtin). Bare `raise ImportError` and
+`raise ModuleNotFoundError` now use the existing `.builtinException`
+identity representation. They are caught by the already-admitted
+`except Exception:` path; payload-bearing constructors and direct
+`except ImportError:` matching remain on the pinned import-error path until
+a separate constructor/handler identity slice is measured.
 
 ### `from X import *`
 

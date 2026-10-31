@@ -118,6 +118,8 @@
 
 - Switch default initialization now preserves a constant assignment through fallthrough to the following case.
 
+- Switch default constant initialization now preserves the enclosing value when the default arm is skipped before fallthrough.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

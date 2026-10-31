@@ -15973,3 +15973,9 @@ The timed scheduler now retains one sampled value per live whole-net `assign` pr
 The timed `always_ff` acceptance row now exercises the retained positive-edge process instead of only proving that the process can be loaded. `always_ff_capture` changes `d`, raises `clk` twice, and checks that each edge queues the nonblocking update; the final value proves that the scheduler's existing edge registration and NBA commit are used for the distinct `always_ff` process kind. No new event loop or edge-specific shortcut is added.
 
 Differential coverage grows **540/526/0/14 → 541/527/0/14**; grammar coverage remains **239/210/29**, and the sv-tests-2 extraction headline remains **5,901 clean of 22,071 paths**.
+
+## `always_latch` wake and hold witness — 2026-10-31
+
+The timed `always_latch` row now changes its enable and data after time zero. `always_latch_wake` verifies that the inferred level-sensitive process captures when enabled and retains its previous value when disabled, using the existing signal-change wake queue. No polling process or latch-specific scheduler path is added.
+
+Differential coverage grows **541/527/0/14 → 542/528/0/14**; grammar coverage remains **239/210/29**, and the sv-tests-2 extraction headline remains **5,901 clean of 22,071 paths**.

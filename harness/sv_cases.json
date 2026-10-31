@@ -4933,6 +4933,17 @@
       "ticks": 3
     },
     {
+      "name": "always_latch_wake",
+      "file": "Examples/system-verilog/always_latch_wake/always_latch_wake.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_LATCH WAKE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
       "name": "wait_accept",
       "file": "Examples/system-verilog/wait_accept/wait_accept.sv",
       "module": "top",

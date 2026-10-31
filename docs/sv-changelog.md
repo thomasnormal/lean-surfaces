@@ -1,3 +1,12 @@
+# [0.1.275] — 2026-10-31
+
+The `always_latch_wake` timed witness now changes enable and data after time
+zero, checks the enabled capture, and verifies that the latch holds while
+disabled. It exercises the existing inferred-sensitivity wake queue without a
+latch-specific scheduler. Differential coverage grows **541/527/0/14 →
+542/528/0/14** while grammar coverage remains **239/210/29** and the clean
+extraction headline remains **5,901/22,071**.
+
 # [0.1.274] — 2026-10-31
 
 The `always_ff_capture` timed witness now toggles its clock twice and checks both

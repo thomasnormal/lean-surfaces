@@ -60,6 +60,8 @@
 
 - While declaration initializers now preserve the enclosing value when a false condition skips a body-local assignment and `continue`.
 
+- While zero-computed initialization now preserves the computed local assignment before `break`.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

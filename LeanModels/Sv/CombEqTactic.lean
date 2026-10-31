@@ -489,7 +489,15 @@ A coverage goal says that a bit a read observes has a source: `A ∨ B ∨ ∃ j
 constraints. `sv_cover` is the player's explicit call (it is NOT part of `sv_equations`): it closes
 such a goal by `omega`, by choosing a side of a disjunction, and by trying as witness each local
 `Nat`/`Int` variable shifted by a small constant (`x`, `x - 1`, `x + 1`, `x - 2`, `x + 2`), the
-remaining constraints going to `omega`. -/
+remaining constraints going to `omega`.
+
+**Site witnesses** (WP-P3b). When the source of a bit is a SITE (`∃ b, (b = site₀ ∨ … ∨ b = siteₘ₋₁) ∧
+Q b`, what a netlist of more than a few dozen plain sites leaves after the normalization), `sv_cover`
+picks the writer by NAME: it keeps the sites whose target is the signal `Q` names (`b.site.tgt.name =
+"y14"`, read off the site's constructor term, no evaluation), builds the membership proof in the
+disjunction directly and closes the rest of `Q` with `decide` (`omega` when a parameter is free). The
+input-bit disjunct `A ∨ …` is tried first. A design with no generate loop and no parameter never reaches
+this: `sv_equations` has already decided its coverage (`CombEqPlain.lean`). -/
 
 /-- Try the alternatives in order, restoring the state after a failure; the error is the last one. -/
 private partial def firstOf (alts : List (TacticM Unit)) : TacticM Unit := do
@@ -616,8 +624,108 @@ private def tuplesOf : List (List Expr) → List (List Expr)
   | [] => [[]]
   | cs :: rest => cs.flatMap fun c => (tuplesOf rest).map (c :: ·)
 
+/-- The right-hand sides `c₀ … cₘ₋₁` of a membership disjunction `b = c₀ ∨ … ∨ b = cₘ₋₁`, or `none` if `e`
+has another shape. -/
+private partial def memDisjuncts (e : Expr) : Option (List Expr) :=
+  let leaf (x : Expr) : Option Expr :=
+    -- `b = c` with `b` the bound variable and `c` a closed term
+    if x.isAppOfArity ``Eq 3 && x.appFn!.appArg! == .bvar 0 && !x.appArg!.hasLooseBVars then some x.appArg! else none
+  if e.isAppOfArity ``Or 2 then
+    match leaf e.appFn!.appArg!, memDisjuncts e.appArg! with
+    | some c, some rest => some (c :: rest)
+    | _, _ => none
+  else (leaf e).map ([·])
+
+/-- The proof that the `i`-th disjunct of `e` (a membership disjunction already instantiated at `w`) holds:
+`Or.inr (… (Or.inl rfl))`, the last one `Or.inr (… rfl)`. -/
+private partial def memProof (e : Expr) (i : Nat) (w : Expr) : MetaM Expr := do
+  if e.isAppOfArity ``Or 2 then
+    let a := e.appFn!.appArg!
+    let b := e.appArg!
+    match i with
+    | 0 => return mkApp3 (mkConst ``Or.inl) a b (← mkEqRefl w)
+    | i + 1 => return mkApp3 (mkConst ``Or.inr) a b (← memProof b i w)
+  else mkEqRefl w
+
+/-- The signal a site writes, read off its constructor term `LSite.mk hdrs blk (TSite.mk pos tgt rds proc)`
+with `tgt` an `Acc` constructor whose first argument is the name literal. -/
+private def siteTgtName? (c : Expr) : Option String :=
+  let cs := c.getAppArgs
+  if cs.size != 3 then none else
+  let ts := cs[2]!.getAppArgs
+  if ts.size != 4 then none else
+  match ts[1]!.getAppArgs[0]? with
+  | some (Expr.lit (Literal.strVal s)) => some s
+  | _ => none
+
+/-- Close the rest `Q w` of a site-witness cover: unfold the (empty) loop quantifier, then `decide` (a design
+without a free variable), or the normalization of `sv_equations` (`sv_eq_norm`, with the declarations
+evaluated), which closes the closed arithmetic that a parameter-carrying `σ` leaves, or `omega`. -/
+private def closeSiteRest : TacticM Unit := do
+  try evalTactic (← `(tactic| simp only [LeanModels.Sv.CombEq.LoopsE])) catch _ => pure ()
+  unless (← getGoals).isEmpty do
+    evalTactic (← `(tactic| first | decide | (repeat (sv_eq_norm; try simp); done) | omega))
+
+/-- **The site witness**: for `∃ b, (b = c₀ ∨ … ∨ b = cₘ₋₁) ∧ Q b` (possibly after an input-bit disjunct
+`A ∨ …`, tried first), pick the site by the name `Q` states and close `Q`. Fails (without effect) on any
+other shape, so the general search below takes over. -/
+private partial def siteWitness : TacticM Unit := do
+  let goal ← getMainGoal
+  let ty ← whnfR (← instantiateMVars (← goal.getType))
+  if ty.isAppOfArity ``Or 2 then
+    -- the input-bit disjunct: `4 < ↑(Int.natAbs 7) + 1` and the like
+    let st ← saveState
+    try
+      evalTactic (← `(tactic| refine Or.inl ?_))
+      evalTactic (← `(tactic| first | decide | omega))
+      unless (← getGoals).isEmpty do throwError "sv_cover: input disjunct left open"
+      return
+    catch _ => st.restore
+    evalTactic (← `(tactic| refine Or.inr ?_))
+    siteWitness
+  else if ty.isAppOfArity ``Exists 2 then
+    let .lam _ α body _ := ty.appArg! | throwError "sv_cover: not a site witness"
+    unless body.isAppOfArity ``And 2 do throwError "sv_cover: not a site witness"
+    let memB := body.appFn!.appArg!
+    let qB := body.appArg!
+    let some cs := memDisjuncts memB | throwError "sv_cover: not a site witness"
+    if cs.length < 2 then throwError "sv_cover: not a site witness"
+    -- the name `Q` states: its first conjunct is `<name of b> = "sig"`
+    let want? : Option String :=
+      let q1 := if qB.isAppOfArity ``And 2 then qB.appFn!.appArg! else qB
+      if q1.isAppOfArity ``Eq 3 then
+        match q1.appArg! with
+        | Expr.lit (Literal.strVal s) => some s
+        | _ => none
+      else none
+    let lvl := ty.getAppFn.constLevels!
+    let mut idx : List Nat := []
+    for (c, i) in cs.zipIdx do
+      let ok := match want?, siteTgtName? c with
+        | some w, some n => n == w
+        | _, _ => true
+      if ok then idx := idx ++ [i]
+    for i in idx do
+      let c := cs[i]!
+      let st ← saveState
+      try
+        let mem := memB.instantiate1 c
+        let q := qB.instantiate1 c
+        let qm ← mkFreshExprSyntheticOpaqueMVar q
+        let pf ← memProof mem i c
+        goal.assign (mkApp4 (mkConst ``Exists.intro lvl) α ty.appArg! c
+          (mkApp4 (mkConst ``And.intro) mem q pf qm))
+        setGoals [qm.mvarId!]
+        closeSiteRest
+        unless (← getGoals).isEmpty do throwError "sv_cover: site witness left open"
+        return
+      catch _ => st.restore
+    throwError "sv_cover: no site writes the bit"
+  else throwError "sv_cover: not a site witness"
+
 private partial def svCover (budget : IO.Ref Nat) : TacticM Unit := do
   firstOf [
+    do spendBudget budget; siteWitness,
     do spendBudget budget; evalTactic (← `(tactic| omega)),
     -- 2-D leaves: witnesses cast back, row-major comparisons lexicographic, then `omega`
     do
@@ -678,7 +786,7 @@ private partial def svCover (budget : IO.Ref Nat) : TacticM Unit := do
 /-- `sv_cover` closes a coverage goal (`A ∨ ∃ j, …` with linear constraints); see above. -/
 syntax (name := svCoverStx) "sv_cover" : tactic
 
-@[tactic svCoverStx] def evalSvCover : Tactic := fun _ => do
+@[tactic svCoverStx] def evalSvCover : Tactic := fun _ => withDeepRec do
   let budget ← IO.mkRef 250
   try evalTactic (← `(tactic| intros)) catch _ => pure ()
   svCover budget

@@ -1,3 +1,13 @@
+# [0.1.283] — 2026-10-31
+
+Timed `always_ff @(posedge clk iff en)` now retains its scalar guard on the
+positive-edge clock registration and filters wake-up before the ordinary NBA body runs. The
+`always_ff_event_iff` witness checks a disabled edge followed by an enabled
+capture and MATCHes; compound guards, guarded negative-edge clocks, and guarded
+reset lists remain loud.
+Differential coverage grows **548/534/0/14 → 549/535/0/14**; grammar coverage
+remains **240/212/28**.
+
 # [0.1.282] — 2026-10-31
 
 Plain timed `always` event controls now retain scalar identifier `iff` guards;

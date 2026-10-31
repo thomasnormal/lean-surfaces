@@ -37,6 +37,15 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual((process["kind"], process["clock"], process["areset"]),
                          ("AlwaysPosedge", "clk", "rst"))
 
+    def test_always_ff_scalar_iff_guard_is_retained(self):
+        design = lower(
+            "module top; logic clk, en, q; "
+            "always_ff @(posedge clk iff en) q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["style"], process["clock"]),
+                         ("AlwaysPosedge", "always_ff", "clk"))
+        self.assertEqual(process["iff"]["name"], "en")
+
     def test_plain_multi_signal_event_list_is_retained(self):
         design = lower(
             "module top; logic a,b,y; always @(a or b) y = a ^ b; endmodule")
@@ -77,6 +86,13 @@ class PlainAlways(unittest.TestCase):
         design = lower(
             "module top; logic clk, en, seen; "
             "always @(posedge clk iff en == 1'b1) seen = 1; endmodule",
+            require_valid=False)
+        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
+    def test_always_ff_compound_iff_guard_stays_loud(self):
+        design = lower(
+            "module top; logic clk, en, q; "
+            "always_ff @(posedge clk iff en == 1'b1) q <= 1'b1; endmodule",
             require_valid=False)
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 

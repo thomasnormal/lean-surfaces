@@ -12,14 +12,28 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar `iff` guards on timed `always_ff` clocks — 2026-10-31
+
+Timed `always_ff @(posedge clk iff en)` retains the scalar guard on its
+positive-edge clock registration. The existing edge wake-up samples `en` in the published
+state before the body enters the ordinary Active/Inactive/NBA path, so a
+disabled edge does not enqueue an NBA update. Compound guards, guarded
+negative-edge clocks, and guarded clock-plus-reset lists remain loud, and the `always_ff` process kind stays
+distinct from plain `always` event lists.
+
+The `always_ff_event_iff` witness raises `clk` once with `en = 0`, enables the
+guard, then raises it again and checks the NBA capture. Its transcript MATCHes;
+differential coverage grows **548/534/0/14 → 549/535/0/14**, while grammar
+coverage remains **240/212/28**.
+
 ## Scalar `iff` guards for timed `always` events — 2026-10-31
 
 Plain timed `always` event entries may carry a scalar identifier `iff` guard.
 The guard is retained beside its event and sampled against the published state
 when the edge occurs; a false or unknown guard leaves the process registered
 for the next event. The existing Active/Inactive/NBA slot loop remains the
-only scheduler, and guarded `always_ff` controls or compound guards remain
-loud until their distinct contracts are modelled.
+only scheduler, and compound guards remain loud until their general
+expression evaluator is modelled.
 
 The `always_event_iff` witness first raises `clk` with `en = 0`, then enables
 the guard and raises it again; only the second edge updates `q` and the pinned

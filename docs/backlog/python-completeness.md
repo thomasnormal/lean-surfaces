@@ -6841,3 +6841,22 @@ faithfully; payload-bearing warning constructors remain loud.
 DECIDED: admit only the payload-free `UnicodeWarning` class identity and its
 measured `Warning` hierarchy catch; retain loud behavior for payload
 constructors.
+
+## 2026-10-31-pycomplete-214 — admit bare `UserWarning`
+
+The builtin exception table now admits the leaf `UserWarning` identity. A bare
+`raise UserWarning` uses the existing `.builtinException` representation, and
+the warning hierarchy now lets `except Warning:` catch it faithfully;
+payload-bearing warning constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Warning` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,798 cases: 3,761 matched / 37 recorded refusals / 0 failed |
+| Full proof differential | 3,798 cases: 3,660 matched / 138 refusals / 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `leanmodels-run` and `builtin_raise_lab.spec` build passed; extractor 150/150; generated coverage/progress and differential checks passed |
+
+DECIDED: admit only the payload-free `UserWarning` class identity and its
+measured `Warning` hierarchy catch; retain loud behavior for payload
+constructors.

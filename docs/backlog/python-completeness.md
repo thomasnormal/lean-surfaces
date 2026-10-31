@@ -6772,3 +6772,18 @@ longer calls admitted names refused.
 DECIDED: derive the exception coverage list from the admission table rather
 than the syntactic shape of the matcher, preserving accurate generated status
 when generic fallback arms admit additional identities.
+## 2026-10-31-pycomplete-210 — report import-error handler identities
+
+The coverage generator now unions the two-name `importErrorHandlerMatch` table
+from `Semantics.lean` with `admittedBuiltinExc`. The generated exception table
+therefore counts `ImportError` and `ModuleNotFoundError` as admitted handler
+identities instead of mentioning them only in prose.
+
+| Measurement | Result |
+|---|---|
+| Generated table | 25 admitted exception names and 42 refused CPython builtin names; the separate import-error handler pair is now counted |
+| Freshness | `coverage_page.py --check`, language-progress check, backlog index, docs check, and `git diff --check` pass |
+| Scope | Documentation generator and generated coverage page only; interpreter behavior unchanged |
+
+DECIDED: derive the coverage exception list from both semantic handler tables,
+keeping the status page aligned with every accepted `except` identity.

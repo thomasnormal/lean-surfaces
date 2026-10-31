@@ -12,11 +12,12 @@ Every number on the page is produced by a run, never typed by hand:
 * the GRAMMAR TABLE is `harness/refusal_census.py --grammar` (one witness
   program per CPython 3.9 `ast` production, run through both), verdict and
   refusal message per row;
-* the BUILTIN TABLES are read from the name tables in
+* the BUILTIN TABLES are read from the name tables and handler tables in
   `LeanModels/Python/Ast.lean` (`isBuiltinName`: the names the interpreter
   dispatches; `isPyBuiltinName`: every name CPython 3.9 binds; and
-  `admittedBuiltinExc`: exception identities accepted by `except`). A name in
-  the second and not the first refuses loudly when used.
+  `admittedBuiltinExc` plus `importErrorHandlerMatch`: exception identities
+  accepted by `except`). A name in the second and not the first refuses loudly
+  when used.
 
 `--check` regenerates the page and exits 1 if it differs from the committed
 file, so a change to the tier that moves coverage must also move the page.
@@ -38,18 +39,19 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_RUNNER = os.path.join(".lake", "build", "bin", "leanmodels-run")
 DEFAULT_OUT = os.path.join("docs", "python-coverage.md")
 AST_LEAN = os.path.join("LeanModels", "Python", "Ast.lean")
+SEMANTICS_LEAN = os.path.join("LeanModels", "Python", "Semantics.lean")
 PINNED_ORACLE = "CPython 3.9"
 
 sys.path.insert(0, os.path.join(REPO_ROOT, "harness"))
 
 
-def lean_def_body(src, name):
+def lean_def_body(src, name, path=AST_LEAN):
     """The text of `def <name> …` up to the next top-level declaration."""
     m = re.search(r"^def %s\b.*?(?=^(?:def|/--|/-!|end|theorem|inductive)\b)"
                   % re.escape(name), src, re.S | re.M)
     if not m:
         raise SystemExit("coverage_page: cannot find `def %s` in %s"
-                         % (name, AST_LEAN))
+                         % (name, path))
     # Drop line comments: they quote names that are not table members.
     return re.sub(r"--[^\n]*", "", m.group(0))
 
@@ -57,12 +59,17 @@ def lean_def_body(src, name):
 def builtin_tables():
     with open(os.path.join(REPO_ROOT, AST_LEAN), encoding="utf-8") as f:
         src = f.read()
+    with open(os.path.join(REPO_ROOT, SEMANTICS_LEAN), encoding="utf-8") as f:
+        semantics = f.read()
     modelled = set(re.findall(r'id == "([^"]+)"',
                               lean_def_body(src, "isBuiltinName")))
     cpython = set(re.findall(r'"([^"]+)"',
                              lean_def_body(src, "isPyBuiltinName")))
     catches = set(re.findall(r'"([A-Za-z]+)"',
                              lean_def_body(src, "admittedBuiltinExc")))
+    catches.update(re.findall(r'"([A-Za-z]+)"',
+                              lean_def_body(semantics, "importErrorHandlerMatch",
+                                            SEMANTICS_LEAN)))
     if not modelled or not cpython or not catches:
         raise SystemExit("coverage_page: a builtin table parsed empty")
     stray = sorted(modelled - cpython - {"count"})

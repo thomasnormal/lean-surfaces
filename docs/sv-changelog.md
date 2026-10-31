@@ -1,3 +1,12 @@
+# [0.1.288] — 2026-10-31
+
+Guarded asynchronous-reset `always_ff` lists now retain a scalar `iff` on the
+clock event while keeping the active-low or active-high reset event
+unconditional. The `always_ff_async_reset_iff` witness covers disabled clock,
+reset, and enabled clock publications through the existing scheduler.
+Differential coverage grows **552/538/0/14 → 553/539/0/14**; grammar coverage
+remains **240/212/28**.
+
 # [0.1.287] — 2026-10-31
 
 Proof tactics: the multiplier-shaped designs lose their glue (WP-P3/P4). Two NEW modules, additive: `CombBridge`

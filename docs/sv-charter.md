@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Guarded asynchronous-reset lists — 2026-10-31
+
+The timed loader retains a scalar `iff` guard on the clock event of
+`always_ff @(posedge clk iff en or negedge rst_n)` and leaves the asynchronous
+reset edge unconditional. Active-high reset lists use the same retained clock
+guard with a positive reset edge. The existing scheduler is the sole authority
+for both wake paths; a reset-side guard remains loud. The
+`always_ff_async_reset_iff` witness checks a disabled clock edge, an unguarded
+reset edge, and an enabled clock edge. Differential coverage grows
+**552/538/0/14 → 553/539/0/14**; grammar coverage remains **240/212/28**.
+
 ## Scalar `iff` guards on negative-edge timed `always_ff` clocks — 2026-10-31
 
 Timed `always_ff @(negedge clk iff en)` now retains both the negative-edge

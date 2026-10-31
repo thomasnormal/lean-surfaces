@@ -172,7 +172,11 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
         (true, clock) :: timedAccesses body
     | .alwaysFFReset clock reset body =>
         (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetGuarded clock reset _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
     | .alwaysFFResetHigh clock reset body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHighGuarded clock reset _ body =>
         (true, clock) :: (true, reset) :: timedAccesses body
     | .alwaysEvent events body =>
         events.map (fun (name, _, _) => (true, name)) ++ timedAccesses body
@@ -240,10 +244,19 @@ def timedProcOf : SProc → Except String ProcState
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual
            , resetTarget := some reset }
+  | .alwaysFFResetGuarded clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, edgeGuard := some guard }
   | .alwaysFFResetHigh clock reset body =>
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual
            , resetTarget := some reset, resetEdge := .pos }
+  | .alwaysFFResetHighGuarded clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos
+           , edgeGuard := some guard }
   | .alwaysEvent events body =>
       match events with
       | [] => .error "timed design rejects an empty event list"

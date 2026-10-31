@@ -1,11 +1,12 @@
 # Conditional event (`iff`) boundary — retained wait qualification
 
 `SignalEventControl:iff` marks an event control whose trigger is qualified by
-an `iff` condition. The event must occur first and the guard is sampled when
-that event arrives; changing the guard alone does not wake the process. The
-timed slice admits scalar identifier, comparison, and logical guards on plain
-`always` events and positive- or negative-edge `always_ff` clocks; the marker
-remains explicit for unsupported expressions and guarded reset lists.
+ an `iff` condition. The event must occur first and the guard is sampled when
+ that event arrives; changing the guard alone does not wake the process. The
+ timed slice admits scalar identifier, comparison, and logical guards on plain
+ `always` events, positive- or negative-edge `always_ff` clocks, and the clock
+ event of a two-edge asynchronous-reset `always_ff`; the marker remains
+ explicit for unsupported expressions and guards placed on the reset event.
 
 ## Why the remaining conditional event controls stay loud
 
@@ -16,8 +17,22 @@ publication point. The retained evaluator covers identifiers, literals, scalar
 equality/inequality comparisons, and logical `&&`/`||` combinations; calls,
 selects and other general expressions still need a broader evaluator. `always_ff` guards
 remain on the clock registration and preserve its inferred-clock and
-single-driver rules. No second scheduler or guessed guard evaluation is
-introduced.
+single-driver rules. In a guarded clock-plus-reset list, only the clock edge is
+filtered; the asynchronous reset edge remains unconditional. No second
+scheduler or guessed guard evaluation is introduced.
+
+## Guarded asynchronous-reset lists — 2026-10-31
+
+`always_ff @(posedge clk iff en or negedge rst_n)` now retains the scalar guard
+on the clock event while keeping the asynchronous reset edge unconditional.
+The reset edge therefore still wakes the process when `en` is false, and a
+clock edge wakes it only when the guard is true. Active-high `areset` uses the
+same representation with its positive reset polarity. A guard attached to the
+reset event itself remains loud because it needs a separate reset qualification
+rule.
+
+The `always_ff_async_reset_iff` witness exercises a disabled clock edge, an
+unguarded reset edge, and an enabled clock edge through the existing scheduler.
 
 ## Scalar comparison guards — 2026-10-31
 

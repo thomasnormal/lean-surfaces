@@ -180,6 +180,9 @@ structure ProcState where
   resetEdge : Edge := .neg
   /-- Optional scalar `iff` guard on a single edge registration. -/
   edgeGuard : Option SExpr := none
+  /-- Optional scalar `iff` guard on the clock edge of an asynchronous-reset
+  process. The reset edge is never filtered by this guard. -/
+  resetGuard : Option SExpr := none
   /-- The target that will make a suspended process runnable. -/
   registration : Option WaitTarget := none
   /-- Explicit process-control suspension is distinct from an ordinary wait.

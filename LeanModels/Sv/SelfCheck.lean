@@ -1185,7 +1185,9 @@ inductive SProc where
   | alwaysFFGuarded (clock : String) (edge : Edge) (guard : SExpr) (body : SStmt)
   | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
+  | alwaysFFResetGuarded (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
   | alwaysFFResetHigh (clock : String) (reset : String) (body : SStmt)
+  | alwaysFFResetHighGuarded (clock : String) (reset : String) (guard : SExpr) (body : SStmt)
   /-- Plain `always` event lists.  The optional `iff` expression is retained
   with each event so the timed scheduler can sample it at publication time.
   The extractor currently admits scalar identifier guards; keeping the full
@@ -1242,8 +1244,12 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysFFNegedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFFReset clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetGuarded clock reset _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}:iff' (self-check tier runs initial-only designs)"
   | .alwaysFFResetHigh clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetHighGuarded clock reset _ _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}:iff' (self-check tier runs initial-only designs)"
   | .alwaysEvent events _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysEvent:{events.length}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
@@ -1310,7 +1316,9 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysFFGuarded clock _ _ _ => some s!"AlwaysFF:{clock}:iff"
       | .alwaysFFNegedge clock _ => some s!"AlwaysFFNegedge:{clock}"
       | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
+      | .alwaysFFResetGuarded clock reset _ _ => some s!"AlwaysFF:{clock}+negedge {reset}:iff"
       | .alwaysFFResetHigh clock reset _ => some s!"AlwaysFF:{clock}+posedge {reset}"
+      | .alwaysFFResetHighGuarded clock reset _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:iff"
       | .alwaysEvent events _ => some s!"AlwaysEvent:{events.length}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
@@ -1729,10 +1737,16 @@ def parseSProc (j : Json) : Except String SProc := do
       if style == "always_ff" then
         let clock ← getStrF j "clock"
         match (getStrF j "areset_n").toOption with
-        | some reset => return .alwaysFFReset clock reset body
+        | some reset =>
+            match getFOpt j "iff" with
+            | some guard => return .alwaysFFResetGuarded clock reset (← parseSExpr guard) body
+            | none => return .alwaysFFReset clock reset body
         | none =>
             match (getStrF j "areset").toOption with
-            | some reset => return .alwaysFFResetHigh clock reset body
+            | some reset =>
+                match getFOpt j "iff" with
+                | some guard => return .alwaysFFResetHighGuarded clock reset (← parseSExpr guard) body
+                | none => return .alwaysFFResetHigh clock reset body
             | none =>
                 let edge ← match (getStrF j "edge").toOption.getD "pos" with
                   | "pos" => pure Edge.pos

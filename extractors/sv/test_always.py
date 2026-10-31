@@ -110,6 +110,35 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual(process["kind"], "AlwaysPosedge")
         self.assertEqual(process["iff"]["op"], "==")
 
+    def test_always_ff_async_reset_clock_iff_is_retained(self):
+        design = lower(
+            "module top; logic clk, rst_n, en, q; "
+            "always_ff @(posedge clk iff en or negedge rst_n) "
+            "if (!rst_n) q <= 1'b0; else q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["style"], process["clock"],
+                          process["areset_n"]),
+                         ("AlwaysPosedge", "always_ff", "clk", "rst_n"))
+        self.assertEqual(process["iff"]["name"], "en")
+
+    def test_always_ff_async_reset_active_high_clock_iff_is_retained(self):
+        design = lower(
+            "module top; logic clk, rst, en, q; "
+            "always_ff @(posedge clk iff en or posedge rst) "
+            "if (rst) q <= 1'b0; else q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["style"], process["clock"],
+                          process["areset"]),
+                         ("AlwaysPosedge", "always_ff", "clk", "rst"))
+        self.assertEqual(process["iff"]["name"], "en")
+
+    def test_always_ff_async_reset_iff_on_reset_is_loud(self):
+        design = lower(
+            "module top; logic clk, rst_n, en, q; "
+            "always_ff @(posedge clk or negedge rst_n iff en) "
+            "q <= 1'b0; endmodule")
+        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
     def test_logical_iff_guard_is_retained(self):
         design = lower(
             "module top; logic clk, en, mode, seen; "

@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 552 | 538 | 0 | 14 | sv-tests-2 declarations |
+| 553 | 539 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -575,6 +575,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_neg` | `Examples/system-verilog/always_ff_event_iff_neg/always_ff_event_iff_neg.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_cmp` | `Examples/system-verilog/always_ff_event_iff_cmp/always_ff_event_iff_cmp.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_logic` | `Examples/system-verilog/always_ff_event_iff_logic/always_ff_event_iff_logic.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_async_reset_iff` | `Examples/system-verilog/always_ff_async_reset_iff/always_ff_async_reset_iff.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

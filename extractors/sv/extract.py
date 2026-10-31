@@ -24749,17 +24749,24 @@ def _sym_areset_process(sm, m, body, timing, style):
     clk_name = None
     rst_name = None
     rst_edge = None
+    clock_guard = None
     for ev in events:
         if type(ev).__name__ != "SignalEventControl":
-            return None
-        if getattr(ev, "iffCondition", None) is not None:
             return None
         sig = convert_expr(sm, ev.expr)
         if sig.get("kind") != "Ident" or sig.get("width") != 1:
             return None
         if ev.edge == EdgeKind.PosEdge and clk_name is None:
+            if getattr(ev, "iffCondition", None) is not None:
+                clock_guard = convert_expr(sm, ev.iffCondition)
+                if not _iff_guard_allowed(clock_guard):
+                    return unsupported(sm, m, "SignalEventControl:iff")
             clk_name = sig["name"]
         elif ev.edge in (EdgeKind.PosEdge, EdgeKind.NegEdge) and rst_name is None:
+            if getattr(ev, "iffCondition", None) is not None:
+                return unsupported(
+                    sm, m, "SignalEventControl:iff-reset",
+                    "an asynchronous reset event cannot carry an iff guard")
             rst_name = sig["name"]
             rst_edge = ev.edge
         else:
@@ -24777,6 +24784,8 @@ def _sym_areset_process(sm, m, body, timing, style):
     if rst_edge == EdgeKind.PosEdge:
         del result["areset_n"]
         result["areset"] = rst_name
+    if clock_guard is not None:
+        result["iff"] = clock_guard
     return result
 
 

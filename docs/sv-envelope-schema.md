@@ -255,8 +255,9 @@ the optional `edge` records a negative-edge clock and its absence means
 positive edge. The `areset_n`/`areset` fields record the admitted
 two-event `posedge` clock plus active-low/active-high reset forms. A scalar
 identifier, comparison, or logical `iff` guard is sampled at a positive- or
-negative-edge clock publication; unsupported guards and guarded reset lists
-remain loud.
+negative-edge clock publication. In a two-edge asynchronous-reset form the
+guard belongs to the clock event and the reset event remains unconditional;
+a guard on the reset event remains loud.
 `style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
 other sensitivity stays unsupported in the M0 cycle path. The legacy

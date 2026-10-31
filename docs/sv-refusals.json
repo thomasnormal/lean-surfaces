@@ -1505,7 +1505,7 @@
     "extractor"
    ],
    "trigger": "H: always_ff @(posedge c iff b[0]) y <= a;",
-   "why": "Plain timed `always` and positive- or negative-edge `always_ff` clocks admit scalar identifier, equality/inequality, and logical `iff` guards and sample them when the adjacent edge is published; unsupported guards and guarded reset lists remain loud.",
+   "why": "Plain timed `always`, positive- or negative-edge `always_ff` clocks, and the clock event of a two-edge asynchronous-reset `always_ff` admit scalar identifier, equality/inequality, and logical `iff` guards and sample them when the adjacent edge is published; unsupported guards and guards placed on the reset event remain loud.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",
@@ -1524,6 +1524,34 @@
    "evidence": "docs/sv-event-iff.md",
    "verified_by_run": true,
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+  },
+  {
+   "id": "pr-edge-iff-reset",
+   "tag": "SignalEventControl:iff-reset",
+   "group": "processes",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "H: always_ff @(posedge c or negedge rst_n iff en) y <= a;",
+   "why": "A scalar `iff` guard is admitted on the clock event of an asynchronous-reset list, but the reset event is unconditional. Guarding the reset edge needs a separate reset qualification rule and remains loud.",
+   "category": "later",
+   "proposed": false,
+   "prerequisite": "the sequential layer",
+   "plan": "SEQ",
+   "kinds": {
+    "extractor": [
+     "SignalEventControl:iff-reset"
+    ]
+   },
+   "where": [
+    {
+     "file": "extractors/sv/extract.py",
+     "fn": "_sym_areset_process"
+    }
+   ],
+   "evidence": "docs/sv-event-iff.md",
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-31: reset-side iff remains an explicit boundary"
   },
   {
    "id": "pr-clock-wide",

@@ -64,6 +64,8 @@
 
 - While zero-computed initialization now preserves the computed local assignment before `return`.
 
+- While zero-computed initialization now preserves the computed local assignment across `continue`.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

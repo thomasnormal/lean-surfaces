@@ -36,6 +36,18 @@ The `always_ff_event_iff_cmp` witness checks a disabled edge followed by an
 enabled comparison and MATCHes. Differential coverage grows **550/536/0/14 →
 551/537/0/14**; grammar coverage remains **240/212/28**.
 
+## Scalar logical `iff` guards — 2026-10-31
+
+Logical guards such as `iff en && mode` and `iff en || mode` are now retained
+on plain timed events and `always_ff` clocks. Publication evaluates their
+four-state truth value through the same expression evaluator; unknown results
+leave the registration armed. Calls, selects, and other unsupported guards
+remain loud.
+
+The `always_ff_event_iff_logic` witness checks a disabled logical guard followed
+by an enabled edge and MATCHes. Differential coverage grows **551/537/0/14 →
+552/538/0/14**; grammar coverage remains **240/212/28**.
+
 ## Scalar `iff` guards on timed `always_ff` clocks — 2026-10-31
 
 Timed `always_ff @(posedge clk iff en)` retains the scalar guard on its

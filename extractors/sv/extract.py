@@ -24798,7 +24798,7 @@ def _iff_guard_allowed(expr):
                 and _iff_guard_allowed(expr.get("operand", {})))
     if kind == "Binary":
         return (expr.get("width") == 1
-                and expr.get("op") in ("==", "!=", "===", "!==")
+                and expr.get("op") in ("==", "!=", "===", "!==", "&&", "||")
                 and _iff_guard_allowed(expr.get("left", {}))
                 and _iff_guard_allowed(expr.get("right", {})))
     return False

@@ -211,6 +211,8 @@ def eventGuardPass (st : SvState) : Option SExpr → Bool
 
 #guard eventGuardPass [("en", .ofNat 1 1)]
     (some (.m0 (.binary .eq (.ident "en") (.lit (.ofNat 1 1))))) == true
+#guard eventGuardPass [("en", .ofNat 1 1), ("mode", .ofNat 1 0)]
+    (some (.m0 (.binary .land (.ident "en") (.ident "mode")))) == false
 
 /-- Whether one guarded event-list entry both changed and passed its filter. -/
 def eventTriggered (old new : SvState)

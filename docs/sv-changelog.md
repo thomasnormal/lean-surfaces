@@ -29,6 +29,15 @@ refusal (`unknown statement kind "LocalDecl"`) and is not pinned. Pinned on Xcel
 503 → 513 rows, purely additive; 288 cycles, 0 mismatches against the transcription of the ls-sv rules); all ten
 pinned rows are XREF-MATCH against the Lean model (`diff_test2.py --golden`), none whitelisted.
 
+# [0.1.287] — 2026-10-31
+
+Scalar logical `iff` guards such as `always_ff @(posedge clk iff en && mode)`
+are now retained and evaluated with the existing four-state expression rules.
+The `always_ff_event_iff_logic` witness covers a disabled guard followed by an
+enabled edge; unsupported calls, selects, and other expressions remain loud.
+Differential coverage grows **551/537/0/14 → 552/538/0/14**; grammar coverage
+remains **240/212/28**.
+
 # [0.1.286] — 2026-10-31
 
 Scalar equality and inequality `iff` guards such as `always_ff @(posedge clk

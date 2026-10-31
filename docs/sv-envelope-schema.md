@@ -254,7 +254,7 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 the optional `edge` records a negative-edge clock and its absence means
 positive edge. The `areset_n`/`areset` fields record the admitted
 two-event `posedge` clock plus active-low/active-high reset forms. A scalar
-identifier or scalar comparison `iff` guard is sampled at a positive- or
+identifier, comparison, or logical `iff` guard is sampled at a positive- or
 negative-edge clock publication; unsupported guards and guarded reset lists
 remain loud.
 `style` records which keyword the source used —

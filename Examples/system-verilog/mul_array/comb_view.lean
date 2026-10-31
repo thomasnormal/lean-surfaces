@@ -273,6 +273,7 @@ def badLaterRow : PDesign :=
 
 /--
 error: sv_structure: the rank does not decrease along a read: `g_bit#0[1, 0]` (rank (1, 0, 1)) reads a window of `s` driven by `g_bit#1[2, 1]` (rank (2, 1, 3), window s[9]); a driver must have a SMALLER rank than its reader (sampled at [N] = [3]; a genuine violation, not a missing proof, unless your hypotheses exclude this point)
+  the read that forms the edge: `s[2][1]` of `g_bit#0[1, 0]`, written by `g_bit#1[2, 1]` (window s[9])
 -/
 #guard_msgs (whitespace := lax) in
 theorem bad_later_row (N : Nat) (hN : 1 ≤ N) : Acyclic (badLaterRow.instantiateGD2 [(N : Int)]) := by
@@ -286,6 +287,7 @@ def swappedKey (N : Nat) : SiteId → Key
 
 /--
 error: sv_structure: the rank does not decrease along a read: `g_bit#1[1, 0]` (rank (1, 0, 0)) reads a window of `c` driven by `g_row#0[1]` (rank (1, 0, 0), window c[3]); a driver must have a SMALLER rank than its reader (sampled at [N] = [2]; a genuine violation, not a missing proof, unless your hypotheses exclude this point)
+  the read that forms the edge: `c[1][0]` of `g_bit#1[1, 0]`, written by `g_row#0[1]` (window c[3])
 -/
 #guard_msgs (whitespace := lax) in
 theorem bad_key (N : Nat) (hN : 1 ≤ N) : Acyclic (mul_n.sem N) := by

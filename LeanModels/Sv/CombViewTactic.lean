@@ -305,7 +305,7 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
       if isAcyc && rankE?.isNone && lexE?.isNone then
         throwError "sv_structure: an `Acyclic` goal needs a rank over site identities, e.g. `sv_structure (rank := rippleRank … …)` or a lexicographic key `sv_structure (lexRank := fun | .plain 0 => (0, 0, 0) | …)`; run `sv_structure?` to see the sites and the rank relation they must satisfy"
       -- sampling: genuine violations are reported with the offending sites
-      for k in [lb, lb + 1, lb + 2, lb + 4] do
+      for k in [lb, lb + 1, lb + 2, lb + 3, lb + 4] do
         let lits := fvs.map fun _ => (mkNatLit k)
         let argsK := args.replaceFVars (fvs.map mkFVar) lits
         let argVals ← evalArgs argsK
@@ -322,13 +322,13 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           let ρ ← evalRank reK
           if let some m := s.rankCounterexample σ (fun w r => decide (ρ w < ρ r))
               (fun i => toString (ρ i)) then
-            throwError "sv_structure: {m} {ctxMsg}"
+            throwError "sv_structure: {m} {ctxMsg}{(s.rankReadNote σ (fun w r => decide (ρ w < ρ r))).getD ""}"
         if let some le := lexE? then
           let leK := le.replaceFVars (fvs.map mkFVar) lits
           let κ ← evalLex leK
           if let some m := s.rankCounterexample σ (fun w r => decide (KLt (κ w) (κ r)))
               (fun i => showKey (κ i)) then
-            throwError "sv_structure: {m} {ctxMsg}"
+            throwError "sv_structure: {m} {ctxMsg}{(s.rankReadNote σ (fun w r => decide (KLt (κ w) (κ r)))).getD ""}"
       -- the proof
       let pdId := mkIdent pdName
       -- the player's own rank/key function, if it is a named definition: unfold it

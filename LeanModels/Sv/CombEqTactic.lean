@@ -3,6 +3,7 @@ import LeanModels.Sv.CombViewTactic
 import LeanModels.Sv.CombEqThm
 import LeanModels.Sv.CombEqPlain
 import LeanModels.Sv.CombBridge
+import LeanModels.Sv.CombCover
 
 /-!
 # `sv_equations` / `sv_equations?` / `sv_cover`: the equations stage of the `sv_comb` tactic (v0)
@@ -500,6 +501,13 @@ such a goal by `omega`, by choosing a side of a disjunction, and by trying as wi
 `Nat`/`Int` variable shifted by a small constant (`x`, `x - 1`, `x + 1`, `x - 2`, `x + 2`), the
 remaining constraints going to `omega`.
 
+**The 2-D rule** (WP-P4, `CombCover.lean`; tried first). For the cell reads of a 2-D array it solves
+each `∃`-variable from the affine equations of the read's row and column (`a := (R - r₀).toNat`, with
+a division and the parity left to `omega` when the loop steps by 2), states the writer's condition at
+those witnesses and walks the disjunction of writers: `Classical.em` of the condition, the proof built
+from its components, `omega` on the last writer. A shape it does not read falls through to the search
+below; a goal it reads and cannot prove is reported with the read and the conditions each writer needs.
+
 **Site witnesses** (WP-P3b). When the source of a bit is a SITE (`∃ b, (b = site₀ ∨ … ∨ b = siteₘ₋₁) ∧
 Q b`, what a netlist of more than a few dozen plain sites leaves after the normalization), `sv_cover`
 picks the writer by NAME: it keeps the sites whose target is the signal `Q` names (`b.site.tgt.name =
@@ -798,4 +806,11 @@ syntax (name := svCoverStx) "sv_cover" : tactic
 @[tactic svCoverStx] def evalSvCover : Tactic := fun _ => withDeepRec do
   let budget ← IO.mkRef 250
   try evalTactic (← `(tactic| intros)) catch _ => pure ()
-  svCover budget
+  -- the 2-D rule first (`CombCover.lean`); a shape it does not read takes the search below
+  let st ← saveState
+  let done ← try LeanModels.Sv.CombCover.coverCells; pure true
+    catch e =>
+      if (← e.toMessageData.toString).startsWith LeanModels.Sv.CombCover.diagPrefix then throw e
+      st.restore
+      pure false
+  unless done do svCover budget

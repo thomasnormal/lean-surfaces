@@ -54,6 +54,7 @@ example (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := (ripple_struct 
 
 /--
 error: sv_structure: the rank does not decrease along a read: `plain#1` (rank 0) reads a window of `c` driven by `g_bit#1[0]` (rank 0, window c[1]); a driver must have a SMALLER rank than its reader (sampled at [N] = [1]; a genuine violation, not a missing proof, unless your hypotheses exclude this point)
+  the read that forms the edge: `c[1]` of `plain#1`, written by `g_bit#1[0]` (window c[1])
 -/
 #guard_msgs (whitespace := lax) in
 theorem bad_rank (N : Nat) (hN : 1 ≤ N) :

@@ -231,5 +231,18 @@ def Summary.rankCounterexample (s : Summary) (σ : String → Int) (lt : SiteId 
           some s!"the rank does not decrease along a read: `{a.id.show}` (rank {showRank a.id}) reads a window of `{r.name}` driven by `{b.id.show}` (rank {showRank b.id}, window {showWin b.win}); a driver must have a SMALLER rank than its reader"
         else none
 
+/-- The read that forms the edge `rankCounterexample` reports, in source form with its indices evaluated
+(`t[1][0]`): the second line of the message `sv_structure` prints for a rank that does not decrease. It
+walks the sites, drivers and reads in the order `rankCounterexample` does, so it names the same edge. -/
+def Summary.rankReadNote (s : Summary) (σ : String → Int) (lt : SiteId → SiteId → Bool) :
+    Option String :=
+  let is := s.insts σ
+  (is.zip (s.instPairs σ)).findSome? fun (a, ls, σ') =>
+    is.findSome? fun b =>
+      (a.rd.zip ls.site.rds).findSome? fun (r, acc) =>
+        if ReadWin.overlaps r b.win && !(lt b.id a.id) then
+          some s!"\n  the read that forms the edge: `{acc.showVal σ'}` of `{a.id.show}`, written by `{b.id.show}` (window {showWin b.win})"
+        else none
+
 end CombView
 end LeanModels.Sv

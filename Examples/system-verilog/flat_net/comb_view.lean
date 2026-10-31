@@ -65,6 +65,7 @@ which runs before the proof, is unchanged) -/
 
 /--
 error: sv_structure: the rank does not decrease along a read: `plain#1` (rank 0) reads a window of `c` driven by `plain#0` (rank 0, window c[0]); a driver must have a SMALLER rank than its reader (sampled at [] = []; a genuine violation, not a missing proof, unless your hypotheses exclude this point)
+  the read that forms the edge: `c[0]` of `plain#1`, written by `plain#0` (window c[0])
 -/
 #guard_msgs (whitespace := lax) in
 theorem flat_bad_rank : Acyclic flat_net.sem := by

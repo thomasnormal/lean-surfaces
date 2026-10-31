@@ -52,6 +52,8 @@
 
 - While declaration initializers now preserve the enclosing value when a false condition skips the body-local assignment.
 
+- While declaration initializers now preserve the enclosing return value when a false condition skips a body-local assignment and `return`.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

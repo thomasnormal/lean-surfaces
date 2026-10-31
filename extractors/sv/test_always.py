@@ -92,19 +92,23 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual([event["iff"]["name"] for event in process["events"]],
                          ["en", "en"])
 
-    def test_compound_iff_guard_stays_loud(self):
+    def test_comparison_iff_guard_is_retained(self):
         design = lower(
             "module top; logic clk, en, seen; "
             "always @(posedge clk iff en == 1'b1) seen = 1; endmodule",
             require_valid=False)
-        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "AlwaysEvent")
+        self.assertEqual(process["events"][0]["iff"]["op"], "==")
 
-    def test_always_ff_compound_iff_guard_stays_loud(self):
+    def test_always_ff_comparison_iff_guard_is_retained(self):
         design = lower(
             "module top; logic clk, en, q; "
             "always_ff @(posedge clk iff en == 1'b1) q <= 1'b1; endmodule",
             require_valid=False)
-        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "AlwaysPosedge")
+        self.assertEqual(process["iff"]["op"], "==")
 
     def test_always_ff_is_not_reinterpreted_as_general_repetition(self):
         design = lower("module top; logic q; always_ff begin #2 q=1; end endmodule", require_valid=False)

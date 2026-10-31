@@ -24714,7 +24714,7 @@ def convert_procedural_block(sm, m):
     guard = None
     if timing.iffCondition is not None:
         guard = convert_expr(sm, timing.iffCondition)
-        if guard.get("kind") != "Ident" or guard.get("width") != 1:
+        if not _iff_guard_allowed(guard):
             return unsupported(sm, m, "SignalEventControl:iff")
     clk = convert_expr(sm, timing.expr)
     if clk.get("kind") != "Ident" or clk.get("width") != 1:
@@ -24780,6 +24780,30 @@ def _sym_areset_process(sm, m, body, timing, style):
     return result
 
 
+def _iff_guard_allowed(expr):
+    """Whether an occurrence-time `iff` is in the scalar guard slice.
+
+    The retained scheduler can evaluate the ordinary scalar expression
+    vocabulary, but the admission stays explicit: no calls, selects, or
+    aggregate expressions cross this boundary. Scalar equality and inequality
+    comparisons are useful in real clock qualifiers and remain one-bit
+    expressions after elaboration.
+    """
+    kind = expr.get("kind")
+    if kind in ("Ident", "Literal"):
+        return expr.get("width") == 1
+    if kind == "Unary":
+        return (expr.get("width") == 1
+                and expr.get("op") in ("!", "~")
+                and _iff_guard_allowed(expr.get("operand", {})))
+    if kind == "Binary":
+        return (expr.get("width") == 1
+                and expr.get("op") in ("==", "!=", "===", "!==")
+                and _iff_guard_allowed(expr.get("left", {}))
+                and _iff_guard_allowed(expr.get("right", {})))
+    return False
+
+
 def _event_list_process(sm, m, body, timing, style):
     """Admit a plain `always` with a finite list of scalar signal events.
 
@@ -24802,7 +24826,7 @@ def _event_list_process(sm, m, body, timing, style):
         guard = None
         if getattr(ev, "iffCondition", None) is not None:
             guard = convert_expr(sm, ev.iffCondition)
-            if guard.get("kind") != "Ident" or guard.get("width") != 1:
+            if not _iff_guard_allowed(guard):
                 return unsupported(sm, m, "SignalEventControl:iff")
         signal = convert_expr(sm, ev.expr)
         if signal.get("kind") != "Ident" or signal.get("width") != 1:
@@ -24838,7 +24862,7 @@ def _single_event_process(sm, m, body, timing):
     guard = None
     if getattr(timing, "iffCondition", None) is not None:
         guard = convert_expr(sm, timing.iffCondition)
-        if guard.get("kind") != "Ident" or guard.get("width") != 1:
+        if not _iff_guard_allowed(guard):
             return unsupported(sm, m, "SignalEventControl:iff")
     signal = convert_expr(sm, timing.expr)
     if signal.get("kind") != "Ident" or signal.get("width") != 1:

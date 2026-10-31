@@ -24,6 +24,18 @@ The `always_ff_event_iff_neg` witness checks a disabled falling edge followed by
 an enabled capture and MATCHes its pinned transcript. Differential coverage
 grows **549/535/0/14 → 550/536/0/14**; grammar coverage remains **240/212/28**.
 
+## Scalar comparison `iff` guards — 2026-10-31
+
+Scalar equality and inequality expressions such as `iff en == 1'b1` are now
+retained on plain timed events and `always_ff` clocks. The existing scheduler
+evaluates the guard with four-state semantics at publication, so `x` and `z`
+results leave the process suspended; calls, selects, and other unsupported
+expressions remain loud.
+
+The `always_ff_event_iff_cmp` witness checks a disabled edge followed by an
+enabled comparison and MATCHes. Differential coverage grows **550/536/0/14 →
+551/537/0/14**; grammar coverage remains **240/212/28**.
+
 ## Scalar `iff` guards on timed `always_ff` clocks — 2026-10-31
 
 Timed `always_ff @(posedge clk iff en)` retains the scalar guard on its

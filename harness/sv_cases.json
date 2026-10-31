@@ -5041,6 +5041,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_cmp",
+      "file": "Examples/system-verilog/always_ff_event_iff_cmp/always_ff_event_iff_cmp.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF CMP PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
     }
   ]
 }

@@ -199,13 +199,18 @@ def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
   edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
 
 /-- Evaluate the retained `iff` guard at the state in which its event was
-published.  The extractor admits only scalar identifier guards for this
-slice; any other expression is deliberately false here and is rejected by
-the envelope admission path rather than approximated. -/
+published. Admission keeps the expression in the scalar, side-effect-free
+vocabulary; evaluation therefore uses the same four-state expression rules as
+the process body. Unknown and failed evaluations do not wake the process. -/
 def eventGuardPass (st : SvState) : Option SExpr → Bool
   | none => true
-  | some (.m0 (.ident signal)) => SvState.bit0 st signal == .l1
-  | some _ => false
+  | some guard =>
+      match evalSExpr 64 st guard with
+      | .ok value => value.condTrue
+      | _ => false
+
+#guard eventGuardPass [("en", .ofNat 1 1)]
+    (some (.m0 (.binary .eq (.ident "en") (.lit (.ofNat 1 1))))) == true
 
 /-- Whether one guarded event-list entry both changed and passed its filter. -/
 def eventTriggered (old new : SvState)

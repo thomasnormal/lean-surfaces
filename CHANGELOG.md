@@ -36,6 +36,8 @@
 
 - Callable plain-`for` declaration initializers now retain the enclosing value when a false condition skips a body-local assignment and `break`.
 
+- Callable plain-`for` declaration initializers now retain the enclosing value when a false condition skips a body-local assignment and `continue`.
+
 - Range slicing now composes the source progression exactly, including
   negative slice steps, empty results, and CPython's slice validation errors;
   the resulting immutable range remains available at the public boundary.

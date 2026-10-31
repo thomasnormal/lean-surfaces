@@ -24799,8 +24799,20 @@ def _iff_guard_allowed(expr):
     expressions after elaboration.
     """
     kind = expr.get("kind")
-    if kind in ("Ident", "Literal"):
+    if kind == "Ident":
         return expr.get("width") == 1
+    if kind == "Literal":
+        return expr.get("width") == 1
+    if kind == "SelectRead":
+        # A bit-select is the one indexed guard shape whose evaluation is
+        # already represented in SExpr. Keep the admission narrow: direct
+        # packed-signal value plus a scalar literal/identifier index.
+        value = expr.get("value", {})
+        index = expr.get("index", {})
+        return (expr.get("width") == 1
+                and not expr.get("descending", False)
+                and value.get("kind") == "Ident"
+                and index.get("kind") in ("Ident", "Literal"))
     if kind == "Unary":
         return (expr.get("width") == 1
                 and expr.get("op") in ("!", "~")

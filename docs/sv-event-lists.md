@@ -12,7 +12,7 @@ The timed envelope now admits a plain `always` list with one or more scalar
 identifier events, including the bare `always @(signal)` spelling. Each entry retains its `any`, `posedge`, or `negedge`
 polarity, and the process stores the whole list while suspended. A publication
 wakes it when any listed edge fires; a scalar identifier, comparison, or
-logical `iff`
+logical `iff`, including a direct scalar bit-select such as `en[0]`,
 guard is sampled
 in the published state and must be true for that entry to wake. Completion
 re-arms the same body through the existing Active/Inactive/NBA loop. This is
@@ -29,7 +29,9 @@ rules that are not represented.
 The retained two-edge `always_ff` registration now separates the clock and
 reset edge tests. A scalar guard on the clock event filters only clock wakeups;
 an active-low or active-high asynchronous reset still wakes the body regardless
-of that guard. A reset-side `iff` remains an explicit refusal.
+of that guard. A reset-side `iff` remains an explicit refusal. Part-select and
+other indexed guard forms remain loud until their selector and width rules are
+represented.
 
 ## 2026-10-22 census and decision
 

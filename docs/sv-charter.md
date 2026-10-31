@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Indexed scalar `iff` guards — 2026-10-31
+
+The timed event guard slice admits a direct one-bit packed-vector select such
+as `iff en[0]` on plain events, `always_ff` clocks, and the clock event of an
+asynchronous-reset list. The existing `SelectRead` evaluator samples it at
+publication; reset edges remain unconditional. Part-selects, dynamic or
+aggregate selectors, and reset-side guards remain loud. The
+`always_ff_async_reset_iff_bit` witness covers the disabled clock, reset, and
+enabled clock sequence. Differential coverage grows **553/539/0/14 →
+554/540/0/14**; grammar coverage remains **240/212/28**.
+
 ## Guarded asynchronous-reset lists — 2026-10-31
 
 The timed loader retains a scalar `iff` guard on the clock event of

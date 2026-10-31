@@ -1504,8 +1504,8 @@
    "layers": [
     "extractor"
    ],
-   "trigger": "H: always_ff @(posedge c iff b[0]) y <= a;",
-   "why": "Plain timed `always`, positive- or negative-edge `always_ff` clocks, and the clock event of a two-edge asynchronous-reset `always_ff` admit scalar identifier, equality/inequality, and logical `iff` guards and sample them when the adjacent edge is published; unsupported guards and guards placed on the reset event remain loud.",
+   "trigger": "H: always_ff @(posedge c iff b[1:0]) y <= a;",
+   "why": "Plain timed `always`, positive- or negative-edge `always_ff` clocks, and the clock event of a two-edge asynchronous-reset `always_ff` admit scalar identifier, equality/inequality, logical, and direct scalar bit-select `iff` guards and sample them when the adjacent edge is published; part-selects, unsupported guards, and guards placed on the reset event remain loud.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",

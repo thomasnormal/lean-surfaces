@@ -121,6 +121,16 @@ class PlainAlways(unittest.TestCase):
                          ("AlwaysPosedge", "always_ff", "clk", "rst_n"))
         self.assertEqual(process["iff"]["name"], "en")
 
+    def test_always_ff_async_reset_vector_bit_iff_is_retained(self):
+        design = lower(
+            "module top; logic clk, rst_n, q; logic [1:0] en; "
+            "always_ff @(posedge clk iff en[0] or negedge rst_n) "
+            "if (!rst_n) q <= 1'b0; else q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["iff"]["kind"], "SelectRead")
+        self.assertEqual(process["iff"]["value"]["name"], "en")
+        self.assertEqual(process["iff"]["index"]["bits"], "00000000000000000000000000000000")
+
     def test_always_ff_async_reset_active_high_clock_iff_is_retained(self):
         design = lower(
             "module top; logic clk, rst, en, q; "
@@ -136,6 +146,13 @@ class PlainAlways(unittest.TestCase):
         design = lower(
             "module top; logic clk, rst_n, en, q; "
             "always_ff @(posedge clk or negedge rst_n iff en) "
+            "q <= 1'b0; endmodule")
+        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
+    def test_always_ff_vector_range_iff_stays_loud(self):
+        design = lower(
+            "module top; logic clk, rst_n, q; logic [1:0] en; "
+            "always_ff @(posedge clk iff en[1:0] or negedge rst_n) "
             "q <= 1'b0; endmodule")
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 

@@ -1,3 +1,12 @@
+# [0.1.289] — 2026-10-31
+
+Direct scalar bit-select `iff` guards such as `always_ff @(posedge clk iff
+en[0] or negedge rst_n)` now use the existing `SelectRead` evaluator. The
+`always_ff_async_reset_iff_bit` witness covers disabled clock, unconditional
+reset, and enabled clock publications. Part-selects and other indexed guard
+forms remain loud. Differential coverage grows **553/539/0/14 → 554/540/0/14**;
+grammar coverage remains **240/212/28**.
+
 # [0.1.288] — 2026-10-31
 
 Guarded asynchronous-reset `always_ff` lists now retain a scalar `iff` on the

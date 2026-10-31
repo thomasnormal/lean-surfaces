@@ -4,18 +4,20 @@
  an `iff` condition. The event must occur first and the guard is sampled when
  that event arrives; changing the guard alone does not wake the process. The
  timed slice admits scalar identifier, comparison, and logical guards on plain
- `always` events, positive- or negative-edge `always_ff` clocks, and the clock
- event of a two-edge asynchronous-reset `always_ff`; the marker remains
- explicit for unsupported expressions and guards placed on the reset event.
+`always` events, positive- or negative-edge `always_ff` clocks, and the clock
+event of a two-edge asynchronous-reset `always_ff`; a direct scalar bit-select
+such as `en[0]` is also admitted. The marker remains explicit for unsupported
+expressions and guards placed on the reset event.
 
 ## Why the remaining conditional event controls stay loud
 
 IEEE 1800-2023 §§9.2.2.4 and 9.4.2.3 make the guard part of event
 registration, wake-up filtering and re-arming. The retained event-list
 registration now carries a side-effect-free scalar guard and applies it at the
-publication point. The retained evaluator covers identifiers, literals, scalar
-equality/inequality comparisons, and logical `&&`/`||` combinations; calls,
-selects and other general expressions still need a broader evaluator. `always_ff` guards
+publication point. The retained evaluator covers identifiers, literals, direct
+scalar bit-selects, scalar equality/inequality comparisons, and logical `&&`/`||`
+combinations; calls, part-selects, and other general expressions still need a
+broader evaluator. `always_ff` guards
 remain on the clock registration and preserve its inferred-clock and
 single-driver rules. In a guarded clock-plus-reset list, only the clock edge is
 filtered; the asynchronous reset edge remains unconditional. No second
@@ -33,6 +35,17 @@ rule.
 
 The `always_ff_async_reset_iff` witness exercises a disabled clock edge, an
 unguarded reset edge, and an enabled clock edge through the existing scheduler.
+
+## Indexed scalar guards — 2026-10-31
+
+The guard slice now admits a direct one-bit packed-vector select such as
+`iff en[0]`. The selected value and its scalar literal or identifier index are
+evaluated by the existing `SelectRead` expression path at publication. Part
+selects, dynamic or aggregate selectors, calls, and other unsupported shapes
+remain loud.
+
+The `always_ff_async_reset_iff_bit` witness checks a disabled bit-select clock
+edge, an unconditional reset edge, and an enabled clock edge.
 
 ## Scalar comparison guards — 2026-10-31
 

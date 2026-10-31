@@ -287,6 +287,17 @@ def catch_RuntimeWarning(value):
         return value
 
 
+def raise_DeprecationWarning():
+    raise DeprecationWarning
+
+
+def catch_DeprecationWarning(value):
+    try:
+        raise DeprecationWarning
+    except Warning:
+        return value
+
+
 def base_not_exception():
     try:
         try:

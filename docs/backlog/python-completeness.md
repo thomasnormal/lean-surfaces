@@ -6879,3 +6879,22 @@ faithfully; payload-bearing warning constructors remain loud.
 DECIDED: admit only the payload-free `RuntimeWarning` class identity and its
 measured `Warning` hierarchy catch; retain loud behavior for payload
 constructors.
+
+## 2026-10-31-pycomplete-216 — admit bare `DeprecationWarning`
+
+The builtin exception table now admits the leaf `DeprecationWarning` identity.
+A bare `raise DeprecationWarning` uses the existing `.builtinException`
+representation, and the warning hierarchy now lets `except Warning:` catch it
+faithfully; payload-bearing warning constructors remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | Four rows (bare raise and `except Warning` catch): 4/4 MATCH in native and proof interpreters |
+| Full executable differential | 3,806 cases: 3,769 decided and matched, 0 failed, and 37 recorded refusals |
+| Full proof differential | 3,806 cases: 3,668 matched, 138 recorded refusals, and 0 failed |
+| Scripts and refusal census | 142 scripts: 140 matched and 2 registered loud refusals; refusal census 0 drift |
+| Build and checks | Managed `leanmodels-run` and `builtin_raise_lab.spec` build passed; generated coverage/progress and differential checks passed |
+
+DECIDED: admit only the payload-free `DeprecationWarning` class identity and
+its measured `Warning` hierarchy catch; retain loud behavior for payload
+constructors.

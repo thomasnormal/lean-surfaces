@@ -1,3 +1,16 @@
+# [0.1.284] — 2026-10-31
+
+Symbolic-tier differential rows for the four-state rules the `always_comb` tactics will rely on (WP-G, step 2
+groundwork; no semantics change). Eleven new `sem2/wpg_*` designs and `cases2.json` rows (736 → 747): the
+procedural `if` with an x/z condition taking the else branch (`wpg_if_x`, `wpg_if_chain`), the conditional
+expression with an x condition merging bitwise (`wpg_tern_x`, `wpg_tern_ctx`), `!` against `~` (`wpg_not`), the
+six reductions at `1x`/`0x`/`xx`/`zz` (`wpg_red`), `&&`/`||` with an x operand and a deciding operand, scalar and
+vector (`wpg_logic`), the last-write-wins order of one body (`wpg_order`), the carry cell as one body
+(`wpg_carry`), a partial write (`wpg_partial`), and `wpg_local`, a block-local declaration, which stays a loud
+refusal (`unknown statement kind "LocalDecl"`) and is not pinned. Pinned on Xcelium 24.03 (`xcelium_golden.json`
+503 → 513 rows, purely additive; 288 cycles, 0 mismatches against the transcription of the ls-sv rules); all ten
+pinned rows are XREF-MATCH against the Lean model (`diff_test2.py --golden`), none whitelisted.
+
 # [0.1.283] — 2026-10-31
 
 Timed `always_ff @(posedge clk iff en)` now retains its scalar guard on the

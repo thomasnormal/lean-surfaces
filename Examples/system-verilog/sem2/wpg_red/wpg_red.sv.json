@@ -1,0 +1,433 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "wpg_red",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/wpg_red/wpg_red.sv",
+      "sha256": "f7c036559d25176a9bc1a884c0b2ce2e55af492a8158c18ab17d4efe9022137b"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "wpg_red",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 23
+            },
+            "name": "v",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 17,
+                      "end_line": 3,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 18
+            },
+            "name": "ro",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 16,
+              "end_line": 5,
+              "end_col": 18
+            },
+            "name": "ra",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "name": "rx",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 19
+            },
+            "name": "rno",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 19
+            },
+            "name": "rna",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 16,
+              "end_line": 9,
+              "end_col": 19
+            },
+            "name": "rnx",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 12
+              },
+              "width": 1,
+              "name": "ro"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 11,
+                "col": 15,
+                "end_line": 11,
+                "end_col": 17
+              },
+              "width": 1,
+              "op": "|",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 11,
+                  "col": 16,
+                  "end_line": 11,
+                  "end_col": 17
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 12,
+              "col": 10,
+              "end_line": 12,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 10,
+                "end_line": 12,
+                "end_col": 12
+              },
+              "width": 1,
+              "name": "ra"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 12,
+                "col": 15,
+                "end_line": 12,
+                "end_col": 17
+              },
+              "width": 1,
+              "op": "&",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 12,
+                  "col": 16,
+                  "end_line": 12,
+                  "end_col": 17
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 13,
+              "col": 10,
+              "end_line": 13,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 10,
+                "end_line": 13,
+                "end_col": 12
+              },
+              "width": 1,
+              "name": "rx"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 13,
+                "col": 15,
+                "end_line": 13,
+                "end_col": 17
+              },
+              "width": 1,
+              "op": "^",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 13,
+                  "col": 16,
+                  "end_line": 13,
+                  "end_col": 17
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 19
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "rno"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 14,
+                "col": 16,
+                "end_line": 14,
+                "end_col": 19
+              },
+              "width": 1,
+              "op": "~|",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 14,
+                  "col": 18,
+                  "end_line": 14,
+                  "end_col": 19
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 15,
+              "col": 10,
+              "end_line": 15,
+              "end_col": 19
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 15,
+                "col": 10,
+                "end_line": 15,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "rna"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 15,
+                "col": 16,
+                "end_line": 15,
+                "end_col": 19
+              },
+              "width": 1,
+              "op": "~&",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 15,
+                  "col": 18,
+                  "end_line": 15,
+                  "end_col": 19
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 19
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "rnx"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 16,
+                "col": 16,
+                "end_line": 16,
+                "end_col": 19
+              },
+              "width": 1,
+              "op": "~^",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 16,
+                  "col": 18,
+                  "end_line": 16,
+                  "end_col": 19
+                },
+                "width": 4,
+                "name": "v"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

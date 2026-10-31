@@ -17,7 +17,7 @@ registration now carries a side-effect-free scalar guard and applies it at the
 publication point. The retained evaluator covers identifiers, literals,
 constant-index packed selects, ascending dynamic packed part-selects, scalar
 equality/inequality comparisons, and logical `&&`/`||` combinations; calls,
-descending dynamic or aggregate selects, and other general expressions still
+descending dynamic selects, replications, aggregate selectors, and other general expressions still
 need a broader evaluator. `always_ff` guards
 remain on the clock registration and preserve its inferred-clock and
 single-driver rules. In a guarded clock-plus-reset list, `iff` filters the
@@ -72,6 +72,12 @@ enabled ascending dynamic slice.
 Descending dynamic packed part-selects such as `iff en[idx -: 2]` now use the
 same evaluator and truthiness. The `always_ff_event_iff_dynamic_neg` witness
 covers the disabled and enabled descending slices.
+
+Concatenations of admitted scalar or packed-select parts, such as
+`iff {en[1], en[0]}`, now use the existing `SExpr.concat` evaluator and vector
+truthiness. Replications and other aggregate forms remain loud. The
+`always_ff_event_iff_concat` witness covers a disabled edge followed by an
+enabled concatenated guard.
 
 ## Scalar comparison guards — 2026-10-31
 

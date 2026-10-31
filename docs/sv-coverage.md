@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 558 | 544 | 0 | 14 | sv-tests-2 declarations |
+| 559 | 545 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -581,6 +581,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_vector` | `Examples/system-verilog/always_ff_event_iff_vector/always_ff_event_iff_vector.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_dynamic` | `Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_dynamic_neg` | `Examples/system-verilog/always_ff_event_iff_dynamic_neg/always_ff_event_iff_dynamic_neg.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_concat` | `Examples/system-verilog/always_ff_event_iff_concat/always_ff_event_iff_concat.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -633,7 +634,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.CastExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CompilationUnit` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/concat_accept/concat_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/always_ff_event_iff_concat/always_ff_event_iff_concat.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPattern` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPredicate` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |

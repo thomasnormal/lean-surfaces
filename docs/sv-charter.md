@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Packed concatenation `iff` guards — 2026-10-31
+
+Concatenations of admitted scalar or packed-select parts, such as
+`iff {en[1], en[0]}`, now use `SExpr.concat` and vector truthiness. Replications
+and other aggregate selectors remain loud. The `always_ff_event_iff_concat`
+witness covers disabled and enabled clock edges. Differential coverage grows
+**558/544/0/14 → 559/545/0/14**; grammar coverage remains **240/212/28**.
+
 ## Descending dynamic packed-vector `iff` guards — 2026-10-31
 
 Descending dynamic packed part-selects such as `iff en[idx -: 2]` now use the

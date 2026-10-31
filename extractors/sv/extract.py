@@ -24808,6 +24808,11 @@ def _iff_guard_allowed(expr):
         return expr.get("width") == 1
     if kind == "Literal":
         return expr.get("width") == 1
+    if kind == "Concat":
+        parts = expr.get("parts", [])
+        return (not expr.get("replication_lowered", False)
+                and bool(parts)
+                and all(_iff_guard_allowed(part) for part in parts))
     if kind == "SelectRead":
         # A bit-select is the one indexed guard shape whose evaluation is
         # already represented in SExpr. Keep the admission narrow: direct

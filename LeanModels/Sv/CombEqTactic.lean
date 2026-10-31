@@ -41,6 +41,14 @@ of a hundred sites needs no `set_option maxRecDepth` in the player's file.)
 * `inputsKnown` — the input ports hold known vectors of their declared width (the player's premise:
   the tactic cannot know how the inputs were obtained).
 
+**Flat netlists (WP-P3b).** When EVERY site is plain (no generate loop) and the design has no free
+parameter, `auto`, `inRange`, `width`, `bitRead` and `cover` are closed, decidable statements about the site
+list, and `sv_equations` DECIDES them (`closeByDecide` through `CombViewPlain.lean` and `CombEqPlain.lean`)
+instead of normalizing them: no goal is returned for them, so the `cover_k` goals do not exist for such a
+design and only the main goal and `inputsKnown` are left (`sv_equations?` says which obligations it decided).
+Any failure (a loop, a parameter, a false statement) takes the normalization route and returns its goals as
+before. The `always_comb` elaborator (`CombProcTactic.lean`) has no such path.
+
 **Knownness.** Why the Boolean equations are the real semantics: in a state that solves the design's
 equations, with the comb shape, known inputs, and a rank certificate, EVERY supported read is known
 (`CombKnown.reads_known`, `CombKnownThm.lean`; its consequences `CombKnown.settled` for the driven bits are

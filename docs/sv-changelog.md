@@ -1,3 +1,21 @@
+# [0.1.287] — 2026-10-31
+
+Proof tactics: the multiplier-shaped designs lose their glue (WP-P3/P4). Two NEW modules, additive: `CombBridge`
+(`SvState.cell`, the canonical row-major cell `st.boolAt n (rmN W r c)`, and the tactic `sv_bridge e [with h₁, …]`,
+which closes a Nat-indexed goal from a raw `eq_*` hypothesis printed by `sv_equations`: it instantiates the
+equation, normalizes the row-major index with `rmN_add_col`, and compares goal and instance by congruence with
+`omega` on the index leaves; a failure names the index equality it could not prove, the goal's read and the
+equation's) and `CombCover` (a first alternative of `sv_cover` for 2-D coverage goals: each writer's witnesses are
+solved from the affine equations of the read's row and column, the disjunction is walked with `Classical.em` and the
+proof term is built directly, writers the hypotheses alone refute are skipped; a shape it does not read falls back
+to the old search, and a goal it reads but cannot prove is reported with the read and the condition each writer
+would need). The rank-failure message of the sampling stage appends the read that forms the failing edge
+(`rankReadNote`, `CombViewDiag.lean`), and the sampler adds one more value; the five Examples that pin that
+message gain one line. Goal dumps of the 24 files that use the tactics are byte-identical (the four probes that
+carry the pinned message differ only by the appended line). Examples: `comb_bridge` (the four index shapes, the
+failure message, the 2-D cover rule, its error format). Every new theorem has a `#print axioms` pin (at most
+`propext`, `Classical.choice`, `Quot.sound`).
+
 # [0.1.284] — 2026-10-31
 
 Symbolic-tier differential rows for the four-state rules the `always_comb` tactics will rely on (WP-G, step 2

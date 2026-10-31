@@ -188,6 +188,10 @@ structure ProcState where
   pendingEdges : Nat := 0
   /-- Generic event-list sensitivity for a retained plain `always` process. -/
   eventEdges : List (String × Edge) := []
+  /-- The same event list with optional `iff` guards retained.  The pair list
+  above remains the scheduler registration; guards are sampled against the
+  published state when an edge occurs. -/
+  eventGuards : List (String × Edge × Option SExpr) := []
 deriving Repr, Inhabited
 
 /-- The world — `W`.

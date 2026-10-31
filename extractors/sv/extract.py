@@ -24654,6 +24654,18 @@ def convert_procedural_block(sm, m):
         if event_process is not None:
             return event_process
 
+    # A conditional single event, `always @(posedge clk iff enable)`, uses
+    # the same retained registration as an unguarded one.  The timed slice
+    # admits only a scalar identifier guard; compound expressions stay loud
+    # until the scheduler has a general event-condition evaluator.
+    if (_SYM is None and pk == ProceduralBlockKind.Always
+            and type(body).__name__ == "TimedStatement"
+            and type(body.timing).__name__ == "SignalEventControl"
+            and body.timing.iffCondition is not None):
+        event_process = _single_event_process(sm, m, body, body.timing)
+        if event_process is not None:
+            return event_process
+
     # A bare signal control, `always @(trigger)`, is the one-entry form of
     # the retained event-list process.  Keep the clocked `always_ff` and
     # positive/negedge paths below distinct; only plain `always` gets this
@@ -24782,8 +24794,11 @@ def _event_list_process(sm, m, body, timing, style):
     for ev in events:
         if type(ev).__name__ != "SignalEventControl":
             return None
+        guard = None
         if getattr(ev, "iffCondition", None) is not None:
-            return None
+            guard = convert_expr(sm, ev.iffCondition)
+            if guard.get("kind") != "Ident" or guard.get("width") != 1:
+                return unsupported(sm, m, "SignalEventControl:iff")
         signal = convert_expr(sm, ev.expr)
         if signal.get("kind") != "Ident" or signal.get("width") != 1:
             return None
@@ -24795,7 +24810,10 @@ def _event_list_process(sm, m, body, timing, style):
             edge = "any"
         else:
             return None
-        encoded.append({"signal": signal["name"], "edge": edge})
+        event = {"signal": signal["name"], "edge": edge}
+        if guard is not None:
+            event["iff"] = guard
+        encoded.append(event)
     statement = body.stmt
     if type(statement).__name__ == "EmptyStatement":
         return None
@@ -24811,12 +24829,23 @@ def _event_list_process(sm, m, body, timing, style):
 
 
 def _single_event_process(sm, m, body, timing):
-    """Admit a plain `always @(signal)` any-edge control."""
+    """Admit a plain single-signal event, with an optional scalar `iff`."""
+    guard = None
     if getattr(timing, "iffCondition", None) is not None:
-        return None
+        guard = convert_expr(sm, timing.iffCondition)
+        if guard.get("kind") != "Ident" or guard.get("width") != 1:
+            return unsupported(sm, m, "SignalEventControl:iff")
     signal = convert_expr(sm, timing.expr)
     if signal.get("kind") != "Ident" or signal.get("width") != 1:
-        return None
+        return unsupported(sm, m, "SignalEventControl:clock")
+    if timing.edge == EdgeKind.PosEdge:
+        edge = "posedge"
+    elif timing.edge == EdgeKind.NegEdge:
+        edge = "negedge"
+    elif timing.edge == EdgeKind.None_:
+        edge = "any"
+    else:
+        return unsupported(sm, m, "SignalEventControl:" + str(timing.edge).split(".")[-1])
     statement = body.stmt
     if type(statement).__name__ == "EmptyStatement":
         return None
@@ -24826,7 +24855,8 @@ def _single_event_process(sm, m, body, timing):
     return {
         "kind": "AlwaysEvent",
         "span": sym_span(sm, m),
-        "events": [{"signal": signal["name"], "edge": "any"}],
+        "events": [{"signal": signal["name"], "edge": edge,
+                    **({"iff": guard} if guard is not None else {})}],
         "body": convert_stmt(sm, statement),
     }
 

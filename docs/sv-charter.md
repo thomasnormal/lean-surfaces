@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar `iff` guards for timed `always` events — 2026-10-31
+
+Plain timed `always` event entries may carry a scalar identifier `iff` guard.
+The guard is retained beside its event and sampled against the published state
+when the edge occurs; a false or unknown guard leaves the process registered
+for the next event. The existing Active/Inactive/NBA slot loop remains the
+only scheduler, and guarded `always_ff` controls or compound guards remain
+loud until their distinct contracts are modelled.
+
+The `always_event_iff` witness first raises `clk` with `en = 0`, then enables
+the guard and raises it again; only the second edge updates `q` and the pinned
+transcript MATCHes. Differential coverage grows **547/533/0/14 → 548/534/0/14**;
+grammar coverage grows **239/211/28 → 240/212/28** with the new
+`IffEventClause` witness.
+
 ## Bare-signal event controls for timed `always` — 2026-10-31
 
 Plain `always @(trigger)` now uses the same retained event registration as a
@@ -33,9 +48,10 @@ re-arms through the existing Active/Inactive/NBA slot loop. The scheduler's
 single loop remains the authority; no polling or event-list-specific loop was
 introduced.
 
-`always_ff` keeps the narrower clock-plus-reset forms. Empty lists, conditional
-events, non-scalar expressions, and unsupported three-event clock/reset shapes
-remain loud. The `always_event_list` witness checks a change on one of two
+`always_ff` keeps the narrower clock-plus-reset forms. Empty lists, compound
+conditional events, non-scalar expressions, and unsupported three-event
+clock/reset shapes remain loud; scalar identifier `iff` filters are retained
+by the guarded-event rung above. The `always_event_list` witness checks a change on one of two
 signals and MATCHes its pinned transcript. Differential coverage grows
 **545/531/0/14 → 546/532/0/14**; grammar coverage grows
 **239/210/29 → 239/211/28**.

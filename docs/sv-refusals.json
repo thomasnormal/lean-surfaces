@@ -1417,7 +1417,7 @@
     "extractor"
    ],
    "trigger": "H: always @(a or b) y = a;  /  always_ff @(posedge clk or posedge rst) ...  /  a three-event list",
-   "why": "Plain `always` lists with one or more edge-qualified 1-bit identifiers are modelled by the retained timed event-list process; empty, conditional, non-scalar, `always_ff`, and three-event clock/reset forms remain loud.",
+   "why": "Plain `always` lists with one or more edge-qualified 1-bit identifiers are modelled by the retained timed event-list process; scalar identifier `iff` guards are sampled at publication, while empty, compound-conditional, non-scalar, `always_ff`, and three-event clock/reset forms remain loud.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer (generic sensitivity lists)",
@@ -1505,7 +1505,7 @@
     "extractor"
    ],
    "trigger": "H: always_ff @(posedge c iff b[0]) y <= a;",
-   "why": "Conditional event controls are not modelled.",
+   "why": "Plain timed `always` admits a scalar identifier `iff` guard and samples it when the adjacent edge is published; compound guards and `always_ff` conditional clocks remain loud.",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer",

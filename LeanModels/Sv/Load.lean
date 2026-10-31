@@ -173,7 +173,7 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
     | .alwaysFFResetHigh clock reset body =>
         (true, clock) :: (true, reset) :: timedAccesses body
     | .alwaysEvent events body =>
-        events.map (fun (name, _) => (true, name)) ++ timedAccesses body
+        events.map (fun (name, _, _) => (true, name)) ++ timedAccesses body
     | .assign _ _ => []
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
@@ -241,12 +241,14 @@ def timedProcOf : SProc → Except String ProcState
   | .alwaysEvent events body =>
       match events with
       | [] => .error "timed design rejects an empty event list"
-      | (signal, edge) :: _ =>
+      | (signal, edge, _) :: _ =>
           let trigger := Trigger.atEdge signal edge
+          let edgeEvents := events.map fun (name, polarity, _) => (name, polarity)
           pure { residual := [body], status := .suspended trigger
                , arm := some [body]
-               , eventEdges := events
-               , registration := some (.edges events) }
+               , eventEdges := edgeEvents
+               , eventGuards := events
+               , registration := some (.edges edgeEvents) }
   | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
 
 /-- Build a scheduler world from the self-check envelope vocabulary.

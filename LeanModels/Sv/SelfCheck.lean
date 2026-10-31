@@ -1185,7 +1185,11 @@ inductive SProc where
   | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
   | alwaysFFResetHigh (clock : String) (reset : String) (body : SStmt)
-  | alwaysEvent (events : List (String × Edge)) (body : SStmt)
+  /-- Plain `always` event lists.  The optional `iff` expression is retained
+  with each event so the timed scheduler can sample it at publication time.
+  The extractor currently admits scalar identifier guards; keeping the full
+  expression here leaves the envelope truthful for the next guard slice. -/
+  | alwaysEvent (events : List (String × Edge × Option SExpr)) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
@@ -1746,7 +1750,10 @@ def parseSProc (j : Json) : Except String SProc := do
           | "negedge" => pure Edge.neg
           | "any" => pure Edge.any
           | other => throw s!"AlwaysEvent: unknown edge '{other}'"
-        pure (signal, edge)
+        let iff ← match getFOpt event "iff" with
+          | none => pure none
+          | some guard => pure (some (← parseSExpr guard))
+        pure (signal, edge, iff)
       if events.isEmpty then
         throw "AlwaysEvent: empty event list"
       return .alwaysEvent events (← parseSStmt (← getF j "body"))

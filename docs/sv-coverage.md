@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 211 | 239 | 88.3% |
+| grammar syntax kinds (MATCH) | 212 | 240 | 88.3% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 547 | 533 | 0 | 14 | sv-tests-2 declarations |
+| 548 | 534 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -570,6 +570,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_latch_accept` | `Examples/system-verilog/always_latch_accept/always_latch_accept.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_latch_wake` | `Examples/system-verilog/always_latch_wake/always_latch_wake.sv` | match | **MATCH** | `ok` | MATCH |
 | `wait_accept` | `Examples/system-verilog/wait_accept/wait_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_event_iff` | `Examples/system-verilog/always_event_iff/always_event_iff.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -577,7 +578,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 239 | 211 | 28 | pyslang SyntaxKind |
+| 240 | 212 | 28 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -615,7 +616,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_event_list/always_event_list.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_event_iff/always_event_iff.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
@@ -675,6 +676,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.IdentifierName` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IdentifierSelectName` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IfGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.IffEventClause` | `Examples/system-verilog/always_event_iff/always_event_iff.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateAssertStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateAssumeStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateCoverStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |

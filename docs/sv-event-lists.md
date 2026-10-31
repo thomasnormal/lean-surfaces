@@ -11,13 +11,15 @@ process continuation.
 The timed envelope now admits a plain `always` list with one or more scalar
 identifier events, including the bare `always @(signal)` spelling. Each entry retains its `any`, `posedge`, or `negedge`
 polarity, and the process stores the whole list while suspended. A publication
-wakes it when any listed edge fires; completion re-arms the same body through
-the existing Active/Inactive/NBA loop. This is one multi-event registration,
-not a second scheduler.
+wakes it when any listed edge fires; a scalar identifier `iff` guard is sampled
+in the published state and must be true for that entry to wake. Completion
+re-arms the same body through the existing Active/Inactive/NBA loop. This is
+one multi-event registration, not a second scheduler.
 
 `always_ff` lists continue to use the narrower asynchronous-reset forms.
-Empty lists, `iff`, non-scalar expressions, and other clock/reset shapes remain
-loud because they need guards or sequential rules that are not represented.
+Empty lists, compound or non-scalar `iff` expressions, and other clock/reset
+shapes remain loud because they need guards or sequential rules that are not
+represented.
 
 ## 2026-10-22 census and decision
 

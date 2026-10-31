@@ -5008,6 +5008,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 4
+    },
+    {
+      "name": "always_event_iff",
+      "file": "Examples/system-verilog/always_event_iff/always_event_iff.sv",
+      "module": "top",
+      "oracle": [
+        "EVENT IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
     }
   ]
 }

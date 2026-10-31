@@ -54,6 +54,32 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual(process["kind"], "AlwaysEvent")
         self.assertEqual(process["events"], [{"signal": "trigger", "edge": "any"}])
 
+    def test_plain_scalar_iff_guard_is_retained(self):
+        design = lower(
+            "module top; logic clk, en, seen; "
+            "always @(posedge clk iff en) seen = 1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "AlwaysEvent")
+        self.assertEqual(process["events"][0]["signal"], "clk")
+        self.assertEqual(process["events"][0]["edge"], "posedge")
+        self.assertEqual(process["events"][0]["iff"]["name"], "en")
+
+    def test_plain_event_list_scalar_iff_guards_are_retained(self):
+        design = lower(
+            "module top; logic a, b, en, seen; "
+            "always @(posedge a iff en or negedge b iff en) seen = 1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "AlwaysEvent")
+        self.assertEqual([event["iff"]["name"] for event in process["events"]],
+                         ["en", "en"])
+
+    def test_compound_iff_guard_stays_loud(self):
+        design = lower(
+            "module top; logic clk, en, seen; "
+            "always @(posedge clk iff en == 1'b1) seen = 1; endmodule",
+            require_valid=False)
+        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
     def test_always_ff_is_not_reinterpreted_as_general_repetition(self):
         design = lower("module top; logic q; always_ff begin #2 q=1; end endmodule", require_valid=False)
         self.assertFalse(any(n.get("kind") == "Always" for n in nodes(design)))

@@ -3,16 +3,17 @@
 `SignalEventControl:iff` marks an event control whose trigger is qualified by
 an `iff` condition. The event must occur first and the guard is sampled when
 that event arrives; changing the guard alone does not wake the process. The
-marker remains explicit for both ordinary `always` blocks and `always_ff`.
+timed slice now admits scalar identifier guards on plain `always` events; the
+marker remains explicit for compound guards and `always_ff`.
 
-## Why conditional event controls remain loud
+## Why the remaining conditional event controls stay loud
 
 IEEE 1800-2023 §§9.2.2.4 and 9.4.2.3 make the guard part of event
-registration, wake-up filtering and re-arming. The public wait representation
-has no retained guard expression or occurrence-time qualification state. Treating
-`@(a iff en)` as `@a`, or making `en` itself an event, changes wake behavior and
-can violate the `always_ff` inferred-clock and single-driver rules. No second
-scheduler or guessed guard evaluation is introduced.
+registration, wake-up filtering and re-arming. The retained event-list
+registration now carries a scalar identifier guard and applies it at the
+publication point. Compound expressions still need a general evaluator, and
+`always_ff` guards must preserve its inferred-clock and single-driver rules.
+No second scheduler or guessed guard evaluation is introduced.
 
 ## 2026-10-22 census and decision
 

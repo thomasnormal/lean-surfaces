@@ -243,7 +243,7 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 | kind | key order / fields |
 |---|---|
 | `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), optional `edge` (`"neg"` for an admitted negative-edge clock; omitted means `"pos"`), optional `areset_n` or `areset` (1-bit asynchronous reset identifier), `body` (stmt) |
-| `AlwaysEvent` | `kind`, `span`, `events` (array of `{signal, edge}` entries; each edge is `"any"`, `"posedge"`, or `"negedge"`), `body` (stmt) — plain `always` with a finite scalar event list |
+| `AlwaysEvent` | `kind`, `span`, `events` (array of `{signal, edge}` entries; each edge is `"any"`, `"posedge"`, or `"negedge"`; an entry may carry `iff` with a scalar guard expression), `body` (stmt) — plain `always` with a finite scalar event list |
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
 | `Assign` | `kind`, `span`, `target` (expr: `Ident`, a select, or semantic-tier `ConcatTarget`), `value` (expr) — continuous `assign` |
 | `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits one or more in source order |
@@ -262,8 +262,9 @@ the latter retains its complete source body, including admitted delay, bare
 signal and negative-edge controls. Unsupported body nodes remain visible.
 `AlwaysEvent` is the timed-only encoding for a plain `always @(a)` or
 `always @(a or b)`-style list of one or more scalar identifiers. Its retained process wakes when any
-listed edge fires through the same Active/Inactive/NBA loop. Other event-list
-forms, `iff`, level waits and `always_latch` remain loud; see [the
+listed edge fires and its scalar `iff` guard is true through the same
+Active/Inactive/NBA loop. Compound guards, other event-list forms, level
+waits and `always_latch` remain loud; see [the
 implicit-event boundary](sv-implicit-events.md) for the inferred-read-set
 contract. `body`
 is a single statement node (often `Block` or `If`).

@@ -1,3 +1,13 @@
+# [0.1.282] — 2026-10-31
+
+Plain timed `always` event controls now retain scalar identifier `iff` guards;
+the scheduler samples the guard when the adjacent edge is published and keeps
+the process suspended when it is false or unknown. The `always_event_iff`
+witness exercises a disabled edge followed by an enabled edge and MATCHes;
+compound guards and guarded `always_ff` controls remain loud. Differential
+coverage grows **547/533/0/14 → 548/534/0/14**; grammar coverage grows
+**239/211/28 → 240/212/28**.
+
 # [0.1.281] — 2026-10-31
 
 Plain timed `always @(trigger)` now retains a one-entry any-edge registration

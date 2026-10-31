@@ -198,6 +198,21 @@ def edgeOn (e : Edge) (old new : Logic) : Bool :=
 def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
   edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
 
+/-- Evaluate the retained `iff` guard at the state in which its event was
+published.  The extractor admits only scalar identifier guards for this
+slice; any other expression is deliberately false here and is rejected by
+the envelope admission path rather than approximated. -/
+def eventGuardPass (st : SvState) : Option SExpr → Bool
+  | none => true
+  | some (.m0 (.ident signal)) => SvState.bit0 st signal == .l1
+  | some _ => false
+
+/-- Whether one guarded event-list entry both changed and passed its filter. -/
+def eventTriggered (old new : SvState)
+    (events : List (String × Edge × Option SExpr)) : Bool :=
+  events.any fun (signal, edge, guard) =>
+    sawEdge old new signal edge && eventGuardPass new guard
+
 def appendInactive (w : SvWorld) (indices : List Nat) : SvWorld :=
   { w with regionQ := fun r =>
       if r == Region.inactive then w.regionQ r ++ indices else w.regionQ r }
@@ -220,7 +235,10 @@ def wakeEdges (old new : SvState) : SvM Unit :=
                    | _ => false)
             | some (.edges events) =>
                 !ps.explicitlySuspended &&
-                  events.any (fun (sig, e) => sawEdge old new sig e) &&
+                  eventTriggered old new
+                    (if ps.eventGuards.isEmpty
+                     then events.map fun (sig, edge) => (sig, edge, none)
+                     else ps.eventGuards) &&
                   (match ps.status with
                    | .suspended _ | .ready => true
                    | _ => false)

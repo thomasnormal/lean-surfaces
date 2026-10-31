@@ -12553,6 +12553,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-switch-computed-initialization-fallthrough-assignment",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalSwitchComputedInitializationFallthroughAssignmentStatementFrameWitness",
+    "cpp_source": "int local_switch_computed_initialization_fallthrough_assignment_statement_frame_witness(int value) { int outer = 3; switch (value) { case 1: { int local = outer + 2; outer = local; } default: break; } return outer; } bool callable_witness() { return local_switch_computed_initialization_fallthrough_assignment_statement_frame_witness(1) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-switch-default-computed-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",
@@ -13256,7 +13268,9 @@
     "lean_expression": "observed (-1)",
     "cpp_include": "tinyxml2.h",
     "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
-    "args": [-1],
+    "args": [
+      -1
+    ],
     "expect": "match",
     "rung": 2
   },
@@ -13268,7 +13282,9 @@
     "lean_expression": "observed (-128)",
     "cpp_include": "tinyxml2.h",
     "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
-    "args": [-128],
+    "args": [
+      -128
+    ],
     "expect": "match",
     "rung": 2
   },
@@ -13280,7 +13296,9 @@
     "lean_expression": "observed 127",
     "cpp_include": "tinyxml2.h",
     "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
-    "args": [127],
+    "args": [
+      127
+    ],
     "expect": "match",
     "rung": 2
   },
@@ -13292,7 +13310,9 @@
     "lean_expression": "observed 0",
     "cpp_include": "tinyxml2.h",
     "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
-    "args": [0],
+    "args": [
+      0
+    ],
     "expect": "match",
     "rung": 2
   }

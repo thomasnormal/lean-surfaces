@@ -84,6 +84,11 @@ Constant replications of admitted parts such as `iff {2{en}}` use the same
 covers a disabled edge followed by an enabled replicated guard; calls and
 other aggregate selectors remain loud.
 
+Logical negation of an admitted vector guard, such as `iff !en[1:0]`, uses the
+same vector truthiness before the unary operation. The
+`always_ff_event_iff_vector_not` witness covers a nonzero vector followed by a
+zero vector.
+
 ## Scalar comparison guards — 2026-10-31
 
 The timed slice now retains `iff en == 1'b1`, `iff en != 1'b0`, and the

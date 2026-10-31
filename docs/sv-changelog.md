@@ -3438,3 +3438,9 @@ Constant replication `iff` guards such as `iff {2{en}}` now use the existing
 loud. The `always_ff_event_iff_replication` witness covers disabled and enabled
 clock publications. Differential coverage grows **559/545/0/14 → 560/546/0/14**;
 grammar coverage remains **240/212/28**.
+# [0.1.296] — 2026-10-31
+
+Logical negation of admitted vector `iff` guards such as `iff !en[1:0]` now
+uses the existing vector truthiness path. The `always_ff_event_iff_vector_not`
+witness covers nonzero and zero vectors. Differential coverage grows
+**560/546/0/14 → 561/547/0/14**; grammar coverage remains **240/212/28**.

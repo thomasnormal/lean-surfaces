@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Logical negation of vector `iff` guards — 2026-10-31
+
+Logical negation of an admitted packed vector, such as `iff !en[1:0]`, now uses
+the existing vector truthiness before the unary operation. The
+`always_ff_event_iff_vector_not` witness covers nonzero and zero vectors.
+Differential coverage grows **560/546/0/14 → 561/547/0/14**; grammar coverage
+remains **240/212/28**.
+
 ## Constant replication `iff` guards — 2026-10-31
 
 Constant replications of admitted guard parts, such as `iff {2{en}}`, now use

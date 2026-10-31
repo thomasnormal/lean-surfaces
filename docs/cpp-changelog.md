@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.177] — 2026-10-31
+
+### Added
+
+- Added callable switch computed-initialization fallthrough-assignment,
+  skipped-case, and enclosing-return witnesses.
+
+### Measured
+
+- The checked-in corpus now contains **1130 differential rows**: **1113 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **624**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.176] — 2026-10-31
 
 ### Added

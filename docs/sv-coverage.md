@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 557 | 543 | 0 | 14 | sv-tests-2 declarations |
+| 558 | 544 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -580,6 +580,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_async_reset_iff_reset` | `Examples/system-verilog/always_ff_async_reset_iff_reset/always_ff_async_reset_iff_reset.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_vector` | `Examples/system-verilog/always_ff_event_iff_vector/always_ff_event_iff_vector.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_dynamic` | `Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_ff_event_iff_dynamic_neg` | `Examples/system-verilog/always_ff_event_iff_dynamic_neg/always_ff_event_iff_dynamic_neg.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -645,7 +646,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.DefaultPatternKeyExpression` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DeferredAssertion` | `Examples/system-verilog/immediate_assertions/deferred.sv` | **REFUSE** | `unsupported` unsupported statement 'ImmediateAssertion:deferred' |
 | `SyntaxKind.DelayControl` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.DescendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.DescendingRangeSelect` | `Examples/system-verilog/always_ff_event_iff_dynamic_neg/always_ff_event_iff_dynamic_neg.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |

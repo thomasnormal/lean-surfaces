@@ -67,7 +67,11 @@ Ascending dynamic packed part-selects such as `iff en[idx +: 2]` use the same
 fueled `SelectRead` evaluator and vector truthiness. Descending dynamic
 part-selects remain loud until their direction rule is pinned. The
 `always_ff_event_iff_dynamic` witness covers a disabled edge followed by an
-enabled dynamic slice.
+enabled ascending dynamic slice.
+
+Descending dynamic packed part-selects such as `iff en[idx -: 2]` now use the
+same evaluator and truthiness. The `always_ff_event_iff_dynamic_neg` witness
+covers the disabled and enabled descending slices.
 
 ## Scalar comparison guards — 2026-10-31
 

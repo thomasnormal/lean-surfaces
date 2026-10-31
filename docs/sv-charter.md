@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Descending dynamic packed-vector `iff` guards — 2026-10-31
+
+Descending dynamic packed part-selects such as `iff en[idx -: 2]` now use the
+existing `SelectRead` direction and vector truthiness. Aggregate selectors
+remain loud. The `always_ff_event_iff_dynamic_neg` witness covers disabled and
+enabled clock edges. Differential coverage grows **557/543/0/14 →
+558/544/0/14**; grammar coverage remains **240/212/28**.
+
 ## Ascending dynamic packed-vector `iff` guards — 2026-10-31
 
 The timed guard slice admits ascending dynamic packed part-selects such as

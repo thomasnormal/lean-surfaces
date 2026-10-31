@@ -3417,3 +3417,10 @@ existing `SelectRead` truthiness path. Dynamic indexed and aggregate selectors
 remain loud. The `always_ff_event_iff_vector` witness covers disabled and
 enabled clock publications. Differential coverage grows **555/541/0/14 →
 556/542/0/14**; grammar coverage remains **240/212/28**.
+# [0.1.293] — 2026-10-31
+
+Descending dynamic packed part-select `iff` guards such as `iff en[idx -: 2]`
+now use the existing `SelectRead` direction and truthiness path. Aggregate
+selectors remain loud. The `always_ff_event_iff_dynamic_neg` witness covers
+disabled and enabled clock publications. Differential coverage grows
+**557/543/0/14 → 558/544/0/14**; grammar coverage remains **240/212/28**.

@@ -3502,3 +3502,11 @@ now retain their expression-context `Resize` nodes and use the existing guard
 evaluator. The `always_event_iff_unsized` witness covers disabled and enabled
 edges. Differential coverage grows **563/549/0/14 → 564/550/0/14**; grammar
 coverage remains **240/212/28**.
+# [0.1.300] — 2026-10-31
+
+Plain `always` now supports one-bit constant packed-select event expressions
+through a retained sampled-value registration. The `always_event_bit_select`
+witness covers wake-up on a changed selected bit. Differential coverage grows
+**564/550/0/14 → 565/551/0/14**. The fresh grammar page remeasures the
+committed witness set at **240/209/31** (from the stale **240/212/28** page);
+no new syntax production is introduced here.

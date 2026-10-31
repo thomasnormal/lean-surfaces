@@ -220,6 +220,24 @@ def eventTriggered (old new : SvState)
   events.any fun (signal, edge, guard) =>
     sawEdge old new signal edge && eventGuardPass new guard
 
+/-- Evaluate one retained sampled-expression event in both the pre- and
+published states.  The event wakes only when the sampled value changes (or
+its LSB crosses the requested edge); a guard is still sampled in the new
+state, just as for a named event. -/
+def eventExprTriggered (old new : SvState)
+    (events : List (SExpr × Edge × Option SExpr)) : Bool :=
+  events.any fun (expression, edge, guard) =>
+    match evalSExpr 64 old expression, evalSExpr 64 new expression with
+    | .ok oldValue, .ok newValue =>
+        let oldBit := oldValue.bits[0]?.getD .lx
+        let newBit := newValue.bits[0]?.getD .lx
+        edgeOn edge oldBit newBit && eventGuardPass new guard
+    | _, _ => false
+
+#guard eventExprTriggered
+    [("v", LVec.ofNat 1 0)] [("v", LVec.ofNat 1 1)]
+    [(SExpr.m0 (Expr.ident "v"), Edge.any, Option.none)] == true
+
 def appendInactive (w : SvWorld) (indices : List Nat) : SvWorld :=
   { w with regionQ := fun r =>
       if r == Region.inactive then w.regionQ r ++ indices else w.regionQ r }
@@ -248,6 +266,12 @@ def wakeEdges (old new : SvState) : SvM Unit :=
                     (if ps.eventGuards.isEmpty
                      then events.map fun (sig, edge) => (sig, edge, none)
                      else ps.eventGuards) &&
+                  (match ps.status with
+                   | .suspended _ | .ready => true
+                   | _ => false)
+            | some (.exprs events) =>
+                !ps.explicitlySuspended &&
+                  eventExprTriggered old new events &&
                   (match ps.status with
                    | .suspended _ | .ready => true
                    | _ => false)
@@ -303,6 +327,23 @@ partial def runProcResidual (fuel : Nat) (i : Nat) (ps : ProcState)
                       ({ ps with residual := body
                                , status := .suspended trigger
                                , registration := some (.edges ps.eventEdges)
+                               , explicitlySuspended := false
+                               , pendingEdges := 0 }, false)
+                  else if !ps.eventExprs.isEmpty then
+                    if ps.pendingEdges > 1 then
+                      ({ ps with residual := body
+                               , status := .ready
+                               , registration := none
+                               , explicitlySuspended := false
+                               , pendingEdges := ps.pendingEdges - 1 }, true)
+                    else
+                      let trigger := match ps.eventExprs with
+                        | (expression, edge, _) :: _ =>
+                            Trigger.atEdge (expression.readNames.head?.getD "") edge
+                        | [] => Trigger.atEdge "" .any
+                      ({ ps with residual := body
+                               , status := .suspended trigger
+                               , registration := some (.exprs ps.eventExprs)
                                , explicitlySuspended := false
                                , pendingEdges := 0 }, false)
                   else if ps.pendingEdges > 1 then

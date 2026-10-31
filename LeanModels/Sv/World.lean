@@ -133,6 +133,10 @@ inductive WaitTarget where
   | edge (signal : String) (edge : Edge)
   /-- A generic event-list wait wakes when any listed signal edge occurs. -/
   | edges (events : List (String × Edge))
+  /-- A sampled-expression event-list wait.  The expression is evaluated in
+  the old and newly published states; its value change or edge wakes the
+  retained continuation. -/
+  | exprs (events : List (SExpr × Edge × Option SExpr))
   | timer (deadline : Nat)
   | level (condition : SExpr)
 deriving Repr, Inhabited
@@ -197,6 +201,9 @@ structure ProcState where
   above remains the scheduler registration; guards are sampled against the
   published state when an edge occurs. -/
   eventGuards : List (String × Edge × Option SExpr) := []
+  /-- Sampled expression events retain their complete expression and guard;
+  the scheduler compares old and newly published expression values. -/
+  eventExprs : List (SExpr × Edge × Option SExpr) := []
 deriving Repr, Inhabited
 
 /-- The world — `W`.

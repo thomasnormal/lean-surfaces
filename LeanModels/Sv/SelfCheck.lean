@@ -1197,6 +1197,10 @@ inductive SProc where
   The extractor currently admits scalar identifier guards; keeping the full
   expression here leaves the envelope truthful for the next guard slice. -/
   | alwaysEvent (events : List (String × Edge × Option SExpr)) (body : SStmt)
+  /-- Plain `always` events whose trigger is a sampled expression rather than
+  a whole scalar signal.  The timed path currently admits constant packed
+  bit-selects and retains the expression for old/new value comparison. -/
+  | alwaysExprEvent (events : List (SExpr × Edge × Option SExpr)) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
@@ -1263,6 +1267,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
   | .alwaysFFResetHighDualGuarded clock reset _ _ _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}:dual-iff' (self-check tier runs initial-only designs)"
   | .alwaysEvent events _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysEvent:{events.length}' (self-check tier runs initial-only designs)"
+  | .alwaysExprEvent events _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysEvent:{events.length}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysImplicit' (self-check tier runs initial-only designs)"
@@ -1336,6 +1342,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysFFResetHighGuardedReset clock reset _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:reset-iff"
       | .alwaysFFResetHighDualGuarded clock reset _ _ _ => some s!"AlwaysFF:{clock}+posedge {reset}:dual-iff"
       | .alwaysEvent events _ => some s!"AlwaysEvent:{events.length}"
+      | .alwaysExprEvent events _ => some s!"AlwaysEvent:{events.length}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
@@ -1800,7 +1807,6 @@ def parseSProc (j : Json) : Except String SProc := do
   | "AlwaysEvent" =>
       let eventJson ← getArrF j "events"
       let events ← eventJson.toList.mapM fun event => do
-        let signal ← getStrF event "signal"
         let edgeName := (getStrF event "edge").toOption.getD "any"
         let edge ← match edgeName with
           | "posedge" => pure Edge.pos
@@ -1810,10 +1816,28 @@ def parseSProc (j : Json) : Except String SProc := do
         let iff ← match getFOpt event "iff" with
           | none => pure none
           | some guard => pure (some (← parseSExpr guard))
-        pure (signal, edge, iff)
+        match getFOpt event "expr" with
+        | some expression =>
+            pure (Sum.inr (← parseSExpr expression), edge, iff)
+        | none =>
+            pure (Sum.inl (← getStrF event "signal"), edge, iff)
       if events.isEmpty then
         throw "AlwaysEvent: empty event list"
-      return .alwaysEvent events (← parseSStmt (← getF j "body"))
+      let body ← parseSStmt (← getF j "body")
+      let hasExpr := events.any fun event =>
+        match event.1 with
+        | Sum.inl _ => false
+        | Sum.inr _ => true
+      if hasExpr then
+        return .alwaysExprEvent (events.map fun event =>
+          ((match event.1 with
+            | Sum.inl signal => .m0 (.ident signal)
+            | Sum.inr expression => expression), event.2.1, event.2.2)) body
+      else
+        return .alwaysEvent (events.map fun event =>
+          ((match event.1 with
+            | Sum.inl signal => signal
+            | Sum.inr _ => ""), event.2.1, event.2.2)) body
   | "AlwaysComb" =>
       return .alwaysComb (← parseSStmt (← getF j "body"))
   | "AlwaysLatch" =>
@@ -1933,6 +1957,7 @@ def parseModuleD (j : Json) : Except String Design := do
       | .alwaysComb body
       | .alwaysLatch body
       | .alwaysEvent _ body => some body
+      | .alwaysExprEvent _ body => some body
       | _ => none
     if let some body := body? then
       let ln := localNames body

@@ -24871,6 +24871,18 @@ def _iff_guard_allowed(expr):
     return False
 
 
+def _event_operand_allowed(expr):
+    """Admit the first sampled-expression event shape: a constant bit select."""
+    if expr.get("kind") == "Ident":
+        return expr.get("width") == 1
+    if expr.get("kind") != "SelectRead" or expr.get("width") != 1:
+        return False
+    value = expr.get("value", {})
+    index = expr.get("index", {})
+    return (value.get("kind") == "Ident"
+            and index.get("kind") == "Literal")
+
+
 def _event_list_process(sm, m, body, timing, style):
     """Admit a plain `always` with a finite list of scalar signal events.
 
@@ -24896,7 +24908,7 @@ def _event_list_process(sm, m, body, timing, style):
             if not _iff_guard_allowed(guard):
                 return unsupported(sm, m, "SignalEventControl:iff")
         signal = convert_expr(sm, ev.expr)
-        if signal.get("kind") != "Ident" or signal.get("width") != 1:
+        if not _event_operand_allowed(signal):
             return None
         if ev.edge == EdgeKind.PosEdge:
             edge = "posedge"
@@ -24906,7 +24918,10 @@ def _event_list_process(sm, m, body, timing, style):
             edge = "any"
         else:
             return None
-        event = {"signal": signal["name"], "edge": edge}
+        if signal.get("kind") == "Ident":
+            event = {"signal": signal["name"], "edge": edge}
+        else:
+            event = {"expr": signal, "edge": edge}
         if guard is not None:
             event["iff"] = guard
         encoded.append(event)
@@ -24932,7 +24947,7 @@ def _single_event_process(sm, m, body, timing):
         if not _iff_guard_allowed(guard):
             return unsupported(sm, m, "SignalEventControl:iff")
     signal = convert_expr(sm, timing.expr)
-    if signal.get("kind") != "Ident" or signal.get("width") != 1:
+    if not _event_operand_allowed(signal):
         return unsupported(sm, m, "SignalEventControl:clock")
     if timing.edge == EdgeKind.PosEdge:
         edge = "posedge"
@@ -24948,11 +24963,17 @@ def _single_event_process(sm, m, body, timing):
     if (type(statement).__name__ == "BlockStatement"
             and len(getattr(getattr(statement, "body", None), "list", ())) == 0):
         return None
+    event = {"edge": edge}
+    if signal.get("kind") == "Ident":
+        event["signal"] = signal["name"]
+    else:
+        event["expr"] = signal
+    if guard is not None:
+        event["iff"] = guard
     return {
         "kind": "AlwaysEvent",
         "span": sym_span(sm, m),
-        "events": [{"signal": signal["name"], "edge": edge,
-                    **({"iff": guard} if guard is not None else {})}],
+        "events": [event],
         "body": convert_stmt(sm, statement),
     }
 

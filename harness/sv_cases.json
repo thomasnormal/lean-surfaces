@@ -5195,6 +5195,17 @@
       "expect": "match",
       "mode": "timed",
       "ticks": 5
+    },
+    {
+      "name": "always_event_bit_select",
+      "file": "Examples/system-verilog/always_event_bit_select/always_event_bit_select.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BIT SELECT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
     }
   ]
 }

@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Constant bit-select event expressions — 2026-10-31
+
+Plain `always @(bus[2])` events now retain a sampled one-bit `SelectRead`
+expression. The existing scheduler compares its old and newly published values
+and re-arms the same continuation on a change. The
+`always_event_bit_select` witness covers this value-change path; other event
+expressions remain loud. Differential coverage grows **564/550/0/14 →
+565/551/0/14**. A fresh grammar regeneration remeasures the committed
+witness set from **240/212/28** to **240/209/31**; no new grammar production
+was added by this item.
+
 ## Width-normalized scalar `iff` comparisons — 2026-10-31
 
 Unsized scalar comparisons such as `iff en == 1` retain the extractor's

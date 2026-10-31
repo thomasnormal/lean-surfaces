@@ -9,22 +9,37 @@ selected values are evaluated before the event is registered, and the sampled
 value is retained for later comparisons. The control re-arms at the same
 continuation after a wake.
 
+## Constant bit-select events — 2026-10-31
+
+Plain `always` events over a one-bit constant packed select, such as
+`always @(bus[2])`, now retain the `SelectRead` expression. The scheduler
+evaluates it in the old and newly published states, wakes on a changed sampled
+value, and re-arms the same continuation through the existing event loop.
+Other sampled expressions, including part-selects, reductions, concatenations,
+conditionals, and operators, remain loud until their dependency and edge rules
+are represented.
+
+The read-only corpus repricer now finds **26** sole
+`SignalEventControl:clock` files and **26** spans, down from **27/27**; the
+`always_event_bit_select` witness covers the retained value-change path.
+
 ## Why expression event controls remain a boundary
 
-The public envelope carries only the simple event form whose edge operand is a
-one-bit identifier. It has no expression sampler, dependency set, retained
-previous result, four-state edge conversion or aggregate-to-singular
+The public envelope carries a sampled expression only for a one-bit constant
+packed select. Other forms still need an expression sampler, dependency set,
+retained previous result, four-state edge conversion, and aggregate-to-singular
 validation. Reducing `@(a | b)` to one operand, treating a concatenation as a
-single signal without sampling it, or selecting a fixed bit of a vector would
-change both wake-up conditions and re-arming behavior. The tier therefore
-keeps `SignalEventControl:clock` loud and introduces no second scheduler.
+single signal without sampling it, or selecting a dynamic part of a vector
+would change both wake-up conditions and re-arming behavior. The tier keeps
+those `SignalEventControl:clock` forms loud and introduces no second scheduler.
 
 ## 2026-10-22 census and decision
 
-The fresh **22,035**-path census records `SignalEventControl:clock` in **350**
-files: **20** are event-expression-only and **330** co-occur with another
-wall. Repricing the sole files finds **20** spans. Four are multibit edge
-controls whose least-significant bit matters; **16** are value-change controls.
+The fresh **22,077**-path census records `SignalEventControl:clock` in **350**
+files: **27** are event-expression-only and **323** co-occur with another
+wall. Repricing the sole files finds **27** spans before the constant-select
+admission. Four are multibit edge controls whose least-significant bit matters;
+**23** are value-change controls.
 The spans include **3** binary expressions, **1** concatenation, **1**
 conditional expression, **3** reduction or unary expressions, **3** selected
 expressions, **4** singular/aggregate cases, **11** result-change scenarios

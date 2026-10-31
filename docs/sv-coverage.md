@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 212 | 240 | 88.3% |
+| grammar syntax kinds (MATCH) | 209 | 240 | 87.1% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 564 | 550 | 0 | 14 | sv-tests-2 declarations |
+| 565 | 551 | 0 | 14 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -587,6 +587,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `always_ff_event_iff_vector_bnot` | `Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_ff_event_iff_implication` | `Examples/system-verilog/always_ff_event_iff_implication/always_ff_event_iff_implication.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_event_iff_unsized` | `Examples/system-verilog/always_event_iff_unsized/always_event_iff_unsized.sv` | match | **MATCH** | `ok` | MATCH |
+| `always_event_bit_select` | `Examples/system-verilog/always_event_bit_select/always_event_bit_select.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -594,7 +595,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 240 | 212 | 28 | pyslang SyntaxKind |
+| 240 | 209 | 31 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -632,7 +633,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_event_iff/always_event_iff.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/always_event_bit_select/always_event_bit_select.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
@@ -682,11 +683,11 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionPortList` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPrototype` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
-| `SyntaxKind.GenerateBlock` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
-| `SyntaxKind.GenerateRegion` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
-| `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.GenerateBlock` | `Examples/system-verilog/comb_ops/add_mux.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.GenerateRegion` | `Examples/system-verilog/comb_ops/add_mux.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/comb_ops/add_mux.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/comparison_accept/comparison_accept.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/comb_ops/neg/neg_cmp.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchicalInstance` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchyInstantiation` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IdentifierName` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
@@ -724,7 +725,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/lp_add/neg/lp_shift.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/sem2/fold_cgrow/fold_cgrow.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LongIntType` | `Examples/system-verilog/sem2/fold_sqn/fold_sqn.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LoopGenerate` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.LoopGenerate` | `Examples/system-verilog/comb_ops/add_mux.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.LoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MinTypMaxExpression` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.ModAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
@@ -735,7 +736,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_default_accept/let_default_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/comb_proc/add_proc.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
+| `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/comb_ops/add_mux.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedPortConnection` | `Examples/system-verilog/ripple_fa/ripple_fa.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Assign' |
@@ -811,13 +812,13 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimingControlStatement` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TypedefDeclaration` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/comb_ops/ops_flat.sv` | **REFUSE** | `unsupported` continuous assign target 'n' is not a net |
+| `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/comb_ops/ops_gen.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/comb_ops/ops_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reduction_accept/reduction_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/comb_ops/ops_flat.sv` | **REFUSE** | `unsupported` continuous assign target 'n' is not a net |
+| `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/comb_ops/ops_flat.sv` | **REFUSE** | `unsupported` continuous assign target 'n' is not a net |
+| `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/comb_ops/ops_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryMinusExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPlusExpression` | `Examples/system-verilog/unary_plus/arithmetic.sv` | **MATCH** | `ok`  |

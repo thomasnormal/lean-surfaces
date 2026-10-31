@@ -1,6 +1,7 @@
 import Lean
 import LeanModels.Sv.CombViewTactic
 import LeanModels.Sv.CombEqThm
+import LeanModels.Sv.CombEqPlain
 
 /-!
 # `sv_equations` / `sv_equations?` / `sv_cover`: the equations stage of the `sv_comb` tactic (v0)
@@ -352,27 +353,52 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
           i := i + 1
           g.setTag (if k == 1 then Name.mkSimple nm else Name.mkSimple s!"{nm}_{i}")
         return rest
-      out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        sv_norm
-        repeat' refine And.intro ?_ ?_
-        all_goals first | (intros; omega) | skip))).toArray
-      out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        sv_norm
-        repeat' refine And.intro ?_ ?_))).toArray
-      out := out ++ (← runOb `hwid "width" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        repeat (sv_eq_norm; try simp)
-        repeat' refine And.intro ?_ ?_))).toArray
-      out := out ++ (← runOb `hbit "bitRead" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        repeat (sv_eq_norm; try simp)
-        repeat' refine And.intro ?_ ?_))).toArray
-      out := out ++ (← runOb `hcov "cover" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        repeat (sv_eq_norm; try simp)
-        repeat' refine And.intro ?_ ?_))).toArray
+      -- A FLAT netlist (all sites plain, no parameter; WP-P3b): the five obligations below are closed
+      -- statements about the site list. They are DECIDED (`tryClosePlain`, the lemmas of `CombViewPlain`
+      -- and `CombEqPlain`) instead of normalized, and no goal is returned for them; `decided` records
+      -- which, for the hint. Any failure takes the normalization route and returns its goals as before.
+      let mut decided : Array String := #[]
+      if (← tryClosePlain s (← find `hauto) ``LeanModels.Sv.CombView.Summary.autoObl_of_plain
+          "an in-range fact of a flat netlist does not hold") then
+        decided := decided.push "auto"
+      else
+        out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          sv_norm
+          repeat' refine And.intro ?_ ?_
+          all_goals first | (intros; omega) | skip))).toArray
+      if (← tryClosePlain s (← find `hin) ``LeanModels.Sv.CombView.Summary.inRangeObl_of_plain
+          "the in-range obligation of a flat netlist does not hold") then
+        decided := decided.push "inRange"
+      else
+        out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          sv_norm
+          repeat' refine And.intro ?_ ?_))).toArray
+      if (← tryClosePlain s (← find `hwid) ``LeanModels.Sv.CombView.Summary.widthObl_of_plain
+          "an operand of a flat netlist is not as wide as its target") then
+        decided := decided.push "width"
+      else
+        out := out ++ (← runOb `hwid "width" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          repeat (sv_eq_norm; try simp)
+          repeat' refine And.intro ?_ ?_))).toArray
+      if (← tryClosePlain s (← find `hbit) ``LeanModels.Sv.CombView.Summary.bitReadObl_of_plain
+          "a bit read of a flat netlist is outside its vector") then
+        decided := decided.push "bitRead"
+      else
+        out := out ++ (← runOb `hbit "bitRead" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          repeat (sv_eq_norm; try simp)
+          repeat' refine And.intro ?_ ?_))).toArray
+      if (← tryClosePlain s (← find `hcov) ``LeanModels.Sv.CombView.Summary.coverObl_of_plain
+          "a bit read by a flat netlist has no source") then
+        decided := decided.push "cover"
+      else
+        out := out ++ (← runOb `hcov "cover" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          repeat (sv_eq_norm; try simp)
+          repeat' refine And.intro ?_ ?_))).toArray
       out := out ++ (← runOb `hinK "inputsKnown" (← `(tacticSeq|
         (try simp only [$pdId:ident])
         repeat (sv_eq_norm; try simp)
@@ -432,6 +458,8 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
             for (ae, oe, ak, ok) in stableAliases sites do
               ls := ls.push s!"    {ae} := {oe}    {ak} := {ok}"
           return ls
+        unless decided.isEmpty do
+          lines := lines.push s!"  decided (flat netlist: every site plain, no parameter): {", ".intercalate decided.toList}"
         for g in out do
           lines := lines.push s!"  [{(← g.getTag)}] ⊢ {← g.withContext (do ppExpr (← instantiateMVars (← g.getType)))}"
       else

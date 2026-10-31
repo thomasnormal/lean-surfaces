@@ -11,9 +11,15 @@ right-nested conjunction of knownness facts has one conjunct more than there are
 used to count conjuncts, find 11 for 10 sites and leave the whole view unnamed in `key` with a warning.
 It now takes the sites as the first conjuncts of each spine, so every site gets `eq_<signal>_<k>` and
 `known_<signal>_<k>`, `s[3]` included (`eq_s_4`). Pinned verbatim.
+
+The design is FLAT (every site plain, no parameter), so `sv_equations` DECIDES `auto`, `inRange`, `width`,
+`bitRead` and `cover` (closed statements about the site list; `CombEqPlain.lean`) and returns no goal for
+them: the hint says so, and the only obligations left are the three `inputsKnown` premises. The second
+example runs `sv_equations` itself and closes everything that is left with the input premises; there is no
+`cover_k` to close.
 -/
 
-open LeanModels.Sv LeanModels.Sv.CombView
+open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
 open Examples.«system-verilog».flat_net.gen
 
 namespace Examples.«system-verilog».flat_net.comb_hint
@@ -62,6 +68,7 @@ info: sv_equations: the netlist view and the obligations
     eq_c_5 := eq_c_plain_7    known_c_5 := known_c_plain_7
     eq_cout_1 := eq_cout_plain_8    known_cout_1 := known_cout_plain_8
     eq_s_4 := eq_s_plain_9    known_s_4 := known_s_plain_9
+  decided (flat netlist: every site plain, no parameter): auto, inRange, width, bitRead, cover
   [inputsKnown_1] ⊢ ∃ v, st.lookup "a" = some v ∧ v.allKnown = true ∧ v.width = 4
   [inputsKnown_2] ⊢ ∃ v, st.lookup "b" = some v ∧ v.allKnown = true ∧ v.width = 4
   [inputsKnown_3] ⊢ ∃ v, st.lookup "cin" = some v ∧ v.allKnown = true ∧ v.width = 1
@@ -80,5 +87,26 @@ example :
   intro x y ci hA hB hCi
   sv_equations?
   trivial
+
+/-- `sv_equations` itself: the main goal, then ONLY the three `inputsKnown` premises (no `width`, `bitRead`
+or `cover_k` goal); the aliases (`eq_s_4`, the last site) are in the context of the main goal. -/
+example :
+    flat_net.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (x y : BitVec 4) (ci : Bool),
+        SvState.lookup st "a" = some (LVec.ofBitVec x) →
+        SvState.lookup st "b" = some (LVec.ofBitVec y) →
+        SvState.lookup st "cin" = some (LVec.ofBitVec (BitVec.ofBool ci)) → True := by
+  have hc : CombDesign flat_net.sem := by sv_structure
+  have ha : Acyclic flat_net.sem := by
+    sv_structure (rank := rippleRank (fun p => [0, 1, 1, 2, 2, 3, 3, 4, 5, 4].getD p 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro x y ci hA hB hCi
+  sv_equations
+  · have : eq_s_4 = eq_s_plain_9 := rfl
+    have _ := known_s_4
+    trivial
+  · exact inKnown_ofBitVec hA (by omega)
+  · exact inKnown_ofBitVec hB (by omega)
+  · exact inKnown_ofBitVec hCi (by omega)
 
 end Examples.«system-verilog».flat_net.comb_hint

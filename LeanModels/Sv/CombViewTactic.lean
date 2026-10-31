@@ -230,6 +230,27 @@ changes, and a limit the player set higher is kept. -/
 def withDeepRec {α : Type} (x : TacticM α) : TacticM α :=
   withTheReader Core.Context (fun c => { c with maxRecDepth := max c.maxRecDepth 100000 }) x
 
+/-- **Decide the obligation of a flat netlist** (WP-P3b). `g` is an obligation goal (`s.DisjObl σ`,
+`s.CoverObl σ`, …) of the summary `s`; `lem` is the `…_of_plain` lemma that reduces it to a closed, decidable
+statement about the site list (`CombViewPlain.lean`, `CombEqPlain.lean`). When every site of `s` is plain and
+the goal mentions no free variable or metavariable (no parameter), the lemma is applied and its premises are
+closed with `closeByDecide`; the result is `true` and `g` is closed. Anything else, including a premise that is
+false, restores the state and returns `false`: the caller takes the normalization route, unchanged. -/
+unsafe def tryClosePlain (s : LeanModels.Sv.CombView.Summary) (g : MVarId) (lem : Name) (what : String) :
+    TacticM Bool := do
+  unless s.lsites.all fun ls => ls.hdrs.isEmpty do return false
+  let ty ← instantiateMVars (← g.getType)
+  if ty.hasFVar || ty.hasExprMVar then return false
+  let saved ← saveState
+  try
+    let gs ← g.apply (← mkConstWithFreshMVarLevels lem)
+    for g' in gs do closeByDecide g' what
+    setGoals []
+    return true
+  catch _ =>
+    saved.restore
+    return false
+
 /-- Run the structural stage. (`unsafe`: it evaluates the recognizer on the design with
 `evalExpr`, at tactic time only.) -/
 unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly : Bool) : TacticM Unit := do
@@ -421,21 +442,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
       -- `CombViewPlain` instead of being normalized by `simp` (two of them into one goal per pair of
       -- sites: quadratic in the number of sites). Anything else (a loop, a parameter, a statement that
       -- is false) takes the normalization below, unchanged.
-      let allPlain := s.lsites.all fun ls => ls.hdrs.isEmpty
       let closePlain (n : Name) (lem : Name) (what : String) : TacticM Bool := do
-        unless allPlain do return false
-        let g ← find n
-        let ty ← instantiateMVars (← g.getType)
-        if ty.hasFVar || ty.hasExprMVar then return false
-        let saved ← saveState
-        try
-          let gs ← g.apply (← mkConstWithFreshMVarLevels lem)
-          for g' in gs do closeByDecide g' what
-          setGoals []
-          return true
-        catch _ =>
-          saved.restore
-          return false
+        tryClosePlain s (← find n) lem what
       unless (← closePlain `hauto ``LeanModels.Sv.CombView.Summary.autoObl_of_plain
           "an in-range fact of a flat netlist does not hold") do
         out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|

@@ -5,6 +5,26 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.172] — 2026-10-31
+
+### Added
+
+- Added a do-while declaration-initializer assignment `return` false-path
+  witness: the body runs once and returns the assigned local value even when
+  the initial condition is false.
+- Added a do-while declaration-initializer assignment `continue` false-path
+  witness: the body runs once, continues, and returns the assigned value after
+  the false post-body condition.
+
+### Measured
+
+- The checked-in corpus now contains **1105 differential rows**: **1088 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Rung-4 statement rows increased to **599**. Pinned Clang/LLVM 21.1.8
+  supplies the native witness results; the ten explicit ORACLE rows are the
+  unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.171] — 2026-10-31
 
 ### Added

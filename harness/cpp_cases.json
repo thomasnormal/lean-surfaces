@@ -7789,6 +7789,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-for-declaration-initialization-assignment-break-false",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalForDeclarationInitializationAssignmentBreakFalseStatementFrameWitness",
+    "cpp_source": "int local_for_declaration_initialization_assignment_break_false_statement_frame_witness(int value) { for (int i = 2; i < 2; ++i) { int local = 5; value = local; break; } return value; } bool callable_witness() { return local_for_declaration_initialization_assignment_break_false_statement_frame_witness(9) == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-do-while-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

@@ -18,14 +18,14 @@ These bars use each tier's checked-in differential corpus: `MATCH` rows divided 
 | Language | Completion | Current measurement |
 | --- | --- | --- |
 | Python | <progress value="99.0" max="100" aria-label="99.0% complete">99.0%</progress> **99.0%** | 3,785 / 3,822 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 3,684 / 3,822 |
-| C++ | <progress value="98.5" max="100" aria-label="98.5% complete">98.5%</progress> **98.5%** | 1,123 / 1,140 differential rows ([coverage](docs/cpp-coverage.md)) |
+| C++ | <progress value="98.5" max="100" aria-label="98.5% complete">98.5%</progress> **98.5%** | 1,124 / 1,141 differential rows ([coverage](docs/cpp-coverage.md)) |
 | Rust | <progress value="0.0" max="100" aria-label="0.0% complete">0.0%</progress> **0.0%** | Lane planned, implementation not started ([roadmap](#roadmap-not-built--do-not-expect-it-in-this-tree)) |
-| SystemVerilog | <progress value="97.5" max="100" aria-label="97.5% complete">97.5%</progress> **97.5%** | 549 / 563 differential self-check rows ([coverage](docs/sv-coverage.md)) |
+| SystemVerilog | <progress value="97.5" max="100" aria-label="97.5% complete">97.5%</progress> **97.5%** | 550 / 564 differential self-check rows ([coverage](docs/sv-coverage.md)) |
 <!-- LANGUAGE_PROGRESS:END -->
 
 ## C++ tier status
 
-The C++ tier prerelease is **v0.1.179 (2026-10-31)**. Tag `cpp-v0.1.179` identifies
+The C++ tier prerelease is **v0.1.180 (2026-10-31)**. Tag `cpp-v0.1.180` identifies
 the release commit on `master`; see the [C++ changelog](docs/cpp-changelog.md).
 The bounded surface admits translation roots and exact-path namespace,
 function, parameter, record, field, variable, enum, typedef, type-alias,
@@ -42,8 +42,8 @@ executes selected integral callable expressions, including bounded comparisons,
 bounded `sizeof`/`alignof`,
 integral casts, direct calls, `noexcept`, and rung-4 control statements,
 void returns, forward labels, bounded local scopes, and a local-reference
-alias witness. Its checked-in differential corpus has 1140 rows and its grammar census has 24
-witnesses, with 1123 MATCH, 7 REFUSE, 0 DIVERGE/TIMEOUT, and 10 ORACLE results in
+alias witness. Its checked-in differential corpus has 1141 rows and its grammar census has 24
+witnesses, with 1124 MATCH, 7 REFUSE, 0 DIVERGE/TIMEOUT, and 10 ORACLE results in
 the current host run. See the [C++ coverage](docs/cpp-coverage.md)
 and [rung status](docs/cpp-rung-status.md) pages.
 

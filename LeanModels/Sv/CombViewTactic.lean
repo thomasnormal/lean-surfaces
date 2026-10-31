@@ -1,5 +1,6 @@
 import Lean
 import LeanModels.Sv.CombViewDiag
+import LeanModels.Sv.CombViewPlain
 
 /-!
 # `sv_structure` / `sv_structure?`: the structural stage of the `sv_comb` tactic (v0)
@@ -25,9 +26,18 @@ What it does: reads the design off the goal (`X.sem N` is `PDesign.instantiateGD
 runs the recognizer `PDesign.summary` (a refusal is an error with the specific reason, naming
 the site), applies the theorem `comb_view`/`acyclic_view` (whose hypotheses are CHECKED by `rfl`
 and `decide`: the parameter stage, the structural facts, the fuel), normalizes the player
-obligations, and returns them. It never discharges the in-range, disjointness or rank goals.
-Before returning them it SAMPLES them at small `N` (for the message only): a genuine violation
-is reported with the offending sites instead of an unprovable goal.
+obligations, and returns them. It never discharges the in-range, disjointness or rank goals of a
+design with a generate loop or a parameter. Before returning them it SAMPLES them at small `N` (for the
+message only): a genuine violation is reported with the offending sites instead of an unprovable goal.
+
+**Flat netlists (WP-P3b).** When EVERY site is plain (no generate loop) and the design has no free
+parameter, the four obligations (`hauto`, `hin`, `hdisj`, `hrank`) are closed statements about the site
+list, and the tactic DECIDES them (`closeByDecide`, through `CombViewPlain.lean`) instead of normalizing
+them with `simp`, whose cost is quadratic in the number of sites for the one-driver and rank
+obligations (4 min and a failure at 113 sites; about 12 s and 120 M heartbeats now, linear). Nothing is
+left to the player in that case (not even the rank goals `rank[4] < rank[5]`). A design with a loop or a
+parameter, or a closed statement that is false (it then falls back to the normalization and its goals),
+behaves exactly as before.
 -/
 
 open Lean Elab Tactic Meta
@@ -395,25 +405,54 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           i := i + 1
           g.setTag (if k == 1 then Name.mkSimple nm else Name.mkSimple s!"{nm}_{i}")
         return rest
-      out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        sv_norm [$keyLemmas,*]
-        repeat' refine And.intro ?_ ?_
-        all_goals first | (intros; omega) | skip))).toArray
-      out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
-        (try simp only [$pdId:ident])
-        sv_norm [$keyLemmas,*]
-        repeat' refine And.intro ?_ ?_))).toArray
+      -- A FLAT netlist (WP-P3b): when no site has a generate header and the goal mentions no free
+      -- variable (no parameter), the four obligations (reads and windows in range, one driver per bit,
+      -- rank) are closed statements about the site list. They are decided (`closeByDecide`) through
+      -- `CombViewPlain` instead of being normalized by `simp` (two of them into one goal per pair of
+      -- sites: quadratic in the number of sites). Anything else (a loop, a parameter, a statement that
+      -- is false) takes the normalization below, unchanged.
+      let allPlain := s.lsites.all fun ls => ls.hdrs.isEmpty
+      let closePlain (n : Name) (lem : Name) (what : String) : TacticM Bool := do
+        unless allPlain do return false
+        let g ← find n
+        let ty ← instantiateMVars (← g.getType)
+        if ty.hasFVar || ty.hasExprMVar then return false
+        let saved ← saveState
+        try
+          let gs ← g.apply (← mkConstWithFreshMVarLevels lem)
+          for g' in gs do closeByDecide g' what
+          setGoals []
+          return true
+        catch _ =>
+          saved.restore
+          return false
+      unless (← closePlain `hauto ``LeanModels.Sv.CombView.Summary.autoObl_of_plain
+          "an in-range fact of a flat netlist does not hold") do
+        out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          sv_norm [$keyLemmas,*]
+          repeat' refine And.intro ?_ ?_
+          all_goals first | (intros; omega) | skip))).toArray
+      unless (← closePlain `hin ``LeanModels.Sv.CombView.Summary.inRangeObl_of_plain
+          "the in-range obligation of a flat netlist does not hold") do
+        out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
+          (try simp only [$pdId:ident])
+          sv_norm [$keyLemmas,*]
+          repeat' refine And.intro ?_ ?_))).toArray
       if usingStx?.isNone then
-        out := out ++ (← runOb `hdisj "driverDisjoint" (← `(tacticSeq|
-          (try simp only [$pdId:ident])
-          sv_norm [$keyLemmas,*]
-          repeat' refine And.intro ?_ ?_))).toArray
+        unless (← closePlain `hdisj ``LeanModels.Sv.CombView.Summary.disjObl_of_plain
+            "the one-driver obligation of a flat netlist does not hold") do
+          out := out ++ (← runOb `hdisj "driverDisjoint" (← `(tacticSeq|
+            (try simp only [$pdId:ident])
+            sv_norm [$keyLemmas,*]
+            repeat' refine And.intro ?_ ?_))).toArray
       if isAcyc then
-        out := out ++ (← runOb `hrank "rankDecreases" (← `(tacticSeq|
-          (try simp only [$pdId:ident])
-          sv_norm [$keyLemmas,*]
-          repeat' refine And.intro ?_ ?_))).toArray
+        unless (← closePlain `hrank ``LeanModels.Sv.CombView.Summary.rankObl'_of_plain
+            "the rank obligation of a flat netlist does not hold") do
+          out := out ++ (← runOb `hrank "rankDecreases" (← `(tacticSeq|
+            (try simp only [$pdId:ident])
+            sv_norm [$keyLemmas,*]
+            repeat' refine And.intro ?_ ?_))).toArray
       setGoals out.toList
 
 declare_syntax_cat svRankCat

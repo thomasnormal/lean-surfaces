@@ -170,6 +170,8 @@ def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
         (true, clock) :: timedAccesses body
     | .alwaysFFReset clock reset body =>
         (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHigh clock reset body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
     | .assign _ _ => []
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
@@ -230,6 +232,10 @@ def timedProcOf : SProc → Except String ProcState
       let residual := [.waitEvent clock .pos, body]
       pure { residual, status := .ready, arm := some residual
            , resetTarget := some reset }
+  | .alwaysFFResetHigh clock reset body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos }
   | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
 
 /-- Build a scheduler world from the self-check envelope vocabulary.

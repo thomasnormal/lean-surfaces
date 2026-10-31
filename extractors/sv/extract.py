@@ -24694,10 +24694,12 @@ def convert_procedural_block(sm, m):
 
 
 def _sym_areset_process(sm, m, body, timing, style):
-    """`@(posedge clk or negedge rst_n)` (or the comma form) with 1-bit
-    identifier events -> AlwaysPosedge node with an extra `areset_n` field
-    (semantic tier T-reset). Any other event list: None (falls through to
-    the M0 Unsupported path)."""
+    """Two-edge clock/reset lists with 1-bit identifier events.
+
+    The positive clock plus negative reset spelling keeps the historical
+    ``areset_n`` field; a positive reset uses ``areset``. Any other event list
+    remains outside this focused reset tier.
+    """
     try:
         events = list(timing.events)
     except Exception:
@@ -24706,6 +24708,7 @@ def _sym_areset_process(sm, m, body, timing, style):
         return None
     clk_name = None
     rst_name = None
+    rst_edge = None
     for ev in events:
         if type(ev).__name__ != "SignalEventControl":
             return None
@@ -24716,13 +24719,14 @@ def _sym_areset_process(sm, m, body, timing, style):
             return None
         if ev.edge == EdgeKind.PosEdge and clk_name is None:
             clk_name = sig["name"]
-        elif ev.edge == EdgeKind.NegEdge and rst_name is None:
+        elif ev.edge in (EdgeKind.PosEdge, EdgeKind.NegEdge) and rst_name is None:
             rst_name = sig["name"]
+            rst_edge = ev.edge
         else:
             return None
     if clk_name is None or rst_name is None:
         return None
-    return {
+    result = {
         "kind": "AlwaysPosedge",
         "span": sym_span(sm, m),
         "style": style,
@@ -24730,6 +24734,10 @@ def _sym_areset_process(sm, m, body, timing, style):
         "areset_n": rst_name,
         "body": convert_stmt(sm, body.stmt),
     }
+    if rst_edge == EdgeKind.PosEdge:
+        del result["areset_n"]
+        result["areset"] = rst_name
+    return result
 
 
 def _symbolic_concat_target(sm, lhs):

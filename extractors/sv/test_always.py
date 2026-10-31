@@ -29,6 +29,14 @@ class PlainAlways(unittest.TestCase):
         self.assertEqual((process["kind"], process["clock"], process["style"], process["edge"]),
                          ("AlwaysPosedge", "clk", "always_ff", "neg"))
 
+    def test_always_ff_active_high_reset_is_retained(self):
+        design = lower(
+            "module top; logic clk, rst, q; always_ff @(posedge clk or posedge rst) "
+            "if (rst) q <= 1'b0; else q <= 1'b1; endmodule")
+        process, = design["modules"][0]["processes"]
+        self.assertEqual((process["kind"], process["clock"], process["areset"]),
+                         ("AlwaysPosedge", "clk", "rst"))
+
     def test_always_ff_is_not_reinterpreted_as_general_repetition(self):
         design = lower("module top; logic q; always_ff begin #2 q=1; end endmodule", require_valid=False)
         self.assertFalse(any(n.get("kind") == "Always" for n in nodes(design)))

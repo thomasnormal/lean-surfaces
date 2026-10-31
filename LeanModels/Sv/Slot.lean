@@ -214,7 +214,7 @@ def wakeEdges (old new : SvState) : SvM Unit :=
             | some (.edge sig e) =>
                 !ps.explicitlySuspended &&
                   (sawEdge old new sig e ||
-                    ps.resetTarget.any (fun reset => sawEdge old new reset .neg)) &&
+                    ps.resetTarget.any (fun reset => sawEdge old new reset ps.resetEdge)) &&
                   (match ps.status with
                    | .suspended _ | .ready => true
                    | _ => false)

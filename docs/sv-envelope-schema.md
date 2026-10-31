@@ -242,7 +242,7 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 
 | kind | key order / fields |
 |---|---|
-| `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), optional `edge` (`"neg"` for an admitted negative-edge clock; omitted means `"pos"`), `body` (stmt) |
+| `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), optional `edge` (`"neg"` for an admitted negative-edge clock; omitted means `"pos"`), optional `areset_n` or `areset` (1-bit asynchronous reset identifier), `body` (stmt) |
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
 | `Assign` | `kind`, `span`, `target` (expr: `Ident`, a select, or semantic-tier `ConcatTarget`), `value` (expr) — continuous `assign` |
 | `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits one or more in source order |
@@ -251,7 +251,9 @@ timed, mixed-shape, and member-to-whole copies remain unsupported.
 `AlwaysPosedge` covers `always_ff @(posedge clk) ...`,
 `always_ff @(negedge clk) ...`, and their plain `always` counterparts;
 the optional `edge` records a negative-edge clock and its absence means
-positive edge. `style` records which keyword the source used —
+positive edge. The `areset_n`/`areset` fields record the admitted
+two-event `posedge` clock plus active-low/active-high reset forms.
+`style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
 other sensitivity stays unsupported in the M0 cycle path. The legacy
 scheduler envelope can instead carry `Initial` or plain `Always` processes;

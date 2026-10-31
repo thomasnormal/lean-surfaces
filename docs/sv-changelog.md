@@ -1,3 +1,12 @@
+# [0.1.279] — 2026-10-31
+
+Timed `always_ff @(posedge clk or posedge rst)` now retains an active-high
+asynchronous reset with its edge polarity and wakes through the existing
+Active/Inactive/NBA scheduler. The `always_ff_async_reset_high` witness
+matches reset assertion and post-release capture; the initial-only runner
+continues to refuse the non-initial process. Differential coverage grows
+**544/530/0/14 → 545/531/0/14** and grammar coverage remains **239/210/29**.
+
 # [0.1.278] — 2026-10-31
 
 Proof tactics: flat netlists scale (WP-P3b; register `tl-sv-structure-fragment`). Two NEW modules, additive:

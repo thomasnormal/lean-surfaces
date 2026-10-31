@@ -1417,7 +1417,7 @@
     "extractor"
    ],
    "trigger": "H: always @(a or b) y = a;  /  always_ff @(posedge clk or posedge rst) ...  /  a three-event list",
-   "why": "Only the two-event `posedge clk or negedge rst_n` list is modelled (via _sym_areset_process).",
+   "why": "Only two-event clock-plus-reset lists with edge-qualified 1-bit identifiers are modelled (via _sym_areset_process).",
    "category": "later",
    "proposed": false,
    "prerequisite": "the sequential layer (generic sensitivity lists)",

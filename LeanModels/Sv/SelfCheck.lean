@@ -1184,6 +1184,7 @@ inductive SProc where
   | alwaysFF (clock : String) (body : SStmt)
   | alwaysFFNegedge (clock : String) (body : SStmt)
   | alwaysFFReset (clock : String) (reset : String) (body : SStmt)
+  | alwaysFFResetHigh (clock : String) (reset : String) (body : SStmt)
   | alwaysImplicit (body : SStmt)
   | alwaysComb (body : SStmt)
   | alwaysLatch (body : SStmt)
@@ -1233,6 +1234,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process 'AlwaysFFNegedge:{clock}' (self-check tier runs initial-only designs)"
   | .alwaysFFReset clock reset _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysFF:{clock}+negedge {reset}' (self-check tier runs initial-only designs)"
+  | .alwaysFFResetHigh clock reset _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysFF:{clock}+posedge {reset}' (self-check tier runs initial-only designs)"
   | .alwaysImplicit _ :: _, _, _, _, _ =>
       .unsupported "non-initial process 'AlwaysImplicit' (self-check tier runs initial-only designs)"
   | .alwaysBody _ :: _, _, _, _, _ =>
@@ -1296,6 +1299,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       | .alwaysFF clock _ => some s!"AlwaysFF:{clock}"
       | .alwaysFFNegedge clock _ => some s!"AlwaysFFNegedge:{clock}"
       | .alwaysFFReset clock reset _ => some s!"AlwaysFF:{clock}+negedge {reset}"
+      | .alwaysFFResetHigh clock reset _ => some s!"AlwaysFF:{clock}+posedge {reset}"
       | .alwaysImplicit _ => some "AlwaysImplicit"
       | .alwaysBody _ => some "Always"
       | .alwaysComb _ => some "AlwaysComb"
@@ -1715,10 +1719,13 @@ def parseSProc (j : Json) : Except String SProc := do
         match (getStrF j "areset_n").toOption with
         | some reset => return .alwaysFFReset clock reset body
         | none =>
-            match (getStrF j "edge").toOption.getD "pos" with
-            | "pos" => return .alwaysFF clock body
-            | "neg" => return .alwaysFFNegedge clock body
-            | edge => throw s!"AlwaysPosedge: unknown edge '{edge}'"
+            match (getStrF j "areset").toOption with
+            | some reset => return .alwaysFFResetHigh clock reset body
+            | none =>
+                match (getStrF j "edge").toOption.getD "pos" with
+                | "pos" => return .alwaysFF clock body
+                | "neg" => return .alwaysFFNegedge clock body
+                | edge => throw s!"AlwaysPosedge: unknown edge '{edge}'"
       else
         let clock ← getStrF j "clock"
         match (getStrF j "edge").toOption.getD "pos" with

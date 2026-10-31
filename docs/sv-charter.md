@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Active-high asynchronous reset for timed `always_ff` — 2026-10-31
+
+Timed `always_ff @(posedge clk or posedge rst)` now retains a positive-edge
+asynchronous reset alongside the clock. A reset edge wakes the same retained
+body and uses the ordinary Active/Inactive/NBA publication path; the reset
+polarity is stored with the process so an active-low reset remains distinct.
+The legacy initial-only runner continues to refuse both reset forms, and no
+second event loop is introduced.
+
+The `always_ff_async_reset_high` witness asserts reset between clock captures,
+checks the reset value, then verifies capture after release. Differential
+coverage grows **544/530/0/14 → 545/531/0/14**; grammar coverage remains
+**239/210/29**.
+
 ## Negative-edge timed `always_ff` — 2026-10-31
 
 Timed `always_ff @(negedge clk)` now retains a negative-edge clock

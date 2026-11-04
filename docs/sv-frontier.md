@@ -41,6 +41,12 @@ envelope.
 
 ### F1 — SVA safety fragment in E (clause 16)
 
+**Started 2026-11-04:** `LeanModels.Sv.Sva` now provides the retained,
+fuel-free predicate over clocked Preponed samples for the finite safety core.
+The OpenTitan assertion source is still a loud extractor boundary at
+`ProceduralBlockSymbol:NoEventControl`; retaining that source shape and adding
+its simulator/formal differential rows is the next F1 packet.
+
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded
 `##[m:n]`; `$past`, `$rose`, `$fell`, and `$stable`. Their meaning is a trace

@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## F1 retained SVA safety envelope — 2026-11-04
+
+`LeanModels.Sv.Sva` gives the retained concurrent-assertion shape a fuel-free
+meaning over E's clocked Preponed samples. The first fragment covers boolean
+signals and four-state case equality, `|->` and `|=>`, finite `##n` and
+`##[m:n]`, `$past`, `$rose`, `$fell`, `$stable`, `disable iff`, and
+assert/assume/cover checks. It is a separate property envelope, so the frozen
+`Stmt2` AST gains no constructor and procedural code is not flattened.
+
+The OpenTitan FPV target census remains a loader boundary at
+`ProceduralBlockSymbol:NoEventControl`; unbounded and liveness SVA also remain
+loud. The next F1 step retains those source assertions and connects them to
+this E predicate, with differential simulator/formal rows.
+
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range

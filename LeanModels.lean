@@ -55,6 +55,9 @@ import LeanModels.Sv.Lib
 -- proved), the slot-structured trace, and the `cycleOf` abstraction every
 -- observation is stated through. No semantics — see docs/sv-r1-scheduler.md.
 import LeanModels.Sv.Regions
+-- F1: retained concurrent-assertion properties over E's clocked samples. The
+-- property envelope is separate from the frozen procedural `Stmt2` AST.
+import LeanModels.Sv.Sva
 -- R1 inch 4a: the resumable stepper. `stepSStmts` runs a process body to
 -- completion OR to its first suspension point, with the continuation kept as
 -- DATA (the residual statement list) because `SemM` cannot suspend. Carries

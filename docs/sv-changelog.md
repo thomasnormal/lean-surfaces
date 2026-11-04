@@ -1,5 +1,19 @@
 # [unreleased] — 2026-11-02 (an Sv landing builds the comb chain above it)
 
+## F1: retained SVA safety envelope over E samples
+
+The first F1 slice adds `LeanModels.Sv.Sva`, a retained property envelope that
+does not alter frozen `Stmt2` or lower an assertion into procedural code. It
+selects Preponed samples at positive clock edges and evaluates boolean signals,
+four-state case equality, `|->`, `|=>`, finite `##n` and `##[m:n]`, `$past`,
+`$rose`, `$fell`, `$stable`, `disable iff`, and assert/assume/cover outcomes
+without semantic fuel. Kernel-reducible witnesses cover both passing and
+failing checks, a finite delayed sequence, and a positive-edge cover.
+
+Unbounded and liveness operators remain loud. The OpenTitan FPV source census
+still reaches `ProceduralBlockSymbol:NoEventControl` until the extractor and
+loader retain those source assertions; that is the next F1 integration step.
+
 ## Parameter-dependent unpacked arrays remain loud
 
 The `unpacked_generate_array` clean-room witness records the current boundary

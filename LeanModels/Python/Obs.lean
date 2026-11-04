@@ -3020,7 +3020,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                     · simp only [hz, if_true]
                                       exact .liftResF h₁ _
                                     · simp only [hz, if_false]
-                                      exact .unsupported
+                                      by_cases ho : roundDigitsOne digits = true
+                                      · simp only [ho, if_true]
+                                        exact .liftResF h₁ _
+                                      · simp only [ho, if_false]
+                                        exact .unsupported
                                   | _ => exact .unsupported
                                 · simp only [hn, if_false]
                                   exact .unsupported

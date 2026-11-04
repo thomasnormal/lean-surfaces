@@ -12,6 +12,10 @@
   limited to the exact `ndigits == 0` slice; negative and richer digit
   protocols remain loud.
 
+- Float `round(number, 1)` now uses an exact binary64 ratio scaled by ten,
+  including signed-zero behavior. Larger positive digit counts and other
+  digit protocols remain loud.
+
 - One-argument `round(float)` now uses the exact binary64 ratio with
   ties-to-even rounding, including CPython's `ValueError` for NaN and
   `OverflowError` for infinity. The `ndigits` form remains loud. A focused

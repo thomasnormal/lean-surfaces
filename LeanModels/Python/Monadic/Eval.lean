@@ -433,6 +433,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           | .bool b => pure (.int (if b then 1 else 0))
           | .float value =>
             if roundDigitsZero digits then liftRes (roundFloatZero value)
+            else if roundDigitsOne digits then liftRes (roundFloatOne value)
             else refuse "round() with positive ndigits for floats is outside the tier"
           | _ => refuse "round() over this non-integral value is outside the tier"
         else refuse "round() with negative or non-integral ndigits is outside the tier"

@@ -1480,5 +1480,6 @@
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_int_zero", "args": [[7], [-7]], "expect": "match"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_zero", "args": [[true], [false]], "expect": "match"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_int_positive", "args": [[7], [-7]], "expect": "match", "note": "integral inputs retain their integer result for nonnegative ndigits"},
-  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_positive", "args": [[true], [false]], "expect": "match", "note": "Boolean inputs retain CPython's integer result for nonnegative ndigits"}
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_positive", "args": [[true], [false]], "expect": "match", "note": "Boolean inputs retain CPython's integer result for nonnegative ndigits"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_one", "args": [[2.675], [1.25], [-1.25], [-0.04], [5e-324]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits one"}
 ]

@@ -8282,3 +8282,21 @@ positive-digit float calls remain loud.
 DECIDED: admit nonnegative integral `ndigits` for integer and Boolean inputs;
 retain loud behavior for negative or non-integral digits and positive-digit
 float calls.
+
+## 2026-11-04-pycomplete-288 — admit one positive float digit
+
+The float `round(number, 1)` slice now computes from the exact binary64 ratio
+scaled by ten, preserving ties-to-even and signed zero. Larger positive digit
+counts, negative or non-integral digits, and unsupported value protocols remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,012 rows: 3,998 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,012 rows: 3,883 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,012 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit only positive float `ndigits == 1` in addition to the existing
+zero-digit slice; retain loud behavior for richer decimal rounding forms.

@@ -32,3 +32,7 @@ def round_int_positive(value):
 
 def round_bool_positive(value):
     return round(value, True)
+
+
+def round_float_one(value):
+    return round(value, 1)

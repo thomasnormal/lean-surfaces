@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Float `round(number, 7)` now uses an exact binary64 ratio scaled by ten
+  million, preserving ties-to-even and signed zero. Larger positive digit
+  counts and other digit protocols remain loud.
+
 - Float `round(number, 6)` now uses an exact binary64 ratio scaled by one
   million, preserving ties-to-even and signed zero. Larger positive digit
   counts and other digit protocols remain loud.

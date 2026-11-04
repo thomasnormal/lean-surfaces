@@ -617,7 +617,7 @@ def interpUnfolds : List Name :=
    ``importErrorHandlerMatch, ``admittedBuiltinExc, ``builtinExcCatches,
    ``strOfVal, ``strOfValH, ``reprArgs, ``formatValueH, ``ordVal, ``chrVal, ``isBuiltinName,
    ``markUnboundLocals, ``stmtHasUnboundLocal, ``stmtHasUnboundLocalList,
-   ``hasLateRaiseNames, ``directRaiseName, ``directAssignName,
+   ``hasLateRaiseNames, ``hasLateRaiseNamesCore, ``lateHandlerNames, ``dynamicShadowHandlerName, ``directRaiseName, ``directAssignName,
    ``hasDirectAssignAfter, ``hasTypeErrorHandlerMarker,
    ``stmtHasTypeErrorTarget, ``stmtHasTypeErrorTargetList,
    ``markUnboundLocals_noop,

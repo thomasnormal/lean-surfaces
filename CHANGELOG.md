@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Repaired the Python proof layer after dynamic exception-handler shadowing
+  changed the interpreter guard: `PayloadBlind` now follows the semantics
+  guard, and the VC tests expose the new helper reductions. `lake build
+  LeanModels` passes on a clean managed build.
+
 - C++ callable-frame coverage now includes a negative-false while-inside-
   `switch` shadow fallthrough assignment `continue` witness, with a native
   differential match and 1,530 total rows.

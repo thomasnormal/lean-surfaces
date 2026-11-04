@@ -85,10 +85,21 @@ would otherwise go. -/
     CallsTo factM "fact" #[.int n] (.int (factorial n)) := by
   induction n with
   | zero =>
+    have hcore : hasLateRaiseNamesCore factFn.body.toList = false := by
+      simp [factFn, hasLateRaiseNamesCore, directRaiseName]
+    have hlate : lateHandlerNames factFn.body.toList = [] := by
+      simp [factFn, lateHandlerNames]
+    simp only [factFn] at hcore hlate
     exact ⟨8, by py_simp [callFunction, callIn, factM, factFn, factPlusOneFn,
-                          factorial]⟩
+                          factorial, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+                          PyVCGen.binOpBeqMult, hcore, hlate]⟩
   | succ k ih =>
     refine PyTriple.callsTo_ofRet (f := factFn) rfl rfl rfl rfl rfl ?_
+    have hcore : hasLateRaiseNamesCore factFn.body.toList = false := by
+      simp [factFn, hasLateRaiseNamesCore, directRaiseName]
+    have hlate : lateHandlerNames factFn.body.toList = [] := by
+      simp [factFn, lateHandlerNames]
+    simp only [factFn] at hcore hlate
     refine PyTriple.seq
       (R := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
       (.ifStmt (Pt := fun _ => False)
@@ -97,7 +108,7 @@ would otherwise go. -/
     · -- the test `n <= 0` is false at n = k + 1
       rintro st rfl
       refine ⟨.bool false, false, .of_eval (fuel := 4) ?_, rfl, ?_, ?_⟩
-      · py_simp [factM, factFn]
+      · py_simp [factM, factFn, hcore, hlate]
       · intro h; cases h
       · intro _; rfl
     · -- r = fact(n - 1): the IH is the callee fact
@@ -108,7 +119,8 @@ would otherwise go. -/
       · rintro st rfl
         refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
           .cons (.of_eval (fuel := 3) ?_) .nil, rfl, ih, rfl⟩
-        py_simp [factM, factFn, evalBinOpH, PyVCGen.binOpBeqBitAnd]
+        py_simp [factM, factFn, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+                 PyVCGen.binOpBeqMult, hcore, hlate]
       · -- return n + r
         rintro st rfl
         refine ⟨.int ((↑(k + 1) : Int) + ↑(factorial k)),

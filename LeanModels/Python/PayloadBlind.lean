@@ -4443,13 +4443,13 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
               | unsupported msg => exact PBF.unsupported
             · refine PBF.ite₂
                 (c :=
-                  ((excName != "TypeError") &&
+                  ((!dynamicShadowHandlerName excName) &&
                     ((Env.lookup st.locals excName).isSome ||
                       (lookupG (moduleGlobals m).1 excName).isSome ||
                       (Env.lookup st.world.globals excName).isSome ||
                       (findFunction m excName).isSome)) = true)
                 (d :=
-                  ((excName != "TypeError") &&
+                  ((!dynamicShadowHandlerName excName) &&
                     ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
                       (lookupG (moduleGlobals m).1 excName).isSome ||
                       (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||

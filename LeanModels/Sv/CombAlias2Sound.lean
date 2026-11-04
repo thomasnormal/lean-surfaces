@@ -645,7 +645,7 @@ theorem Design2.aliasGuard_sound (m : Design2) (b : Stmt2)
   | alwaysFF c b' => simp [aliasGuardProc] at hqb
   | alwaysPlain c b' => simp [aliasGuardProc] at hqb
   | assign t e => simp [aliasGuardProc] at hqb
-  | alwaysFFR c r b' => simp [aliasGuardProc] at hqb
+  | alwaysFFR c r b' _ => simp [aliasGuardProc] at hqb
   | unsupported k t => simp [aliasGuardProc] at hqb
 
 theorem flatMap_map_eq {α γ : Type} (f : α → α) (g : α → List γ) (hfg : ∀ a, g (f a) = g a)

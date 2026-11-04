@@ -983,7 +983,7 @@ def Proc0.ofProcess2 : Process2 → Proc0
   | .assign t e => .assign t e
   | .alwaysComb b => .comb b
   | .unsupported k x => .comb (.unsupported k x)
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ =>
+  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
       .comb (.unsupported "always_ff" "clocked processes are outside E-core-0")
 
 /-- **`toE`**: the E-core-0 design of a `Design2`: the same name and declarations, every process

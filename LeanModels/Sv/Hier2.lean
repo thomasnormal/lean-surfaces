@@ -290,12 +290,12 @@ def Process2.rename (f g : String → String) : Process2 → Process2
   | .alwaysPlain c b => .alwaysPlain (g c) (b.rename f)
   | .alwaysComb b => .alwaysComb (b.rename f)
   | .assign t e => .assign (t.rename f) (e.rename f)
-  | .alwaysFFR c rn b => .alwaysFFR (g c) (g rn) (b.rename f)
+  | .alwaysFFR c rn b resetHigh => @Process2.alwaysFFR (g c) (g rn) (b.rename f) resetHigh
   | .unsupported k t => .unsupported k t
 
 /-- The clock name of an edge-phase process. -/
 def Process2.clock? : Process2 → Option String
-  | .alwaysFF c _ | .alwaysPlain c _ | .alwaysFFR c _ _ => some c
+  | .alwaysFF c _ | .alwaysPlain c _ | .alwaysFFR c _ _ _ => some c
   | _ => none
 
 /-- A child declaration hoisted into the instantiating module: prefixed name,
@@ -505,7 +505,7 @@ first, not under `l.`). -/
   | .alwaysPlain c b => .alwaysPlain c b
   | .alwaysComb b => .alwaysComb b
   | .assign t e => .assign t e
-  | .alwaysFFR c rn b => .alwaysFFR c rn b
+  | .alwaysFFR c rn b resetHigh => @Process2.alwaysFFR c rn b resetHigh
   | .unsupported k t =>
       .unsupported k (if k = "AlwaysComb:self-read" then
         s!"in instance '{i.name}' of module '{i.module}' (its signals flatten under the prefix '{pfx}' inside the module that instantiates it): {t}"
@@ -739,7 +739,7 @@ def Process2.drvWins : Process2 → List DrvWin
 /-- The windows a procedural process assigns (`[]` for a continuous
 assignment or a loud process). -/
 def Process2.procWins : Process2 → List DrvWin
-  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b => b.drvWins
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.drvWins
   | _ => []
 
 /-- The signals a procedural process assigns (`[]` for a continuous
@@ -752,7 +752,7 @@ and — conservatively — `alwaysFFR`, which does not record whether it came
 from `always_ff` or from a plain `always @(posedge clk or negedge rn)`.
 A plain `always @(posedge clk)` (`alwaysPlain`) is not exclusive. -/
 def Process2.exclusive : Process2 → Bool
-  | .alwaysComb _ | .alwaysFF _ _ | .alwaysFFR _ _ _ => true
+  | .alwaysComb _ | .alwaysFF _ _ | .alwaysFFR _ _ _ _ => true
   | _ => false
 
 /-- Two windows share a bit: same signal, and either covers the whole

@@ -55,7 +55,7 @@ end
 
 /-- `stmtQ` of a process body (assigns and loud processes have none). -/
 def procQ : PProcess → Bool
-  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b => stmtQ b
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => stmtQ b
   | _ => true
 
 mutual

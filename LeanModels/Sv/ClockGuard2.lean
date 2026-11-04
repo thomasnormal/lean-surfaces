@@ -161,13 +161,13 @@ end
 
 /-- Every signal name a process reads as data (`[]` for a loud process). -/
 def Process2.clkReads : Process2 → List String
-  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b => b.clkReads
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.clkReads
   | .assign t e => t.clkReads ++ e.clkReads
   | .unsupported _ _ => []
 
 /-- The asynchronous-reset name of an `alwaysFFR` process. -/
 def Process2.rst? : Process2 → Option String
-  | .alwaysFFR _ rn _ => some rn
+  | .alwaysFFR _ rn _ _ => some rn
   | _ => none
 
 /-- A PLAIN COPY `assign t = s` (nothing but an identifier on the right, a
@@ -239,7 +239,7 @@ def Process2.clkDesc (p : Process2) : String :=
   match p with
   | .alwaysFF c _ => s!"the `always_ff @(posedge {c})` process{w}"
   | .alwaysPlain c _ => s!"the `always @(posedge {c})` process{w}"
-  | .alwaysFFR c rn _ => s!"the `always_ff @(posedge {c} or negedge {rn})` process{w}"
+  | .alwaysFFR c rn _ high => s!"the `always_ff @(posedge {c} or {if high then "posedge" else "negedge"} {rn})` process{w}"
   | .alwaysComb _ => s!"the `always_comb` process{w}"
   | .assign t _ => s!"the continuous assignment to {clkQ t.name}"
   | .unsupported k _ => s!"a loud `{k}` process"
@@ -287,7 +287,7 @@ def Design2.clockResetViol (d : Design2) : Option (String × String) :=
   let clks := d.clockNames
   d.processes.toList.findSome? fun p =>
     match p with
-    | .alwaysFFR c rn _ =>
+    | .alwaysFFR c rn _ _ =>
         if !d.isInputPort rn then
           some ("Clock:reset",
             s!"{p.clkDesc} uses {clkQ rn} as its asynchronous reset, which is not an input port of module {clkQ d.name} (it is {d.clockOrigin rn}): a reset the design generates itself is a real asynchronous event in hardware but only a value at a snapshot in the cycle semantics (the reset-event phase compares the settled inputs between snapshots); name an input port as the reset")
@@ -456,7 +456,7 @@ private theorem clockResetViol_of_noEdge {d : Design2}
   intro p hp
   have hp' := h p hp
   cases p with
-  | alwaysFFR c rn b => simp [Process2.clock?] at hp'
+  | alwaysFFR c rn b _ => simp [Process2.clock?] at hp'
   | _ => rfl
 
 private theorem clockReadViol_of_noEdge {d : Design2}

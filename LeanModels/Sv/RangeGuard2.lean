@@ -166,7 +166,7 @@ end
 
 /-- … of a process. -/
 def PProcess.legacySelNames : PProcess → List String
-  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b => b.legacySelNames
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.legacySelNames
   | .assign _ v => v.legacySelNames
   | .assignL t v => t.legacySelNames ++ v.legacySelNames
   | .unsupported .. => []
@@ -316,7 +316,7 @@ end
 
 /-- … of a process. -/
 def PProcess.bitIdxs : PProcess → List PExpr
-  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b => b.bitIdxs
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.bitIdxs
   | .assign _ v => v.bitIdxs
   | .assignL t v => t.bitIdxs ++ v.bitIdxs
   | .unsupported .. => []
@@ -421,7 +421,7 @@ def Design2.firstSliceViolation (d : Design2) : Option (String × String) :=
   d.processes.findSome? fun p =>
     match p with
     | .unsupported _ _ => none
-    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s => stmtV s
+    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s _ => stmtV s
     | .assign t e => (lhsV t).orElse fun _ => exprV e
 where
   declW (n : String) : Option Nat := (d.decls.find? (·.name == n)).map (·.width)
@@ -476,7 +476,7 @@ def Design2.firstLoud (d : Design2) : Option (String × String) :=
   d.processes.findSome? fun p =>
     match p with
     | .unsupported k t => some (k, t)
-    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s => stmtL s
+    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s _ => stmtL s
     | .assign t e => (lhsL t).orElse fun _ => exprL e
 where
   exprL : Expr2 → Option (String × String)

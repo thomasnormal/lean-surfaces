@@ -196,7 +196,7 @@ theorem siteOf?_cases {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}
   | alwaysFF _ _ => simp [siteOf?] at h
   | alwaysPlain _ _ => simp [siteOf?] at h
   | alwaysComb _ => simp [siteOf?] at h
-  | alwaysFFR _ _ _ => simp [siteOf?] at h
+  | alwaysFFR _ _ _ _ => simp [siteOf?] at h
   | unsupported _ _ => simp [siteOf?] at h
 
 theorem siteOf?_proc {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}

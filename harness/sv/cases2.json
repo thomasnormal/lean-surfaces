@@ -28,12 +28,19 @@
       ]
     },
     {
-      "name": "loader_refuse_areset",
-      "example": "sem2/loader_refuse_areset",
-      "top": "loader_refuse_areset",
-      "refusal": "AlwaysPosedge:areset",
-      "signals": ["q"],
-      "stimulus": [{"rst": "0", "en": "0", "d": "0"}]
+      "name": "loader_accept_areset",
+      "example": "sem2/loader_accept_areset",
+      "top": "loader_accept_areset",
+      "signals": ["rst", "en", "d", "q"],
+      "stimulus": [
+        {"rst": "0", "en": "0", "d": "0"},
+        {"rst": "1", "en": "0", "d": "1"},
+        {"rst": "0", "en": "1", "d": "1"},
+        {"en": "0", "d": "0"},
+        {"rst": "1", "en": "0", "d": "1"},
+        {"rst": "0", "en": "1", "d": "1"}
+      ],
+      "measured": "Active-high asynchronous reset is retained as the same source-shaped reset process and matches Icarus over six cycles."
     },
     {
       "name": "loader_refuse_negedge",
@@ -30380,6 +30387,21 @@
         }
       ],
       "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Asynchronous active-low reset (the pinned pin3 ledger): the reset acts the moment `rst_n` falls (cycles 0 and 4, before the edge); rst_n = x (cycle 8, a 1 -> x glitch) is a negedge event too and the register holds 0110 in all tools; en = x holds. `rst_n` is read as data inside the block (allowed); it is not a clock."
+    },
+    {
+      "name": "clk_arst_high",
+      "example": "sem2/clk_arst_high",
+      "top": "clk_arst_high",
+      "signals": ["rst", "en", "d", "q"],
+      "stimulus": [
+        {"rst": "0", "en": "0", "d": "0001"},
+        {"rst": "1", "en": "0", "d": "0010"},
+        {"rst": "0", "en": "1", "d": "0110"},
+        {"en": "0", "d": "1111"},
+        {"rst": "1", "en": "0", "d": "0011"},
+        {"rst": "0", "en": "1", "d": "0101"}
+      ],
+      "measured": "E active-high asynchronous reset (2026-11-04): a 0 -> 1 reset edge with the clock held low runs the reset body before the next clock edge; release does not wake it. The retained source shape matches Icarus over six cycles."
     },
     {
       "name": "clk_arst_reset_edges",

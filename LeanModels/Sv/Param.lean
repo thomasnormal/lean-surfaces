@@ -461,7 +461,7 @@ inductive PProcess where
   | alwaysComb (body : PStmt)
   | assign (target : String) (value : PExpr)
   | assignL (target : PLhs) (value : PExpr)
-  | alwaysFFR (clock rstn : String) (body : PStmt)
+  | alwaysFFR (clock rstn : String) (body : PStmt) (resetHigh : Bool)
   | unsupported (svKind : String) (text : String)
 deriving Repr, BEq, Inhabited
 

@@ -1,15 +1,21 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Active-high asynchronous reset now retained in E
+
+The retained `alwaysFFR` process now carries reset polarity through the
+parametric and semantic envelopes. `always_ff @(posedge clk or posedge rst)`
+fires its reset phase on a `0 -> 1` edge, while reset release does not wake the
+process. The clean `clk_arst_high` witness and six-cycle Icarus row match the
+active-high LRM behavior. `areset_n` remains the active-low form; negative-edge
+clocks and `iff` guards remain named loader refusals.
+
 ## Loader loudness for discarded edge-control fields
 
-`Ingest2` now refuses `AlwaysPosedge` envelopes that carry an active-high
-`areset`, a negative-edge `edge`, or an `iff` guard. Those fields used to be
-ignored, silently changing the source into a plain positive-edge `alwaysFF`.
-The three clean-room fixtures `loader_refuse_areset`,
-`loader_refuse_negedge`, and `loader_refuse_iff` each produce a named refusal
-and are recorded in the phase-2 differential corpus. Active-low `areset_n`
-remains the existing retained shape; the other event forms stay loud until
-their E semantics are wired through the loader.
+`Ingest2` refuses negative-edge `edge` and `iff` fields rather than silently
+changing them into plain positive-edge `alwaysFF`. The active-high `areset`
+case has since moved into the retained E process path above. The clean-room
+`loader_refuse_negedge` and `loader_refuse_iff` fixtures remain recorded
+refusals.
 
 ## F1: asynchronous-reset edge table in E
 

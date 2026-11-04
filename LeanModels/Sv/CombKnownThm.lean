@@ -471,7 +471,7 @@ theorem Design2.sourcedB_iff {d : Design2} {n : String} {k : Nat} :
       | alwaysFF _ _ => simp at hany
       | alwaysPlain _ _ => simp at hany
       | alwaysComb _ => simp at hany
-      | alwaysFFR _ _ _ => simp at hany
+      | alwaysFFR _ _ _ _ => simp at hany
       | unsupported _ _ => simp at hany
     · rintro ⟨i, lo, w, ⟨t, e, hp, hmem⟩, hlo, hhi⟩
       refine ⟨.assign t e, List.mem_of_getElem? (by rw [Array.getElem?_toList]; exact hp), ?_⟩

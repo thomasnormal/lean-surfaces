@@ -6,10 +6,10 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "loader_refuse_areset",
+  "top": "loader_accept_areset",
   "source_files": [
     {
-      "path": "Examples/system-verilog/sem2/loader_refuse_areset/loader_refuse_areset.sv",
+      "path": "Examples/system-verilog/sem2/loader_accept_areset/loader_accept_areset.sv",
       "sha256": "f91ab10da792b5624a72cbbd2afb706e26a8eba52d17688fd9139be35012a012"
     }
   ],
@@ -25,7 +25,7 @@
           "end_line": 4,
           "end_col": 10
         },
-        "name": "loader_refuse_areset",
+        "name": "loader_accept_areset",
         "imports": [],
         "params": [],
         "types": [],

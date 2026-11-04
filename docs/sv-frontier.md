@@ -82,11 +82,10 @@ shape: kernel guards cover reset assertion and release, the `1 -> x` and
 wall while the target files still have independent array, cast, loop, and
 primitive-dependency refusals.
 
-The loader soundness boundary is now explicit as well: active-high `areset`,
-negative-edge clocks, and `iff` guards are named refusals rather than silently
-being read as positive-edge `alwaysFF`. Their E event semantics are the next
-sequential extension; no target census is allowed to count a silently
-reinterpreted process as loaded.
+The loader soundness boundary is now explicit as well: active-high `areset`
+is retained in E with its polarity, while negative-edge clocks and `iff`
+guards remain named refusals rather than silently being read as positive-edge
+`alwaysFF`. No target census counts a silently reinterpreted process as loaded.
 
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded

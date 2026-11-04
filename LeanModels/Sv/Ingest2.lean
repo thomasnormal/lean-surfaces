@@ -426,19 +426,20 @@ def parsePProcess (j : Json) : Except String PProcess := do
           throw "AlwaysPosedge:edge — edge-qualified clock requires its retained event semantics"
         if (getOptField j "iff").isSome then
           throw "AlwaysPosedge:iff — event-control iff guard requires its retained event semantics"
-        if (getOptField j "areset").isSome then
-          throw "AlwaysPosedge:areset — active-high asynchronous reset requires its retained event semantics"
         let body ← parsePStmt (← getField j "body")
         match getOptStr j "areset_n" with
         | some rn =>
             -- `@(posedge clock or negedge rn)` — the async active-low
             -- reset event list (T-reset); style is metadata here.
-            return .alwaysFFR clock rn body
+            return @PProcess.alwaysFFR clock rn body false
         | none =>
-        match style with
-        | "always_ff" => return .alwaysFF clock body
-        | "always" => return .alwaysPlain clock body
-        | s => throw s!"unknown AlwaysPosedge style {s.quote}"
+          match getOptStr j "areset" with
+          | some rp => return @PProcess.alwaysFFR clock rp body true
+          | none =>
+            match style with
+            | "always_ff" => return .alwaysFF clock body
+            | "always" => return .alwaysPlain clock body
+            | s => throw s!"unknown AlwaysPosedge style {s.quote}"
     | "AlwaysComb" => return .alwaysComb (← parsePStmt (← getField j "body"))
     | "Initial" =>
         -- Keep the envelope parseable so the semantic tier can report the

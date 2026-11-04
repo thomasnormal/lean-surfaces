@@ -12,15 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Active-high asynchronous reset in E — 2026-11-04
+
+The retained `alwaysFFR` process now carries reset polarity. An active-high
+`always_ff @(posedge clk or posedge rst)` wakes its reset phase on `0 -> 1`,
+while release does not wake it. `clk_arst_high` matches Icarus over six
+cycles. Negative-edge clocks and `iff` guards remain explicit loader refusals;
+they are no longer silently reinterpreted.
+
 ## Loader loudness for edge-control metadata — 2026-11-04
 
-The symbolic loader never drops event-control fields. `AlwaysPosedge` entries
-with an active-high `areset`, a negative-edge `edge`, or an `iff` guard now
-refuse with their named `AlwaysPosedge:*` boundary instead of becoming a
-plain positive-edge `alwaysFF`. The clean fixtures
-`loader_refuse_areset`, `loader_refuse_negedge`, and `loader_refuse_iff` pin
-the three cases in the phase-2 corpus. The active-low `areset_n` form remains
-the retained process shape; the other forms await their E event semantics.
+The symbolic loader never drops event-control fields. Negative-edge `edge`
+and `iff` entries refuse with named `AlwaysPosedge:*` boundaries instead of
+becoming plain positive-edge `alwaysFF`; active-high `areset` is now retained
+by the E process path above. The active-low `areset_n` form remains retained.
 
 ## F1 retained SVA safety envelope — 2026-11-04
 

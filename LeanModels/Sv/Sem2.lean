@@ -240,7 +240,7 @@ inductive Process2 where
   | alwaysPlain (clock : String) (body : Stmt2)
   | alwaysComb (body : Stmt2)
   | assign (target : Lhs2) (value : Expr2)
-  | alwaysFFR (clock rstn : String) (body : Stmt2)
+  | alwaysFFR (clock rstn : String) (body : Stmt2) (resetHigh : Bool := false)
   | unsupported (svKind : String) (text : String)
 deriving Repr, Inhabited
 
@@ -264,7 +264,7 @@ def Design2.hasUnsupported (d : Design2) : Bool :=
   d.processes.any fun p =>
     match p with
     | .unsupported _ _ => true
-    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s => stmtHas s
+    | .alwaysFF _ s | .alwaysPlain _ s | .alwaysComb s | .alwaysFFR _ _ s _ => stmtHas s
     | .assign t e => lhsHas t || exprHas e
 where
   exprHas : Expr2 → Bool
@@ -634,7 +634,7 @@ def validateProcessChecks2 (fuel : Nat) (st : SvState) : List Process2 → Res U
   | p :: rest => do
       match p with
       | .alwaysComb body | .alwaysFF _ body | .alwaysPlain _ body
-      | .alwaysFFR _ _ body =>
+      | .alwaysFFR _ _ body _ =>
           if body.hasQualifiedCase then validateCaseChecks2 fuel st body else .ok ()
       | .assign _ _ | .unsupported _ _ => .ok ()
       validateProcessChecks2 fuel st rest
@@ -645,17 +645,17 @@ def validateProcessChecks2 (fuel : Nat) (st : SvState) : List Process2 → Res U
 M0 rule). -/
 def Process2.isCombPhase : Process2 → Bool
   | .alwaysComb _ | .assign _ _ | .unsupported _ _ => true
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ => false
+  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ => false
 
 /-- Edge-phase processes: every posedge-clocked block, INCLUDING the
 async-reset ones (the posedge fires with reset asserted too — the body's
 reset branch is what holds the state, pin3 CYCLE 4). -/
 def Process2.isEdgePhase : Process2 → Bool
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ => true
+  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ => true
   | _ => false
 
 def Process2.hasQualifiedCase : Process2 → Bool
-  | .alwaysComb body | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body => body.hasQualifiedCase
+  | .alwaysComb body | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body _ => body.hasQualifiedCase
   | .assign _ _ | .unsupported _ _ => false
 
 def Design2.combIndices (d : Design2) : List Nat :=
@@ -697,7 +697,7 @@ def runCombProcess2 (fuel : Nat) (st : SvState) : Process2 → Res SvState
       | (name, _) :: _ =>
           .unsupported
             s!"nonblocking assignment to '{name}' inside always_comb is outside the cycle semantics"
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ => .ok st
+  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ => .ok st
   | .unsupported svKind _ => .unsupported s!"unsupported process '{svKind}'"
 
 def combPass2 (d : Design2) (fuel : Nat) (st : SvState) : List Nat → Res SvState
@@ -728,13 +728,15 @@ is what makes the two tiers agree by construction. Nothing else changes:
 the names are unqualified and identical, so `resetIndices` below reads the
 same rule it always did. -/
 
-/-- Indices of `alwaysFFR` processes whose reset input made a §9.4.2
-negedge between `prev` (end of previous cycle) and `cur` (this cycle's
+/-- Indices of `alwaysFFR` processes whose reset input made its configured
+§9.4.2 edge between `prev` (end of previous cycle) and `cur` (this cycle's
 settled inputs) — the ready set of the reset-event phase. -/
 def Design2.resetIndices (d : Design2) (prev cur : SvState) : List Nat :=
   (List.range d.processes.size).filter fun i =>
     match d.processes[i]? with
-    | some (.alwaysFFR _ rn _) => isNegedge (SvState.bit0 prev rn) (SvState.bit0 cur rn)
+    | some (.alwaysFFR _ rn _ resetHigh) =>
+        if resetHigh then isPosedge (SvState.bit0 prev rn) (SvState.bit0 cur rn)
+        else isNegedge (SvState.bit0 prev rn) (SvState.bit0 cur rn)
     | _ => false
 
 /-- Run one process at a reset event (only `alwaysFFR` bodies are ever
@@ -742,7 +744,7 @@ listed). The WHOLE body runs — on `rst_n: 1→x` the canonical
 `if (!rst_n)` takes the else branch at the event (pin3 CYCLE 6). -/
 def runResetProcess2 (fuel : Nat) (st : SvState) (nba : NbaQueue2) :
     Process2 → Res (SvState × NbaQueue2)
-  | .alwaysFFR _ _ body => execStmt2 fuel st nba body
+  | .alwaysFFR _ _ body _ => execStmt2 fuel st nba body
   | _ => .ok (st, nba)
 
 def resetPass2 (d : Design2) (fuel : Nat) (st : SvState) (nba : NbaQueue2) :
@@ -760,7 +762,7 @@ def runEdgeProcess2 (fuel : Nat) (st : SvState) (nba : NbaQueue2) :
     Process2 → Res (SvState × NbaQueue2)
   | .alwaysFF _ body => execStmt2 fuel st nba body
   | .alwaysPlain _ body => execStmt2 fuel st nba body
-  | .alwaysFFR _ _ body => execStmt2 fuel st nba body
+  | .alwaysFFR _ _ body _ => execStmt2 fuel st nba body
   | .alwaysComb _ | .assign _ _ => .ok (st, nba)
   | .unsupported svKind _ => .unsupported s!"unsupported process '{svKind}'"
 
@@ -1022,10 +1024,10 @@ private def arDesign : Design2 :=
       { name := "q", width := 4, isOutput := true },
       { name := "q2", width := 4, isOutput := true }]
     processes := #[
-      .alwaysFFR "clk" "rst_n"
+      @Process2.alwaysFFR "clk" "rst_n"
         (.ifStmt (.unary .bnot (.ident "rst_n"))
           (.nbaAssign (.ident "q") (.lit (.ofNat 4 0)))
-          (some (.nbaAssign (.ident "q") (.ident "d")))),
+          (some (.nbaAssign (.ident "q") (.ident "d")))) false,
       .alwaysFF "clk" (.nbaAssign (.ident "q2") (.ident "q"))] }
 
 private def arStim : List SvState := [

@@ -1409,7 +1409,8 @@ def instProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → Proc
   -- WP4 (2026-10-28): a body that reads a bit before writing it and writes
   -- it later on the same path is refused, loudly (`CombGuard2.lean`).
   | .alwaysComb b => combGuardProc (fun n => env.widths.lookup n) (instStmt2 env elems b)
-  | .alwaysFFR c rn b => .alwaysFFR c rn (instStmt2 env elems b)
+  | .alwaysFFR c rn b resetHigh =>
+      @Process2.alwaysFFR c rn (instStmt2 env elems b) resetHigh
   | .assign t v =>
       match env.widths.lookup t with
       | some w => .assign (.ident t) (fitExpr2 env elems (some w) v)
@@ -1613,13 +1614,13 @@ private def pRcase : PDesign :=
       { name := "i", type := .packed [⟨.int 1, .int 0⟩] (some 2), isInput := true },
       { name := "q", type := .packed [wm1'] (some 4), isOutput := true }]
     processes := [
-      .alwaysFFR "clk" "rst_n"
+      @PProcess.alwaysFFR "clk" "rst_n"
         (.ifStmt (.unary (.m0 .lnot) (.ident "rst_n"))
           (.nbaAssign "q" (.fill .l0))
           (some (.caseStmt (.ident "op")
             [([.lit (.ofNat 2 1)], .nbaAssignL (.bitSel "q" (.ident "i")) (.lit (.ofNat 1 1))),
              ([.lit (.ofNat 2 2)], .nbaAssign "q" (.unary (.m0 .bnot) (.ident "q")))]
-            (some (.nbaAssign "q" (.ident "q"))) .normal .none)))]
+            (some (.nbaAssign "q" (.ident "q"))) .normal .none))) false]
     generates := []
     others := [] }
 

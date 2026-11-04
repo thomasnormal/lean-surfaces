@@ -159,7 +159,8 @@ def Process2.xeqT (tol : Bool) : Process2 → Process2 → Bool
   | .alwaysPlain c b, .alwaysPlain c' b' => c == c' && b.xeqT tol b'
   | .alwaysComb b, .alwaysComb b' => b.xeqT tol b'
   | .assign t v, .assign t' v' => t.xeqT tol t' && v.xeqT tol v'
-  | .alwaysFFR c r b, .alwaysFFR c' r' b' => c == c' && r == r' && b.xeqT tol b'
+  | .alwaysFFR c r b high, .alwaysFFR c' r' b' high' =>
+      c == c' && r == r' && high == high' && b.xeqT tol b'
   | _, _ => false
 
 /-- THE comparison (`xeqT false`): structural equality, loud nodes by kind. -/
@@ -373,7 +374,7 @@ def Process2.norm (ws : List (String × Nat)) : Process2 → Process2
   | .alwaysPlain c b => .alwaysPlain c (b.norm ws)
   | .alwaysComb b => .alwaysComb (b.norm ws)
   | .assign t v => .assign (t.norm ws) (v.norm ws)
-  | .alwaysFFR c r b => .alwaysFFR c r (b.norm ws)
+  | .alwaysFFR c r b high => @Process2.alwaysFFR c r (b.norm ws) high
   | p => p
 
 /-! ## The first difference -/
@@ -478,7 +479,7 @@ def Process2.zoom (tol : Bool) (a b : Process2) : ProbeZoom :=
     | _ => false
   match a, b with
   | .alwaysFF _ x, .alwaysFF _ y | .alwaysPlain _ x, .alwaysPlain _ y
-  | .alwaysComb x, .alwaysComb y | .alwaysFFR _ _ x, .alwaysFFR _ _ y => x.zoom tol y
+  | .alwaysComb x, .alwaysComb y | .alwaysFFR _ _ x _, .alwaysFFR _ _ y _ => x.zoom tol y
   | .assign t v, .assign t' v' =>
       if t.xeqT tol t' then v.zoom tol v' else probeLeaf a b false false
   | _, _ => probeLeaf a b (loud a) (loud b)

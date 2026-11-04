@@ -104,7 +104,7 @@ theorem siteOfP?_cases {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}
   | assignL l v => left; exact h
   | alwaysFF _ _ => left; exact h
   | alwaysPlain _ _ => left; exact h
-  | alwaysFFR _ _ _ => left; exact h
+  | alwaysFFR _ _ _ _ => left; exact h
   | unsupported _ _ => left; exact h
 
 theorem siteOfP?_proc {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}

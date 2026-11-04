@@ -80,7 +80,7 @@ end
 /-- Does a process write `n`? -/
 def Process2.writesName (n : String) : Process2 → Bool
   | .assign t _ => t.writesName n
-  | .alwaysComb b | .alwaysFF _ b | .alwaysPlain _ b | .alwaysFFR _ _ b => b.writesName n
+  | .alwaysComb b | .alwaysFF _ b | .alwaysPlain _ b | .alwaysFFR _ _ b _ => b.writesName n
   | .unsupported _ _ => false
 
 /-- **Does some process write some input port?** Decidable and syntactic. It is `false` for every
@@ -486,7 +486,7 @@ theorem runCombProcess2_lookup {fuel : Nat} {st st' : SvState} {p : Process2} {n
           subst h
           exact ((exec_frame n fuel).1 st [] body st1 [] h1 hw (by simp)).1
       | cons _ _ => simp at h
-  | alwaysFF _ _ | alwaysPlain _ _ | alwaysFFR _ _ _ =>
+  | alwaysFF _ _ | alwaysPlain _ _ | alwaysFFR _ _ _ _ =>
       simp only [runCombProcess2, Res.ok.injEq] at h
       subst h; rfl
   | unsupported _ _ => simp [runCombProcess2] at h

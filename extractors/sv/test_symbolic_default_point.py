@@ -189,6 +189,16 @@ class SymbolicDefaultPoint(unittest.TestCase):
                           "span": local["expr"]["right"]["span"]})
         self.assertNotIn("ConversionExpression:width", kinds(local))
 
+    def test_typed_localparam_fill_uses_assignment_width(self):
+        module = self.extract(
+            "module top #(parameter int W = 8) (input logic [W-1:0] x,"
+            " output logic [W-1:0] y);"
+            " localparam logic [W-1:0] MASK = '0; assign y = x ^ MASK;"
+            " endmodule")
+        local = next(p for p in module["params"] if p["name"] == "MASK")
+        self.assertEqual(local["expr"]["kind"], "Fill")
+        self.assertEqual(local["expr"]["bit"], "0")
+
     # --- (b) static labels over parameter-dependent ranges ------------------
 
     def test_static_labels_take_the_array_path(self):

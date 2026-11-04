@@ -25,6 +25,16 @@ non-INT trees, and propagated symbolic-position conversions remain loud.
 
 The phase-2 corpus grows **935 → 938** rows.
 
+## Typed packed parameter fills — 2026-11-04
+
+An unbased unsized `'0` or `'1` used as a typed packed parameter or localparam
+default now takes the declaration's assignment width in the constant tier.
+`unsized_param_literal` matches Lean and Icarus at W = 4, 8, and 12 and the
+probe sidecar agrees at all three points. x/z fills remain loud because the
+constant tier has no known-value representation for them.
+
+The phase-2 corpus grows **938 → 941** rows.
+
 ## Static local NBA targets inside `always_ff` remain loud — 2026-11-04
 
 A static block-local variable used as a nonblocking target inside a procedural

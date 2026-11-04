@@ -1501,6 +1501,10 @@ checked):
   `localparam signed [11:0] DOUBLE_BIAS = 2 * BIAS` is evaluated by
   `evalAssign` at its declared width for each point. Propagated conversions
   in self-determined labels and bounds remain loud.
+* **Typed assignment-context fills.** A root `Fill` (`'0` or `'1`) in a
+  typed parameter/localparam initializer uses the declared packed width at the
+  current point. The constant evaluator handles this through `evalAssign`;
+  x/z fills remain loud in constant contexts.
 * **Value-position widths.** A sized unsigned literal widened by its value
   context (`a + 1'b1` with `logic [N-1:0] a`) is `Resize(width, Literal)`
   like every other unsigned operand, not a literal folded at the default

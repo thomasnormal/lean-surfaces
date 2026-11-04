@@ -1287,9 +1287,19 @@ typed-parameter-default twin of the value tier's `fitExpr2` (round 3
 folds, verifier finding `vp_lp2`: `localparam logic [N-1:0] L1 = 8'd200 +
 8'd100` is `44` at `N = 8` and `300` at `N = 16`; the envelope's
 default-point `Resize(4, …)` used to make it `12` at every point). -/
-def evalAssign (env : IEnv) (w : Nat) (e : PExpr) : Except String Int := do
-  let (we, se) ← ctype env e
-  evalAt env (max w we, se) e
+def evalAssign (env : IEnv) (w : Nat) (e : PExpr) : Except String Int :=
+  match e with
+  | .fill b =>
+      -- An unbased unsized 0/1 literal takes the assignment target's
+      -- context width (§5.7.1).  It has no self-determined `ctype`, so this
+      -- root case must be handled before the ordinary `ctype`/`evalAt` path.
+      match b with
+      | .l0 => .ok (canonInt w false 0)
+      | .l1 => .ok (canonInt w false ((2 : Int) ^ w - 1))
+      | .lx | .lz => .error "x/z literal in a constant context"
+  | _ => do
+      let (we, se) ← ctype env e
+      evalAt env (max w we, se) e
 
 /-- Evaluate a symbolic expression as an integer constant (parameter
 defaults, localparams, generate headers/conditions, dimension bounds,
@@ -3037,6 +3047,8 @@ private def l1 : PExpr := .resize 4 (.binary (.m0 .add) (lit8 200) (lit8 100))
 #guard okIs (evalAssign {} 16 l1) 300
 #guard okIs (evalAssign {} 8 l1) 44
 #guard okIs (evalAssign {} 4 l1) 44   -- the caller's `canonInt 4` makes it 12
+#guard okIs (evalAssign {} 8 (.fill .l0)) 0
+#guard okIs (evalAssign {} 8 (.fill .l1)) 255
 -- `4'd15 << 2` keeps its high bits at a wider target.
 #guard okIs (evalAssign {} 16 (.binary .shl (.lit (.ofNat 4 15)) (.int 2))) 60
 #guard okIs (evalAssign {} 4 (.binary .shl (.lit (.ofNat 4 15)) (.int 2))) 12

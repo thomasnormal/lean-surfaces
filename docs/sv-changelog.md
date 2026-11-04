@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-02 (an Sv landing builds the comb chain above it)
 
+## Typed packed parameter fills
+
+Typed packed parameter and localparam defaults using `'0` or `'1` now use the
+declared assignment width in the constant evaluator. `unsized_param_literal`
+matches Lean and Icarus at W = 4, 8, and 12, with the multi-point checks
+agreeing at each point. x/z fills remain loud in constant contexts.
+
 ## Signed packed localparam initializers
 
 The symbolic extractor now retains a signed INT-class initializer such as

@@ -69918,6 +69918,48 @@
         {"e": "xxxxxxxxxxxx"}
       ],
       "measured": "2026-11-04: signed packed localparam width conversion at E = 12; Icarus and the Lean constant tier agree."
+    },
+    {
+      "name": "unsized_param_literal",
+      "example": "sem2/unsized_param_literal",
+      "top": "unsized_param_literal",
+      "params": {"W": 8},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "00000000"},
+        {"x": "00000001"},
+        {"x": "10101010"},
+        {"x": "xxxxxxxx"}
+      ],
+      "measured": "2026-11-04: typed packed parameter default `MASK = '0` is evaluated in its declared assignment context; Lean and Icarus agree at W=8."
+    },
+    {
+      "name": "unsized_param_literal_w4",
+      "example": "sem2/unsized_param_literal",
+      "top": "unsized_param_literal",
+      "params": {"W": 4},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "0000"},
+        {"x": "0001"},
+        {"x": "1010"},
+        {"x": "xxxx"}
+      ],
+      "measured": "2026-11-04: typed packed parameter fill at W=4; Lean and Icarus agree and the probe cross-check passes."
+    },
+    {
+      "name": "unsized_param_literal_w12",
+      "example": "sem2/unsized_param_literal",
+      "top": "unsized_param_literal",
+      "params": {"W": 12},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "000000000000"},
+        {"x": "000000000001"},
+        {"x": "101010101010"},
+        {"x": "xxxxxxxxxxxx"}
+      ],
+      "measured": "2026-11-04: typed packed parameter fill at W=12; Lean and Icarus agree and the probe cross-check passes."
     }
 
   ]

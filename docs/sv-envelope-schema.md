@@ -1505,6 +1505,10 @@ checked):
   typed parameter/localparam initializer uses the declared packed width at the
   current point. The constant evaluator handles this through `evalAssign`;
   x/z fills remain loud in constant contexts.
+* **Known constant replications.** A `Repl` whose count and operand are
+  constant is evaluated at the operand's self-determined width and repeated
+  source-order in a typed assignment context. Signal-dependent, negative,
+  empty, and x/z replications remain loud.
 * **Value-position widths.** A sized unsigned literal widened by its value
   context (`a + 1'b1` with `logic [N-1:0] a`) is `Resize(width, Literal)`
   like every other unsigned operand, not a literal folded at the default

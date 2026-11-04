@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-02 (an Sv landing builds the comb chain above it)
 
+## Known constant replications
+
+Replications of known constant operands now evaluate in typed parameter and
+localparam contexts. `constant_replication` matches Lean and Icarus at E = 4,
+8, and 12, with multi-point checks agreeing at every point. Signals,
+unknown operands, negative counts, and empty replications remain loud.
+
 ## Typed packed parameter fills
 
 Typed packed parameter and localparam defaults using `'0` or `'1` now use the

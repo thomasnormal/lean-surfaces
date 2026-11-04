@@ -199,6 +199,17 @@ class SymbolicDefaultPoint(unittest.TestCase):
         self.assertEqual(local["expr"]["kind"], "Fill")
         self.assertEqual(local["expr"]["bit"], "0")
 
+    def test_typed_localparam_known_replication_is_retained(self):
+        module = self.extract(
+            "module top #(parameter int E = 8) (input logic [E-1:0] x,"
+            " output logic [E-1:0] y);"
+            " localparam integer SIGN = {{E{1'b0}}}; assign y = x ^ SIGN;"
+            " endmodule")
+        local = next(p for p in module["params"] if p["name"] == "SIGN")
+        self.assertEqual(local["expr"]["kind"], "Resize")
+        self.assertEqual(local["expr"]["operand"]["kind"], "Concat")
+        self.assertEqual(local["expr"]["operand"]["parts"][0]["kind"], "Repl")
+
     # --- (b) static labels over parameter-dependent ranges ------------------
 
     def test_static_labels_take_the_array_path(self):

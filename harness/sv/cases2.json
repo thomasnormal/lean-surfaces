@@ -69960,6 +69960,48 @@
         {"x": "xxxxxxxxxxxx"}
       ],
       "measured": "2026-11-04: typed packed parameter fill at W=12; Lean and Icarus agree and the probe cross-check passes."
+    },
+    {
+      "name": "constant_replication",
+      "example": "sem2/constant_replication",
+      "top": "constant_replication",
+      "params": {"E": 8},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "00000000"},
+        {"x": "00000001"},
+        {"x": "10101010"},
+        {"x": "xxxxxxxx"}
+      ],
+      "measured": "2026-11-04: known one-bit replication in typed localparam `SIGN` evaluates exactly; Lean and Icarus agree at E=8."
+    },
+    {
+      "name": "constant_replication_e4",
+      "example": "sem2/constant_replication",
+      "top": "constant_replication",
+      "params": {"E": 4},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "0000"},
+        {"x": "0001"},
+        {"x": "1010"},
+        {"x": "xxxx"}
+      ],
+      "measured": "2026-11-04: replication count at E=4; Lean and Icarus agree with the multi-point cross-check."
+    },
+    {
+      "name": "constant_replication_e12",
+      "example": "sem2/constant_replication",
+      "top": "constant_replication",
+      "params": {"E": 12},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "000000000000"},
+        {"x": "000000000001"},
+        {"x": "101010101010"},
+        {"x": "xxxxxxxxxxxx"}
+      ],
+      "measured": "2026-11-04: replication count at E=12; Lean and Icarus agree with the multi-point cross-check."
     }
 
   ]

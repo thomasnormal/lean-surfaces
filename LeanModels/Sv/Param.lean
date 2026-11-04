@@ -653,6 +653,12 @@ def IEnv.bindNVal (env : IEnv) (n : String) (v : Int) (w : Nat) (s : Bool) : IEn
 
 private def b2i (b : Bool) : Int := if b then 1 else 0
 
+/-! A known constant replication, computed from the operand's own width. -/
+def repeatConst : Nat → Nat → Int → Int
+  | 0, _, _ => 0
+  | n + 1, w, v =>
+      v.emod ((2 : Int) ^ w) * ((2 : Int) ^ (n * w)) + repeatConst n w v
+
 /-- `v` at the constant type `(w, s)`: two's complement modulo `2^w`, read
 signed when `s` (IEEE 1800-2023 §11.8.2: every operation is carried out at
 the propagated width; `canonInt w s` is the value that width holds). -/
@@ -1009,7 +1015,12 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       let w := tys.foldl (fun total ty => total + ty.1) 0
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (w, false)
-  | .repl _ _ => .error "replication in a constant context"
+  | .repl count arg => do
+      let n ← evalAt env (← ctype env count) count
+      let (wa, _) ← ctype env arg
+      if n < 0 then .error "negative replication count"
+      else if n == 0 then .error "empty replication in a constant context"
+      else .ok (n.toNat * wa, false)
   | .reduce _ _ => .error "reduction in a constant context (width-dependent)"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
@@ -1198,7 +1209,13 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
         (total + pw, value * ((2 : Int) ^ pw) + pv.emod ((2 : Int) ^ pw))) (0, 0)
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (convertConst w ty.1 ty.2 v)
-  | .repl _ _ => .error "replication in a constant context"
+  | .repl count arg => do
+      let n ← evalAt env (← ctype env count) count
+      let (wa, sa) ← ctype env arg
+      let v ← evalAt env (wa, sa) arg
+      if n < 0 then .error "negative replication count"
+      else if n == 0 then .error "empty replication in a constant context"
+      else .ok (convertConst (n.toNat * wa) ty.1 ty.2 (repeatConst n.toNat wa v))
   | .reduce _ _ => .error "reduction in a constant context (width-dependent)"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 

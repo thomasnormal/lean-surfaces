@@ -35,6 +35,16 @@ constant tier has no known-value representation for them.
 
 The phase-2 corpus grows **938 → 941** rows.
 
+## Known constant replications — 2026-11-04
+
+Replications whose count and operand are known constant expressions now
+evaluate in typed parameter and localparam assignment contexts. The
+`constant_replication` fixture matches Lean and Icarus at E = 4, 8, and 12,
+with every probe point agreeing. Signal-dependent operands, negative or empty
+counts, and x/z operands remain loud.
+
+The phase-2 corpus grows **941 → 944** rows.
+
 ## Static local NBA targets inside `always_ff` remain loud — 2026-11-04
 
 A static block-local variable used as a nonblocking target inside a procedural

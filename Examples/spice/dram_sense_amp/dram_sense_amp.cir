@@ -1,0 +1,15 @@
+cross-coupled differential DRAM sense amplifier
+* Component deck only: q, qb, and vdd are boundary ports. Supplies,
+* initial conditions, and enable sequencing belong to the environment.
+.subckt dram_sense_amp q qb vdd
+mpq q qb vdd vdd psense
+mnq q qb 0 0 nmod
+mpqb qb q vdd vdd psense
+mnqb qb q 0 0 nmod
+cq q 0 300f
+cqb qb 0 300f
+.ends dram_sense_amp
+xsense q qb vdd dram_sense_amp
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.model psense pmos (level=1 vto=-1 kp=100u lambda=0 is=0)
+.end

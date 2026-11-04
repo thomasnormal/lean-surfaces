@@ -1,0 +1,55 @@
+{
+  "schema": "lean-models.veriloga.openvaf-ast.v1",
+  "frontend": {
+    "name": "OpenVAF Reloaded",
+    "repository": "https://github.com/OpenVAF/OpenVAF-Reloaded",
+    "revision": "b4517adc0a21ef42e03b396373553a41174444c4",
+    "representation": "OpenVAF typed syntax tree"
+  },
+  "source": {
+    "path": "Examples/verilog-a/resistor/resistor.va",
+    "text": "`include \"disciplines.vams\"\n\nmodule resistor(p, n);\n  inout p, n;\n  electrical p, n;\n  parameter real resistance = 1k;\n  analog I(p, n) <+ V(p, n) / resistance;\nendmodule\n"
+  },
+  "module": {
+    "name": "resistor",
+    "ports": [
+      "p",
+      "n"
+    ],
+    "inouts": [
+      "p",
+      "n"
+    ],
+    "electricals": [
+      "p",
+      "n"
+    ],
+    "parameters": [
+      {
+        "name": "resistance",
+        "default": "1k"
+      }
+    ],
+    "contributions": [
+      {
+        "target": {
+          "kind": "flow",
+          "positive": "p",
+          "negative": "n"
+        },
+        "expression": {
+          "kind": "div",
+          "left": {
+            "kind": "potential",
+            "positive": "p",
+            "negative": "n"
+          },
+          "right": {
+            "kind": "name",
+            "name": "resistance"
+          }
+        }
+      }
+    ]
+  }
+}

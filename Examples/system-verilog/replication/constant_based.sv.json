@@ -1,0 +1,90 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/replication/constant_based.sv",
+  "source_sha256": "1fe28d681247b220ea20bfed0a7f3f1d3d39852ec5746773bcec67fcb3eac944",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 5,
+              "end_line": 6,
+              "end_col": 55
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 13,
+                "end_line": 6,
+                "end_col": 55
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 19,
+                    "end_line": 6,
+                    "end_col": 42
+                  },
+                  "name": "$display",
+                  "format": "unexpected",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 43,
+                    "end_line": 6,
+                    "end_col": 51
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            },
+            "generated_scope": [
+              "2",
+              "wrong"
+            ]
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": [
+      {
+        "kind": "Unsupported",
+        "span": null,
+        "sv_kind": "UnsizedBasedLiteral:constant-context",
+        "text": "frontend widening of an unsized X/Z elaboration constant"
+      }
+    ]
+  },
+  "lean_blocks": []
+}

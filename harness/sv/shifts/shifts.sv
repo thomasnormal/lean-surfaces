@@ -1,0 +1,57 @@
+module shifts;
+  logic [7:0] value;
+  logic signed [7:0] signed_value;
+  logic [3:0] amount;
+  logic [15:0] wide;
+  logic [3:0] narrow;
+  integer signed_amount;
+  bit [7:0] two_state;
+  initial begin
+    value = 8'b10000001;
+    signed_value = 8'b10000001;
+    amount = 4'd1;
+    if ((value << amount) !== 8'b00000010) $display("FAIL logical-left");
+    if ((value <<< amount) !== 8'b00000010) $display("FAIL arithmetic-left");
+    if ((value >> amount) !== 8'b01000000) $display("FAIL logical-right");
+    if ((value >>> amount) !== 8'b01000000) $display("FAIL unsigned-arithmetic-right");
+    if ((signed_value >>> amount) !== 8'sb11000000) $display("FAIL signed-arithmetic-right");
+    if ((signed_value >>> amount) !== 8'b01000000) $display("FAIL unsigned-comparison-context");
+    amount = 4'd8;
+    if ((value << amount) !== 8'b00000000) $display("FAIL left-overshift");
+    if ((value >> amount) !== 8'b00000000) $display("FAIL right-overshift");
+    if ((signed_value >>> amount) !== 8'sb11111111) $display("FAIL signed-overshift");
+    amount = 4'bx001;
+    if ((value << amount) !== 8'bxxxxxxxx) $display("FAIL unknown-amount");
+    amount = 4'd1;
+    wide = value << amount;
+    if (wide !== 16'b0000000100000010) $display("FAIL width-context");
+    narrow = value << 4'd1;
+    if (narrow !== 4'b0010) $display("FAIL destination-narrow");
+    value = 8'b1xz00101;
+    if ((value << amount) !== 8'bxz001010) $display("FAIL left-unknown-bits");
+    if ((value >> amount) !== 8'b01xz0010) $display("FAIL right-unknown-bits");
+    signed_value = 8'bz1000001;
+    if ((signed_value >>> amount) !== 8'sbzz100000) $display("FAIL unknown-sign-fill");
+    amount = 4'd0;
+    if ((value << amount) !== value || (value >> amount) !== value)
+      $display("FAIL zero-amount");
+    amount = 4'bz001;
+    if ((value >>> amount) !== 8'bxxxxxxxx) $display("FAIL z-amount");
+    two_state = value << amount;
+    if (two_state !== 8'd0) $display("FAIL two-state-destination");
+    signed_amount = -1;
+    value = 8'h81;
+    if ((value << signed_amount) !== 8'd0) $display("FAIL negative-amount");
+    signed_value = 8'sh81;
+    amount = 4'd1;
+    signed_value >>>= amount;
+    if (signed_value !== 8'shc0) $display("FAIL compound-arithmetic-right");
+    value <<= amount;
+    value <<<= amount;
+    value >>= amount;
+    value >>>= amount;
+    if (value !== 8'h01) $display("FAIL compound-sequence");
+    $display("PASS");
+    $finish;
+  end
+endmodule

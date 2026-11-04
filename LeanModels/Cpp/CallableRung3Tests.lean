@@ -1,0 +1,1138 @@
+import LeanModels.Cpp.CallableEvaluation
+
+namespace LeanModels.Cpp.CallableRung3Tests
+
+open LeanModels.Cpp
+
+def intType : CppTypeEvidence := .builtin .int
+def shortType : CppTypeEvidence := .builtin .short
+def unsignedCharType : CppTypeEvidence := .builtin .unsignedChar
+def unsignedShortType : CppTypeEvidence := .builtin .unsignedShort
+def unsignedIntType : CppTypeEvidence := .builtin .unsignedInt
+def unsignedLongType : CppTypeEvidence := .builtin .unsignedLong
+def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
+def parameter : FrontendHandle := {value := "0x10"}
+
+def incrementFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .increment "++" false parameter
+    sourceType := intType
+    type := intType})
+}
+
+def callableIncrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 incrementFunction [signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def narrowParameter : FrontendHandle := {value := "0x11"}
+
+def narrowIncrementFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedShortType, parameters := [unsignedShortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := unsignedShortType}]
+  body := .block (.return_ {
+    expression := .increment "++" false narrowParameter
+    sourceType := unsignedShortType
+    type := unsignedShortType})
+}
+
+def callableNarrowIncrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 narrowIncrementFunction [⟨.unsigned 16, 65535⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 16, 0⟩
+  | _ => false
+
+def narrowDecrementFunction : CallableFunction := {
+  narrowIncrementFunction with
+  body := .block (.return_ {
+    expression := .increment "--" false narrowParameter
+    sourceType := unsignedShortType
+    type := unsignedShortType})
+}
+
+def callableNarrowDecrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 narrowDecrementFunction [⟨.unsigned 16, 0⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 16, 65535⟩
+  | _ => false
+
+def unaryNarrowFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .unary "-"
+      {expression := .parameter narrowParameter, sourceType := shortType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryNarrowWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryNarrowFunction [⟨.signed 16, -32768⟩] with
+  | .ok (.ok value) => value == signed 32768
+  | _ => false
+
+def unaryComplementFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .unary "~"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryComplementWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryComplementFunction [signed (-1)] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
+def unaryLogicalNotFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .unary "!"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableUnaryLogicalNotWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryLogicalNotFunction [signed 0],
+        evaluateCallable 16 .lp64 unaryLogicalNotFunction [signed 3] with
+  | .ok (.ok zero), .ok (.ok nonzero) =>
+      zero == integralBoolean true && nonzero == integralBoolean false
+  | _, _ => false
+
+def noexceptOperand : TypedCallableExpression := {
+  expression := .binary "+"
+    {expression := .integer 1, sourceType := intType, type := intType}
+    {expression := .integer 2, sourceType := intType, type := intType}
+  sourceType := intType
+  type := intType}
+
+def noexceptFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .noexceptExpr noexceptOperand
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNoexceptWitness : Bool :=
+  match evaluateCallable 16 .lp64 noexceptFunction [] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def unaryPlusFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .unary "+"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryPlusWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryPlusFunction [signed (-7)] with
+  | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
+def bitwiseAndFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType, intType], variadic := false}
+  parameters := [
+    {declaration := parameter, name := some "left", type := intType},
+    {declaration := {value := "0x11"}, name := some "right", type := intType}]
+  body := .block (.return_ {
+    expression := .binary "&"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableBitwiseAndWitness : Bool :=
+  match evaluateCallable 16 .lp64 bitwiseAndFunction [signed 240, signed 15] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
+def bitwiseOrFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "|"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableBitwiseOrWitness : Bool :=
+  match evaluateCallable 16 .lp64 bitwiseOrFunction [signed 240, signed 15] with
+  | .ok (.ok value) => value == signed 255
+  | _ => false
+
+def bitwiseXorFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "^"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableBitwiseXorWitness : Bool :=
+  match evaluateCallable 16 .lp64 bitwiseXorFunction [signed 240, signed 15] with
+  | .ok (.ok value) => value == signed 255
+  | _ => false
+
+def multiplicationFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "*"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableMultiplicationWitness : Bool :=
+  match evaluateCallable 16 .lp64 multiplicationFunction [signed 6, signed 7] with
+  | .ok (.ok value) => value == signed 42
+  | _ => false
+
+def divisionFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "/"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableDivisionWitness : Bool :=
+  match evaluateCallable 16 .lp64 divisionFunction [signed 42, signed 6] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def remainderFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "%"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableRemainderWitness : Bool :=
+  match evaluateCallable 16 .lp64 remainderFunction [signed 43, signed 6] with
+  | .ok (.ok value) => value == signed 1
+  | _ => false
+
+def shiftLeftFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "<<"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableShiftLeftWitness : Bool :=
+  match evaluateCallable 16 .lp64 shiftLeftFunction [signed 1, signed 4] with
+  | .ok (.ok value) => value == signed 16
+  | _ => false
+
+def shiftRightFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary ">>"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableShiftRightWitness : Bool :=
+  match evaluateCallable 16 .lp64 shiftRightFunction [signed (-7), signed 1] with
+  | .ok (.ok value) => value == signed (-4)
+  | _ => false
+
+def lessThanFunction : CallableFunction := {
+  bitwiseAndFunction with
+  signature := {result := .builtin .boolean, parameters := [intType, intType], variadic := false}
+  body := .block (.return_ {
+    expression := .binary "<"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableLessThanWitness : Bool :=
+  match evaluateCallable 16 .lp64 lessThanFunction [signed 3, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def lessEqualFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "<="
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableLessEqualWitness : Bool :=
+  match evaluateCallable 16 .lp64 lessEqualFunction [signed 5, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def equalFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "=="
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableEqualWitness : Bool :=
+  match evaluateCallable 16 .lp64 equalFunction [signed 5, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def notEqualFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "!="
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNotEqualWitness : Bool :=
+  match evaluateCallable 16 .lp64 notEqualFunction [signed 5, signed 6] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def greaterThanFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary ">"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableGreaterThanWitness : Bool :=
+  match evaluateCallable 16 .lp64 greaterThanFunction [signed 6, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def greaterEqualFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary ">="
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableGreaterEqualWitness : Bool :=
+  match evaluateCallable 16 .lp64 greaterEqualFunction [signed 5, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def additionFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "+"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableAdditionWitness : Bool :=
+  match evaluateCallable 16 .lp64 additionFunction [signed 7, signed 5] with
+  | .ok (.ok value) => value == signed 12
+  | _ => false
+
+def subtractionFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "-"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableSubtractionWitness : Bool :=
+  match evaluateCallable 16 .lp64 subtractionFunction [signed 9, signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def unaryMinusFunction : CallableFunction := {
+  unaryPlusFunction with
+  body := .block (.return_ {
+    expression := .unary "-"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryMinusWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryMinusFunction [signed (-7)] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def decrementFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .increment "--" false parameter
+    sourceType := intType
+    type := intType})
+}
+
+def callableDecrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 decrementFunction [signed 4] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def postfixDecrementFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .increment "--" true parameter
+    sourceType := intType
+    type := intType})
+}
+
+def callablePostfixDecrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 postfixDecrementFunction [signed 4] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
+def sizeOfFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedLongType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .sizeOf shortType
+    sourceType := unsignedLongType
+    type := unsignedLongType})
+}
+
+def callableSizeOfWitness : Bool :=
+  match evaluateCallable 16 .lp64 sizeOfFunction [] with
+  | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
+  | _ => false
+
+def alignOfFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedLongType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .alignOf shortType
+    sourceType := unsignedLongType
+    type := unsignedLongType})
+}
+
+def callableAlignOfWitness : Bool :=
+  match evaluateCallable 16 .lp64 alignOfFunction [] with
+  | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
+  | _ => false
+
+def boolLiteralFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 1
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableBoolLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 boolLiteralFunction [] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def falseBoolLiteralFunction : CallableFunction := {
+  boolLiteralFunction with
+  body := .block (.return_ {
+    expression := .integer 0
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableFalseBoolLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 falseBoolLiteralFunction [] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
+def characterLiteralFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .convert {
+      expression := .integer 65
+      sourceType := .builtin .char
+      type := .builtin .char}
+    sourceType := intType
+    type := intType})
+}
+
+def callableCharacterLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 characterLiteralFunction [] with
+  | .ok (.ok value) => value == signed 65
+  | _ => false
+
+def constantExpressionFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 7
+    sourceType := intType
+    type := intType})
+}
+
+def callableConstantExpressionWitness : Bool :=
+  match evaluateCallable 16 .lp64 constantExpressionFunction [] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def unsignedIntegerLiteralFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 7
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableUnsignedIntegerLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 unsignedIntegerLiteralFunction [] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 7⟩
+  | _ => false
+
+def nullPointerComparisonFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .nullComparison "=="
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNullPointerWitness : Bool :=
+  match evaluateCallable 16 .lp64 nullPointerComparisonFunction [] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
+def nullPointerInequalityFunction : CallableFunction := {
+  nullPointerComparisonFunction with
+  body := .block (.return_ {
+    expression := .nullComparison "!="
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNullPointerInequalityWitness : Bool :=
+  match evaluateCallable 16 .lp64 nullPointerInequalityFunction [] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
+def castFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .convert {
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}
+    sourceType := shortType
+    type := intType})
+}
+
+def callableCastWitness : Bool :=
+  match evaluateCallable 16 .lp64 castFunction [⟨.signed 16, -7⟩] with
+  | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
+def narrowCastFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedCharType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .convert {
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}
+    sourceType := shortType
+    type := unsignedCharType})
+}
+
+def callableNarrowCastWitness : Bool :=
+  match evaluateCallable 16 .lp64 narrowCastFunction [⟨.signed 16, -7⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 8, 249⟩
+  | _ => false
+
+def postfixFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .comma
+      {expression := .increment "++" true parameter, sourceType := intType, type := intType}
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callablePostfixWitness : Bool :=
+  match evaluateCallable 16 .lp64 postfixFunction [signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def compoundAssignmentFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.sequence
+    (.compoundAssign "+=" parameter
+      {expression := .integer 3, sourceType := intType, type := intType})
+    (.return_ {
+      expression := .parameter parameter
+      sourceType := intType
+      type := intType}))
+}
+
+def callableCompoundAssignmentWitness : Bool :=
+  match evaluateCallable 16 .lp64 compoundAssignmentFunction [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def assignmentFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.sequence
+    (.assign parameter
+      {expression := .binary "+"
+        {expression := .parameter parameter, sourceType := intType, type := intType}
+        {expression := .integer 3, sourceType := intType, type := intType},
+        sourceType := intType, type := intType})
+    (.return_ {
+      expression := .parameter parameter
+      sourceType := intType
+      type := intType}))
+}
+
+def callableAssignmentWitness : Bool :=
+  match evaluateCallable 16 .lp64 assignmentFunction [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def mixedLeftParameter : FrontendHandle := {value := "0x30"}
+def mixedRightParameter : FrontendHandle := {value := "0x31"}
+
+def mixedArithmeticFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .binary "+"
+      {expression := .parameter mixedLeftParameter, sourceType := shortType, type := unsignedIntType}
+      {expression := .parameter mixedRightParameter, sourceType := unsignedIntType, type := unsignedIntType},
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableMixedArithmeticWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedArithmeticFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 0⟩
+  | _ => false
+
+def mixedCompoundFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := shortType, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.sequence
+    (.compoundAssign "+=" mixedLeftParameter
+      {expression := .parameter mixedRightParameter
+       sourceType := unsignedIntType
+       type := unsignedIntType})
+    (.return_ {
+      expression := .parameter mixedLeftParameter
+      sourceType := shortType
+      type := shortType}))
+}
+
+def callableMixedCompoundWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedCompoundFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == ⟨.signed 16, 0⟩
+  | _ => false
+
+def mixedComparisonFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .binary "<"
+      {expression := .parameter mixedLeftParameter, sourceType := shortType, type := unsignedIntType}
+      {expression := .parameter mixedRightParameter, sourceType := unsignedIntType, type := unsignedIntType},
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableMixedComparisonWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedComparisonFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
+def mixedShiftFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .binary ">>"
+      {expression := .parameter mixedLeftParameter, sourceType := shortType, type := intType}
+      {expression := .parameter mixedRightParameter, sourceType := unsignedIntType, type := unsignedIntType},
+    sourceType := intType
+    type := intType})
+}
+
+def callableMixedShiftWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedShiftFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == signed (-1)
+  | _ => false
+
+def calleeParameter : FrontendHandle := {value := "0x20"}
+
+def addThreeCallee : CallableCallee := {
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := calleeParameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .binary "+"
+      {expression := .parameter calleeParameter, sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType},
+    sourceType := intType, type := intType})
+}
+
+def callFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .call addThreeCallee [{
+      expression := .parameter parameter
+      sourceType := intType
+      type := intType}]
+    sourceType := intType
+    type := intType})
+}
+
+def callableCallWitness : Bool :=
+  match evaluateCallable 32 .lp64 callFunction [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def convertingCalleeParameter : FrontendHandle := {value := "0x21"}
+
+def convertingCallee : CallableCallee := {
+  signature := {result := unsignedIntType, parameters := [unsignedIntType], variadic := false}
+  parameters := [{declaration := convertingCalleeParameter, name := some "value", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .parameter convertingCalleeParameter
+    sourceType := unsignedIntType, type := unsignedIntType})
+}
+
+def callConversionFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .call convertingCallee [{
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}]
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableCallConversionWitness : Bool :=
+  match evaluateCallable 32 .lp64 callConversionFunction [⟨.signed 16, -1⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
+  | _ => false
+
+def parsedCallRaw : Raw := .object [
+  ("id", .string "0x90"), ("kind", .string "CallExpr"),
+  ("inner", .array [
+    .object [("id", .string "0x91"), ("kind", .string "DeclRefExpr"),
+      ("referencedDecl", .object [("id", .string "0x20"),
+        ("kind", .string "FunctionDecl"), ("name", .string "add_three")])],
+    .object [("id", .string "0x92"), ("kind", .string "DeclRefExpr"),
+      ("referencedDecl", .object [("id", .string "0x10"),
+        ("kind", .string "ParmVarDecl"), ("name", .string "value")])]])]
+
+def parsedCallExpression : Except String TypedCallableExpression :=
+  parseCallableDirectCallExpression .lp64 [
+    {declaration := parameter, name := some "value", type := intType}]
+    [] none [{declaration := calleeParameter, callee := addThreeCallee}]
+    parsedCallRaw (some intType)
+
+def callableParsedCallWitness : Bool :=
+  match parsedCallExpression with
+  | .ok expression =>
+      let function : CallableFunction := {
+        occurrence := default
+        signature := {result := intType, parameters := [intType], variadic := false}
+        parameters := [{declaration := parameter, name := some "value", type := intType}]
+        body := .block (.return_ expression)}
+      match evaluateCallable 32 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 7
+      | _ => false
+  | .error _ => false
+
+def conditionalFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .conditional
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .integer 7, sourceType := intType, type := intType}
+      {expression := .integer 8, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableConditionalWitness : Bool :=
+  match evaluateCallable 16 .lp64 conditionalFunction [signed 1],
+        evaluateCallable 16 .lp64 conditionalFunction [signed 0] with
+  | .ok (.ok positive), .ok (.ok zero) => positive == signed 7 && zero == signed 8
+  | _, _ => false
+
+def logicalExpression : TypedCallableExpression := {
+  expression := .logical "&&"
+    {expression := .parameter parameter, sourceType := intType, type := intType}
+    {expression := .increment "++" false parameter, sourceType := intType, type := intType}
+  sourceType := .builtin .boolean
+  type := .builtin .boolean}
+
+def logicalFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .comma logicalExpression
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableLogicalWitness : Bool :=
+  match evaluateCallable 16 .lp64 logicalFunction [signed 0],
+        evaluateCallable 16 .lp64 logicalFunction [signed 1] with
+  | .ok (.ok zero), .ok (.ok one) => zero == signed 0 && one == signed 2
+  | _, _ => false
+
+def logicalOrExpression : TypedCallableExpression := {
+  expression := .logical "||"
+    {expression := .parameter parameter, sourceType := intType, type := intType}
+    {expression := .increment "++" false parameter, sourceType := intType, type := intType}
+  sourceType := .builtin .boolean
+  type := .builtin .boolean}
+
+def logicalOrFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .comma logicalOrExpression
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableLogicalOrWitness : Bool :=
+  match evaluateCallable 16 .lp64 logicalOrFunction [signed 1],
+        evaluateCallable 16 .lp64 logicalOrFunction [signed 0] with
+  | .ok (.ok one), .ok (.ok zero) => one == signed 1 && zero == signed 1
+  | _, _ => false
+
+#guard callableIncrementWitness
+#guard callableNarrowIncrementWitness
+#guard callableNarrowDecrementWitness
+#guard callableUnaryNarrowWitness
+#guard callableUnaryComplementWitness
+#guard callableUnaryLogicalNotWitness
+#guard callableNoexceptWitness
+#guard callableUnaryPlusWitness
+#guard callableBitwiseAndWitness
+#guard callableBitwiseOrWitness
+#guard callableBitwiseXorWitness
+#guard callableMultiplicationWitness
+#guard callableDivisionWitness
+#guard callableRemainderWitness
+#guard callableShiftLeftWitness
+#guard callableShiftRightWitness
+#guard callableLessThanWitness
+#guard callableLessEqualWitness
+#guard callableEqualWitness
+#guard callableNotEqualWitness
+#guard callableGreaterThanWitness
+#guard callableGreaterEqualWitness
+#guard callableAdditionWitness
+#guard callableSubtractionWitness
+#guard callableUnaryMinusWitness
+#guard callableDecrementWitness
+#guard callablePostfixDecrementWitness
+#guard callableSizeOfWitness
+#guard callableAlignOfWitness
+#guard callableBoolLiteralWitness
+#guard callableFalseBoolLiteralWitness
+#guard callableCharacterLiteralWitness
+#guard callableConstantExpressionWitness
+#guard callableUnsignedIntegerLiteralWitness
+#guard callableNullPointerWitness
+#guard callableNullPointerInequalityWitness
+#guard callableCastWitness
+#guard callableNarrowCastWitness
+#guard callablePostfixWitness
+#guard callableCompoundAssignmentWitness
+#guard callableAssignmentWitness
+#guard callableMixedArithmeticWitness
+#guard callableMixedCompoundWitness
+#guard callableMixedComparisonWitness
+#guard callableMixedShiftWitness
+#guard callableCallWitness
+#guard callableCallConversionWitness
+#guard callableConditionalWitness
+#guard callableLogicalWitness
+#guard callableLogicalOrWitness
+
+theorem callable_increment_witness : callableIncrementWitness = true := by
+  rfl
+
+theorem callable_narrow_increment_witness : callableNarrowIncrementWitness = true := by
+  rfl
+
+theorem callable_narrow_decrement_witness : callableNarrowDecrementWitness = true := by
+  rfl
+
+theorem callable_unary_narrow_witness : callableUnaryNarrowWitness = true := by
+  rfl
+
+theorem callable_unary_complement_witness : callableUnaryComplementWitness = true := by
+  rfl
+
+theorem callable_unary_logical_not_witness : callableUnaryLogicalNotWitness = true := by
+  rfl
+
+theorem callable_noexcept_witness : callableNoexceptWitness = true := by
+  rfl
+
+theorem callable_unary_plus_witness : callableUnaryPlusWitness = true := by
+  rfl
+
+theorem callable_bitwise_and_witness : callableBitwiseAndWitness = true := by
+  rfl
+
+theorem callable_bitwise_or_witness : callableBitwiseOrWitness = true := by
+  rfl
+
+theorem callable_bitwise_xor_witness : callableBitwiseXorWitness = true := by
+  rfl
+
+theorem callable_multiplication_witness : callableMultiplicationWitness = true := by
+  rfl
+
+theorem callable_division_witness : callableDivisionWitness = true := by
+  rfl
+
+theorem callable_remainder_witness : callableRemainderWitness = true := by
+  rfl
+
+theorem callable_shift_left_witness : callableShiftLeftWitness = true := by
+  rfl
+
+theorem callable_shift_right_witness : callableShiftRightWitness = true := by
+  rfl
+
+theorem callable_less_than_witness : callableLessThanWitness = true := by
+  rfl
+
+theorem callable_less_equal_witness : callableLessEqualWitness = true := by
+  rfl
+
+theorem callable_equal_witness : callableEqualWitness = true := by
+  rfl
+
+theorem callable_not_equal_witness : callableNotEqualWitness = true := by
+  rfl
+
+theorem callable_greater_than_witness : callableGreaterThanWitness = true := by
+  rfl
+
+theorem callable_greater_equal_witness : callableGreaterEqualWitness = true := by
+  rfl
+
+theorem callable_addition_witness : callableAdditionWitness = true := by
+  rfl
+
+theorem callable_subtraction_witness : callableSubtractionWitness = true := by
+  rfl
+
+theorem callable_unary_minus_witness : callableUnaryMinusWitness = true := by
+  rfl
+
+theorem callable_decrement_witness : callableDecrementWitness = true := by
+  rfl
+
+theorem callable_postfix_decrement_witness : callablePostfixDecrementWitness = true := by
+  rfl
+
+theorem callable_size_of_witness : callableSizeOfWitness = true := by
+  rfl
+
+theorem callable_align_of_witness : callableAlignOfWitness = true := by
+  rfl
+
+theorem callable_bool_literal_witness : callableBoolLiteralWitness = true := by
+  rfl
+
+theorem callable_false_bool_literal_witness : callableFalseBoolLiteralWitness = true := by
+  rfl
+
+theorem callable_character_literal_witness : callableCharacterLiteralWitness = true := by
+  rfl
+
+theorem callable_constant_expression_witness : callableConstantExpressionWitness = true := by
+  rfl
+
+theorem callable_unsigned_integer_literal_witness : callableUnsignedIntegerLiteralWitness = true := by
+  rfl
+
+theorem callable_null_pointer_witness : callableNullPointerWitness = true := by
+  rfl
+
+theorem callable_null_pointer_inequality_witness : callableNullPointerInequalityWitness = true := by
+  rfl
+
+theorem callable_cast_witness : callableCastWitness = true := by
+  rfl
+
+theorem callable_narrow_cast_witness : callableNarrowCastWitness = true := by
+  rfl
+
+theorem callable_postfix_witness : callablePostfixWitness = true := by
+  rfl
+
+theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness = true := by
+  rfl
+
+theorem callable_assignment_witness : callableAssignmentWitness = true := by
+  rfl
+
+theorem callable_mixed_arithmetic_witness : callableMixedArithmeticWitness = true := by
+  rfl
+
+theorem callable_mixed_compound_witness : callableMixedCompoundWitness = true := by
+  rfl
+
+theorem callable_mixed_comparison_witness : callableMixedComparisonWitness = true := by
+  rfl
+
+theorem callable_mixed_shift_witness : callableMixedShiftWitness = true := by
+  rfl
+
+theorem callable_call_witness : callableCallWitness = true := by
+  rfl
+
+theorem callable_call_conversion_witness : callableCallConversionWitness = true := by
+  rfl
+
+theorem callable_conditional_witness : callableConditionalWitness = true := by
+  rfl
+
+theorem callable_logical_witness : callableLogicalWitness = true := by
+  rfl
+
+theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
+  rfl
+
+#print axioms callable_increment_witness
+#print axioms callable_narrow_increment_witness
+#print axioms callable_narrow_decrement_witness
+#print axioms callable_unary_narrow_witness
+#print axioms callable_unary_complement_witness
+#print axioms callable_unary_logical_not_witness
+#print axioms callable_noexcept_witness
+#print axioms callable_unary_plus_witness
+#print axioms callable_bitwise_and_witness
+#print axioms callable_bitwise_or_witness
+#print axioms callable_bitwise_xor_witness
+#print axioms callable_multiplication_witness
+#print axioms callable_division_witness
+#print axioms callable_remainder_witness
+#print axioms callable_shift_left_witness
+#print axioms callable_shift_right_witness
+#print axioms callable_less_than_witness
+#print axioms callable_less_equal_witness
+#print axioms callable_equal_witness
+#print axioms callable_not_equal_witness
+#print axioms callable_greater_than_witness
+#print axioms callable_greater_equal_witness
+#print axioms callable_addition_witness
+#print axioms callable_subtraction_witness
+#print axioms callable_unary_minus_witness
+#print axioms callable_decrement_witness
+#print axioms callable_postfix_decrement_witness
+#print axioms callable_size_of_witness
+#print axioms callable_align_of_witness
+#print axioms callable_bool_literal_witness
+#print axioms callable_false_bool_literal_witness
+#print axioms callable_character_literal_witness
+#print axioms callable_constant_expression_witness
+#print axioms callable_unsigned_integer_literal_witness
+#print axioms callable_null_pointer_witness
+#print axioms callable_null_pointer_inequality_witness
+#print axioms callable_cast_witness
+#print axioms callable_narrow_cast_witness
+#print axioms callable_postfix_witness
+#print axioms callable_compound_assignment_witness
+#print axioms callable_assignment_witness
+#print axioms callable_mixed_arithmetic_witness
+#print axioms callable_mixed_compound_witness
+#print axioms callable_mixed_comparison_witness
+#print axioms callable_mixed_shift_witness
+#print axioms callable_call_witness
+#print axioms callable_call_conversion_witness
+#print axioms callable_conditional_witness
+#print axioms callable_logical_witness
+#print axioms callable_logical_or_witness
+
+end LeanModels.Cpp.CallableRung3Tests

@@ -1,0 +1,240 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv",
+  "source_sha256": "b7aa0e94f7e8d1a1cb3bd461e9904c575687781ac41f7fbe8dda16e6c8c0017c",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 24,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 11,
+              "end_line": 8,
+              "end_col": 16
+            },
+            "name": "value",
+            "width": 32,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 16,
+              "end_line": 9,
+              "end_col": 25
+            },
+            "name": "real_bits",
+            "width": 64,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 16,
+              "end_line": 10,
+              "end_col": 26
+            },
+            "name": "short_bits",
+            "width": 32,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 23,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 12,
+                "col": 11,
+                "end_line": 23,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 13,
+                      "col": 5,
+                      "end_line": 13,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "value",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 13,
+                      "col": 13,
+                      "end_line": 13,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000011"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 5,
+                      "end_line": 14,
+                      "end_col": 14
+                    },
+                    "width": 64,
+                    "name": "real_bits"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 17,
+                      "end_line": 14,
+                      "end_col": 22
+                    },
+                    "width": 64,
+                    "bits": "0000000000000000000000000000000000000000000000000000000000000001"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 24
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 15,
+                      "col": 5,
+                      "end_line": 15,
+                      "end_col": 15
+                    },
+                    "width": 32,
+                    "name": "short_bits"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 15,
+                      "col": 18,
+                      "end_line": 15,
+                      "end_col": 23
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000010"
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 22
+                  },
+                  "itor_pure_statement": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 36
+                  },
+                  "bitstoreal_pure_statement": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 42
+                  },
+                  "bitstoshortreal_pure_statement": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 21,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

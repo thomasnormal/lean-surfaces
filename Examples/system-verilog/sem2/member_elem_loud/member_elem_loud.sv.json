@@ -1,0 +1,333 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "member_elem_loud",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/member_elem_loud/member_elem_loud.sv",
+      "sha256": "968bb5ca8c1af66fa4d0e1716ef3d6b62a4b1a4214d1f67b76ab3917bb0485f9"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "member_elem_loud",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 25,
+              "end_line": 5,
+              "end_col": 28
+            },
+            "name": "p_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "value": 33,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 22,
+                      "end_line": 5,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 34
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 25,
+              "end_line": 6,
+              "end_col": 28
+            },
+            "name": "i_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 21,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 25,
+              "end_line": 7,
+              "end_col": 30
+            },
+            "name": "dyn_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 21,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 25,
+              "end_line": 8,
+              "end_col": 29
+            },
+            "name": "ix_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 21
+                    },
+                    "value": 15,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 22,
+                      "end_line": 8,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 16
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 9,
+              "end_line": 14,
+              "end_col": 10
+            },
+            "name": "p",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 33,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 34
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 11
+              },
+              "width": 34,
+              "name": "p"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 14,
+                "end_line": 16,
+                "end_col": 17
+              },
+              "width": 34,
+              "name": "p_i"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 17,
+              "col": 10,
+              "end_line": 17,
+              "end_col": 30
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 17,
+                "col": 10,
+                "end_line": 17,
+                "end_col": 15
+              },
+              "width": 8,
+              "name": "dyn_o"
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 17,
+                "col": 18,
+                "end_line": 17,
+                "end_col": 30
+              },
+              "sv_kind": "ElementSelectExpression:member-index",
+              "text": "p.bytes[i_i]"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 18,
+              "col": 10,
+              "end_line": 18,
+              "end_col": 30
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 18,
+                "col": 10,
+                "end_line": 18,
+                "end_col": 14
+              },
+              "width": 16,
+              "name": "ix_o"
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 18,
+                "col": 17,
+                "end_line": 18,
+                "end_col": 30
+              },
+              "sv_kind": "RangeSelectExpression:member-indexed",
+              "text": "p.bytes[1+:2]"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

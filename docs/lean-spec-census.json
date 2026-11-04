@@ -1,0 +1,462 @@
+{
+  "commit": "0ba178704380d2fad751f020d461b293f47e36d5",
+  "families": [
+    {
+      "declared_at_section": "5.1",
+      "elided": false,
+      "file": "Wtypes",
+      "judgment": "(untagged in Wtypes)",
+      "rules": 26,
+      "tags": []
+    },
+    {
+      "declared_at_section": "8",
+      "elided": false,
+      "file": "compilation",
+      "judgment": "(untagged in compilation)",
+      "rules": 9,
+      "tags": []
+    },
+    {
+      "declared_at_section": "7.1",
+      "elided": false,
+      "file": "normalization",
+      "judgment": "(untagged in normalization)",
+      "rules": 1,
+      "tags": []
+    },
+    {
+      "declared_at_section": "6.1",
+      "elided": false,
+      "file": "soundness",
+      "judgment": "(untagged in soundness)",
+      "rules": 10,
+      "tags": []
+    },
+    {
+      "declared_at_section": "3.2",
+      "elided": false,
+      "file": "typesys",
+      "judgment": "(untagged in typesys)",
+      "rules": 3,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.6.2",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma;t:F\\vdash K\\LE",
+      "rules": 3,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.6.1",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma;t:F\\vdash K\\spec",
+      "rules": 1,
+      "tags": []
+    },
+    {
+      "declared_at_section": "5.2",
+      "elided": false,
+      "file": "Wtypes",
+      "judgment": "\\Gamma;t:F\\vdash K\\spec\\Rightarrow A;B;G",
+      "rules": 2,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.6.2",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma;t:F\\vdash \\alpha\\LEctor",
+      "rules": 8,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.6.1",
+      "elided": true,
+      "file": "axioms",
+      "judgment": "\\Gamma;t:F\\vdash \\alpha\\ctor",
+      "rules": 5,
+      "tags": []
+    },
+    {
+      "declared_at_section": "5.2",
+      "elided": true,
+      "file": "Wtypes",
+      "judgment": "\\Gamma;t:F\\vdash \\beta\\ctor\\Rightarrow A;p.B;pgx.G",
+      "rules": 6,
+      "tags": []
+    },
+    {
+      "declared_at_section": "5.3",
+      "elided": false,
+      "file": "Wtypes",
+      "judgment": "\\Gamma;t:F\\vdash \\tau\\LEctor\\Rightarrow x.B;x'x.[S;R]",
+      "rules": 4,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.1",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma\\vdash e:\\alpha",
+      "rules": 7,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.3",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma\\vdash e\\Leftrightarrow e'",
+      "rules": 9,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.2",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma\\vdash e\\equiv e'",
+      "rules": 10,
+      "tags": [
+        "\\beta",
+        "\\eta"
+      ]
+    },
+    {
+      "declared_at_section": "4.1",
+      "elided": true,
+      "file": "unique",
+      "judgment": "\\Gamma\\vdash e\\equiv_p e'",
+      "rules": 15,
+      "tags": []
+    },
+    {
+      "declared_at_section": "4.1",
+      "elided": true,
+      "file": "unique",
+      "judgment": "\\Gamma\\vdash e\\rightsquigarrow_\\kappa e'",
+      "rules": 10,
+      "tags": [
+        "\\beta",
+        "\\delta",
+        "\\iota",
+        "\\zeta"
+      ]
+    },
+    {
+      "declared_at_section": "7.1",
+      "elided": true,
+      "file": "normalization",
+      "judgment": "\\Gamma\\vdash e\\rightsquigarrow_\\sigma e'",
+      "rules": 10,
+      "tags": [
+        "\\beta",
+        "\\delta",
+        "\\iota",
+        "\\zeta"
+      ]
+    },
+    {
+      "declared_at_section": "2.1",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\Gamma\\vdash\\alpha\\type",
+      "rules": 1,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.2",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\ell\\equiv\\ell'",
+      "rules": 1,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.2",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\ell\\le \\ell'+n",
+      "rules": 14,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.1",
+      "elided": false,
+      "file": "axioms",
+      "judgment": "\\vdash\\Gamma\\ok",
+      "rules": 2,
+      "tags": []
+    },
+    {
+      "declared_at_section": "2.3",
+      "elided": true,
+      "file": "axioms",
+      "judgment": "e\\rightsquigarrow e'",
+      "rules": 10,
+      "tags": [
+        "\\delta",
+        "\\zeta"
+      ]
+    }
+  ],
+  "file_order": [
+    "intro",
+    "axioms",
+    "typesys",
+    "unique",
+    "Wtypes",
+    "soundness",
+    "normalization",
+    "compilation"
+  ],
+  "kernel_relevant": {
+    "chapter_file": "axioms",
+    "elided_families": [
+      "\\Gamma;t:F\\vdash \\alpha\\ctor",
+      "e\\rightsquigarrow e'"
+    ],
+    "families": 12,
+    "rules": 71
+  },
+  "known_undercounts": [
+    "align*-typeset computation rules (the iota menagerie, the quotient lift rule) are NOT \\frac and are NOT counted here",
+    "families flagged `elided` end in an explicit ... standing for an unwritten set of congruence/compatibility rules described only in prose"
+  ],
+  "licence": "NO LICENSE FILE IN-TREE \u2014 cite by section and rule, never vendor",
+  "method": "counts \\frac/\\dfrac occurrences attributed to the most recent \\boxed{} judgment and the current section. The source has NO rule macro and NO rule names; this is a reproducible proxy, not a named-rule set equality.",
+  "named_rules": [
+    "\\beta",
+    "\\delta",
+    "\\eta",
+    "\\iota",
+    "\\zeta"
+  ],
+  "per_file_lines": {
+    "Wtypes": 198,
+    "axioms": 244,
+    "compilation": 23,
+    "intro": 2,
+    "normalization": 23,
+    "soundness": 387,
+    "typesys": 122,
+    "unique": 288
+  },
+  "per_file_rules": {
+    "Wtypes": 38,
+    "axioms": 71,
+    "compilation": 9,
+    "normalization": 11,
+    "soundness": 10,
+    "typesys": 3,
+    "unique": 25
+  },
+  "pinned": true,
+  "schema": "lean-spec-census/1",
+  "sections": [
+    {
+      "file": "intro",
+      "number": "1",
+      "title": "Introduction"
+    },
+    {
+      "file": "axioms",
+      "number": "2",
+      "title": "The axioms"
+    },
+    {
+      "file": "axioms",
+      "number": "2.1",
+      "title": "Typing"
+    },
+    {
+      "file": "axioms",
+      "number": "2.2",
+      "title": "Definitional equality"
+    },
+    {
+      "file": "axioms",
+      "number": "2.3",
+      "title": "Reduction"
+    },
+    {
+      "file": "axioms",
+      "number": "2.4",
+      "title": "\\textsf{let} binders ($\\zeta$ reduction)"
+    },
+    {
+      "file": "axioms",
+      "number": "2.5",
+      "title": "Definitions ($\\delta$ reduction)"
+    },
+    {
+      "file": "axioms",
+      "number": "2.6",
+      "title": "Inductive types"
+    },
+    {
+      "file": "axioms",
+      "number": "2.6.1",
+      "title": "Inductive specifications"
+    },
+    {
+      "file": "axioms",
+      "number": "2.6.2",
+      "title": "Large elimination"
+    },
+    {
+      "file": "axioms",
+      "number": "2.6.3",
+      "title": "The recursor"
+    },
+    {
+      "file": "axioms",
+      "number": "2.6.4",
+      "title": "The computation rule ($\\iota$ reduction)"
+    },
+    {
+      "file": "axioms",
+      "number": "2.7",
+      "title": "Non-primitive axioms"
+    },
+    {
+      "file": "axioms",
+      "number": "2.7.1",
+      "title": "Quotient types"
+    },
+    {
+      "file": "axioms",
+      "number": "2.7.2",
+      "title": "Propositional extensionality"
+    },
+    {
+      "file": "axioms",
+      "number": "2.7.3",
+      "title": "Axiom of choice"
+    },
+    {
+      "file": "typesys",
+      "number": "3",
+      "title": "Properties of the type system"
+    },
+    {
+      "file": "typesys",
+      "number": "3.1",
+      "title": "Undecidability of definitional equality"
+    },
+    {
+      "file": "typesys",
+      "number": "3.1.1",
+      "title": "Algorithmic equality is not transitive"
+    },
+    {
+      "file": "typesys",
+      "number": "3.1.2",
+      "title": "Failure of subject reduction"
+    },
+    {
+      "file": "typesys",
+      "number": "3.2",
+      "title": "Regularity"
+    },
+    {
+      "file": "unique",
+      "number": "4",
+      "title": "Unique typing"
+    },
+    {
+      "file": "unique",
+      "number": "4.1",
+      "title": "The $\\kappa$ reduction"
+    },
+    {
+      "file": "unique",
+      "number": "4.2",
+      "title": "The Church-Rosser theorem"
+    },
+    {
+      "file": "Wtypes",
+      "number": "5",
+      "title": "Reduction of inductive types to $\\W$-types"
+    },
+    {
+      "file": "Wtypes",
+      "number": "5.1",
+      "title": "The menagerie"
+    },
+    {
+      "file": "Wtypes",
+      "number": "5.2",
+      "title": "Translating type families"
+    },
+    {
+      "file": "Wtypes",
+      "number": "5.3",
+      "title": "Translating subsingleton eliminators"
+    },
+    {
+      "file": "Wtypes",
+      "number": "5.4",
+      "title": "The remainder"
+    },
+    {
+      "file": "soundness",
+      "number": "6",
+      "title": "Soundness"
+    },
+    {
+      "file": "soundness",
+      "number": "6.1",
+      "title": "Proof splitting"
+    },
+    {
+      "file": "soundness",
+      "number": "6.2",
+      "title": "Modeling Lean in ZFC"
+    },
+    {
+      "file": "soundness",
+      "number": "6.2.1",
+      "title": "Definition of $\\W$-types in ZFC"
+    },
+    {
+      "file": "soundness",
+      "number": "6.2.2",
+      "title": "Definition of $\\acc$ in ZFC"
+    },
+    {
+      "file": "soundness",
+      "number": "6.3",
+      "title": "Soundness"
+    },
+    {
+      "file": "soundness",
+      "number": "6.4",
+      "title": "Type injectivity"
+    },
+    {
+      "file": "soundness",
+      "number": "6.5",
+      "title": "Equality reflection"
+    },
+    {
+      "file": "normalization",
+      "number": "7",
+      "title": "Strong normalization"
+    },
+    {
+      "file": "normalization",
+      "number": "7.1",
+      "title": "Evaluation in the empty context"
+    },
+    {
+      "file": "compilation",
+      "number": "8",
+      "title": "Compilation"
+    }
+  ],
+  "source": "digama0/lean-type-theory (LaTeX source of Carneiro, The Type Theory of Lean)",
+  "total_typeset_rules": 167
+}

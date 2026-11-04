@@ -1,0 +1,630 @@
+[
+  {
+    "file": "harness/scripts/hello.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/fib_loop.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/dict_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/raiser.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/listcomp_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/interleaved.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/mate_fns.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tt_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/fnprint.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/call_before_def.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/list_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/cpython_list_basics.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/class_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/namedtuple_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/str_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/iter_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/gen_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/live_rebind_read.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/live_fresh_global.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/exc_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/cls_effect_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/cls_data_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/cls_slots_script.py",
+    "expect": "match",
+    "note": "class storage: declared __slots__ writes succeed and an undeclared attribute raises AttributeError"
+  },
+  {
+    "file": "harness/scripts/interleave_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/prefix_forward.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/main_guard_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/init_effect_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/init_raise_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/enum_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/repr_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/print_set.py",
+    "expect": "match",
+    "note": "increasing integer set rendering uses the exact deterministic CPython order"
+  },
+  {
+    "file": "harness/scripts/with_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/with_exception_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/with_suppress_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/with_computed_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/print_nonascii.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/dict_ctor_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/exc_message_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/loop_publish_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/while_else_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/star_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/assert_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/fstring_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/import_lab/import_lab.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0 import forms): happy_fallback + rebind_after_fallback + guarded star, all inventory-absent"
+  },
+  {
+    "file": "harness/scripts/import_missing_uncaught.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0): unguarded absent module, exit 1, ModuleNotFoundError line CPython-identical"
+  },
+  {
+    "file": "harness/scripts/import_plain_missing.py",
+    "expect": "match",
+    "note": "plain absolute import of an inventory-absent module raises before binding"
+  },
+  {
+    "file": "harness/scripts/import_star_missing.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0): unguarded star of an absent module raises before any binding"
+  },
+  {
+    "file": "harness/scripts/import_not_top_level.py",
+    "expect": "match",
+    "note": "Pass 0: an unguarded function-body from-import of an inventory-absent module raises the faithful ModuleNotFoundError"
+  },
+  {
+    "file": "harness/scripts/import_bisect_fallback.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0, memo 2.5): accelerator-fallback equivalence for bisect_left/right -- a divergence is a blocker"
+  },
+  {
+    "file": "harness/scripts/import_insort_fallback.py",
+    "expect": "match",
+    "note": "memo 2.5 DISCHARGED: pure insort through the list.insert tier vs CPython's C accelerator -- a divergence is a blocker"
+  },
+  {
+    "file": "harness/scripts/insort_alias_script.py",
+    "expect": "match",
+    "note": "alias tier composed with list.insert: the bisect consumer shape end to end"
+  },
+  {
+    "file": "harness/scripts/alias_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/alias_before_def.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/alias_rebound.py",
+    "expect": "match",
+    "note": "an ordinary later assignment shadows the admitted alias"
+  },
+  {
+    "file": "harness/scripts/alias_bisect_shape.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_trailing_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_global_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_never_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_partial_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_shell_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_def_mid_script.py",
+    "expect": "match",
+    "note": "The static definition entry is safely erased because no later top-level or function-global read observes it."
+  },
+  {
+    "file": "harness/scripts/del_dunder_script.py",
+    "expect": "match",
+    "note": "Deleting the runner-supplied __name__ uncovers CPython's builtins __name__, so the script prints 'builtins'."
+  },
+  {
+    "file": "harness/scripts/del_import_script.py",
+    "expect": "match",
+    "note": "The benign import binding is safely erased because no later read observes it."
+  },
+  {
+    "file": "harness/scripts/fmt_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/fmt_width_script.py",
+    "expect": "match",
+    "note": "CPython's fixed decimal width preserves the exact left padding and surrounding literal text"
+  },
+  {
+    "file": "harness/scripts/cls_deco_script.py",
+    "expect": "unsupported",
+    "note": "THE THIRD DOOR: CPython prints 'registered m' then 'after' because @log is CALLED at the class statement; the model executes no class body, so a DECORATED method is now a creation effect and the script refuses instead of printing only 'after'"
+  },
+  {
+    "file": "harness/scripts/cls_deco_args_script.py",
+    "expect": "match",
+    "note": "the precision pin beside it: *args/**kwargs/defaults are refused at CALL time and are NOT creation effects, so ingestion reads the structured has_decorators flag and never matches on args_unsupported's message"
+  },
+  {
+    "file": "harness/scripts/star_target_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/zerodiv_pow_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/index_message_gap_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/ann_module_script.py",
+    "expect": "match",
+    "note": "An unshadowed builtin type annotation is pure in the tier; the assignment remains and the implicit annotation table is unobservable"
+  },
+  {
+    "file": "harness/scripts/ann_module_value_script.py",
+    "expect": "match",
+    "note": "Simple module-scope annotated assignments with scalar literal annotations lower to assignment followed by annotation evaluation"
+  },
+  {
+    "file": "harness/scripts/ann_module_effect_script.py",
+    "expect": "match",
+    "note": "Module annotations run after the value is stored, so an effectful annotation preserves CPython's exception and published target order"
+  },
+  {
+    "file": "harness/scripts/ann_module_table_script.py",
+    "expect": "match",
+    "note": "The exact __annotations__ = table = {} idiom updates the shared heap mapping after each module annotation"
+  },
+  {
+    "file": "harness/scripts/int_string_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_string_error_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_string_truncated_error_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/string_repeat_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/string_repeat_order_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_effects_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_order_script.py",
+    "expect": "match",
+    "note": "CPython raises OverflowError when the repetition count cannot fit its index-sized integer; operand effects and caught TypeErrors retain their order before the final uncaught exception."
+  },
+  {
+    "file": "harness/scripts/decimal_render_script.py",
+    "expect": "match",
+    "note": "Ordinary rendering and both signs of exactly 4300-digit integer magnitudes remain admitted across scalar, percent, f-string, container, namedtuple, and range fields; the minus sign is outside the magnitude budget."
+  },
+  {
+    "file": "harness/scripts/decimal_render_effects_script.py",
+    "expect": "match",
+    "note": "Admitted argument effects and first/second operand exceptions retain CPython's evaluation order; stdout is checked separately from unsupported outcomes, which carry no retained world."
+  },
+  {
+    "file": "harness/scripts/decimal_render_limit_script.py",
+    "expect": "match",
+    "note": "Both sides raise CPython's exact ValueError at the pinned 4300-digit decimal conversion limit."
+  },
+  {
+    "file": "harness/scripts/range_bool_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bool_script.py",
+    "expect": "match",
+    "note": "Builtin bool on ordinary values and live heap objects; generator truth does not drain, argument mutations persist, and arity errors follow all argument effects."
+  },
+  {
+    "file": "harness/scripts/divmod_script.py",
+    "expect": "match",
+    "note": "Integral divmod floor semantics, Bool coercion, local shadowing, zero divisors, complete left-to-right argument effects before arity errors, and argument exceptions preceding those errors."
+  },
+  {
+    "file": "Examples/python/exc_handlers_lab/exc_handlers_script.py",
+    "expect": "match",
+    "note": "Builtin TypeError handler retains argument mutations and publishes its assigned module global before a function reads it; the same program is kernel-checked on the proof script surface."
+  },
+  {
+    "file": "Examples/python/exc_handlers_lab/exc_handlers_rebound_script.py",
+    "expect": "match",
+    "note": "A delegated while-else rebinds its handler class before raising; runtime handler resolution reproduces CPython's catching-classes TypeError."
+  },
+  {
+    "file": "Examples/python/exc_ancestors_lab/exc_ancestors_script.py",
+    "expect": "match",
+    "note": "BaseException catches a missing import and dictionary-size RuntimeError from retained module state; ArithmeticError and LookupError propagate the import to the outer handler."
+  },
+  {
+    "file": "Examples/python/repr_lab/repr_script.py",
+    "expect": "match",
+    "note": "Builtin repr shares exact container rendering, preserves argument effects, and decides arity errors only after all arguments evaluate."
+  },
+  {
+    "file": "Examples/python/fstring_repr/fstring_script.py",
+    "expect": "match",
+    "note": "Intrinsic f-string str/repr conversions bypass shadowed names, while modeled builtin globals remain visible to function callees; field effects, default debug conversions, and first-error order stay exact."
+  },
+  {
+    "file": "Examples/python/ellipsis_lab/ellipsis_script.py",
+    "expect": "match",
+    "note": "Ellipsis singleton literals and builtin lookup, rendering, truth, identity, dictionary keys, shadowing and restoration after deletion."
+  },
+  {
+    "file": "Examples/python/float_lab/float_script.py",
+    "expect": "match",
+    "note": "Binary64 literals and true division, signed zero, subnormal/infinity rendering, exact mixed comparison and ArithmeticError catches."
+  },
+  {
+    "file": "Examples/python/float_lab/float_error_script.py",
+    "expect": "match",
+    "note": "Retained stdout and the exact float division by zero exception class/message."
+  },
+  {
+    "file": "Examples/python/float_lab/integer_division_error_script.py",
+    "expect": "match",
+    "note": "Integer true division's distinct division by zero message and retained stdout."
+  },
+  {
+    "file": "Examples/python/float_lab/integer_overflow_script.py",
+    "expect": "match",
+    "note": "Integer ratio overflow class/message rather than a finite-float overflow result."
+  },
+  {
+    "file": "Examples/python/float_lab/conversion_overflow_script.py",
+    "expect": "match",
+    "note": "Mixed division converts the integer before inspecting the zero denominator, preserving its overflow message."
+  },
+  {
+    "file": "Examples/python/float_lab/count_arity_script.py",
+    "expect": "match",
+    "note": "The count-admission miss distinguishes excessive positional arity from nonnumeric arguments, with the exact exception message and retained stdout."
+  },
+  {
+    "file": "Examples/python/float_lab/count_nonfinite_script.py",
+    "expect": "match",
+    "note": "itertools.count preserves non-finite starts and advances through the shared NaN/infinity arithmetic."
+  },
+  {
+    "file": "Examples/python/float_lab/arithmetic_script.py",
+    "expect": "match",
+    "note": "Binary64 addition/subtraction/multiplication, signed zeros, overflow/infinity, and module-level augmented assignments published to a function callee."
+  },
+  {
+    "file": "Examples/python/float_lab/arithmetic_overflow_script.py",
+    "expect": "match",
+    "note": "Integer conversion overflow precedes a zero product, retaining stdout and the exact exception class/message."
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_invalid_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_quote_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_both_quotes_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_nan_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/division_infinity_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/nan_division_script.py",
+    "expect": "match",
+    "note": "The pinned CPython 3.9 canonical negative quiet-NaN word is rendered as nan for inf / -inf."
+  },
+  {
+    "file": "Examples/python/float_lab/floor_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/nan_floor_script.py",
+    "expect": "match",
+    "note": "The pinned CPython 3.9 canonical negative quiet-NaN word is rendered as nan for an infinite left operand."
+  },
+  {
+    "file": "Examples/python/float_lab/nan_arithmetic_script.py",
+    "expect": "match",
+    "note": "The pinned CPython 3.9 binary64 model emits its canonical negative quiet-NaN word for the invalid infinity difference."
+  },
+  {
+    "file": "harness/scripts/bytes_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_sum_noniterable.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_concat_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_repeat_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_classname.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_classname.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_noniterable.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_bytes_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_start_order.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_start.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple_handler.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple_generator.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_uncaught.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_base.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_generator.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_shadow.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namesake.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_base_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_base_error_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/unpack_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_list_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/dict_view_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/list_aug_repeat_script.py",
+    "expect": "match",
+    "note": "List `*=` updates the existing heap address, so the alias prints the repeated list."
+  },
+  {
+    "file": "harness/scripts/async_dead_script.py",
+    "expect": "match",
+    "note": "An unreferenced async definition has no definition-time coroutine effect."
+  },
+  {
+    "file": "harness/scripts/import_dead_script.py",
+    "expect": "match",
+    "note": "Unobserved imports of the pinned math module have no tier-visible effect."
+  }
+]

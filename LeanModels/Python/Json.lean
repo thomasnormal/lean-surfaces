@@ -1,0 +1,2196 @@
+import Lean
+import LeanModels.Python.Ast
+
+/-!
+# Envelope JSON ingestion (`LeanModels.Python`)
+
+Parses the standardized AST envelope of `docs/envelope-schema.md` (schema v0.1,
+Python payload) from `Lean.Json` into the types of `Ast.lean`. All parsers are
+pure and return `Except String _`; malformed or unknown input yields a
+descriptive `.error`, never a panic. IO helpers belong to later phases.
+
+Entry points: `parseEnvelope : Lean.Json → Except String Envelope` and the
+convenience `parseEnvelopeString : String → Except String Envelope`.
+
+Notes:
+* Field names match the schema doc exactly (`schema_version`, `source_file`,
+  `args_unsupported`, `py_kind`, `first_line`, …).
+* The envelope's `frontend` field is accepted but not retained.
+* Int constants arrive as decimal strings (`{"type":"int","repr":"123"}`).
+* A `FunctionDef` at module top level becomes a `FunctionDefn`; a *nested*
+  `def` is ingested as `Stmt.unsupported "FunctionDef" name span`.
+-/
+
+namespace LeanModels.Python
+
+open Lean (Json)
+
+/-- One `# lean[ … # ]` block: `{"first_line": …, "last_line": …, "text": …}`.
+`firstLine`/`lastLine` are the 1-based source lines of the `# lean[` / `# ]`
+markers; `text` is the joined inner lines, no trailing newline. -/
+structure LeanBlock where
+  firstLine : Nat
+  lastLine : Nat
+  text : String
+deriving Repr, Inhabited, BEq, DecidableEq
+
+/-- The full envelope (one per source file). `frontend` is not retained. -/
+structure Envelope where
+  schemaVersion : String
+  language : String
+  sourceFile : String
+  sourceSha256 : String
+  module : Module
+  leanBlocks : Array LeanBlock
+deriving Repr, Inhabited, BEq
+
+/-- Prefix an error message with context. -/
+private def withCtx (c : String) : Except String α → Except String α
+  | .ok a => .ok a
+  | .error e => .error s!"{c}: {e}"
+
+/-- Required object field. -/
+private def getField (j : Json) (name : String) : Except String Json :=
+  withCtx s!"field '{name}'" (j.getObjVal? name)
+
+/-- Nullable string field: absent or `null` ↦ `none`, string ↦ `some`. -/
+private def getOptStrField (j : Json) (name : String) : Except String (Option String) :=
+  match j.getObjVal? name with
+  | .error _ => pure Option.none
+  | .ok .null => pure Option.none
+  | .ok v => withCtx s!"field '{name}'" do pure (some (← v.getStr?))
+
+def parseSpan (j : Json) : Except String Span :=
+  withCtx "span" do
+    return { lineno := ← (← getField j "lineno").getNat?
+             colOffset := ← (← getField j "col_offset").getNat?
+             endLineno := ← (← getField j "end_lineno").getNat?
+             endColOffset := ← (← getField j "end_col_offset").getNat? }
+
+def parseBinOpName : String → Except String BinOp
+  | "Add" => .ok .add
+  | "Sub" => .ok .sub
+  | "Mult" => .ok .mult
+  | "Div" => .ok .div
+  | "FloorDiv" => .ok .floorDiv
+  | "Mod" => .ok .mod
+  | "Pow" => .ok .pow
+  | "LShift" => .ok .lshift
+  | "RShift" => .ok .rshift
+  | "BitOr" => .ok .bitOr
+  | "BitXor" => .ok .bitXor
+  | "BitAnd" => .ok .bitAnd
+  | "MatMult" => .ok .matMult
+  | s => .error s!"unknown BinOp name {s.quote}"
+
+def parseUnaryOpName : String → Except String UnaryOp
+  | "USub" => .ok .usub
+  | "Not" => .ok .not
+  | "UAdd" => .ok .uadd
+  | "Invert" => .ok .invert
+  | s => .error s!"unknown UnaryOp name {s.quote}"
+
+def parseBoolOpName : String → Except String BoolOp
+  | "And" => .ok .and
+  | "Or" => .ok .or
+  | s => .error s!"unknown BoolOp name {s.quote}"
+
+def parseCmpOpName : String → Except String CmpOp
+  | "Eq" => .ok .eq
+  | "NotEq" => .ok .notEq
+  | "Lt" => .ok .lt
+  | "LtE" => .ok .ltE
+  | "Gt" => .ok .gt
+  | "GtE" => .ok .gtE
+  | "Is" => .ok .is
+  | "IsNot" => .ok .isNot
+  | "In" => .ok .inOp
+  | "NotIn" => .ok .notIn
+  | s => .error s!"unknown CmpOp name {s.quote}"
+
+/-- Parse a schema constant payload (the `value` of a `Constant` node). -/
+def parseConst (j : Json) : Except String Const :=
+  withCtx "Constant" do
+    let ty ← (← getField j "type").getStr?
+    match ty with
+    | "int" =>
+        let r ← (← getField j "repr").getStr?
+        match r.toInt? with
+        | some n => pure (Const.int n)
+        | Option.none => throw s!"invalid int repr {r.quote}"
+    | "float" =>
+        let raw ← getField j "bits"
+        let bits ← match raw.getStr? with
+          | .ok text => match text.toNat? with
+            | some value => pure value
+            | none => throw s!"invalid float bits {text.quote}"
+          | .error _ => raw.getNat?
+        if bits < 2 ^ 64 then pure (Const.float (Float64.ofBits bits))
+        else throw "float bits exceed binary64 width"
+    | "bool" => return Const.bool (← (← getField j "value").getBool?)
+    | "str" => return Const.str (← (← getField j "value").getStr?)
+    | "bytes" =>
+        let values ← (← (← getField j "value").getArr?).mapM fun item => do
+          let number ← item.getNat?
+          if number < 256 then pure (UInt8.ofNat number)
+          else throw s!"byte value {number} is outside 0..255"
+        return Const.bytes values
+    | "none" => pure Const.none
+    | "ellipsis" => pure Const.ellipsis
+    | other => throw s!"unknown const type {other.quote}"
+
+/-- Parse an expression node. `partial` because the recursion is over the
+`Json` tree (through object/array lookups), not structural; parsing is
+executable code only — nothing downstream proves theorems about it. -/
+partial def parseExpr (j : Json) : Except String Expr := do
+  let kind ← (← getField j "kind").getStr?
+  withCtx kind do
+    let span ← parseSpan (← getField j "span")
+    match kind with
+    | "Constant" =>
+        return .constant (← parseConst (← getField j "value")) span
+    | "Name" =>
+        return .name (← (← getField j "id").getStr?) span
+    | "NamedExpr" =>
+        -- H7+ (docs/memory-model.md §the walrus operator): the general
+        -- `(x := e)`. Only a plain NAME target is Python-legal, and the
+        -- extractor emits this kind only OUTSIDE a comprehension scope
+        -- (inside one PEP 572 leaks the binding to the enclosing frame,
+        -- which the pass-7 filter lowering models and this does not).
+        return .namedExpr (← (← getField j "target").getStr?)
+          (← parseExpr (← getField j "value")) span
+    | "BinOp" =>
+        let left ← parseExpr (← getField j "left")
+        let op ← parseBinOpName (← (← getField j "op").getStr?)
+        let right ← parseExpr (← getField j "right")
+        return .binOp left op right span
+    | "UnaryOp" =>
+        let op ← parseUnaryOpName (← (← getField j "op").getStr?)
+        return .unaryOp op (← parseExpr (← getField j "operand")) span
+    | "JoinedStr" =>
+        let parts ← (← (← getField j "values").getArr?).mapM parseExpr
+        match parts.toList with
+        | [] => return .constant (.str "") span
+        | first :: rest =>
+            return rest.foldl (fun result part => .binOp result .add part span) first
+    | "FormattedValue" =>
+        let conversion ← (← getField j "conversion").getInt?
+        let formatSpec ← getField j "format_spec"
+        if conversion != -1 && conversion != 97 && conversion != 115 && conversion != 114 then
+          return .unsupported "JoinedStr:conversion" "" span
+        let value ← parseExpr (← getField j "value")
+        let converted :=
+          if conversion == 97 then .formattedValueAscii value span
+          else .formattedValue value (conversion == 114) span
+        if formatSpec == Json.null then
+          return converted
+        let specKind ← (← getField formatSpec "kind").getStr?
+        let specParts ← (← getField formatSpec "values").getArr?
+        if specKind != "JoinedStr" then
+          return .unsupported "JoinedStr:format_spec" "" span
+        match specParts.toList with
+        | [] => return converted
+        | [part] =>
+            match ← parseExpr part with
+            | specExpr =>
+                return .call (.name fstringFormatBuiltinName span)
+                  #[(if conversion == -1 then value else converted),
+                    specExpr] #[] Option.none span
+        | _ => return .unsupported "JoinedStr:format_spec" "" span
+    | "BoolOp" =>
+        let op ← parseBoolOpName (← (← getField j "op").getStr?)
+        let values ← (← (← getField j "values").getArr?).mapM parseExpr
+        return .boolOp op values span
+    | "Compare" =>
+        let left ← parseExpr (← getField j "left")
+        let ops ← (← (← getField j "ops").getArr?).mapM fun o => do
+          parseCmpOpName (← o.getStr?)
+        let comparators ← (← getField j "comparators").getArr? >>= (·.mapM parseExpr)
+        if ops.size != comparators.size then
+          throw s!"ops/comparators length mismatch ({ops.size} vs {comparators.size})"
+        return .compare left ops comparators span
+    | "Call" =>
+        let func ← parseExpr (← getField j "func")
+        let args ← (← (← getField j "args").getArr?).mapM parseExpr
+        -- H6: structured plain named keywords. Absent field = empty
+        -- (envelopes extracted before the tier stay valid).
+        let kwargs ← match j.getObjVal? "keywords" with
+          | .error _ => pure #[]
+          | .ok kj => do
+            (← kj.getArr?).mapM fun kw => do
+              let name ← (← getField kw "arg").getStr?
+              let value ← parseExpr (← getField kw "value")
+              return (name, value)
+        let cu ← getOptStrField j "call_unsupported"
+        return .call func args kwargs cu span
+    | "List" =>
+        return .list (← (← (← getField j "elts").getArr?).mapM parseExpr) span
+    | "Tuple" =>
+        return .tuple (← (← (← getField j "elts").getArr?).mapM parseExpr) span
+    | "Dict" =>
+        return .dict (← (← (← getField j "keys").getArr?).mapM parseExpr)
+          (← (← (← getField j "values").getArr?).mapM parseExpr) span
+    | "Attribute" =>
+        return .attribute (← parseExpr (← getField j "value"))
+          (← (← getField j "attr").getStr?) span
+    | "IfExp" =>
+        return .ifExp (← parseExpr (← getField j "test"))
+          (← parseExpr (← getField j "body"))
+          (← parseExpr (← getField j "orelse")) span
+    | "Subscript" =>
+        let value ← parseExpr (← getField j "value")
+        let index ← parseExpr (← getField j "index")
+        return .subscript value index span
+    | "Slice" =>
+        -- Absent components become `Constant None`: CPython compiles a
+        -- missing bound to exactly that (`BUILD_SLICE` pushes `None`), so
+        -- `s[:i]` and `s[None:i:None]` are the same program, faithfully.
+        let value ← parseExpr (← getField j "value")
+        let comp : String → Except String Expr := fun name =>
+          match j.getObjVal? name with
+          | .ok jc => parseExpr jc
+          | .error _ => pure (Expr.constant .none span)
+        return .slice value (← comp "lower") (← comp "upper") (← comp "step") span
+    | "GeneratorExp" | "ListComp" =>
+        -- Structured only (H4); `parseModule` LOWERS every surviving
+        -- occurrence into a synthesized generator function.
+        --
+        -- A LIST COMPREHENSION (2026-08-13) is the SAME node under a
+        -- different `kind`, desugared here into `list(<the genexp>)`.
+        -- That is CPython-exact — both compile to an implicit function
+        -- over the already-evaluated outer iterator, and building the
+        -- list eagerly from the lazy one observes the same effects in
+        -- the same order, because the drain completes before the
+        -- enclosing frame can run again. It also inherits the genexp
+        -- lowering whole: the capture census, the walrus filter, and
+        -- the `drainOk` gate, which already counts `list` as a draining
+        -- builtin.
+        let elt ← parseExpr (← getField j "elt")
+        let target ← parseExpr (← getField j "target")
+        let iter ← parseExpr (← getField j "iter")
+        let ifs ← (← (← getField j "ifs").getArr?).mapM parseExpr
+        -- pass 7 (§the walrus filter): optional filter-bound names, each
+        -- `v = <value>` a statement of the synthesized body
+        let walrus ← match j.getObjVal? "walrus" with
+          | .ok wj => do
+            (← wj.getArr?).mapM fun w => do
+              pure ((← (← getField w "name").getStr?), ← parseExpr (← getField w "value"))
+          | .error _ => pure #[]
+        let g := Expr.genExp elt target iter ifs walrus span
+        if kind == "ListComp" then
+          return .call (.name "list" span) #[g] #[] Option.none span
+        else
+          return g
+    | "Unsupported" =>
+        return .unsupported (← (← getField j "py_kind").getStr?)
+          (← (← getField j "text").getStr?) span
+    | other => throw s!"unknown expression kind {other.quote}"
+
+private def lowerWithItems (items : List WithItem) (body : Array Stmt)
+    (span : Span) : Stmt :=
+  match items with
+  | [] => .withStmt #[] body (some "with statement has no context items") span
+  | [item] => .withStmt #[item] body Option.none span
+  | item :: rest =>
+      .withStmt #[item] #[lowerWithItems rest body span] Option.none span
+
+/-- Parse a statement node (see `parseExpr` for why `partial`). -/
+def parseParam (j : Json) : Except String Param :=
+  withCtx "param" do
+    let default ← match j.getObjVal? "default" with
+      | .error _ => pure (Option.none : Option Const)  -- absent: no default
+      | .ok .null => pure Option.none
+      | .ok v => do pure (some (← parseConst v))
+    return { arg := ← (← getField j "arg").getStr?
+             span := ← parseSpan (← getField j "span")
+             default }
+
+partial def parseStmt (j : Json) : Except String Stmt := do
+  let kind ← (← getField j "kind").getStr?
+  withCtx kind do
+    let span ← parseSpan (← getField j "span")
+    match kind with
+    | "Return" =>
+        let value ← match ← getField j "value" with
+          | .null => pure Option.none
+          | jv => do pure (some (← parseExpr jv))
+        return .ret value span
+    | "Assign" =>
+        let targets ← (← (← getField j "targets").getArr?).mapM parseExpr
+        return .assign targets (← parseExpr (← getField j "value")) span
+    | "UnpackAssign" =>
+        let before ← (← (← getField j "before").getArr?).mapM (·.getStr?)
+        let star ← (← getField j "star").getStr?
+        let after ← (← (← getField j "after").getArr?).mapM (·.getStr?)
+        return .unpackAssign before star after
+          (← parseExpr (← getField j "value")) span
+    | "AugAssign" =>
+        let target ← parseExpr (← getField j "target")
+        let op ← parseBinOpName (← (← getField j "op").getStr?)
+        return .augAssign target op (← parseExpr (← getField j "value")) span
+    | "While" =>
+        return .whileLoop (← parseExpr (← getField j "test"))
+          (← (← (← getField j "body").getArr?).mapM parseStmt)
+          (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
+    | "For" =>
+        return .forStmt (← parseExpr (← getField j "target"))
+          (← parseExpr (← getField j "iter"))
+          (← (← (← getField j "body").getArr?).mapM parseStmt)
+          (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
+    | "If" =>
+        return .ifStmt (← parseExpr (← getField j "test"))
+          (← (← (← getField j "body").getArr?).mapM parseStmt)
+          (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
+    | "Expr" =>
+        return .exprStmt (← parseExpr (← getField j "value")) span
+    | "Yield" =>
+        -- A bare `yield` carries no "value": ingestion fills `Constant
+        -- None`, CPython's own compilation (the `Slice` convention).
+        let value ← match j.getObjVal? "value" with
+          | .ok jv => parseExpr jv
+          | .error _ => pure (Expr.constant .none span)
+        return .yieldStmt value span
+    | "YieldFrom" =>
+        -- pass 5: structured always; `lowerGenExps` inlines the admitted
+        -- genexp shape (docs/memory-model.md §yield from), and whatever
+        -- survives un-lowered refuses loudly at execution.
+        return .yieldFromStmt (← parseExpr (← getField j "value")) span
+    | "Raise" =>
+        -- exceptions tier: structured in full generality (absent fields
+        -- = the bare forms); evaluation owns the tier boundary.
+        let exc ← match j.getObjVal? "exc" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        let cause ← match j.getObjVal? "cause" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        return .raiseStmt exc cause span
+    | "Assert" =>
+        -- the tail batch: `msg` absent is the bare `assert test`
+        let msg ← match j.getObjVal? "msg" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        return .assertStmt (← parseExpr (← j.getObjVal? "test")) msg span
+    | "With" =>
+        let items ← (← (← getField j "items").getArr?).mapM fun item => do
+          let context ← parseExpr (← getField item "context")
+          let target ← match item.getObjVal? "target" with
+            | .ok .null | .error _ => pure Option.none
+            | .ok v => pure (some (← parseExpr v))
+          pure { context, target }
+        let body ← (← (← getField j "body").getArr?).mapM parseStmt
+        return lowerWithItems items.toList body span
+    | "Delete" =>
+        -- the tail batch (docs/memory-model.md §the del statement): the
+        -- extractor admits BARE NAMES only (clause 4 ships everything
+        -- else as `Unsupported`), so the field is a plain string array.
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        return .delStmt names span
+    | "DeleteSubscript" =>
+        -- THE REWRITE (docs/backlog/python-completeness.md §pycomplete-15/16):
+        -- `del d[k]` ⇢ `<dictdel>(d, k)` as an `exprStmt`. `del` is a
+        -- statement with NO VALUE and `exprStmt` discards the value, so this
+        -- is exact. The evaluator then meets a call shape it already handles,
+        -- which is why this inch adds no `Stmt` constructor and no walker arm.
+        let recv ← parseExpr (← getField j "recv")
+        let key ← parseExpr (← getField j "key")
+        return .exprStmt
+          (.call (.name dictDelBuiltinName span) #[recv, key] #[] Option.none span) span
+    | "DeleteAttribute" =>
+        -- §del: `del o.attr` ⇢ `<attrdel>(o, "attr")` as an `exprStmt`.
+        let recv ← parseExpr (← getField j "recv")
+        let attr ← (← getField j "attr").getStr?
+        return .exprStmt
+          (.call (.name attrDelBuiltinName span)
+            #[recv, .constant (.str attr) span] #[] Option.none span) span
+    | "Try" =>
+        -- exceptions tier: the v0 single-handler fields plus the
+        -- `callUnsupported`-style reason (structured-but-loud).
+        let body ← (← (← getField j "body").getArr?).mapM parseStmt
+        let excName := ((← getField j "exc_name").getStr?).toOption.getD ""
+        let handler ← (← (← getField j "handler").getArr?).mapM parseStmt
+        let tu ← getOptStrField j "try_unsupported"
+        return .tryStmt body excName handler tu span
+    | "Pass" => return .pass span
+    | "Break" => return .brk span
+    | "Continue" => return .cont span
+    | "ImportFrom" =>
+        -- Pass 0 (docs/memory-model.md §import forms (Pass 0)): the
+        -- admitted from-import, structured by the EXTRACTOR (which owns
+        -- the admission against the pinned platform inventory). `star`
+        -- is default-tolerant (the walrus `..` precedent): absent =
+        -- `false`, so nothing breaks when the field is omitted.
+        let module ← (← getField j "module").getStr?
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        let star := match j.getObjVal? "star" with
+          | .ok (.bool b) => b
+          | _ => false
+        -- The whitelist collision CANONICALIZED (one table — Ast.lean —
+        -- one rewrite site): a structured row whose reconstructed text
+        -- hits `benignImportBinds` is rewritten back to the legacy
+        -- Unsupported node, so all five text-keyed consumers (the
+        -- namedtuple census's `isBenignNtImport`/`importBinds`,
+        -- `scriptImports`, `Stmt.g1Binds`, the survey's benign rows)
+        -- see today's shape unchanged.
+        let text := s!"from {module} import "
+          ++ (if star then "*" else String.intercalate ", " names.toList)
+        if (benignImportBinds text).isSome then
+          return .unsupported "ImportFrom" text span
+        else
+          return .importFrom module names star span
+    | "Unsupported" =>
+        return .unsupported (← (← getField j "py_kind").getStr?)
+          (← (← getField j "text").getStr?) span
+    | "FunctionDef" =>
+        -- A def NOT directly in a function body (module-level ones are
+        -- split out by `parseModule`; direct children of a function body
+        -- arrive as "NestedDef"). Representation coverage: keep
+        -- ingestion total, mark it unsupported.
+        let name := ((← getField j "name").getStr?).toOption.getD ""
+        return .unsupported "FunctionDef" name span
+    | "NestedDef" =>
+        -- H7 (docs/memory-model.md §nested defs and closures): a def
+        -- DIRECTLY inside a function body. The snapshot tier's admission
+        -- was decided at EXTRACTION — a non-null `closure_unsupported`
+        -- keeps the loud refusal, reason attached.
+        let name := ((← getField j "name").getStr?).toOption.getD ""
+        match ← getOptStrField j "closure_unsupported" with
+        | some reason =>
+            return .unsupported "NestedDef" s!"{name}: {reason}" span
+        | Option.none =>
+          let params ← (← (← getField j "args").getArr?).mapM parseParam
+          let argsUnsupported ← getOptStrField j "args_unsupported"
+          let localsUnsupported ← getOptStrField j "locals_unsupported"
+          let hasGlobal := match j.getObjVal? "has_global" with
+            | .ok (.bool b) => b
+            | _ => false
+          let isGenerator := match j.getObjVal? "is_generator" with
+            | .ok (.bool b) => b
+            | _ => false
+          let body ← (← (← getField j "body").getArr?).mapM parseStmt
+          let captures ← (← (← getField j "captures").getArr?).mapM (·.getStr?)
+          return .defStmt name params argsUnsupported.isNone
+            localsUnsupported.isNone hasGlobal isGenerator body captures span
+    | "ClassDef" =>
+        -- Nested `class` (module-level ones are split out by `parseModule`).
+        let name := ((← getField j "name").getStr?).toOption.getD ""
+        return .unsupported "ClassDef" name span
+    | other => throw s!"unknown statement kind {other.quote}"
+
+private def lowerBoundaryAugRepeat (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.augAssign (.name id targetSpan) .mult count augSpan,
+      .ret (some (.name resultId resultSpan)) retSpan] =>
+      if resultId == id && params.toList.any (fun p => p.arg == id) then
+        let target := .name id targetSpan
+        let repeated := .binOp target .mult count augSpan
+        #[.assign #[target] repeated augSpan,
+          .ret (some (.name resultId resultSpan)) retSpan]
+      else
+        body
+  | _ => body
+
+/-- Parse a module-level `FunctionDef` node into a `FunctionDefn`.
+`argsOk` is `true` iff `args_unsupported` is `null` (or absent); `localsOk`
+likewise from `locals_unsupported` (absent in older envelopes ⇒ `true`). -/
+def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
+  withCtx "FunctionDef" do
+    let name ← (← getField j "name").getStr?
+    let span ← parseSpan (← getField j "span")
+    let params ← (← (← getField j "args").getArr?).mapM parseParam
+    let argsUnsupported ← getOptStrField j "args_unsupported"
+    let localsUnsupported ← getOptStrField j "locals_unsupported"
+    let hasGlobal := match j.getObjVal? "has_global" with
+      | .ok (.bool b) => b
+      | _ => false
+    let isGenerator := match j.getObjVal? "is_generator" with
+      | .ok (.bool b) => b
+      | _ => false
+    let body ← (← (← getField j "body").getArr?).mapM parseStmt
+    -- A public `Val.list` is still represented by the transitional
+    -- value-side `RVal.listV` until the H2 boundary flip.  That form cannot
+    -- model an alias-visible in-place `*=`, so the general augmented-list
+    -- arm stays loud.  The small immutable shape
+    --
+    --     x *= count
+    --     return x
+    --
+    -- is nevertheless exact: `x` is a parameter, no other binding or alias
+    -- can observe the old list, and the returned boundary snapshot only
+    -- observes the repeated contents.  Lower it to the ordinary pure
+    -- assignment/binop path, whose sequence repetition worker already has
+    -- the complete count/error/budget behavior.  Alias-bearing and
+    -- control-flow shapes remain represented as `AugAssign` and therefore
+    -- refuse loudly until the heap-threading boundary is wired.
+    let body := lowerBoundaryAugRepeat params body
+    let body :=
+      if Stmt.hasTypeErrorHandlerList body.toList then
+        #[.unsupported "TypeErrorHandler" "" span] ++ body
+      else body
+    return { name, params, argsOk := argsUnsupported.isNone,
+             localsOk := localsUnsupported.isNone, hasGlobal, isGenerator,
+             body, span }
+
+/-! ## namedtuple recognition (H3+, docs/memory-model.md §class semantics)
+
+The recorded VALUE-like decision needs `X = namedtuple("T", <fields>)` at
+module level to become a `NamedTupleDefn` — a DESUGARING done here, at
+ingestion, exactly like the ClassDef method flattening above. It fires
+only under conditions that make it provably faithful, ALL-OR-NOTHING per
+module; anything else leaves the module byte-identical (the assign stays
+an ordinary statement → poisoned G1 binding → loud, never wrong):
+
+1. the EXACT benign import `from collections import namedtuple` is
+   present (as the extractor's `Unsupported "ImportFrom"` text);
+2. every candidate `X = namedtuple("T", <fields>)` has a valid typename
+   and validated field names (CPython's identifier/keyword/underscore/
+   duplicate rules — an invalid spec fails the CPython import itself, so
+   refusing recognition keeps the loud path);
+3. a conservative BINDING CENSUS proves `X` is bound exactly once at top
+   level and `namedtuple` is bound only by the benign import: every
+   top-level statement must be census-analyzable (structured binds,
+   simple one-name imports), no def/class subtree may contain a `global`
+   statement (the extractor-recorded `has_global` — exact, nested scopes
+   included, so opaque `try`/`with` bodies need no conservative refusal),
+   and the name `namedtuple` must not be referenced outside the
+   recognized assigns.
+
+On success the benign import and the recognized assigns are replaced by
+`pass` (span-preserving): their entire semantics lives in the table —
+G1 neither binds nor poisons `X`, and the leanpy prefix/suffix split is
+undisturbed. -/
+
+/-- CPython 3.9 keywords (`keyword.kwlist`). -/
+private def pyKeywords : List String :=
+  ["False", "None", "True", "and", "as", "assert", "async", "await",
+   "break", "class", "continue", "def", "del", "elif", "else", "except",
+   "finally", "for", "from", "global", "if", "import", "in", "is",
+   "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+   "while", "with", "yield"]
+
+/-- ASCII identifier shape (the fragment namedtuple field specs use). -/
+private def isPyIdent (s : String) : Bool :=
+  match s.toList with
+  | [] => false
+  | c :: rest => (c.isAlpha || c == '_') && rest.all fun d => d.isAlphanum || d == '_'
+
+/-- A valid namedtuple FIELD name: identifier, not a keyword, no leading
+underscore (CPython rejects it without `rename=True` — keyword-only, so
+such calls never reach recognition anyway). -/
+private def validFieldName (s : String) : Bool :=
+  isPyIdent s && !pyKeywords.contains s && !s.startsWith "_"
+
+/-- Split on whitespace AND commas, dropping empties (CPython's
+`field_names.replace(',', ' ').split()`). Char-level, toolchain-stable. -/
+private def splitWsAux : List Char → List Char → List String
+  | [], acc => if acc.isEmpty then [] else [String.ofList acc.reverse]
+  | c :: rest, acc =>
+    if c.isWhitespace || c == ',' then
+      (if acc.isEmpty then [] else [String.ofList acc.reverse]) ++ splitWsAux rest []
+    else splitWsAux rest (c :: acc)
+
+@[inherit_doc splitWsAux]
+private def splitWs (s : String) : List String := splitWsAux s.toList []
+
+/-- Parse a namedtuple field spec: a string (commas become spaces, then
+whitespace-split — CPython's own rule) or a list/tuple of string
+literals. `none` = out of the recognized shape. -/
+private def parseFieldSpec : Expr → Option (List String)
+  | .constant (.str s) _ => some (splitWs s)
+  | .list es _ | .tuple es _ =>
+    es.toList.mapM fun e =>
+      match e with
+      | .constant (.str f) _ => some f
+      | _ => Option.none
+  | _ => Option.none
+
+/-- No duplicate field names (CPython rejects duplicates). -/
+private def nodupFields : List String → Bool
+  | [] => true
+  | f :: fs => !fs.contains f && nodupFields fs
+
+/-- The validated call shape `namedtuple("T", <fields>)` — shared by the
+top-level assign candidates and the class-base candidates
+(`class Position(namedtuple(…))`). `bindName` is the name constructor
+callers resolve (the assigned name, resp. the CLASS name — CPython
+instances of the subclass carry the SUBCLASS type). -/
+private def ntupleCallSpec (bindName : String) (sp : Span) :
+    Expr → Option NamedTupleDefn
+  | .call (.name "namedtuple" _) args #[] Option.none _ =>
+    match args.toList with
+    | [.constant (.str tname) _, fldE] =>
+      match parseFieldSpec fldE with
+      | some fields =>
+        if isPyIdent tname && !pyKeywords.contains tname
+            && fields.all validFieldName && nodupFields fields then
+          some { name := bindName, tname, fields := fields.toArray, span := sp }
+        else Option.none
+      | Option.none => Option.none
+    | _ => Option.none
+  | _ => Option.none
+
+/-- A recognition candidate: `X = namedtuple("T", <fields>)` with a
+keyword-free call and a fully validated spec. -/
+private def ntCandidate : Stmt → Option NamedTupleDefn
+  | .assign tgts rhs sp =>
+    (match tgts.toList with
+     | [.name x _] => ntupleCallSpec x sp rhs
+     | _ => Option.none)
+  | _ => Option.none
+
+/-- The exact benign import whose only effect (binding `namedtuple`) the
+recognition absorbs — the `namedtuple` row of the shared exact-import
+whitelist (`benignImportBinds`, Ast.lean; G1 reads the same table). -/
+private def isBenignNtImport : Stmt → Bool
+  | .unsupported "ImportFrom" text _ =>
+    (benignImportBinds text).map Prod.fst == some "namedtuple"
+  | _ => false
+
+/-- Names an assignment-like TARGET binds; `none` = unanalyzable shape.
+Subscript/attribute targets bind no name. -/
+private def targetBinds : Expr → Option (List String)
+  | .name id _ => some [id]
+  | .tuple es _ | .list es _ =>
+    es.toList.mapM fun e =>
+      match e with
+      | .name id _ => some id
+      | _ => Option.none
+  | .subscript .. => some []
+  | .attribute .. => some []
+  | _ => Option.none
+
+/-- Names a simple import statement's TEXT binds (`from A import B` binds
+`B`; `import A.B` binds `A`); `none` = not a simple single-name import. -/
+private def importBinds (text : String) : Option (List String) :=
+  if (text.splitOn ",").length != 1 || (text.splitOn " as ").length != 1 then
+    Option.none
+  else
+    match splitWs text with
+    | ["from", _, "import", n] => if isPyIdent n then some [n] else Option.none
+    | ["import", m] =>
+      match (m.splitOn ".").head? with
+      | some root => if isPyIdent root then some [root] else Option.none
+      | Option.none => Option.none
+    | _ => Option.none
+
+/-- Names a top-level statement (nested included) can bind; `none` =
+unanalyzable (refuses the whole recognition). The `imp0` flag selects the
+`importFrom` reading: `false` = the Pass 0 census answer (the names form
+OVER-reports — Pass 0 binds nothing, the raise fires first; the future
+modeled-module arm will bind, and over-reporting refuses more, the safe
+direction — while star's bind set is unknowable without a module,
+unanalysable by fiat); `true` = the ALIAS census answer (docs/
+memory-model.md §module-level def aliasing): a structured `importFrom`,
+star included, contributes NO binds, because in Pass 0 it RAISES before
+binding anything — the model's own semantics; the guarded present-module
+divergence is the standing §2.5 accelerator-equivalence obligation. -/
+private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
+  | .assign tgts _ _ => do
+    let bss ← tgts.toList.mapM targetBinds
+    return bss.flatten
+  | .unpackAssign before star after _ _ => some (before.toList ++ [star] ++ after.toList)
+  | .augAssign t _ _ _ => targetBinds t
+  | .forStmt t _ body orelse _ => do
+    let tb ← targetBinds t
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    let ob ← orelse.toList.mapM (stmtBindsWith imp0)
+    return tb ++ bb.flatten ++ ob.flatten
+  | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ => do
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    let ob ← orelse.toList.mapM (stmtBindsWith imp0)
+    return bb.flatten ++ ob.flatten
+  | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
+  -- pass 5: impossible at module top level (CPython parse error) —
+  -- unanalyzable, conservative
+  | .yieldFromStmt .. => Option.none
+  -- H7: a nested def binds its NAME; the body is its own scope
+  | .defStmt name _ _ _ _ _ _ _ _ => some [name]
+  -- Class definitions are represented in the ordered top-level stream by a
+  -- marker so script execution can run their creation body at the class
+  -- statement.  The marker still binds its class name for the static
+  -- binding/exception/namedtuple censuses.
+  | .unsupported "ClassDef" name _ => some [name]
+  -- exceptions tier: `raise` binds nothing; a try can bind whatever its
+  -- body and handler can (over-approximation, the safe direction)
+  | .raiseStmt .. => some []
+  | .assertStmt .. => some []
+  -- del RECONCILED: a `del` target counts as a BINDING here — the
+  -- direction `_binding_linenos` already took in the extractor, and the
+  -- conservative one for every census this feeds (a namedtuple or alias
+  -- name that is deleted anywhere must not be recognized).
+  | .delStmt ns _ => some ns.toList
+  | .withStmt items body _ _ => do
+    let ib := items.toList.map fun item =>
+      match item.target with
+      | none => []
+      | some target => (targetBinds target).getD []
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    return ib.flatten ++ bb.flatten
+  | .tryStmt b _ hnd _ _ => do
+    let bb ← b.toList.mapM (stmtBindsWith imp0)
+    let hb ← hnd.toList.mapM (stmtBindsWith imp0)
+    return bb.flatten ++ hb.flatten
+  | .importFrom _ names star _ =>
+    if imp0 then some []
+    else if star then Option.none else some names.toList
+  | .unsupported "ImportFrom" text _ => importBinds text
+  | .unsupported "Import" text _ => importBinds text
+  | .unsupported .. => Option.none
+
+@[inherit_doc stmtBindsWith]
+private def stmtBinds : Stmt → Option (List String) := stmtBindsWith false
+
+@[inherit_doc stmtBindsWith]
+private def aliasStmtBinds : Stmt → Option (List String) := stmtBindsWith true
+
+/- The active-exception payload is deliberately not part of `FrameState` yet.
+   Admit the one bare re-raise shape whose payload is statically known anyway:
+   a handler for `N` whose whole protected body is the class-identity raise
+   `raise N`.  In that shape CPython can only enter the handler with `N`, so
+   lowering its direct bare `raise` to `raise N` preserves the existing
+   retained-state path.  Broad handlers, tuple handlers, nested control flow,
+   and every other re-raise remain structured and loud. -/
+private def plainHandlerName (name : String) : Bool :=
+  !name.isEmpty && !(name.toList.any (· == '|'))
+
+private def exactBareReraiseSource (body : Array Stmt) (handler : String) : Bool :=
+  if !plainHandlerName handler then false
+  else
+    match body.toList with
+    | [.raiseStmt (some (.name raised _)) none _] => raised == handler
+    | _ => false
+
+private def lowerDirectBareReraise (body : Array Stmt) (handler : String) : Array Stmt :=
+  match body.toList with
+  | [.raiseStmt none none sp] =>
+      #[.raiseStmt (some (.name handler sp)) none sp]
+  | _ => body
+
+mutual
+  /-- Every `Name` occurring in the expression (the reference scan). -/
+  private partial def exprRefs : Expr → List String
+    | .constant .. => []
+    | .name id _ => [id]
+    -- the WALRUS both binds and reads: the target counts as an occurrence
+    | .namedExpr id v _ => id :: exprRefs v
+    | .binOp l _ r _ => exprRefs l ++ exprRefs r
+    | .unaryOp _ e _ => exprRefs e
+    | .formattedValue value _ _ => exprRefs value
+    | .formattedValueAscii value _ => exprRefs value
+    | .boolOp _ vs _ => (vs.toList.map exprRefs).flatten
+    | .compare l _ cs _ => exprRefs l ++ (cs.toList.map exprRefs).flatten
+    | .call f args kwargs _ _ =>
+      exprRefs f ++ (args.toList.map exprRefs).flatten
+        ++ (kwargs.toList.map (fun kv => exprRefs kv.2)).flatten
+    | .list es _ | .tuple es _ => (es.toList.map exprRefs).flatten
+    | .subscript v i _ => exprRefs v ++ exprRefs i
+    | .dict ks vs _ => (ks.toList.map exprRefs).flatten ++ (vs.toList.map exprRefs).flatten
+    | .attribute v _ _ => exprRefs v
+    | .ifExp t b o _ => exprRefs t ++ exprRefs b ++ exprRefs o
+    | .slice v l u st _ => exprRefs v ++ exprRefs l ++ exprRefs u ++ exprRefs st
+    | .genExp e t it ifs wb _ =>
+      exprRefs e ++ exprRefs t ++ exprRefs it ++ (ifs.toList.map exprRefs).flatten
+        ++ (wb.toList.map (fun p => exprRefs p.2)).flatten
+    | .unsupported .. => []
+
+  /-- Every `Name` occurring in the statement. -/
+  private partial def stmtRefs : Stmt → List String
+    | .ret Option.none _ => []
+    | .ret (some e) _ => exprRefs e
+    | .assign tgts v _ => (tgts.toList.map exprRefs).flatten ++ exprRefs v
+    | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprRefs v
+    | .augAssign t _ v _ => exprRefs t ++ exprRefs v
+    | .whileLoop t b o _ | .ifStmt t b o _ =>
+      exprRefs t ++ (b.toList.map stmtRefs).flatten ++ (o.toList.map stmtRefs).flatten
+    | .forStmt t it b o _ =>
+      exprRefs t ++ exprRefs it ++ (b.toList.map stmtRefs).flatten
+        ++ (o.toList.map stmtRefs).flatten
+    | .exprStmt e _ => exprRefs e
+    | .yieldStmt e _ => exprRefs e
+    | .yieldFromStmt v _ => exprRefs v
+    | .defStmt _ _ _ _ _ _ body _ _ => (body.toList.map stmtRefs).flatten
+    -- exceptions tier: the handler CLASS NAME is a reference too
+    | .raiseStmt exc cause _ =>
+      (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+    | .assertStmt t m _ =>
+      exprRefs t ++ (m.map exprRefs).getD []
+    -- del RECONCILED: a target is a MENTION of the name (conservative)
+    | .delStmt ns _ => ns.toList
+    | .tryStmt b excName hnd _ _ =>
+      excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
+    | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprRefs item.context ++ (item.target.map exprRefs).getD []).flatten
+        ++ (body.toList.map stmtRefs).flatten
+    -- Pass 0: an import references no in-module names
+    | .importFrom .. => []
+    | .pass _ | .brk _ | .cont _ => []
+    | .unsupported .. => []
+end
+
+/-- The span of a statement (every constructor carries one last). -/
+private def stmtSpanOf : Stmt → Span
+  | .ret _ sp | .assign _ _ sp | .unpackAssign _ _ _ _ sp | .augAssign _ _ _ sp
+  | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
+  | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
+  | .pass sp | .brk sp | .cont sp
+  | .defStmt _ _ _ _ _ _ _ _ sp
+  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
+  | .withStmt _ _ _ sp
+  | .importFrom _ _ _ sp | .delStmt _ sp
+  | .unsupported _ _ sp => sp
+
+/-- The recognition pass (see the section comment for the rules). Returns
+the module's top level with the benign import and every recognized assign
+replaced by `pass`, plus the namedtuple table — or the input unchanged
+(all-or-nothing: partial recognition could leave a stray `namedtuple`
+reference resolving to a wrong `NameError`). -/
+private def recognizeNamedtuples (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (topLevel : Array Stmt) :
+    Array Stmt × Array NamedTupleDefn × Array ClassDefn :=
+  -- demotion restores the loud inheritance state for every class-base
+  -- CANDIDATE (parseClassDefn stores them unconditionally)
+  let demoted := classes.map fun c =>
+    if c.ntBase.isSome then
+      { c with ntBase := Option.none, ok := false, creationPure := false } else c
+  let unchanged := (topLevel, #[], demoted)
+  -- rule 1: the benign import is present
+  if !topLevel.any isBenignNtImport then unchanged else
+  -- candidates, in source order (assign binds and class bases share the
+  -- census — a failed census demotes BOTH, all-or-nothing)
+  let cands := topLevel.toList.filterMap ntCandidate
+  if cands.isEmpty && !classes.any (·.ntBase.isSome) then unchanged else
+  -- rule 3a: the census must analyze EVERY top-level statement
+  match (topLevel.toList.filter (!isBenignNtImport ·)).mapM stmtBinds with
+  | Option.none => unchanged
+  | some bindss =>
+    let bound := bindss.flatten
+    -- rule 3b: no def/class subtree may leak a module binding (`global` —
+    -- the EXACT extractor-recorded fact `has_global`, nested scopes and
+    -- opaque statements included, so `try`/`with` need no conservative
+    -- refusal)
+    if functions.any (·.hasGlobal) || classes.any (·.hasGlobal) then unchanged else
+    -- rule 3c: `namedtuple` is bound only by the benign import and
+    -- referenced only inside the candidate assigns
+    let fnames := functions.toList.map FunctionDefn.name
+    let cnames := classes.toList.map ClassDefn.name
+    if bound.contains "namedtuple" || fnames.contains "namedtuple"
+        || cnames.contains "namedtuple" then unchanged else
+    let tlRefs :=
+      ((topLevel.toList.filter (fun s => (ntCandidate s).isNone)).map stmtRefs).flatten
+    let fnRefs :=
+      (functions.toList.map (fun f => (f.body.toList.map stmtRefs).flatten)).flatten
+    if (tlRefs ++ fnRefs).contains "namedtuple" then unchanged else
+    -- per-candidate: X bound exactly once (its own assign), no def/class X.
+    -- ALL-OR-NOTHING: one rejected candidate refuses the whole pass.
+    let ok := cands.all fun nt =>
+      (bound.filter (· == nt.name)).length == 1
+        && !fnames.contains nt.name && !cnames.contains nt.name
+        && (cands.filter (fun nt' => nt'.name == nt.name)).length == 1
+    if !ok then unchanged else
+    -- class-base candidates: the class name must not collide with an
+    -- assign candidate, a top-level bind, or another same-named class
+    -- (the def/class collision guard already covers `def`s loudly)
+    -- `stmtBinds` includes the ordered ClassDef marker itself, so remove
+    -- those marker bindings before testing the class-base candidate; the
+    -- separate candidate/class-name and duplicate-class checks below retain
+    -- the actual collision guards.
+    let boundWithoutClassMarkers :=
+      bound.filter (fun n => !classes.any (fun c => c.name == n))
+    let cok := classes.all fun c =>
+      c.ntBase.isNone ||
+        (!boundWithoutClassMarkers.contains c.name
+          && (cands.all fun nt => nt.name != c.name)
+          && (classes.toList.filter (fun c' => c'.name == c.name)).length == 1)
+    if !cok then unchanged else
+    -- IDENTITY of method dispatch: a plain candidate's TYPENAME may not
+    -- collide with an `ntBase` class's NAME — otherwise a plain value
+    -- would carry a tname that names the subclass and dispatch its
+    -- methods (CPython: unrelated classes, AttributeError)
+    let tnameClash := cands.any fun nt =>
+      classes.any fun c => c.ntBase.isSome && c.name == nt.tname
+    if tnameClash then unchanged else
+    let topLevel' := topLevel.map fun s =>
+      if isBenignNtImport s || (ntCandidate s).isSome then .pass (stmtSpanOf s)
+      else s
+    (topLevel', cands.toArray, classes)
+
+/-- Can this class-body statement change anything observable when CPython
+executes the class body? `pass`, a docstring (or stray constant), an
+UNDECORATED method, and an attribute bound to a LITERAL are all invisible:
+the model may skip these pure creation effects, and skipping them skips
+nothing.
+Anything outside the executable class-body slice can print or raise at
+exactly the `class` statement, where it is not reproduced — so it remains
+loud through `ClassDefn.creationPure`/`creationExecutable`.
+
+A DECORATED method is NOT invisible — see `methodCreationPure`; a
+`.defStmt` reaching this function is a NESTED def, which cannot appear in
+a class body ingestion parses (`parseClassDefn` handles `FunctionDef`
+nodes itself and never routes them here). -/
+def classBodyStmtPure (s : Stmt) : Bool :=
+  match s with
+  | .pass _ => true
+  | .exprStmt (.constant _ _) _ => true
+  | .assign targets (.constant _ _) _ =>
+      targets.all fun t => match t with | .name _ _ => true | _ => false
+  | .defStmt .. => true
+  | _ => false
+
+/-- THE THIRD DOOR (2026-08-14, docs/memory-model.md §class semantics):
+is this class-body `FunctionDef` node invisible at the `class` statement?
+
+Only if it is UNDECORATED. `@log def m(self)` calls `log` while CPython
+builds the class, and the executable class-body slice does not reproduce
+decorator descriptor semantics: a WRONG ANSWER, not a refusal, would result,
+and the third way into the hole `creationPure` exists to close (the first
+two were a class-body statement and a base expression).
+
+The extractor's `has_decorators` is the structured flag, in the
+`has_global`/`is_generator` family: `args_unsupported` also carries
+"decorators", but it is a comma-joined MESSAGE that mixes in
+`*args`/`**kwargs`/defaults — none of which is a creation effect — and
+purity is not decided by matching on prose. A node without the field is
+read as undecorated, which is what an envelope from any extractor that
+could produce one means; the envelope cache keys on the extractor's own
+hash, so a re-extraction cannot serve a stale verdict. -/
+def methodCreationPure (j : Json) : Bool :=
+  match j.getObjVal? "has_decorators" with
+  | .ok (.bool b) => !b
+  | _ => true
+
+/-- The first executable class-creation slice admits a class with no
+recognized base/meta effect and only ordinary name assignments, expression
+statements, or `pass` in its body.  Method definitions are removed before
+this check; their decorators are handled separately by `methodCreationPure`.
+The class namespace is intentionally discarded after execution, so this
+slice models creation-time effects without pretending to implement class
+objects or inheritance. -/
+def classBodyStmtExecutable (s : Stmt) : Bool :=
+  match s with
+  | .pass _ | .exprStmt _ _ => true
+  | .assign targets _ _ =>
+      targets.all fun t => match t with | .name _ _ => true | _ => false
+  | _ => false
+
+def classCreationExecutableShape (classUnsupported : Option String)
+    (decoratedMethod : Bool) (body : Array Stmt) : Bool :=
+  !decoratedMethod
+    && (classUnsupported.isNone
+      || classUnsupported == some "class-level statements (class attributes)")
+    && body.all classBodyStmtExecutable
+
+/-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
+the method `FunctionDefn`s FLATTENED under qualified names
+`"<class>.<method>"` (see `ClassDefn`'s docstring — method calls reuse
+`callIn` verbatim). `ok` is `true` iff `class_unsupported` is `null`
+(bases/keywords/decorators/class-level statements set it at extraction).
+Non-`FunctionDef` body statements are dropped here — they already set
+`class_unsupported`, so no instance of the class can ever be built. -/
+def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) :=
+  withCtx "ClassDef" do
+    let name ← (← getField j "name").getStr?
+    let span ← parseSpan (← getField j "span")
+    let classUnsupported ← getOptStrField j "class_unsupported"
+    let base ← getOptStrField j "base"
+    let hasGlobal := match j.getObjVal? "has_global" with
+      | .ok (.bool b) => b
+      | _ => false
+    let slots ← match j.getObjVal? "slots" with
+      | .ok value => do
+        let xs ← value.getArr?
+        pure (some (← xs.mapM (·.getStr?)))
+      | .error _ => pure Option.none
+    -- the structured namedtuple BASE (extractor: a single plain
+    -- `namedtuple(…)` base) — a CANDIDATE here; `recognizeNamedtuples`
+    -- promotes it (module census) or demotes the class to the ordinary
+    -- uninstantiable-loudly state. The inner `name` is the CLASS name:
+    -- CPython instances carry the SUBCLASS type.
+    let ntBase ← match j.getObjVal? "namedtuple_base" with
+      | .error _ => pure (Option.none : Option NamedTupleDefn)
+      | .ok .null => pure Option.none
+      | .ok baseJson => do
+        pure (ntupleCallSpec name span (← parseExpr baseJson))
+    -- the exceptions tier's class kinds (docs/memory-model.md
+    -- §exceptions): the extractor marks the exact `class N(Exception):
+    -- pass` shape and the measured direct builtin-ancestor shape. These are
+    -- CANDIDATES here — `parseModule`'s census demotes them (isExc := false,
+    -- ok := false) unless the referenced builtin name is provably
+    -- unshadowed at module level (the ntBase demotion discipline).
+    let isExc := match j.getObjVal? "exception_base" with
+      | .ok (.bool b) => b
+      | _ => false
+    let excBase ← getOptStrField j "exception_ancestor"
+    let body ← (← getField j "body").getArr?
+    let mut methods : Array String := #[]
+    let mut fns : Array FunctionDefn := #[]
+    let mut classBody : Array Stmt := #[]
+    let mut decoratedMethod := false
+    for stmtJson in body do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then
+        let f ← parseFunctionDefn stmtJson
+        decoratedMethod := decoratedMethod || !methodCreationPure stmtJson
+        methods := methods.push f.name
+        fns := fns.push { f with name := name ++ "." ++ f.name }
+      else
+        classBody := classBody.push (← parseStmt stmtJson)
+    -- CREATION PURITY (docs/memory-model.md §class creation): the
+    -- extractor's structured verdict, re-checked here over the parsed body
+    -- so ingestion never trusts a field it can verify. An envelope from
+    -- before the field existed has no verdict, and the safe answer is the
+    -- LOUD one.
+    let noCreationEffects := match j.getObjVal? "creation_effects" with
+      | .ok (.bool b) => !b
+      | _ => false
+    let bodyPure ← body.allM fun stmtJson => do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then pure (methodCreationPure stmtJson)
+      else pure (classBodyStmtPure (← parseStmt stmtJson))
+    return ({ name, ok := classUnsupported.isNone, methods, base, slots, hasGlobal, ntBase,
+              isExc, excBase, creationPure := noCreationEffects && bodyPure, span,
+              body := classBody,
+              creationExecutable := classCreationExecutableShape classUnsupported
+                decoratedMethod classBody }, fns)
+
+/-! ## Generator-expression lowering (H4, docs/memory-model.md
+§generator semantics)
+
+CPython compiles `(elt for t in it if c)` into an implicit generator
+FUNCTION whose FIRST argument is the already-evaluated outer iterator
+(`MAKE_FUNCTION <genexpr>; …; GET_ITER; CALL_FUNCTION 1`), and this pass
+performs exactly that lowering, at ingestion, so genexps ride the same
+machinery as every other generator — no second evaluation story.
+
+The one real design point is CAPTURE. CPython closes over the enclosing
+frame BY REFERENCE; a lowering that passes free names as extra arguments
+captures them BY VALUE, and the two disagree exactly when a captured
+name is REBOUND between the genexp's creation and its consumption. v0
+therefore admits a free name only when the two provably agree:
+
+* it is a PARAMETER of the enclosing function that the body never
+  assigns (bound once, at the call — by-value is by-reference), or
+* it is resolved outside the frame anyway: a module-level binding
+  (`piece`, `MATE_UPPER`, a `def`/`class`/namedtuple name) or a builtin,
+  neither of which is captured at all.
+
+Anything else — a local the body assigns, an unanalyzable target —
+leaves the `Expr.genExp` node in place, and EVALUATING it refuses
+loudly (Semantics.lean). Never a silent by-value guess. -/
+
+/-- Builtin names the lowering must not treat as captures. Deliberately
+a LOCAL list rather than an import of `isBuiltinName` (Semantics.lean
+imports nothing from here and this file imports only the AST): a name
+missing from it costs a loud refusal, never a wrong capture, so the two
+lists may drift safely in the only direction that matters. -/
+private def lowerBuiltins : List String :=
+  ["len", "sorted", "max", "min", "abs", "int", "float", "print", "ord", "chr",
+   "next", "iter", "range", "enumerate", "count", "all", "any", "sum",
+   "tuple", "list", "dict", "str", "bool", "divmod", "set", "reversed", "zip", "map",
+   "filter", "True", "False", "None"]
+
+/-- Builtins that DRAIN a directly-passed genexp within the enclosing
+elt evaluation (the `genTargets` admission's gate — pass 3). -/
+private def drainingBuiltins : List String :=
+  ["tuple", "sum", "sorted", "max", "min", "any", "all", "list", "set"]
+
+/-- The synthesized name of a lowered generator expression. CPython calls
+the implicit function `<genexpr>`; the index keeps several genexps in one
+module apart, and the angle brackets make collision with a real Python
+identifier impossible. -/
+def genExpName (n : Nat) : String := s!"{genExpPrefix}{n}>"
+
+/-- The FRESH loop target a non-genexp `yield from` inlines through
+(pass 5+, docs/memory-model.md §yield from). `<`/`>` cannot occur in a
+Python identifier, so the name is unspellable from the source and the
+inlined loop can shadow nothing. -/
+def yieldFromName (n : Nat) : String := s!"<yieldfrom@{n}>"
+
+/-- CPython's own name for the implicit first parameter (the
+already-evaluated outer iterator). No Python identifier contains `.`. -/
+def genExpArg : String := genExpArgName
+
+/-- Wrap a statement in the genexp's filters, innermost last:
+`if c₁: if c₂: <stmt>`. -/
+private def guardWith (sp : Span) : List Expr → Stmt → Stmt
+  | [], body => body
+  | c :: cs, body => .ifStmt c #[guardWith sp cs body] #[] sp
+
+/-- Deduplicate, keeping first occurrence. -/
+private def dedup (l : List String) : List String :=
+  l.foldl (init := []) (fun acc n => if acc.contains n then acc else acc ++ [n])
+
+/-- Names a function body assigns anywhere (CPython's static-locals
+rule), over-approximated: an unanalyzable target contributes nothing but
+also cannot hide a name that `targetBinds` would have found, so the
+capture test stays conservative in the safe direction — an unnoticed
+rebinding is impossible for the shapes `targetBinds` analyses, and every
+other shape binds nothing. -/
+private partial def bodyAssigns : Stmt → List String
+  | .assign ts _ _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
+  | .augAssign t _ _ _ => (targetBinds t).getD []
+  | .forStmt t _ b o _ =>
+      (targetBinds t).getD [] ++ (b.toList.map bodyAssigns).flatten
+        ++ (o.toList.map bodyAssigns).flatten
+  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map bodyAssigns).flatten ++ (o.toList.map bodyAssigns).flatten
+  -- H7: the def NAME becomes a local of the enclosing body; the nested
+  -- BODY is its own scope and contributes nothing here
+  | .defStmt name _ _ _ _ _ _ _ _ => [name]
+  -- exceptions tier: body and handler assigns both count
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map bodyAssigns).flatten ++ (hnd.toList.map bodyAssigns).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        match item.target with
+        | none => []
+        | some target => (targetBinds target).getD []).flatten
+        ++ (body.toList.map bodyAssigns).flatten
+  | _ => []
+
+/-- Every name a statement can OBSERVE or BIND — reads (`exprRefs` of
+each embedded expression, targets included: conservative), binding
+targets, nested-def names and captures (a capture is the one window a
+nested body has into the enclosing frame) — EXCEPT the subtrees of
+statement-position `yield from <genexp>` statements, which contribute
+NOTHING: the inlining admission (pass 5, docs/memory-model.md §yield
+from) asks whether the genexp's target occurs anywhere OUTSIDE
+yield-from subtrees, and skipping them ALL lets two yield-froms share
+a target soundly (the second loop's rebinding is as unobservable as
+the first's binding). -/
+private partial def yfNames : Stmt → List String
+  | .yieldFromStmt (.genExp ..) _ => []
+  | .yieldFromStmt v _ => exprRefs v
+  | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
+  | .ret (some e) _ => exprRefs e
+  | .assign ts v _ =>
+      (ts.toList.map exprRefs).flatten
+        ++ (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
+        ++ exprRefs v
+  | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprRefs v
+  | .augAssign t _ v _ => exprRefs t ++ (targetBinds t).getD [] ++ exprRefs v
+  | .whileLoop t b o _ =>
+      exprRefs t ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .forStmt t it b o _ =>
+      exprRefs t ++ (targetBinds t).getD [] ++ exprRefs it
+        ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .ifStmt t b o _ =>
+      exprRefs t ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .exprStmt e _ => exprRefs e
+  | .yieldStmt e _ => exprRefs e
+  | .raiseStmt exc cause _ =>
+      (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+  | .assertStmt t m _ =>
+      exprRefs t ++ (m.map exprRefs).getD []
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map yfNames).flatten ++ (hnd.toList.map yfNames).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprRefs item.context ++ (item.target.map exprRefs).getD []).flatten
+        ++ (body.toList.map yfNames).flatten
+  -- Pass 0: statement-position only at module top level; observes and
+  -- (in Pass 0) binds nothing a yield-from target could collide with
+  | .importFrom .. => []
+  -- del RECONCILED: targets are mentions (a colliding yield-from target
+  -- must refuse — over-reporting is the safe direction)
+  | .delStmt ns _ => ns.toList
+  | .defStmt name _ _ _ _ _ body captures _ =>
+      [name] ++ captures.toList ++ (body.toList.map yfNames).flatten
+
+/-- Direct-child bindings of a function body with their line numbers
+(`LowerCtx.boundBefore` — see its docstring for the admission this
+feeds). Only shapes whose binding provably executes when reached:
+single-target name/tuple assigns and nested defs, DIRECTLY in the body
+(never inside a nested `if`/loop, whose execution is conditional). -/
+private def directBinds (body : List Stmt) : List (String × Nat) :=
+  body.foldl (init := []) fun acc s =>
+    match s with
+    | .assign tgts _ sp =>
+      (match tgts.toList with
+       | [t] => acc ++ ((targetBinds t).getD []).map (fun x => (x, sp.lineno))
+       | _ => acc)
+    | .defStmt name _ _ _ _ _ _ _ sp => acc ++ [(name, sp.lineno)]
+    | _ => acc
+
+/-- What a lowering pass may capture and what it must refuse. -/
+private structure LowerCtx where
+  /-- Names resolved outside the frame (module bindings + builtins). -/
+  outer : List String
+  /-- The enclosing function's parameters. -/
+  params : List String
+  /-- Names the enclosing body assigns anywhere (CPython's static-locals
+  rule makes these local throughout, so a parameter listed here is
+  REBINDABLE and cannot be captured by value). -/
+  assigned : List String
+  /-- Targets of ENCLOSING genexps whose elt we are lowering (pass 3 —
+  sunfish's K_END nests a genexp inside a genexp's elt). Admissible as
+  by-value captures ONLY in immediately-consumed position (`drainOk`):
+  a drain completes within one elt evaluation, and one-argument `next`
+  steps before the enclosing frame can run again, so by-value equals
+  CPython's by-reference. -/
+  genTargets : List String := []
+  /-- Names bound by a DIRECT CHILD of the enclosing body (single-target
+  assigns, nested defs) with their line numbers (pass 4,
+  docs/memory-model.md §bound() end-to-end): under `drainOk` a
+  body-ASSIGNED free name is admissible when provably BOUND at the
+  genexp's creation — it is a parameter, or a direct-child bind at a
+  strictly smaller line (direct children execute in order, so the bind
+  ran before any statement containing the genexp). The drain-gate makes
+  by-value-at-creation equal CPython's by-reference; boundness is what
+  rules out a fake `NameError` on an empty iterable. -/
+  boundBefore : List (String × Nat) := []
+  /-- pass 5 (docs/memory-model.md §yield from): every name the
+  enclosing body reads or binds OUTSIDE yield-from-genexp statements'
+  own subtrees (`yfNames`) — the inlining admission's forbidden set for
+  the genexp's target. -/
+  yfForbidden : List String := []
+  /-- pass 7 (docs/memory-model.md §the walrus filter): every name
+  occurring in the enclosing body OUTSIDE walrus-bearing-genexp
+  subtrees. PEP 572 leaks a comprehension walrus into the enclosing
+  frame; the frame-LOCAL lowering is observationally equal only when
+  the enclosing body never looks — a walrus name in this set refuses
+  the lowering (the genexp stays un-lowered, loud at evaluation). -/
+  walrusForbidden : List String := []
+
+/-- pass 7 (docs/memory-model.md §the walrus filter): every name
+occurring in the expression OUTSIDE walrus-bearing-genexp subtrees —
+reads and binds alike. The skip is what lets the shipped QS line's `v`
+live only inside its own genexp; any other occurrence lands in
+`walrusForbidden` and refuses the lowering. -/
+private partial def exprNamesXW : Expr → List String
+  | .constant .. => []
+  | .name id _ => [id]
+  | .namedExpr id v _ => id :: exprNamesXW v
+  | .binOp l _ r _ => exprNamesXW l ++ exprNamesXW r
+  | .unaryOp _ e _ => exprNamesXW e
+  | .formattedValue value _ _ => exprNamesXW value
+  | .formattedValueAscii value _ => exprNamesXW value
+  | .boolOp _ vs _ => (vs.toList.map exprNamesXW).flatten
+  | .compare l _ cs _ => exprNamesXW l ++ (cs.toList.map exprNamesXW).flatten
+  | .call f args kwargs _ _ =>
+      exprNamesXW f ++ (args.toList.map exprNamesXW).flatten
+        ++ (kwargs.toList.map (fun kv => exprNamesXW kv.2)).flatten
+  | .list es _ | .tuple es _ => (es.toList.map exprNamesXW).flatten
+  | .subscript v i _ => exprNamesXW v ++ exprNamesXW i
+  | .dict ks vs _ =>
+      (ks.toList.map exprNamesXW).flatten ++ (vs.toList.map exprNamesXW).flatten
+  | .attribute v _ _ => exprNamesXW v
+  | .ifExp t b o _ => exprNamesXW t ++ exprNamesXW b ++ exprNamesXW o
+  | .slice v l u st _ =>
+      exprNamesXW v ++ exprNamesXW l ++ exprNamesXW u ++ exprNamesXW st
+  | .genExp e t it ifs wb _ =>
+      if wb.isEmpty then
+        exprNamesXW e ++ exprNamesXW t ++ exprNamesXW it
+          ++ (ifs.toList.map exprNamesXW).flatten
+      else []
+  | .unsupported .. => []
+
+/-- The statement-level walk for `exprNamesXW` (binds included via the
+target expressions themselves — a target `Name` IS a name). -/
+private partial def stmtNamesXW : Stmt → List String
+  | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
+  | .ret (some e) _ => exprNamesXW e
+  | .assign ts v _ => (ts.toList.map exprNamesXW).flatten ++ exprNamesXW v
+  | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprNamesXW v
+  | .augAssign t _ v _ => exprNamesXW t ++ exprNamesXW v
+  | .whileLoop t b o _ | .ifStmt t b o _ =>
+      exprNamesXW t ++ (b.toList.map stmtNamesXW).flatten
+        ++ (o.toList.map stmtNamesXW).flatten
+  | .forStmt t it b o _ =>
+      exprNamesXW t ++ exprNamesXW it ++ (b.toList.map stmtNamesXW).flatten
+        ++ (o.toList.map stmtNamesXW).flatten
+  | .exprStmt e _ | .yieldStmt e _ | .yieldFromStmt e _ => exprNamesXW e
+  | .raiseStmt exc cause _ =>
+      (exc.map exprNamesXW).getD [] ++ (cause.map exprNamesXW).getD []
+  | .assertStmt t m _ =>
+      exprNamesXW t ++ (m.map exprNamesXW).getD []
+  | .tryStmt b en hnd _ _ =>
+      [en] ++ (b.toList.map stmtNamesXW).flatten
+        ++ (hnd.toList.map stmtNamesXW).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprNamesXW item.context ++ (item.target.map exprNamesXW).getD []).flatten
+        ++ (body.toList.map stmtNamesXW).flatten
+  -- Pass 0: the names form's names count as enclosing occurrences (a
+  -- future binding arm would look at them — over-reporting refuses a
+  -- colliding walrus, the safe direction); star enumerates nothing and
+  -- in Pass 0 binds nothing (the raise fires first)
+  | .importFrom _ names _ _ => names.toList
+  -- del RECONCILED: targets count as enclosing occurrences (safe
+  -- direction — a walrus name colliding with a del target refuses)
+  | .delStmt ns _ => ns.toList
+  | .defStmt name params _ _ _ _ body captures _ =>
+      -- a NESTED scope: its walrus rules are its own; conservatively,
+      -- every name it mentions counts as an enclosing occurrence
+      [name] ++ params.toList.map Param.arg ++ captures.toList
+        ++ (body.toList.map stmtNamesXW).flatten
+
+mutual
+  /-- Rewrite every lowerable genexp in the expression, bottom up. The
+  state is the fresh-name counter and the synthesized functions. -/
+  private partial def lowerExpr (ctx : LowerCtx) (e : Expr)
+      (drainOk : Bool := false) :
+      StateM (Nat × Array FunctionDefn) Expr := do
+    match e with
+    | .constant .. | .name .. | .unsupported .. => return e
+    | .namedExpr id v sp => return .namedExpr id (← lowerExpr ctx v) sp
+    | .binOp l op r sp => return .binOp (← lowerExpr ctx l) op (← lowerExpr ctx r) sp
+    | .unaryOp op v sp => return .unaryOp op (← lowerExpr ctx v) sp
+    | .formattedValue value reprConversion sp =>
+        return .formattedValue (← lowerExpr ctx value) reprConversion sp
+    | .formattedValueAscii value sp =>
+        return .formattedValueAscii (← lowerExpr ctx value) sp
+    | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
+    | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
+    | .call f args kwargs cu sp =>
+        -- pass 3: a genexp passed DIRECTLY to a consumer may capture
+        -- enclosing-genexp targets (`drainOk` — see LowerCtx). `next` is
+        -- admitted only in its one-argument form: Python evaluates a
+        -- two-argument default before stepping, leaving a rebinding window.
+        let drainOk := match f with
+          | .name "next" _ => args.size == 1
+          | .name d _ => drainingBuiltins.contains d
+          | _ => false
+        -- A direct `len(sequence * count)` is compiled by CPython as a
+        -- multiplication followed by a length query, but the tier's fixed
+        -- materialization budget would make that shape refuse unnecessarily.
+        -- Lower the two operands into a synthetic call so the structural
+        -- evaluator can recurse into them before the length-only worker runs.
+        match f, args.toList, kwargs.isEmpty, cu with
+        | .name "len" _, [(.binOp left .mult right _)], true, Option.none =>
+            if !ctx.params.contains "len" && !ctx.assigned.contains "len"
+                && !ctx.outer.contains "len" then
+              return .call (.name lenMultBuiltinName sp)
+                #[← lowerExpr ctx left, ← lowerExpr ctx right] #[] Option.none sp
+            else pure ()
+        | _, _, _, _ => pure ()
+        -- §3c-i-b: a dict VIEW in CONSUMING-ARGUMENT position becomes a
+        -- synthetic builtin over the receiver — `list(d.keys())` ⇢
+        -- `list(<dictkeys>(d))`. The rewrite fires ONLY here, so
+        -- `k = d.keys()` is untouched and still refuses: the shape is what
+        -- licenses the snapshot, exactly as it does for `ListComp`.
+        let consuming := match f with
+          | .name d _ => consumesViewArg d && args.size == 1
+          | _ => false
+        let args' ← args.mapM fun a => do
+          match a with
+          | .genExp .. => lowerExpr ctx a (drainOk := drainOk)
+          | .call (.attribute recv attr _) vargs vkw Option.none vsp =>
+              match (if consuming && vargs.isEmpty && vkw.isEmpty then
+                       dictViewBuiltinName attr else Option.none) with
+              | some vn =>
+                  return .call (.name vn vsp) #[← lowerExpr ctx recv] #[] Option.none vsp
+              | Option.none => lowerExpr ctx a
+          | a => lowerExpr ctx a
+        return .call (← lowerExpr ctx f) args'
+          (← kwargs.mapM fun kv => do pure (kv.1, ← lowerExpr ctx kv.2)) cu sp
+    | .list es sp => return .list (← lowerExprs ctx es) sp
+    | .tuple es sp => return .tuple (← lowerExprs ctx es) sp
+    | .subscript v i sp => return .subscript (← lowerExpr ctx v) (← lowerExpr ctx i) sp
+    | .dict ks vs sp => return .dict (← lowerExprs ctx ks) (← lowerExprs ctx vs) sp
+    | .attribute v a sp => return .attribute (← lowerExpr ctx v) a sp
+    | .ifExp t b o sp =>
+        return .ifExp (← lowerExpr ctx t) (← lowerExpr ctx b) (← lowerExpr ctx o) sp
+    | .slice v l u st sp =>
+        return .slice (← lowerExpr ctx v) (← lowerExpr ctx l) (← lowerExpr ctx u)
+          (← lowerExpr ctx st) sp
+    | .genExp elt target iter ifs wb sp => do
+      let tb0 := (targetBinds target).getD []
+      -- the elt lowers under the grown genTargets (an inner genexp in
+      -- immediately-drained position may capture THIS genexp's target)
+      let elt ← lowerExpr { ctx with genTargets := ctx.genTargets ++ tb0 } elt
+      let iter ← lowerExpr ctx iter
+      let ifs ← lowerExprs ctx ifs
+      let wb ← wb.mapM fun p => do pure (p.1, ← lowerExpr ctx p.2)
+      match targetBinds target with
+      | Option.none => return .genExp elt target iter ifs wb sp
+      | some tb =>
+        -- pass 7 (§the walrus filter): walrus names are LOCALS of the
+        -- synthesized frame — they join the bound set for the capture
+        -- census, and the admission refuses any walrus name the
+        -- enclosing body mentions (`walrusForbidden` — PEP 572 leaks
+        -- the binding there, and a frame-local must be unobservable)
+        let wbNames := wb.toList.map Prod.fst
+        let tb := tb ++ wbNames
+        let refs := dedup (exprRefs elt ++ (ifs.toList.map exprRefs).flatten
+          ++ (wb.toList.map (fun p => exprRefs p.2)).flatten)
+        let caps := refs.filter fun n =>
+          !tb.contains n && (ctx.params.contains n || ctx.assigned.contains n
+            || (!ctx.outer.contains n && !lowerBuiltins.contains n))
+            && n != genExpArg
+            -- a synthesized `<genexpr@m>` call inside THIS elt (pass 3:
+            -- K_END nests one) resolves through Module.functions — the
+            -- leading `<` is unnameable in Python (the defsBeforeLive
+            -- precedent), never a capturable frame name
+            && !(n.startsWith "<")
+        let leakNames := wbNames.filter (fun n => ctx.walrusForbidden.contains n)
+        let assignedCaps := caps.filter (fun n => ctx.assigned.contains n)
+        let cellNames := dedup (assignedCaps ++ leakNames)
+        let cellCaps := cellNames.map (fun n => "<cell>" ++ n)
+        if caps.all (fun n =>
+            (ctx.params.contains n && !ctx.assigned.contains n)
+              || cellNames.contains n
+              || (drainOk && ctx.genTargets.contains n)
+              -- pass 4: body-assigned names under an immediate drain,
+              -- provided boundness at creation (see LowerCtx.boundBefore)
+              || (drainOk && (ctx.params.contains n
+                    || ctx.boundBefore.any (fun p => p.1 == n && p.2 < sp.lineno))))
+            then
+          let (n, fns) ← get
+          let fname := genExpName n
+          let body : Array Stmt :=
+            #[.forStmt target (.name genExpArg sp)
+                ((wb.map fun p => Stmt.assign #[.name p.1 sp] p.2 sp)
+                  ++ #[guardWith sp ifs.toList (.yieldStmt elt sp)]) #[] sp]
+          let params : Array Param :=
+            (#[genExpArg] ++ caps.toArray ++ cellCaps.toArray).map
+              fun a => { arg := a, span := sp }
+          set (n + 1,
+            fns.push { name := fname, params, argsOk := true, localsOk := true,
+                       hasGlobal := false, isGenerator := true, body, span := sp })
+          return .call (.name fname sp)
+            (#[iter] ++ (caps.map (fun c => Expr.name c sp)).toArray
+              ++ (cellNames.map (fun _ => Expr.constant .none sp)).toArray)
+            #[] Option.none sp
+        else
+          return .genExp elt target iter ifs wb sp
+
+  /-- Elementwise `lowerExpr`. -/
+  private partial def lowerExprs (ctx : LowerCtx) (es : Array Expr) :
+      StateM (Nat × Array FunctionDefn) (Array Expr) :=
+    es.mapM (lowerExpr ctx)
+end
+
+/-- Fuse the local temporary shape used by the repetition acceptance examples:
+`result = sequence * count; return len(result)` (and its immutable `*=` form)
+becomes the same length-only synthetic call as a direct `len(sequence * count)`.
+The assignment is immediately consumed by the return, so removing it preserves
+left-to-right operand evaluation while avoiding a needless over-budget
+materialization. -/
+def lowerLenRepeatPairs (ctx : LowerCtx) : Array Stmt → Array Stmt
+  | ss =>
+      let rec go : List Stmt → List Stmt
+        | .assign #[.name target targetSp] (.binOp left .mult right binSp) assignSp ::
+              .ret (some (.call (.name "len" lenSp) #[.name used usedSp]
+                #[] Option.none rsp)) retSp :: rest =>
+            if target == used && !ctx.params.contains "len"
+                && !ctx.assigned.contains "len" && !ctx.outer.contains "len" then
+              .ret (some (.call (.name lenMultBuiltinName rsp) #[left, right]
+                #[] Option.none rsp)) rsp :: go rest
+            else
+              .assign #[.name target targetSp] (.binOp left .mult right binSp) assignSp
+                :: .ret (some (.call (.name "len" lenSp) #[.name used usedSp]
+                  #[] Option.none rsp)) retSp :: go rest
+        | .assign #[.name target targetSp] initial assignSp ::
+              .augAssign (.name used usedSp) .mult count augSp ::
+              .ret (some (.call (.name "len" lenSp) #[.name returned returnedSp]
+                #[] Option.none rsp)) retSp :: rest =>
+            if target == used && used == returned && !ctx.params.contains "len"
+                && !ctx.assigned.contains "len" && !ctx.outer.contains "len" then
+              .ret (some (.call (.name lenMultBuiltinName rsp) #[initial, count]
+                #[] Option.none rsp)) rsp :: go rest
+            else
+              .assign #[.name target targetSp] initial assignSp
+                :: .augAssign (.name used usedSp) .mult count augSp
+                :: .ret (some (.call (.name "len" lenSp) #[.name returned returnedSp]
+                  #[] Option.none rsp)) retSp :: go rest
+        | s :: rest => s :: go rest
+        | [] => []
+      (go ss.toList).toArray
+
+/-- Fuse the exact local-generator shape whose lifetime is already bounded by
+an immediately consuming return:
+
+    g = (x for x in it if c)
+    return all(g)
+
+The assignment has no observation between creation and consumption, and the
+local cannot be read after the return. Replacing the name with the original
+genexp therefore preserves evaluation order while allowing `lowerExpr` to see
+the consumer's `drainOk` gate. This is deliberately limited to a single
+plain-name assignment, a direct return, no keywords, and the existing draining
+consumer inventory (plus one-argument `next`). -/
+private def fuseImmediateGenexpDrains (ss : Array Stmt) : Array Stmt :=
+  let isConsumer (name : String) (arity : Nat) : Bool :=
+    (name == "next" && arity == 1) || drainingBuiltins.contains name
+  let rec go : List Stmt → List Stmt
+    | .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp ::
+        .ret (some (.call (.name consumer csp) #[.name used usedsp]
+          #[] Option.none callsp)) retsp :: rest =>
+        if alias == used && isConsumer consumer 1 then
+          .ret (some (.call (.name consumer csp)
+            #[.genExp elt target iter ifs wb gsp] #[] Option.none callsp)) retsp
+            :: go rest
+        else
+          .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp
+            :: .ret (some (.call (.name consumer csp) #[.name used usedsp]
+              #[] Option.none callsp)) retsp :: go rest
+    | s :: rest => s :: go rest
+    | [] => []
+  (go ss.toList).toArray
+
+mutual
+  /-- Rewrite every lowerable genexp in the statement. -/
+  private partial def lowerStmt (ctx : LowerCtx) (s : Stmt) :
+      StateM (Nat × Array FunctionDefn) Stmt := do
+    match s with
+    -- Pass 0: `importFrom` carries no expression, nothing to lower
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .importFrom ..
+    | .unsupported .. => return s
+    | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
+    | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp
+    | .unpackAssign before star after v sp =>
+        return .unpackAssign before star after (← lowerExpr ctx v) sp
+    | .augAssign t op v sp => return .augAssign (← lowerExpr ctx t) op (← lowerExpr ctx v) sp
+    | .whileLoop t b o sp =>
+        return .whileLoop (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .forStmt t it b o sp =>
+        return .forStmt (← lowerExpr ctx t) (← lowerExpr ctx it)
+          (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .ifStmt t b o sp =>
+        return .ifStmt (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
+    | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
+    | .yieldFromStmt v sp =>
+      (match v with
+       | .genExp elt target iter ifs wb gsp => do
+        -- pass 5 (docs/memory-model.md §yield from): INLINE the
+        -- delegation — `for target in iter: [ifs:] yield elt` — when
+        -- the target binds analyzably and its names occur nowhere else
+        -- in the enclosing body. The FREE names need no admission at
+        -- all: the inlined loop reads the enclosing frame by reference,
+        -- which is exactly what a delegated genexp does (the enclosing
+        -- frame cannot run mid-delegation). Subexpressions lower first,
+        -- as everywhere; an inadmissible shape survives un-lowered and
+        -- refuses loudly at execution.
+        let elt ← lowerExpr ctx elt
+        let iter ← lowerExpr ctx iter
+        let ifs ← lowerExprs ctx ifs
+        match targetBinds target with
+        | some tb =>
+          -- pass 7: a walrus-bearing delegation is NOT inlined (its
+          -- binding would land in the enclosing frame — representable,
+          -- unneeded, refused loudly at evaluation)
+          if tb.all (fun n => !ctx.yfForbidden.contains n) && wb.isEmpty then
+            return .forStmt target iter
+              #[guardWith gsp ifs.toList (.yieldStmt elt gsp)] #[] sp
+          else
+            -- If the genexp target is observed by the enclosing body, it
+            -- cannot be inlined: CPython gives that target a private
+            -- comprehension scope.  Lower the same genexp to a synthesized
+            -- generator and consume it through a fresh loop target instead.
+            -- This preserves the target scope while retaining the existing
+            -- conservative capture admission in `lowerExpr`.
+            let candidate ← lowerExpr ctx (.genExp elt target iter ifs wb gsp)
+            match candidate with
+            | .call .. =>
+                let (n, fns) ← get
+                set (n + 1, fns)
+                let fresh : Expr := .name (yieldFromName n) sp
+                return .forStmt fresh candidate #[.yieldStmt fresh sp] #[] sp
+            | _ => return .yieldFromStmt candidate sp
+        | Option.none =>
+            return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
+       | v => do
+        -- pass 5+ (docs/memory-model.md §yield from): a NON-genexp
+        -- delegate inlines the same way, through a FRESH target no
+        -- Python identifier can spell — so it collides with nothing in
+        -- the enclosing body and needs no `yfForbidden` check at all.
+        -- CPython-exact on this tier's surface: `yield from e` differs
+        -- from `for t in e: yield t` only in `send`/`throw`/`close`
+        -- propagation and in the delegation's RETURN value, and all four
+        -- are already outside the tier (a yield in EXPRESSION position
+        -- is `Expr.unsupported`, and the generator methods refuse). The
+        -- shipped `moves()` ends in `yield from sorted(…)`, a CALL.
+        let v ← lowerExpr ctx v
+        let (n, fns) ← get
+        set (n + 1, fns)
+        let t : Expr := .name (yieldFromName n) sp
+        return .forStmt t v #[.yieldStmt t sp] #[] sp)
+    | .raiseStmt exc cause sp =>
+        let cause' ← cause.mapM (lowerExpr ctx)
+        -- `raise N from None` suppresses chaining, but the tier has no
+        -- observable exception-cause payload.  Lower this exact literal
+        -- cause to the existing class-identity raise path; dynamic causes
+        -- remain structured so evaluation can refuse them loudly.
+        let cause' := match cause' with
+          | some (.constant .none _) => Option.none
+          | other => other
+        return .raiseStmt (← exc.mapM (lowerExpr ctx)) cause' sp
+    | .assertStmt t m sp =>
+        return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp
+    | .delStmt ns sp => return .delStmt ns sp
+    | .tryStmt b en hnd tu sp =>
+        let b' ← lowerStmts ctx b
+        let h' ← lowerStmts ctx hnd
+        let h' :=
+          if tu.isNone && exactBareReraiseSource b' en then
+            lowerDirectBareReraise h' en
+          else h'
+        return .tryStmt b' en h' tu sp
+    | .withStmt items body tu sp =>
+        let items ← items.mapM fun item => do
+          pure { context := ← lowerExpr ctx item.context,
+                 target := ← item.target.mapM (lowerExpr ctx) }
+        return .withStmt items (← lowerStmts ctx body) tu sp
+    | .defStmt name params ao lo hg ig body captures sp =>
+        -- H7: the nested body lowers under its OWN ctx. Closure captures
+        -- are never-rebound by admission, so a genexp inside the nested
+        -- body may capture them BY VALUE exactly like never-assigned
+        -- parameters — sunfish's ordering line inside `moves()`.
+        let ctx' : LowerCtx :=
+          { ctx with
+            params := params.toList.map Param.arg ++ captures.toList
+            assigned := (body.toList.map bodyAssigns).flatten
+            boundBefore := directBinds body.toList
+            yfForbidden := (body.toList.map yfNames).flatten
+            walrusForbidden := params.toList.map Param.arg ++ captures.toList
+              ++ (body.toList.map stmtNamesXW).flatten }
+        let body' ← lowerStmts ctx' body
+        let body' :=
+          if Stmt.hasTypeErrorHandlerList body'.toList then
+            #[.unsupported "TypeErrorHandler" "" sp] ++ body'
+          else body'
+        return .defStmt name params ao lo hg ig body' captures sp
+
+  /-- Elementwise `lowerStmt`. -/
+  private partial def lowerStmts (ctx : LowerCtx) (ss : Array Stmt) :
+      StateM (Nat × Array FunctionDefn) (Array Stmt) :=
+    do
+      let lowered ← ss.mapM (lowerStmt ctx)
+      return lowerLenRepeatPairs ctx lowered
+end
+
+/-- Lower every genexp in the module: function bodies first, then the
+TOP LEVEL. A module-scope genexp needs no capture list at all — every
+free name it has is a module global, which the synthesized function
+resolves through the same static table (module bindings are immutable in
+tier, the standing G1 assumption, so by-value and by-reference agree
+there by construction). Returns the rewritten functions and top level
+PLUS the synthesized generator functions, in creation order. -/
+private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
+    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt :=
+  let step := functions.foldl (init := (#[], (0, (#[] : Array FunctionDefn))))
+    fun (acc, st) f =>
+      let ctx : LowerCtx :=
+        { outer
+          params := f.params.toList.map Param.arg
+          assigned := (f.body.toList.map bodyAssigns).flatten
+          boundBefore := directBinds f.body.toList
+          yfForbidden := (f.body.toList.map yfNames).flatten
+          walrusForbidden := f.params.toList.map Param.arg
+            ++ (f.body.toList.map stmtNamesXW).flatten }
+      let (body', st') := (lowerStmts ctx (fuseImmediateGenexpDrains f.body)).run st
+      (acc.push { f with body := body' }, st')
+  let topCtx : LowerCtx :=
+    { outer, params := [], assigned := []
+      walrusForbidden := (topLevel.toList.map stmtNamesXW).flatten }
+  let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
+  (step.1 ++ st''.2, topLevel')
+
+/-! ## Immediate local aliases of admitted builtins
+
+The runtime deliberately keeps a function-valued name loud: `RVal` has no
+callable immediate, and returning a builtin through the public boundary would
+lose its identity. There is one smaller Python shape whose semantics are fully
+static, however: a direct local alias followed immediately by a call, as in
+`f = bool; return f(x)`. CPython evaluates the builtin lookup at the
+assignment and the call later, but this exact two-statement shape has no
+intervening observation or rebinding. Lower it to the ordinary builtin call and
+keep all other first-class callable forms refused.
+-/
+
+private def immediateBuiltinAlias (name : String) : Bool :=
+  name == "bool" || name == "divmod" || name == "repr" || name == "len"
+    || name == "sorted" || name == "max" || name == "min" || name == "abs"
+    || name == "int" || name == "float" || name == "all" || name == "any"
+    || name == "str" || name == "sum" || name == "tuple" || name == "list"
+    || name == "ord" || name == "chr" || name == "pow" || name == "round"
+    || name == "ascii" || name == "hex" || name == "oct" || name == "bin" || name == "format" || name == "range" || name == "next" || name == "print"
+
+private def rewriteImmediateBuiltinAlias (outer : List String)
+    (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.assign #[.name alias _] (.name builtin _) _assignSp,
+      .ret (some (.call (.name callee calleeSp) args kws cu callSp)) retSp] =>
+      if alias == callee && immediateBuiltinAlias builtin && alias != builtin
+          && !outer.contains builtin && !params.toList.any (·.arg == builtin) then
+        #[.ret (some (.call (.name builtin calleeSp) args kws cu callSp)) retSp]
+      else body
+  | _ => body
+
+private def rewriteImmediateBuiltinAliases (outer : List String)
+    (functions : Array FunctionDefn) :
+    Array FunctionDefn :=
+  functions.map fun f =>
+    { f with body := rewriteImmediateBuiltinAlias outer f.params f.body }
+
+/-! A function/class lookup is pure, but the OBJECT itself is not a runtime
+value in the current tier.  The one useful boundary case is a dead local
+assignment whose value is never observed: `x = f; return n`.  Erase only this
+exact two-statement form when the source name is an admitted module function or
+creation-pure class; a live assignment still reaches the loud first-class-value
+arm. -/
+
+private def rewriteDeadValue (valueNames : List String)
+    (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.assign #[.name target _] (.name exception _) _assignSp,
+      .ret (some value) retSp] =>
+      if valueNames.contains exception
+          && target != exception
+          && !params.toList.any (·.arg == exception)
+          && !(exprRefs value).contains target then
+        #[.ret (some value) retSp]
+      else body
+  | _ => body
+
+private def rewriteDeadFunctionValues (classes : Array ClassDefn)
+    (functions : Array FunctionDefn) : Array FunctionDefn :=
+  let classNames := classes.toList.filterMap fun c =>
+    if c.ok && c.creationPure then some c.name else none
+  let functionNames := functions.toList.filterMap fun f =>
+    if !f.name.toList.any (· == '.') then some f.name else none
+  let names := admittedBuiltinExc ++ classNames ++ functionNames
+  functions.map fun f =>
+    { f with body := rewriteDeadValue names f.params f.body }
+
+private def chainAttrTempName : String := "<leanpy-chain-attr-temp>"
+
+mutual
+  /-- pass 5 (docs/memory-model.md §search()'s first blockers): CHAINED
+  assignment splits at ingestion. A FIRST plain name uses the existing
+  `t1 = v; t2 = t1; …` form. The measured ATTRIBUTE-first shape
+  (`cell.x = m = v`) gets an unnameable synthetic temporary:
+  `tmp = v; cell.x = tmp; m = tmp`. Both forms evaluate the RHS once before
+  left-to-right stores, and every later target's subexpressions still run
+  after earlier stores. ATTRIBUTE-first lowering is restricted to later
+  plain-name targets; other non-name-first chains remain loud. Runs FIRST
+  among the lowering passes, so every later census sees plain
+  single-target assigns riding the existing discipline. -/
+  private partial def splitChainStmt : Stmt → List Stmt
+    | .assign tgts v sp =>
+      (match tgts.toList with
+       | t1 :: t2 :: rest =>
+         (match t1 with
+          | .name id nsp =>
+            .assign #[t1] v sp ::
+              (t2 :: rest).map (fun t => .assign #[t] (.name id nsp) sp)
+          | .attribute .. =>
+            if (t2 :: rest).all (fun t =>
+                match t with | .name .. => true | _ => false) then
+              let tmp := .name chainAttrTempName sp
+              .assign #[tmp] v sp ::
+                (t1 :: t2 :: rest).map
+                  (fun t => .assign #[t] (.name chainAttrTempName sp) sp)
+            else
+              [.assign tgts v sp]
+          | _ => [.assign tgts v sp])
+       | _ => [.assign tgts v sp])
+    | .whileLoop t b o sp =>
+        [.whileLoop t (splitChainStmts b) (splitChainStmts o) sp]
+    | .forStmt t it b o sp =>
+        [.forStmt t it (splitChainStmts b) (splitChainStmts o) sp]
+    | .ifStmt t b o sp =>
+        [.ifStmt t (splitChainStmts b) (splitChainStmts o) sp]
+    | .tryStmt b en h tu sp =>
+        [.tryStmt (splitChainStmts b) en (splitChainStmts h) tu sp]
+    | .withStmt items body tu sp =>
+        [.withStmt items (splitChainStmts body) tu sp]
+    | .defStmt n p ao lo hg ig body cap sp =>
+        [.defStmt n p ao lo hg ig (splitChainStmts body) cap sp]
+    | s => [s]
+
+  /-- Elementwise `splitChainStmt`, splicing the splits in place. -/
+  private partial def splitChainStmts (ss : Array Stmt) : Array Stmt :=
+    ((ss.toList.map splitChainStmt).flatten).toArray
+end
+
+/-- Every `del` target in the statement's subtree, with multiplicity —
+the uniqueness census of the trailing-del rewrite below. Nested
+compounds are walked; `defStmt` bodies are DELIBERATELY not (extractor
+clause 1 makes a function-scope `del` target a LOCAL of that function,
+so it never touches the module binding this census protects). -/
+private partial def delTargets : Stmt → List String
+  | .delStmt ns _ => ns.toList
+  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
+  | .forStmt _ _ b o _ =>
+      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map delTargets).flatten ++ (hnd.toList.map delTargets).flatten
+  | .withStmt _ body _ _ => (body.toList.map delTargets).flatten
+  | _ => []
+
+/-- del RECONCILED (docs/backlog.md §`del` RECONCILED with the one
+pipeline): rewrite TRAILING `del`s of definition names away. A
+`def`/`class`/namedtuple/alias binding is a STATIC table entry no
+runtime arm can remove (the tombstone alternatives are the recorded
+design's rejected Option A), but in the module's TRAILING RUN — the
+maximal suffix of top-level statements that are all `Delete` or `Pass` —
+the removal is UNOBSERVABLE: the name is certainly bound there
+(`defsBoundBefore` orders the mention, `initBindable` forbids rebinding,
+the uniqueness census below forbids an earlier admitted del), so the
+deletion cannot raise, and nothing after the trailing run can read it.
+Per TARGET: a definition name occurring as a del target EXACTLY ONCE in
+the whole top level (nested compounds included — `del f; del f` must
+stay loud on the second) is dropped from its statement; a statement left
+with no targets becomes `pass`. Dropping preserves CPython's partial
+left-to-right order because a dropped target's deletion is the one step
+that cannot raise. Everything not dropped is the runtime arms' business
+(module scope: `execScriptOne`; the opcode.py payer:
+`del def_op, name_op, jrel_op, jabs_op` as the module's last statement). -/
+private def rewriteTrailingDefDels (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
+    (topLevel : Array Stmt) : Array Stmt :=
+  let isTail : Stmt → Bool := fun s =>
+    match s with
+    | .delStmt .. | .pass _ => true
+    | _ => false
+  let stmts := topLevel.toList
+  let tailLen := (stmts.reverse.takeWhile isTail).length
+  if tailLen == 0 then topLevel else
+  let tailStart := stmts.length - tailLen
+  let isDefName : String → Bool := fun n =>
+    functions.any (·.name == n) || classes.any (·.name == n)
+      || namedtuples.any (·.name == n)
+  let allDelTargets := (stmts.map delTargets).flatten
+  let uniqueOnce : String → Bool := fun n =>
+    (allDelTargets.filter (· == n)).length == 1
+  let rewriteOne : Stmt → Stmt := fun s =>
+    match s with
+    | .delStmt ns sp =>
+      let keep := ns.filter fun n => !(isDefName n && uniqueOnce n)
+      if keep.isEmpty then .pass sp else .delStmt keep sp
+    | s => s
+  (stmts.take tailStart ++ (stmts.drop tailStart).map rewriteOne).toArray
+
+/-- MODULE-LEVEL DEF ALIASING (docs/memory-model.md §module-level def
+aliasing): recognize a direct top-level `alias = name` where `name` is a
+top-level def (or an earlier-admitted alias of one, transitively — the
+source-order fold below resolves later candidates against the extended
+table). The alias becomes a SECOND `Module.functions` entry — the target
+defn copied verbatim under the alias name, `span :=` the alias
+STATEMENT's span, so `defsBoundBefore`'s ordered admission covers alias
+mentions with zero new code — and the assign becomes `pass`. The alias
+never exists as a runtime value: calls dispatch through `findFunction`
+to a byte-identical defn, and every other observation keeps its loud
+refusal (`initBindable` refuses live rebinding of functions-table names,
+the backstop for hand-built modules).
+
+Runs LAST in `parseModule`: the namedtuple and exception censuses see
+the original assigns, and the copy shares the already-lowered
+`<genexpr@n>` helpers instead of re-synthesizing them.
+
+A REJECTED candidate stays a plain assign whose RHS keeps the
+function-as-value refusal at evaluation — loud, never wrong — so
+rejection is per candidate; the module-wide preconditions (every
+top-level statement bind-analyzable under `aliasStmtBinds`, no
+`has_global` in any def/class subtree) reject ALL candidates.
+
+Per candidate: the target's last binding entry must END strictly before
+the alias statement's line (the ordering check the `pass` rewrite would
+otherwise erase from `defsBoundBefore`'s view); the target may be bound
+by NO top-level statement except, for an admitted-alias target, its own
+admitted assign (a def target rebound anywhere would make the copy
+stale — CPython aliases the newer value); the alias name must be a
+plain non-dunder non-keyword identifier, no builtin (either table — the
+call arms and the genexp lowering key builtins by name), no
+def/class/namedtuple name, and have no prior binding. One later ordinary
+assignment may shadow the alias; a second function-valued assignment to the
+same alias name remains loud because the static call table would lose the
+source-order transition. -/
+private def recognizeDefAliases (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
+    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt × Array String :=
+  let isCand : Stmt → Bool := fun s =>
+    match s with
+    | .assign tgts (.name _ _) _ =>
+      (match tgts.toList with | [.name _ _] => true | _ => false)
+    | _ => false
+  if !topLevel.any isCand then (functions, topLevel, #[]) else
+  match topLevel.toList.mapM aliasStmtBinds with
+  | Option.none => (functions, topLevel, #[])
+  | some bindss =>
+    if functions.any (·.hasGlobal) || classes.any (·.hasGlobal) then
+      (functions, topLevel, #[])
+    else
+      let bound := bindss.flatten
+      let defNames := functions.toList.map FunctionDefn.name
+      let cNames := classes.toList.map ClassDefn.name
+      let ntNames := namedtuples.toList.map NamedTupleDefn.name
+      let aliasForms := topLevel.toList.filterMap fun s =>
+        match s with
+        | .assign tgts (.name t _) _ =>
+          match tgts.toList with
+          | [.name a _] => some (a, t)
+          | _ => Option.none
+        | _ => Option.none
+      let step := fun (acc : Array FunctionDefn × List String × Array Stmt × List String)
+          (s : Stmt) =>
+        let (funcs, admitted, out, seen) := acc
+        match s with
+        | .assign tgts (.name t _) sp =>
+          (match tgts.toList with
+           | [.name a _] =>
+             -- ordering: a DEF target must END before the alias line; an
+             -- admitted-ALIAS target is ordered by the FOLD itself (its
+             -- assign already executed, and `splitChains` preserves
+             -- CPython's left-to-right order INSIDE a chained statement,
+             -- whose split pieces all carry the same span — the span test
+             -- would wrongly reject `chain2 = chain1` there)
+             let ok :=
+               (if admitted.contains t then true
+                else match funcs.findRev? (fun f => f.name == t) with
+                | some f => decide (f.span.endLineno < sp.lineno)
+                | Option.none => false)
+               && !cNames.contains t && !ntNames.contains t
+               && !isBuiltinName t && !isPyBuiltinName t
+               && (bound.filter (· == t)).length
+                    == (if admitted.contains t then 1 else 0)
+               && isPyIdent a && !pyKeywords.contains a
+               && !(a.startsWith "__" && a.endsWith "__")
+               && !isBuiltinName a && !isPyBuiltinName a
+               && !defNames.contains a && !cNames.contains a
+               && !ntNames.contains a
+               -- A later ordinary assignment may shadow an alias. The
+               -- static function entry remains sound because script-scope
+               -- lookup consults live globals first. A prior binding or a
+               -- second function-valued assignment would make the table
+               -- stale, so those candidates stay loud.
+               && !seen.contains a
+               && (aliasForms.filter (·.1 == a)).length == 1
+             if ok then
+               match funcs.findRev? (fun f => f.name == t) with
+               | some f =>
+                 (funcs.push { f with name := a, span := sp },
+                  a :: admitted, out.push (.pass sp),
+                  seen ++ (aliasStmtBinds s).getD [])
+               | Option.none => (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD [])
+             else (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD [])
+           | _ => (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD []))
+        | _ => (funcs, admitted, out.push s,
+                  seen ++ (aliasStmtBinds s).getD [])
+      let (funcs, admitted, out, _) :=
+        topLevel.foldl step (functions, [], #[], [])
+      (funcs, out, admitted.toArray)
+
+/-- Parse the `module` payload, splitting top-level `FunctionDef`s into
+`Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
+into `functions` under qualified names, in source order), and everything
+else into `Module.topLevel` (source order preserved within each); then
+run the namedtuple recognition pass (above) to fill `Module.namedtuples`. -/
+def parseModule (j : Json) : Except String Module :=
+  withCtx "module" do
+    let kind ← (← getField j "kind").getStr?
+    unless kind == "Module" do
+      throw s!"expected kind \"Module\", got {kind.quote}"
+    let body ← (← getField j "body").getArr?
+    let mut functions : Array FunctionDefn := #[]
+    let mut topLevel : Array Stmt := #[]
+    let mut classes : Array ClassDefn := #[]
+    for stmtJson in body do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then
+        functions := functions.push (← parseFunctionDefn stmtJson)
+      else if k == "ClassDef" then
+        let (c, fns) ← parseClassDefn stmtJson
+        -- A simple base is evaluated at the class statement.  Admit only a
+        -- same-module class already bound by an earlier class statement and
+        -- only when that base is itself in the ordinary instantiation slice.
+        -- The extractor records the plain name; this source-order check keeps
+        -- `class Sub(Base)` above `class Base` faithful (NameError) without
+        -- introducing an ordered module-item representation.
+        let c := match c.base with
+          | some b =>
+            if b == "object" then
+              { c with base := Option.none, creationPure := c.creationExecutable }
+            else match classes.findRev? (fun prior => prior.name == b) with
+              | some prior =>
+                if prior.ok && prior.ntBase.isNone && !prior.isExc then
+                  { c with creationPure := c.creationExecutable }
+                else { c with ok := false, creationPure := false }
+              | Option.none => { c with ok := false, creationPure := false }
+          | Option.none => c
+        let classStmt := .unsupported "ClassDef" c.name c.span
+        classes := classes.push c
+        functions := functions ++ fns
+        topLevel := topLevel.push classStmt
+      else
+        topLevel := topLevel.push (← parseStmt stmtJson)
+    -- pass 5: split chained assignments FIRST, so the namedtuple
+    -- recognition, the exception census, and the genexp lowering all
+    -- see plain single-target assigns (docs/memory-model.md §search()'s
+    -- first blockers).
+    functions := functions.map fun f => { f with body := splitChainStmts f.body }
+    topLevel := splitChainStmts topLevel
+    let (topLevel', namedtuples, classes') :=
+      recognizeNamedtuples functions classes topLevel
+    -- the exceptions-tier census (docs/memory-model.md §exceptions,
+    -- as-built): an `exception_base` candidate keeps `isExc` only when
+    -- `Exception` is provably the builtin — every top-level statement
+    -- bind-analyzable, `Exception` bound nowhere (no top-level bind, no
+    -- def/class/namedtuple of that name), and no `global` anywhere that
+    -- could rebind it at call time. ANY failure demotes every candidate
+    -- to the ordinary loud state (isExc := false, ok := false).
+    let excOk :=
+      (match topLevel'.toList.mapM stmtBinds with
+       | some bindss => !(bindss.flatten.contains "Exception")
+       | Option.none => false)
+      && functions.toList.all (fun f => f.name != "Exception" && !f.hasGlobal)
+      && classes'.toList.all (fun c => c.name != "Exception" && !c.hasGlobal)
+      && namedtuples.toList.all (fun nt => nt.name != "Exception")
+    let builtinExcOk :=
+      (match topLevel'.toList.mapM stmtBinds with
+       | some _ => true
+       | none => false)
+      && classes'.toList.all fun c =>
+        match c.excBase with
+        | some b => admittedBuiltinExc.contains b
+          && !(topLevel'.toList.map (fun st => (stmtBinds st).getD [])).flatten.contains b
+          && !functions.toList.any (fun f => f.name == b || f.hasGlobal)
+          && !classes'.toList.any (fun d => d.name == b || d.hasGlobal)
+          && !namedtuples.toList.any (fun nt => nt.name == b)
+        | none => true
+    let classes' :=
+      if excOk then classes'
+      else classes'.map fun c =>
+        if c.isExc then
+          { c with isExc := false, ok := false, creationPure := false } else c
+    let classes' :=
+      if builtinExcOk then classes'.map fun c =>
+        if c.excBase.isSome then { c with isExc := true, creationPure := c.creationExecutable }
+        else c
+      else classes'.map fun c =>
+        if c.excBase.isSome then
+          { c with excBase := Option.none, isExc := false, ok := false, creationPure := false }
+        else c
+    -- A name-only base would become ambiguous if the module later rebinds the
+    -- base class.  Keep the admitted slice conservative rather than silently
+    -- dispatching through the wrong MRO; an ordered ClassId field is the
+    -- recorded extension for that broader case.
+    let classes' := classes'.map fun c =>
+      match c.base with
+      | some b =>
+        if (classes'.toList.filter (fun d => d.name == b)).length == 1 then c
+        else { c with ok := false, creationPure := false }
+      | none => c
+    -- H4: lower generator EXPRESSIONS last, so the capture test sees the
+    -- final module-level binding set (the namedtuple pass turns
+    -- recognized assigns into `pass`, but their bound names stay outer
+    -- names — `Move`/`Entry` resolve as constructors).
+    let outer :=
+      functions.toList.map FunctionDefn.name
+        ++ classes'.toList.map ClassDefn.name
+        ++ namedtuples.toList.map NamedTupleDefn.name
+        ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
+    let (functions', topLevel'') := lowerGenExps outer functions topLevel'
+    let functions' := rewriteImmediateBuiltinAliases outer functions'
+    -- module-level def aliasing, LAST (docs/memory-model.md §module-level
+    -- def aliasing): the censuses above see the original assigns, and the
+    -- alias copies share the just-synthesized `<genexpr@n>` helpers.
+    let (functions'', topLevel''', aliases) :=
+      recognizeDefAliases functions' classes' namedtuples topLevel''
+    -- Dead-value erasure runs after alias recognition so the value-name
+    -- census includes admitted module-level aliases as well as definitions.
+    let functions'' := rewriteDeadFunctionValues classes' functions''
+    -- del RECONCILED, after the alias pass (alias entries ARE functions
+    -- entries, so `del bisect` of an admitted alias is covered by the
+    -- same definition-name test).
+    let topLevel'''' :=
+      rewriteTrailingDefDels functions'' classes' namedtuples topLevel'''
+    return { functions := functions'', topLevel := topLevel'''',
+             classes := classes', namedtuples, aliases }
+
+def parseLeanBlock (j : Json) : Except String LeanBlock :=
+  withCtx "lean_blocks" do
+    return { firstLine := ← (← getField j "first_line").getNat?
+             lastLine := ← (← getField j "last_line").getNat?
+             text := ← (← getField j "text").getStr? }
+
+/-- Parse a full envelope document. -/
+def parseEnvelope (j : Json) : Except String Envelope :=
+  withCtx "envelope" do
+    return { schemaVersion := ← (← getField j "schema_version").getStr?
+             language := ← (← getField j "language").getStr?
+             sourceFile := ← (← getField j "source_file").getStr?
+             sourceSha256 := ← (← getField j "source_sha256").getStr?
+             module := ← parseModule (← getField j "module")
+             leanBlocks := ← (← (← getField j "lean_blocks").getArr?).mapM parseLeanBlock }
+
+/-- Convenience: JSON text → `Envelope` (pure; composes `Lean.Json.parse`). -/
+def parseEnvelopeString (s : String) : Except String Envelope :=
+  Json.parse s >>= parseEnvelope
+
+/-! ## Inline test: the worked `add.py` example from docs/envelope-schema.md -/
+
+/-- The worked `add.py` envelope from the schema doc (sha256 is a placeholder;
+the parser does not validate it). -/
+private def addEnvelopeText : String := r#"{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {"name": "cpython-ast", "version": "3.9.25"},
+  "source_file": "Examples/python/add/add.py",
+  "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {"lineno": 1, "col_offset": 0, "end_lineno": 2, "end_col_offset": 16},
+        "name": "add",
+        "args": [
+          {"arg": "a", "span": {"lineno": 1, "col_offset": 8, "end_lineno": 1, "end_col_offset": 9}},
+          {"arg": "b", "span": {"lineno": 1, "col_offset": 11, "end_lineno": 1, "end_col_offset": 12}}
+        ],
+        "args_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {"lineno": 2, "col_offset": 4, "end_lineno": 2, "end_col_offset": 16},
+            "value": {
+              "kind": "BinOp",
+              "span": {"lineno": 2, "col_offset": 11, "end_lineno": 2, "end_col_offset": 16},
+              "left": {"kind": "Name", "span": {"lineno": 2, "col_offset": 11, "end_lineno": 2, "end_col_offset": 12}, "id": "a"},
+              "op": "Add",
+              "right": {"kind": "Name", "span": {"lineno": 2, "col_offset": 15, "end_lineno": 2, "end_col_offset": 16}, "id": "b"}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}"#
+
+/-- Structural expectations on the parsed `add.py` envelope: one function
+named `"add"` with two plain params `a b`, body `Return (BinOp Add a b)`. -/
+private def addEnvelopeChecks : Bool :=
+  match parseEnvelopeString addEnvelopeText with
+  | .error _ => false
+  | .ok env =>
+    env.schemaVersion == "0.1" &&
+    env.language == "python" &&
+    env.sourceFile == "Examples/python/add/add.py" &&
+    env.module.topLevel.isEmpty &&
+    env.leanBlocks.isEmpty &&
+    (match env.module.functions.toList with
+      | [f] =>
+        f.name == "add" && f.argsOk &&
+        (match f.params.toList with
+          | [p, q] => p.arg == "a" && q.arg == "b"
+          | _ => false) &&
+        (match f.body.toList with
+          | [.ret (some (.binOp (.name "a" _) .add (.name "b" _) _)) _] => true
+          | _ => false)
+      | _ => false)
+
+#guard addEnvelopeChecks
+
+end LeanModels.Python

@@ -1,0 +1,101 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/min_typ_max/argument_context.sv",
+  "source_sha256": "a22a1fe86b7de8adcd491f88612589517c712432d020458a46c6db1313f1c5a2",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 14,
+              "end_line": 2,
+              "end_col": 28
+            },
+            "name": "minimum_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 29,
+              "end_line": 2,
+              "end_col": 43
+            },
+            "name": "typical_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 44,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "maximum_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 59,
+              "end_line": 2,
+              "end_col": 67
+            },
+            "name": "captured",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 12,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 0,
+                "col": 0,
+                "end_line": 0,
+                "end_col": 0
+              },
+              "sv_kind": "InvalidStatement",
+              "text": "begin\n    minimum_source=8'h11;typical_source=8'h22;maximum_source=8'h33;\n    captured=(minimum_source:typical_source:maximum_source);\n    $display(\"before %h\",captured);\n    captured<=(minimum_source"
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,11 @@
+.lake/
+__pycache__/
+*.pyc
+*.olean
+harness/sv/conformance/census.json
+notebooks/work/
+extractors/veriloga/openvaf_ast/
+target/
+tools/rv-oracle/sail-riscv-Linux-x86_64/
+tools/rv-oracle/sail-riscv-Linux-x86_64.tar.gz
+scratch/

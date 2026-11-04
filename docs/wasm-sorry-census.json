@@ -1,0 +1,6968 @@
+{
+  "schema": "wasm-sorry-census-0.1",
+  "revision": "b399351f98d8a0350d6e818fe53442117cfe5637",
+  "totals": {
+    "files_scanned": 40,
+    "files_with_obligations": 9,
+    "raw_count": 861,
+    "live_count": 849,
+    "commented_out": 12
+  },
+  "files": [
+    {
+      "path": "test-lean-backend/ToyCallIndirect.lean",
+      "lines": 754,
+      "raw_count": 3,
+      "live_count": 2,
+      "commented_out": 1,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 669,
+          "decl_kind": "theorem",
+          "decl_name": "empty_table_stuck_old",
+          "decl_line": 653,
+          "text": "sorry  -- \u2190 GENUINE GAP: the old encoding is incomplete for this case"
+        },
+        {
+          "token": "sorry",
+          "line": 696,
+          "decl_kind": "theorem",
+          "decl_name": "call_indirect_progress_old",
+          "decl_line": 684,
+          "text": "sorry  -- \u2190 Old backend cannot prove this in general"
+        }
+      ],
+      "commented_sites": [
+        {
+          "token": "sorry",
+          "line": 652,
+          "text": "We mark it sorry to document the genuine incompleteness. -/"
+        }
+      ]
+    },
+    {
+      "path": "test-lean-backend/test_spectec_output.lean",
+      "lines": 18438,
+      "raw_count": 365,
+      "live_count": 365,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 277,
+          "decl_kind": "theorem",
+          "decl_name": "fzero_is_wf",
+          "decl_line": 274,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 285,
+          "decl_kind": "theorem",
+          "decl_name": "fnat_is_wf",
+          "decl_line": 282,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 293,
+          "decl_kind": "theorem",
+          "decl_name": "fone_is_wf",
+          "decl_line": 290,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 365,
+          "decl_kind": "theorem",
+          "decl_name": "utf8_is_wf",
+          "decl_line": 360,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 450,
+          "decl_kind": "theorem",
+          "decl_name": "funcsxx_is_wf",
+          "decl_line": 445,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 467,
+          "decl_kind": "theorem",
+          "decl_name": "globalsxx_is_wf",
+          "decl_line": 462,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 484,
+          "decl_kind": "theorem",
+          "decl_name": "tablesxx_is_wf",
+          "decl_line": 479,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 501,
+          "decl_kind": "theorem",
+          "decl_name": "memsxx_is_wf",
+          "decl_line": 496,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 518,
+          "decl_kind": "theorem",
+          "decl_name": "tagsxx_is_wf",
+          "decl_line": 513,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 595,
+          "decl_kind": "theorem",
+          "decl_name": "free_opt_is_wf",
+          "decl_line": 591,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 620,
+          "decl_kind": "theorem",
+          "decl_name": "free_list_is_wf",
+          "decl_line": 615,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 640,
+          "decl_kind": "theorem",
+          "decl_name": "free_typeidx_is_wf",
+          "decl_line": 636,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 660,
+          "decl_kind": "theorem",
+          "decl_name": "free_funcidx_is_wf",
+          "decl_line": 656,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 680,
+          "decl_kind": "theorem",
+          "decl_name": "free_globalidx_is_wf",
+          "decl_line": 676,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 700,
+          "decl_kind": "theorem",
+          "decl_name": "free_tableidx_is_wf",
+          "decl_line": 696,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 720,
+          "decl_kind": "theorem",
+          "decl_name": "free_memidx_is_wf",
+          "decl_line": 716,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 740,
+          "decl_kind": "theorem",
+          "decl_name": "free_elemidx_is_wf",
+          "decl_line": 736,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 760,
+          "decl_kind": "theorem",
+          "decl_name": "free_dataidx_is_wf",
+          "decl_line": 756,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 780,
+          "decl_kind": "theorem",
+          "decl_name": "free_localidx_is_wf",
+          "decl_line": 776,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 800,
+          "decl_kind": "theorem",
+          "decl_name": "free_labelidx_is_wf",
+          "decl_line": 796,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 820,
+          "decl_kind": "theorem",
+          "decl_name": "free_tagidx_is_wf",
+          "decl_line": 816,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 834,
+          "decl_kind": "theorem",
+          "decl_name": "free_externidx_is_wf",
+          "decl_line": 830,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1186,
+          "decl_kind": "theorem",
+          "decl_name": "ANYREF_is_wf",
+          "decl_line": 1183,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1194,
+          "decl_kind": "theorem",
+          "decl_name": "EQREF_is_wf",
+          "decl_line": 1191,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1202,
+          "decl_kind": "theorem",
+          "decl_name": "I31REF_is_wf",
+          "decl_line": 1199,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1210,
+          "decl_kind": "theorem",
+          "decl_name": "STRUCTREF_is_wf",
+          "decl_line": 1207,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1218,
+          "decl_kind": "theorem",
+          "decl_name": "ARRAYREF_is_wf",
+          "decl_line": 1215,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1226,
+          "decl_kind": "theorem",
+          "decl_name": "FUNCREF_is_wf",
+          "decl_line": 1223,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1234,
+          "decl_kind": "theorem",
+          "decl_name": "EXNREF_is_wf",
+          "decl_line": 1231,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1242,
+          "decl_kind": "theorem",
+          "decl_name": "EXTERNREF_is_wf",
+          "decl_line": 1239,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1250,
+          "decl_kind": "theorem",
+          "decl_name": "NULLREF_is_wf",
+          "decl_line": 1247,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1258,
+          "decl_kind": "theorem",
+          "decl_name": "NULLFUNCREF_is_wf",
+          "decl_line": 1255,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1266,
+          "decl_kind": "theorem",
+          "decl_name": "NULLEXNREF_is_wf",
+          "decl_line": 1263,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1274,
+          "decl_kind": "theorem",
+          "decl_name": "NULLEXTERNREF_is_wf",
+          "decl_line": 1271,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1565,
+          "decl_kind": "theorem",
+          "decl_name": "unpack_is_wf",
+          "decl_line": 1561,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1611,
+          "decl_kind": "theorem",
+          "decl_name": "diffrt_is_wf",
+          "decl_line": 1606,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1633,
+          "decl_kind": "theorem",
+          "decl_name": "tagsxt_is_wf",
+          "decl_line": 1628,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1650,
+          "decl_kind": "theorem",
+          "decl_name": "globalsxt_is_wf",
+          "decl_line": 1645,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1667,
+          "decl_kind": "theorem",
+          "decl_name": "memsxt_is_wf",
+          "decl_line": 1662,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1684,
+          "decl_kind": "theorem",
+          "decl_name": "tablesxt_is_wf",
+          "decl_line": 1679,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1724,
+          "decl_kind": "theorem",
+          "decl_name": "subst_typevar_is_wf",
+          "decl_line": 1716,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1741,
+          "decl_kind": "theorem",
+          "decl_name": "minus_recs_is_wf",
+          "decl_line": 1734,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1871,
+          "decl_kind": "theorem",
+          "decl_name": "subst_typeuse_is_wf",
+          "decl_line": 1864,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1880,
+          "decl_kind": "theorem",
+          "decl_name": "subst_heaptype_is_wf",
+          "decl_line": 1873,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1889,
+          "decl_kind": "theorem",
+          "decl_name": "subst_reftype_is_wf",
+          "decl_line": 1882,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1898,
+          "decl_kind": "theorem",
+          "decl_name": "subst_valtype_is_wf",
+          "decl_line": 1891,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1907,
+          "decl_kind": "theorem",
+          "decl_name": "subst_storagetype_is_wf",
+          "decl_line": 1900,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1916,
+          "decl_kind": "theorem",
+          "decl_name": "subst_fieldtype_is_wf",
+          "decl_line": 1909,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1925,
+          "decl_kind": "theorem",
+          "decl_name": "subst_comptype_is_wf",
+          "decl_line": 1918,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1934,
+          "decl_kind": "theorem",
+          "decl_name": "subst_subtype_is_wf",
+          "decl_line": 1927,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1952,
+          "decl_kind": "theorem",
+          "decl_name": "subst_tagtype_is_wf",
+          "decl_line": 1945,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1967,
+          "decl_kind": "theorem",
+          "decl_name": "subst_globaltype_is_wf",
+          "decl_line": 1960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1979,
+          "decl_kind": "theorem",
+          "decl_name": "subst_memtype_is_wf",
+          "decl_line": 1973,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1994,
+          "decl_kind": "theorem",
+          "decl_name": "subst_tabletype_is_wf",
+          "decl_line": 1987,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2019,
+          "decl_kind": "theorem",
+          "decl_name": "subst_externtype_is_wf",
+          "decl_line": 2012,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2037,
+          "decl_kind": "theorem",
+          "decl_name": "subst_moduletype_is_wf",
+          "decl_line": 2030,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2052,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_valtype_is_wf",
+          "decl_line": 2046,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2067,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_reftype_is_wf",
+          "decl_line": 2061,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2089,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_tagtype_is_wf",
+          "decl_line": 2083,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2104,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_globaltype_is_wf",
+          "decl_line": 2098,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2118,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_memtype_is_wf",
+          "decl_line": 2112,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2133,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_tabletype_is_wf",
+          "decl_line": 2127,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2148,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_externtype_is_wf",
+          "decl_line": 2142,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2163,
+          "decl_kind": "theorem",
+          "decl_name": "subst_all_moduletype_is_wf",
+          "decl_line": 2157,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2206,
+          "decl_kind": "theorem",
+          "decl_name": "unrolldt_is_wf",
+          "decl_line": 2202,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2225,
+          "decl_kind": "theorem",
+          "decl_name": "free_addrtype_is_wf",
+          "decl_line": 2222,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2244,
+          "decl_kind": "theorem",
+          "decl_name": "free_numtype_is_wf",
+          "decl_line": 2241,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2263,
+          "decl_kind": "theorem",
+          "decl_name": "free_packtype_is_wf",
+          "decl_line": 2260,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2277,
+          "decl_kind": "theorem",
+          "decl_name": "free_lanetype_is_wf",
+          "decl_line": 2274,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2296,
+          "decl_kind": "theorem",
+          "decl_name": "free_vectype_is_wf",
+          "decl_line": 2293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2309,
+          "decl_kind": "theorem",
+          "decl_name": "free_consttype_is_wf",
+          "decl_line": 2306,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2328,
+          "decl_kind": "theorem",
+          "decl_name": "free_absheaptype_is_wf",
+          "decl_line": 2325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2350,
+          "decl_kind": "theorem",
+          "decl_name": "free_typevar_is_wf",
+          "decl_line": 2346,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2490,
+          "decl_kind": "theorem",
+          "decl_name": "free_heaptype_is_wf",
+          "decl_line": 2485,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2497,
+          "decl_kind": "theorem",
+          "decl_name": "free_reftype_is_wf",
+          "decl_line": 2492,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2504,
+          "decl_kind": "theorem",
+          "decl_name": "free_typeuse_is_wf",
+          "decl_line": 2499,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2511,
+          "decl_kind": "theorem",
+          "decl_name": "free_valtype_is_wf",
+          "decl_line": 2506,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2517,
+          "decl_kind": "theorem",
+          "decl_name": "free_resulttype_is_wf",
+          "decl_line": 2513,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2524,
+          "decl_kind": "theorem",
+          "decl_name": "free_storagetype_is_wf",
+          "decl_line": 2519,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2531,
+          "decl_kind": "theorem",
+          "decl_name": "free_fieldtype_is_wf",
+          "decl_line": 2526,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2538,
+          "decl_kind": "theorem",
+          "decl_name": "free_comptype_is_wf",
+          "decl_line": 2533,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2545,
+          "decl_kind": "theorem",
+          "decl_name": "free_subtype_is_wf",
+          "decl_line": 2540,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2551,
+          "decl_kind": "theorem",
+          "decl_name": "free_rectype_is_wf",
+          "decl_line": 2547,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2557,
+          "decl_kind": "theorem",
+          "decl_name": "free_deftype_is_wf",
+          "decl_line": 2553,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2570,
+          "decl_kind": "theorem",
+          "decl_name": "free_tagtype_is_wf",
+          "decl_line": 2565,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2583,
+          "decl_kind": "theorem",
+          "decl_name": "free_globaltype_is_wf",
+          "decl_line": 2578,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2593,
+          "decl_kind": "theorem",
+          "decl_name": "free_memtype_is_wf",
+          "decl_line": 2589,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2606,
+          "decl_kind": "theorem",
+          "decl_name": "free_tabletype_is_wf",
+          "decl_line": 2601,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2626,
+          "decl_kind": "theorem",
+          "decl_name": "free_datatype_is_wf",
+          "decl_line": 2623,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2639,
+          "decl_kind": "theorem",
+          "decl_name": "free_elemtype_is_wf",
+          "decl_line": 2634,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2662,
+          "decl_kind": "theorem",
+          "decl_name": "free_externtype_is_wf",
+          "decl_line": 2657,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2680,
+          "decl_kind": "theorem",
+          "decl_name": "free_moduletype_is_wf",
+          "decl_line": 2675,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3101,
+          "decl_kind": "theorem",
+          "decl_name": "dim_is_wf",
+          "decl_line": 3097,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4438,
+          "decl_kind": "theorem",
+          "decl_name": "memarg0_is_wf",
+          "decl_line": 4435,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4453,
+          "decl_kind": "theorem",
+          "decl_name": "const_is_wf",
+          "decl_line": 4449,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4463,
+          "decl_kind": "theorem",
+          "decl_name": "free_shape_is_wf",
+          "decl_line": 4459,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4478,
+          "decl_kind": "theorem",
+          "decl_name": "free_blocktype_is_wf",
+          "decl_line": 4473,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4491,
+          "decl_kind": "theorem",
+          "decl_name": "free_catch_is_wf",
+          "decl_line": 4487,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4508,
+          "decl_kind": "theorem",
+          "decl_name": "shift_labelidxs_is_wf",
+          "decl_line": 4503,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4824,
+          "decl_kind": "theorem",
+          "decl_name": "free_instr_is_wf",
+          "decl_line": 4819,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4831,
+          "decl_kind": "theorem",
+          "decl_name": "free_block_is_wf",
+          "decl_line": 4826,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4846,
+          "decl_kind": "theorem",
+          "decl_name": "free_expr_is_wf",
+          "decl_line": 4841,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5020,
+          "decl_kind": "theorem",
+          "decl_name": "free_type_is_wf",
+          "decl_line": 5016,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5033,
+          "decl_kind": "theorem",
+          "decl_name": "free_tag_is_wf",
+          "decl_line": 5028,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5047,
+          "decl_kind": "theorem",
+          "decl_name": "free_global_is_wf",
+          "decl_line": 5042,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5057,
+          "decl_kind": "theorem",
+          "decl_name": "free_mem_is_wf",
+          "decl_line": 5053,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5071,
+          "decl_kind": "theorem",
+          "decl_name": "free_table_is_wf",
+          "decl_line": 5066,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5084,
+          "decl_kind": "theorem",
+          "decl_name": "free_local_is_wf",
+          "decl_line": 5079,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5103,
+          "decl_kind": "theorem",
+          "decl_name": "free_func_is_wf",
+          "decl_line": 5098,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5128,
+          "decl_kind": "theorem",
+          "decl_name": "free_datamode_is_wf",
+          "decl_line": 5123,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5141,
+          "decl_kind": "theorem",
+          "decl_name": "free_data_is_wf",
+          "decl_line": 5136,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5178,
+          "decl_kind": "theorem",
+          "decl_name": "free_elemmode_is_wf",
+          "decl_line": 5173,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5195,
+          "decl_kind": "theorem",
+          "decl_name": "free_elem_is_wf",
+          "decl_line": 5190,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5205,
+          "decl_kind": "theorem",
+          "decl_name": "free_start_is_wf",
+          "decl_line": 5201,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5218,
+          "decl_kind": "theorem",
+          "decl_name": "free_import_is_wf",
+          "decl_line": 5213,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5228,
+          "decl_kind": "theorem",
+          "decl_name": "free_export_is_wf",
+          "decl_line": 5224,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5266,
+          "decl_kind": "theorem",
+          "decl_name": "free_module_is_wf",
+          "decl_line": 5261,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5279,
+          "decl_kind": "theorem",
+          "decl_name": "funcidx_module_is_wf",
+          "decl_line": 5274,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5294,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_funcs_is_wf",
+          "decl_line": 5289,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5409,
+          "decl_kind": "theorem",
+          "decl_name": "with_locals_is_wf",
+          "decl_line": 5401,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5434,
+          "decl_kind": "theorem",
+          "decl_name": "clos_valtype_is_wf",
+          "decl_line": 5428,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5458,
+          "decl_kind": "theorem",
+          "decl_name": "clos_tagtype_is_wf",
+          "decl_line": 5452,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5474,
+          "decl_kind": "theorem",
+          "decl_name": "clos_externtype_is_wf",
+          "decl_line": 5468,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5490,
+          "decl_kind": "theorem",
+          "decl_name": "clos_moduletype_is_wf",
+          "decl_line": 5484,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5565,
+          "decl_kind": "theorem",
+          "decl_name": "unrollht__is_wf",
+          "decl_line": 5559,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6331,
+          "decl_kind": "theorem",
+          "decl_name": "default__is_wf",
+          "decl_line": 6326,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7884,
+          "decl_kind": "theorem",
+          "decl_name": "funcidx_nonfuncs_is_wf",
+          "decl_line": 7879,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8108,
+          "decl_kind": "theorem",
+          "decl_name": "R_fmadd_is_wf",
+          "decl_line": 8105,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8119,
+          "decl_kind": "theorem",
+          "decl_name": "R_fmin_is_wf",
+          "decl_line": 8116,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8130,
+          "decl_kind": "theorem",
+          "decl_name": "R_fmax_is_wf",
+          "decl_line": 8127,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8141,
+          "decl_kind": "theorem",
+          "decl_name": "R_idot_is_wf",
+          "decl_line": 8138,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8152,
+          "decl_kind": "theorem",
+          "decl_name": "R_iq15mulr_is_wf",
+          "decl_line": 8149,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8163,
+          "decl_kind": "theorem",
+          "decl_name": "R_trunc_u_is_wf",
+          "decl_line": 8160,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8174,
+          "decl_kind": "theorem",
+          "decl_name": "R_trunc_s_is_wf",
+          "decl_line": 8171,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8185,
+          "decl_kind": "theorem",
+          "decl_name": "R_swizzle_is_wf",
+          "decl_line": 8182,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8196,
+          "decl_kind": "theorem",
+          "decl_name": "R_laneselect_is_wf",
+          "decl_line": 8193,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8208,
+          "decl_kind": "theorem",
+          "decl_name": "s33_to_u32_is_wf",
+          "decl_line": 8204,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8220,
+          "decl_kind": "theorem",
+          "decl_name": "ibits__is_wf",
+          "decl_line": 8216,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8232,
+          "decl_kind": "theorem",
+          "decl_name": "fbits__is_wf",
+          "decl_line": 8228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8244,
+          "decl_kind": "theorem",
+          "decl_name": "ibytes__is_wf",
+          "decl_line": 8240,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8256,
+          "decl_kind": "theorem",
+          "decl_name": "fbytes__is_wf",
+          "decl_line": 8252,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8268,
+          "decl_kind": "theorem",
+          "decl_name": "nbytes__is_wf",
+          "decl_line": 8264,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8280,
+          "decl_kind": "theorem",
+          "decl_name": "vbytes__is_wf",
+          "decl_line": 8276,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8293,
+          "decl_kind": "theorem",
+          "decl_name": "zbytes__is_wf",
+          "decl_line": 8288,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8305,
+          "decl_kind": "theorem",
+          "decl_name": "cbytes__is_wf",
+          "decl_line": 8301,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8317,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibits__is_wf",
+          "decl_line": 8313,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8329,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbits__is_wf",
+          "decl_line": 8325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8341,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibytes__is_wf",
+          "decl_line": 8337,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8353,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbytes__is_wf",
+          "decl_line": 8349,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8365,
+          "decl_kind": "theorem",
+          "decl_name": "inv_nbytes__is_wf",
+          "decl_line": 8361,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8377,
+          "decl_kind": "theorem",
+          "decl_name": "inv_vbytes__is_wf",
+          "decl_line": 8373,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8390,
+          "decl_kind": "theorem",
+          "decl_name": "inv_zbytes__is_wf",
+          "decl_line": 8385,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8402,
+          "decl_kind": "theorem",
+          "decl_name": "inv_cbytes__is_wf",
+          "decl_line": 8398,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8445,
+          "decl_kind": "theorem",
+          "decl_name": "zero_is_wf",
+          "decl_line": 8442,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8497,
+          "decl_kind": "theorem",
+          "decl_name": "ineg__is_wf",
+          "decl_line": 8493,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8509,
+          "decl_kind": "theorem",
+          "decl_name": "iabs__is_wf",
+          "decl_line": 8505,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8521,
+          "decl_kind": "theorem",
+          "decl_name": "iclz__is_wf",
+          "decl_line": 8517,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8533,
+          "decl_kind": "theorem",
+          "decl_name": "ictz__is_wf",
+          "decl_line": 8529,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8545,
+          "decl_kind": "theorem",
+          "decl_name": "ipopcnt__is_wf",
+          "decl_line": 8541,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8560,
+          "decl_kind": "theorem",
+          "decl_name": "iextend__is_wf",
+          "decl_line": 8555,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8570,
+          "decl_kind": "theorem",
+          "decl_name": "iadd__is_wf",
+          "decl_line": 8565,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8580,
+          "decl_kind": "theorem",
+          "decl_name": "isub__is_wf",
+          "decl_line": 8575,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8590,
+          "decl_kind": "theorem",
+          "decl_name": "imul__is_wf",
+          "decl_line": 8585,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8614,
+          "decl_kind": "theorem",
+          "decl_name": "idiv__is_wf",
+          "decl_line": 8608,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8634,
+          "decl_kind": "theorem",
+          "decl_name": "irem__is_wf",
+          "decl_line": 8628,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8647,
+          "decl_kind": "theorem",
+          "decl_name": "imin__is_wf",
+          "decl_line": 8642,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8660,
+          "decl_kind": "theorem",
+          "decl_name": "imax__is_wf",
+          "decl_line": 8655,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8673,
+          "decl_kind": "theorem",
+          "decl_name": "iadd_sat__is_wf",
+          "decl_line": 8668,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8686,
+          "decl_kind": "theorem",
+          "decl_name": "isub_sat__is_wf",
+          "decl_line": 8681,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8699,
+          "decl_kind": "theorem",
+          "decl_name": "iq15mulr_sat__is_wf",
+          "decl_line": 8694,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8712,
+          "decl_kind": "theorem",
+          "decl_name": "irelaxed_q15mulr__is_wf",
+          "decl_line": 8707,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8725,
+          "decl_kind": "theorem",
+          "decl_name": "iavgr__is_wf",
+          "decl_line": 8720,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8737,
+          "decl_kind": "theorem",
+          "decl_name": "inot__is_wf",
+          "decl_line": 8733,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8749,
+          "decl_kind": "theorem",
+          "decl_name": "irev__is_wf",
+          "decl_line": 8745,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8762,
+          "decl_kind": "theorem",
+          "decl_name": "iand__is_wf",
+          "decl_line": 8757,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8775,
+          "decl_kind": "theorem",
+          "decl_name": "iandnot__is_wf",
+          "decl_line": 8770,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8788,
+          "decl_kind": "theorem",
+          "decl_name": "ior__is_wf",
+          "decl_line": 8783,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8801,
+          "decl_kind": "theorem",
+          "decl_name": "ixor__is_wf",
+          "decl_line": 8796,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8814,
+          "decl_kind": "theorem",
+          "decl_name": "ishl__is_wf",
+          "decl_line": 8809,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8827,
+          "decl_kind": "theorem",
+          "decl_name": "ishr__is_wf",
+          "decl_line": 8822,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8840,
+          "decl_kind": "theorem",
+          "decl_name": "irotl__is_wf",
+          "decl_line": 8835,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8853,
+          "decl_kind": "theorem",
+          "decl_name": "irotr__is_wf",
+          "decl_line": 8848,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8867,
+          "decl_kind": "theorem",
+          "decl_name": "ibitselect__is_wf",
+          "decl_line": 8861,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8881,
+          "decl_kind": "theorem",
+          "decl_name": "irelaxed_laneselect__is_wf",
+          "decl_line": 8875,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8890,
+          "decl_kind": "theorem",
+          "decl_name": "ieqz__is_wf",
+          "decl_line": 8886,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8899,
+          "decl_kind": "theorem",
+          "decl_name": "inez__is_wf",
+          "decl_line": 8895,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8909,
+          "decl_kind": "theorem",
+          "decl_name": "ieq__is_wf",
+          "decl_line": 8904,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8919,
+          "decl_kind": "theorem",
+          "decl_name": "ine__is_wf",
+          "decl_line": 8914,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8932,
+          "decl_kind": "theorem",
+          "decl_name": "ilt__is_wf",
+          "decl_line": 8927,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8945,
+          "decl_kind": "theorem",
+          "decl_name": "igt__is_wf",
+          "decl_line": 8940,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8958,
+          "decl_kind": "theorem",
+          "decl_name": "ile__is_wf",
+          "decl_line": 8953,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8971,
+          "decl_kind": "theorem",
+          "decl_name": "ige__is_wf",
+          "decl_line": 8966,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8983,
+          "decl_kind": "theorem",
+          "decl_name": "fabs__is_wf",
+          "decl_line": 8979,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8995,
+          "decl_kind": "theorem",
+          "decl_name": "fneg__is_wf",
+          "decl_line": 8991,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9007,
+          "decl_kind": "theorem",
+          "decl_name": "fsqrt__is_wf",
+          "decl_line": 9003,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9019,
+          "decl_kind": "theorem",
+          "decl_name": "fceil__is_wf",
+          "decl_line": 9015,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9031,
+          "decl_kind": "theorem",
+          "decl_name": "ffloor__is_wf",
+          "decl_line": 9027,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9043,
+          "decl_kind": "theorem",
+          "decl_name": "ftrunc__is_wf",
+          "decl_line": 9039,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9055,
+          "decl_kind": "theorem",
+          "decl_name": "fnearest__is_wf",
+          "decl_line": 9051,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9068,
+          "decl_kind": "theorem",
+          "decl_name": "fadd__is_wf",
+          "decl_line": 9063,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9081,
+          "decl_kind": "theorem",
+          "decl_name": "fsub__is_wf",
+          "decl_line": 9076,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9094,
+          "decl_kind": "theorem",
+          "decl_name": "fmul__is_wf",
+          "decl_line": 9089,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9107,
+          "decl_kind": "theorem",
+          "decl_name": "fdiv__is_wf",
+          "decl_line": 9102,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9120,
+          "decl_kind": "theorem",
+          "decl_name": "fmin__is_wf",
+          "decl_line": 9115,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9133,
+          "decl_kind": "theorem",
+          "decl_name": "fmax__is_wf",
+          "decl_line": 9128,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9146,
+          "decl_kind": "theorem",
+          "decl_name": "fpmin__is_wf",
+          "decl_line": 9141,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9159,
+          "decl_kind": "theorem",
+          "decl_name": "fpmax__is_wf",
+          "decl_line": 9154,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9172,
+          "decl_kind": "theorem",
+          "decl_name": "frelaxed_min__is_wf",
+          "decl_line": 9167,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9185,
+          "decl_kind": "theorem",
+          "decl_name": "frelaxed_max__is_wf",
+          "decl_line": 9180,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9198,
+          "decl_kind": "theorem",
+          "decl_name": "fcopysign__is_wf",
+          "decl_line": 9193,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9211,
+          "decl_kind": "theorem",
+          "decl_name": "feq__is_wf",
+          "decl_line": 9206,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9224,
+          "decl_kind": "theorem",
+          "decl_name": "fne__is_wf",
+          "decl_line": 9219,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9237,
+          "decl_kind": "theorem",
+          "decl_name": "flt__is_wf",
+          "decl_line": 9232,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9250,
+          "decl_kind": "theorem",
+          "decl_name": "fgt__is_wf",
+          "decl_line": 9245,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9263,
+          "decl_kind": "theorem",
+          "decl_name": "fle__is_wf",
+          "decl_line": 9258,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9276,
+          "decl_kind": "theorem",
+          "decl_name": "fge__is_wf",
+          "decl_line": 9271,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9290,
+          "decl_kind": "theorem",
+          "decl_name": "frelaxed_madd__is_wf",
+          "decl_line": 9284,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9304,
+          "decl_kind": "theorem",
+          "decl_name": "frelaxed_nmadd__is_wf",
+          "decl_line": 9298,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9316,
+          "decl_kind": "theorem",
+          "decl_name": "wrap___is_wf",
+          "decl_line": 9312,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9328,
+          "decl_kind": "theorem",
+          "decl_name": "extend___is_wf",
+          "decl_line": 9324,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9340,
+          "decl_kind": "theorem",
+          "decl_name": "trunc___is_wf",
+          "decl_line": 9336,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9352,
+          "decl_kind": "theorem",
+          "decl_name": "trunc_sat___is_wf",
+          "decl_line": 9348,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9364,
+          "decl_kind": "theorem",
+          "decl_name": "relaxed_trunc___is_wf",
+          "decl_line": 9360,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9376,
+          "decl_kind": "theorem",
+          "decl_name": "demote___is_wf",
+          "decl_line": 9372,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9388,
+          "decl_kind": "theorem",
+          "decl_name": "promote___is_wf",
+          "decl_line": 9384,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9400,
+          "decl_kind": "theorem",
+          "decl_name": "convert___is_wf",
+          "decl_line": 9396,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9412,
+          "decl_kind": "theorem",
+          "decl_name": "narrow___is_wf",
+          "decl_line": 9408,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9424,
+          "decl_kind": "theorem",
+          "decl_name": "reinterpret___is_wf",
+          "decl_line": 9420,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9440,
+          "decl_kind": "theorem",
+          "decl_name": "lpacknum__is_wf",
+          "decl_line": 9436,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9459,
+          "decl_kind": "theorem",
+          "decl_name": "cpacknum__is_wf",
+          "decl_line": 9453,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9475,
+          "decl_kind": "theorem",
+          "decl_name": "lunpacknum__is_wf",
+          "decl_line": 9471,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9494,
+          "decl_kind": "theorem",
+          "decl_name": "cunpacknum__is_wf",
+          "decl_line": 9488,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9531,
+          "decl_kind": "theorem",
+          "decl_name": "unop__is_wf",
+          "decl_line": 9525,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9589,
+          "decl_kind": "theorem",
+          "decl_name": "binop__is_wf",
+          "decl_line": 9582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9602,
+          "decl_kind": "theorem",
+          "decl_name": "testop__is_wf",
+          "decl_line": 9597,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9638,
+          "decl_kind": "theorem",
+          "decl_name": "relop__is_wf",
+          "decl_line": 9632,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9701,
+          "decl_kind": "theorem",
+          "decl_name": "cvtop___is_wf",
+          "decl_line": 9695,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9714,
+          "decl_kind": "theorem",
+          "decl_name": "lanes__is_wf",
+          "decl_line": 9709,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9727,
+          "decl_kind": "theorem",
+          "decl_name": "inv_lanes__is_wf",
+          "decl_line": 9722,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10137,
+          "decl_kind": "theorem",
+          "decl_name": "iswizzle_lane__is_wf",
+          "decl_line": 10132,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10150,
+          "decl_kind": "theorem",
+          "decl_name": "irelaxed_swizzle_lane__is_wf",
+          "decl_line": 10145,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10174,
+          "decl_kind": "theorem",
+          "decl_name": "ivunop__is_wf",
+          "decl_line": 10168,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10187,
+          "decl_kind": "theorem",
+          "decl_name": "fvunop__is_wf",
+          "decl_line": 10182,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10216,
+          "decl_kind": "theorem",
+          "decl_name": "ivbinop__is_wf",
+          "decl_line": 10209,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10245,
+          "decl_kind": "theorem",
+          "decl_name": "ivbinopsx__is_wf",
+          "decl_line": 10238,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10259,
+          "decl_kind": "theorem",
+          "decl_name": "ivbinopsxnd__is_wf",
+          "decl_line": 10253,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10273,
+          "decl_kind": "theorem",
+          "decl_name": "fvbinop__is_wf",
+          "decl_line": 10267,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10288,
+          "decl_kind": "theorem",
+          "decl_name": "ivternopnd__is_wf",
+          "decl_line": 10281,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10303,
+          "decl_kind": "theorem",
+          "decl_name": "fvternop__is_wf",
+          "decl_line": 10296,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10317,
+          "decl_kind": "theorem",
+          "decl_name": "ivrelop__is_wf",
+          "decl_line": 10311,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10331,
+          "decl_kind": "theorem",
+          "decl_name": "ivrelopsx__is_wf",
+          "decl_line": 10325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10345,
+          "decl_kind": "theorem",
+          "decl_name": "fvrelop__is_wf",
+          "decl_line": 10339,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10370,
+          "decl_kind": "theorem",
+          "decl_name": "ivshiftop__is_wf",
+          "decl_line": 10363,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10395,
+          "decl_kind": "theorem",
+          "decl_name": "ivshiftopsx__is_wf",
+          "decl_line": 10388,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10442,
+          "decl_kind": "theorem",
+          "decl_name": "ivbitmaskop__is_wf",
+          "decl_line": 10436,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10471,
+          "decl_kind": "theorem",
+          "decl_name": "ivswizzlop__is_wf",
+          "decl_line": 10464,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10501,
+          "decl_kind": "theorem",
+          "decl_name": "ivshufflop__is_wf",
+          "decl_line": 10493,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10511,
+          "decl_kind": "theorem",
+          "decl_name": "vvunop__is_wf",
+          "decl_line": 10507,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10525,
+          "decl_kind": "theorem",
+          "decl_name": "vvbinop__is_wf",
+          "decl_line": 10520,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10537,
+          "decl_kind": "theorem",
+          "decl_name": "vvternop__is_wf",
+          "decl_line": 10531,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10639,
+          "decl_kind": "theorem",
+          "decl_name": "vunop__is_wf",
+          "decl_line": 10632,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10868,
+          "decl_kind": "theorem",
+          "decl_name": "vbinop__is_wf",
+          "decl_line": 10860,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 10906,
+          "decl_kind": "theorem",
+          "decl_name": "vternop__is_wf",
+          "decl_line": 10897,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11027,
+          "decl_kind": "theorem",
+          "decl_name": "vrelop__is_wf",
+          "decl_line": 11019,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11240,
+          "decl_kind": "theorem",
+          "decl_name": "lcvtop___is_wf",
+          "decl_line": 11232,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11291,
+          "decl_kind": "theorem",
+          "decl_name": "vcvtop___is_wf",
+          "decl_line": 11283,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11336,
+          "decl_kind": "theorem",
+          "decl_name": "vshiftop__is_wf",
+          "decl_line": 11328,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11359,
+          "decl_kind": "theorem",
+          "decl_name": "vbitmaskop__is_wf",
+          "decl_line": 11353,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11380,
+          "decl_kind": "theorem",
+          "decl_name": "vswizzlop__is_wf",
+          "decl_line": 11372,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11395,
+          "decl_kind": "theorem",
+          "decl_name": "vshufflop__is_wf",
+          "decl_line": 11387,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11616,
+          "decl_kind": "theorem",
+          "decl_name": "vnarrowop___is_wf",
+          "decl_line": 11608,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11628,
+          "decl_kind": "theorem",
+          "decl_name": "ivadd_pairwise__is_wf",
+          "decl_line": 11624,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11642,
+          "decl_kind": "theorem",
+          "decl_name": "ivextunop___is_wf",
+          "decl_line": 11636,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11719,
+          "decl_kind": "theorem",
+          "decl_name": "vextunop___is_wf",
+          "decl_line": 11711,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11732,
+          "decl_kind": "theorem",
+          "decl_name": "ivdot__is_wf",
+          "decl_line": 11727,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11745,
+          "decl_kind": "theorem",
+          "decl_name": "ivdot_sat__is_wf",
+          "decl_line": 11740,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11762,
+          "decl_kind": "theorem",
+          "decl_name": "ivextbinop___is_wf",
+          "decl_line": 11753,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11772,
+          "decl_kind": "theorem",
+          "decl_name": "ivmul__is_wf",
+          "decl_line": 11767,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 11978,
+          "decl_kind": "theorem",
+          "decl_name": "vextbinop___is_wf",
+          "decl_line": 11969,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12313,
+          "decl_kind": "theorem",
+          "decl_name": "vextternop___is_wf",
+          "decl_line": 12303,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12707,
+          "decl_kind": "theorem",
+          "decl_name": "packfield__is_wf",
+          "decl_line": 12701,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12791,
+          "decl_kind": "theorem",
+          "decl_name": "unpackfield__is_wf",
+          "decl_line": 12785,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12851,
+          "decl_kind": "theorem",
+          "decl_name": "store_is_wf",
+          "decl_line": 12847,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12861,
+          "decl_kind": "theorem",
+          "decl_name": "frame_is_wf",
+          "decl_line": 12857,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12875,
+          "decl_kind": "theorem",
+          "decl_name": "moduleinst_is_wf",
+          "decl_line": 12871,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12885,
+          "decl_kind": "theorem",
+          "decl_name": "taginst_is_wf",
+          "decl_line": 12881,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12895,
+          "decl_kind": "theorem",
+          "decl_name": "globalinst_is_wf",
+          "decl_line": 12891,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12905,
+          "decl_kind": "theorem",
+          "decl_name": "meminst_is_wf",
+          "decl_line": 12901,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12915,
+          "decl_kind": "theorem",
+          "decl_name": "tableinst_is_wf",
+          "decl_line": 12911,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12925,
+          "decl_kind": "theorem",
+          "decl_name": "funcinst_is_wf",
+          "decl_line": 12921,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12935,
+          "decl_kind": "theorem",
+          "decl_name": "datainst_is_wf",
+          "decl_line": 12931,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12945,
+          "decl_kind": "theorem",
+          "decl_name": "eleminst_is_wf",
+          "decl_line": 12941,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12955,
+          "decl_kind": "theorem",
+          "decl_name": "structinst_is_wf",
+          "decl_line": 12951,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12965,
+          "decl_kind": "theorem",
+          "decl_name": "arrayinst_is_wf",
+          "decl_line": 12961,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12975,
+          "decl_kind": "theorem",
+          "decl_name": "exninst_is_wf",
+          "decl_line": 12971,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12984,
+          "decl_kind": "theorem",
+          "decl_name": "fof_is_wf",
+          "decl_line": 12980,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 12996,
+          "decl_kind": "theorem",
+          "decl_name": "sof_is_wf",
+          "decl_line": 12992,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13006,
+          "decl_kind": "theorem",
+          "decl_name": "tag_is_wf",
+          "decl_line": 13001,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13016,
+          "decl_kind": "theorem",
+          "decl_name": "global_is_wf",
+          "decl_line": 13011,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13026,
+          "decl_kind": "theorem",
+          "decl_name": "mem_is_wf",
+          "decl_line": 13021,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13036,
+          "decl_kind": "theorem",
+          "decl_name": "table_is_wf",
+          "decl_line": 13031,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13046,
+          "decl_kind": "theorem",
+          "decl_name": "func_is_wf",
+          "decl_line": 13041,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13056,
+          "decl_kind": "theorem",
+          "decl_name": "data_is_wf",
+          "decl_line": 13051,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13066,
+          "decl_kind": "theorem",
+          "decl_name": "elem_is_wf",
+          "decl_line": 13061,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13076,
+          "decl_kind": "theorem",
+          "decl_name": "local_is_wf",
+          "decl_line": 13071,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13090,
+          "decl_kind": "theorem",
+          "decl_name": "with_local_is_wf",
+          "decl_line": 13084,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13107,
+          "decl_kind": "theorem",
+          "decl_name": "with_global_is_wf",
+          "decl_line": 13101,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13124,
+          "decl_kind": "theorem",
+          "decl_name": "with_table_is_wf",
+          "decl_line": 13118,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13138,
+          "decl_kind": "theorem",
+          "decl_name": "with_tableinst_is_wf",
+          "decl_line": 13132,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13155,
+          "decl_kind": "theorem",
+          "decl_name": "with_mem_is_wf",
+          "decl_line": 13149,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13169,
+          "decl_kind": "theorem",
+          "decl_name": "with_meminst_is_wf",
+          "decl_line": 13163,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13186,
+          "decl_kind": "theorem",
+          "decl_name": "with_elem_is_wf",
+          "decl_line": 13180,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13203,
+          "decl_kind": "theorem",
+          "decl_name": "with_data_is_wf",
+          "decl_line": 13197,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13219,
+          "decl_kind": "theorem",
+          "decl_name": "with_struct_is_wf",
+          "decl_line": 13214,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13235,
+          "decl_kind": "theorem",
+          "decl_name": "with_array_is_wf",
+          "decl_line": 13230,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13248,
+          "decl_kind": "theorem",
+          "decl_name": "add_structinst_is_wf",
+          "decl_line": 13243,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13261,
+          "decl_kind": "theorem",
+          "decl_name": "add_arrayinst_is_wf",
+          "decl_line": 13256,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13274,
+          "decl_kind": "theorem",
+          "decl_name": "add_exninst_is_wf",
+          "decl_line": 13269,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13334,
+          "decl_kind": "theorem",
+          "decl_name": "growtable_is_wf",
+          "decl_line": 13327,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13393,
+          "decl_kind": "theorem",
+          "decl_name": "growmem_is_wf",
+          "decl_line": 13387,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13653,
+          "decl_kind": "theorem",
+          "decl_name": "inst_valtype_is_wf",
+          "decl_line": 13647,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13667,
+          "decl_kind": "theorem",
+          "decl_name": "inst_reftype_is_wf",
+          "decl_line": 13661,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13681,
+          "decl_kind": "theorem",
+          "decl_name": "inst_globaltype_is_wf",
+          "decl_line": 13675,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13695,
+          "decl_kind": "theorem",
+          "decl_name": "inst_memtype_is_wf",
+          "decl_line": 13689,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 13709,
+          "decl_kind": "theorem",
+          "decl_name": "inst_tabletype_is_wf",
+          "decl_line": 13703,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 14300,
+          "decl_kind": "theorem",
+          "decl_name": "blocktype__is_wf",
+          "decl_line": 14294,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 15913,
+          "decl_kind": "theorem",
+          "decl_name": "alloctag_is_wf",
+          "decl_line": 15907,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 15931,
+          "decl_kind": "theorem",
+          "decl_name": "alloctags_is_wf",
+          "decl_line": 15925,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 15964,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobal_is_wf",
+          "decl_line": 15957,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 15983,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobals_is_wf",
+          "decl_line": 15976,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16015,
+          "decl_kind": "theorem",
+          "decl_name": "allocmem_is_wf",
+          "decl_line": 16009,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16033,
+          "decl_kind": "theorem",
+          "decl_name": "allocmems_is_wf",
+          "decl_line": 16027,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16066,
+          "decl_kind": "theorem",
+          "decl_name": "alloctable_is_wf",
+          "decl_line": 16059,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16085,
+          "decl_kind": "theorem",
+          "decl_name": "alloctables_is_wf",
+          "decl_line": 16078,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16120,
+          "decl_kind": "theorem",
+          "decl_name": "allocfunc_is_wf",
+          "decl_line": 16113,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16139,
+          "decl_kind": "theorem",
+          "decl_name": "allocfuncs_is_wf",
+          "decl_line": 16132,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16169,
+          "decl_kind": "theorem",
+          "decl_name": "allocdata_is_wf",
+          "decl_line": 16163,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16187,
+          "decl_kind": "theorem",
+          "decl_name": "allocdatas_is_wf",
+          "decl_line": 16181,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16220,
+          "decl_kind": "theorem",
+          "decl_name": "allocelem_is_wf",
+          "decl_line": 16213,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16239,
+          "decl_kind": "theorem",
+          "decl_name": "allocelems_is_wf",
+          "decl_line": 16232,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16269,
+          "decl_kind": "theorem",
+          "decl_name": "allocexport_is_wf",
+          "decl_line": 16264,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16279,
+          "decl_kind": "theorem",
+          "decl_name": "allocexports_is_wf",
+          "decl_line": 16274,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16401,
+          "decl_kind": "theorem",
+          "decl_name": "allocmodule_is_wf",
+          "decl_line": 16391,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16418,
+          "decl_kind": "theorem",
+          "decl_name": "rundata__is_wf",
+          "decl_line": 16412,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16438,
+          "decl_kind": "theorem",
+          "decl_name": "runelem__is_wf",
+          "decl_line": 16432,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16457,
+          "decl_kind": "theorem",
+          "decl_name": "evalexprs_is_wf",
+          "decl_line": 16450,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16476,
+          "decl_kind": "theorem",
+          "decl_name": "evalexprss_is_wf",
+          "decl_line": 16469,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16513,
+          "decl_kind": "theorem",
+          "decl_name": "evalglobals_is_wf",
+          "decl_line": 16505,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16607,
+          "decl_kind": "theorem",
+          "decl_name": "instantiate_is_wf",
+          "decl_line": 16601,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16638,
+          "decl_kind": "theorem",
+          "decl_name": "invoke_is_wf",
+          "decl_line": 16632,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16659,
+          "decl_kind": "theorem",
+          "decl_name": "ieee__is_wf",
+          "decl_line": 16656,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16750,
+          "decl_kind": "theorem",
+          "decl_name": "concat_idctxt_is_wf",
+          "decl_line": 16745,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16915,
+          "decl_kind": "theorem",
+          "decl_name": "importsd_is_wf",
+          "decl_line": 16910,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16932,
+          "decl_kind": "theorem",
+          "decl_name": "tagsd_is_wf",
+          "decl_line": 16927,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16949,
+          "decl_kind": "theorem",
+          "decl_name": "globalsd_is_wf",
+          "decl_line": 16944,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16966,
+          "decl_kind": "theorem",
+          "decl_name": "memsd_is_wf",
+          "decl_line": 16961,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 16983,
+          "decl_kind": "theorem",
+          "decl_name": "tablesd_is_wf",
+          "decl_line": 16978,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 17000,
+          "decl_kind": "theorem",
+          "decl_name": "funcsd_is_wf",
+          "decl_line": 16995,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 17017,
+          "decl_kind": "theorem",
+          "decl_name": "datasd_is_wf",
+          "decl_line": 17012,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 17034,
+          "decl_kind": "theorem",
+          "decl_name": "elemsd_is_wf",
+          "decl_line": 17029,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 17051,
+          "decl_kind": "theorem",
+          "decl_name": "startsd_is_wf",
+          "decl_line": 17046,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 17068,
+          "decl_kind": "theorem",
+          "decl_name": "exportsd_is_wf",
+          "decl_line": 17063,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 18392,
+          "decl_kind": "theorem",
+          "decl_name": "instrdots_is_wf",
+          "decl_line": 18389,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 18424,
+          "decl_kind": "theorem",
+          "decl_name": "allocX_is_wf",
+          "decl_line": 18420,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 18437,
+          "decl_kind": "theorem",
+          "decl_name": "allocXs_is_wf",
+          "decl_line": 18433,
+          "text": "sorry"
+        }
+      ],
+      "commented_sites": []
+    },
+    {
+      "path": "test-lean/ExtendedDeriveDecEq.lean",
+      "lines": 738,
+      "raw_count": 2,
+      "live_count": 0,
+      "commented_out": 2,
+      "obligations": [],
+      "commented_sites": [
+        {
+          "token": "admit",
+          "line": 152,
+          "text": "-- type params that admit DecidableEq, [inst : Class] for instances"
+        },
+        {
+          "token": "admit",
+          "line": 174,
+          "text": "-- For params that admit DecidableEq, add [DecidableEq name]"
+        }
+      ]
+    },
+    {
+      "path": "test-lean/bug.lean",
+      "lines": 105,
+      "raw_count": 1,
+      "live_count": 1,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 105,
+          "decl_kind": "example",
+          "decl_name": "<anonymous>",
+          "decl_line": 103,
+          "text": "all_goals sorry"
+        }
+      ],
+      "commented_sites": []
+    },
+    {
+      "path": "test-lean/bug_repro_fix_check.lean",
+      "lines": 45,
+      "raw_count": 2,
+      "live_count": 1,
+      "commented_out": 1,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 45,
+          "decl_kind": "example",
+          "decl_name": "<anonymous>",
+          "decl_line": 43,
+          "text": "all_goals sorry"
+        }
+      ],
+      "commented_sites": [
+        {
+          "token": "sorry",
+          "line": 30,
+          "text": "Result: only linter warnings (unused binder names, `sorry`) below, no error."
+        }
+      ]
+    },
+    {
+      "path": "test-lean/non_mutual_check.lean",
+      "lines": 37,
+      "raw_count": 1,
+      "live_count": 1,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 37,
+          "decl_kind": "example",
+          "decl_name": "<anonymous>",
+          "decl_line": 35,
+          "text": "all_goals sorry"
+        }
+      ],
+      "commented_sites": []
+    },
+    {
+      "path": "test-lean/typing_lemmas.lean",
+      "lines": 1865,
+      "raw_count": 13,
+      "live_count": 5,
+      "commented_out": 8,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 1505,
+          "decl_kind": "theorem",
+          "decl_name": "instrtype_sub_refl",
+          "decl_line": 1500,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1514,
+          "decl_kind": "theorem",
+          "decl_name": "instr_subtyping_weaken2",
+          "decl_line": 1507,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1523,
+          "decl_kind": "theorem",
+          "decl_name": "instrtype_sub_trans",
+          "decl_line": 1516,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1532,
+          "decl_kind": "theorem",
+          "decl_name": "instr_subtyping_strengthen2",
+          "decl_line": 1525,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1865,
+          "decl_kind": "theorem",
+          "decl_name": "ais_single_typing_inversion",
+          "decl_line": 1682,
+          "text": "sorry"
+        }
+      ],
+      "commented_sites": [
+        {
+          "token": "sorry",
+          "line": 1083,
+          "text": "-- case mpr => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1209,
+          "text": "--   sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1210,
+          "text": "-- case label => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1211,
+          "text": "-- case frame => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1212,
+          "text": "-- case call_addr => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1213,
+          "text": "-- case ref => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1214,
+          "text": "-- case trap => sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1863,
+          "text": "--   sorry"
+        }
+      ]
+    },
+    {
+      "path": "test-lean/wasm2.0.lean",
+      "lines": 10385,
+      "raw_count": 158,
+      "live_count": 158,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 302,
+          "decl_kind": "theorem",
+          "decl_name": "fzero_is_wf",
+          "decl_line": 299,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 312,
+          "decl_kind": "theorem",
+          "decl_name": "fone_is_wf",
+          "decl_line": 309,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 365,
+          "decl_kind": "theorem",
+          "decl_name": "utf8_is_wf",
+          "decl_line": 360,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 877,
+          "decl_kind": "theorem",
+          "decl_name": "zero_is_wf",
+          "decl_line": 874,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1243,
+          "decl_kind": "theorem",
+          "decl_name": "dim_is_wf",
+          "decl_line": 1239,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2178,
+          "decl_kind": "theorem",
+          "decl_name": "concat_bytes_is_wf",
+          "decl_line": 2173,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2234,
+          "decl_kind": "theorem",
+          "decl_name": "tablesxt_is_wf",
+          "decl_line": 2229,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2253,
+          "decl_kind": "theorem",
+          "decl_name": "memsxt_is_wf",
+          "decl_line": 2248,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2267,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instr_is_wf",
+          "decl_line": 2263,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2283,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instrs_is_wf",
+          "decl_line": 2278,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2298,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_expr_is_wf",
+          "decl_line": 2293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2313,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_func_is_wf",
+          "decl_line": 2308,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2330,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_funcs_is_wf",
+          "decl_line": 2325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2343,
+          "decl_kind": "theorem",
+          "decl_name": "memarg0_is_wf",
+          "decl_line": 2340,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2357,
+          "decl_kind": "theorem",
+          "decl_name": "s33_to_u32_is_wf",
+          "decl_line": 2353,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2432,
+          "decl_kind": "theorem",
+          "decl_name": "extend___is_wf",
+          "decl_line": 2428,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2446,
+          "decl_kind": "theorem",
+          "decl_name": "fabs__is_wf",
+          "decl_line": 2442,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2460,
+          "decl_kind": "theorem",
+          "decl_name": "fceil__is_wf",
+          "decl_line": 2456,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2474,
+          "decl_kind": "theorem",
+          "decl_name": "ffloor__is_wf",
+          "decl_line": 2470,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2488,
+          "decl_kind": "theorem",
+          "decl_name": "fnearest__is_wf",
+          "decl_line": 2484,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2502,
+          "decl_kind": "theorem",
+          "decl_name": "fneg__is_wf",
+          "decl_line": 2498,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2516,
+          "decl_kind": "theorem",
+          "decl_name": "fsqrt__is_wf",
+          "decl_line": 2512,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2530,
+          "decl_kind": "theorem",
+          "decl_name": "ftrunc__is_wf",
+          "decl_line": 2526,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2544,
+          "decl_kind": "theorem",
+          "decl_name": "iclz__is_wf",
+          "decl_line": 2540,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2558,
+          "decl_kind": "theorem",
+          "decl_name": "ictz__is_wf",
+          "decl_line": 2554,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2572,
+          "decl_kind": "theorem",
+          "decl_name": "ipopcnt__is_wf",
+          "decl_line": 2568,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2586,
+          "decl_kind": "theorem",
+          "decl_name": "wrap___is_wf",
+          "decl_line": 2582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2621,
+          "decl_kind": "theorem",
+          "decl_name": "unop__is_wf",
+          "decl_line": 2616,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2636,
+          "decl_kind": "theorem",
+          "decl_name": "fadd__is_wf",
+          "decl_line": 2631,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2651,
+          "decl_kind": "theorem",
+          "decl_name": "fcopysign__is_wf",
+          "decl_line": 2646,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2666,
+          "decl_kind": "theorem",
+          "decl_name": "fdiv__is_wf",
+          "decl_line": 2661,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2681,
+          "decl_kind": "theorem",
+          "decl_name": "fmax__is_wf",
+          "decl_line": 2676,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2696,
+          "decl_kind": "theorem",
+          "decl_name": "fmin__is_wf",
+          "decl_line": 2691,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2711,
+          "decl_kind": "theorem",
+          "decl_name": "fmul__is_wf",
+          "decl_line": 2706,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2726,
+          "decl_kind": "theorem",
+          "decl_name": "fsub__is_wf",
+          "decl_line": 2721,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2738,
+          "decl_kind": "theorem",
+          "decl_name": "iadd__is_wf",
+          "decl_line": 2733,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2753,
+          "decl_kind": "theorem",
+          "decl_name": "iand__is_wf",
+          "decl_line": 2748,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2779,
+          "decl_kind": "theorem",
+          "decl_name": "idiv__is_wf",
+          "decl_line": 2773,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2791,
+          "decl_kind": "theorem",
+          "decl_name": "imul__is_wf",
+          "decl_line": 2786,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2806,
+          "decl_kind": "theorem",
+          "decl_name": "ior__is_wf",
+          "decl_line": 2801,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2828,
+          "decl_kind": "theorem",
+          "decl_name": "irem__is_wf",
+          "decl_line": 2822,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2843,
+          "decl_kind": "theorem",
+          "decl_name": "irotl__is_wf",
+          "decl_line": 2838,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2858,
+          "decl_kind": "theorem",
+          "decl_name": "irotr__is_wf",
+          "decl_line": 2853,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2873,
+          "decl_kind": "theorem",
+          "decl_name": "ishl__is_wf",
+          "decl_line": 2868,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2888,
+          "decl_kind": "theorem",
+          "decl_name": "ishr__is_wf",
+          "decl_line": 2883,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2900,
+          "decl_kind": "theorem",
+          "decl_name": "isub__is_wf",
+          "decl_line": 2895,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2915,
+          "decl_kind": "theorem",
+          "decl_name": "ixor__is_wf",
+          "decl_line": 2910,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2975,
+          "decl_kind": "theorem",
+          "decl_name": "binop__is_wf",
+          "decl_line": 2968,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2986,
+          "decl_kind": "theorem",
+          "decl_name": "ieqz__is_wf",
+          "decl_line": 2982,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3001,
+          "decl_kind": "theorem",
+          "decl_name": "testop__is_wf",
+          "decl_line": 2996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3016,
+          "decl_kind": "theorem",
+          "decl_name": "feq__is_wf",
+          "decl_line": 3011,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3031,
+          "decl_kind": "theorem",
+          "decl_name": "fge__is_wf",
+          "decl_line": 3026,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3046,
+          "decl_kind": "theorem",
+          "decl_name": "fgt__is_wf",
+          "decl_line": 3041,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3061,
+          "decl_kind": "theorem",
+          "decl_name": "fle__is_wf",
+          "decl_line": 3056,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3076,
+          "decl_kind": "theorem",
+          "decl_name": "flt__is_wf",
+          "decl_line": 3071,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3091,
+          "decl_kind": "theorem",
+          "decl_name": "fne__is_wf",
+          "decl_line": 3086,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3103,
+          "decl_kind": "theorem",
+          "decl_name": "ieq__is_wf",
+          "decl_line": 3098,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3121,
+          "decl_kind": "theorem",
+          "decl_name": "ige__is_wf",
+          "decl_line": 3115,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3139,
+          "decl_kind": "theorem",
+          "decl_name": "igt__is_wf",
+          "decl_line": 3133,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3157,
+          "decl_kind": "theorem",
+          "decl_name": "ile__is_wf",
+          "decl_line": 3151,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3175,
+          "decl_kind": "theorem",
+          "decl_name": "ilt__is_wf",
+          "decl_line": 3169,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3187,
+          "decl_kind": "theorem",
+          "decl_name": "ine__is_wf",
+          "decl_line": 3182,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3241,
+          "decl_kind": "theorem",
+          "decl_name": "relop__is_wf",
+          "decl_line": 3234,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3255,
+          "decl_kind": "theorem",
+          "decl_name": "convert___is_wf",
+          "decl_line": 3251,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3269,
+          "decl_kind": "theorem",
+          "decl_name": "demote___is_wf",
+          "decl_line": 3265,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3283,
+          "decl_kind": "theorem",
+          "decl_name": "promote___is_wf",
+          "decl_line": 3279,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3297,
+          "decl_kind": "theorem",
+          "decl_name": "reinterpret___is_wf",
+          "decl_line": 3293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3311,
+          "decl_kind": "theorem",
+          "decl_name": "trunc___is_wf",
+          "decl_line": 3307,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3325,
+          "decl_kind": "theorem",
+          "decl_name": "trunc_sat___is_wf",
+          "decl_line": 3321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3406,
+          "decl_kind": "theorem",
+          "decl_name": "cvtop___is_wf",
+          "decl_line": 3400,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3420,
+          "decl_kind": "theorem",
+          "decl_name": "narrow___is_wf",
+          "decl_line": 3416,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3434,
+          "decl_kind": "theorem",
+          "decl_name": "ibits__is_wf",
+          "decl_line": 3430,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3448,
+          "decl_kind": "theorem",
+          "decl_name": "fbits__is_wf",
+          "decl_line": 3444,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3462,
+          "decl_kind": "theorem",
+          "decl_name": "ibytes__is_wf",
+          "decl_line": 3458,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3476,
+          "decl_kind": "theorem",
+          "decl_name": "fbytes__is_wf",
+          "decl_line": 3472,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3490,
+          "decl_kind": "theorem",
+          "decl_name": "nbytes__is_wf",
+          "decl_line": 3486,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3505,
+          "decl_kind": "theorem",
+          "decl_name": "vbytes__is_wf",
+          "decl_line": 3500,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3519,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibits__is_wf",
+          "decl_line": 3515,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3533,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbits__is_wf",
+          "decl_line": 3529,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3547,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibytes__is_wf",
+          "decl_line": 3543,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3561,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbytes__is_wf",
+          "decl_line": 3557,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3575,
+          "decl_kind": "theorem",
+          "decl_name": "inv_nbytes__is_wf",
+          "decl_line": 3571,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3590,
+          "decl_kind": "theorem",
+          "decl_name": "inv_vbytes__is_wf",
+          "decl_line": 3585,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3604,
+          "decl_kind": "theorem",
+          "decl_name": "inot__is_wf",
+          "decl_line": 3600,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3618,
+          "decl_kind": "theorem",
+          "decl_name": "irev__is_wf",
+          "decl_line": 3614,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3633,
+          "decl_kind": "theorem",
+          "decl_name": "iandnot__is_wf",
+          "decl_line": 3628,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3644,
+          "decl_kind": "theorem",
+          "decl_name": "inez__is_wf",
+          "decl_line": 3640,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3660,
+          "decl_kind": "theorem",
+          "decl_name": "ibitselect__is_wf",
+          "decl_line": 3654,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3671,
+          "decl_kind": "theorem",
+          "decl_name": "ineg__is_wf",
+          "decl_line": 3667,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3691,
+          "decl_kind": "theorem",
+          "decl_name": "iabs__is_wf",
+          "decl_line": 3686,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3719,
+          "decl_kind": "theorem",
+          "decl_name": "imin__is_wf",
+          "decl_line": 3713,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3747,
+          "decl_kind": "theorem",
+          "decl_name": "imax__is_wf",
+          "decl_line": 3741,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3766,
+          "decl_kind": "theorem",
+          "decl_name": "iadd_sat__is_wf",
+          "decl_line": 3760,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3785,
+          "decl_kind": "theorem",
+          "decl_name": "isub_sat__is_wf",
+          "decl_line": 3779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3800,
+          "decl_kind": "theorem",
+          "decl_name": "iavgr__is_wf",
+          "decl_line": 3795,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3815,
+          "decl_kind": "theorem",
+          "decl_name": "iq15mulr_sat__is_wf",
+          "decl_line": 3810,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3830,
+          "decl_kind": "theorem",
+          "decl_name": "fpmin__is_wf",
+          "decl_line": 3825,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3845,
+          "decl_kind": "theorem",
+          "decl_name": "fpmax__is_wf",
+          "decl_line": 3840,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3863,
+          "decl_kind": "theorem",
+          "decl_name": "packnum__is_wf",
+          "decl_line": 3859,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3881,
+          "decl_kind": "theorem",
+          "decl_name": "unpacknum__is_wf",
+          "decl_line": 3877,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3896,
+          "decl_kind": "theorem",
+          "decl_name": "lanes__is_wf",
+          "decl_line": 3891,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3911,
+          "decl_kind": "theorem",
+          "decl_name": "inv_lanes__is_wf",
+          "decl_line": 3906,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3948,
+          "decl_kind": "theorem",
+          "decl_name": "vvunop__is_wf",
+          "decl_line": 3943,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3965,
+          "decl_kind": "theorem",
+          "decl_name": "vvbinop__is_wf",
+          "decl_line": 3959,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3980,
+          "decl_kind": "theorem",
+          "decl_name": "vvternop__is_wf",
+          "decl_line": 3973,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4230,
+          "decl_kind": "theorem",
+          "decl_name": "vunop__is_wf",
+          "decl_line": 4223,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4953,
+          "decl_kind": "theorem",
+          "decl_name": "vbinop__is_wf",
+          "decl_line": 4945,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5672,
+          "decl_kind": "theorem",
+          "decl_name": "vrelop__is_wf",
+          "decl_line": 5664,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5758,
+          "decl_kind": "theorem",
+          "decl_name": "vcvtop___is_wf",
+          "decl_line": 5752,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5821,
+          "decl_kind": "theorem",
+          "decl_name": "vextunop___is_wf",
+          "decl_line": 5813,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5969,
+          "decl_kind": "theorem",
+          "decl_name": "vextbinop___is_wf",
+          "decl_line": 5960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5994,
+          "decl_kind": "theorem",
+          "decl_name": "vshiftop__is_wf",
+          "decl_line": 5986,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6727,
+          "decl_kind": "theorem",
+          "decl_name": "default__is_wf",
+          "decl_line": 6723,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6783,
+          "decl_kind": "theorem",
+          "decl_name": "store_is_wf",
+          "decl_line": 6779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6795,
+          "decl_kind": "theorem",
+          "decl_name": "frame_is_wf",
+          "decl_line": 6791,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6812,
+          "decl_kind": "theorem",
+          "decl_name": "funcinst_is_wf",
+          "decl_line": 6808,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6824,
+          "decl_kind": "theorem",
+          "decl_name": "globalinst_is_wf",
+          "decl_line": 6820,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6836,
+          "decl_kind": "theorem",
+          "decl_name": "tableinst_is_wf",
+          "decl_line": 6832,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6848,
+          "decl_kind": "theorem",
+          "decl_name": "meminst_is_wf",
+          "decl_line": 6844,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6865,
+          "decl_kind": "theorem",
+          "decl_name": "datainst_is_wf",
+          "decl_line": 6861,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6877,
+          "decl_kind": "theorem",
+          "decl_name": "moduleinst_is_wf",
+          "decl_line": 6873,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6895,
+          "decl_kind": "theorem",
+          "decl_name": "func_is_wf",
+          "decl_line": 6890,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6908,
+          "decl_kind": "theorem",
+          "decl_name": "global_is_wf",
+          "decl_line": 6903,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6921,
+          "decl_kind": "theorem",
+          "decl_name": "table_is_wf",
+          "decl_line": 6916,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6934,
+          "decl_kind": "theorem",
+          "decl_name": "mem_is_wf",
+          "decl_line": 6929,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6952,
+          "decl_kind": "theorem",
+          "decl_name": "data_is_wf",
+          "decl_line": 6947,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6965,
+          "decl_kind": "theorem",
+          "decl_name": "local_is_wf",
+          "decl_line": 6960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6982,
+          "decl_kind": "theorem",
+          "decl_name": "with_local_is_wf",
+          "decl_line": 6976,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7002,
+          "decl_kind": "theorem",
+          "decl_name": "with_global_is_wf",
+          "decl_line": 6996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7021,
+          "decl_kind": "theorem",
+          "decl_name": "with_table_is_wf",
+          "decl_line": 7016,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7038,
+          "decl_kind": "theorem",
+          "decl_name": "with_tableinst_is_wf",
+          "decl_line": 7032,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7058,
+          "decl_kind": "theorem",
+          "decl_name": "with_mem_is_wf",
+          "decl_line": 7052,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7075,
+          "decl_kind": "theorem",
+          "decl_name": "with_meminst_is_wf",
+          "decl_line": 7069,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7094,
+          "decl_kind": "theorem",
+          "decl_name": "with_elem_is_wf",
+          "decl_line": 7089,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7114,
+          "decl_kind": "theorem",
+          "decl_name": "with_data_is_wf",
+          "decl_line": 7108,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7174,
+          "decl_kind": "theorem",
+          "decl_name": "growtable_is_wf",
+          "decl_line": 7168,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7234,
+          "decl_kind": "theorem",
+          "decl_name": "growmemory_is_wf",
+          "decl_line": 7228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8614,
+          "decl_kind": "theorem",
+          "decl_name": "Step_pure_is_wf",
+          "decl_line": 8610,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9006,
+          "decl_kind": "theorem",
+          "decl_name": "Step_read_is_wf",
+          "decl_line": 9002,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9115,
+          "decl_kind": "theorem",
+          "decl_name": "Step_is_wf",
+          "decl_line": 9111,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9214,
+          "decl_kind": "theorem",
+          "decl_name": "allocfunc_is_wf",
+          "decl_line": 9207,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9235,
+          "decl_kind": "theorem",
+          "decl_name": "allocfuncs_is_wf",
+          "decl_line": 9228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9261,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobal_is_wf",
+          "decl_line": 9255,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9281,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobals_is_wf",
+          "decl_line": 9275,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9307,
+          "decl_kind": "theorem",
+          "decl_name": "alloctable_is_wf",
+          "decl_line": 9301,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9327,
+          "decl_kind": "theorem",
+          "decl_name": "alloctables_is_wf",
+          "decl_line": 9321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9353,
+          "decl_kind": "theorem",
+          "decl_name": "allocmem_is_wf",
+          "decl_line": 9347,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9373,
+          "decl_kind": "theorem",
+          "decl_name": "allocmems_is_wf",
+          "decl_line": 9367,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9394,
+          "decl_kind": "theorem",
+          "decl_name": "allocelem_is_wf",
+          "decl_line": 9389,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9413,
+          "decl_kind": "theorem",
+          "decl_name": "allocelems_is_wf",
+          "decl_line": 9408,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9437,
+          "decl_kind": "theorem",
+          "decl_name": "allocdata_is_wf",
+          "decl_line": 9431,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9457,
+          "decl_kind": "theorem",
+          "decl_name": "allocdatas_is_wf",
+          "decl_line": 9451,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9484,
+          "decl_kind": "theorem",
+          "decl_name": "instexport_is_wf",
+          "decl_line": 9480,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9555,
+          "decl_kind": "theorem",
+          "decl_name": "allocmodule_is_wf",
+          "decl_line": 9547,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9571,
+          "decl_kind": "theorem",
+          "decl_name": "runelem_is_wf",
+          "decl_line": 9566,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9588,
+          "decl_kind": "theorem",
+          "decl_name": "rundata_is_wf",
+          "decl_line": 9582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9675,
+          "decl_kind": "theorem",
+          "decl_name": "instantiate_is_wf",
+          "decl_line": 9669,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9720,
+          "decl_kind": "theorem",
+          "decl_name": "invoke_is_wf",
+          "decl_line": 9714,
+          "text": "sorry"
+        }
+      ],
+      "commented_sites": []
+    },
+    {
+      "path": "test-lean/wasm2.0_OLD2.lean",
+      "lines": 10385,
+      "raw_count": 158,
+      "live_count": 158,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 302,
+          "decl_kind": "theorem",
+          "decl_name": "fzero_is_wf",
+          "decl_line": 299,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 312,
+          "decl_kind": "theorem",
+          "decl_name": "fone_is_wf",
+          "decl_line": 309,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 365,
+          "decl_kind": "theorem",
+          "decl_name": "utf8_is_wf",
+          "decl_line": 360,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 877,
+          "decl_kind": "theorem",
+          "decl_name": "zero_is_wf",
+          "decl_line": 874,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1243,
+          "decl_kind": "theorem",
+          "decl_name": "dim_is_wf",
+          "decl_line": 1239,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2178,
+          "decl_kind": "theorem",
+          "decl_name": "concat_bytes_is_wf",
+          "decl_line": 2173,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2234,
+          "decl_kind": "theorem",
+          "decl_name": "tablesxt_is_wf",
+          "decl_line": 2229,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2253,
+          "decl_kind": "theorem",
+          "decl_name": "memsxt_is_wf",
+          "decl_line": 2248,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2267,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instr_is_wf",
+          "decl_line": 2263,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2283,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instrs_is_wf",
+          "decl_line": 2278,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2298,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_expr_is_wf",
+          "decl_line": 2293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2313,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_func_is_wf",
+          "decl_line": 2308,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2330,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_funcs_is_wf",
+          "decl_line": 2325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2343,
+          "decl_kind": "theorem",
+          "decl_name": "memarg0_is_wf",
+          "decl_line": 2340,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2357,
+          "decl_kind": "theorem",
+          "decl_name": "s33_to_u32_is_wf",
+          "decl_line": 2353,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2432,
+          "decl_kind": "theorem",
+          "decl_name": "extend___is_wf",
+          "decl_line": 2428,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2446,
+          "decl_kind": "theorem",
+          "decl_name": "fabs__is_wf",
+          "decl_line": 2442,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2460,
+          "decl_kind": "theorem",
+          "decl_name": "fceil__is_wf",
+          "decl_line": 2456,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2474,
+          "decl_kind": "theorem",
+          "decl_name": "ffloor__is_wf",
+          "decl_line": 2470,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2488,
+          "decl_kind": "theorem",
+          "decl_name": "fnearest__is_wf",
+          "decl_line": 2484,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2502,
+          "decl_kind": "theorem",
+          "decl_name": "fneg__is_wf",
+          "decl_line": 2498,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2516,
+          "decl_kind": "theorem",
+          "decl_name": "fsqrt__is_wf",
+          "decl_line": 2512,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2530,
+          "decl_kind": "theorem",
+          "decl_name": "ftrunc__is_wf",
+          "decl_line": 2526,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2544,
+          "decl_kind": "theorem",
+          "decl_name": "iclz__is_wf",
+          "decl_line": 2540,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2558,
+          "decl_kind": "theorem",
+          "decl_name": "ictz__is_wf",
+          "decl_line": 2554,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2572,
+          "decl_kind": "theorem",
+          "decl_name": "ipopcnt__is_wf",
+          "decl_line": 2568,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2586,
+          "decl_kind": "theorem",
+          "decl_name": "wrap___is_wf",
+          "decl_line": 2582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2621,
+          "decl_kind": "theorem",
+          "decl_name": "unop__is_wf",
+          "decl_line": 2616,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2636,
+          "decl_kind": "theorem",
+          "decl_name": "fadd__is_wf",
+          "decl_line": 2631,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2651,
+          "decl_kind": "theorem",
+          "decl_name": "fcopysign__is_wf",
+          "decl_line": 2646,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2666,
+          "decl_kind": "theorem",
+          "decl_name": "fdiv__is_wf",
+          "decl_line": 2661,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2681,
+          "decl_kind": "theorem",
+          "decl_name": "fmax__is_wf",
+          "decl_line": 2676,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2696,
+          "decl_kind": "theorem",
+          "decl_name": "fmin__is_wf",
+          "decl_line": 2691,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2711,
+          "decl_kind": "theorem",
+          "decl_name": "fmul__is_wf",
+          "decl_line": 2706,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2726,
+          "decl_kind": "theorem",
+          "decl_name": "fsub__is_wf",
+          "decl_line": 2721,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2738,
+          "decl_kind": "theorem",
+          "decl_name": "iadd__is_wf",
+          "decl_line": 2733,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2753,
+          "decl_kind": "theorem",
+          "decl_name": "iand__is_wf",
+          "decl_line": 2748,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2779,
+          "decl_kind": "theorem",
+          "decl_name": "idiv__is_wf",
+          "decl_line": 2773,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2791,
+          "decl_kind": "theorem",
+          "decl_name": "imul__is_wf",
+          "decl_line": 2786,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2806,
+          "decl_kind": "theorem",
+          "decl_name": "ior__is_wf",
+          "decl_line": 2801,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2828,
+          "decl_kind": "theorem",
+          "decl_name": "irem__is_wf",
+          "decl_line": 2822,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2843,
+          "decl_kind": "theorem",
+          "decl_name": "irotl__is_wf",
+          "decl_line": 2838,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2858,
+          "decl_kind": "theorem",
+          "decl_name": "irotr__is_wf",
+          "decl_line": 2853,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2873,
+          "decl_kind": "theorem",
+          "decl_name": "ishl__is_wf",
+          "decl_line": 2868,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2888,
+          "decl_kind": "theorem",
+          "decl_name": "ishr__is_wf",
+          "decl_line": 2883,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2900,
+          "decl_kind": "theorem",
+          "decl_name": "isub__is_wf",
+          "decl_line": 2895,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2915,
+          "decl_kind": "theorem",
+          "decl_name": "ixor__is_wf",
+          "decl_line": 2910,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2975,
+          "decl_kind": "theorem",
+          "decl_name": "binop__is_wf",
+          "decl_line": 2968,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2986,
+          "decl_kind": "theorem",
+          "decl_name": "ieqz__is_wf",
+          "decl_line": 2982,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3001,
+          "decl_kind": "theorem",
+          "decl_name": "testop__is_wf",
+          "decl_line": 2996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3016,
+          "decl_kind": "theorem",
+          "decl_name": "feq__is_wf",
+          "decl_line": 3011,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3031,
+          "decl_kind": "theorem",
+          "decl_name": "fge__is_wf",
+          "decl_line": 3026,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3046,
+          "decl_kind": "theorem",
+          "decl_name": "fgt__is_wf",
+          "decl_line": 3041,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3061,
+          "decl_kind": "theorem",
+          "decl_name": "fle__is_wf",
+          "decl_line": 3056,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3076,
+          "decl_kind": "theorem",
+          "decl_name": "flt__is_wf",
+          "decl_line": 3071,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3091,
+          "decl_kind": "theorem",
+          "decl_name": "fne__is_wf",
+          "decl_line": 3086,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3103,
+          "decl_kind": "theorem",
+          "decl_name": "ieq__is_wf",
+          "decl_line": 3098,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3121,
+          "decl_kind": "theorem",
+          "decl_name": "ige__is_wf",
+          "decl_line": 3115,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3139,
+          "decl_kind": "theorem",
+          "decl_name": "igt__is_wf",
+          "decl_line": 3133,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3157,
+          "decl_kind": "theorem",
+          "decl_name": "ile__is_wf",
+          "decl_line": 3151,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3175,
+          "decl_kind": "theorem",
+          "decl_name": "ilt__is_wf",
+          "decl_line": 3169,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3187,
+          "decl_kind": "theorem",
+          "decl_name": "ine__is_wf",
+          "decl_line": 3182,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3241,
+          "decl_kind": "theorem",
+          "decl_name": "relop__is_wf",
+          "decl_line": 3234,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3255,
+          "decl_kind": "theorem",
+          "decl_name": "convert___is_wf",
+          "decl_line": 3251,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3269,
+          "decl_kind": "theorem",
+          "decl_name": "demote___is_wf",
+          "decl_line": 3265,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3283,
+          "decl_kind": "theorem",
+          "decl_name": "promote___is_wf",
+          "decl_line": 3279,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3297,
+          "decl_kind": "theorem",
+          "decl_name": "reinterpret___is_wf",
+          "decl_line": 3293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3311,
+          "decl_kind": "theorem",
+          "decl_name": "trunc___is_wf",
+          "decl_line": 3307,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3325,
+          "decl_kind": "theorem",
+          "decl_name": "trunc_sat___is_wf",
+          "decl_line": 3321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3406,
+          "decl_kind": "theorem",
+          "decl_name": "cvtop___is_wf",
+          "decl_line": 3400,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3420,
+          "decl_kind": "theorem",
+          "decl_name": "narrow___is_wf",
+          "decl_line": 3416,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3434,
+          "decl_kind": "theorem",
+          "decl_name": "ibits__is_wf",
+          "decl_line": 3430,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3448,
+          "decl_kind": "theorem",
+          "decl_name": "fbits__is_wf",
+          "decl_line": 3444,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3462,
+          "decl_kind": "theorem",
+          "decl_name": "ibytes__is_wf",
+          "decl_line": 3458,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3476,
+          "decl_kind": "theorem",
+          "decl_name": "fbytes__is_wf",
+          "decl_line": 3472,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3490,
+          "decl_kind": "theorem",
+          "decl_name": "nbytes__is_wf",
+          "decl_line": 3486,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3505,
+          "decl_kind": "theorem",
+          "decl_name": "vbytes__is_wf",
+          "decl_line": 3500,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3519,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibits__is_wf",
+          "decl_line": 3515,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3533,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbits__is_wf",
+          "decl_line": 3529,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3547,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibytes__is_wf",
+          "decl_line": 3543,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3561,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbytes__is_wf",
+          "decl_line": 3557,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3575,
+          "decl_kind": "theorem",
+          "decl_name": "inv_nbytes__is_wf",
+          "decl_line": 3571,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3590,
+          "decl_kind": "theorem",
+          "decl_name": "inv_vbytes__is_wf",
+          "decl_line": 3585,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3604,
+          "decl_kind": "theorem",
+          "decl_name": "inot__is_wf",
+          "decl_line": 3600,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3618,
+          "decl_kind": "theorem",
+          "decl_name": "irev__is_wf",
+          "decl_line": 3614,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3633,
+          "decl_kind": "theorem",
+          "decl_name": "iandnot__is_wf",
+          "decl_line": 3628,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3644,
+          "decl_kind": "theorem",
+          "decl_name": "inez__is_wf",
+          "decl_line": 3640,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3660,
+          "decl_kind": "theorem",
+          "decl_name": "ibitselect__is_wf",
+          "decl_line": 3654,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3671,
+          "decl_kind": "theorem",
+          "decl_name": "ineg__is_wf",
+          "decl_line": 3667,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3691,
+          "decl_kind": "theorem",
+          "decl_name": "iabs__is_wf",
+          "decl_line": 3686,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3719,
+          "decl_kind": "theorem",
+          "decl_name": "imin__is_wf",
+          "decl_line": 3713,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3747,
+          "decl_kind": "theorem",
+          "decl_name": "imax__is_wf",
+          "decl_line": 3741,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3766,
+          "decl_kind": "theorem",
+          "decl_name": "iadd_sat__is_wf",
+          "decl_line": 3760,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3785,
+          "decl_kind": "theorem",
+          "decl_name": "isub_sat__is_wf",
+          "decl_line": 3779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3800,
+          "decl_kind": "theorem",
+          "decl_name": "iavgr__is_wf",
+          "decl_line": 3795,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3815,
+          "decl_kind": "theorem",
+          "decl_name": "iq15mulr_sat__is_wf",
+          "decl_line": 3810,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3830,
+          "decl_kind": "theorem",
+          "decl_name": "fpmin__is_wf",
+          "decl_line": 3825,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3845,
+          "decl_kind": "theorem",
+          "decl_name": "fpmax__is_wf",
+          "decl_line": 3840,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3863,
+          "decl_kind": "theorem",
+          "decl_name": "packnum__is_wf",
+          "decl_line": 3859,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3881,
+          "decl_kind": "theorem",
+          "decl_name": "unpacknum__is_wf",
+          "decl_line": 3877,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3896,
+          "decl_kind": "theorem",
+          "decl_name": "lanes__is_wf",
+          "decl_line": 3891,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3911,
+          "decl_kind": "theorem",
+          "decl_name": "inv_lanes__is_wf",
+          "decl_line": 3906,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3948,
+          "decl_kind": "theorem",
+          "decl_name": "vvunop__is_wf",
+          "decl_line": 3943,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3965,
+          "decl_kind": "theorem",
+          "decl_name": "vvbinop__is_wf",
+          "decl_line": 3959,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3980,
+          "decl_kind": "theorem",
+          "decl_name": "vvternop__is_wf",
+          "decl_line": 3973,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4230,
+          "decl_kind": "theorem",
+          "decl_name": "vunop__is_wf",
+          "decl_line": 4223,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4953,
+          "decl_kind": "theorem",
+          "decl_name": "vbinop__is_wf",
+          "decl_line": 4945,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5672,
+          "decl_kind": "theorem",
+          "decl_name": "vrelop__is_wf",
+          "decl_line": 5664,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5758,
+          "decl_kind": "theorem",
+          "decl_name": "vcvtop___is_wf",
+          "decl_line": 5752,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5821,
+          "decl_kind": "theorem",
+          "decl_name": "vextunop___is_wf",
+          "decl_line": 5813,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5969,
+          "decl_kind": "theorem",
+          "decl_name": "vextbinop___is_wf",
+          "decl_line": 5960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5994,
+          "decl_kind": "theorem",
+          "decl_name": "vshiftop__is_wf",
+          "decl_line": 5986,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6727,
+          "decl_kind": "theorem",
+          "decl_name": "default__is_wf",
+          "decl_line": 6723,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6783,
+          "decl_kind": "theorem",
+          "decl_name": "store_is_wf",
+          "decl_line": 6779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6795,
+          "decl_kind": "theorem",
+          "decl_name": "frame_is_wf",
+          "decl_line": 6791,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6812,
+          "decl_kind": "theorem",
+          "decl_name": "funcinst_is_wf",
+          "decl_line": 6808,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6824,
+          "decl_kind": "theorem",
+          "decl_name": "globalinst_is_wf",
+          "decl_line": 6820,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6836,
+          "decl_kind": "theorem",
+          "decl_name": "tableinst_is_wf",
+          "decl_line": 6832,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6848,
+          "decl_kind": "theorem",
+          "decl_name": "meminst_is_wf",
+          "decl_line": 6844,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6865,
+          "decl_kind": "theorem",
+          "decl_name": "datainst_is_wf",
+          "decl_line": 6861,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6877,
+          "decl_kind": "theorem",
+          "decl_name": "moduleinst_is_wf",
+          "decl_line": 6873,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6895,
+          "decl_kind": "theorem",
+          "decl_name": "func_is_wf",
+          "decl_line": 6890,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6908,
+          "decl_kind": "theorem",
+          "decl_name": "global_is_wf",
+          "decl_line": 6903,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6921,
+          "decl_kind": "theorem",
+          "decl_name": "table_is_wf",
+          "decl_line": 6916,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6934,
+          "decl_kind": "theorem",
+          "decl_name": "mem_is_wf",
+          "decl_line": 6929,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6952,
+          "decl_kind": "theorem",
+          "decl_name": "data_is_wf",
+          "decl_line": 6947,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6965,
+          "decl_kind": "theorem",
+          "decl_name": "local_is_wf",
+          "decl_line": 6960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6982,
+          "decl_kind": "theorem",
+          "decl_name": "with_local_is_wf",
+          "decl_line": 6976,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7002,
+          "decl_kind": "theorem",
+          "decl_name": "with_global_is_wf",
+          "decl_line": 6996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7021,
+          "decl_kind": "theorem",
+          "decl_name": "with_table_is_wf",
+          "decl_line": 7016,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7038,
+          "decl_kind": "theorem",
+          "decl_name": "with_tableinst_is_wf",
+          "decl_line": 7032,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7058,
+          "decl_kind": "theorem",
+          "decl_name": "with_mem_is_wf",
+          "decl_line": 7052,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7075,
+          "decl_kind": "theorem",
+          "decl_name": "with_meminst_is_wf",
+          "decl_line": 7069,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7094,
+          "decl_kind": "theorem",
+          "decl_name": "with_elem_is_wf",
+          "decl_line": 7089,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7114,
+          "decl_kind": "theorem",
+          "decl_name": "with_data_is_wf",
+          "decl_line": 7108,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7174,
+          "decl_kind": "theorem",
+          "decl_name": "growtable_is_wf",
+          "decl_line": 7168,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7234,
+          "decl_kind": "theorem",
+          "decl_name": "growmemory_is_wf",
+          "decl_line": 7228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8614,
+          "decl_kind": "theorem",
+          "decl_name": "Step_pure_is_wf",
+          "decl_line": 8610,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9006,
+          "decl_kind": "theorem",
+          "decl_name": "Step_read_is_wf",
+          "decl_line": 9002,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9115,
+          "decl_kind": "theorem",
+          "decl_name": "Step_is_wf",
+          "decl_line": 9111,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9214,
+          "decl_kind": "theorem",
+          "decl_name": "allocfunc_is_wf",
+          "decl_line": 9207,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9235,
+          "decl_kind": "theorem",
+          "decl_name": "allocfuncs_is_wf",
+          "decl_line": 9228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9261,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobal_is_wf",
+          "decl_line": 9255,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9281,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobals_is_wf",
+          "decl_line": 9275,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9307,
+          "decl_kind": "theorem",
+          "decl_name": "alloctable_is_wf",
+          "decl_line": 9301,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9327,
+          "decl_kind": "theorem",
+          "decl_name": "alloctables_is_wf",
+          "decl_line": 9321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9353,
+          "decl_kind": "theorem",
+          "decl_name": "allocmem_is_wf",
+          "decl_line": 9347,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9373,
+          "decl_kind": "theorem",
+          "decl_name": "allocmems_is_wf",
+          "decl_line": 9367,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9394,
+          "decl_kind": "theorem",
+          "decl_name": "allocelem_is_wf",
+          "decl_line": 9389,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9413,
+          "decl_kind": "theorem",
+          "decl_name": "allocelems_is_wf",
+          "decl_line": 9408,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9437,
+          "decl_kind": "theorem",
+          "decl_name": "allocdata_is_wf",
+          "decl_line": 9431,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9457,
+          "decl_kind": "theorem",
+          "decl_name": "allocdatas_is_wf",
+          "decl_line": 9451,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9484,
+          "decl_kind": "theorem",
+          "decl_name": "instexport_is_wf",
+          "decl_line": 9480,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9555,
+          "decl_kind": "theorem",
+          "decl_name": "allocmodule_is_wf",
+          "decl_line": 9547,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9571,
+          "decl_kind": "theorem",
+          "decl_name": "runelem_is_wf",
+          "decl_line": 9566,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9588,
+          "decl_kind": "theorem",
+          "decl_name": "rundata_is_wf",
+          "decl_line": 9582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9675,
+          "decl_kind": "theorem",
+          "decl_name": "instantiate_is_wf",
+          "decl_line": 9669,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9720,
+          "decl_kind": "theorem",
+          "decl_name": "invoke_is_wf",
+          "decl_line": 9714,
+          "text": "sorry"
+        }
+      ],
+      "commented_sites": []
+    },
+    {
+      "path": "test-lean/wasm2.0_tier1.lean",
+      "lines": 10385,
+      "raw_count": 158,
+      "live_count": 158,
+      "commented_out": 0,
+      "obligations": [
+        {
+          "token": "sorry",
+          "line": 302,
+          "decl_kind": "theorem",
+          "decl_name": "fzero_is_wf",
+          "decl_line": 299,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 312,
+          "decl_kind": "theorem",
+          "decl_name": "fone_is_wf",
+          "decl_line": 309,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 365,
+          "decl_kind": "theorem",
+          "decl_name": "utf8_is_wf",
+          "decl_line": 360,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 877,
+          "decl_kind": "theorem",
+          "decl_name": "zero_is_wf",
+          "decl_line": 874,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 1243,
+          "decl_kind": "theorem",
+          "decl_name": "dim_is_wf",
+          "decl_line": 1239,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2178,
+          "decl_kind": "theorem",
+          "decl_name": "concat_bytes_is_wf",
+          "decl_line": 2173,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2234,
+          "decl_kind": "theorem",
+          "decl_name": "tablesxt_is_wf",
+          "decl_line": 2229,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2253,
+          "decl_kind": "theorem",
+          "decl_name": "memsxt_is_wf",
+          "decl_line": 2248,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2267,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instr_is_wf",
+          "decl_line": 2263,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2283,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_instrs_is_wf",
+          "decl_line": 2278,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2298,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_expr_is_wf",
+          "decl_line": 2293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2313,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_func_is_wf",
+          "decl_line": 2308,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2330,
+          "decl_kind": "theorem",
+          "decl_name": "dataidx_funcs_is_wf",
+          "decl_line": 2325,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2343,
+          "decl_kind": "theorem",
+          "decl_name": "memarg0_is_wf",
+          "decl_line": 2340,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2357,
+          "decl_kind": "theorem",
+          "decl_name": "s33_to_u32_is_wf",
+          "decl_line": 2353,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2432,
+          "decl_kind": "theorem",
+          "decl_name": "extend___is_wf",
+          "decl_line": 2428,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2446,
+          "decl_kind": "theorem",
+          "decl_name": "fabs__is_wf",
+          "decl_line": 2442,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2460,
+          "decl_kind": "theorem",
+          "decl_name": "fceil__is_wf",
+          "decl_line": 2456,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2474,
+          "decl_kind": "theorem",
+          "decl_name": "ffloor__is_wf",
+          "decl_line": 2470,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2488,
+          "decl_kind": "theorem",
+          "decl_name": "fnearest__is_wf",
+          "decl_line": 2484,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2502,
+          "decl_kind": "theorem",
+          "decl_name": "fneg__is_wf",
+          "decl_line": 2498,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2516,
+          "decl_kind": "theorem",
+          "decl_name": "fsqrt__is_wf",
+          "decl_line": 2512,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2530,
+          "decl_kind": "theorem",
+          "decl_name": "ftrunc__is_wf",
+          "decl_line": 2526,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2544,
+          "decl_kind": "theorem",
+          "decl_name": "iclz__is_wf",
+          "decl_line": 2540,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2558,
+          "decl_kind": "theorem",
+          "decl_name": "ictz__is_wf",
+          "decl_line": 2554,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2572,
+          "decl_kind": "theorem",
+          "decl_name": "ipopcnt__is_wf",
+          "decl_line": 2568,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2586,
+          "decl_kind": "theorem",
+          "decl_name": "wrap___is_wf",
+          "decl_line": 2582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2621,
+          "decl_kind": "theorem",
+          "decl_name": "unop__is_wf",
+          "decl_line": 2616,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2636,
+          "decl_kind": "theorem",
+          "decl_name": "fadd__is_wf",
+          "decl_line": 2631,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2651,
+          "decl_kind": "theorem",
+          "decl_name": "fcopysign__is_wf",
+          "decl_line": 2646,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2666,
+          "decl_kind": "theorem",
+          "decl_name": "fdiv__is_wf",
+          "decl_line": 2661,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2681,
+          "decl_kind": "theorem",
+          "decl_name": "fmax__is_wf",
+          "decl_line": 2676,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2696,
+          "decl_kind": "theorem",
+          "decl_name": "fmin__is_wf",
+          "decl_line": 2691,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2711,
+          "decl_kind": "theorem",
+          "decl_name": "fmul__is_wf",
+          "decl_line": 2706,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2726,
+          "decl_kind": "theorem",
+          "decl_name": "fsub__is_wf",
+          "decl_line": 2721,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2738,
+          "decl_kind": "theorem",
+          "decl_name": "iadd__is_wf",
+          "decl_line": 2733,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2753,
+          "decl_kind": "theorem",
+          "decl_name": "iand__is_wf",
+          "decl_line": 2748,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2779,
+          "decl_kind": "theorem",
+          "decl_name": "idiv__is_wf",
+          "decl_line": 2773,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2791,
+          "decl_kind": "theorem",
+          "decl_name": "imul__is_wf",
+          "decl_line": 2786,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2806,
+          "decl_kind": "theorem",
+          "decl_name": "ior__is_wf",
+          "decl_line": 2801,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2828,
+          "decl_kind": "theorem",
+          "decl_name": "irem__is_wf",
+          "decl_line": 2822,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2843,
+          "decl_kind": "theorem",
+          "decl_name": "irotl__is_wf",
+          "decl_line": 2838,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2858,
+          "decl_kind": "theorem",
+          "decl_name": "irotr__is_wf",
+          "decl_line": 2853,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2873,
+          "decl_kind": "theorem",
+          "decl_name": "ishl__is_wf",
+          "decl_line": 2868,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2888,
+          "decl_kind": "theorem",
+          "decl_name": "ishr__is_wf",
+          "decl_line": 2883,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2900,
+          "decl_kind": "theorem",
+          "decl_name": "isub__is_wf",
+          "decl_line": 2895,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2915,
+          "decl_kind": "theorem",
+          "decl_name": "ixor__is_wf",
+          "decl_line": 2910,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2975,
+          "decl_kind": "theorem",
+          "decl_name": "binop__is_wf",
+          "decl_line": 2968,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 2986,
+          "decl_kind": "theorem",
+          "decl_name": "ieqz__is_wf",
+          "decl_line": 2982,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3001,
+          "decl_kind": "theorem",
+          "decl_name": "testop__is_wf",
+          "decl_line": 2996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3016,
+          "decl_kind": "theorem",
+          "decl_name": "feq__is_wf",
+          "decl_line": 3011,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3031,
+          "decl_kind": "theorem",
+          "decl_name": "fge__is_wf",
+          "decl_line": 3026,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3046,
+          "decl_kind": "theorem",
+          "decl_name": "fgt__is_wf",
+          "decl_line": 3041,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3061,
+          "decl_kind": "theorem",
+          "decl_name": "fle__is_wf",
+          "decl_line": 3056,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3076,
+          "decl_kind": "theorem",
+          "decl_name": "flt__is_wf",
+          "decl_line": 3071,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3091,
+          "decl_kind": "theorem",
+          "decl_name": "fne__is_wf",
+          "decl_line": 3086,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3103,
+          "decl_kind": "theorem",
+          "decl_name": "ieq__is_wf",
+          "decl_line": 3098,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3121,
+          "decl_kind": "theorem",
+          "decl_name": "ige__is_wf",
+          "decl_line": 3115,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3139,
+          "decl_kind": "theorem",
+          "decl_name": "igt__is_wf",
+          "decl_line": 3133,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3157,
+          "decl_kind": "theorem",
+          "decl_name": "ile__is_wf",
+          "decl_line": 3151,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3175,
+          "decl_kind": "theorem",
+          "decl_name": "ilt__is_wf",
+          "decl_line": 3169,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3187,
+          "decl_kind": "theorem",
+          "decl_name": "ine__is_wf",
+          "decl_line": 3182,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3241,
+          "decl_kind": "theorem",
+          "decl_name": "relop__is_wf",
+          "decl_line": 3234,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3255,
+          "decl_kind": "theorem",
+          "decl_name": "convert___is_wf",
+          "decl_line": 3251,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3269,
+          "decl_kind": "theorem",
+          "decl_name": "demote___is_wf",
+          "decl_line": 3265,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3283,
+          "decl_kind": "theorem",
+          "decl_name": "promote___is_wf",
+          "decl_line": 3279,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3297,
+          "decl_kind": "theorem",
+          "decl_name": "reinterpret___is_wf",
+          "decl_line": 3293,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3311,
+          "decl_kind": "theorem",
+          "decl_name": "trunc___is_wf",
+          "decl_line": 3307,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3325,
+          "decl_kind": "theorem",
+          "decl_name": "trunc_sat___is_wf",
+          "decl_line": 3321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3406,
+          "decl_kind": "theorem",
+          "decl_name": "cvtop___is_wf",
+          "decl_line": 3400,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3420,
+          "decl_kind": "theorem",
+          "decl_name": "narrow___is_wf",
+          "decl_line": 3416,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3434,
+          "decl_kind": "theorem",
+          "decl_name": "ibits__is_wf",
+          "decl_line": 3430,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3448,
+          "decl_kind": "theorem",
+          "decl_name": "fbits__is_wf",
+          "decl_line": 3444,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3462,
+          "decl_kind": "theorem",
+          "decl_name": "ibytes__is_wf",
+          "decl_line": 3458,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3476,
+          "decl_kind": "theorem",
+          "decl_name": "fbytes__is_wf",
+          "decl_line": 3472,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3490,
+          "decl_kind": "theorem",
+          "decl_name": "nbytes__is_wf",
+          "decl_line": 3486,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3505,
+          "decl_kind": "theorem",
+          "decl_name": "vbytes__is_wf",
+          "decl_line": 3500,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3519,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibits__is_wf",
+          "decl_line": 3515,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3533,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbits__is_wf",
+          "decl_line": 3529,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3547,
+          "decl_kind": "theorem",
+          "decl_name": "inv_ibytes__is_wf",
+          "decl_line": 3543,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3561,
+          "decl_kind": "theorem",
+          "decl_name": "inv_fbytes__is_wf",
+          "decl_line": 3557,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3575,
+          "decl_kind": "theorem",
+          "decl_name": "inv_nbytes__is_wf",
+          "decl_line": 3571,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3590,
+          "decl_kind": "theorem",
+          "decl_name": "inv_vbytes__is_wf",
+          "decl_line": 3585,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3604,
+          "decl_kind": "theorem",
+          "decl_name": "inot__is_wf",
+          "decl_line": 3600,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3618,
+          "decl_kind": "theorem",
+          "decl_name": "irev__is_wf",
+          "decl_line": 3614,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3633,
+          "decl_kind": "theorem",
+          "decl_name": "iandnot__is_wf",
+          "decl_line": 3628,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3644,
+          "decl_kind": "theorem",
+          "decl_name": "inez__is_wf",
+          "decl_line": 3640,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3660,
+          "decl_kind": "theorem",
+          "decl_name": "ibitselect__is_wf",
+          "decl_line": 3654,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3671,
+          "decl_kind": "theorem",
+          "decl_name": "ineg__is_wf",
+          "decl_line": 3667,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3691,
+          "decl_kind": "theorem",
+          "decl_name": "iabs__is_wf",
+          "decl_line": 3686,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3719,
+          "decl_kind": "theorem",
+          "decl_name": "imin__is_wf",
+          "decl_line": 3713,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3747,
+          "decl_kind": "theorem",
+          "decl_name": "imax__is_wf",
+          "decl_line": 3741,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3766,
+          "decl_kind": "theorem",
+          "decl_name": "iadd_sat__is_wf",
+          "decl_line": 3760,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3785,
+          "decl_kind": "theorem",
+          "decl_name": "isub_sat__is_wf",
+          "decl_line": 3779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3800,
+          "decl_kind": "theorem",
+          "decl_name": "iavgr__is_wf",
+          "decl_line": 3795,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3815,
+          "decl_kind": "theorem",
+          "decl_name": "iq15mulr_sat__is_wf",
+          "decl_line": 3810,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3830,
+          "decl_kind": "theorem",
+          "decl_name": "fpmin__is_wf",
+          "decl_line": 3825,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3845,
+          "decl_kind": "theorem",
+          "decl_name": "fpmax__is_wf",
+          "decl_line": 3840,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3863,
+          "decl_kind": "theorem",
+          "decl_name": "packnum__is_wf",
+          "decl_line": 3859,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3881,
+          "decl_kind": "theorem",
+          "decl_name": "unpacknum__is_wf",
+          "decl_line": 3877,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3896,
+          "decl_kind": "theorem",
+          "decl_name": "lanes__is_wf",
+          "decl_line": 3891,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3911,
+          "decl_kind": "theorem",
+          "decl_name": "inv_lanes__is_wf",
+          "decl_line": 3906,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3948,
+          "decl_kind": "theorem",
+          "decl_name": "vvunop__is_wf",
+          "decl_line": 3943,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3965,
+          "decl_kind": "theorem",
+          "decl_name": "vvbinop__is_wf",
+          "decl_line": 3959,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 3980,
+          "decl_kind": "theorem",
+          "decl_name": "vvternop__is_wf",
+          "decl_line": 3973,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4230,
+          "decl_kind": "theorem",
+          "decl_name": "vunop__is_wf",
+          "decl_line": 4223,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 4953,
+          "decl_kind": "theorem",
+          "decl_name": "vbinop__is_wf",
+          "decl_line": 4945,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5672,
+          "decl_kind": "theorem",
+          "decl_name": "vrelop__is_wf",
+          "decl_line": 5664,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5758,
+          "decl_kind": "theorem",
+          "decl_name": "vcvtop___is_wf",
+          "decl_line": 5752,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5821,
+          "decl_kind": "theorem",
+          "decl_name": "vextunop___is_wf",
+          "decl_line": 5813,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5969,
+          "decl_kind": "theorem",
+          "decl_name": "vextbinop___is_wf",
+          "decl_line": 5960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 5994,
+          "decl_kind": "theorem",
+          "decl_name": "vshiftop__is_wf",
+          "decl_line": 5986,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6727,
+          "decl_kind": "theorem",
+          "decl_name": "default__is_wf",
+          "decl_line": 6723,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6783,
+          "decl_kind": "theorem",
+          "decl_name": "store_is_wf",
+          "decl_line": 6779,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6795,
+          "decl_kind": "theorem",
+          "decl_name": "frame_is_wf",
+          "decl_line": 6791,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6812,
+          "decl_kind": "theorem",
+          "decl_name": "funcinst_is_wf",
+          "decl_line": 6808,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6824,
+          "decl_kind": "theorem",
+          "decl_name": "globalinst_is_wf",
+          "decl_line": 6820,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6836,
+          "decl_kind": "theorem",
+          "decl_name": "tableinst_is_wf",
+          "decl_line": 6832,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6848,
+          "decl_kind": "theorem",
+          "decl_name": "meminst_is_wf",
+          "decl_line": 6844,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6865,
+          "decl_kind": "theorem",
+          "decl_name": "datainst_is_wf",
+          "decl_line": 6861,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6877,
+          "decl_kind": "theorem",
+          "decl_name": "moduleinst_is_wf",
+          "decl_line": 6873,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6895,
+          "decl_kind": "theorem",
+          "decl_name": "func_is_wf",
+          "decl_line": 6890,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6908,
+          "decl_kind": "theorem",
+          "decl_name": "global_is_wf",
+          "decl_line": 6903,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6921,
+          "decl_kind": "theorem",
+          "decl_name": "table_is_wf",
+          "decl_line": 6916,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6934,
+          "decl_kind": "theorem",
+          "decl_name": "mem_is_wf",
+          "decl_line": 6929,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6952,
+          "decl_kind": "theorem",
+          "decl_name": "data_is_wf",
+          "decl_line": 6947,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6965,
+          "decl_kind": "theorem",
+          "decl_name": "local_is_wf",
+          "decl_line": 6960,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 6982,
+          "decl_kind": "theorem",
+          "decl_name": "with_local_is_wf",
+          "decl_line": 6976,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7002,
+          "decl_kind": "theorem",
+          "decl_name": "with_global_is_wf",
+          "decl_line": 6996,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7021,
+          "decl_kind": "theorem",
+          "decl_name": "with_table_is_wf",
+          "decl_line": 7016,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7038,
+          "decl_kind": "theorem",
+          "decl_name": "with_tableinst_is_wf",
+          "decl_line": 7032,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7058,
+          "decl_kind": "theorem",
+          "decl_name": "with_mem_is_wf",
+          "decl_line": 7052,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7075,
+          "decl_kind": "theorem",
+          "decl_name": "with_meminst_is_wf",
+          "decl_line": 7069,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7094,
+          "decl_kind": "theorem",
+          "decl_name": "with_elem_is_wf",
+          "decl_line": 7089,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7114,
+          "decl_kind": "theorem",
+          "decl_name": "with_data_is_wf",
+          "decl_line": 7108,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7174,
+          "decl_kind": "theorem",
+          "decl_name": "growtable_is_wf",
+          "decl_line": 7168,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 7234,
+          "decl_kind": "theorem",
+          "decl_name": "growmemory_is_wf",
+          "decl_line": 7228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 8614,
+          "decl_kind": "theorem",
+          "decl_name": "Step_pure_is_wf",
+          "decl_line": 8610,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9006,
+          "decl_kind": "theorem",
+          "decl_name": "Step_read_is_wf",
+          "decl_line": 9002,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9115,
+          "decl_kind": "theorem",
+          "decl_name": "Step_is_wf",
+          "decl_line": 9111,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9214,
+          "decl_kind": "theorem",
+          "decl_name": "allocfunc_is_wf",
+          "decl_line": 9207,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9235,
+          "decl_kind": "theorem",
+          "decl_name": "allocfuncs_is_wf",
+          "decl_line": 9228,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9261,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobal_is_wf",
+          "decl_line": 9255,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9281,
+          "decl_kind": "theorem",
+          "decl_name": "allocglobals_is_wf",
+          "decl_line": 9275,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9307,
+          "decl_kind": "theorem",
+          "decl_name": "alloctable_is_wf",
+          "decl_line": 9301,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9327,
+          "decl_kind": "theorem",
+          "decl_name": "alloctables_is_wf",
+          "decl_line": 9321,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9353,
+          "decl_kind": "theorem",
+          "decl_name": "allocmem_is_wf",
+          "decl_line": 9347,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9373,
+          "decl_kind": "theorem",
+          "decl_name": "allocmems_is_wf",
+          "decl_line": 9367,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9394,
+          "decl_kind": "theorem",
+          "decl_name": "allocelem_is_wf",
+          "decl_line": 9389,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9413,
+          "decl_kind": "theorem",
+          "decl_name": "allocelems_is_wf",
+          "decl_line": 9408,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9437,
+          "decl_kind": "theorem",
+          "decl_name": "allocdata_is_wf",
+          "decl_line": 9431,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9457,
+          "decl_kind": "theorem",
+          "decl_name": "allocdatas_is_wf",
+          "decl_line": 9451,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9484,
+          "decl_kind": "theorem",
+          "decl_name": "instexport_is_wf",
+          "decl_line": 9480,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9555,
+          "decl_kind": "theorem",
+          "decl_name": "allocmodule_is_wf",
+          "decl_line": 9547,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9571,
+          "decl_kind": "theorem",
+          "decl_name": "runelem_is_wf",
+          "decl_line": 9566,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9588,
+          "decl_kind": "theorem",
+          "decl_name": "rundata_is_wf",
+          "decl_line": 9582,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9675,
+          "decl_kind": "theorem",
+          "decl_name": "instantiate_is_wf",
+          "decl_line": 9669,
+          "text": "sorry"
+        },
+        {
+          "token": "sorry",
+          "line": 9720,
+          "decl_kind": "theorem",
+          "decl_name": "invoke_is_wf",
+          "decl_line": 9714,
+          "text": "sorry"
+        }
+      ],
+      "commented_sites": []
+    }
+  ]
+}

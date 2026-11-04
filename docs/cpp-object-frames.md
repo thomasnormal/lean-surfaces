@@ -1,0 +1,104 @@
+# Object-backed integral frames and lexical scopes
+
+2026-10-20. `LeanModels/Cpp/IntegralObjectFrame.lean` connects the integral
+object store to a stateful function frame. It is the executable foundation for
+automatic parameter and local declarations, including the validated Clang
+`DeclStmt` fragment; it does not replace the existing value-only callable
+evaluator.
+
+`IntegralObjectFrame` owns one `IntegralObjectStore`, a stack of `FrameScope`s,
+and persistent tables for function-local static and thread-local bindings. A binding records
+the declaration occurrence handle, its `ObjectId`, structured access type, and
+whether it owns a parameter/local or borrows an existing object as a reference.
+Lookup
+walks from the innermost scope outward, so declaration handles remain identity
+witnesses even when source spellings repeat. Every active scope shares one
+declaration-handle namespace: a handle cannot be bound again while its earlier
+binding remains active, including from a nested scope. After that scope exits,
+the handle may be reused by a new dynamic scope, which receives a new object
+for an owned declaration.
+
+Entering a scope pushes an empty binding list. Parameter declaration allocates
+automatic storage and initializes it before publishing the binding. Local
+declaration publishes its storage binding before evaluating the initializer;
+self-reference therefore resolves to the new not-yet-live object and returns
+the store's lifetime refusal. A successful expression initializer then uses
+`initializeConverted`, preserving the source type and destination conversion.
+Default initialization uses `defaultInitialize`: a mutable scalar is alive but
+uninitialized and can be assigned without a read. Zero initialization uses the
+separate `zeroInitialize` boundary, which publishes a typed zero and also
+admits const-qualified integral locals. Const access and unsupported structured
+types continue to be rejected by `IntegralObjectStore`.
+
+Static local declarations use `.static_` storage and initialize once. The
+successful binding is retained outside the active scope; a later call reuses
+the same object and value, publishing only a fresh scope-local view. Scope exit
+therefore removes the view without ending the static object's lifetime.
+
+Function-local `thread_local` declarations use `.thread` storage and follow the
+same persistence boundary for the current threaded store. Initialization occurs
+once per store, later calls reuse the object and value, and scope exit removes
+only the view. A separate thread scheduler is outside this bounded model.
+
+Dynamic integral declarations use `.dynamic` storage. Their binding remains
+available until an explicit `dynamicRelease` ends the lifetime and releases the
+storage; ordinary scope cleanup leaves an unreleased dynamic object live, so a
+caller cannot mistake scope exit for `delete`.
+
+`FrameOutcome` always returns the mutated frame alongside its result. A failed
+initializer retains its storage-only binding and all earlier declarations; it
+does not roll back a prefix or invent a value. Reads and assignments resolve
+through the current frame, so aliasing is the store's object identity rather
+than a name-based copy.
+
+`Statement` supplies the stateful control shell for this slice: blocks, ifs,
+while loops, for loops, assignment, declaration forms, `break`, `continue`,
+and `return`. A for initializer scope encloses its condition, step and body;
+each block execution pushes a fresh scope. Loop transfers are consumed by the
+nearest loop, while a return unwinds every active scope before publishing its
+value. A top-level break or continue is a loud boundary error.
+
+Local reference bindings reuse a live referent's object identity and store a
+possibly const-qualified access view. Binding performs no read or allocation.
+`bindLocalReference_store` proves the entire store is unchanged for both success
+and failure. Reads and assignments use the binding's view, preserving const
+access through alias chains.
+
+Prvalue reference binding is admitted for integral temporaries in the bounded
+frame. A const lvalue reference or an rvalue reference evaluates its source,
+materializes a checked temporary object, and extends that object's cleanup to
+the active lexical scope. The reference binding retains the temporary's object
+identity, so reads observe the converted value and const lvalue views reject
+writes. Scope exit ends the extended temporary and removes the binding; the
+temporary is never treated as an ordinary automatic local. Mutable lvalue
+references to prvalues and non-integral referents remain loud.
+
+Exiting a scope ends owned bindings in reverse declaration order and removes
+only that scope's bindings. Static-local and thread-local views and ordinary
+non-owning reference bindings never end their referents; the temporary-reference role is the explicit
+exception because the reference extended that temporary's lifetime. Object IDs
+remain tombstones
+in the append-only store.
+`returnValue` evaluates the return expression before unwinding all scopes,
+then returns the value with the closed frame. Fuel exhaustion, undefined
+integral operations, missing declarations and lifetime errors retain the
+current frame instead of claiming a successful cleanup.
+
+Expression and statement execution recurse structurally on fuel. Full-frame
+cleanup descends the explicit scope list, ending each scope's bindings before
+continuing with the remaining scopes. An error retains that scope and the
+already-updated store. These definitions reduce in the kernel; `rfl` regression
+checks cover declarations, loop transfers, cleanup and retained failure state,
+with printed inventories containing at most the core `propext` axiom.
+
+The expression fragment is deliberately small: literals, declaration-handle
+reads, integral unary operations and integral binary operations. The frontend
+adapter joins Clang declaration, type, storage and initializer evidence before
+the frame executes it; unsupported declaration forms remain loud. The tests
+cover parameter and sequential-local initialization, copy/direct/list/default
+initialization, nested lookup and shadowing, repeated loop-body allocation,
+self-initialization, default initialization followed by assignment, retained
+prefix state on division failure, reverse cleanup, return-before-cleanup, const
+writes, temporary reference materialization and scope cleanup, static-local and
+thread-local persistence across calls, explicit dynamic release, and loud
+missing/duplicate bindings.

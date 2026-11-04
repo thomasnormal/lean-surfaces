@@ -1,0 +1,210 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/time_boundary/nested.sv",
+  "source_sha256": "d2efd197df8e5405efa035449c1d513a4ee5799612297e5e3dfad995d20d5a32",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 9,
+              "end_line": 3,
+              "end_col": 15
+            },
+            "name": "enable",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 11,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 11,
+                "end_line": 11,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 11
+                    },
+                    "width": 1,
+                    "name": "enable"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 14,
+                      "end_line": 5,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 6,
+                      "col": 7,
+                      "end_line": 6,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 9,
+                      "end_line": 7,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "enable"
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 8,
+                      "col": 7,
+                      "end_line": 8,
+                      "end_col": 45
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 8,
+                          "col": 7,
+                          "end_line": 8,
+                          "end_col": 45
+                        },
+                        "name": "$display",
+                        "format": "nested %0d",
+                        "args": [
+                          {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 8,
+                              "col": 30,
+                              "end_line": 8,
+                              "end_col": 43
+                            },
+                            "width": 64,
+                            "op": "+",
+                            "left": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 8,
+                                "col": 30,
+                                "end_line": 8,
+                                "end_col": 35
+                              },
+                              "width": 64,
+                              "bits": "0000000000000000000000000000000000000000000000000000000000000000",
+                              "time_zero": true
+                            },
+                            "right": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 8,
+                                "col": 38,
+                                "end_line": 8,
+                                "end_col": 43
+                              },
+                              "width": 64,
+                              "bits": "0000000000000000000000000000000000000000000000000000000000000001"
+                            }
+                          }
+                        ],
+                        "arg_signed": [
+                          false
+                        ]
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

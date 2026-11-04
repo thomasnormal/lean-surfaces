@@ -1,0 +1,220 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "symbolic_ref_formal_function_refuse",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/symbolic_ref_formal_function_refuse/symbolic_ref_formal_function_refuse.sv",
+      "sha256": "ea3b78a82d5ca3d5626c652630e2b5d710329b448f6a58052a88c716b5a49911"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "symbolic_ref_formal_function_refuse",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 21,
+              "end_line": 3,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 16,
+                      "end_line": 3,
+                      "end_col": 17
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 18,
+                      "end_line": 3,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 22,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 17,
+                      "end_line": 4,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 19,
+                      "end_line": 4,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 15,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "name": "tmp",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 10,
+                      "end_line": 6,
+                      "end_col": 11
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 12,
+                      "end_line": 6,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 12,
+              "end_col": 29
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 12,
+                "col": 15,
+                "end_line": 12,
+                "end_col": 29
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 12,
+                  "col": 15,
+                  "end_line": 12,
+                  "end_col": 16
+                },
+                "width": 4,
+                "name": "y"
+              },
+              "value": {
+                "kind": "Unsupported",
+                "span": {
+                  "line": 12,
+                  "col": 19,
+                  "end_line": 12,
+                  "end_col": 28
+                },
+                "sv_kind": "CallExpression",
+                "text": "f(a, tmp)"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 11,
+              "end_col": 14
+            },
+            "sv_kind": "SubroutineSymbol:Subroutine",
+            "text": "function automatic logic [3:0] f(input logic [3:0] x,\n                                    ref logic [3:0] out);\n    out = x;\n    return x + 4'd1;\n  endfunction"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

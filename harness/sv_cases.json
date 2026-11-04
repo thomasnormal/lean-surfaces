@@ -1,0 +1,6015 @@
+{
+  "oracle": "sv-tests-2 self-check declarations",
+  "cases": [
+    {
+      "name": "statement_call_adapter",
+      "file": "Examples/system-verilog/statement_call_adapter/statement_call_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "local_2state_declarations",
+      "file": "Examples/system-verilog/local_2state_declarations/local_2state_declarations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "typedef_metadata",
+      "file": "Examples/system-verilog/typedef_metadata/typedef_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_declarations",
+      "file": "Examples/system-verilog/opaque_declarations/opaque_declarations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_concat_replication_ops",
+      "file": "Examples/system-verilog/string_concat_replication_ops/string_concat_replication_ops.sv",
+      "module": "top",
+      "oracle": [
+        "Hello_World!",
+        "testtesttesttest"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_string_array_loops",
+      "file": "Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_default_format",
+      "file": "Examples/system-verilog/severity_default_format/severity_default_format.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "default_display_format",
+      "file": "Examples/system-verilog/default_display_format/default_display_format.sv",
+      "module": "top",
+      "oracle": [
+        "175",
+        "175",
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "qualified_if_fallback",
+      "file": "Examples/system-verilog/qualified_if_fallback/qualified_if_fallback.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "conditional_accept",
+      "file": "Examples/system-verilog/conditional_accept/conditional_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "logical_accept",
+      "file": "Examples/system-verilog/logical_accept/logical_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unary_plus_arithmetic",
+      "file": "Examples/system-verilog/unary_plus/arithmetic.sv",
+      "module": "unary_plus_arithmetic",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unary_minus_accept",
+      "file": "Examples/system-verilog/unary_minus_accept/unary_minus_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "reduction_accept",
+      "file": "Examples/system-verilog/reduction_accept/reduction_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unary_not_accept",
+      "file": "Examples/system-verilog/unary_not_accept/unary_not_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unary_logical_not_accept",
+      "file": "Examples/system-verilog/unary_logical_not_accept/unary_logical_not_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "shift_accept",
+      "file": "Examples/system-verilog/shift_accept/shift_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bitwise_accept",
+      "file": "Examples/system-verilog/bitwise_accept/bitwise_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "comparison_accept",
+      "file": "Examples/system-verilog/comparison_accept/comparison_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "arithmetic_accept",
+      "file": "Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_accept",
+      "file": "Examples/system-verilog/power_accept/power_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "concat_accept",
+      "file": "Examples/system-verilog/concat_accept/concat_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unique_if_dynamic_refuse",
+      "file": "Examples/system-verilog/unique_if_dynamic_refuse/unique_if_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "priority_if_dynamic_refuse",
+      "file": "Examples/system-verilog/priority_if_dynamic_refuse/priority_if_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "string_case_assignment",
+      "file": "Examples/system-verilog/string_case_assignment/string_case_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_substr_assignment",
+      "file": "Examples/system-verilog/string_substr_assignment/string_substr_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_string_assignment",
+      "file": "Examples/system-verilog/string_sformatf_string_assignment/string_sformatf_string_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_zero_width_string_assignment",
+      "file": "Examples/system-verilog/string_sformatf_zero_width_string_assignment/string_sformatf_zero_width_string_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_integral_wrapper_assignment",
+      "file": "Examples/system-verilog/string_sformatf_integral_wrapper_assignment/string_sformatf_integral_wrapper_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_ascii_codes_assignment",
+      "file": "Examples/system-verilog/string_sformatf_ascii_codes_assignment/string_sformatf_ascii_codes_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_percent_literal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_percent_literal_assignment/string_sformatf_percent_literal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_multiple_integral_assignment",
+      "file": "Examples/system-verilog/string_sformatf_multiple_integral_assignment/string_sformatf_multiple_integral_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_char_assignment",
+      "file": "Examples/system-verilog/string_sformatf_char_assignment/string_sformatf_char_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_binary_assignment",
+      "file": "Examples/system-verilog/string_sformatf_binary_assignment/string_sformatf_binary_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_octal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_octal_assignment/string_sformatf_octal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_decimal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_decimal_assignment/string_sformatf_decimal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_zero_width_assignment",
+      "file": "Examples/system-verilog/string_sformatf_zero_width_assignment/string_sformatf_zero_width_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_literal_then_empty_concat",
+      "file": "Examples/system-verilog/queue_literal_then_empty_concat/queue_literal_then_empty_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_unsigned",
+      "file": "harness/sv/power/unsigned.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_signed",
+      "file": "harness/sv/power/signed.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_zero_negative",
+      "file": "harness/sv/power/zero_negative.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_null_character",
+      "file": "Examples/system-verilog/string_null_character/string_null_character.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_null_literal_character",
+      "file": "Examples/system-verilog/string_null_literal_character/string_null_literal_character.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_index_literal_character",
+      "file": "Examples/system-verilog/string_index_literal_character/string_index_literal_character.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_literal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_literal_assignment/string_sformatf_literal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "static_fixed_array_continuous_copy",
+      "file": "Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_fixed_size_mismatch",
+      "file": "Examples/system-verilog/queue_fixed_size_mismatch/queue_fixed_size_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "BEFORE"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_literal_peek",
+      "file": "Examples/system-verilog/mailbox_literal_peek/mailbox_literal_peek.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bits_fixed_expr",
+      "file": "Examples/system-verilog/bits_fixed_expr/bits_fixed_expr.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unobserved_queue_literal_write",
+      "file": "Examples/system-verilog/unobserved_queue_literal_write/unobserved_queue_literal_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_zero_key_methods",
+      "file": "Examples/system-verilog/semaphore_zero_key_methods/semaphore_zero_key_methods.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_semaphore_constructor",
+      "file": "Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_string_replication_multiplier",
+      "file": "Examples/system-verilog/invalid_string_replication_multiplier/invalid_string_replication_multiplier.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_struct_replication_assignment",
+      "file": "Examples/system-verilog/invalid_struct_replication_assignment/invalid_struct_replication_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_associative_index_target",
+      "file": "Examples/system-verilog/invalid_associative_index_target/invalid_associative_index_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "multiple_variable_continuous_drivers",
+      "file": "Examples/system-verilog/multiple_variable_continuous_drivers/multiple_variable_continuous_drivers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_continuous_target",
+      "file": "Examples/system-verilog/dynamic_array_continuous_target/dynamic_array_continuous_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bitstoshortreal_literal_statement",
+      "file": "Examples/system-verilog/bitstoshortreal_literal_statement/bitstoshortreal_literal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bitstoreal_literal_statement",
+      "file": "Examples/system-verilog/bitstoreal_literal_statement/bitstoreal_literal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "itor_literal_statement",
+      "file": "Examples/system-verilog/itor_literal_statement/itor_literal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "shortrealtobits_itor_literal",
+      "file": "Examples/system-verilog/shortrealtobits_itor_literal/shortrealtobits_itor_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtobits_itor_literal",
+      "file": "Examples/system-verilog/realtobits_itor_literal/realtobits_itor_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "rtoi_itor_literal",
+      "file": "Examples/system-verilog/rtoi_itor_literal/rtoi_itor_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_bits_query",
+      "file": "Examples/system-verilog/floating_bits_query/floating_bits_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "shortrealtobits_literal",
+      "file": "Examples/system-verilog/shortrealtobits_literal/shortrealtobits_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtobits_literal",
+      "file": "Examples/system-verilog/realtobits_literal/realtobits_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "rtoi_literal",
+      "file": "Examples/system-verilog/rtoi_literal/rtoi_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_function_argument",
+      "file": "Examples/system-verilog/literal_function_argument/literal_function_argument.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_function_named_history",
+      "file": "Examples/system-verilog/literal_function_named_history/literal_function_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "static_dependency_initializer",
+      "file": "Examples/system-verilog/static_dependency_initializer/static_dependency_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_oob_write",
+      "file": "Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_concat",
+      "file": "Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_concat_literal_function",
+      "file": "Examples/system-verilog/dynamic_array_concat_literal_function/dynamic_array_concat_literal_function.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_concat_refuse",
+      "file": "Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "dynamic_array_pattern",
+      "file": "Examples/system-verilog/dynamic_array_pattern/dynamic_array_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "system_null",
+      "file": "Examples/system-verilog/system_null/system_null.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_queue_declaration",
+      "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "increment",
+      "file": "Examples/system-verilog/increment/incdec.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_aggregate_member",
+      "file": "Examples/system-verilog/streaming_aggregate_member/streaming_aggregate_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_pattern_replication",
+      "file": "Examples/system-verilog/unpacked_pattern_replication/unpacked_pattern_replication.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_concat_pattern",
+      "file": "Examples/system-verilog/unpacked_concat_pattern/unpacked_concat_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_struct_nested",
+      "file": "Examples/system-verilog/packed_struct_nested/packed_struct_nested.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_unpack",
+      "file": "Examples/system-verilog/streaming_unpack/streaming_unpack.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "two_state_output",
+      "file": "Examples/system-verilog/two_state_output/two_state_output.sv",
+      "module": "two_state_output",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_2state",
+      "file": "Examples/system-verilog/fixed_array_2state/fixed_array_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_packed_leaf_2state",
+      "file": "Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_oob",
+      "file": "Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "clog2",
+      "file": "Examples/system-verilog/clog2/clog2.sv",
+      "module": "clog2",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_dynamic",
+      "file": "Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_pattern_2state",
+      "file": "Examples/system-verilog/fixed_array_pattern_2state/fixed_array_pattern_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_integral_fields",
+      "file": "Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_initializers",
+      "file": "Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_concat_initializer",
+      "file": "Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_array",
+      "file": "Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "event_declaration",
+      "file": "Examples/system-verilog/event_decl/event_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "real_declaration",
+      "file": "Examples/system-verilog/real_decl/real_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "chandle_declaration",
+      "file": "Examples/system-verilog/chandle_decl/chandle_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "virtual_interface_null_declaration",
+      "file": "Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_declaration",
+      "file": "Examples/system-verilog/string_decl/string_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_literal_declaration",
+      "file": "Examples/system-verilog/string_literal_decl/string_literal_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_struct_initializers",
+      "file": "Examples/system-verilog/nested_struct_initializers/nested_struct_initializers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "large_fixed_array",
+      "file": "Examples/system-verilog/large_fixed_array/large_fixed_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "do_while_string_literal",
+      "file": "Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_tasks",
+      "file": "Examples/system-verilog/severity_tasks/severity_tasks.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_declaration",
+      "file": "Examples/system-verilog/queue_decl/queue_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_declaration",
+      "file": "Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_empty_declaration",
+      "file": "Examples/system-verilog/dynamic_array_empty_decl/dynamic_array_empty_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_four_state",
+      "file": "Examples/system-verilog/dynamic_array_four_state/dynamic_array_four_state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_task_literals",
+      "file": "Examples/system-verilog/severity_task_literals/severity_task_literals.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "error_task",
+      "file": "Examples/system-verilog/error_task/error_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fatal_task",
+      "file": "Examples/system-verilog/fatal_task/fatal_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fatal_dynamic",
+      "file": "Examples/system-verilog/fatal_dynamic/fatal_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "associative_array_declaration",
+      "file": "Examples/system-verilog/associative_array_decl/associative_array_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "printtimescale_declaration",
+      "file": "Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "printtimescale_scope",
+      "file": "Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "strobe_literal",
+      "file": "Examples/system-verilog/strobe_literal/strobe_literal.sv",
+      "module": "top",
+      "oracle": [
+        "DISPLAY",
+        "DISPLAY2",
+        "STROBE"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fdisplay_stdout",
+      "file": "Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fdisplay_mcd_variable",
+      "file": "Examples/system-verilog/fdisplay_mcd_variable/fdisplay_mcd_variable.sv",
+      "module": "top",
+      "oracle": [
+        "PASS via MCD bit 0"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_atoreal_real_write",
+      "file": "Examples/system-verilog/string_atoreal_real_write/string_atoreal_real_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_atoreal_statement",
+      "file": "Examples/system-verilog/string_atoreal_statement/string_atoreal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_dynamic",
+      "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_opaque_args",
+      "file": "Examples/system-verilog/severity_opaque_args/severity_opaque_args.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "exit_declaration",
+      "file": "Examples/system-verilog/exit_decl/exit_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "vcd_setup",
+      "file": "Examples/system-verilog/vcd_setup/vcd_setup.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "vcd_control",
+      "file": "Examples/system-verilog/vcd_control/vcd_control.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dumpportsflush_statement",
+      "file": "Examples/system-verilog/dumpportsflush_statement/dumpportsflush_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_copy",
+      "file": "Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_conditional",
+      "file": "Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_nested_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_nested_pattern",
+      "file": "Examples/system-verilog/unpacked_array_nested_pattern/unpacked_array_nested_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_subarray_copy",
+      "file": "Examples/system-verilog/unpacked_array_subarray_copy/unpacked_array_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_struct_copy",
+      "file": "Examples/system-verilog/unpacked_array_struct_copy/unpacked_array_struct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_unpacked_subarray_copy",
+      "file": "Examples/system-verilog/packed_unpacked_subarray_copy/packed_unpacked_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_keyed_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_nested_fixed_array",
+      "file": "Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_left_target",
+      "file": "Examples/system-verilog/streaming_left_target/streaming_left_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_slice_target",
+      "file": "Examples/system-verilog/streaming_slice_target/streaming_slice_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_left_slice_target",
+      "file": "Examples/system-verilog/streaming_left_slice_target/streaming_left_slice_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_indexed_slice",
+      "file": "Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_bitstream_cast",
+      "file": "Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_struct_pattern",
+      "file": "Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "generate_constant_targets",
+      "file": "Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_local_decl",
+      "file": "Examples/system-verilog/floating_local_decl/floating_local_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_literal_write",
+      "file": "Examples/system-verilog/floating_literal_write/floating_literal_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtime_write",
+      "file": "Examples/system-verilog/realtime_write/realtime_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_concat_write",
+      "file": "Examples/system-verilog/string_concat_write/string_concat_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_replication_write",
+      "file": "Examples/system-verilog/string_replication_write/string_replication_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_replication_history",
+      "file": "Examples/system-verilog/replication/dynamic_string.sv",
+      "module": "top",
+      "oracle": [
+        "dynamic abab"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_queue_write",
+      "file": "Examples/system-verilog/empty_queue_write/empty_queue_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_dynamic_array_write",
+      "file": "Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_subroutine_call",
+      "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_handle_decl",
+      "file": "Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_handle_adapter",
+      "file": "Examples/system-verilog/opaque_handle_adapter/opaque_handle_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_semaphore_adapter",
+      "file": "Examples/system-verilog/literal_semaphore_adapter/literal_semaphore_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mixed_array_dimension_adapter",
+      "file": "Examples/system-verilog/mixed_array_dimension_adapter/mixed_array_dimension_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "associative_decl_adapter",
+      "file": "Examples/system-verilog/associative_decl_adapter/associative_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_handle_null_write",
+      "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_chandle_null_write",
+      "file": "Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_virtual_interface_null_write",
+      "file": "Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_event_null_write",
+      "file": "Examples/system-verilog/opaque_event_null_write/opaque_event_null_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_process_self_write",
+      "file": "Examples/system-verilog/opaque_process_self_write/opaque_process_self_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "postincrement_array_target",
+      "file": "Examples/system-verilog/postincrement_array_target/postincrement_array_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_math_write",
+      "file": "Examples/system-verilog/floating_math_write/floating_math_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "stime_query",
+      "file": "Examples/system-verilog/stime_query/stime_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtime_integral_query",
+      "file": "Examples/system-verilog/realtime_integral_query/realtime_integral_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "zero_size_query",
+      "file": "Examples/system-verilog/zero_size_query/zero_size_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "zero_string_len",
+      "file": "Examples/system-verilog/zero_string_len/zero_string_len.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "zero_size_after_empty_write",
+      "file": "Examples/system-verilog/zero_size_after_empty_write/zero_size_after_empty_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "zero_size_after_new_zero",
+      "file": "Examples/system-verilog/zero_size_after_new_zero/zero_size_after_new_zero.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "zero_size_statement",
+      "file": "Examples/system-verilog/zero_size_statement/zero_size_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_mailbox_new_write",
+      "file": "Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "opaque_semaphore_zero_write",
+      "file": "Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_function_value",
+      "file": "Examples/system-verilog/empty_function_value/empty_function_value.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assert_control",
+      "file": "Examples/system-verilog/assert_control/assert_control.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "generate_indexed_targets",
+      "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "oob_struct_read",
+      "file": "Examples/system-verilog/oob_struct_read/oob_struct_read.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_struct_source",
+      "file": "Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_with_range",
+      "file": "Examples/system-verilog/streaming_with_range/streaming_with_range.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_dynamic_with_range",
+      "file": "Examples/system-verilog/streaming_dynamic_with_range/streaming_dynamic_with_range.sv",
+      "module": "test",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_indexed_with_range",
+      "file": "Examples/system-verilog/streaming_indexed_with_range/streaming_indexed_with_range.sv",
+      "module": "top",
+      "oracle": [
+        "PLUS 255 255 1 2 3 255 255 255",
+        "MINUS 255 255 255 255 1 2 3 255"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_fixed_array_copy",
+      "file": "Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "strobe_dynamic",
+      "file": "Examples/system-verilog/strobe_dynamic/strobe_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "VALUE=9"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_cells",
+      "file": "Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "time_scale_query",
+      "file": "Examples/system-verilog/time_scale_query/time_scale_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sdf_annotate",
+      "file": "Examples/system-verilog/sdf_annotate/sdf_annotate.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_function_return",
+      "file": "Examples/system-verilog/literal_function_return/literal_function_return.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_function_statement",
+      "file": "Examples/system-verilog/literal_function_statement/literal_function_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "monitor_controls",
+      "file": "Examples/system-verilog/monitor_controls/monitor_controls.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fwrite_stdout",
+      "file": "Examples/system-verilog/fwrite_stdout/fwrite_stdout.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "timeformat_inert",
+      "file": "Examples/system-verilog/timeformat_inert/timeformat_inert.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "delay_refusal",
+      "file": "Examples/system-verilog/delay/delay.sv",
+      "module": "delay",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "event_refusal",
+      "file": "Examples/system-verilog/event/event.sv",
+      "module": "event_wait",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "always_refusal",
+      "file": "Examples/system-verilog/always/events.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "always_accept_timed",
+      "file": "Examples/system-verilog/always_accept/always_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_no_control_refuse",
+      "file": "Examples/system-verilog/always_no_control_refuse/always_no_control_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_blocking_nba",
+      "file": "Examples/system-verilog/scheduler_blocking_nba/scheduler_blocking_nba.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED BLOCKING NBA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "scheduler_zero_delay_inactive",
+      "file": "Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED ZERO PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_zero_delay_loop",
+      "file": "Examples/system-verilog/scheduler_zero_delay_loop/scheduler_zero_delay_loop.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_zero_delay_convergent",
+      "file": "Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv",
+      "module": "top",
+      "oracle": [
+        "N=3"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "always_event_bare",
+      "file": "Examples/system-verilog/always_event_bare/always_event_bare.sv",
+      "module": "top",
+      "oracle": [
+        "BARE EVENT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_list",
+      "file": "Examples/system-verilog/always_event_list/always_event_list.sv",
+      "module": "top",
+      "oracle": [
+        "EVENT LIST PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "scheduler_sensitivity_double",
+      "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED SENS PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_nba_retrigger",
+      "file": "Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED NBA RETRIGGER PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_region_outputs",
+      "file": "Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED DISPLAY",
+        "SCHED MONITOR 0",
+        "SCHED STROBE",
+        "SCHED MONITOR 1"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "scheduler_postponed_strobe",
+      "file": "Examples/system-verilog/scheduler_postponed_strobe/scheduler_postponed_strobe.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED DISPLAY",
+        "SCHED STROBE 9"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "scheduler_initial_always",
+      "file": "Examples/system-verilog/scheduler_initial_always/scheduler_initial_always.sv",
+      "module": "top",
+      "oracle": [
+        "SCHED INITIAL ALWAYS PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_accept_timed",
+      "file": "Examples/system-verilog/always_comb_accept/always_comb_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_nba_timed",
+      "file": "Examples/system-verilog/always_comb_nba/always_comb_nba.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB NBA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_chain_timed",
+      "file": "Examples/system-verilog/always_comb_chain/always_comb_chain.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB CHAIN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_written_excluded_timed",
+      "file": "Examples/system-verilog/always_comb_written_excluded/always_comb_written_excluded.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB EXCLUDE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_double_write_timed",
+      "file": "Examples/system-verilog/always_comb_double_write/always_comb_double_write.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB DOUBLE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_comb_branch_outputs",
+      "file": "Examples/system-verilog/always_comb_branch_outputs/always_comb_branch_outputs.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_COMB BRANCH INITIAL PASS",
+        "ALWAYS_COMB BRANCH SELECT PASS",
+        "ALWAYS_COMB BRANCH DATA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_comb_delay_refuse",
+      "file": "Examples/system-verilog/always_comb_delay_refuse/always_comb_delay_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "delayed_refusal",
+      "file": "Examples/system-verilog/time_boundary/delayed.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "literal_real_decl",
+      "file": "Examples/system-verilog/literal_real_decl/literal_real_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_string_len",
+      "file": "Examples/system-verilog/literal_string_len/literal_string_len.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_string_getc",
+      "file": "Examples/system-verilog/literal_string_getc/literal_string_getc.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_getc_assignment",
+      "file": "Examples/system-verilog/string_getc_assignment/string_getc_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_query_lexing",
+      "file": "Examples/system-verilog/string_query_lexing/string_query_lexing.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_query_statement",
+      "file": "Examples/system-verilog/string_query_statement/string_query_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_net_driver",
+      "file": "Examples/system-verilog/constant_net_driver/constant_net_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "typed_default_array_pattern",
+      "file": "Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_net_bit_driver",
+      "file": "Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "static_net_resolution",
+      "file": "Examples/system-verilog/static_net_resolution/static_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_array_cell_driver",
+      "file": "Examples/system-verilog/constant_array_cell_driver/constant_array_cell_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_variable_driver",
+      "file": "Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "disjoint_literal_net_windows",
+      "file": "Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "overlapping_literal_net_windows",
+      "file": "Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_net_array_cell_driver",
+      "file": "Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_tri_driver",
+      "file": "Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_strength_driver",
+      "file": "Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_tri_strength_driver",
+      "file": "Examples/system-verilog/constant_tri_strength_driver/constant_tri_strength_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_strength_select_driver",
+      "file": "Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assertcontrol_literal",
+      "file": "Examples/system-verilog/assertcontrol_literal/assertcontrol_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assertcontrol_literal_args",
+      "file": "Examples/system-verilog/assertcontrol_literal_args/assertcontrol_literal_args.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_fixed_size_mismatch",
+      "file": "Examples/system-verilog/dynamic_fixed_size_mismatch/dynamic_fixed_size_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "BEFORE"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformat_literal_integral",
+      "file": "Examples/system-verilog/sformat_literal_integral/sformat_literal_integral.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformat_constant_selected",
+      "file": "Examples/system-verilog/sformat_constant_selected/sformat_constant_selected.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_reverse",
+      "file": "Examples/system-verilog/array_reverse/array_reverse.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_reverse_procedural",
+      "file": "Examples/system-verilog/array_reverse_procedural/array_reverse_procedural.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_initialize_status",
+      "file": "Examples/system-verilog/q_initialize_status/q_initialize_status.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_add_status_0",
+      "file": "Examples/system-verilog/q_add_status_0/q_add_status_0.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_add_status_1_when_full",
+      "file": "Examples/system-verilog/q_add_status_1_when_full/q_add_status_1_when_full.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_full_status_0",
+      "file": "Examples/system-verilog/q_full_status_0/q_full_status_0.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_full_status_1_when_full",
+      "file": "Examples/system-verilog/q_full_status_1_when_full/q_full_status_1_when_full.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_initialize_duplicate_status",
+      "file": "Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_remove_status_2",
+      "file": "Examples/system-verilog/q_remove_status_2/q_remove_status_2.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_remove_status_3",
+      "file": "Examples/system-verilog/q_remove_status_3/q_remove_status_3.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_member",
+      "file": "Examples/system-verilog/unpacked_union_member/unpacked_union_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_copy",
+      "file": "Examples/system-verilog/unpacked_union_copy/unpacked_union_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_equality",
+      "file": "Examples/system-verilog/unpacked_union_equality/unpacked_union_equality.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_conditional",
+      "file": "Examples/system-verilog/unpacked_union_conditional/unpacked_union_conditional.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_compound",
+      "file": "Examples/system-verilog/unpacked_union_compound/unpacked_union_compound.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_union_case_member",
+      "file": "Examples/system-verilog/unpacked_union_case_member/unpacked_union_case_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_zero_try_get",
+      "file": "Examples/system-verilog/semaphore_zero_try_get/semaphore_zero_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_empty_num",
+      "file": "Examples/system-verilog/mailbox_empty_num/mailbox_empty_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_literal_put_num",
+      "file": "Examples/system-verilog/mailbox_literal_put_num/mailbox_literal_put_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_literal_fifo",
+      "file": "Examples/system-verilog/mailbox_literal_fifo/mailbox_literal_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_len_assignment",
+      "file": "Examples/system-verilog/string_len_assignment/string_len_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_atoi_literal",
+      "file": "Examples/system-verilog/string_atoi_literal/string_atoi_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_integer_conversion",
+      "file": "Examples/system-verilog/string_integer_conversion/string_integer_conversion.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_compare_literal",
+      "file": "Examples/system-verilog/string_compare_literal/string_compare_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_literal_try_get",
+      "file": "Examples/system-verilog/semaphore_literal_try_get/semaphore_literal_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "std_semaphore_try_get",
+      "file": "Examples/system-verilog/std_semaphore_try_get/std_semaphore_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_literal_size",
+      "file": "Examples/system-verilog/dynamic_array_literal_size/dynamic_array_literal_size.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_reductions",
+      "file": "Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_radix_literal",
+      "file": "Examples/system-verilog/string_radix_literal/string_radix_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_default_try_get",
+      "file": "Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_empty_try",
+      "file": "Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "event_triggered_false",
+      "file": "Examples/system-verilog/event_triggered_false/event_triggered_false.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "event_triggered_statement",
+      "file": "Examples/system-verilog/event_triggered_statement/event_triggered_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_literal_put_get",
+      "file": "Examples/system-verilog/semaphore_literal_put_get/semaphore_literal_put_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_struct_defaults",
+      "file": "Examples/system-verilog/dynamic_array_struct_defaults/dynamic_array_struct_defaults.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_struct_field_defaults",
+      "file": "Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_with_previous_extent",
+      "file": "Examples/system-verilog/streaming_with_previous_extent/streaming_with_previous_extent.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_resize_copy",
+      "file": "Examples/system-verilog/dynamic_array_resize_copy/dynamic_array_resize_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_resize_fixed_source",
+      "file": "Examples/system-verilog/dynamic_array_resize_fixed_source/dynamic_array_resize_fixed_source.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_self_resize",
+      "file": "Examples/system-verilog/dynamic_array_self_resize/dynamic_array_self_resize.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_new_pattern",
+      "file": "Examples/system-verilog/dynamic_array_new_pattern/dynamic_array_new_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_fixed_subarrays",
+      "file": "Examples/system-verilog/dynamic_array_fixed_subarrays/dynamic_array_fixed_subarrays.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_ordering_literals",
+      "file": "Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_ordering_with_field",
+      "file": "Examples/system-verilog/struct_array_ordering_with_field/struct_array_ordering_with_field.sv",
+      "module": "top",
+      "oracle": [
+        "SORT PASS",
+        "RSORT PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_ordering_with_tuple",
+      "file": "Examples/system-verilog/struct_array_ordering_with_tuple/struct_array_ordering_with_tuple.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_literal_loop_fifo",
+      "file": "Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unique_case_complete",
+      "file": "Examples/system-verilog/unique_case_complete/unique_case_complete.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unique_case_dynamic_refuse",
+      "file": "Examples/system-verilog/unique_case_dynamic_refuse/unique_case_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "priority_case_dynamic_refuse",
+      "file": "Examples/system-verilog/priority_case_dynamic_refuse/priority_case_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "assoc_string_cells",
+      "file": "Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_exists_cells",
+      "file": "Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_exists_dynamic_refuse",
+      "file": "Examples/system-verilog/assoc_exists_dynamic_refuse/assoc_exists_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "dynamic_array_concat_subarrays",
+      "file": "Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_typed_fifo",
+      "file": "Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_variable_fifo",
+      "file": "Examples/system-verilog/mailbox_variable_fifo/mailbox_variable_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_num_lifetime",
+      "file": "Examples/system-verilog/mailbox_num_lifetime/mailbox_num_lifetime.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_parameterized_packed_vector",
+      "file": "Examples/system-verilog/mailbox_parameterized_packed_vector/mailbox_parameterized_packed_vector.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_empty_init",
+      "file": "Examples/system-verilog/queue_empty_init/queue_empty_init.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_literal_size",
+      "file": "Examples/system-verilog/queue_literal_size/queue_literal_size.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_literal_size_after_empty_write",
+      "file": "Examples/system-verilog/queue_literal_size_after_empty_write/queue_literal_size_after_empty_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_empty_pop",
+      "file": "Examples/system-verilog/queue_empty_pop/queue_empty_pop.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_empty_num",
+      "file": "Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_empty_query_statement",
+      "file": "Examples/system-verilog/assoc_empty_query_statement/assoc_empty_query_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_empty_endpoint",
+      "file": "Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_empty_endpoint_statement",
+      "file": "Examples/system-verilog/assoc_empty_endpoint_statement/assoc_empty_endpoint_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_type_mismatch",
+      "file": "Examples/system-verilog/mailbox_type_mismatch/mailbox_type_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_try_peek_type_mismatch",
+      "file": "Examples/system-verilog/mailbox_try_peek_type_mismatch/mailbox_try_peek_type_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_dynamic_bits",
+      "file": "Examples/system-verilog/empty_dynamic_bits/empty_dynamic_bits.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "semaphore_negative_try_get",
+      "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_empty_pop_struct_default",
+      "file": "Examples/system-verilog/queue_empty_pop_struct_default/queue_empty_pop_struct_default.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mailbox_module_init",
+      "file": "Examples/system-verilog/mailbox_module_init/mailbox_module_init.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_empty_pop_discarded",
+      "file": "Examples/system-verilog/queue_empty_pop_discarded/queue_empty_pop_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "isunbounded_bounded",
+      "file": "Examples/system-verilog/isunbounded_bounded/isunbounded_bounded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "real_bits_query",
+      "file": "Examples/system-verilog/real_bits_query/real_bits_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_macro_len",
+      "file": "Examples/system-verilog/string_macro_len/string_macro_len.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_size_property",
+      "file": "Examples/system-verilog/dynamic_array_size_property/dynamic_array_size_property.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "enum_name_method",
+      "file": "Examples/system-verilog/enum_name_method/enum_name_method.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "name=BLUE",
+        "unknown=''"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "enum_name_comparison",
+      "file": "Examples/system-verilog/enum_name_comparison/enum_name_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_case_comparison",
+      "file": "Examples/system-verilog/string_case_comparison/string_case_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "enum_name_statement",
+      "file": "Examples/system-verilog/enum_name_statement/enum_name_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "enum_numeric_statement",
+      "file": "Examples/system-verilog/enum_numeric_statement/enum_numeric_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_reduction_statements",
+      "file": "Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_integral_cells",
+      "file": "Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_multidim",
+      "file": "Examples/system-verilog/packed_array_multidim/packed_array_multidim.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_dynamic_part_select",
+      "file": "Examples/system-verilog/packed_array_dynamic_part_select/packed_array_dynamic_part_select.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_dynamic_target",
+      "file": "Examples/system-verilog/packed_array_dynamic_target/packed_array_dynamic_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_dynamic_index",
+      "file": "Examples/system-verilog/packed_array_dynamic_index/packed_array_dynamic_index.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dist_uniform_array_target",
+      "file": "Examples/system-verilog/dist_uniform_array_target/dist_uniform_array_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dist_uniform_scalar",
+      "file": "Examples/system-verilog/dist_uniform_scalar/dist_uniform_scalar.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dist_uniform_literal_bounds",
+      "file": "Examples/system-verilog/dist_uniform_literal_bounds/dist_uniform_literal_bounds.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dist_uniform_variable_bounds",
+      "file": "Examples/system-verilog/dist_uniform_variable_bounds/dist_uniform_variable_bounds.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_sort",
+      "file": "Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv",
+      "module": "top",
+      "oracle": [
+        "SORT PASS",
+        "RSORT PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "swrite_default_radix",
+      "file": "Examples/system-verilog/swrite_default_radix/swrite_default_radix.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_nested_scalar_select",
+      "file": "Examples/system-verilog/packed_nested_scalar_select/packed_nested_scalar_select.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sdf_static_scope",
+      "file": "Examples/system-verilog/sdf_static_scope/sdf_static_scope.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "wired_net_resolution",
+      "file": "Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_bound_key",
+      "file": "Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_struct_member",
+      "file": "Examples/system-verilog/packed_array_struct_member/packed_array_struct_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_union_reshaped_member",
+      "file": "Examples/system-verilog/packed_union_reshaped_member/packed_union_reshaped_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_field_windows",
+      "file": "Examples/system-verilog/struct_array_field_windows/struct_array_field_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_field_pattern",
+      "file": "Examples/system-verilog/struct_array_field_pattern/struct_array_field_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_field_default",
+      "file": "Examples/system-verilog/struct_array_field_default/struct_array_field_default.sv",
+      "module": "top",
+      "oracle": [
+        "DEFAULT PASS",
+        "KEYED PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_array_field_enum_default",
+      "file": "Examples/system-verilog/struct_array_field_enum_default/struct_array_field_enum_default.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_2d_reductions",
+      "file": "Examples/system-verilog/nested_2d_reductions/nested_2d_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_array_reductions",
+      "file": "Examples/system-verilog/empty_array_reductions/empty_array_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_struct_reduction",
+      "file": "Examples/system-verilog/dynamic_struct_reduction/dynamic_struct_reduction.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_index_reduction",
+      "file": "Examples/system-verilog/dynamic_array_index_reduction/dynamic_array_index_reduction.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fopen_invalid_mode",
+      "file": "Examples/system-verilog/fopen_invalid_mode/fopen_invalid_mode.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fopen_invalid_mode_statement",
+      "file": "Examples/system-verilog/fopen_invalid_mode_statement/fopen_invalid_mode_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_bound_real_bits",
+      "file": "Examples/system-verilog/literal_bound_real_bits/literal_bound_real_bits.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "continuous_bound_literal",
+      "file": "Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "continuous_history_literal",
+      "file": "Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_disjoint_slice_copy",
+      "file": "Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unsized_left_stream",
+      "file": "Examples/system-verilog/unsized_left_stream/unsized_left_stream.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "constant_expression_net_driver",
+      "file": "Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_dynamic_target",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_target/nested_fixed_array_dynamic_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_outer_dynamic_target",
+      "file": "Examples/system-verilog/nested_fixed_array_outer_dynamic_target/nested_fixed_array_outer_dynamic_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_dynamic_subarray_copy",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_subarray_copy/nested_fixed_array_dynamic_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_dynamic_inner_subarray_copy",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_inner_subarray_copy/nested_fixed_array_dynamic_inner_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_dynamic_subarray_read_copy",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_subarray_read_copy/nested_fixed_array_dynamic_subarray_read_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_dynamic_packed_slice",
+      "file": "Examples/system-verilog/fixed_array_dynamic_packed_slice/fixed_array_dynamic_packed_slice.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_net_copy",
+      "file": "Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_copy",
+      "file": "Examples/system-verilog/fixed_array_nested_copy/fixed_array_nested_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_subarray_copy",
+      "file": "Examples/system-verilog/fixed_array_subarray_copy/fixed_array_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_disjoint_subarray_copy",
+      "file": "Examples/system-verilog/fixed_array_disjoint_subarray_copy/fixed_array_disjoint_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_subarray_self_copy",
+      "file": "Examples/system-verilog/fixed_array_subarray_self_copy/fixed_array_subarray_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_reinitialization",
+      "file": "Examples/system-verilog/dynamic_array_reinitialization/dynamic_array_reinitialization.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_oob_reads",
+      "file": "Examples/system-verilog/array_oob_reads/array_oob_reads.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_index",
+      "file": "Examples/system-verilog/string_index/string_index.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_array_dynamic_wide_slice",
+      "file": "Examples/system-verilog/packed_array_dynamic_wide_slice/packed_array_dynamic_wide_slice.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "continuous_selected_history_windows",
+      "file": "Examples/system-verilog/continuous_selected_history_windows/continuous_selected_history_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "continuous_conditional_history_drivers",
+      "file": "Examples/system-verilog/continuous_conditional_history_drivers/continuous_conditional_history_drivers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "coverage_nocov_queries",
+      "file": "Examples/system-verilog/coverage_nocov_queries/coverage_nocov_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fseek_stdout_error",
+      "file": "Examples/system-verilog/fseek_stdout_error/fseek_stdout_error.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "ftell_stdout_error",
+      "file": "Examples/system-verilog/ftell_stdout_error/ftell_stdout_error.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "typename_discarded",
+      "file": "Examples/system-verilog/typename_discarded/typename_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bits_discarded",
+      "file": "Examples/system-verilog/bits_discarded/bits_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_bit_query_statements",
+      "file": "Examples/system-verilog/literal_bit_query_statements/literal_bit_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dimension_query_statements",
+      "file": "Examples/system-verilog/dimension_query_statements/dimension_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "time_query_statements",
+      "file": "Examples/system-verilog/time_query_statements/time_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtime_query_statements",
+      "file": "Examples/system-verilog/realtime_query_statements/realtime_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "isunbounded_statement",
+      "file": "Examples/system-verilog/isunbounded_statement/isunbounded_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "clog2_statement",
+      "file": "Examples/system-verilog/clog2_statement/clog2_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "signing_statement",
+      "file": "Examples/system-verilog/signing_statement/signing_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "time_scale_statements",
+      "file": "Examples/system-verilog/time_scale_statements/time_scale_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_transform_statements",
+      "file": "Examples/system-verilog/string_transform_statements/string_transform_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_query_statements",
+      "file": "Examples/system-verilog/array_query_statements/array_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_query_with_statements",
+      "file": "Examples/system-verilog/array_query_with_statements/array_query_with_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_aggregate_delete_statements",
+      "file": "Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_associative_delete_statements",
+      "file": "Examples/system-verilog/empty_associative_delete_statements/empty_associative_delete_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_length",
+      "file": "Examples/system-verilog/q_exam_length/q_exam_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_current_length",
+      "file": "Examples/system-verilog/q_exam_current_length/q_exam_current_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_static_history",
+      "file": "Examples/system-verilog/q_exam_static_history/q_exam_static_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_max_queue_length",
+      "file": "Examples/system-verilog/q_exam_max_queue_length/q_exam_max_queue_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_stat_code_3_max_length_v3",
+      "file": "Examples/system-verilog/q_exam_stat_code_3_max_length_v3/q_exam_stat_code_3_max_length_v3.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dist_uniform_signed_bounds",
+      "file": "Examples/system-verilog/dist_uniform_signed_bounds/dist_uniform_signed_bounds.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_stat_codes",
+      "file": "Examples/system-verilog/q_exam_stat_codes/q_exam_stat_codes.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_full_value_history",
+      "file": "Examples/system-verilog/q_full_value_history/q_full_value_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_uppercase",
+      "file": "Examples/system-verilog/sformatf_uppercase/sformatf_uppercase.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_statement",
+      "file": "Examples/system-verilog/sformatf_statement/sformatf_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_char",
+      "file": "Examples/system-verilog/sformatf_char/sformatf_char.sv",
+      "module": "top",
+      "oracle": [
+        "A"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_zero_width",
+      "file": "Examples/system-verilog/sformatf_zero_width/sformatf_zero_width.sv",
+      "module": "top",
+      "oracle": [
+        "1010|a|42|012"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_string_literal",
+      "file": "Examples/system-verilog/sformatf_string_literal/sformatf_string_literal.sv",
+      "module": "top",
+      "oracle": [
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "sformatf_string_history",
+      "file": "Examples/system-verilog/sformatf_string_history/sformatf_string_history.sv",
+      "module": "top",
+      "oracle": [
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_remove_payload",
+      "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_fixed_array_copy",
+      "file": "Examples/system-verilog/queue_fixed_array_copy/queue_fixed_array_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "rtoi_named_real_history",
+      "file": "Examples/system-verilog/rtoi_named_real_history/rtoi_named_real_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "itor_named_integral_history",
+      "file": "Examples/system-verilog/itor_named_integral_history/itor_named_integral_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "realtime_conversion_calls",
+      "file": "Examples/system-verilog/realtime_conversion_calls/realtime_conversion_calls.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "bit_query_named_history",
+      "file": "Examples/system-verilog/bit_query_named_history/bit_query_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assertcontrol_named_history",
+      "file": "Examples/system-verilog/assertcontrol_named_history/assertcontrol_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "timeformat_named_history",
+      "file": "Examples/system-verilog/timeformat_named_history/timeformat_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "real_integral_cast",
+      "file": "Examples/system-verilog/real_integral_cast/real_integral_cast.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_comparison_history",
+      "file": "Examples/system-verilog/string_comparison_history/string_comparison_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "array_named_display",
+      "file": "Examples/system-verilog/array_named_display/array_named_display.sv",
+      "module": "top",
+      "oracle": [
+        "ARRAY '{1, 2, 3}",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "foreach_nested_fixed",
+      "file": "Examples/system-verilog/foreach_nested/foreach_nested.sv",
+      "module": "top",
+      "oracle": [
+        "sum=21"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unused_subroutines",
+      "file": "Examples/system-verilog/unused_subroutines/unused_subroutines.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "package_unused_subroutines",
+      "file": "Examples/system-verilog/package_unused_subroutines/package_unused_subroutines.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assignment_pattern_self_alias",
+      "file": "Examples/system-verilog/assignment_patterns/self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "self 7 3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_self_copy",
+      "file": "Examples/system-verilog/fixed_array_self_copy/fixed_array_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "selfcopy 3 7"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_struct_self_copy",
+      "file": "Examples/system-verilog/fixed_array_struct_self_copy/fixed_array_struct_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_conditional_self_alias",
+      "file": "Examples/system-verilog/fixed_array_conditional_self_alias/fixed_array_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_self_copy",
+      "file": "Examples/system-verilog/unpacked_struct_self_copy/unpacked_struct_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_conditional_self_alias",
+      "file": "Examples/system-verilog/unpacked_struct_conditional_self_alias/unpacked_struct_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_packed_dimension_decl",
+      "file": "Examples/system-verilog/invalid_packed_dimension_decl/invalid_packed_dimension_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_packed_dimension_literal",
+      "file": "Examples/system-verilog/invalid_packed_dimension_literal/invalid_packed_dimension_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_self_copy",
+      "file": "Examples/system-verilog/fixed_array_nested_self_copy/fixed_array_nested_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_conditional_self_alias",
+      "file": "Examples/system-verilog/fixed_array_nested_conditional_self_alias/fixed_array_nested_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_subarray_copy",
+      "file": "Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_typename_assignment",
+      "file": "Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "typename_comparison",
+      "file": "Examples/system-verilog/typename_comparison/typename_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_concat_comparison",
+      "file": "Examples/system-verilog/string_concat_comparison/string_concat_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "Hello World"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_query_initializers",
+      "file": "Examples/system-verilog/string_query_initializers/string_query_initializers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_query_observations",
+      "file": "Examples/system-verilog/string_query_observations/string_query_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_compare_observations",
+      "file": "Examples/system-verilog/string_compare_observations/string_compare_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_concat_query_observations",
+      "file": "Examples/system-verilog/string_concat_query_observations/string_concat_query_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_null_query_observations",
+      "file": "Examples/system-verilog/string_null_query_observations/string_null_query_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_scope_assignment",
+      "file": "Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_sformatf_scope_wrapper_assignment",
+      "file": "Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_putc_history",
+      "file": "Examples/system-verilog/string_putc_history/string_putc_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_putc_length_index",
+      "file": "Examples/system-verilog/string_putc_length_index/string_putc_length_index.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_count_history",
+      "file": "Examples/system-verilog/assoc_count_history/assoc_count_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_delete_history",
+      "file": "Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_endpoint_history",
+      "file": "Examples/system-verilog/assoc_endpoint_history/assoc_endpoint_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS5",
+        "PASS2",
+        "PASS3",
+        "PASS4"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_unsigned_endpoint_history",
+      "file": "Examples/system-verilog/assoc_unsigned_endpoint_history/assoc_unsigned_endpoint_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_exists_sized_comparison",
+      "file": "Examples/system-verilog/assoc_exists_sized_comparison/assoc_exists_sized_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_endpoint_statement_history",
+      "file": "Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_assoc_sorted",
+      "file": "Examples/system-verilog/streaming_assoc_sorted/streaming_assoc_sorted.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_next_prev_history",
+      "file": "Examples/system-verilog/assoc_next_prev_history/assoc_next_prev_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3",
+        "PASS4",
+        "PASS5"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_compound_history",
+      "file": "Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_system_size_history",
+      "file": "Examples/system-verilog/assoc_system_size_history/assoc_system_size_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_system_bounds_history",
+      "file": "Examples/system-verilog/assoc_system_bounds_history/assoc_system_bounds_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_system_empty_bounds_history",
+      "file": "Examples/system-verilog/assoc_system_empty_bounds_history/assoc_system_empty_bounds_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_exists_statement",
+      "file": "Examples/system-verilog/assoc_exists_statement/assoc_exists_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "typename_event_declaration",
+      "file": "Examples/system-verilog/typename_event_declaration/typename_event_declaration.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "implicit_function_return",
+      "file": "Examples/system-verilog/implicit_function_return/implicit_function_return.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "automatic_implicit_function_return",
+      "file": "Examples/system-verilog/automatic_implicit_function_return/automatic_implicit_function_return.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_input_task",
+      "file": "Examples/system-verilog/empty_input_task/empty_input_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "conditional_string_assignment",
+      "file": "Examples/system-verilog/conditional_string_assignment/conditional_string_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_direct_copy",
+      "file": "Examples/system-verilog/string_direct_copy/string_direct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_integral_write",
+      "file": "Examples/system-verilog/floating_integral_write/floating_integral_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "priority_case_fallback",
+      "file": "Examples/system-verilog/priority_case_fallback/priority_case_fallback.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unique0_case",
+      "file": "Examples/system-verilog/unique0_case/unique0_case.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unique0_case_dynamic_refuse",
+      "file": "Examples/system-verilog/unique0_case_dynamic_refuse/unique0_case_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "literal_function_computed_statement",
+      "file": "Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "case_array_widening",
+      "file": "Examples/system-verilog/case_array_widening/case_array_widening.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "case_equality_accept",
+      "file": "Examples/system-verilog/case_equality_accept/case_equality_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "wildcard_case_accept",
+      "file": "Examples/system-verilog/wildcard_case_accept/wildcard_case_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "case_inside_accept",
+      "file": "Examples/system-verilog/case_inside_accept/case_inside_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "case_inside_dynamic_accept",
+      "file": "Examples/system-verilog/case_inside_dynamic_accept/case_inside_dynamic_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_integral_real_conversions",
+      "file": "Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "discarded_pure_floating_math",
+      "file": "Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "discarded_pure_real_to_bits",
+      "file": "Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "discarded_pure_rtoi",
+      "file": "Examples/system-verilog/discarded_pure_rtoi/discarded_pure_rtoi.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_dynamic_array_target",
+      "file": "Examples/system-verilog/nested_dynamic_array_target/nested_dynamic_array_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_aggregate_copy",
+      "file": "Examples/system-verilog/packed_aggregate_copy/packed_aggregate_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "literal_format_concat",
+      "file": "Examples/system-verilog/literal_format_concat/literal_format_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "net_alias",
+      "file": "Examples/system-verilog/net_alias/net_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "supply_net",
+      "file": "Examples/system-verilog/supply_net/supply_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "tri_net",
+      "file": "Examples/system-verilog/tri_net/tri_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "wired_net",
+      "file": "Examples/system-verilog/wired_net/wired_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pull_net",
+      "file": "Examples/system-verilog/pull_net/pull_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "trireg_net",
+      "file": "Examples/system-verilog/trireg_net/trireg_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "user_nettype",
+      "file": "Examples/system-verilog/user_nettype/user_nettype.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "two_state_net",
+      "file": "Examples/system-verilog/two_state_net/two_state_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "mixed_dimension_queries",
+      "file": "Examples/system-verilog/mixed_dimension_queries/mixed_dimension_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_dimension_queries",
+      "file": "Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_unpacked_union",
+      "file": "Examples/system-verilog/fixed_array_unpacked_union/fixed_array_unpacked_union.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_string_initializer",
+      "file": "Examples/system-verilog/fixed_array_string_initializer/fixed_array_string_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_struct_initializer",
+      "file": "Examples/system-verilog/fixed_array_struct_initializer/fixed_array_struct_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "compilation_unit_parameter",
+      "file": "Examples/system-verilog/compilation_unit_parameter/compilation_unit_parameter.sv",
+      "module": "top",
+      "oracle": [
+        "8",
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "parameter_metadata",
+      "file": "Examples/system-verilog/parameter_metadata/parameter_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "8",
+        "a",
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "compilation_unit_typedef",
+      "file": "Examples/system-verilog/compilation_unit_typedef/compilation_unit_typedef.sv",
+      "module": "top",
+      "oracle": [
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "package_metadata",
+      "file": "Examples/system-verilog/package_metadata/package_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "inside_parameter_adapter",
+      "file": "Examples/system-verilog/inside_parameter_adapter/inside_parameter_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "0",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "inside_accept",
+      "file": "Examples/system-verilog/inside_accept/inside_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "inside_dynamic_accept",
+      "file": "Examples/system-verilog/inside_dynamic_accept/inside_dynamic_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "display_format_escape_adapter",
+      "file": "Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "octal S",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "forward_typedef_metadata",
+      "file": "Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "42",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unreferenced_subroutine_metadata",
+      "file": "Examples/system-verilog/unreferenced_subroutine_metadata/unreferenced_subroutine_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_display_arguments",
+      "file": "Examples/system-verilog/empty_display_arguments/empty_display_arguments.sv",
+      "module": "top",
+      "oracle": [
+        "start msg1 end",
+        "          5           2           3",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_method_adapter",
+      "file": "Examples/system-verilog/string_method_adapter/string_method_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_diagnostic_adapter",
+      "file": "Examples/system-verilog/pure_diagnostic_adapter/pure_diagnostic_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_adapter",
+      "file": "Examples/system-verilog/severity_adapter/severity_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "ordering_adapter",
+      "file": "Examples/system-verilog/ordering_adapter/ordering_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "generate_adapter",
+      "file": "Examples/system-verilog/generate_adapter/generate_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "empty_dynamic_decl_adapter",
+      "file": "Examples/system-verilog/empty_dynamic_decl_adapter/empty_dynamic_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "invalid_dimension_adapter",
+      "file": "Examples/system-verilog/invalid_dimension_adapter/invalid_dimension_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_extent_adapter",
+      "file": "Examples/system-verilog/dynamic_extent_adapter/dynamic_extent_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_decl_adapter",
+      "file": "Examples/system-verilog/fixed_array_decl_adapter/fixed_array_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "struct_decl_adapter",
+      "file": "Examples/system-verilog/struct_decl_adapter/struct_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assertcontrol_adapter",
+      "file": "Examples/system-verilog/assertcontrol_adapter/assertcontrol_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assertcontrol_tasks_adapter",
+      "file": "Examples/system-verilog/assertcontrol_tasks_adapter/assertcontrol_tasks_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_diagnostic_markers_adapter",
+      "file": "Examples/system-verilog/pure_diagnostic_markers_adapter/pure_diagnostic_markers_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_real_conversion_statements_adapter",
+      "file": "Examples/system-verilog/pure_real_conversion_statements_adapter/pure_real_conversion_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_bit_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_bit_query_statements_adapter/pure_bit_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_array_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_array_query_statements_adapter/pure_array_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_dimension_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_dimension_query_statements_adapter/pure_dimension_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_string_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_string_query_statements_adapter/pure_string_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_enum_method_statements_adapter",
+      "file": "Examples/system-verilog/pure_enum_method_statements_adapter/pure_enum_method_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_floating_math_statements_adapter",
+      "file": "Examples/system-verilog/pure_floating_math_statements_adapter/pure_floating_math_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_associative_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_associative_query_statements_adapter/pure_associative_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_zero_size_statements_adapter",
+      "file": "Examples/system-verilog/pure_zero_size_statements_adapter/pure_zero_size_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_type_width_query_statements_adapter",
+      "file": "Examples/system-verilog/pure_type_width_query_statements_adapter/pure_type_width_query_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_empty_subroutine_statements_adapter",
+      "file": "Examples/system-verilog/pure_empty_subroutine_statements_adapter/pure_empty_subroutine_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_scalar_metadata_statements_adapter",
+      "file": "Examples/system-verilog/pure_scalar_metadata_statements_adapter/pure_scalar_metadata_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_sformatf_statements_adapter",
+      "file": "Examples/system-verilog/pure_sformatf_statements_adapter/pure_sformatf_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_literal_function_values_adapter",
+      "file": "Examples/system-verilog/pure_literal_function_values_adapter/pure_literal_function_values_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_associative_endpoint_delete_statements_adapter",
+      "file": "Examples/system-verilog/pure_associative_endpoint_delete_statements_adapter/pure_associative_endpoint_delete_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_associative_count_exists_delete_statements_adapter",
+      "file": "Examples/system-verilog/pure_associative_count_exists_delete_statements_adapter/pure_associative_count_exists_delete_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_string_atoreal_statements_adapter",
+      "file": "Examples/system-verilog/pure_string_atoreal_statements_adapter/pure_string_atoreal_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_fopen_invalid_mode_statements_adapter",
+      "file": "Examples/system-verilog/pure_fopen_invalid_mode_statements_adapter/pure_fopen_invalid_mode_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_stdout_position_error_statements_adapter",
+      "file": "Examples/system-verilog/pure_stdout_position_error_statements_adapter/pure_stdout_position_error_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_coverage_nocov_statements_adapter",
+      "file": "Examples/system-verilog/pure_coverage_nocov_statements_adapter/pure_coverage_nocov_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "pure_qualified_if_fallback_adapter",
+      "file": "Examples/system-verilog/pure_qualified_if_fallback_adapter/pure_qualified_if_fallback_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "let_accept",
+      "file": "Examples/system-verilog/let_accept/let_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "let_default_accept",
+      "file": "Examples/system-verilog/let_default_accept/let_default_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "let_typed_accept",
+      "file": "Examples/system-verilog/let_typed_accept/let_typed_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "let_effects_refuse",
+      "file": "Examples/system-verilog/let_expressions/effects.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "assign_accept",
+      "file": "Examples/system-verilog/assign_accept/assign_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ASSIGN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "assign_chain",
+      "file": "Examples/system-verilog/assign_chain/assign_chain.sv",
+      "module": "top",
+      "oracle": [
+        "ASSIGN_CHAIN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "assign_multiple_drivers",
+      "file": "Examples/system-verilog/assign_multiple_drivers/assign_multiple_drivers.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "assign_net_resolution",
+      "file": "Examples/system-verilog/assign_net_resolution/assign_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "NET RESOLUTION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "assign_dynamic_resolution",
+      "file": "Examples/system-verilog/assign_dynamic_resolution/assign_dynamic_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "DYNAMIC RESOLUTION ZERO PASS",
+        "DYNAMIC RESOLUTION CONFLICT PASS",
+        "DYNAMIC RESOLUTION ONE PASS",
+        "DYNAMIC RESOLUTION RETURN PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "assign_selected_target_refuse",
+      "file": "Examples/system-verilog/assign_selected_target_refuse/assign_selected_target_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "assign_selected_target_accept",
+      "file": "Examples/system-verilog/assign_selected_target_accept/assign_selected_target_accept.sv",
+      "module": "top",
+      "oracle": [
+        "Y=z0",
+        "Y=z1"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "assign_delay_refuse",
+      "file": "Examples/system-verilog/assign_delay_refuse/assign_delay_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_ff_accept",
+      "file": "Examples/system-verilog/always_ff_accept/always_ff_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "always_ff_delay_refuse",
+      "file": "Examples/system-verilog/always_ff_delay_refuse/always_ff_delay_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_ff_capture",
+      "file": "Examples/system-verilog/always_ff_capture/always_ff_capture.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF CAPTURE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_expression_clock",
+      "file": "Examples/system-verilog/always_ff_expression_clock/always_ff_expression_clock.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS FF EXPRESSION CLOCK PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_async_reset",
+      "file": "Examples/system-verilog/always_ff_async_reset/always_ff_async_reset.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_ff_async_reset_high",
+      "file": "Examples/system-verilog/always_ff_async_reset_high/always_ff_async_reset_high.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET HIGH PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 8
+    },
+    {
+      "name": "always_ff_negedge",
+      "file": "Examples/system-verilog/always_ff_negedge/always_ff_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_ff_vector_clock_accept",
+      "file": "Examples/system-verilog/always_ff_vector_clock_accept/always_ff_vector_clock_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF VECTOR CLOCK PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_ff_selected_clock_accept",
+      "file": "Examples/system-verilog/always_ff_selected_clock_accept/always_ff_selected_clock_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF SELECTED CLOCK PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_ff_vector_reset_accept",
+      "file": "Examples/system-verilog/always_ff_vector_reset_accept/always_ff_vector_reset_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF VECTOR RESET PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_ff_three_event_accept",
+      "file": "Examples/system-verilog/always_ff_three_event_accept/always_ff_three_event_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF THREE EVENT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_latch_accept",
+      "file": "Examples/system-verilog/always_latch_accept/always_latch_accept.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_LATCH PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_latch_wake",
+      "file": "Examples/system-verilog/always_latch_wake/always_latch_wake.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_LATCH WAKE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_latch_multi_output",
+      "file": "Examples/system-verilog/always_latch_multi_output/always_latch_multi_output.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_LATCH MULTI CAPTURE PASS",
+        "ALWAYS_LATCH MULTI UPDATE PASS",
+        "ALWAYS_LATCH MULTI HOLD PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_latch_delay_refuse",
+      "file": "Examples/system-verilog/always_latch_delay_refuse/always_latch_delay_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "wait_accept",
+      "file": "Examples/system-verilog/wait_accept/wait_accept.sv",
+      "module": "top",
+      "oracle": [
+        "WAIT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_iff",
+      "file": "Examples/system-verilog/always_event_iff/always_event_iff.sv",
+      "module": "top",
+      "oracle": [
+        "EVENT IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff",
+      "file": "Examples/system-verilog/always_ff_event_iff/always_ff_event_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_neg",
+      "file": "Examples/system-verilog/always_ff_event_iff_neg/always_ff_event_iff_neg.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF NEG IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_cmp",
+      "file": "Examples/system-verilog/always_ff_event_iff_cmp/always_ff_event_iff_cmp.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF CMP PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_logic",
+      "file": "Examples/system-verilog/always_ff_event_iff_logic/always_ff_event_iff_logic.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF LOGIC PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_async_reset_iff",
+      "file": "Examples/system-verilog/always_ff_async_reset_iff/always_ff_async_reset_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_async_reset_iff_bit",
+      "file": "Examples/system-verilog/always_ff_async_reset_iff_bit/always_ff_async_reset_iff_bit.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET IFF BIT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_async_reset_iff_reset",
+      "file": "Examples/system-verilog/always_ff_async_reset_iff_reset/always_ff_async_reset_iff_reset.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF RESET IFF RESET PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_ff_event_iff_vector",
+      "file": "Examples/system-verilog/always_ff_event_iff_vector/always_ff_event_iff_vector.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF VECTOR PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_dynamic",
+      "file": "Examples/system-verilog/always_ff_event_iff_dynamic/always_ff_event_iff_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF DYNAMIC PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_dynamic_neg",
+      "file": "Examples/system-verilog/always_ff_event_iff_dynamic_neg/always_ff_event_iff_dynamic_neg.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF DYNAMIC NEG PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_concat",
+      "file": "Examples/system-verilog/always_ff_event_iff_concat/always_ff_event_iff_concat.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF CONCAT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_replication",
+      "file": "Examples/system-verilog/always_ff_event_iff_replication/always_ff_event_iff_replication.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF REPLICATION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_vector_not",
+      "file": "Examples/system-verilog/always_ff_event_iff_vector_not/always_ff_event_iff_vector_not.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF VECTOR NOT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_vector_bnot",
+      "file": "Examples/system-verilog/always_ff_event_iff_vector_bnot/always_ff_event_iff_vector_bnot.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF VECTOR BNOT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_ff_event_iff_implication",
+      "file": "Examples/system-verilog/always_ff_event_iff_implication/always_ff_event_iff_implication.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS_FF IFF IMPLICATION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_iff_unsized",
+      "file": "Examples/system-verilog/always_event_iff_unsized/always_event_iff_unsized.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS IFF UNSIZED PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_bit_select",
+      "file": "Examples/system-verilog/always_event_bit_select/always_event_bit_select.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BIT SELECT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_bit_select_posedge",
+      "file": "Examples/system-verilog/always_event_bit_select_posedge/always_event_bit_select_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BIT SELECT POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_bit_select_negedge",
+      "file": "Examples/system-verilog/always_event_bit_select_negedge/always_event_bit_select_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BIT SELECT NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_part_select",
+      "file": "Examples/system-verilog/always_event_part_select/always_event_part_select.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT PART SELECT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_conditional",
+      "file": "Examples/system-verilog/always_event_conditional/always_event_conditional.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT CONDITIONAL PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_binary",
+      "file": "Examples/system-verilog/always_event_binary/always_event_binary.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BINARY PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_reduction",
+      "file": "Examples/system-verilog/always_event_reduction/always_event_reduction.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT REDUCTION PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_unary",
+      "file": "Examples/system-verilog/always_event_unary/always_event_unary.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT UNARY PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_event_concat",
+      "file": "Examples/system-verilog/always_event_concat/always_event_concat.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT CONCAT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_part_select_posedge",
+      "file": "Examples/system-verilog/always_event_part_select_posedge/always_event_part_select_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT PART SELECT POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_part_select_negedge",
+      "file": "Examples/system-verilog/always_event_part_select_negedge/always_event_part_select_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT PART SELECT NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_multibit_posedge",
+      "file": "Examples/system-verilog/always_event_multibit_posedge/always_event_multibit_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT MULTIBIT POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_multibit_negedge",
+      "file": "Examples/system-verilog/always_event_multibit_negedge/always_event_multibit_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT MULTIBIT NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_explicit_edge",
+      "file": "Examples/system-verilog/always_event_explicit_edge/always_event_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_explicit_edge_list",
+      "file": "Examples/system-verilog/always_event_explicit_edge_list/always_event_explicit_edge_list.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE LIST PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_explicit_edge_comma_list",
+      "file": "Examples/system-verilog/always_event_explicit_edge_comma_list/always_event_explicit_edge_comma_list.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE COMMA PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_explicit_edge_list_iff",
+      "file": "Examples/system-verilog/always_event_explicit_edge_list_iff/always_event_explicit_edge_list_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE LIST IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_explicit_edge_comma_list_iff",
+      "file": "Examples/system-verilog/always_event_explicit_edge_comma_list_iff/always_event_explicit_edge_comma_list_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE COMMA IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_explicit_edge_iff/always_event_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_binary_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_binary_explicit_edge_iff/always_event_binary_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BINARY EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_ternary_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_ternary_explicit_edge_iff/always_event_ternary_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT TERNARY EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_concat_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_concat_explicit_edge_iff/always_event_concat_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT CONCAT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_reduction_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_reduction_explicit_edge_iff/always_event_reduction_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT REDUCTION EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_logical_not_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_logical_not_explicit_edge_iff/always_event_logical_not_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT LOGICAL NOT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_bitwise_not_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_bitwise_not_explicit_edge_iff/always_event_bitwise_not_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BITWISE NOT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_dynamic_bit_select",
+      "file": "Examples/system-verilog/always_event_dynamic_bit_select/always_event_dynamic_bit_select.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC BIT SELECT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_dynamic_bit_select_negedge",
+      "file": "Examples/system-verilog/always_event_dynamic_bit_select_negedge/always_event_dynamic_bit_select_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC BIT SELECT NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_dynamic_bit_select_explicit_edge",
+      "file": "Examples/system-verilog/always_event_dynamic_bit_select_explicit_edge/always_event_dynamic_bit_select_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC BIT SELECT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_dynamic_bit_select_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_dynamic_bit_select_explicit_edge_iff/always_event_dynamic_bit_select_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC BIT SELECT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_dynamic_part_select",
+      "file": "Examples/system-verilog/always_event_dynamic_part_select/always_event_dynamic_part_select.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC PART SELECT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_dynamic_part_select_posedge",
+      "file": "Examples/system-verilog/always_event_dynamic_part_select_posedge/always_event_dynamic_part_select_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC PART SELECT POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_dynamic_part_select_explicit_edge",
+      "file": "Examples/system-verilog/always_event_dynamic_part_select_explicit_edge/always_event_dynamic_part_select_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC PART SELECT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_dynamic_part_select_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_dynamic_part_select_explicit_edge_iff/always_event_dynamic_part_select_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC PART SELECT EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_dynamic_part_select_desc_explicit_edge_iff",
+      "file": "Examples/system-verilog/always_event_dynamic_part_select_desc_explicit_edge_iff/always_event_dynamic_part_select_desc_explicit_edge_iff.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT DYNAMIC DESC EXPLICIT EDGE IFF PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_vector_unary",
+      "file": "Examples/system-verilog/always_event_vector_unary/always_event_vector_unary.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR UNARY PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "always_event_vector_unary_posedge",
+      "file": "Examples/system-verilog/always_event_vector_unary_posedge/always_event_vector_unary_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR UNARY POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 8
+    },
+    {
+      "name": "always_event_vector_binary",
+      "file": "Examples/system-verilog/always_event_vector_binary/always_event_vector_binary.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR BINARY PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_vector_ternary",
+      "file": "Examples/system-verilog/always_event_vector_ternary/always_event_vector_ternary.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR TERNARY PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_vector_logical_not",
+      "file": "Examples/system-verilog/always_event_vector_logical_not/always_event_vector_logical_not.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR LOGICAL NOT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "event_real_refuse",
+      "file": "Examples/system-verilog/event_real_refuse/event_real_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "event_named_accept",
+      "file": "Examples/system-verilog/event_named_accept/event_named_accept.sv",
+      "module": "top",
+      "oracle": [
+        "NAMED EVENT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "always_event_mixed_expression_list",
+      "file": "Examples/system-verilog/always_event_mixed_expression_list/always_event_mixed_expression_list.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT MIXED LIST PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_binary_posedge",
+      "file": "Examples/system-verilog/always_event_binary_posedge/always_event_binary_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BINARY POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_binary_explicit_edge",
+      "file": "Examples/system-verilog/always_event_binary_explicit_edge/always_event_binary_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BINARY EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_ternary_posedge",
+      "file": "Examples/system-verilog/always_event_ternary_posedge/always_event_ternary_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT TERNARY POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_ternary_explicit_edge",
+      "file": "Examples/system-verilog/always_event_ternary_explicit_edge/always_event_ternary_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT TERNARY EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_concat_negedge",
+      "file": "Examples/system-verilog/always_event_concat_negedge/always_event_concat_negedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT CONCAT NEGEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_concat_explicit_edge",
+      "file": "Examples/system-verilog/always_event_concat_explicit_edge/always_event_concat_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT CONCAT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_reduction_posedge",
+      "file": "Examples/system-verilog/always_event_reduction_posedge/always_event_reduction_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT REDUCTION POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_reduction_explicit_edge",
+      "file": "Examples/system-verilog/always_event_reduction_explicit_edge/always_event_reduction_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT REDUCTION EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "always_event_vector_logical_not_posedge",
+      "file": "Examples/system-verilog/always_event_vector_logical_not_posedge/always_event_vector_logical_not_posedge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT VECTOR NOT POSEDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 5
+    },
+    {
+      "name": "always_event_logical_not_explicit_edge",
+      "file": "Examples/system-verilog/always_event_logical_not_explicit_edge/always_event_logical_not_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT LOGICAL NOT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 7
+    },
+    {
+      "name": "always_event_bitwise_not_explicit_edge",
+      "file": "Examples/system-verilog/always_event_bitwise_not_explicit_edge/always_event_bitwise_not_explicit_edge.sv",
+      "module": "top",
+      "oracle": [
+        "ALWAYS EVENT BITWISE NOT EXPLICIT EDGE PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 6
+    },
+    {
+      "name": "event_chandle_refuse",
+      "file": "Examples/system-verilog/event_chandle_refuse/event_chandle_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "event_aggregate_singular_refuse",
+      "file": "Examples/system-verilog/event_aggregate_singular_refuse/event_aggregate_singular_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "event_wait_expression_accept",
+      "file": "Examples/system-verilog/event_wait_expression_accept/event_wait_expression_accept.sv",
+      "module": "top",
+      "oracle": [
+        "PROCEDURAL EXPRESSION WAIT PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
+      "name": "for_timed_accept",
+      "file": "Examples/system-verilog/for_timed_accept/for_timed_accept.sv",
+      "module": "top",
+      "oracle": [
+        "TIMED FOR PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "local_decl_timed_accept",
+      "file": "Examples/system-verilog/local_decl_timed_accept/local_decl_timed_accept.sv",
+      "module": "top",
+      "oracle": [
+        "TIMED LOCAL DECL PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 2
+    },
+    {
+      "name": "casez_timed_accept",
+      "file": "Examples/system-verilog/casez_timed_accept/casez_timed_accept.sv",
+      "module": "top",
+      "oracle": [
+        "CASEZ TIMED PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    },
+    {
+      "name": "casex_timed_accept",
+      "file": "Examples/system-verilog/casex_timed_accept/casex_timed_accept.sv",
+      "module": "top",
+      "oracle": [
+        "CASEX TIMED PASS"
+      ],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 3
+    }
+  ]
+}

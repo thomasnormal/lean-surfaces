@@ -1,0 +1,374 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv",
+  "source_sha256": "fc72575f267ff94c9c3d6e1a253f585d588956ff235bcf878dd01e9e99e2e941",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 24,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 11,
+              "end_line": 8,
+              "end_col": 15
+            },
+            "name": "q_id",
+            "width": 32,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 17,
+              "end_line": 8,
+              "end_col": 23
+            },
+            "name": "status",
+            "width": 32,
+            "init": null,
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 23,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 23,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 14
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 9
+                    },
+                    "width": 32,
+                    "name": "q_id",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 11,
+                      "col": 12,
+                      "end_line": 11,
+                      "end_col": 13
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 39
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 32,
+                      "end_line": 12,
+                      "end_col": 38
+                    },
+                    "width": 32,
+                    "name": "status",
+                    "signed": true,
+                    "two_state": false
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 12,
+                      "col": 32,
+                      "end_line": 12,
+                      "end_col": 38
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000",
+                    "q_initialize_status": 0
+                  },
+                  "q_initialize_status_lowered": 0
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 15
+                      },
+                      "width": 32,
+                      "name": "status",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 13,
+                        "col": 20,
+                        "end_line": 13,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 13,
+                      "col": 23,
+                      "end_line": 16,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 14,
+                          "col": 7,
+                          "end_line": 14,
+                          "end_col": 50
+                        },
+                        "name": "$display",
+                        "format": "FAIL: first status=%0d",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 42,
+                              "end_line": 14,
+                              "end_col": 48
+                            },
+                            "width": 32,
+                            "name": "status",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 15,
+                          "col": 7,
+                          "end_line": 15,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 39
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 17,
+                      "col": 32,
+                      "end_line": 17,
+                      "end_col": 38
+                    },
+                    "width": 32,
+                    "name": "status",
+                    "signed": true,
+                    "two_state": false
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 17,
+                      "col": 32,
+                      "end_line": 17,
+                      "end_col": 38
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000110",
+                    "q_initialize_status": 6
+                  },
+                  "q_initialize_status_lowered": 6
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 54
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 18,
+                      "col": 9,
+                      "end_line": 18,
+                      "end_col": 21
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 18,
+                        "col": 9,
+                        "end_line": 18,
+                        "end_col": 15
+                      },
+                      "width": 32,
+                      "name": "status",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 18,
+                        "col": 20,
+                        "end_line": 18,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000110"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 19,
+                      "col": 7,
+                      "end_line": 19,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 21,
+                      "col": 7,
+                      "end_line": 21,
+                      "end_col": 54
+                    },
+                    "name": "$display",
+                    "format": "FAIL: duplicate status=%0d",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 21,
+                          "col": 46,
+                          "end_line": 21,
+                          "end_col": 52
+                        },
+                        "width": 32,
+                        "name": "status",
+                        "signed": true
+                      }
+                    ],
+                    "arg_signed": [
+                      true
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

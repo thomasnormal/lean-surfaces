@@ -1,0 +1,346 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "proc_local_initializer_param",
+ "envelope": "proc_local_initializer_param.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/sem2/proc_local_initializer_param/proc_local_initializer_param.sv",
+   "sha256": "bb35e121fa6ae1edc4cf2aa9457359a2b75272ffd8869bbc3c1fda8c0d53d695"
+  }
+ ],
+ "probe_points": "B=90;B=165",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "B",
+     "value": 90
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "proc_local_initializer_param",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "B",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "default": {
+       "kind": "Resize",
+       "width": 8,
+       "operand": {
+        "kind": "Int",
+        "value": 90,
+        "resolved_width": 32
+       }
+      },
+      "resolved": 90
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "blk1__bias",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "init": {
+       "kind": "ParamRef",
+       "name": "B"
+      },
+      "hoisted_local": true
+     }
+    ],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "Empty",
+         "symbolic_local_hoisted": "blk1__bias"
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "y"
+         },
+         "value": {
+          "kind": "Binary",
+          "width": 8,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 8,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 8,
+           "name": "blk1__bias"
+          }
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "B",
+     "value": 165
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "proc_local_initializer_param",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "B",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "default": {
+       "kind": "Resize",
+       "width": 8,
+       "operand": {
+        "kind": "Int",
+        "value": 165,
+        "resolved_width": 32
+       }
+      },
+      "resolved": 165
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "blk1__bias",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "init": {
+       "kind": "ParamRef",
+       "name": "B"
+      },
+      "hoisted_local": true
+     }
+    ],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "Empty",
+         "symbolic_local_hoisted": "blk1__bias"
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "y"
+         },
+         "value": {
+          "kind": "Binary",
+          "width": 8,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 8,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 8,
+           "name": "blk1__bias"
+          }
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

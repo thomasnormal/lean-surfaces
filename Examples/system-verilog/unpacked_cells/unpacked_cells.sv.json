@@ -1,0 +1,227 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/unpacked_cells/unpacked_cells.sv",
+  "source_sha256": "5a787e65a4fddd0790d75e66c532b75bc136548a7e49796e2df66a5a74fcae80",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 15,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "mem[0]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 15,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "mem[1]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 15,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "mem[2]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 15,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "mem[3]",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 9,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 9,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 11
+                    },
+                    "width": 8,
+                    "name": "mem[2]"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 14,
+                      "end_line": 10,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "bits": "10101011"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 38
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 25
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 9,
+                        "end_line": 11,
+                        "end_col": 15
+                      },
+                      "width": 8,
+                      "name": "mem[2]"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 11,
+                        "col": 20,
+                        "end_line": 11,
+                        "end_col": 25
+                      },
+                      "width": 8,
+                      "bits": "10101011"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 27,
+                      "end_line": 11,
+                      "end_col": 44
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 10,
+                      "end_line": 12,
+                      "end_col": 38
+                    },
+                    "name": "$display",
+                    "format": "FAIL %h",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 12,
+                          "col": 30,
+                          "end_line": 12,
+                          "end_col": 36
+                        },
+                        "width": 8,
+                        "name": "mem[2]"
+                      }
+                    ],
+                    "arg_signed": [
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

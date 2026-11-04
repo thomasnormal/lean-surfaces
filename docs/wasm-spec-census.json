@@ -1,0 +1,4542 @@
+{
+  "schema": "wasm-spec-census-0.1",
+  "corpus": "WebAssembly/spec specification/ (SpecTec)",
+  "revision": "fc209c5ed8afc4dfeb9252024d217da3376c7a6f",
+  "describe": "wg-3.0-313-gfc209c5e",
+  "splice_check": {
+    "splice_patterns": 410,
+    "rules_total": 568,
+    "rules_spliced": 488,
+    "dead_patterns": [],
+    "never_spliced": [
+      "Arrayinst_ok/<sole>",
+      "Config_ok/<sole>",
+      "Context_ok/<sole>",
+      "Datainst_ok/<sole>",
+      "Defaultable/<sole>",
+      "Eleminst_ok/<sole>",
+      "Exninst_ok/<sole>",
+      "Exportinst_ok/<sole>",
+      "Expr_ok2/<sole>",
+      "Expr_ok_const/<sole>",
+      "Extend_arrayinst/<sole>",
+      "Extend_datainst/<sole>",
+      "Extend_eleminst/<sole>",
+      "Extend_exninst/<sole>",
+      "Extend_funcinst/<sole>",
+      "Extend_globalinst/<sole>",
+      "Extend_meminst/<sole>",
+      "Extend_store/<sole>",
+      "Extend_structinst/<sole>",
+      "Extend_tableinst/<sole>",
+      "Extend_taginst/<sole>",
+      "Fieldval_ok/packval",
+      "Fieldval_ok/val",
+      "Frame_ok/<sole>",
+      "Funcinst_ok/<sole>",
+      "Globalinst_ok/<sole>",
+      "Heaptype_ok/typeuse",
+      "Idctxt_ok/<sole>",
+      "ImmutReachable/ref.array",
+      "ImmutReachable/ref.exn",
+      "ImmutReachable/ref.extern",
+      "ImmutReachable/ref.struct",
+      "ImmutReachable/trans",
+      "Instr_ok/load",
+      "Instr_ok/store",
+      "Instr_ok2/call_ref",
+      "Instr_ok2/frame",
+      "Instr_ok2/handler",
+      "Instr_ok2/label",
+      "Instr_ok2/plain",
+      "Instr_ok2/ref",
+      "Instr_ok2/return_call_ref",
+      "Instr_ok2/trap",
+      "Instrs_ok2/empty",
+      "Instrs_ok2/frame",
+      "Instrs_ok2/seq",
+      "Instrs_ok2/sub",
+      "Localtype_ok/<sole>",
+      "Localval_ok/set",
+      "Localval_ok/unset",
+      "Meminst_ok/<sole>",
+      "Moduleinst_ok/<sole>",
+      "Nondefaultable/<sole>",
+      "NotImmutReachable/<sole>",
+      "Packval_ok/<sole>",
+      "State_ok/<sole>",
+      "Step/ctxt-frame",
+      "Step/ctxt-handler",
+      "Step/ctxt-instrs",
+      "Step/ctxt-label",
+      "Step/pure",
+      "Step/read",
+      "Step_pure/trap-frame",
+      "Step_pure/trap-handler",
+      "Step_pure/trap-instrs",
+      "Step_pure/trap-label",
+      "Step_read/vload-oob",
+      "Step_read/vload-val",
+      "Steps/refl",
+      "Steps/trans",
+      "Storagetype_ok/pack",
+      "Storagetype_ok/val",
+      "Store_ok/<sole>",
+      "Structinst_ok/<sole>",
+      "Tableinst_ok/<sole>",
+      "Taginst_ok/<sole>",
+      "Typeuse_ok/deftype",
+      "Val_ok/num",
+      "Val_ok/ref",
+      "Val_ok/vec"
+    ]
+  },
+  "splice_check_version": "wasm-latest",
+  "versions": {
+    "wasm-1.0": {
+      "version": "wasm-1.0",
+      "files": 10,
+      "lines": 2309,
+      "counts": {
+        "relations": 35,
+        "rules": 133,
+        "syntax_decls": 88,
+        "def_names": 131,
+        "def_clauses": 371,
+        "grammar_names": 61,
+        "grammar_clauses": 80
+      },
+      "relations_by_kind": {
+        "auxiliary": 2,
+        "reduction": 5,
+        "validation": 28
+      },
+      "rules_by_kind": {
+        "auxiliary": 3,
+        "reduction": 58,
+        "validation": 72
+      },
+      "relations": {
+        "Data_ok": {
+          "form": "context |- data : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Elem_ok": {
+          "form": "context |- elem : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Eval_expr": {
+          "form": "state; expr ~>* state; val*",
+          "kind": "reduction",
+          "rules": 1
+        },
+        "Export_ok": {
+          "form": "context |- export : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_const": {
+          "form": "context |- expr CONST",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expr_ok": {
+          "form": "context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok_const": {
+          "form": "context |- expr : valtype? CONST",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Externidx_ok": {
+          "form": "context |- externidx : externtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Externtype_ok": {
+          "form": "|- externtype : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Externtype_sub": {
+          "form": "|- externtype <: externtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Func_ok": {
+          "form": "context |- func : functype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Functype_ok": {
+          "form": "|- functype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Functype_sub": {
+          "form": "|- functype <: functype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Global_ok": {
+          "form": "context |- global : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_ok": {
+          "form": "|- globaltype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_sub": {
+          "form": "|- globaltype <: globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Import_ok": {
+          "form": "context |- import : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instr_const": {
+          "form": "context |- instr CONST",
+          "kind": "auxiliary",
+          "rules": 2
+        },
+        "Instr_ok": {
+          "form": "context |- instr : functype",
+          "kind": "validation",
+          "rules": 33
+        },
+        "Instrs_ok": {
+          "form": "context |- instr* : functype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Limits_ok": {
+          "form": "|- limits : nat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_sub": {
+          "form": "|- limits <: limits",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Mem_ok": {
+          "form": "context |- mem : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_ok": {
+          "form": "|- memtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_sub": {
+          "form": "|- memtype <: memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Module_ok": {
+          "form": "|- module : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Start_ok": {
+          "form": "context |- start : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Step": {
+          "form": "config ~> config",
+          "kind": "reduction",
+          "rules": 13
+        },
+        "Step_pure": {
+          "form": "admininstr* ~> admininstr*",
+          "kind": "reduction",
+          "rules": 29
+        },
+        "Step_read": {
+          "form": "config ~> admininstr*",
+          "kind": "reduction",
+          "rules": 13
+        },
+        "Steps": {
+          "form": "config ~>* config",
+          "kind": "reduction",
+          "rules": 2
+        },
+        "Table_ok": {
+          "form": "context |- table : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_ok": {
+          "form": "|- tabletype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_sub": {
+          "form": "|- tabletype <: tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Type_ok": {
+          "form": "|- type : functype",
+          "kind": "validation",
+          "rules": 1
+        }
+      },
+      "rules": {
+        "Data_ok": [
+          "<sole>"
+        ],
+        "Elem_ok": [
+          "<sole>"
+        ],
+        "Eval_expr": [
+          "<sole>"
+        ],
+        "Export_ok": [
+          "<sole>"
+        ],
+        "Expr_const": [
+          "<sole>"
+        ],
+        "Expr_ok": [
+          "<sole>"
+        ],
+        "Expr_ok_const": [
+          "<sole>"
+        ],
+        "Externidx_ok": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Externtype_ok": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Externtype_sub": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Func_ok": [
+          "<sole>"
+        ],
+        "Functype_ok": [
+          "<sole>"
+        ],
+        "Functype_sub": [
+          "<sole>"
+        ],
+        "Global_ok": [
+          "<sole>"
+        ],
+        "Globaltype_ok": [
+          "<sole>"
+        ],
+        "Globaltype_sub": [
+          "<sole>"
+        ],
+        "Import_ok": [
+          "<sole>"
+        ],
+        "Instr_const": [
+          "const",
+          "global.get"
+        ],
+        "Instr_ok": [
+          "binop",
+          "block",
+          "br",
+          "br_if",
+          "br_table",
+          "call",
+          "call_indirect",
+          "const",
+          "cvtop-convert",
+          "cvtop-reinterpret",
+          "drop",
+          "global.get",
+          "global.set",
+          "if",
+          "load",
+          "load-pack",
+          "load-val",
+          "local.get",
+          "local.set",
+          "local.tee",
+          "loop",
+          "memory.grow",
+          "memory.size",
+          "nop",
+          "relop",
+          "return",
+          "select",
+          "store",
+          "store-pack",
+          "store-val",
+          "testop",
+          "unop",
+          "unreachable"
+        ],
+        "Instrs_ok": [
+          "empty",
+          "frame",
+          "instr",
+          "seq"
+        ],
+        "Limits_ok": [
+          "<sole>"
+        ],
+        "Limits_sub": [
+          "<sole>"
+        ],
+        "Mem_ok": [
+          "<sole>"
+        ],
+        "Memtype_ok": [
+          "<sole>"
+        ],
+        "Memtype_sub": [
+          "<sole>"
+        ],
+        "Module_ok": [
+          "<sole>"
+        ],
+        "Start_ok": [
+          "<sole>"
+        ],
+        "Step": [
+          "ctxt-frame",
+          "ctxt-instrs",
+          "ctxt-label",
+          "global.set",
+          "local.set",
+          "memory.grow-fail",
+          "memory.grow-succeed",
+          "pure",
+          "read",
+          "store-num-trap",
+          "store-num-val",
+          "store-pack-trap",
+          "store-pack-val"
+        ],
+        "Step_pure": [
+          "binop-trap",
+          "binop-val",
+          "br-succ",
+          "br-zero",
+          "br_if-false",
+          "br_if-true",
+          "br_table-ge",
+          "br_table-lt",
+          "cvtop-trap",
+          "cvtop-val",
+          "drop",
+          "frame-vals",
+          "if-false",
+          "if-true",
+          "label-vals",
+          "local.tee",
+          "nop",
+          "relop",
+          "return-frame",
+          "return-label",
+          "select-false",
+          "select-true",
+          "testop",
+          "trap-frame",
+          "trap-label",
+          "trap-vals",
+          "unop-trap",
+          "unop-val",
+          "unreachable"
+        ],
+        "Step_read": [
+          "block",
+          "call",
+          "call_addr",
+          "call_indirect-call",
+          "call_indirect-trap",
+          "global.get",
+          "load-num-trap",
+          "load-num-val",
+          "load-pack-trap",
+          "load-pack-val",
+          "local.get",
+          "loop",
+          "memory.size"
+        ],
+        "Steps": [
+          "refl",
+          "trans"
+        ],
+        "Table_ok": [
+          "<sole>"
+        ],
+        "Tabletype_ok": [
+          "<sole>"
+        ],
+        "Tabletype_sub": [
+          "<sole>"
+        ],
+        "Type_ok": [
+          "<sole>"
+        ]
+      },
+      "per_file": {
+        "0-aux.spectec": {
+          "lines": 42,
+          "relations": 0,
+          "rules": 0
+        },
+        "1-syntax.spectec": {
+          "lines": 300,
+          "relations": 0,
+          "rules": 0
+        },
+        "2-syntax-aux.spectec": {
+          "lines": 50,
+          "relations": 0,
+          "rules": 0
+        },
+        "3-numerics.spectec": {
+          "lines": 243,
+          "relations": 0,
+          "rules": 0
+        },
+        "4-runtime.spectec": {
+          "lines": 110,
+          "relations": 0,
+          "rules": 0
+        },
+        "5-runtime-aux.spectec": {
+          "lines": 115,
+          "relations": 0,
+          "rules": 0
+        },
+        "6-typing.spectec": {
+          "lines": 461,
+          "relations": 30,
+          "rules": 75
+        },
+        "8-reduction.spectec": {
+          "lines": 275,
+          "relations": 5,
+          "rules": 58
+        },
+        "9-module.spectec": {
+          "lines": 172,
+          "relations": 0,
+          "rules": 0
+        },
+        "A-binary.spectec": {
+          "lines": 541,
+          "relations": 0,
+          "rules": 0
+        }
+      }
+    },
+    "wasm-2.0": {
+      "version": "wasm-2.0",
+      "files": 10,
+      "lines": 4121,
+      "counts": {
+        "relations": 40,
+        "rules": 259,
+        "syntax_decls": 143,
+        "def_names": 213,
+        "def_clauses": 631,
+        "grammar_names": 71,
+        "grammar_clauses": 114
+      },
+      "relations_by_kind": {
+        "auxiliary": 2,
+        "reduction": 5,
+        "validation": 33
+      },
+      "rules_by_kind": {
+        "auxiliary": 6,
+        "reduction": 128,
+        "validation": 125
+      },
+      "relations": {
+        "Blocktype_ok": {
+          "form": "context |- blocktype : functype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Data_ok": {
+          "form": "context |- data : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Datamode_ok": {
+          "form": "context |- datamode : OK",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Elem_ok": {
+          "form": "context |- elem : reftype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Elemmode_ok": {
+          "form": "context |- elemmode : reftype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Eval_expr": {
+          "form": "state; expr ~>* state; val*",
+          "kind": "reduction",
+          "rules": 1
+        },
+        "Export_ok": {
+          "form": "context |- export : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_const": {
+          "form": "context |- expr CONST",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expr_ok": {
+          "form": "context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok_const": {
+          "form": "context |- expr : valtype CONST",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Externidx_ok": {
+          "form": "context |- externidx : externtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Externtype_ok": {
+          "form": "|- externtype : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Externtype_sub": {
+          "form": "|- externtype <: externtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Func_ok": {
+          "form": "context |- func : functype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Functype_ok": {
+          "form": "|- functype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Functype_sub": {
+          "form": "|- functype <: functype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Global_ok": {
+          "form": "context |- global : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_ok": {
+          "form": "|- globaltype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_sub": {
+          "form": "|- globaltype <: globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Import_ok": {
+          "form": "context |- import : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instr_const": {
+          "form": "context |- instr CONST",
+          "kind": "auxiliary",
+          "rules": 5
+        },
+        "Instr_ok": {
+          "form": "context |- instr : functype",
+          "kind": "validation",
+          "rules": 75
+        },
+        "Instrs_ok": {
+          "form": "context |- instr* : functype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Limits_ok": {
+          "form": "|- limits : nat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_sub": {
+          "form": "|- limits <: limits",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Mem_ok": {
+          "form": "context |- mem : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_ok": {
+          "form": "|- memtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_sub": {
+          "form": "|- memtype <: memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Module_ok": {
+          "form": "|- module : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Resulttype_sub": {
+          "form": "|- resulttype <: resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Start_ok": {
+          "form": "context |- start : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Step": {
+          "form": "config ~> config",
+          "kind": "reduction",
+          "rules": 22
+        },
+        "Step_pure": {
+          "form": "admininstr* ~> admininstr*",
+          "kind": "reduction",
+          "rules": 56
+        },
+        "Step_read": {
+          "form": "config ~> admininstr*",
+          "kind": "reduction",
+          "rules": 47
+        },
+        "Steps": {
+          "form": "config ~>* config",
+          "kind": "reduction",
+          "rules": 2
+        },
+        "Table_ok": {
+          "form": "context |- table : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_ok": {
+          "form": "|- tabletype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_sub": {
+          "form": "|- tabletype <: tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Type_ok": {
+          "form": "|- type : functype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Valtype_sub": {
+          "form": "|- valtype <: valtype",
+          "kind": "validation",
+          "rules": 2
+        }
+      },
+      "rules": {
+        "Blocktype_ok": [
+          "typeidx",
+          "valtype"
+        ],
+        "Data_ok": [
+          "<sole>"
+        ],
+        "Datamode_ok": [
+          "active",
+          "passive"
+        ],
+        "Elem_ok": [
+          "<sole>"
+        ],
+        "Elemmode_ok": [
+          "active",
+          "declare",
+          "passive"
+        ],
+        "Eval_expr": [
+          "<sole>"
+        ],
+        "Export_ok": [
+          "<sole>"
+        ],
+        "Expr_const": [
+          "<sole>"
+        ],
+        "Expr_ok": [
+          "<sole>"
+        ],
+        "Expr_ok_const": [
+          "<sole>"
+        ],
+        "Externidx_ok": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Externtype_ok": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Externtype_sub": [
+          "func",
+          "global",
+          "mem",
+          "table"
+        ],
+        "Func_ok": [
+          "<sole>"
+        ],
+        "Functype_ok": [
+          "<sole>"
+        ],
+        "Functype_sub": [
+          "<sole>"
+        ],
+        "Global_ok": [
+          "<sole>"
+        ],
+        "Globaltype_ok": [
+          "<sole>"
+        ],
+        "Globaltype_sub": [
+          "<sole>"
+        ],
+        "Import_ok": [
+          "<sole>"
+        ],
+        "Instr_const": [
+          "const",
+          "global.get",
+          "ref.func",
+          "ref.null",
+          "vconst"
+        ],
+        "Instr_ok": [
+          "binop",
+          "block",
+          "br",
+          "br_if",
+          "br_table",
+          "call",
+          "call_indirect",
+          "const",
+          "cvtop-convert",
+          "cvtop-reinterpret",
+          "data.drop",
+          "drop",
+          "elem.drop",
+          "global.get",
+          "global.set",
+          "if",
+          "load",
+          "load-pack",
+          "load-val",
+          "local.get",
+          "local.set",
+          "local.tee",
+          "loop",
+          "memory.copy",
+          "memory.fill",
+          "memory.grow",
+          "memory.init",
+          "memory.size",
+          "nop",
+          "ref.func",
+          "ref.is_null",
+          "ref.null",
+          "relop",
+          "return",
+          "select-expl",
+          "select-impl",
+          "store",
+          "store-pack",
+          "store-val",
+          "table.copy",
+          "table.fill",
+          "table.get",
+          "table.grow",
+          "table.init",
+          "table.set",
+          "table.size",
+          "testop",
+          "unop",
+          "unreachable",
+          "vbinop",
+          "vbitmask",
+          "vconst",
+          "vcvtop",
+          "vextbinop",
+          "vextract_lane",
+          "vextunop",
+          "vload",
+          "vload-splat",
+          "vload-zero",
+          "vload_lane",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vstore",
+          "vstore_lane",
+          "vswizzle",
+          "vtestop",
+          "vunop",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Instrs_ok": [
+          "empty",
+          "frame",
+          "instr",
+          "seq",
+          "sub"
+        ],
+        "Limits_ok": [
+          "<sole>"
+        ],
+        "Limits_sub": [
+          "<sole>"
+        ],
+        "Mem_ok": [
+          "<sole>"
+        ],
+        "Memtype_ok": [
+          "<sole>"
+        ],
+        "Memtype_sub": [
+          "<sole>"
+        ],
+        "Module_ok": [
+          "<sole>"
+        ],
+        "Resulttype_sub": [
+          "<sole>"
+        ],
+        "Start_ok": [
+          "<sole>"
+        ],
+        "Step": [
+          "ctxt-frame",
+          "ctxt-label",
+          "data.drop",
+          "elem.drop",
+          "global.set",
+          "local.set",
+          "memory.grow-fail",
+          "memory.grow-succeed",
+          "pure",
+          "read",
+          "store-num-trap",
+          "store-num-val",
+          "store-pack-trap",
+          "store-pack-val",
+          "table.grow-fail",
+          "table.grow-succeed",
+          "table.set-trap",
+          "table.set-val",
+          "vstore-oob",
+          "vstore-val",
+          "vstore_lane-oob",
+          "vstore_lane-val"
+        ],
+        "Step_pure": [
+          "binop-trap",
+          "binop-val",
+          "br-succ",
+          "br-zero",
+          "br_if-false",
+          "br_if-true",
+          "br_table-ge",
+          "br_table-lt",
+          "cvtop-trap",
+          "cvtop-val",
+          "drop",
+          "frame-vals",
+          "if-false",
+          "if-true",
+          "label-vals",
+          "local.tee",
+          "nop",
+          "ref.is_null-false",
+          "ref.is_null-true",
+          "relop",
+          "return-frame",
+          "return-label",
+          "select-false",
+          "select-true",
+          "testop",
+          "trap-frame",
+          "trap-label",
+          "trap-vals",
+          "unop-trap",
+          "unop-val",
+          "unreachable",
+          "vbinop-trap",
+          "vbinop-val",
+          "vbitmask",
+          "vcvtop-full",
+          "vcvtop-half",
+          "vcvtop-zero",
+          "vextbinop",
+          "vextract_lane-num",
+          "vextract_lane-pack",
+          "vextunop",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vswizzle",
+          "vtestop-false",
+          "vtestop-true",
+          "vunop",
+          "vunop-trap",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Step_read": [
+          "block",
+          "call",
+          "call_addr",
+          "call_indirect-call",
+          "call_indirect-trap",
+          "global.get",
+          "load-num-trap",
+          "load-num-val",
+          "load-pack-trap",
+          "load-pack-val",
+          "local.get",
+          "loop",
+          "memory.copy-gt",
+          "memory.copy-le",
+          "memory.copy-trap",
+          "memory.copy-zero",
+          "memory.fill-succ",
+          "memory.fill-trap",
+          "memory.fill-zero",
+          "memory.init-succ",
+          "memory.init-trap",
+          "memory.init-zero",
+          "memory.size",
+          "ref.func",
+          "table.copy-gt",
+          "table.copy-le",
+          "table.copy-trap",
+          "table.copy-zero",
+          "table.fill-succ",
+          "table.fill-trap",
+          "table.fill-zero",
+          "table.get-trap",
+          "table.get-val",
+          "table.init-succ",
+          "table.init-trap",
+          "table.init-zero",
+          "table.size",
+          "vload-oob",
+          "vload-shape-oob",
+          "vload-shape-val",
+          "vload-splat-oob",
+          "vload-splat-val",
+          "vload-val",
+          "vload-zero-oob",
+          "vload-zero-val",
+          "vload_lane-oob",
+          "vload_lane-val"
+        ],
+        "Steps": [
+          "refl",
+          "trans"
+        ],
+        "Table_ok": [
+          "<sole>"
+        ],
+        "Tabletype_ok": [
+          "<sole>"
+        ],
+        "Tabletype_sub": [
+          "<sole>"
+        ],
+        "Type_ok": [
+          "<sole>"
+        ],
+        "Valtype_sub": [
+          "bot",
+          "refl"
+        ]
+      },
+      "per_file": {
+        "0-aux.spectec": {
+          "lines": 57,
+          "relations": 0,
+          "rules": 0
+        },
+        "1-syntax.spectec": {
+          "lines": 578,
+          "relations": 0,
+          "rules": 0
+        },
+        "2-syntax-aux.spectec": {
+          "lines": 107,
+          "relations": 0,
+          "rules": 0
+        },
+        "3-numerics.spectec": {
+          "lines": 612,
+          "relations": 0,
+          "rules": 0
+        },
+        "4-runtime.spectec": {
+          "lines": 135,
+          "relations": 0,
+          "rules": 0
+        },
+        "5-runtime-aux.spectec": {
+          "lines": 129,
+          "relations": 0,
+          "rules": 0
+        },
+        "6-typing.spectec": {
+          "lines": 698,
+          "relations": 35,
+          "rules": 131
+        },
+        "8-reduction.spectec": {
+          "lines": 664,
+          "relations": 5,
+          "rules": 128
+        },
+        "9-module.spectec": {
+          "lines": 199,
+          "relations": 0,
+          "rules": 0
+        },
+        "A-binary.spectec": {
+          "lines": 942,
+          "relations": 0,
+          "rules": 0
+        }
+      }
+    },
+    "wasm-3.0": {
+      "version": "wasm-3.0",
+      "files": 37,
+      "lines": 9351,
+      "counts": {
+        "relations": 125,
+        "rules": 568,
+        "syntax_decls": 208,
+        "def_names": 464,
+        "def_clauses": 1353,
+        "grammar_names": 232,
+        "grammar_clauses": 437
+      },
+      "relations_by_kind": {
+        "auxiliary": 22,
+        "reduction": 6,
+        "validation": 97
+      },
+      "rules_by_kind": {
+        "auxiliary": 38,
+        "reduction": 224,
+        "validation": 306
+      },
+      "relations": {
+        "Arrayinst_ok": {
+          "form": "store |- arrayinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Blocktype_ok": {
+          "form": "context |- blocktype : instrtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Catch_ok": {
+          "form": "context |- catch : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Comptype_ok": {
+          "form": "context |- comptype : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Comptype_sub": {
+          "form": "context |- comptype <: comptype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Config_ok": {
+          "form": "|- config : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Context_ok": {
+          "form": "|- context : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Data_ok": {
+          "form": "context |- data : datatype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Datainst_ok": {
+          "form": "store |- datainst : datatype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Datamode_ok": {
+          "form": "context |- datamode : datatype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Defaultable": {
+          "form": "|- valtype DEFAULTABLE",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Deftype_ok": {
+          "form": "context |- deftype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Deftype_sub": {
+          "form": "context |- deftype <: deftype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Elem_ok": {
+          "form": "context |- elem : elemtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Eleminst_ok": {
+          "form": "store |- eleminst : elemtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Elemmode_ok": {
+          "form": "context |- elemmode : elemtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Eval_expr": {
+          "form": "state; expr ~>* state; val*",
+          "kind": "reduction",
+          "rules": 1
+        },
+        "Exninst_ok": {
+          "form": "store |- exninst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expand": {
+          "form": "deftype ~~ comptype",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expand_use": {
+          "form": "typeuse ~~_context comptype",
+          "kind": "auxiliary",
+          "rules": 2
+        },
+        "Export_ok": {
+          "form": "context |- export : name externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Exportinst_ok": {
+          "form": "store |- exportinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_const": {
+          "form": "context |- expr CONST",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expr_ok": {
+          "form": "context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok2": {
+          "form": "store; context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok_const": {
+          "form": "context |- expr : valtype CONST",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Extend_arrayinst": {
+          "form": "arrayinst `<= arrayinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_datainst": {
+          "form": "datainst `<= datainst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_eleminst": {
+          "form": "eleminst `<= eleminst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_exninst": {
+          "form": "exninst `<= exninst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_funcinst": {
+          "form": "funcinst `<= funcinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_globalinst": {
+          "form": "globalinst `<= globalinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_meminst": {
+          "form": "meminst `<= meminst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_store": {
+          "form": "store `<= store",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_structinst": {
+          "form": "structinst `<= structinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_tableinst": {
+          "form": "tableinst `<= tableinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_taginst": {
+          "form": "taginst `<= taginst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Externaddr_ok": {
+          "form": "store |- externaddr : externtype",
+          "kind": "validation",
+          "rules": 6
+        },
+        "Externidx_ok": {
+          "form": "context |- externidx : externtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Externtype_ok": {
+          "form": "context |- externtype : OK",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Externtype_sub": {
+          "form": "context |- externtype <: externtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Fieldtype_ok": {
+          "form": "context |- fieldtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Fieldtype_sub": {
+          "form": "context |- fieldtype <: fieldtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Fieldval_ok": {
+          "form": "store |- fieldval : storagetype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Frame_ok": {
+          "form": "store |- frame : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Func_ok": {
+          "form": "context |- func : deftype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Funcinst_ok": {
+          "form": "store |- funcinst : deftype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Global_ok": {
+          "form": "context |- global : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globalinst_ok": {
+          "form": "store |- globalinst : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globals_ok": {
+          "form": "context |- global* : globaltype*",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Globaltype_ok": {
+          "form": "context |- globaltype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_sub": {
+          "form": "context |- globaltype <: globaltype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Heaptype_ok": {
+          "form": "context |- heaptype : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Heaptype_sub": {
+          "form": "context |- heaptype <: heaptype",
+          "kind": "validation",
+          "rules": 21
+        },
+        "Idctxt_ok": {
+          "form": "|- idctxt : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "ImmutReachable": {
+          "form": "fieldval >>_store fieldval",
+          "kind": "auxiliary",
+          "rules": 5
+        },
+        "Import_ok": {
+          "form": "context |- import : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instr_const": {
+          "form": "context |- instr CONST",
+          "kind": "auxiliary",
+          "rules": 14
+        },
+        "Instr_ok": {
+          "form": "context |- instr : instrtype",
+          "kind": "validation",
+          "rules": 112
+        },
+        "Instr_ok2": {
+          "form": "store; context |- instr : instrtype",
+          "kind": "validation",
+          "rules": 8
+        },
+        "Instrs_ok": {
+          "form": "context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Instrs_ok2": {
+          "form": "store; context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Instrtype_ok": {
+          "form": "context |- instrtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instrtype_sub": {
+          "form": "context |- instrtype <: instrtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_ok": {
+          "form": "context |- limits : nat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_sub": {
+          "form": "context |- limits <: limits",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Local_ok": {
+          "form": "context |- local : localtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Localtype_ok": {
+          "form": "context |- localtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Localval_ok": {
+          "form": "store |- val? : localtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Mem_ok": {
+          "form": "context |- mem : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memarg_ok": {
+          "form": "|- memarg : addrtype -> N",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Meminst_ok": {
+          "form": "store |- meminst : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_ok": {
+          "form": "context |- memtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_sub": {
+          "form": "context |- memtype <: memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Module_ok": {
+          "form": "|- module : moduletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Moduleinst_ok": {
+          "form": "store |- moduleinst : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Nondefaultable": {
+          "form": "|- valtype NONDEFAULTABLE",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "NotImmutReachable": {
+          "form": "`~ fieldval >>_store fieldval",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "NotationReduct": {
+          "form": "~> instr*",
+          "kind": "reduction",
+          "rules": 3
+        },
+        "NotationTypingInstrScheme": {
+          "form": "context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "NotationTypingPremise": {
+          "form": "nat",
+          "kind": "auxiliary",
+          "rules": 0
+        },
+        "NotationTypingPremisedots": {
+          "form": "`...",
+          "kind": "auxiliary",
+          "rules": 0
+        },
+        "NotationTypingScheme": {
+          "form": "nat",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Num_ok": {
+          "form": "store |- num : numtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Numtype_ok": {
+          "form": "context |- numtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Numtype_sub": {
+          "form": "context |- numtype <: numtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packtype_ok": {
+          "form": "context |- packtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packtype_sub": {
+          "form": "context |- packtype <: packtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packval_ok": {
+          "form": "store |- packval : packtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Rectype_ok": {
+          "form": "context |- rectype : oktypeidx",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Rectype_ok2": {
+          "form": "context |- rectype : oktypenat",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Ref_ok": {
+          "form": "store |- ref : reftype",
+          "kind": "validation",
+          "rules": 9
+        },
+        "Reftype_ok": {
+          "form": "context |- reftype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Reftype_sub": {
+          "form": "context |- reftype <: reftype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Resulttype_ok": {
+          "form": "context |- resulttype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Resulttype_sub": {
+          "form": "context |- resulttype <: resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Start_ok": {
+          "form": "context |- start : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "State_ok": {
+          "form": "|- state : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Step": {
+          "form": "config ~> config",
+          "kind": "reduction",
+          "rules": 36
+        },
+        "Step_pure": {
+          "form": "instr* ~> instr*",
+          "kind": "reduction",
+          "rules": 79
+        },
+        "Step_read": {
+          "form": "config ~> instr*",
+          "kind": "reduction",
+          "rules": 103
+        },
+        "Steps": {
+          "form": "config ~>* config",
+          "kind": "reduction",
+          "rules": 2
+        },
+        "Storagetype_ok": {
+          "form": "context |- storagetype : OK",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Storagetype_sub": {
+          "form": "context |- storagetype <: storagetype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Store_ok": {
+          "form": "|- store : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Structinst_ok": {
+          "form": "store |- structinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Subtype_ok": {
+          "form": "context |- subtype : oktypeidx",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Subtype_ok2": {
+          "form": "context |- subtype : oktypenat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Table_ok": {
+          "form": "context |- table : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tableinst_ok": {
+          "form": "store |- tableinst : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_ok": {
+          "form": "context |- tabletype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_sub": {
+          "form": "context |- tabletype <: tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tag_ok": {
+          "form": "context |- tag : tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Taginst_ok": {
+          "form": "store |- taginst : tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tagtype_ok": {
+          "form": "context |- tagtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tagtype_sub": {
+          "form": "context |- tagtype <: tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Type_ok": {
+          "form": "context |- type : deftype*",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Types_ok": {
+          "form": "context |- type* : deftype*",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Typeuse_ok": {
+          "form": "context |- typeuse : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Val_ok": {
+          "form": "store |- val : valtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Valtype_ok": {
+          "form": "context |- valtype : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Valtype_sub": {
+          "form": "context |- valtype <: valtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Vec_ok": {
+          "form": "store |- vec : vectype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Vectype_ok": {
+          "form": "context |- vectype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Vectype_sub": {
+          "form": "context |- vectype <: vectype",
+          "kind": "validation",
+          "rules": 1
+        }
+      },
+      "rules": {
+        "Arrayinst_ok": [
+          "<sole>"
+        ],
+        "Blocktype_ok": [
+          "typeidx",
+          "valtype"
+        ],
+        "Catch_ok": [
+          "catch",
+          "catch_all",
+          "catch_all_ref",
+          "catch_ref"
+        ],
+        "Comptype_ok": [
+          "array",
+          "func",
+          "struct"
+        ],
+        "Comptype_sub": [
+          "array",
+          "func",
+          "struct"
+        ],
+        "Config_ok": [
+          "<sole>"
+        ],
+        "Context_ok": [
+          "<sole>"
+        ],
+        "Data_ok": [
+          "<sole>"
+        ],
+        "Datainst_ok": [
+          "<sole>"
+        ],
+        "Datamode_ok": [
+          "active",
+          "passive"
+        ],
+        "Defaultable": [
+          "<sole>"
+        ],
+        "Deftype_ok": [
+          "<sole>"
+        ],
+        "Deftype_sub": [
+          "refl",
+          "super"
+        ],
+        "Elem_ok": [
+          "<sole>"
+        ],
+        "Eleminst_ok": [
+          "<sole>"
+        ],
+        "Elemmode_ok": [
+          "active",
+          "declare",
+          "passive"
+        ],
+        "Eval_expr": [
+          "<sole>"
+        ],
+        "Exninst_ok": [
+          "<sole>"
+        ],
+        "Expand": [
+          "<sole>"
+        ],
+        "Expand_use": [
+          "deftype",
+          "typeidx"
+        ],
+        "Export_ok": [
+          "<sole>"
+        ],
+        "Exportinst_ok": [
+          "<sole>"
+        ],
+        "Expr_const": [
+          "<sole>"
+        ],
+        "Expr_ok": [
+          "<sole>"
+        ],
+        "Expr_ok2": [
+          "<sole>"
+        ],
+        "Expr_ok_const": [
+          "<sole>"
+        ],
+        "Extend_arrayinst": [
+          "<sole>"
+        ],
+        "Extend_datainst": [
+          "<sole>"
+        ],
+        "Extend_eleminst": [
+          "<sole>"
+        ],
+        "Extend_exninst": [
+          "<sole>"
+        ],
+        "Extend_funcinst": [
+          "<sole>"
+        ],
+        "Extend_globalinst": [
+          "<sole>"
+        ],
+        "Extend_meminst": [
+          "<sole>"
+        ],
+        "Extend_store": [
+          "<sole>"
+        ],
+        "Extend_structinst": [
+          "<sole>"
+        ],
+        "Extend_tableinst": [
+          "<sole>"
+        ],
+        "Extend_taginst": [
+          "<sole>"
+        ],
+        "Externaddr_ok": [
+          "func",
+          "global",
+          "mem",
+          "sub",
+          "table",
+          "tag"
+        ],
+        "Externidx_ok": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Externtype_ok": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Externtype_sub": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Fieldtype_ok": [
+          "<sole>"
+        ],
+        "Fieldtype_sub": [
+          "const",
+          "var"
+        ],
+        "Fieldval_ok": [
+          "packval",
+          "val"
+        ],
+        "Frame_ok": [
+          "<sole>"
+        ],
+        "Func_ok": [
+          "<sole>"
+        ],
+        "Funcinst_ok": [
+          "<sole>"
+        ],
+        "Global_ok": [
+          "<sole>"
+        ],
+        "Globalinst_ok": [
+          "<sole>"
+        ],
+        "Globals_ok": [
+          "cons",
+          "empty"
+        ],
+        "Globaltype_ok": [
+          "<sole>"
+        ],
+        "Globaltype_sub": [
+          "const",
+          "var"
+        ],
+        "Heaptype_ok": [
+          "abs",
+          "bot",
+          "typeuse"
+        ],
+        "Heaptype_sub": [
+          "array",
+          "array-eq",
+          "bot",
+          "def",
+          "eq-any",
+          "func",
+          "i31-eq",
+          "noexn",
+          "noextern",
+          "nofunc",
+          "none",
+          "rec-array",
+          "rec-func",
+          "rec-struct",
+          "rec-sub",
+          "refl",
+          "struct",
+          "struct-eq",
+          "trans",
+          "typeidx-l",
+          "typeidx-r"
+        ],
+        "Idctxt_ok": [
+          "<sole>"
+        ],
+        "ImmutReachable": [
+          "ref.array",
+          "ref.exn",
+          "ref.extern",
+          "ref.struct",
+          "trans"
+        ],
+        "Import_ok": [
+          "<sole>"
+        ],
+        "Instr_const": [
+          "any.convert_extern",
+          "array.new",
+          "array.new_default",
+          "array.new_fixed",
+          "binop",
+          "const",
+          "extern.convert_any",
+          "global.get",
+          "ref.func",
+          "ref.i31",
+          "ref.null",
+          "struct.new",
+          "struct.new_default",
+          "vconst"
+        ],
+        "Instr_ok": [
+          "any.convert_extern",
+          "array.copy",
+          "array.fill",
+          "array.get",
+          "array.init_data",
+          "array.init_elem",
+          "array.len",
+          "array.new",
+          "array.new_data",
+          "array.new_default",
+          "array.new_elem",
+          "array.new_fixed",
+          "array.set",
+          "binop",
+          "block",
+          "br",
+          "br_if",
+          "br_on_cast",
+          "br_on_cast_fail",
+          "br_on_non_null",
+          "br_on_null",
+          "br_table",
+          "call",
+          "call_indirect",
+          "call_ref",
+          "const",
+          "cvtop",
+          "data.drop",
+          "drop",
+          "elem.drop",
+          "extern.convert_any",
+          "global.get",
+          "global.set",
+          "i31.get",
+          "if",
+          "load",
+          "load-pack",
+          "load-val",
+          "local.get",
+          "local.set",
+          "local.tee",
+          "loop",
+          "memory.copy",
+          "memory.fill",
+          "memory.grow",
+          "memory.init",
+          "memory.size",
+          "nop",
+          "ref.as_non_null",
+          "ref.cast",
+          "ref.eq",
+          "ref.func",
+          "ref.i31",
+          "ref.is_null",
+          "ref.null",
+          "ref.test",
+          "relop",
+          "return",
+          "return_call",
+          "return_call_indirect",
+          "return_call_ref",
+          "select-expl",
+          "select-impl",
+          "store",
+          "store-pack",
+          "store-val",
+          "struct.get",
+          "struct.new",
+          "struct.new_default",
+          "struct.set",
+          "table.copy",
+          "table.fill",
+          "table.get",
+          "table.grow",
+          "table.init",
+          "table.set",
+          "table.size",
+          "testop",
+          "throw",
+          "throw_ref",
+          "try_table",
+          "unop",
+          "unreachable",
+          "vbinop",
+          "vbitmask",
+          "vconst",
+          "vcvtop",
+          "vextbinop",
+          "vextract_lane",
+          "vextternop",
+          "vextunop",
+          "vload-pack",
+          "vload-splat",
+          "vload-val",
+          "vload-zero",
+          "vload_lane",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vstore",
+          "vstore_lane",
+          "vswizzlop",
+          "vternop",
+          "vtestop",
+          "vunop",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Instr_ok2": [
+          "call_ref",
+          "frame",
+          "handler",
+          "label",
+          "plain",
+          "ref",
+          "return_call_ref",
+          "trap"
+        ],
+        "Instrs_ok": [
+          "empty",
+          "frame",
+          "instr",
+          "seq",
+          "sub"
+        ],
+        "Instrs_ok2": [
+          "empty",
+          "frame",
+          "seq",
+          "sub"
+        ],
+        "Instrtype_ok": [
+          "<sole>"
+        ],
+        "Instrtype_sub": [
+          "<sole>"
+        ],
+        "Limits_ok": [
+          "<sole>"
+        ],
+        "Limits_sub": [
+          "eps",
+          "max"
+        ],
+        "Local_ok": [
+          "set",
+          "unset"
+        ],
+        "Localtype_ok": [
+          "<sole>"
+        ],
+        "Localval_ok": [
+          "set",
+          "unset"
+        ],
+        "Mem_ok": [
+          "<sole>"
+        ],
+        "Memarg_ok": [
+          "<sole>"
+        ],
+        "Meminst_ok": [
+          "<sole>"
+        ],
+        "Memtype_ok": [
+          "<sole>"
+        ],
+        "Memtype_sub": [
+          "<sole>"
+        ],
+        "Module_ok": [
+          "<sole>"
+        ],
+        "Moduleinst_ok": [
+          "<sole>"
+        ],
+        "Nondefaultable": [
+          "<sole>"
+        ],
+        "NotImmutReachable": [
+          "<sole>"
+        ],
+        "NotationReduct": [
+          "2",
+          "3",
+          "4"
+        ],
+        "NotationTypingInstrScheme": [
+          "block",
+          "global.get",
+          "i32.add"
+        ],
+        "NotationTypingScheme": [
+          "<sole>"
+        ],
+        "Num_ok": [
+          "<sole>"
+        ],
+        "Numtype_ok": [
+          "<sole>"
+        ],
+        "Numtype_sub": [
+          "<sole>"
+        ],
+        "Packtype_ok": [
+          "<sole>"
+        ],
+        "Packtype_sub": [
+          "<sole>"
+        ],
+        "Packval_ok": [
+          "<sole>"
+        ],
+        "Rectype_ok": [
+          "cons",
+          "empty"
+        ],
+        "Rectype_ok2": [
+          "cons",
+          "empty"
+        ],
+        "Ref_ok": [
+          "array",
+          "exn",
+          "extern",
+          "func",
+          "host",
+          "i31",
+          "null",
+          "struct",
+          "sub"
+        ],
+        "Reftype_ok": [
+          "<sole>"
+        ],
+        "Reftype_sub": [
+          "nonnull",
+          "null"
+        ],
+        "Resulttype_ok": [
+          "<sole>"
+        ],
+        "Resulttype_sub": [
+          "<sole>"
+        ],
+        "Start_ok": [
+          "<sole>"
+        ],
+        "State_ok": [
+          "<sole>"
+        ],
+        "Step": [
+          "array.new_fixed",
+          "array.set-array",
+          "array.set-null",
+          "array.set-oob",
+          "call_ref-func",
+          "call_ref-hostfunc-div",
+          "call_ref-hostfunc-res",
+          "call_ref-null",
+          "ctxt-frame",
+          "ctxt-handler",
+          "ctxt-instrs",
+          "ctxt-label",
+          "data.drop",
+          "elem.drop",
+          "global.set",
+          "local.set",
+          "memory.grow-fail",
+          "memory.grow-succeed",
+          "pure",
+          "read",
+          "store-num-oob",
+          "store-num-val",
+          "store-pack-oob",
+          "store-pack-val",
+          "struct.new",
+          "struct.set-null",
+          "struct.set-struct",
+          "table.grow-fail",
+          "table.grow-succeed",
+          "table.set-oob",
+          "table.set-val",
+          "throw",
+          "vstore-oob",
+          "vstore-val",
+          "vstore_lane-oob",
+          "vstore_lane-val"
+        ],
+        "Step_pure": [
+          "any.convert_extern-addr",
+          "any.convert_extern-null",
+          "array.new",
+          "binop-trap",
+          "binop-val",
+          "br-handler",
+          "br-label-succ",
+          "br-label-zero",
+          "br_if-false",
+          "br_if-true",
+          "br_on_non_null-addr",
+          "br_on_non_null-null",
+          "br_on_null-addr",
+          "br_on_null-null",
+          "br_table-ge",
+          "br_table-lt",
+          "call_indirect",
+          "cvtop-trap",
+          "cvtop-val",
+          "drop",
+          "extern.convert_any-addr",
+          "extern.convert_any-null",
+          "frame-vals",
+          "handler-vals",
+          "i31.get-null",
+          "i31.get-num",
+          "if-false",
+          "if-true",
+          "label-vals",
+          "local.tee",
+          "nop",
+          "ref.as_non_null-addr",
+          "ref.as_non_null-null",
+          "ref.eq-false",
+          "ref.eq-null",
+          "ref.eq-true",
+          "ref.i31",
+          "ref.is_null-false",
+          "ref.is_null-true",
+          "relop",
+          "return-frame",
+          "return-handler",
+          "return-label",
+          "return_call_indirect",
+          "select-false",
+          "select-true",
+          "testop",
+          "trap-frame",
+          "trap-handler",
+          "trap-instrs",
+          "trap-label",
+          "unop-trap",
+          "unop-val",
+          "unreachable",
+          "vbinop-trap",
+          "vbinop-val",
+          "vbitmask",
+          "vcvtop",
+          "vextbinop",
+          "vextract_lane-num",
+          "vextract_lane-pack",
+          "vextternop",
+          "vextunop",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vswizzlop",
+          "vternop-trap",
+          "vternop-val",
+          "vtestop",
+          "vunop-trap",
+          "vunop-val",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Step_read": [
+          "array.copy-gt",
+          "array.copy-le",
+          "array.copy-null1",
+          "array.copy-null2",
+          "array.copy-oob1",
+          "array.copy-oob2",
+          "array.copy-zero",
+          "array.fill-null",
+          "array.fill-oob",
+          "array.fill-succ",
+          "array.fill-zero",
+          "array.get-array",
+          "array.get-null",
+          "array.get-oob",
+          "array.init_data-null",
+          "array.init_data-num",
+          "array.init_data-oob1",
+          "array.init_data-oob2",
+          "array.init_data-zero",
+          "array.init_elem-null",
+          "array.init_elem-oob1",
+          "array.init_elem-oob2",
+          "array.init_elem-succ",
+          "array.init_elem-zero",
+          "array.len-array",
+          "array.len-null",
+          "array.new_data-num",
+          "array.new_data-oob",
+          "array.new_default",
+          "array.new_elem-alloc",
+          "array.new_elem-oob",
+          "block",
+          "br_on_cast-fail",
+          "br_on_cast-succeed",
+          "br_on_cast_fail-fail",
+          "br_on_cast_fail-succeed",
+          "call",
+          "global.get",
+          "load-num-oob",
+          "load-num-val",
+          "load-pack-oob",
+          "load-pack-val",
+          "local.get",
+          "loop",
+          "memory.copy-gt",
+          "memory.copy-le",
+          "memory.copy-oob",
+          "memory.copy-zero",
+          "memory.fill-oob",
+          "memory.fill-succ",
+          "memory.fill-zero",
+          "memory.init-oob",
+          "memory.init-succ",
+          "memory.init-zero",
+          "memory.size",
+          "ref.cast-fail",
+          "ref.cast-succeed",
+          "ref.func",
+          "ref.null",
+          "ref.test-false",
+          "ref.test-true",
+          "return_call",
+          "return_call_ref-frame-addr",
+          "return_call_ref-frame-null",
+          "return_call_ref-handler",
+          "return_call_ref-label",
+          "struct.get-null",
+          "struct.get-struct",
+          "struct.new_default",
+          "table.copy-gt",
+          "table.copy-le",
+          "table.copy-oob",
+          "table.copy-zero",
+          "table.fill-oob",
+          "table.fill-succ",
+          "table.fill-zero",
+          "table.get-oob",
+          "table.get-val",
+          "table.init-oob",
+          "table.init-succ",
+          "table.init-zero",
+          "table.size",
+          "throw_ref-frame",
+          "throw_ref-handler-catch",
+          "throw_ref-handler-catch_all",
+          "throw_ref-handler-catch_all_ref",
+          "throw_ref-handler-catch_ref",
+          "throw_ref-handler-empty",
+          "throw_ref-handler-next",
+          "throw_ref-instrs",
+          "throw_ref-label",
+          "throw_ref-null",
+          "try_table",
+          "vload-oob",
+          "vload-pack-oob",
+          "vload-pack-val",
+          "vload-splat-oob",
+          "vload-splat-val",
+          "vload-val",
+          "vload-zero-oob",
+          "vload-zero-val",
+          "vload_lane-oob",
+          "vload_lane-val"
+        ],
+        "Steps": [
+          "refl",
+          "trans"
+        ],
+        "Storagetype_ok": [
+          "pack",
+          "val"
+        ],
+        "Storagetype_sub": [
+          "pack",
+          "val"
+        ],
+        "Store_ok": [
+          "<sole>"
+        ],
+        "Structinst_ok": [
+          "<sole>"
+        ],
+        "Subtype_ok": [
+          "<sole>"
+        ],
+        "Subtype_ok2": [
+          "<sole>"
+        ],
+        "Table_ok": [
+          "<sole>"
+        ],
+        "Tableinst_ok": [
+          "<sole>"
+        ],
+        "Tabletype_ok": [
+          "<sole>"
+        ],
+        "Tabletype_sub": [
+          "<sole>"
+        ],
+        "Tag_ok": [
+          "<sole>"
+        ],
+        "Taginst_ok": [
+          "<sole>"
+        ],
+        "Tagtype_ok": [
+          "<sole>"
+        ],
+        "Tagtype_sub": [
+          "<sole>"
+        ],
+        "Type_ok": [
+          "<sole>"
+        ],
+        "Types_ok": [
+          "cons",
+          "empty"
+        ],
+        "Typeuse_ok": [
+          "deftype",
+          "rec",
+          "typeidx"
+        ],
+        "Val_ok": [
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Valtype_ok": [
+          "bot",
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Valtype_sub": [
+          "bot",
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Vec_ok": [
+          "<sole>"
+        ],
+        "Vectype_ok": [
+          "<sole>"
+        ],
+        "Vectype_sub": [
+          "<sole>"
+        ]
+      },
+      "per_file": {
+        "0.1-aux.vars.spectec": {
+          "lines": 8,
+          "relations": 0,
+          "rules": 0
+        },
+        "0.2-aux.num.spectec": {
+          "lines": 15,
+          "relations": 0,
+          "rules": 0
+        },
+        "0.3-aux.seq.spectec": {
+          "lines": 58,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.0-syntax.profiles.spectec": {
+          "lines": 5,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.1-syntax.values.spectec": {
+          "lines": 209,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.2-syntax.types.spectec": {
+          "lines": 576,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.3-syntax.instructions.spectec": {
+          "lines": 594,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.4-syntax.modules.spectec": {
+          "lines": 145,
+          "relations": 0,
+          "rules": 0
+        },
+        "2.0-validation.contexts.spectec": {
+          "lines": 72,
+          "relations": 0,
+          "rules": 0
+        },
+        "2.1-validation.types.spectec": {
+          "lines": 257,
+          "relations": 28,
+          "rules": 43
+        },
+        "2.2-validation.subtyping.spectec": {
+          "lines": 268,
+          "relations": 16,
+          "rules": 53
+        },
+        "2.3-validation.instructions.spectec": {
+          "lines": 706,
+          "relations": 11,
+          "rules": 141
+        },
+        "2.4-validation.modules.spectec": {
+          "lines": 189,
+          "relations": 18,
+          "rules": 28
+        },
+        "3.0-numerics.relaxed.spectec": {
+          "lines": 26,
+          "relations": 0,
+          "rules": 0
+        },
+        "3.1-numerics.scalar.spectec": {
+          "lines": 442,
+          "relations": 0,
+          "rules": 0
+        },
+        "3.2-numerics.vector.spectec": {
+          "lines": 403,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.0-execution.configurations.spectec": {
+          "lines": 346,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.1-execution.values.spectec": {
+          "lines": 130,
+          "relations": 7,
+          "rules": 25
+        },
+        "4.2-execution.types.spectec": {
+          "lines": 15,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.3-execution.instructions.spectec": {
+          "lines": 1124,
+          "relations": 5,
+          "rules": 221
+        },
+        "4.4-execution.modules.spectec": {
+          "lines": 218,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.1-binary.values.spectec": {
+          "lines": 89,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.2-binary.types.spectec": {
+          "lines": 107,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.3-binary.instructions.spectec": {
+          "lines": 813,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.4-binary.modules.spectec": {
+          "lines": 195,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.0-text.lexical.spectec": {
+          "lines": 73,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.1-text.values.spectec": {
+          "lines": 200,
+          "relations": 1,
+          "rules": 1
+        },
+        "6.2-text.types.spectec": {
+          "lines": 180,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.3-text.instructions.spectec": {
+          "lines": 1012,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.4-text.modules.spectec": {
+          "lines": 350,
+          "relations": 0,
+          "rules": 0
+        },
+        "7.0-soundness.contexts.spectec": {
+          "lines": 35,
+          "relations": 1,
+          "rules": 1
+        },
+        "7.1-soundness.configurations.spectec": {
+          "lines": 363,
+          "relations": 33,
+          "rules": 48
+        },
+        "X.1-notation.syntax.spectec": {
+          "lines": 20,
+          "relations": 0,
+          "rules": 0
+        },
+        "X.2-notation.typing.spectec": {
+          "lines": 32,
+          "relations": 4,
+          "rules": 4
+        },
+        "X.3-notation.execution.spectec": {
+          "lines": 36,
+          "relations": 1,
+          "rules": 3
+        },
+        "X.4-notation.binary.spectec": {
+          "lines": 16,
+          "relations": 0,
+          "rules": 0
+        },
+        "X.5-notation.text.spectec": {
+          "lines": 24,
+          "relations": 0,
+          "rules": 0
+        }
+      }
+    },
+    "wasm-latest": {
+      "version": "wasm-latest",
+      "files": 37,
+      "lines": 9351,
+      "counts": {
+        "relations": 125,
+        "rules": 568,
+        "syntax_decls": 208,
+        "def_names": 464,
+        "def_clauses": 1353,
+        "grammar_names": 232,
+        "grammar_clauses": 437
+      },
+      "relations_by_kind": {
+        "auxiliary": 22,
+        "reduction": 6,
+        "validation": 97
+      },
+      "rules_by_kind": {
+        "auxiliary": 38,
+        "reduction": 224,
+        "validation": 306
+      },
+      "relations": {
+        "Arrayinst_ok": {
+          "form": "store |- arrayinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Blocktype_ok": {
+          "form": "context |- blocktype : instrtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Catch_ok": {
+          "form": "context |- catch : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Comptype_ok": {
+          "form": "context |- comptype : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Comptype_sub": {
+          "form": "context |- comptype <: comptype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Config_ok": {
+          "form": "|- config : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Context_ok": {
+          "form": "|- context : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Data_ok": {
+          "form": "context |- data : datatype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Datainst_ok": {
+          "form": "store |- datainst : datatype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Datamode_ok": {
+          "form": "context |- datamode : datatype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Defaultable": {
+          "form": "|- valtype DEFAULTABLE",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Deftype_ok": {
+          "form": "context |- deftype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Deftype_sub": {
+          "form": "context |- deftype <: deftype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Elem_ok": {
+          "form": "context |- elem : elemtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Eleminst_ok": {
+          "form": "store |- eleminst : elemtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Elemmode_ok": {
+          "form": "context |- elemmode : elemtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Eval_expr": {
+          "form": "state; expr ~>* state; val*",
+          "kind": "reduction",
+          "rules": 1
+        },
+        "Exninst_ok": {
+          "form": "store |- exninst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expand": {
+          "form": "deftype ~~ comptype",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expand_use": {
+          "form": "typeuse ~~_context comptype",
+          "kind": "auxiliary",
+          "rules": 2
+        },
+        "Export_ok": {
+          "form": "context |- export : name externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Exportinst_ok": {
+          "form": "store |- exportinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_const": {
+          "form": "context |- expr CONST",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Expr_ok": {
+          "form": "context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok2": {
+          "form": "store; context |- expr : resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Expr_ok_const": {
+          "form": "context |- expr : valtype CONST",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Extend_arrayinst": {
+          "form": "arrayinst `<= arrayinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_datainst": {
+          "form": "datainst `<= datainst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_eleminst": {
+          "form": "eleminst `<= eleminst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_exninst": {
+          "form": "exninst `<= exninst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_funcinst": {
+          "form": "funcinst `<= funcinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_globalinst": {
+          "form": "globalinst `<= globalinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_meminst": {
+          "form": "meminst `<= meminst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_store": {
+          "form": "store `<= store",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_structinst": {
+          "form": "structinst `<= structinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_tableinst": {
+          "form": "tableinst `<= tableinst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Extend_taginst": {
+          "form": "taginst `<= taginst",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Externaddr_ok": {
+          "form": "store |- externaddr : externtype",
+          "kind": "validation",
+          "rules": 6
+        },
+        "Externidx_ok": {
+          "form": "context |- externidx : externtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Externtype_ok": {
+          "form": "context |- externtype : OK",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Externtype_sub": {
+          "form": "context |- externtype <: externtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Fieldtype_ok": {
+          "form": "context |- fieldtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Fieldtype_sub": {
+          "form": "context |- fieldtype <: fieldtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Fieldval_ok": {
+          "form": "store |- fieldval : storagetype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Frame_ok": {
+          "form": "store |- frame : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Func_ok": {
+          "form": "context |- func : deftype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Funcinst_ok": {
+          "form": "store |- funcinst : deftype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Global_ok": {
+          "form": "context |- global : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globalinst_ok": {
+          "form": "store |- globalinst : globaltype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globals_ok": {
+          "form": "context |- global* : globaltype*",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Globaltype_ok": {
+          "form": "context |- globaltype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Globaltype_sub": {
+          "form": "context |- globaltype <: globaltype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Heaptype_ok": {
+          "form": "context |- heaptype : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Heaptype_sub": {
+          "form": "context |- heaptype <: heaptype",
+          "kind": "validation",
+          "rules": 21
+        },
+        "Idctxt_ok": {
+          "form": "|- idctxt : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "ImmutReachable": {
+          "form": "fieldval >>_store fieldval",
+          "kind": "auxiliary",
+          "rules": 5
+        },
+        "Import_ok": {
+          "form": "context |- import : externtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instr_const": {
+          "form": "context |- instr CONST",
+          "kind": "auxiliary",
+          "rules": 14
+        },
+        "Instr_ok": {
+          "form": "context |- instr : instrtype",
+          "kind": "validation",
+          "rules": 112
+        },
+        "Instr_ok2": {
+          "form": "store; context |- instr : instrtype",
+          "kind": "validation",
+          "rules": 8
+        },
+        "Instrs_ok": {
+          "form": "context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 5
+        },
+        "Instrs_ok2": {
+          "form": "store; context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Instrtype_ok": {
+          "form": "context |- instrtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Instrtype_sub": {
+          "form": "context |- instrtype <: instrtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_ok": {
+          "form": "context |- limits : nat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Limits_sub": {
+          "form": "context |- limits <: limits",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Local_ok": {
+          "form": "context |- local : localtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Localtype_ok": {
+          "form": "context |- localtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Localval_ok": {
+          "form": "store |- val? : localtype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Mem_ok": {
+          "form": "context |- mem : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memarg_ok": {
+          "form": "|- memarg : addrtype -> N",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Meminst_ok": {
+          "form": "store |- meminst : memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_ok": {
+          "form": "context |- memtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Memtype_sub": {
+          "form": "context |- memtype <: memtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Module_ok": {
+          "form": "|- module : moduletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Moduleinst_ok": {
+          "form": "store |- moduleinst : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Nondefaultable": {
+          "form": "|- valtype NONDEFAULTABLE",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "NotImmutReachable": {
+          "form": "`~ fieldval >>_store fieldval",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "NotationReduct": {
+          "form": "~> instr*",
+          "kind": "reduction",
+          "rules": 3
+        },
+        "NotationTypingInstrScheme": {
+          "form": "context |- instr* : instrtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "NotationTypingPremise": {
+          "form": "nat",
+          "kind": "auxiliary",
+          "rules": 0
+        },
+        "NotationTypingPremisedots": {
+          "form": "`...",
+          "kind": "auxiliary",
+          "rules": 0
+        },
+        "NotationTypingScheme": {
+          "form": "nat",
+          "kind": "auxiliary",
+          "rules": 1
+        },
+        "Num_ok": {
+          "form": "store |- num : numtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Numtype_ok": {
+          "form": "context |- numtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Numtype_sub": {
+          "form": "context |- numtype <: numtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packtype_ok": {
+          "form": "context |- packtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packtype_sub": {
+          "form": "context |- packtype <: packtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Packval_ok": {
+          "form": "store |- packval : packtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Rectype_ok": {
+          "form": "context |- rectype : oktypeidx",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Rectype_ok2": {
+          "form": "context |- rectype : oktypenat",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Ref_ok": {
+          "form": "store |- ref : reftype",
+          "kind": "validation",
+          "rules": 9
+        },
+        "Reftype_ok": {
+          "form": "context |- reftype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Reftype_sub": {
+          "form": "context |- reftype <: reftype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Resulttype_ok": {
+          "form": "context |- resulttype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Resulttype_sub": {
+          "form": "context |- resulttype <: resulttype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Start_ok": {
+          "form": "context |- start : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "State_ok": {
+          "form": "|- state : context",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Step": {
+          "form": "config ~> config",
+          "kind": "reduction",
+          "rules": 36
+        },
+        "Step_pure": {
+          "form": "instr* ~> instr*",
+          "kind": "reduction",
+          "rules": 79
+        },
+        "Step_read": {
+          "form": "config ~> instr*",
+          "kind": "reduction",
+          "rules": 103
+        },
+        "Steps": {
+          "form": "config ~>* config",
+          "kind": "reduction",
+          "rules": 2
+        },
+        "Storagetype_ok": {
+          "form": "context |- storagetype : OK",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Storagetype_sub": {
+          "form": "context |- storagetype <: storagetype",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Store_ok": {
+          "form": "|- store : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Structinst_ok": {
+          "form": "store |- structinst : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Subtype_ok": {
+          "form": "context |- subtype : oktypeidx",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Subtype_ok2": {
+          "form": "context |- subtype : oktypenat",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Table_ok": {
+          "form": "context |- table : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tableinst_ok": {
+          "form": "store |- tableinst : tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_ok": {
+          "form": "context |- tabletype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tabletype_sub": {
+          "form": "context |- tabletype <: tabletype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tag_ok": {
+          "form": "context |- tag : tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Taginst_ok": {
+          "form": "store |- taginst : tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tagtype_ok": {
+          "form": "context |- tagtype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Tagtype_sub": {
+          "form": "context |- tagtype <: tagtype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Type_ok": {
+          "form": "context |- type : deftype*",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Types_ok": {
+          "form": "context |- type* : deftype*",
+          "kind": "validation",
+          "rules": 2
+        },
+        "Typeuse_ok": {
+          "form": "context |- typeuse : OK",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Val_ok": {
+          "form": "store |- val : valtype",
+          "kind": "validation",
+          "rules": 3
+        },
+        "Valtype_ok": {
+          "form": "context |- valtype : OK",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Valtype_sub": {
+          "form": "context |- valtype <: valtype",
+          "kind": "validation",
+          "rules": 4
+        },
+        "Vec_ok": {
+          "form": "store |- vec : vectype",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Vectype_ok": {
+          "form": "context |- vectype : OK",
+          "kind": "validation",
+          "rules": 1
+        },
+        "Vectype_sub": {
+          "form": "context |- vectype <: vectype",
+          "kind": "validation",
+          "rules": 1
+        }
+      },
+      "rules": {
+        "Arrayinst_ok": [
+          "<sole>"
+        ],
+        "Blocktype_ok": [
+          "typeidx",
+          "valtype"
+        ],
+        "Catch_ok": [
+          "catch",
+          "catch_all",
+          "catch_all_ref",
+          "catch_ref"
+        ],
+        "Comptype_ok": [
+          "array",
+          "func",
+          "struct"
+        ],
+        "Comptype_sub": [
+          "array",
+          "func",
+          "struct"
+        ],
+        "Config_ok": [
+          "<sole>"
+        ],
+        "Context_ok": [
+          "<sole>"
+        ],
+        "Data_ok": [
+          "<sole>"
+        ],
+        "Datainst_ok": [
+          "<sole>"
+        ],
+        "Datamode_ok": [
+          "active",
+          "passive"
+        ],
+        "Defaultable": [
+          "<sole>"
+        ],
+        "Deftype_ok": [
+          "<sole>"
+        ],
+        "Deftype_sub": [
+          "refl",
+          "super"
+        ],
+        "Elem_ok": [
+          "<sole>"
+        ],
+        "Eleminst_ok": [
+          "<sole>"
+        ],
+        "Elemmode_ok": [
+          "active",
+          "declare",
+          "passive"
+        ],
+        "Eval_expr": [
+          "<sole>"
+        ],
+        "Exninst_ok": [
+          "<sole>"
+        ],
+        "Expand": [
+          "<sole>"
+        ],
+        "Expand_use": [
+          "deftype",
+          "typeidx"
+        ],
+        "Export_ok": [
+          "<sole>"
+        ],
+        "Exportinst_ok": [
+          "<sole>"
+        ],
+        "Expr_const": [
+          "<sole>"
+        ],
+        "Expr_ok": [
+          "<sole>"
+        ],
+        "Expr_ok2": [
+          "<sole>"
+        ],
+        "Expr_ok_const": [
+          "<sole>"
+        ],
+        "Extend_arrayinst": [
+          "<sole>"
+        ],
+        "Extend_datainst": [
+          "<sole>"
+        ],
+        "Extend_eleminst": [
+          "<sole>"
+        ],
+        "Extend_exninst": [
+          "<sole>"
+        ],
+        "Extend_funcinst": [
+          "<sole>"
+        ],
+        "Extend_globalinst": [
+          "<sole>"
+        ],
+        "Extend_meminst": [
+          "<sole>"
+        ],
+        "Extend_store": [
+          "<sole>"
+        ],
+        "Extend_structinst": [
+          "<sole>"
+        ],
+        "Extend_tableinst": [
+          "<sole>"
+        ],
+        "Extend_taginst": [
+          "<sole>"
+        ],
+        "Externaddr_ok": [
+          "func",
+          "global",
+          "mem",
+          "sub",
+          "table",
+          "tag"
+        ],
+        "Externidx_ok": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Externtype_ok": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Externtype_sub": [
+          "func",
+          "global",
+          "mem",
+          "table",
+          "tag"
+        ],
+        "Fieldtype_ok": [
+          "<sole>"
+        ],
+        "Fieldtype_sub": [
+          "const",
+          "var"
+        ],
+        "Fieldval_ok": [
+          "packval",
+          "val"
+        ],
+        "Frame_ok": [
+          "<sole>"
+        ],
+        "Func_ok": [
+          "<sole>"
+        ],
+        "Funcinst_ok": [
+          "<sole>"
+        ],
+        "Global_ok": [
+          "<sole>"
+        ],
+        "Globalinst_ok": [
+          "<sole>"
+        ],
+        "Globals_ok": [
+          "cons",
+          "empty"
+        ],
+        "Globaltype_ok": [
+          "<sole>"
+        ],
+        "Globaltype_sub": [
+          "const",
+          "var"
+        ],
+        "Heaptype_ok": [
+          "abs",
+          "bot",
+          "typeuse"
+        ],
+        "Heaptype_sub": [
+          "array",
+          "array-eq",
+          "bot",
+          "def",
+          "eq-any",
+          "func",
+          "i31-eq",
+          "noexn",
+          "noextern",
+          "nofunc",
+          "none",
+          "rec-array",
+          "rec-func",
+          "rec-struct",
+          "rec-sub",
+          "refl",
+          "struct",
+          "struct-eq",
+          "trans",
+          "typeidx-l",
+          "typeidx-r"
+        ],
+        "Idctxt_ok": [
+          "<sole>"
+        ],
+        "ImmutReachable": [
+          "ref.array",
+          "ref.exn",
+          "ref.extern",
+          "ref.struct",
+          "trans"
+        ],
+        "Import_ok": [
+          "<sole>"
+        ],
+        "Instr_const": [
+          "any.convert_extern",
+          "array.new",
+          "array.new_default",
+          "array.new_fixed",
+          "binop",
+          "const",
+          "extern.convert_any",
+          "global.get",
+          "ref.func",
+          "ref.i31",
+          "ref.null",
+          "struct.new",
+          "struct.new_default",
+          "vconst"
+        ],
+        "Instr_ok": [
+          "any.convert_extern",
+          "array.copy",
+          "array.fill",
+          "array.get",
+          "array.init_data",
+          "array.init_elem",
+          "array.len",
+          "array.new",
+          "array.new_data",
+          "array.new_default",
+          "array.new_elem",
+          "array.new_fixed",
+          "array.set",
+          "binop",
+          "block",
+          "br",
+          "br_if",
+          "br_on_cast",
+          "br_on_cast_fail",
+          "br_on_non_null",
+          "br_on_null",
+          "br_table",
+          "call",
+          "call_indirect",
+          "call_ref",
+          "const",
+          "cvtop",
+          "data.drop",
+          "drop",
+          "elem.drop",
+          "extern.convert_any",
+          "global.get",
+          "global.set",
+          "i31.get",
+          "if",
+          "load",
+          "load-pack",
+          "load-val",
+          "local.get",
+          "local.set",
+          "local.tee",
+          "loop",
+          "memory.copy",
+          "memory.fill",
+          "memory.grow",
+          "memory.init",
+          "memory.size",
+          "nop",
+          "ref.as_non_null",
+          "ref.cast",
+          "ref.eq",
+          "ref.func",
+          "ref.i31",
+          "ref.is_null",
+          "ref.null",
+          "ref.test",
+          "relop",
+          "return",
+          "return_call",
+          "return_call_indirect",
+          "return_call_ref",
+          "select-expl",
+          "select-impl",
+          "store",
+          "store-pack",
+          "store-val",
+          "struct.get",
+          "struct.new",
+          "struct.new_default",
+          "struct.set",
+          "table.copy",
+          "table.fill",
+          "table.get",
+          "table.grow",
+          "table.init",
+          "table.set",
+          "table.size",
+          "testop",
+          "throw",
+          "throw_ref",
+          "try_table",
+          "unop",
+          "unreachable",
+          "vbinop",
+          "vbitmask",
+          "vconst",
+          "vcvtop",
+          "vextbinop",
+          "vextract_lane",
+          "vextternop",
+          "vextunop",
+          "vload-pack",
+          "vload-splat",
+          "vload-val",
+          "vload-zero",
+          "vload_lane",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vstore",
+          "vstore_lane",
+          "vswizzlop",
+          "vternop",
+          "vtestop",
+          "vunop",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Instr_ok2": [
+          "call_ref",
+          "frame",
+          "handler",
+          "label",
+          "plain",
+          "ref",
+          "return_call_ref",
+          "trap"
+        ],
+        "Instrs_ok": [
+          "empty",
+          "frame",
+          "instr",
+          "seq",
+          "sub"
+        ],
+        "Instrs_ok2": [
+          "empty",
+          "frame",
+          "seq",
+          "sub"
+        ],
+        "Instrtype_ok": [
+          "<sole>"
+        ],
+        "Instrtype_sub": [
+          "<sole>"
+        ],
+        "Limits_ok": [
+          "<sole>"
+        ],
+        "Limits_sub": [
+          "eps",
+          "max"
+        ],
+        "Local_ok": [
+          "set",
+          "unset"
+        ],
+        "Localtype_ok": [
+          "<sole>"
+        ],
+        "Localval_ok": [
+          "set",
+          "unset"
+        ],
+        "Mem_ok": [
+          "<sole>"
+        ],
+        "Memarg_ok": [
+          "<sole>"
+        ],
+        "Meminst_ok": [
+          "<sole>"
+        ],
+        "Memtype_ok": [
+          "<sole>"
+        ],
+        "Memtype_sub": [
+          "<sole>"
+        ],
+        "Module_ok": [
+          "<sole>"
+        ],
+        "Moduleinst_ok": [
+          "<sole>"
+        ],
+        "Nondefaultable": [
+          "<sole>"
+        ],
+        "NotImmutReachable": [
+          "<sole>"
+        ],
+        "NotationReduct": [
+          "2",
+          "3",
+          "4"
+        ],
+        "NotationTypingInstrScheme": [
+          "block",
+          "global.get",
+          "i32.add"
+        ],
+        "NotationTypingScheme": [
+          "<sole>"
+        ],
+        "Num_ok": [
+          "<sole>"
+        ],
+        "Numtype_ok": [
+          "<sole>"
+        ],
+        "Numtype_sub": [
+          "<sole>"
+        ],
+        "Packtype_ok": [
+          "<sole>"
+        ],
+        "Packtype_sub": [
+          "<sole>"
+        ],
+        "Packval_ok": [
+          "<sole>"
+        ],
+        "Rectype_ok": [
+          "cons",
+          "empty"
+        ],
+        "Rectype_ok2": [
+          "cons",
+          "empty"
+        ],
+        "Ref_ok": [
+          "array",
+          "exn",
+          "extern",
+          "func",
+          "host",
+          "i31",
+          "null",
+          "struct",
+          "sub"
+        ],
+        "Reftype_ok": [
+          "<sole>"
+        ],
+        "Reftype_sub": [
+          "nonnull",
+          "null"
+        ],
+        "Resulttype_ok": [
+          "<sole>"
+        ],
+        "Resulttype_sub": [
+          "<sole>"
+        ],
+        "Start_ok": [
+          "<sole>"
+        ],
+        "State_ok": [
+          "<sole>"
+        ],
+        "Step": [
+          "array.new_fixed",
+          "array.set-array",
+          "array.set-null",
+          "array.set-oob",
+          "call_ref-func",
+          "call_ref-hostfunc-div",
+          "call_ref-hostfunc-res",
+          "call_ref-null",
+          "ctxt-frame",
+          "ctxt-handler",
+          "ctxt-instrs",
+          "ctxt-label",
+          "data.drop",
+          "elem.drop",
+          "global.set",
+          "local.set",
+          "memory.grow-fail",
+          "memory.grow-succeed",
+          "pure",
+          "read",
+          "store-num-oob",
+          "store-num-val",
+          "store-pack-oob",
+          "store-pack-val",
+          "struct.new",
+          "struct.set-null",
+          "struct.set-struct",
+          "table.grow-fail",
+          "table.grow-succeed",
+          "table.set-oob",
+          "table.set-val",
+          "throw",
+          "vstore-oob",
+          "vstore-val",
+          "vstore_lane-oob",
+          "vstore_lane-val"
+        ],
+        "Step_pure": [
+          "any.convert_extern-addr",
+          "any.convert_extern-null",
+          "array.new",
+          "binop-trap",
+          "binop-val",
+          "br-handler",
+          "br-label-succ",
+          "br-label-zero",
+          "br_if-false",
+          "br_if-true",
+          "br_on_non_null-addr",
+          "br_on_non_null-null",
+          "br_on_null-addr",
+          "br_on_null-null",
+          "br_table-ge",
+          "br_table-lt",
+          "call_indirect",
+          "cvtop-trap",
+          "cvtop-val",
+          "drop",
+          "extern.convert_any-addr",
+          "extern.convert_any-null",
+          "frame-vals",
+          "handler-vals",
+          "i31.get-null",
+          "i31.get-num",
+          "if-false",
+          "if-true",
+          "label-vals",
+          "local.tee",
+          "nop",
+          "ref.as_non_null-addr",
+          "ref.as_non_null-null",
+          "ref.eq-false",
+          "ref.eq-null",
+          "ref.eq-true",
+          "ref.i31",
+          "ref.is_null-false",
+          "ref.is_null-true",
+          "relop",
+          "return-frame",
+          "return-handler",
+          "return-label",
+          "return_call_indirect",
+          "select-false",
+          "select-true",
+          "testop",
+          "trap-frame",
+          "trap-handler",
+          "trap-instrs",
+          "trap-label",
+          "unop-trap",
+          "unop-val",
+          "unreachable",
+          "vbinop-trap",
+          "vbinop-val",
+          "vbitmask",
+          "vcvtop",
+          "vextbinop",
+          "vextract_lane-num",
+          "vextract_lane-pack",
+          "vextternop",
+          "vextunop",
+          "vnarrow",
+          "vrelop",
+          "vreplace_lane",
+          "vshiftop",
+          "vshuffle",
+          "vsplat",
+          "vswizzlop",
+          "vternop-trap",
+          "vternop-val",
+          "vtestop",
+          "vunop-trap",
+          "vunop-val",
+          "vvbinop",
+          "vvternop",
+          "vvtestop",
+          "vvunop"
+        ],
+        "Step_read": [
+          "array.copy-gt",
+          "array.copy-le",
+          "array.copy-null1",
+          "array.copy-null2",
+          "array.copy-oob1",
+          "array.copy-oob2",
+          "array.copy-zero",
+          "array.fill-null",
+          "array.fill-oob",
+          "array.fill-succ",
+          "array.fill-zero",
+          "array.get-array",
+          "array.get-null",
+          "array.get-oob",
+          "array.init_data-null",
+          "array.init_data-num",
+          "array.init_data-oob1",
+          "array.init_data-oob2",
+          "array.init_data-zero",
+          "array.init_elem-null",
+          "array.init_elem-oob1",
+          "array.init_elem-oob2",
+          "array.init_elem-succ",
+          "array.init_elem-zero",
+          "array.len-array",
+          "array.len-null",
+          "array.new_data-num",
+          "array.new_data-oob",
+          "array.new_default",
+          "array.new_elem-alloc",
+          "array.new_elem-oob",
+          "block",
+          "br_on_cast-fail",
+          "br_on_cast-succeed",
+          "br_on_cast_fail-fail",
+          "br_on_cast_fail-succeed",
+          "call",
+          "global.get",
+          "load-num-oob",
+          "load-num-val",
+          "load-pack-oob",
+          "load-pack-val",
+          "local.get",
+          "loop",
+          "memory.copy-gt",
+          "memory.copy-le",
+          "memory.copy-oob",
+          "memory.copy-zero",
+          "memory.fill-oob",
+          "memory.fill-succ",
+          "memory.fill-zero",
+          "memory.init-oob",
+          "memory.init-succ",
+          "memory.init-zero",
+          "memory.size",
+          "ref.cast-fail",
+          "ref.cast-succeed",
+          "ref.func",
+          "ref.null",
+          "ref.test-false",
+          "ref.test-true",
+          "return_call",
+          "return_call_ref-frame-addr",
+          "return_call_ref-frame-null",
+          "return_call_ref-handler",
+          "return_call_ref-label",
+          "struct.get-null",
+          "struct.get-struct",
+          "struct.new_default",
+          "table.copy-gt",
+          "table.copy-le",
+          "table.copy-oob",
+          "table.copy-zero",
+          "table.fill-oob",
+          "table.fill-succ",
+          "table.fill-zero",
+          "table.get-oob",
+          "table.get-val",
+          "table.init-oob",
+          "table.init-succ",
+          "table.init-zero",
+          "table.size",
+          "throw_ref-frame",
+          "throw_ref-handler-catch",
+          "throw_ref-handler-catch_all",
+          "throw_ref-handler-catch_all_ref",
+          "throw_ref-handler-catch_ref",
+          "throw_ref-handler-empty",
+          "throw_ref-handler-next",
+          "throw_ref-instrs",
+          "throw_ref-label",
+          "throw_ref-null",
+          "try_table",
+          "vload-oob",
+          "vload-pack-oob",
+          "vload-pack-val",
+          "vload-splat-oob",
+          "vload-splat-val",
+          "vload-val",
+          "vload-zero-oob",
+          "vload-zero-val",
+          "vload_lane-oob",
+          "vload_lane-val"
+        ],
+        "Steps": [
+          "refl",
+          "trans"
+        ],
+        "Storagetype_ok": [
+          "pack",
+          "val"
+        ],
+        "Storagetype_sub": [
+          "pack",
+          "val"
+        ],
+        "Store_ok": [
+          "<sole>"
+        ],
+        "Structinst_ok": [
+          "<sole>"
+        ],
+        "Subtype_ok": [
+          "<sole>"
+        ],
+        "Subtype_ok2": [
+          "<sole>"
+        ],
+        "Table_ok": [
+          "<sole>"
+        ],
+        "Tableinst_ok": [
+          "<sole>"
+        ],
+        "Tabletype_ok": [
+          "<sole>"
+        ],
+        "Tabletype_sub": [
+          "<sole>"
+        ],
+        "Tag_ok": [
+          "<sole>"
+        ],
+        "Taginst_ok": [
+          "<sole>"
+        ],
+        "Tagtype_ok": [
+          "<sole>"
+        ],
+        "Tagtype_sub": [
+          "<sole>"
+        ],
+        "Type_ok": [
+          "<sole>"
+        ],
+        "Types_ok": [
+          "cons",
+          "empty"
+        ],
+        "Typeuse_ok": [
+          "deftype",
+          "rec",
+          "typeidx"
+        ],
+        "Val_ok": [
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Valtype_ok": [
+          "bot",
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Valtype_sub": [
+          "bot",
+          "num",
+          "ref",
+          "vec"
+        ],
+        "Vec_ok": [
+          "<sole>"
+        ],
+        "Vectype_ok": [
+          "<sole>"
+        ],
+        "Vectype_sub": [
+          "<sole>"
+        ]
+      },
+      "per_file": {
+        "0.1-aux.vars.spectec": {
+          "lines": 8,
+          "relations": 0,
+          "rules": 0
+        },
+        "0.2-aux.num.spectec": {
+          "lines": 15,
+          "relations": 0,
+          "rules": 0
+        },
+        "0.3-aux.seq.spectec": {
+          "lines": 58,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.0-syntax.profiles.spectec": {
+          "lines": 5,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.1-syntax.values.spectec": {
+          "lines": 209,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.2-syntax.types.spectec": {
+          "lines": 576,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.3-syntax.instructions.spectec": {
+          "lines": 594,
+          "relations": 0,
+          "rules": 0
+        },
+        "1.4-syntax.modules.spectec": {
+          "lines": 145,
+          "relations": 0,
+          "rules": 0
+        },
+        "2.0-validation.contexts.spectec": {
+          "lines": 72,
+          "relations": 0,
+          "rules": 0
+        },
+        "2.1-validation.types.spectec": {
+          "lines": 257,
+          "relations": 28,
+          "rules": 43
+        },
+        "2.2-validation.subtyping.spectec": {
+          "lines": 268,
+          "relations": 16,
+          "rules": 53
+        },
+        "2.3-validation.instructions.spectec": {
+          "lines": 706,
+          "relations": 11,
+          "rules": 141
+        },
+        "2.4-validation.modules.spectec": {
+          "lines": 189,
+          "relations": 18,
+          "rules": 28
+        },
+        "3.0-numerics.relaxed.spectec": {
+          "lines": 26,
+          "relations": 0,
+          "rules": 0
+        },
+        "3.1-numerics.scalar.spectec": {
+          "lines": 442,
+          "relations": 0,
+          "rules": 0
+        },
+        "3.2-numerics.vector.spectec": {
+          "lines": 403,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.0-execution.configurations.spectec": {
+          "lines": 346,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.1-execution.values.spectec": {
+          "lines": 130,
+          "relations": 7,
+          "rules": 25
+        },
+        "4.2-execution.types.spectec": {
+          "lines": 15,
+          "relations": 0,
+          "rules": 0
+        },
+        "4.3-execution.instructions.spectec": {
+          "lines": 1124,
+          "relations": 5,
+          "rules": 221
+        },
+        "4.4-execution.modules.spectec": {
+          "lines": 218,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.1-binary.values.spectec": {
+          "lines": 89,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.2-binary.types.spectec": {
+          "lines": 107,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.3-binary.instructions.spectec": {
+          "lines": 813,
+          "relations": 0,
+          "rules": 0
+        },
+        "5.4-binary.modules.spectec": {
+          "lines": 195,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.0-text.lexical.spectec": {
+          "lines": 73,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.1-text.values.spectec": {
+          "lines": 200,
+          "relations": 1,
+          "rules": 1
+        },
+        "6.2-text.types.spectec": {
+          "lines": 180,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.3-text.instructions.spectec": {
+          "lines": 1012,
+          "relations": 0,
+          "rules": 0
+        },
+        "6.4-text.modules.spectec": {
+          "lines": 350,
+          "relations": 0,
+          "rules": 0
+        },
+        "7.0-soundness.contexts.spectec": {
+          "lines": 35,
+          "relations": 1,
+          "rules": 1
+        },
+        "7.1-soundness.configurations.spectec": {
+          "lines": 363,
+          "relations": 33,
+          "rules": 48
+        },
+        "X.1-notation.syntax.spectec": {
+          "lines": 20,
+          "relations": 0,
+          "rules": 0
+        },
+        "X.2-notation.typing.spectec": {
+          "lines": 32,
+          "relations": 4,
+          "rules": 4
+        },
+        "X.3-notation.execution.spectec": {
+          "lines": 36,
+          "relations": 1,
+          "rules": 3
+        },
+        "X.4-notation.binary.spectec": {
+          "lines": 16,
+          "relations": 0,
+          "rules": 0
+        },
+        "X.5-notation.text.spectec": {
+          "lines": 24,
+          "relations": 0,
+          "rules": 0
+        }
+      }
+    }
+  },
+  "version_deltas": {
+    "wasm-1.0 -> wasm-2.0": {
+      "added": 128,
+      "dropped": 2,
+      "kept": 131,
+      "dropped_names": [
+        "Instr_ok/select",
+        "Step/ctxt-instrs"
+      ]
+    },
+    "wasm-2.0 -> wasm-3.0": {
+      "added": 345,
+      "dropped": 36,
+      "kept": 223,
+      "dropped_names": [
+        "Functype_ok/<sole>",
+        "Functype_sub/<sole>",
+        "Globaltype_sub/<sole>",
+        "Instr_ok/cvtop-convert",
+        "Instr_ok/cvtop-reinterpret",
+        "Instr_ok/vload",
+        "Instr_ok/vswizzle",
+        "Limits_sub/<sole>",
+        "Step/store-num-trap",
+        "Step/store-pack-trap",
+        "Step/table.set-trap",
+        "Step_pure/br-succ",
+        "Step_pure/br-zero",
+        "Step_pure/trap-vals",
+        "Step_pure/vcvtop-full",
+        "Step_pure/vcvtop-half",
+        "Step_pure/vcvtop-zero",
+        "Step_pure/vswizzle",
+        "Step_pure/vtestop-false",
+        "Step_pure/vtestop-true",
+        "Step_pure/vunop",
+        "Step_read/call_addr",
+        "Step_read/call_indirect-call",
+        "Step_read/call_indirect-trap",
+        "Step_read/load-num-trap",
+        "Step_read/load-pack-trap",
+        "Step_read/memory.copy-trap",
+        "Step_read/memory.fill-trap",
+        "Step_read/memory.init-trap",
+        "Step_read/table.copy-trap",
+        "Step_read/table.fill-trap",
+        "Step_read/table.get-trap",
+        "Step_read/table.init-trap",
+        "Step_read/vload-shape-oob",
+        "Step_read/vload-shape-val",
+        "Valtype_sub/refl"
+      ]
+    },
+    "wasm-3.0 -> wasm-latest": {
+      "added": 0,
+      "dropped": 0,
+      "kept": 568,
+      "dropped_names": []
+    }
+  }
+}

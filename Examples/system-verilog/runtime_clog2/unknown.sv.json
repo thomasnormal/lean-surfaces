@@ -1,0 +1,148 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/runtime_clog2/unknown.sv",
+  "source_sha256": "c916bc02036eb8d368573372f9ca89948a4b3eb33accdfe6e1ce5c89d3a4b45f",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 20
+            },
+            "name": "value",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 7,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 5,
+                      "end_line": 4,
+                      "end_col": 10
+                    },
+                    "width": 8,
+                    "name": "value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 13,
+                      "end_line": 4,
+                      "end_col": 15
+                    },
+                    "width": 8,
+                    "bits": "xxxxxxxx"
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 44
+                  },
+                  "name": "$display",
+                  "format": "unknown %0d",
+                  "args": [
+                    {
+                      "kind": "Clog2",
+                      "span": {
+                        "line": 5,
+                        "col": 29,
+                        "end_line": 5,
+                        "end_col": 42
+                      },
+                      "width": 32,
+                      "signed": true,
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 5,
+                          "col": 36,
+                          "end_line": 5,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "name": "value"
+                      },
+                      "runtime_clog2": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

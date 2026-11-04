@@ -1,0 +1,178 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "neg_resize",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/comb_ops/neg/neg_resize.sv",
+      "sha256": "917bf3406707b576fb4c71e0671b2725fa36084006ff0bb42598a0b172a70452"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "neg_resize",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 38,
+              "end_line": 3,
+              "end_col": 39
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 33,
+                      "end_line": 3,
+                      "end_col": 34
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 35,
+                      "end_line": 3,
+                      "end_col": 36
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 60,
+              "end_line": 3,
+              "end_col": 61
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 55,
+                      "end_line": 3,
+                      "end_col": 56
+                    },
+                    "value": 4,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 57,
+                      "end_line": 3,
+                      "end_col": 58
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 5
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 4,
+              "col": 10,
+              "end_line": 4,
+              "end_col": 16
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 4,
+                "end_col": 11
+              },
+              "width": 5,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Unary",
+              "span": {
+                "line": 4,
+                "col": 14,
+                "end_line": 4,
+                "end_col": 16
+              },
+              "width": 5,
+              "op": "~",
+              "operand": {
+                "kind": "Resize",
+                "span": {
+                  "line": 4,
+                  "col": 15,
+                  "end_line": 4,
+                  "end_col": 16
+                },
+                "width": 5,
+                "operand": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 4,
+                    "col": 15,
+                    "end_line": 4,
+                    "end_col": 16
+                  },
+                  "width": 4,
+                  "name": "a"
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

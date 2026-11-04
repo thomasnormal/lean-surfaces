@@ -1,0 +1,1335 @@
+#!/usr/bin/env python3.12
+"""Corpus census for the lean_models SV lane: run the extract.py pipeline
+in-process over the IEEE 1800-2023 conformance corpus (sv-tests-2) and
+measure axis-1/2 coverage on real code.
+
+Usage (from the repo root):
+
+    python3.12 extractors/sv/census.py                 # full census
+    python3.12 extractors/sv/census.py --recheck       # determinism check
+    python3.12 extractors/sv/census.py --limit 500     # smoke run
+
+Outputs (full run):
+  * harness/sv/conformance/census.json  — per-file classification + summary
+  * harness/sv/conformance/unlockable.txt — the chapter-4/6/11 unlockable
+    set (see below), one corpus-relative path per line
+
+Classification per .sv file under <corpus>/chapter-*/:
+  * skip_include — the source uses a real `include directive (multi-file
+    test; extract.py compiles single files with no include path, so the
+    envelope would be built from a partial parse — skip with reason)
+  * error   — the pipeline raised (pyslang/driver exception or timeout);
+    should be ~0, every one is an extractor bug to report
+  * clean   — envelope has zero Unsupported nodes
+  * partial — envelope has Unsupported nodes; the distinct sv_kind values
+    are recorded (the construct-frequency table over these is the
+    implementation priority queue)
+
+Adapter (pass 2, "unlockable") analysis — computed for every parsed file:
+the self-check tier the Adapter phase builds extends M0 with exactly
+  {initial blocks, represented output/severity/termination calls,
+   string literals, local variable declarations (M0-typed: unsigned 4-state
+   scalar/[W-1:0])}
+A file is UNLOCKABLE iff it is `partial` and re-walking its elaborated AST
+with those adapter constructs treated as supported (descending into initial
+bodies, which the envelope collapses into a single Unsupported node) leaves
+zero blockers. Everything inside an initial body must otherwise be M0
+vocabulary (begin/end, =, <=, if/else, M0 expressions); represented call
+arguments must pass the converter's source-purity checks; local decls must be
+M0-typed with M0/string initializers. The residual blockers of non-unlockable
+files are recorded in `adapter_blockers` (tags mirror extract.py's sv_kind
+convention, plus `Call:<name>` for non-admitted calls).
+
+Determinism: --recheck re-runs a fixed-seed 200-file random sample against
+the stored census.json and asserts identical classification.
+"""
+
+import argparse
+import json
+import os
+import platform
+import random
+import re
+import signal
+import sys
+import time
+from collections import Counter
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
+
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# ---------------------------------------------------------------------------
+# THE CORPUS REGISTRY — no hard-coded default, and no silent fallback.
+#
+# This module used to carry an absolute host-local default corpus path,
+# used whenever --corpus was omitted --
+# which is exactly how the documented reproduce-block came to be unrunnable
+# on any host but one (docs/sv-charter.md §1.3).  A census that cannot say
+# which corpus it measured is not a measurement.
+#
+# Now: a corpus is chosen by NAME from the registry below, or by explicit
+# --corpus PATH.  Each name lists candidate locations in preference order;
+# the first that exists wins, and if none exists the run REFUSES and prints
+# every path it tried.  Nothing is ever assumed to be present.
+#
+# 'sv-tests-2'  the corpus every landed SV coverage claim was measured on
+#               (docs/sv-corpus-coverage.md).  ~21.6k files, IEEE 1800-2023
+#               chapters 3-40. An external corpus requires explicit access
+#               and redistribution permission; its sources are not vendored.
+#
+# 'sv-tests'    public chipsalliance/sv-tests.  1028 tests, uniformly ISC
+#               with per-file SPDX, vendorable (tests/** only).  Wired here
+#               so that switching anchors is a FLAG, not a project.
+# ---------------------------------------------------------------------------
+KNOWN_CORPORA = {
+    "sv-tests-2": [
+        os.path.expanduser("~/repos/sv-tests-2/tests"),
+        os.path.expanduser("~/corpora/sv-tests-2/tests"),
+    ],
+    "sv-tests": [
+        os.path.expanduser("~/repos/sv-tests/tests"),
+    ],
+}
+
+OUT_DIR = os.path.join(REPO, "harness", "sv", "conformance")
+CENSUS_JSON = os.path.join(OUT_DIR, "census.json")
+UNLOCKABLE_TXT = os.path.join(OUT_DIR, "unlockable.txt")
+# The committed, machine-readable half (docs/<lang>-<subject>-census.json).
+SUMMARY_JSON = os.path.join(REPO, "docs", "sv-construct-census.json")
+
+SEED = 20260721
+SAMPLE_SIZE = 200
+FILE_TIMEOUT_S = 90
+# Statement calls whose effects are represented by the legacy self-check
+# state: output, severity evaluation, and whole-run termination.  Other
+# system and user calls stay explicit adapter boundaries even when their
+# syntax is recognized.
+ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
+ADAPTER_FILE_OUTPUT = ("$fdisplay", "$fwrite")
+ADAPTER_PURE_DIAGNOSTIC = (
+    "$exit", "$printtimescale", "$assertcontrol",
+    "$asserton", "$assertoff", "$assertkill",
+    "$monitoron", "$monitoroff", "$system",
+    "$sdf_annotate", "$timeformat",
+    "$dumpfile", "$dumpvars", "$dumpon", "$dumpoff", "$dumpall",
+    "$dumpflush", "$dumplimit", "$dumpportsflush",
+)
+ADAPTER_SEVERITY = ("$info", "$warning", "$error")
+ADAPTER_FATAL = "$fatal"
+ADAPTER_LOWERED_METHOD_MARKERS = (
+    "fixed_array_reverse_lowered",
+    "fixed_array_ordering_lowered",
+    "fixed_struct_array_ordering_with_lowered",
+    "associative_delete_lowered",
+)
+ADAPTER_PURE_STATEMENT_MARKERS = (
+    "bit_query_statement",
+    "dimension_query_statement",
+    "array_query_statement", "array_reduction_statement",
+    "string_query_statement",
+    "enum_name_statement", "enum_numeric_statement",
+    "floating_math_statement",
+    "associative_empty_query_statement",
+    "associative_empty_endpoint_statement",
+    "zero_size_statement",
+    "typename_statement", "bits_statement",
+    "empty_subroutine_call", "empty_input_task_call",
+    "literal_function_statement",
+    "clog2_statement", "isunbounded_statement", "signing_statement",
+    "time_scale_statement",
+    "sformatf_statement",
+    "floating_string_atoreal_statement",
+    "fopen_invalid_mode_statement",
+    "fseek_stdout_error_statement",
+    "ftell_stdout_error_statement",
+    "coverage_nocov_statement",
+    "associative_count_statement",
+    "associative_exists_statement",
+    "associative_empty_delete_statement",
+    "itor_literal_statement", "itor_pure_statement",
+    "bitstoreal_literal_statement", "bitstoreal_pure_statement",
+    "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",
+    "rtoi_literal_statement", "rtoi_pure_statement",
+    "realtobits_literal_statement", "realtobits_pure_statement",
+    "shortrealtobits_literal_statement", "shortrealtobits_pure_statement",
+)
+DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
+
+# A *real* include directive at the start of a line (`include "f" / <f> /
+# `MACRO). Mentions inside // comments or :description: lines don't match.
+INCLUDE_RE = re.compile(r'^\s*`include\s*(["<`])', re.M)
+META_RE = re.compile(r'^:(name|tags|type):[ \t]*(.*?)[ \t]*$', re.M)
+
+
+class FileTimeout(Exception):
+    pass
+
+
+def _on_alarm(signum, frame):
+    raise FileTimeout("per-file timeout (%ds)" % FILE_TIMEOUT_S)
+
+
+# ---------------------------------------------------------------------------
+# Worker
+# ---------------------------------------------------------------------------
+
+_CORPUS = None
+extract = None  # the extract.py module, imported in the worker initializer
+_pyslang_ast = None
+
+
+def _init_worker(corpus):
+    global _CORPUS, extract, _pyslang_ast
+    _CORPUS = corpus
+    sys.path.insert(0, os.path.join(REPO, "extractors", "sv"))
+    import extract as _e
+    import pyslang.ast as _a
+    extract = _e
+    _pyslang_ast = _a
+    signal.signal(signal.SIGALRM, _on_alarm)
+
+
+def kinds_in(node):
+    """All sv_kind values of Unsupported nodes in a converted dict tree."""
+    out = []
+    if isinstance(node, dict):
+        if node.get("kind") == "Unsupported":
+            out.append(node.get("sv_kind", "?"))
+        for v in node.values():
+            out.extend(kinds_in(v))
+    elif isinstance(node, list):
+        for v in node:
+            out.extend(kinds_in(v))
+    return out
+
+
+def _minus_string(kinds):
+    """String literals are in the adapter tier — not blockers in pass 2."""
+    return [k for k in kinds if k != "StringLiteral"]
+
+
+def _adapter_erased_decl(symbol):
+    """Whether the legacy converter intentionally drops this declaration."""
+    try:
+        return (extract._declaration_only(symbol)
+                or extract.is_integral_type_alias(symbol)
+                or extract.is_flat_unpacked_struct_alias(symbol)
+                or extract.is_resolved_forward_typedef(symbol)
+                or extract.is_bound_enum_member(symbol)
+                or extract.is_module_event_decl(symbol)
+                or extract.is_module_floating_decl(symbol)
+                or extract.is_inert_event_decl(symbol)
+                or extract.is_inert_2state_floating_decl(symbol)
+                or extract.is_chandle_decl(symbol)
+                # The module and local declaration paths erase an
+                # uninitialized class handle (including built-in handles
+                # such as mailbox and semaphore) as opaque metadata.  Keep
+                # the adapter's declaration walk on that same boundary;
+                # reads, writes, construction, and methods still flow
+                # through their ordinary loud expression/statement paths.
+                or extract.is_inert_class_handle_decl(symbol)
+                # A direct literal semaphore constructor is also erased by
+                # the local declaration path; the semaphore methods that
+                # follow it still have their own explicit adapter boundaries.
+                or extract.is_literal_semaphore_decl(symbol)
+                # An untouched 2-state mixed fixed/dynamic array is likewise
+                # declaration-only when the extractor proves that every
+                # later occurrence is a dimension query.  Initializers and
+                # value uses remain ordinary loud array boundaries.
+                or extract.is_inert_2state_mixed_array_decl(symbol)
+                # A zero-size dynamic-array initializer creates no cells in
+                # the extractor's flat self-check state.  Match that exact
+                # declaration-only route; nonzero allocations and later
+                # value uses remain ordinary loud boundaries.
+                or extract.is_inert_empty_dynamic_array_decl(symbol)
+                # A malformed packed dimension is rejected during
+                # elaboration, so the converter emits no runtime declaration.
+                # Keep direct literal recovery on the same declaration-only
+                # path; calls and references remain loud.
+                or extract.is_invalid_packed_dimension_decl(symbol)
+                or extract.is_string_decl(symbol)
+                or extract.is_fixed_string_array_decl(symbol))
+    except Exception:
+        return False
+
+
+def _adapter_integral_parameter(symbol):
+    """Whether a parameter is compile-time metadata in the legacy path.
+
+    ``convert_module`` keeps an exact integral parameter out of runtime
+    storage when slang has already elaborated its value to an ``SVInt`` with
+    the declaration's width.  Keep this predicate aligned with that
+    admission rule; real/string/type parameters and unresolved values remain
+    explicit adapter blockers.
+    """
+    try:
+        if str(getattr(symbol, "kind", "")).split(".")[-1] != "Parameter":
+            return False
+        width, _two_state, reason = extract.type_width_2s(symbol.type)
+        value = getattr(getattr(symbol, "value", None), "value", None)
+        return (reason is None and width is not None
+                and type(value).__name__ == "SVInt"
+                and value.bitWidth == width)
+    except Exception:
+        return False
+
+
+def _adapter_package_metadata(package, scope, packages):
+    """Whether a package contributes no runtime or referenced callable data."""
+    try:
+        for member in package:
+            kind = str(getattr(member, "kind", "")).split(".")[-1]
+            if (kind in ("ExplicitImport", "WildcardImport")
+                    and getattr(member, "package", None) in packages):
+                continue
+            if _adapter_erased_decl(member) or _adapter_integral_parameter(member):
+                continue
+            if kind == "Subroutine" and not extract._subroutine_is_referenced(scope, member):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def adapter_expr(sm, e):
+    # Exact integral parameters are elaboration metadata, not self-check
+    # cells.  The converter resolves their references to literals before the
+    # normal expression walk; mirror that decision here without depending on
+    # convert_design's temporary global binding table.
+    if (type(e).__name__ == "NamedValueExpression"
+            and _adapter_integral_parameter(getattr(e, "symbol", None))):
+        return []
+    # Strings have no flat self-check slot, but the extractor already has an
+    # exact source-history resolver for unconditional ASCII literals,
+    # concatenations, and constant replications.  Reuse that proof here so
+    # adapter census rows do not report a false 2-state blocker for a value
+    # that the actual self-check lowering has erased safely.  Unknown,
+    # effectful, timed, and non-ASCII histories remain ordinary blockers.
+    try:
+        if (type(e).__name__ in ("NamedValueExpression", "ConcatenationExpression",
+                                 "ReplicationExpression", "StringLiteral")
+                and type(getattr(e.type, "canonicalType", None)).__name__ == "StringType"):
+            position = getattr(getattr(getattr(e, "sourceRange", None),
+                                       "start", None), "offset", None)
+            if (position is not None
+                    and extract._string_source_value(e, position) is not None):
+                return []
+    except Exception:
+        pass
+    return _minus_string(kinds_in(extract.convert_expr(sm, e)))
+
+
+def adapter_stmt(sm, s):
+    """Blocker tags of a statement under the adapter tier (M0 vocabulary
+    + represented output/termination calls + inert pure diagnostics + string
+    literals + M0-typed local var decls)."""
+    if getattr(s, "bad", False):
+        return ["InvalidStatement"]
+    cn = type(s).__name__
+
+    if cn == "BlockStatement":
+        from pyslang.ast import StatementBlockKind
+        if s.blockKind != StatementBlockKind.Sequential:
+            return ["BlockStatement:" + str(s.blockKind).split(".")[-1]]
+        body = s.body
+        items = body.list if type(body).__name__ == "StatementList" else [body]
+        out = []
+        for x in items:
+            out.extend(adapter_stmt(sm, x))
+        return out
+
+    if cn == "StatementList":
+        out = []
+        for x in s.list:
+            out.extend(adapter_stmt(sm, x))
+        return out
+
+    if cn == "VariableDeclStatement":
+        sym = s.symbol
+        # Finite associative arrays are lowered from their complete source
+        # history to static flat cells, and their declaration becomes Empty.
+        # Reuse those exact recognizers rather than treating every Empty
+        # declaration as metadata: dynamic constructors and other value
+        # boundaries must remain loud.
+        if (extract._finite_string_assoc_decls(sm, sym) is not None
+                or extract._finite_integral_assoc_decls(sm, sym) is not None
+                or (str(getattr(sym, "lifetime", "")).split(".")[-1]
+                    == "Static"
+                    and type(sym.type.canonicalType).__name__
+                    == "AssociativeArrayType")):
+            return []
+        if _adapter_erased_decl(sym):
+            return []
+        # A procedural dynamic array whose source history fixes a finite
+        # extent is lowered by the converter into independent flat cells.
+        # Mirror only that exact lowering here; unresolved extents and any
+        # other dynamic-array representation remain adapter boundaries.
+        if type(sym.type.canonicalType).__name__ in (
+                "DynamicArrayType", "FixedSizeUnpackedArrayType",
+                "UnpackedStructType"):
+            converted = extract.convert_var(sm, sym)
+            if (isinstance(converted, list) and converted
+                    and all(isinstance(cell, dict)
+                            and cell.get("kind") in ("Var", "Empty")
+                            for cell in converted)):
+                return []
+        # The converter's local-declaration path admits both four-state and
+        # two-state integral cells (and applies ``Squash2`` at the latter's
+        # initializer/assignment boundary).  The adapter census used to call
+        # ``type_width``, which is deliberately four-state-only for the
+        # module-level M0 path, and therefore reported a false
+        # ``VariableDeclStatement:2state`` residual for a declaration that
+        # already lowers to static storage or ``LocalDecl`` and executes in
+        # SelfCheck.
+        w, _two_state, reason = extract.type_width_2s(sym.type)
+        out = [] if w is not None else ["VariableDeclStatement:" + reason]
+        init = getattr(sym, "initializer", None)
+        if init is not None:
+            out.extend(adapter_expr(sm, init))
+        return out
+
+    if cn == "ExpressionStatement":
+        e = s.expr
+        if type(e).__name__ == "CallExpression":
+            name = None
+            try:
+                name = e.subroutineName
+            except Exception:
+                pass
+            if name in ADAPTER_CALLS:
+                out = []
+                try:
+                    args = list(e.arguments)
+                except Exception:
+                    return ["Call:" + name + ":args"]
+                # `$display`/`$write` consume their first string as the
+                # format itself.  The converter already renders that string
+                # into the SysCall node, so do not send it through the
+                # ordinary expression adapter (which would reject escape
+                # spellings that the display formatter handles exactly).
+                if (name in ("$display", "$write") and args
+                        and type(args[0]).__name__ == "StringLiteral"):
+                    if ("%" in getattr(args[0], "value", "")
+                            and any(type(a).__name__ == "EmptyArgumentExpression"
+                                    for a in args[1:])):
+                        return ["SysCall:empty-argument-format"]
+                    args = args[1:]
+                for a in args:
+                    if type(a).__name__ == "EmptyArgumentExpression":
+                        continue
+                    out.extend(adapter_expr(sm, a))
+                return out
+            if name in ADAPTER_FILE_OUTPUT:
+                # The extractor maps predefined-stdout `$fdisplay`/`$fwrite`
+                # to the represented `$display`/`$write` state after checking
+                # the descriptor, format, and argument purity. Mirror that
+                # exact converter boundary; arbitrary descriptors and
+                # malformed or effectful forms remain adapter blockers.
+                converted = extract.convert_stmt(sm, s)
+                if (isinstance(converted, dict)
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") in ("$display", "$write")
+                        and converted.get("stdout_file_descriptor") in (1, 0x80000001)):
+                    return []
+                return ["Call:" + name]
+            if name == "$sformat":
+                # Plain literal `$sformat` lowers to a block of marked flat
+                # writes. The adapter has no string storage, but these
+                # already-materialized integral writes are represented state;
+                # selected/aggregate targets and all other forms stay loud.
+                converted = extract.convert_stmt(sm, s)
+                statements = ([converted] if isinstance(converted, dict)
+                              and converted.get("kind") == "BlockingAssign"
+                              else converted.get("stmts", [])
+                              if isinstance(converted, dict)
+                              and converted.get("kind") == "Block" else [])
+                if (statements
+                        and all(isinstance(stmt, dict)
+                                and stmt.get("sformat_literal_assignment") is True
+                                and stmt.get("target", {}).get("kind") == "Ident"
+                                for stmt in statements)):
+                    return []
+                return ["Call:" + name]
+            if name in ("$swriteb", "$swriteo", "$swriteh"):
+                # The task-selected radix forms use the same flat integral
+                # destination as the converter's marked lowering.  Keep the
+                # adapter boundary tied to that exact direct-target marker;
+                # selected/aggregate destinations and every unlowered form
+                # remain explicit call residuals.
+                converted = extract.convert_stmt(sm, s)
+                statements = ([converted] if isinstance(converted, dict)
+                              and converted.get("kind") == "BlockingAssign"
+                              else converted.get("stmts", [])
+                              if isinstance(converted, dict)
+                              and converted.get("kind") == "Block" else [])
+                if (statements
+                        and all(isinstance(stmt, dict)
+                                and stmt.get("default_radix_integral_assignment")
+                                in ("$swriteb", "$swriteo", "$swriteh")
+                                and stmt.get("target", {}).get("kind") == "Ident"
+                                for stmt in statements)):
+                    return []
+                return ["Call:" + name]
+            if name in ADAPTER_PURE_DIAGNOSTIC:
+                converted = extract.convert_stmt(sm, s)
+                if (isinstance(converted, dict)
+                        and converted.get("kind") == "Empty"
+                        and (converted.get("pure_diagnostic") == name
+                             or (name == "$system"
+                                 and converted.get("system_null_task") is True))):
+                    return []
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Empty"
+                    and any(marker in converted
+                            for marker in ADAPTER_PURE_STATEMENT_MARKERS)):
+                return []
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Block"
+                    and any(converted.get(marker) is not None
+                            for marker in ADAPTER_LOWERED_METHOD_MARKERS)):
+                return []
+            if (isinstance(converted, dict)
+                    and converted.get("associative_endpoint_statement") is not None):
+                return []
+            if name in ADAPTER_SEVERITY or name == ADAPTER_FATAL:
+                # The converter has already checked the complete argument
+                # shape and lowered accepted calls to the self-check's
+                # severity/fatal constructors.  Mirror that boundary here;
+                # an Unsupported conversion remains a loud adapter residual.
+                if not isinstance(converted, dict):
+                    return ["Call:" + name]
+                if (name in ADAPTER_SEVERITY
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") == name):
+                    return []
+                if (name in ADAPTER_SEVERITY
+                        and converted.get("kind") == "Empty"
+                        and converted.get("severity_task") == name):
+                    return []
+                if (name == ADAPTER_FATAL
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") == "$finish"
+                        and converted.get("fatal_task") is True):
+                    return []
+            # The extractor erases source-pure string statement methods after
+            # replaying their literal history.  Mirror only those exact
+            # markers here: the legacy adapter has no string cell, so a
+            # discarded putc/integer-conversion/substr/case-conversion call
+            # contributes no state, while dynamic or effectful calls remain
+            # explicit `Call:<name>` blockers.
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Empty"
+                    and any(marker in converted for marker in (
+                        "string_putc_statement",
+                        "string_integer_conversion_statement",
+                        "string_substr_statement",
+                        "string_case_statement"))):
+                return []
+            return ["Call:" + (name if name else type(e).__name__)]
+        return _minus_string(kinds_in(extract.convert_stmt(sm, s)))
+
+    if cn == "ConditionalStatement":
+        from pyslang.ast import UniquePriorityCheck
+        if s.check != UniquePriorityCheck.None_:
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("qualified_fallback_lowered") is not None):
+                return []
+            return ["ConditionalStatement:" + str(s.check).split(".")[-1]]
+        conds = s.conditions
+        if len(conds) != 1:
+            return ["ConditionalStatement:multi"]
+        if conds[0].pattern is not None:
+            return ["ConditionalStatement:pattern"]
+        out = adapter_expr(sm, conds[0].expr)
+        out.extend(adapter_stmt(sm, s.ifTrue))
+        if s.ifFalse is not None:
+            out.extend(adapter_stmt(sm, s.ifFalse))
+        return out
+
+    if cn == "TimedStatement":
+        return ["TimedStatement:" + type(s.timing).__name__]
+
+    # Everything else (loops, case, fork, empty, ...): what extract.py says.
+    return _minus_string(kinds_in(extract.convert_stmt(sm, s)))
+
+
+def adapter_proc_blockers(sm, m):
+    """Blocker tags of one procedural block under the adapter tier.
+    Initial blocks are descended into; always* mirror extract.py's gating
+    but with adapter-aware bodies (so $display inside always is fine)."""
+    from pyslang.ast import EdgeKind, ProceduralBlockKind
+    pk = m.procedureKind
+    if pk == ProceduralBlockKind.Initial:
+        return adapter_stmt(sm, m.body)
+    if pk == ProceduralBlockKind.AlwaysComb:
+        return adapter_stmt(sm, m.body)
+    if pk in (ProceduralBlockKind.Always, ProceduralBlockKind.AlwaysFF):
+        body = m.body
+        if type(body).__name__ != "TimedStatement":
+            return ["ProceduralBlockSymbol:NoEventControl"]
+        timing = body.timing
+        if type(timing).__name__ != "SignalEventControl":
+            return ["TimedStatement:" + type(timing).__name__]
+        if timing.edge != EdgeKind.PosEdge:
+            return ["SignalEventControl:" + str(timing.edge).split(".")[-1]]
+        if timing.iffCondition is not None:
+            return ["SignalEventControl:iff"]
+        clk = extract.convert_expr(sm, timing.expr)
+        if clk.get("kind") != "Ident" or clk.get("width") != 1:
+            return ["SignalEventControl:clock"]
+        return adapter_stmt(sm, body.stmt)
+    return ["ProceduralBlockSymbol:" + str(pk).split(".")[-1]]
+
+
+def _adapter_generated_scope_blockers(sm, symbol):
+    """Adapter blockers from procedural bodies nested below a generate symbol."""
+    blockers = []
+
+    def inspect(node):
+        if node is symbol:
+            return
+        if str(getattr(node, "kind", "")).split(".")[-1] == "ProceduralBlock":
+            blockers.extend(adapter_proc_blockers(sm, node))
+
+    try:
+        symbol.visit(inspect)
+    except Exception:
+        return ["ExtractorInternal:GenerateScope"]
+    return blockers
+
+
+def _adapter_erased_subroutines(sm, scope):
+    """Return subroutines whose every call is an erased pure statement.
+
+    The legacy adapter has no callable frame.  A declaration can nevertheless
+    be metadata when all of its call sites are already lowered by the
+    extractor to an inert empty task/function statement.  Any value-position,
+    literal-return, effectful, or otherwise
+    unrecognized call keeps the declaration as a real adapter boundary.
+    """
+    calls = {}
+    erased = set()
+
+    def subroutine_key(subroutine):
+        location = getattr(subroutine, "location", None)
+        offset = getattr(location, "offset", None)
+        return (getattr(subroutine, "name", None), offset)
+
+    def call_key(call):
+        location = getattr(call, "location", None)
+        offset = getattr(location, "offset", None)
+        if offset is not None:
+            return offset
+        source_range = getattr(call, "sourceRange", None)
+        start = getattr(source_range, "start", None)
+        return getattr(start, "offset", None)
+
+    def inspect(node):
+        if type(node).__name__ == "CallExpression":
+            subroutine = getattr(node, "subroutine", None)
+            if subroutine is not None:
+                calls.setdefault(subroutine_key(subroutine), set()).add(call_key(node))
+
+    try:
+        scope.visit(inspect)
+    except Exception:
+        return set()
+
+    def inspect_statement(node):
+        if type(node).__name__ != "ExpressionStatement":
+            return
+        expression = getattr(node, "expr", None)
+        if type(expression).__name__ != "CallExpression":
+            return
+        subroutine = getattr(expression, "subroutine", None)
+        if subroutine is None:
+            return
+        converted = extract.convert_stmt(sm, node)
+        if (isinstance(converted, dict)
+                and converted.get("kind") == "Empty"
+                and any(marker in converted
+                        for marker in ADAPTER_PURE_STATEMENT_MARKERS)):
+            erased.add((subroutine_key(subroutine), call_key(expression)))
+
+    def inspect_value(node):
+        if type(node).__name__ != "CallExpression":
+            return
+        subroutine = getattr(node, "subroutine", None)
+        if subroutine is None:
+            return
+        converted = extract.convert_expr(sm, node)
+        if (isinstance(converted, dict)
+                and converted.get("kind") == "Literal"
+                and (converted.get("literal_function_return")
+                     or converted.get("empty_function_default"))):
+            erased.add((subroutine_key(subroutine), call_key(node)))
+
+    try:
+        scope.visit(inspect_statement)
+        scope.visit(inspect_value)
+    except Exception:
+        return set()
+    return {key for key, identities in calls.items()
+            if identities and all((key, identity) in erased
+                                  for identity in identities)}
+
+
+def _adapter_design_blockers_impl(sm, comp, design=None):
+    """Pass 2: residual blockers with the adapter tier treated as
+    supported. Mirrors extract.convert_module's member routing."""
+    out = []
+    converted_modules = {}
+    if isinstance(design, dict):
+        converted_modules = {
+            module.get("name"): module
+            for module in design.get("modules", [])
+            if isinstance(module, dict)
+        }
+    packages = {
+        m for unit in comp.getCompilationUnits() for m in unit
+        if str(getattr(m, "kind", "")).split(".")[-1] == "Package"
+    }
+    for inst in comp.getRoot().topInstances:
+        try:
+            # Keep the recognizer and member walk on the same elaborated
+            # instance wrapper; pyslang may materialize distinct Python
+            # wrappers for the same underlying symbol on separate traversals.
+            erased_subroutines = _adapter_erased_subroutines(sm, inst)
+            body = inst.body
+            converted_module = converted_modules.get(getattr(inst, "name", None))
+            generated_metadata_base = (
+                isinstance(converted_module, dict)
+                and converted_module.get("elaboration_lowered") is True
+                and not kinds_in(converted_module))
+            port_names = set()
+            for m in body:
+                if str(m.kind) == "SymbolKind.Port":
+                    port_names.add(m.name)
+            for m in body:
+                try:
+                    k = str(m.kind).split(".")[-1]
+                    if _adapter_erased_decl(m):
+                        continue
+                    if k == "Port":
+                        out.extend(kinds_in(extract.convert_port(sm, m)))
+                    elif k in ("Variable", "Net"):
+                        if m.name in port_names:
+                            continue
+                        d = (extract.convert_var(sm, m) if k == "Variable"
+                             else extract.convert_net(sm, m))
+                        out.extend(_minus_string(kinds_in(d)))
+                    elif k == "ProceduralBlock":
+                        out.extend(adapter_proc_blockers(sm, m))
+                    elif k == "ContinuousAssign":
+                        out.extend(_minus_string(
+                            kinds_in(extract.convert_continuous_assign(sm, m))))
+                    elif k == "StatementBlock":
+                        continue
+                    elif (k in ("GenerateBlock", "GenerateBlockArray", "Genvar")
+                          and generated_metadata_base):
+                        # The ordinary converter has already elaborated this
+                        # clean generated scope into the module's processes
+                        # and declarations. Do not report its source symbol as
+                        # a second adapter-only state; replay any nested
+                        # procedural boundary when the generated body is not
+                        # itself in the adapter tier.
+                        out.extend(_adapter_generated_scope_blockers(sm, m))
+                        continue
+                    elif (k == "Subroutine"
+                          and (not extract._subroutine_is_referenced(inst, m)
+                               or (getattr(m, "name", None),
+                                   getattr(getattr(m, "location", None),
+                                           "offset", None)) in
+                                  erased_subroutines)):
+                        # A declaration has no time-zero effect until a call
+                        # site names it.  convert_module erases the same
+                        # unreferenced subroutine before building the envelope.
+                        continue
+                    elif (k in ("ExplicitImport", "WildcardImport")
+                          and getattr(m, "package", None) in packages):
+                        continue
+                    elif k == "Parameter":
+                        if not _adapter_integral_parameter(m):
+                            out.append(type(m).__name__ + ":" + k)
+                    else:
+                        out.append(type(m).__name__ + ":" + k)
+                except Exception as exc:
+                    out.append("ExtractorInternal:" + type(exc).__name__)
+        except Exception as exc:
+            out.append("ExtractorInternal:" + type(exc).__name__)
+    try:
+        scope = comp.getRoot()
+        for unit in comp.getCompilationUnits():
+            for m in unit:
+                kind = str(getattr(m, "kind", "")).split(".")[-1]
+                if (kind in ("ExplicitImport", "WildcardImport")
+                        and getattr(m, "package", None) in packages):
+                    continue
+                if (kind == "Package"
+                        and _adapter_package_metadata(m, scope, packages)):
+                    continue
+                if _adapter_erased_decl(m):
+                    continue
+                if (str(getattr(m, "kind", "")).split(".")[-1] == "Parameter"
+                        and _adapter_integral_parameter(m)):
+                    continue
+                out.append(type(m).__name__)
+    except Exception as exc:
+        out.append("ExtractorInternal:" + type(exc).__name__)
+    return sorted(set(out))
+
+
+def adapter_design_blockers(sm, comp, design=None):
+    """Run the adapter walk with the converter's elaborated parameter scope."""
+    # The extractor's finite associative-cell cache is keyed by elaborated
+    # symbol identity.  A census may inspect many compilations in one Python
+    # process, and pyslang can reuse wrapper identities across them; carrying
+    # this cache into the next adapter walk can therefore replay a prior
+    # design's cells.  Match convert_design's per-extraction lifetime here.
+    previous_assoc_cells = getattr(extract, "_ASSOC_CELLS", {})
+    extract._ASSOC_CELLS = {}
+    if design is None:
+        try:
+            design = extract.convert_design(sm, comp)
+        finally:
+            extract._ASSOC_CELLS = {}
+    previous = getattr(extract, "_ELAB_PARAMETERS", set())
+    parameters = set()
+
+    def inspect(node):
+        if str(getattr(node, "kind", "")).split(".")[-1] == "Parameter":
+            parameters.add(node)
+
+    try:
+        comp.getRoot().visit(inspect)
+    except Exception:
+        parameters = set()
+    extract._ELAB_PARAMETERS = set(previous) | parameters
+    try:
+        return _adapter_design_blockers_impl(sm, comp, design)
+    finally:
+        extract._ELAB_PARAMETERS = previous
+        extract._ASSOC_CELLS = previous_assoc_cells
+
+
+def parse_meta(text):
+    meta = {"name": None, "tags": None, "type": None}
+    for m in META_RE.finditer(text[:4000]):
+        if meta[m.group(1)] is None:
+            meta[m.group(1)] = m.group(2)
+    return meta
+
+
+def classify(relpath):
+    """Classify one corpus file. Returns the per-file record dict."""
+    rec = {
+        "path": relpath,
+        "chapter": relpath.split("/")[0],
+        "name": None,
+        "tags": None,
+        "type": None,
+        "status": None,
+        "kinds": [],
+        "adapter_blockers": [],
+        "unlockable": False,
+        "n_modules": 0,
+        "error": None,
+    }
+    full = os.path.join(_CORPUS, relpath)
+    try:
+        with open(full, "rb") as f:
+            data = f.read()
+    except OSError as exc:
+        rec["status"] = "error"
+        rec["error"] = "OSError: %s" % exc
+        return rec
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        rec["status"] = "error"
+        rec["error"] = "NotUtf8: %s" % exc
+        return rec
+
+    rec.update(parse_meta(text))
+
+    if INCLUDE_RE.search(text):
+        rec["status"] = "skip_include"
+        rec["error"] = "multi-file test (`include directive)"
+        return rec
+
+    # The extract.py pipeline, in-process (same calls process_file makes).
+    signal.alarm(FILE_TIMEOUT_S)
+    try:
+        from pyslang.syntax import SyntaxTree
+        from pyslang.ast import Compilation
+        extract._SOURCE_BYTES = data
+        tree = SyntaxTree.fromText(text, name=relpath)
+        comp = Compilation()
+        comp.addSyntaxTree(tree)
+        sm = tree.sourceManager
+        design = extract.convert_design(sm, comp)
+        rec["n_modules"] = sum(
+            1 for m in design["modules"] if m.get("kind") == "Module")
+        rec["kinds"] = sorted(set(kinds_in(design)))
+        rec["status"] = "clean" if not rec["kinds"] else "partial"
+        rec["adapter_blockers"] = adapter_design_blockers(sm, comp, design)
+    except FileTimeout as exc:
+        rec["status"] = "error"
+        rec["error"] = "Timeout: %s" % exc
+        return rec
+    except Exception as exc:
+        rec["status"] = "error"
+        rec["error"] = "%s: %s" % (type(exc).__name__, str(exc)[:200])
+        return rec
+    finally:
+        signal.alarm(0)
+
+    rec["unlockable"] = (
+        rec["status"] == "partial"
+        and not rec["adapter_blockers"]
+        and rec["n_modules"] >= 1
+    )
+    return rec
+
+
+# ---------------------------------------------------------------------------
+# Orchestration
+# ---------------------------------------------------------------------------
+
+class CorpusError(Exception):
+    """No corpus could be resolved. Always fatal, never defaulted around."""
+
+
+def resolve_corpus(explicit, name):
+    """Return (abs corpus path, corpus name). REFUSES rather than guessing.
+
+    --corpus PATH wins; otherwise the registry entry for `name` is searched
+    in order. A missing corpus is a hard error naming every candidate tried,
+    because the alternative -- silently censusing nothing, or censusing a
+    different corpus than the one the caller believes -- is the failure this
+    function exists to prevent.
+    """
+    if explicit:
+        path = os.path.abspath(os.path.expanduser(explicit))
+        if not os.path.isdir(path):
+            raise CorpusError("--corpus %s: not a directory" % explicit)
+        return path, (name or "explicit")
+
+    if name not in KNOWN_CORPORA:
+        raise CorpusError("unknown corpus name %r (known: %s)"
+                          % (name, ", ".join(sorted(KNOWN_CORPORA))))
+    tried = KNOWN_CORPORA[name]
+    for cand in tried:
+        if os.path.isdir(cand):
+            return os.path.abspath(cand), name
+    raise CorpusError(
+        "corpus %r not found on this host. Tried:\n  %s\n"
+        "Pass --corpus PATH explicitly, or check out the corpus."
+        % (name, "\n  ".join(tried)))
+
+
+def find_files(corpus, all_dirs=False):
+    """Corpus-relative .sv paths.
+
+    Default walk is `<corpus>/chapter-*/`, one level deep -- the layout the
+    landed census used, kept so its numbers stay comparable. --all-dirs
+    additionally walks every other subdirectory (the public suite keeps 311
+    of its 1028 tests in `generic/`, `testbenches/` and `uvm/`, which the
+    chapter walk cannot see).
+    """
+    paths = []
+    for entry in sorted(os.listdir(corpus)):
+        d = os.path.join(corpus, entry)
+        if not os.path.isdir(d):
+            continue
+        if entry.startswith("chapter-"):
+            for fn in sorted(os.listdir(d)):
+                if fn.endswith(".sv"):
+                    paths.append(entry + "/" + fn)
+        elif all_dirs:
+            for root, _dirs, files in os.walk(d):
+                for fn in sorted(files):
+                    if fn.endswith(".sv"):
+                        rel = os.path.relpath(os.path.join(root, fn), corpus)
+                        paths.append(rel)
+    return sorted(paths)
+
+
+def _crash_record(relpath, detail):
+    """An extractor crash, recorded as a FINDING with the file's name."""
+    return {
+        "path": relpath,
+        "chapter": relpath.split("/")[0],
+        "status": "error",
+        "reason": detail,
+        "type": None,
+        "kinds": [],
+        "blockers": [],
+        "unlockable": False,
+    }
+
+
+def _run_batch(paths, corpus, jobs, results, done):
+    """Pooled pass. Returns True if the pool broke (some paths unprocessed)."""
+    todo = [p for p in paths if p not in done]
+    if not todo:
+        return False
+    ex = ProcessPoolExecutor(max_workers=jobs, initializer=_init_worker,
+                             initargs=(corpus,))
+    futs = {ex.submit(classify, p): p for p in todo}
+    broke = False
+    try:
+        for fut in as_completed(futs):
+            p = futs[fut]
+            try:
+                results.append(fut.result())
+                done.add(p)
+            except BrokenProcessPool:
+                broke = True
+                break
+            except Exception as exc:                      # noqa: BLE001
+                results.append(_crash_record(p, "worker exception: %s" % exc))
+                done.add(p)
+            if len(done) % 2000 == 0:
+                print("  ... %d/%d" % (len(done), len(paths)), flush=True)
+    finally:
+        ex.shutdown(wait=False, cancel_futures=True)
+    return broke
+
+
+def run_pool(paths, corpus, jobs):
+    """Census every path, surviving a frontend that hard-crashes.
+
+    WHY THIS IS NOT A PLAIN Pool.  pyslang 11.0.0 aborts the interpreter
+    with SIGTRAP (rc 133, no diagnostic) on at least one real conformance
+    input -- `chapter-22/22.9--unconnected_drive-invalid-2.sv`, whose whole
+    body is ```unconnected_drive pull2``.  multiprocessing.Pool has no
+    answer to a worker that dies mid-task: it waits forever for a result
+    that can never arrive, so the census HUNG with no exit code, no message
+    and no failing file name (docs/sv-charter.md §1.6).  A hang is strictly
+    worse than a crash, and the 90s per-file SIGALRM cannot help because the
+    process carrying the alarm is the one that dies.
+
+    So: ProcessPoolExecutor, which reports BrokenProcessPool instead of
+    hanging. On a break the unfinished files are re-tried ONE AT A TIME
+    until the crasher is identified and recorded as an `error` row naming
+    it; pooled throughput then resumes for the rest. A crash costs one
+    isolation pass, never the run.
+    """
+    results, done = [], set()
+    while True:
+        if not _run_batch(paths, corpus, jobs, results, done):
+            break
+        remaining = [p for p in paths if p not in done]
+        print("  pool broke; isolating %d unfinished file(s)" % len(remaining),
+              flush=True)
+        for p in remaining:
+            # max_workers=1, one task: a break here blames exactly this file.
+            if _run_batch([p], corpus, 1, results, done):
+                results.append(_crash_record(
+                    p, "extractor CRASHED (worker killed by signal)"))
+                done.add(p)
+                print("  CRASH: %s" % p, flush=True)
+                break   # crasher found; resume pooled work on the rest
+    results.sort(key=lambda r: r["path"])
+    return results
+
+
+def chapter_num(ch):
+    try:
+        return int(ch.split("-")[1])
+    except (IndexError, ValueError):
+        return 999
+
+
+def summarize(records):
+    by_status = Counter(r["status"] for r in records)
+    clean_by_type = Counter(
+        (r["type"] or "(none)") for r in records if r["status"] == "clean")
+    total_by_type = Counter((r["type"] or "(none)") for r in records)
+    blockers = Counter()
+    for r in records:
+        if r["status"] == "partial":
+            for k in r["kinds"]:
+                blockers[k] += 1
+    per_chapter = {}
+    for r in records:
+        ch = per_chapter.setdefault(
+            r["chapter"], {"total": 0, "clean": 0, "partial": 0,
+                           "error": 0, "skip_include": 0, "unlockable": 0})
+        ch["total"] += 1
+        ch[r["status"]] += 1
+        if r["unlockable"]:
+            ch["unlockable"] += 1
+    deep = {}
+    for chap in DEEP_DIVE_CHAPTERS:
+        sim = [r for r in records
+               if r["chapter"] == chap and r["type"] == "simulation"]
+        part = [r for r in sim if r["status"] == "partial"]
+        unlock = [r for r in part if r["unlockable"]]
+        residual = Counter()
+        for r in part:
+            if not r["unlockable"]:
+                for k in r["adapter_blockers"]:
+                    residual[k] += 1
+        deep[chap] = {
+            "simulation_tests": len(sim),
+            "clean": sum(1 for r in sim if r["status"] == "clean"),
+            "partial": len(part),
+            "unlockable": len(unlock),
+            "blocked_by_more": len(part) - len(unlock),
+            "top_residual_blockers": residual.most_common(20),
+        }
+    internal = [r["path"] for r in records
+                if any(k.startswith("ExtractorInternal:")
+                       for k in r["kinds"])]
+    return {
+        "by_status": dict(by_status),
+        "clean_by_type": {t: [clean_by_type[t], total_by_type[t]]
+                          for t in sorted(total_by_type)},
+        "blocker_files": blockers.most_common(),
+        "per_chapter": {ch: per_chapter[ch] for ch in
+                        sorted(per_chapter, key=chapter_num)},
+        "deep_dive": deep,
+        "unlockable_total": sum(1 for r in records if r["unlockable"]),
+        "unlockable_simulation": sum(
+            1 for r in records
+            if r["unlockable"] and r["type"] == "simulation"),
+        "extractor_internal_files": internal[:50],
+    }
+
+
+def key_of(rec):
+    return (rec["status"], tuple(rec["kinds"]),
+            tuple(rec["adapter_blockers"]), rec["unlockable"])
+
+
+def do_recheck(corpus, jobs):
+    with open(CENSUS_JSON, "r", encoding="utf-8") as f:
+        stored = json.load(f)
+    records = {r["path"]: r for r in stored["records"]}
+    paths = sorted(records)
+    rng = random.Random(SEED)
+    sample = rng.sample(paths, min(SAMPLE_SIZE, len(paths)))
+    # OPS-148 shape (d): an empty corpus sampled to zero and then printed
+    # "recheck OK: 0/0 identical classifications" and exited 0 -- a clean
+    # verdict from a run that re-ran nothing.
+    if not sample:
+        print("recheck: COULD NOT VERIFY -- the stored census has NO records "
+              "to re-run (%s)" % CENSUS_JSON)
+        return 1
+    print("recheck: re-running %d files (seed %d)" % (len(sample), SEED))
+    fresh = run_pool(sample, corpus, jobs)
+    bad = 0
+    for rec in fresh:
+        old = records[rec["path"]]
+        if key_of(rec) != key_of(old):
+            bad += 1
+            print("MISMATCH %s\n  stored: %r\n  fresh:  %r"
+                  % (rec["path"], key_of(old), key_of(rec)))
+    if bad:
+        print("recheck FAILED: %d/%d mismatches" % (bad, len(sample)))
+        return 1
+    print("recheck OK: %d/%d identical classifications" %
+          (len(sample), len(sample)))
+    return 0
+
+
+# Volatile per-run values that must NEVER reach the committed artifact:
+# they are facts about this machine's afternoon, not about the corpus, and
+# a committed census that changes on every run cannot detect staleness.
+# (Measured: leaving `elapsed_seconds` in made two consecutive runs differ,
+# which is precisely the drift the --compare mode exists to catch.)
+VOLATILE_SUMMARY_KEYS = ("elapsed_seconds",)
+
+
+def committed_payload(provenance, summary):
+    """Exactly what gets written -- normalized through JSON.
+
+    Normalizing matters for --compare: the in-memory summary holds Counters
+    and tuples that do NOT compare equal to their deserialized list/dict
+    forms, so comparing live objects against a loaded file reports drift
+    that does not exist. Compare what would be WRITTEN, not what is held.
+    """
+    lean = {k: v for k, v in summary.items() if k not in VOLATILE_SUMMARY_KEYS}
+    public_provenance = dict(provenance)
+    if isinstance(public_provenance.get("corpus_path"), str):
+        public_provenance["corpus_path"] = "<corpus>/tests"
+    if isinstance(lean.get("corpus"), str):
+        lean["corpus"] = "<corpus>"
+    payload = {"schema": "sv-census-1", "provenance": public_provenance,
+               "summary": lean}
+    return json.loads(json.dumps(payload, sort_keys=True))
+
+
+def write_summary(provenance, summary):
+    """Write the committed summary census, deterministically."""
+    with open(SUMMARY_JSON, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(committed_payload(provenance, summary), f,
+                  indent=1, sort_keys=True)
+        f.write("\n")
+
+
+def do_compare(provenance, summary):
+    """--compare: is the committed summary still what the corpus yields?
+
+    The corpus lives OUTSIDE this repository and moves on its own schedule,
+    so staleness has to be mechanically detectable rather than merely
+    possible.  Reports every differing key and exits non-zero.
+    """
+    if not os.path.exists(SUMMARY_JSON):
+        print("compare: REFUSED — no committed census at %s" % SUMMARY_JSON,
+              file=sys.stderr)
+        return 2
+    with open(SUMMARY_JSON, encoding="utf-8") as f:
+        old = json.load(f)
+
+    fresh = committed_payload(provenance, summary)
+    diffs = []
+    for label, new_d, old_d in (("provenance", fresh["provenance"], old.get("provenance", {})),
+                                ("summary", fresh["summary"], old.get("summary", {}))):
+        for k in sorted(set(new_d) | set(old_d)):
+            a, b = old_d.get(k), new_d.get(k)
+            if a != b:
+                diffs.append((label, k, a, b))
+
+    if not diffs:
+        print("compare: IDENTICAL (%d files, corpus %s)"
+              % (provenance["corpus_files"], provenance["corpus_name"]))
+        return 0
+    print("compare: %d DIFFERENCE(S) vs %s"
+          % (len(diffs), os.path.relpath(SUMMARY_JSON, REPO)))
+    for label, k, a, b in diffs:
+        sa, sb = repr(a), repr(b)
+        if len(sa) > 90: sa = sa[:87] + "..."
+        if len(sb) > 90: sb = sb[:87] + "..."
+        print("  %s.%s\n    committed: %s\n    now:       %s" % (label, k, sa, sb))
+    return 1
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="census.py", description=__doc__)
+    ap.add_argument("--corpus", default=None, metavar="PATH",
+                    help="explicit corpus path; overrides --corpus-name")
+    ap.add_argument("--corpus-name", default="sv-tests-2",
+                    choices=sorted(KNOWN_CORPORA),
+                    help="corpus to resolve from the registry "
+                         "(default: sv-tests-2, the corpus every landed "
+                         "coverage claim was measured on)")
+    ap.add_argument("--all-dirs", action="store_true",
+                    help="also walk non-chapter subdirectories (the public "
+                         "suite keeps 311 of 1028 tests outside chapter-*)")
+    ap.add_argument("--jobs", type=int, default=32)
+    ap.add_argument("--limit", type=int, default=0,
+                    help="only the first N files (smoke runs; no outputs "
+                         "written unless --write)")
+    ap.add_argument("--write", action="store_true",
+                    help="write outputs even with --limit")
+    ap.add_argument("--recheck", action="store_true")
+    ap.add_argument("--compare", action="store_true",
+                    help="compare against the committed summary census and "
+                         "exit non-zero on any drift (staleness check)")
+    args = ap.parse_args(argv)
+
+    try:
+        corpus, corpus_name = resolve_corpus(args.corpus, args.corpus_name)
+    except CorpusError as exc:
+        print("census: REFUSED — %s" % exc, file=sys.stderr)
+        return 2
+
+    if args.recheck:
+        return do_recheck(corpus, args.jobs)
+
+    t0 = time.time()
+    paths = find_files(corpus, all_dirs=args.all_dirs)
+    if not paths:
+        print("census: REFUSED — no .sv files under %s (an empty census is "
+              "an instrument fault, never a finding)" % corpus, file=sys.stderr)
+        return 2
+    print("census: corpus %s at %s" % (corpus_name, corpus), flush=True)
+    if args.limit:
+        paths = paths[:args.limit]
+    print("census: %d files, %d jobs" % (len(paths), args.jobs), flush=True)
+    records = run_pool(paths, corpus, args.jobs)
+    summary = summarize(records)
+    elapsed = time.time() - t0
+    summary["elapsed_seconds"] = round(elapsed, 1)
+    summary["corpus"] = args.corpus
+    summary["seed"] = SEED
+
+    print(json.dumps({k: v for k, v in summary.items()
+                      if k in ("by_status", "unlockable_total",
+                               "unlockable_simulation", "elapsed_seconds")},
+                     indent=2))
+    print("top blockers:")
+    for k, n in summary["blocker_files"][:15]:
+        print("  %6d  %s" % (n, k))
+    for chap, d in summary["deep_dive"].items():
+        print("%s: sim=%d clean=%d partial=%d unlockable=%d more=%d"
+              % (chap, d["simulation_tests"], d["clean"], d["partial"],
+                 d["unlockable"], d["blocked_by_more"]))
+
+    # PROVENANCE IS PART OF THE MEASUREMENT, not decoration.  The landed
+    # census recorded none, so when its `unlockable` set failed to reproduce
+    # here there was no way to tell a corpus change from a host change from
+    # an instrument change -- the three had to be separated by hand
+    # (docs/sv-charter.md §1.8).  Every run now stamps what it measured and
+    # what measured it.  The frontend is stamped by FAMILY, never by point
+    # release, per docs/family-architecture.md.
+    try:
+        import pyslang
+        frontend = {"name": "pyslang",
+                    "family": "pyslang-%s" % pyslang.__version__.split(".")[0]}
+    except Exception:                                       # noqa: BLE001
+        frontend = {"name": "pyslang", "family": None}
+    provenance = {
+        "corpus_name": corpus_name,
+        "corpus_path": corpus,
+        "corpus_files": len(paths),
+        "walk": "chapter-* + all subdirs" if args.all_dirs else "chapter-* only",
+        "frontend": frontend,
+        "platform": "%s-%s" % (platform.system().lower(), platform.machine()),
+        "python": "%d.%d" % sys.version_info[:2],
+    }
+
+    if args.compare:
+        return do_compare(provenance, summary)
+
+    if args.limit and not args.write:
+        print("(smoke run: outputs not written)")
+        return 0
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    with open(CENSUS_JSON, "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"schema": "sv-census-1", "provenance": provenance,
+                   "summary": summary, "records": records},
+                  f, indent=1, sort_keys=True)
+        f.write("\n")
+
+    # The COMMITTABLE half.  The per-file records are ~12 MB over 21k files,
+    # far outside this repository's census range (6 KB - 773 KB in docs/),
+    # so they stay regenerable-but-uncommitted; provenance + summary is
+    # ~20 KB and is what every claim in docs/sv-corpus-coverage.md actually
+    # cites.  Sorted and indent-stable, so a double run is byte-identical
+    # and --compare can detect staleness mechanically.
+    write_summary(provenance, summary)
+    unlock = sorted(
+        r["path"] for r in records
+        if r["unlockable"] and r["type"] == "simulation"
+        and r["chapter"] in DEEP_DIVE_CHAPTERS)
+    with open(UNLOCKABLE_TXT, "w", encoding="utf-8", newline="\n") as f:
+        for p in unlock:
+            f.write(p + "\n")
+    print("wrote %s (%d records) and %s (%d files)"
+          % (CENSUS_JSON, len(records), UNLOCKABLE_TXT, len(unlock)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

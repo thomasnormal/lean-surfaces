@@ -1,0 +1,1354 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/foreach_nested/foreach_nested.sv",
+  "source_sha256": "11317b322c28d85c72681b45b558bf590b867d725fa276c98105b17de4c71815",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[0][0]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 37,
+                  "end_line": 2,
+                  "end_col": 38
+                },
+                "width": 4,
+                "bits": "0001"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[0][1]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 40,
+                  "end_line": 2,
+                  "end_col": 41
+                },
+                "width": 4,
+                "bits": "0010"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[0][2]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 43,
+                  "end_line": 2,
+                  "end_col": 44
+                },
+                "width": 4,
+                "bits": "0011"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[1][0]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 49,
+                  "end_line": 2,
+                  "end_col": 50
+                },
+                "width": 4,
+                "bits": "0100"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[1][1]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 52,
+                  "end_line": 2,
+                  "end_col": 53
+                },
+                "width": 4,
+                "bits": "0101"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "values[1][2]",
+            "width": 4,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 55,
+                  "end_line": 2,
+                  "end_col": 56
+                },
+                "width": 4,
+                "bits": "0110"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 7,
+              "end_line": 3,
+              "end_col": 10
+            },
+            "name": "sum",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 8,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 47
+                  },
+                  "stmts": [
+                    {
+                      "kind": "Block",
+                      "span": {
+                        "line": 6,
+                        "col": 5,
+                        "end_line": 6,
+                        "end_col": 47
+                      },
+                      "stmts": [
+                        {
+                          "kind": "LocalDecl",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 47
+                          },
+                          "width": 32,
+                          "name": "$foreach:140:$ordinal",
+                          "two_state": true,
+                          "signed": false,
+                          "init": null,
+                          "automatic_foreach": true
+                        },
+                        {
+                          "kind": "LocalDecl",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 47
+                          },
+                          "width": 32,
+                          "name": "$foreach:156:i",
+                          "two_state": false,
+                          "signed": true,
+                          "init": null,
+                          "automatic_foreach": true
+                        },
+                        {
+                          "kind": "LocalDecl",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 47
+                          },
+                          "width": 32,
+                          "name": "$foreach:158:j",
+                          "two_state": false,
+                          "signed": true,
+                          "init": null,
+                          "automatic_foreach": true
+                        },
+                        {
+                          "kind": "For",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 47
+                          },
+                          "foreach_lowered": true,
+                          "foreach_dimensions": [
+                            {
+                              "name": "$foreach:156:i",
+                              "left": 0,
+                              "right": 1
+                            },
+                            {
+                              "name": "$foreach:158:j",
+                              "left": 0,
+                              "right": 2
+                            }
+                          ],
+                          "initializers": [
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 6,
+                                "col": 5,
+                                "end_line": 6,
+                                "end_col": 47
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "width": 32,
+                                "name": "$foreach:140:$ordinal",
+                                "signed": false
+                              },
+                              "value": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "width": 32,
+                                "bits": "00000000000000000000000000000000"
+                              }
+                            }
+                          ],
+                          "condition": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 6,
+                              "col": 5,
+                              "end_line": 6,
+                              "end_col": 47
+                            },
+                            "width": 1,
+                            "op": "<",
+                            "left": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 6,
+                                "col": 5,
+                                "end_line": 6,
+                                "end_col": 47
+                              },
+                              "width": 32,
+                              "name": "$foreach:140:$ordinal",
+                              "signed": false
+                            },
+                            "right": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 6,
+                                "col": 5,
+                                "end_line": 6,
+                                "end_col": 47
+                              },
+                              "width": 32,
+                              "bits": "00000000000000000000000000000110"
+                            }
+                          },
+                          "steps": [
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 6,
+                                "col": 5,
+                                "end_line": 6,
+                                "end_col": 47
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "width": 32,
+                                "name": "$foreach:140:$ordinal",
+                                "signed": false
+                              },
+                              "value": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "width": 32,
+                                "op": "+",
+                                "left": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "name": "$foreach:140:$ordinal",
+                                  "signed": false
+                                },
+                                "right": {
+                                  "kind": "Literal",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "bits": "00000000000000000000000000000001"
+                                }
+                              }
+                            }
+                          ],
+                          "body": {
+                            "kind": "Block",
+                            "span": {
+                              "line": 6,
+                              "col": 5,
+                              "end_line": 6,
+                              "end_col": 47
+                            },
+                            "stmts": [
+                              {
+                                "kind": "BlockingAssign",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "target": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "name": "$foreach:156:i",
+                                  "signed": false
+                                },
+                                "value": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "op": "+",
+                                  "left": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 6,
+                                      "col": 5,
+                                      "end_line": 6,
+                                      "end_col": 47
+                                    },
+                                    "width": 32,
+                                    "bits": "00000000000000000000000000000000"
+                                  },
+                                  "right": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 6,
+                                      "col": 5,
+                                      "end_line": 6,
+                                      "end_col": 47
+                                    },
+                                    "width": 32,
+                                    "op": "u%",
+                                    "left": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 5,
+                                        "end_line": 6,
+                                        "end_col": 47
+                                      },
+                                      "width": 32,
+                                      "op": "u/",
+                                      "left": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 6,
+                                          "col": 5,
+                                          "end_line": 6,
+                                          "end_col": 47
+                                        },
+                                        "width": 32,
+                                        "name": "$foreach:140:$ordinal",
+                                        "signed": false
+                                      },
+                                      "right": {
+                                        "kind": "Literal",
+                                        "span": {
+                                          "line": 6,
+                                          "col": 5,
+                                          "end_line": 6,
+                                          "end_col": 47
+                                        },
+                                        "width": 32,
+                                        "bits": "00000000000000000000000000000011"
+                                      }
+                                    },
+                                    "right": {
+                                      "kind": "Literal",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 5,
+                                        "end_line": 6,
+                                        "end_col": 47
+                                      },
+                                      "width": 32,
+                                      "bits": "00000000000000000000000000000010"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "kind": "BlockingAssign",
+                                "span": {
+                                  "line": 6,
+                                  "col": 5,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "target": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "name": "$foreach:158:j",
+                                  "signed": false
+                                },
+                                "value": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 5,
+                                    "end_line": 6,
+                                    "end_col": 47
+                                  },
+                                  "width": 32,
+                                  "op": "+",
+                                  "left": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 6,
+                                      "col": 5,
+                                      "end_line": 6,
+                                      "end_col": 47
+                                    },
+                                    "width": 32,
+                                    "bits": "00000000000000000000000000000000"
+                                  },
+                                  "right": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 6,
+                                      "col": 5,
+                                      "end_line": 6,
+                                      "end_col": 47
+                                    },
+                                    "width": 32,
+                                    "op": "u%",
+                                    "left": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 5,
+                                        "end_line": 6,
+                                        "end_col": 47
+                                      },
+                                      "width": 32,
+                                      "op": "u/",
+                                      "left": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 6,
+                                          "col": 5,
+                                          "end_line": 6,
+                                          "end_col": 47
+                                        },
+                                        "width": 32,
+                                        "name": "$foreach:140:$ordinal",
+                                        "signed": false
+                                      },
+                                      "right": {
+                                        "kind": "Literal",
+                                        "span": {
+                                          "line": 6,
+                                          "col": 5,
+                                          "end_line": 6,
+                                          "end_col": 47
+                                        },
+                                        "width": 32,
+                                        "bits": "00000000000000000000000000000001"
+                                      }
+                                    },
+                                    "right": {
+                                      "kind": "Literal",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 5,
+                                        "end_line": 6,
+                                        "end_col": 47
+                                      },
+                                      "width": 32,
+                                      "bits": "00000000000000000000000000000011"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "kind": "BlockingAssign",
+                                "span": {
+                                  "line": 6,
+                                  "col": 27,
+                                  "end_line": 6,
+                                  "end_col": 47
+                                },
+                                "target": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 6,
+                                    "col": 27,
+                                    "end_line": 6,
+                                    "end_col": 30
+                                  },
+                                  "width": 32,
+                                  "name": "sum",
+                                  "signed": true
+                                },
+                                "value": {
+                                  "kind": "Squash2",
+                                  "span": null,
+                                  "width": 32,
+                                  "operand": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 6,
+                                      "col": 27,
+                                      "end_line": 6,
+                                      "end_col": 46
+                                    },
+                                    "width": 32,
+                                    "op": "+",
+                                    "left": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 27,
+                                        "end_line": 6,
+                                        "end_col": 30
+                                      },
+                                      "width": 32,
+                                      "name": "sum",
+                                      "signed": true
+                                    },
+                                    "right": {
+                                      "kind": "Resize",
+                                      "span": {
+                                        "line": 6,
+                                        "col": 34,
+                                        "end_line": 6,
+                                        "end_col": 46
+                                      },
+                                      "width": 32,
+                                      "operand": {
+                                        "kind": "Ternary",
+                                        "span": {
+                                          "line": 6,
+                                          "col": 34,
+                                          "end_line": 6,
+                                          "end_col": 46
+                                        },
+                                        "width": 4,
+                                        "cond": {
+                                          "kind": "Binary",
+                                          "span": {
+                                            "line": 6,
+                                            "col": 34,
+                                            "end_line": 6,
+                                            "end_col": 46
+                                          },
+                                          "width": 1,
+                                          "op": "&&",
+                                          "left": {
+                                            "kind": "Binary",
+                                            "span": {
+                                              "line": 6,
+                                              "col": 41,
+                                              "end_line": 6,
+                                              "end_col": 42
+                                            },
+                                            "width": 1,
+                                            "op": "===",
+                                            "left": {
+                                              "kind": "Ident",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 41,
+                                                "end_line": 6,
+                                                "end_col": 42
+                                              },
+                                              "width": 32,
+                                              "name": "$foreach:156:i",
+                                              "signed": true
+                                            },
+                                            "right": {
+                                              "kind": "Literal",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 41,
+                                                "end_line": 6,
+                                                "end_col": 42
+                                              },
+                                              "width": 32,
+                                              "bits": "00000000000000000000000000000000"
+                                            }
+                                          },
+                                          "right": {
+                                            "kind": "Binary",
+                                            "span": {
+                                              "line": 6,
+                                              "col": 44,
+                                              "end_line": 6,
+                                              "end_col": 45
+                                            },
+                                            "width": 1,
+                                            "op": "===",
+                                            "left": {
+                                              "kind": "Ident",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 44,
+                                                "end_line": 6,
+                                                "end_col": 45
+                                              },
+                                              "width": 32,
+                                              "name": "$foreach:158:j",
+                                              "signed": true
+                                            },
+                                            "right": {
+                                              "kind": "Literal",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 44,
+                                                "end_line": 6,
+                                                "end_col": 45
+                                              },
+                                              "width": 32,
+                                              "bits": "00000000000000000000000000000000"
+                                            }
+                                          }
+                                        },
+                                        "then": {
+                                          "kind": "Ident",
+                                          "span": {
+                                            "line": 6,
+                                            "col": 34,
+                                            "end_line": 6,
+                                            "end_col": 46
+                                          },
+                                          "width": 4,
+                                          "name": "values[0][0]"
+                                        },
+                                        "else": {
+                                          "kind": "Ternary",
+                                          "span": {
+                                            "line": 6,
+                                            "col": 34,
+                                            "end_line": 6,
+                                            "end_col": 46
+                                          },
+                                          "width": 4,
+                                          "cond": {
+                                            "kind": "Binary",
+                                            "span": {
+                                              "line": 6,
+                                              "col": 34,
+                                              "end_line": 6,
+                                              "end_col": 46
+                                            },
+                                            "width": 1,
+                                            "op": "&&",
+                                            "left": {
+                                              "kind": "Binary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 41,
+                                                "end_line": 6,
+                                                "end_col": 42
+                                              },
+                                              "width": 1,
+                                              "op": "===",
+                                              "left": {
+                                                "kind": "Ident",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 41,
+                                                  "end_line": 6,
+                                                  "end_col": 42
+                                                },
+                                                "width": 32,
+                                                "name": "$foreach:156:i",
+                                                "signed": true
+                                              },
+                                              "right": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 41,
+                                                  "end_line": 6,
+                                                  "end_col": 42
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000000000"
+                                              }
+                                            },
+                                            "right": {
+                                              "kind": "Binary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 44,
+                                                "end_line": 6,
+                                                "end_col": 45
+                                              },
+                                              "width": 1,
+                                              "op": "===",
+                                              "left": {
+                                                "kind": "Ident",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 44,
+                                                  "end_line": 6,
+                                                  "end_col": 45
+                                                },
+                                                "width": 32,
+                                                "name": "$foreach:158:j",
+                                                "signed": true
+                                              },
+                                              "right": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 44,
+                                                  "end_line": 6,
+                                                  "end_col": 45
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000000001"
+                                              }
+                                            }
+                                          },
+                                          "then": {
+                                            "kind": "Ident",
+                                            "span": {
+                                              "line": 6,
+                                              "col": 34,
+                                              "end_line": 6,
+                                              "end_col": 46
+                                            },
+                                            "width": 4,
+                                            "name": "values[0][1]"
+                                          },
+                                          "else": {
+                                            "kind": "Ternary",
+                                            "span": {
+                                              "line": 6,
+                                              "col": 34,
+                                              "end_line": 6,
+                                              "end_col": 46
+                                            },
+                                            "width": 4,
+                                            "cond": {
+                                              "kind": "Binary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 34,
+                                                "end_line": 6,
+                                                "end_col": 46
+                                              },
+                                              "width": 1,
+                                              "op": "&&",
+                                              "left": {
+                                                "kind": "Binary",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 41,
+                                                  "end_line": 6,
+                                                  "end_col": 42
+                                                },
+                                                "width": 1,
+                                                "op": "===",
+                                                "left": {
+                                                  "kind": "Ident",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 41,
+                                                    "end_line": 6,
+                                                    "end_col": 42
+                                                  },
+                                                  "width": 32,
+                                                  "name": "$foreach:156:i",
+                                                  "signed": true
+                                                },
+                                                "right": {
+                                                  "kind": "Literal",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 41,
+                                                    "end_line": 6,
+                                                    "end_col": 42
+                                                  },
+                                                  "width": 32,
+                                                  "bits": "00000000000000000000000000000000"
+                                                }
+                                              },
+                                              "right": {
+                                                "kind": "Binary",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 44,
+                                                  "end_line": 6,
+                                                  "end_col": 45
+                                                },
+                                                "width": 1,
+                                                "op": "===",
+                                                "left": {
+                                                  "kind": "Ident",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 44,
+                                                    "end_line": 6,
+                                                    "end_col": 45
+                                                  },
+                                                  "width": 32,
+                                                  "name": "$foreach:158:j",
+                                                  "signed": true
+                                                },
+                                                "right": {
+                                                  "kind": "Literal",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 44,
+                                                    "end_line": 6,
+                                                    "end_col": 45
+                                                  },
+                                                  "width": 32,
+                                                  "bits": "00000000000000000000000000000010"
+                                                }
+                                              }
+                                            },
+                                            "then": {
+                                              "kind": "Ident",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 34,
+                                                "end_line": 6,
+                                                "end_col": 46
+                                              },
+                                              "width": 4,
+                                              "name": "values[0][2]"
+                                            },
+                                            "else": {
+                                              "kind": "Ternary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 34,
+                                                "end_line": 6,
+                                                "end_col": 46
+                                              },
+                                              "width": 4,
+                                              "cond": {
+                                                "kind": "Binary",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 34,
+                                                  "end_line": 6,
+                                                  "end_col": 46
+                                                },
+                                                "width": 1,
+                                                "op": "&&",
+                                                "left": {
+                                                  "kind": "Binary",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 41,
+                                                    "end_line": 6,
+                                                    "end_col": 42
+                                                  },
+                                                  "width": 1,
+                                                  "op": "===",
+                                                  "left": {
+                                                    "kind": "Ident",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 41,
+                                                      "end_line": 6,
+                                                      "end_col": 42
+                                                    },
+                                                    "width": 32,
+                                                    "name": "$foreach:156:i",
+                                                    "signed": true
+                                                  },
+                                                  "right": {
+                                                    "kind": "Literal",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 41,
+                                                      "end_line": 6,
+                                                      "end_col": 42
+                                                    },
+                                                    "width": 32,
+                                                    "bits": "00000000000000000000000000000001"
+                                                  }
+                                                },
+                                                "right": {
+                                                  "kind": "Binary",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 44,
+                                                    "end_line": 6,
+                                                    "end_col": 45
+                                                  },
+                                                  "width": 1,
+                                                  "op": "===",
+                                                  "left": {
+                                                    "kind": "Ident",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 44,
+                                                      "end_line": 6,
+                                                      "end_col": 45
+                                                    },
+                                                    "width": 32,
+                                                    "name": "$foreach:158:j",
+                                                    "signed": true
+                                                  },
+                                                  "right": {
+                                                    "kind": "Literal",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 44,
+                                                      "end_line": 6,
+                                                      "end_col": 45
+                                                    },
+                                                    "width": 32,
+                                                    "bits": "00000000000000000000000000000000"
+                                                  }
+                                                }
+                                              },
+                                              "then": {
+                                                "kind": "Ident",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 34,
+                                                  "end_line": 6,
+                                                  "end_col": 46
+                                                },
+                                                "width": 4,
+                                                "name": "values[1][0]"
+                                              },
+                                              "else": {
+                                                "kind": "Ternary",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 34,
+                                                  "end_line": 6,
+                                                  "end_col": 46
+                                                },
+                                                "width": 4,
+                                                "cond": {
+                                                  "kind": "Binary",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 34,
+                                                    "end_line": 6,
+                                                    "end_col": 46
+                                                  },
+                                                  "width": 1,
+                                                  "op": "&&",
+                                                  "left": {
+                                                    "kind": "Binary",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 41,
+                                                      "end_line": 6,
+                                                      "end_col": 42
+                                                    },
+                                                    "width": 1,
+                                                    "op": "===",
+                                                    "left": {
+                                                      "kind": "Ident",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 41,
+                                                        "end_line": 6,
+                                                        "end_col": 42
+                                                      },
+                                                      "width": 32,
+                                                      "name": "$foreach:156:i",
+                                                      "signed": true
+                                                    },
+                                                    "right": {
+                                                      "kind": "Literal",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 41,
+                                                        "end_line": 6,
+                                                        "end_col": 42
+                                                      },
+                                                      "width": 32,
+                                                      "bits": "00000000000000000000000000000001"
+                                                    }
+                                                  },
+                                                  "right": {
+                                                    "kind": "Binary",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 44,
+                                                      "end_line": 6,
+                                                      "end_col": 45
+                                                    },
+                                                    "width": 1,
+                                                    "op": "===",
+                                                    "left": {
+                                                      "kind": "Ident",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 44,
+                                                        "end_line": 6,
+                                                        "end_col": 45
+                                                      },
+                                                      "width": 32,
+                                                      "name": "$foreach:158:j",
+                                                      "signed": true
+                                                    },
+                                                    "right": {
+                                                      "kind": "Literal",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 44,
+                                                        "end_line": 6,
+                                                        "end_col": 45
+                                                      },
+                                                      "width": 32,
+                                                      "bits": "00000000000000000000000000000001"
+                                                    }
+                                                  }
+                                                },
+                                                "then": {
+                                                  "kind": "Ident",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 34,
+                                                    "end_line": 6,
+                                                    "end_col": 46
+                                                  },
+                                                  "width": 4,
+                                                  "name": "values[1][1]"
+                                                },
+                                                "else": {
+                                                  "kind": "Ternary",
+                                                  "span": {
+                                                    "line": 6,
+                                                    "col": 34,
+                                                    "end_line": 6,
+                                                    "end_col": 46
+                                                  },
+                                                  "width": 4,
+                                                  "cond": {
+                                                    "kind": "Binary",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 34,
+                                                      "end_line": 6,
+                                                      "end_col": 46
+                                                    },
+                                                    "width": 1,
+                                                    "op": "&&",
+                                                    "left": {
+                                                      "kind": "Binary",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 41,
+                                                        "end_line": 6,
+                                                        "end_col": 42
+                                                      },
+                                                      "width": 1,
+                                                      "op": "===",
+                                                      "left": {
+                                                        "kind": "Ident",
+                                                        "span": {
+                                                          "line": 6,
+                                                          "col": 41,
+                                                          "end_line": 6,
+                                                          "end_col": 42
+                                                        },
+                                                        "width": 32,
+                                                        "name": "$foreach:156:i",
+                                                        "signed": true
+                                                      },
+                                                      "right": {
+                                                        "kind": "Literal",
+                                                        "span": {
+                                                          "line": 6,
+                                                          "col": 41,
+                                                          "end_line": 6,
+                                                          "end_col": 42
+                                                        },
+                                                        "width": 32,
+                                                        "bits": "00000000000000000000000000000001"
+                                                      }
+                                                    },
+                                                    "right": {
+                                                      "kind": "Binary",
+                                                      "span": {
+                                                        "line": 6,
+                                                        "col": 44,
+                                                        "end_line": 6,
+                                                        "end_col": 45
+                                                      },
+                                                      "width": 1,
+                                                      "op": "===",
+                                                      "left": {
+                                                        "kind": "Ident",
+                                                        "span": {
+                                                          "line": 6,
+                                                          "col": 44,
+                                                          "end_line": 6,
+                                                          "end_col": 45
+                                                        },
+                                                        "width": 32,
+                                                        "name": "$foreach:158:j",
+                                                        "signed": true
+                                                      },
+                                                      "right": {
+                                                        "kind": "Literal",
+                                                        "span": {
+                                                          "line": 6,
+                                                          "col": 44,
+                                                          "end_line": 6,
+                                                          "end_col": 45
+                                                        },
+                                                        "width": 32,
+                                                        "bits": "00000000000000000000000000000010"
+                                                      }
+                                                    }
+                                                  },
+                                                  "then": {
+                                                    "kind": "Ident",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 34,
+                                                      "end_line": 6,
+                                                      "end_col": 46
+                                                    },
+                                                    "width": 4,
+                                                    "name": "values[1][2]"
+                                                  },
+                                                  "else": {
+                                                    "kind": "Literal",
+                                                    "span": {
+                                                      "line": 6,
+                                                      "col": 34,
+                                                      "end_line": 6,
+                                                      "end_col": 46
+                                                    },
+                                                    "width": 4,
+                                                    "bits": "0000"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 30
+                  },
+                  "name": "$display",
+                  "format": "sum=%0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 25,
+                        "end_line": 7,
+                        "end_col": 28
+                      },
+                      "width": 32,
+                      "name": "sum",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

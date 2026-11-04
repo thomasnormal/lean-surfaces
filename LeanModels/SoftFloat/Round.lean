@@ -1,0 +1,344 @@
+/-
+# SoftFloat, layer 2 — CORRECT ROUNDING, DECLARATIVELY
+
+THE SPEC HALF, and it is the half that carries the weight.
+
+charter §3.5.2 warns that a downstream proof must target ROUND-OF-EXACT and
+never our bit algorithm: *"these output bits equal what `UnpackedFloat.div`
+computes" is a tautology about an implementation.*  A COMPUTABLE `roundQ`
+cannot escape that on its own — any correct implementation will structurally
+resemble core's, so an `op_correct` stated against it would be close to
+circular.
+
+The escape is the family's spec/interpreter split one level down (charter
+§3.3): the predicates below mention NO ALGORITHM at all — not core's, not
+ours — and say only what IEEE 754-2019 §4.3 says: *the representable value
+nearest the exact one, ties as the mode directs*.  `op_correct` is stated
+against THIS; a computable `roundQ` is then proved to satisfy it, and its
+resemblance to core stops mattering.
+
+Nothing here mentions `Float`, `Float32`, or any core operation, and ℝ never
+appears.  Width-parametric throughout: every definition takes `fmt : Format`.
+-/
+import LeanModels.SoftFloat.Basic
+
+namespace LeanModels.SoftFloat
+
+open Float.Model
+
+/-! ## 1. REPRESENTABILITY — IEEE 754-2019 §3.3, arithmetically
+
+The finite values a format holds are `± m · 2 ^ e` with the significand inside
+`2 ^ mantissaBits` and the exponent at or above `minExponent`.
+
+NOTE, stated rather than omitted: this carries NO UPPER bound on `e`, so it
+describes the format's finite values as if the exponent range were unbounded
+above.  Overflow is IEEE §7.4 and is a SEPARATE clause with its own
+mode-dependent answer (charter §3.5); folding it in here would silently make
+"nearest representable" mean "nearest representable or ±∞", which is a
+different theorem.
+-/
+def ReprQ (fmt : Format) (q : Q) : Prop :=
+  ∃ (m : Int) (e : Int),
+    m.natAbs < 2 ^ fmt.mantissaBits ∧ fmt.minExponent ≤ e ∧ Q.Eq q (Q.dyadic m e)
+
+/-! ## SCALING INVARIANCE — the fundamental dyadic fact, and the gateway to a
+    common grid for the interleaving argument.
+
+    Doubling the significand `k` times and lowering the exponent by `k` names
+    the SAME value.  `Q.dyadic` splits on the exponent's sign, so this is where
+    that split is paid: three real cases and one vacuous. -/
+theorem dyadic_scale (m : Int) (e : Int) (k : Nat) :
+    Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2 ^ k) (e - k)) := by
+  unfold Q.Eq Q.dyadic
+  by_cases h1 : 0 ≤ e
+  · by_cases h2 : (0 : Int) ≤ e - k
+    · -- both non-negative: 2^e = 2^k * 2^(e-k)
+      simp only [if_pos h1, if_pos h2]
+      have hk : e.toNat = k + (e - k).toNat := by omega
+      rw [hk, Int.pow_add]
+      simp [Int.mul_assoc]
+    · -- e ≥ 0 but e < k: the denominator absorbs the overshoot
+      simp only [if_pos h1, if_neg h2]
+      -- do NOT `rw [hk]`: it rewrites `k` inside the exponent too and nests it.
+      -- Prove the power identity at its own occurrence instead.
+      have key : (2 : Int) ^ e.toNat * 2 ^ (-(e - (k : Int))).toNat = 2 ^ k := by
+        rw [← Int.pow_add]
+        congr 1
+        omega
+      simp [Int.natCast_pow, Int.mul_assoc, key]
+  · -- e < 0 forces e - k < 0
+    have h2 : ¬ (0 : Int) ≤ e - k := by omega
+    simp only [if_neg h1, if_neg h2]
+    have hk : (-(e - k)).toNat = k + (-e).toNat := by omega
+    rw [hk, Int.natCast_pow, Int.natCast_pow, Int.pow_add]
+    simp [Int.mul_assoc]
+
+/-! ## THE COMMON-GRID REDUCTION -/
+
+/-- `Q.Eq` is transitive.  Cross-multiplication equality with positive
+    denominators; the cancellation is `Int.eq_of_mul_eq_mul_right`. -/
+theorem Qeq_trans {a b c : Q} (h1 : Q.Eq a b) (h2 : Q.Eq b c) : Q.Eq a c := by
+  unfold Q.Eq at h1 h2 ⊢
+  have hb : (b.den : Int) ≠ 0 := by have := b.den_pos; omega
+  apply Int.eq_of_mul_eq_mul_right hb
+  calc a.num * (c.den : Int) * (b.den : Int)
+      = (a.num * (b.den : Int)) * (c.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+    _ = (b.num * (a.den : Int)) * (c.den : Int) := by rw [h1]
+    _ = (b.num * (c.den : Int)) * (a.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+    _ = (c.num * (b.den : Int)) * (a.den : Int) := by rw [h2]
+    _ = c.num * (a.den : Int) * (b.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+
+/--
+**EVERY REPRESENTABLE LIES ON ONE GRID.**  Re-expressed at `minExponent` via
+`dyadic_scale`, so "nearest among all representables" stops being a claim about
+many grids and becomes one about a single grid.
+-/
+theorem repr_on_min_grid (fmt : Format) (q : Q) (h : ReprQ fmt q) :
+    ∃ j : Int, Q.Eq q (Q.dyadic j fmt.minExponent) := by
+  obtain ⟨m, e, _hm, he, hq⟩ := h
+  refine ⟨m * 2 ^ (e - fmt.minExponent).toNat, ?_⟩
+  have hscale := dyadic_scale m e (e - fmt.minExponent).toNat
+  have he' : e - (((e - fmt.minExponent).toNat : Nat) : Int) = fmt.minExponent := by omega
+  rw [he'] at hscale
+  exact Qeq_trans hq hscale
+
+/-! ## 4c, STEP 1 — the grid lemma at ANY lower exponent -/
+
+/-- Re-express a dyadic at any exponent at or below its own.  `repr_on_min_grid`
+    is the `t = minExponent` case; 4c needs the `t = targetExponent` case, which
+    is where the two-grid comparison happens. -/
+theorem dyadic_at_lower (m : Int) (e t : Int) (h : t ≤ e) :
+    Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2 ^ (e - t).toNat) t) := by
+  have hs := dyadic_scale m e (e - t).toNat
+  have ht : e - (((e - t).toNat : Nat) : Int) = t := by omega
+  rwa [ht] at hs
+
+/-- Every representable value re-expressed at any exponent at or below the one
+    its representation uses. -/
+theorem repr_at_lower (fmt : Format) (q : Q) (t : Int)
+    (h : ∃ m e, m.natAbs < 2 ^ fmt.mantissaBits ∧ t ≤ e ∧ Q.Eq q (Q.dyadic m e)) :
+    ∃ j : Int, Q.Eq q (Q.dyadic j t) := by
+  obtain ⟨m, e, _hm, he, hq⟩ := h
+  exact ⟨m * 2 ^ (e - t).toNat, Qeq_trans hq (dyadic_at_lower m e t he)⟩
+
+
+/-! ## 4c, STEP 2 — on a COMMON grid, distance comparison is INTEGER comparison
+
+`roundWithAccuracy`'s input is dyadic by construction, and every representable
+is dyadic; `dyadic_at_lower` puts them all on one grid.  Once there, `Q.dist`
+of two grid points is the grid step times an INTEGER difference, so "nothing is
+closer" becomes an `Int` comparison rather than a rational one. -/
+
+/-- Subtraction at a common exponent acts on the significands. -/
+theorem dyadic_sub (a b : Int) (g : Int) :
+    Q.Eq (Q.dyadic a g - Q.dyadic b g) (Q.dyadic (a - b) g) := by
+  show Q.Eq (Q.sub (Q.dyadic a g) (Q.dyadic b g)) (Q.dyadic (a - b) g)
+  unfold Q.Eq Q.sub Q.add Q.neg Q.dyadic
+  by_cases hg : 0 ≤ g
+  · simp only [if_pos hg]
+    simp [Int.add_mul, Int.neg_mul, Int.mul_comm, Int.mul_left_comm,
+          Int.sub_eq_add_neg]
+  · simp only [if_neg hg]
+    rw [← Int.add_mul, ← Int.sub_eq_add_neg, Int.natCast_mul, ← Int.mul_assoc]
+
+#print axioms dyadic_at_lower
+#print axioms repr_at_lower
+#print axioms dyadic_sub
+
+/-! ## 4c, STEP 3 — ORDERING at a common exponent is INTEGER ordering -/
+
+theorem dyadic_le_iff (a b : Int) (g : Int) :
+    Q.Le (Q.dyadic a g) (Q.dyadic b g) ↔ a ≤ b := by
+  unfold Q.Le Q.dyadic
+  by_cases hg : 0 ≤ g
+  · simp only [if_pos hg]
+    have hp : (0 : Int) < 2 ^ g.toNat := Int.pow_pos (by decide)
+    constructor
+    · intro h
+      have h' : a * 2 ^ g.toNat ≤ b * 2 ^ g.toNat := by simpa using h
+      exact Int.le_of_mul_le_mul_right h' hp
+    · intro h
+      have h' : a * 2 ^ g.toNat ≤ b * 2 ^ g.toNat :=
+        Int.mul_le_mul_of_nonneg_right h (Int.le_of_lt hp)
+      simpa using h'
+  · simp only [if_neg hg]
+    have hp : (0 : Int) < ((2 ^ (-g).toNat : Nat) : Int) := by
+      have := Nat.two_pow_pos (-g).toNat; omega
+    constructor
+    · intro h; exact Int.le_of_mul_le_mul_right h hp
+    · intro h; exact Int.mul_le_mul_of_nonneg_right h (Int.le_of_lt hp)
+
+
+/-! ## 4c, STEP 4 — DISTANCE at a common exponent is |Δsignificand| times the step -/
+
+/--  — the one fact both branches of  need. -/
+theorem natAbs_mul_pow (d : Int) (k : Nat) :
+    (d * 2 ^ k).natAbs = d.natAbs * 2 ^ k := by
+  rw [Int.natAbs_mul]
+  congr 1
+
+theorem dist_dyadic (x y : Int) (g : Int) :
+    Q.Eq (Q.dist (Q.dyadic x g) (Q.dyadic y g)) (Q.dyadic (((x - y).natAbs : Nat) : Int) g) := by
+  show Q.Eq (Q.abs (Q.sub (Q.dyadic x g) (Q.dyadic y g))) _
+  unfold Q.Eq Q.abs Q.sub Q.add Q.neg Q.dyadic
+  by_cases hg : 0 <= g
+  . simp only [if_pos hg]
+    simp
+    rw [show x * 2 ^ g.toNat + -(y * 2 ^ g.toNat) = (x - y) * 2 ^ g.toNat from by
+          rw [Int.sub_mul, Int.sub_eq_add_neg]]
+    rw [natAbs_mul_pow]
+    simp [Int.natCast_mul]
+  . simp only [if_neg hg]
+    simp
+    rw [show x * 2 ^ (-g).toNat + -y * 2 ^ (-g).toNat = (x - y) * 2 ^ (-g).toNat from by
+          rw [Int.sub_eq_add_neg, Int.add_mul]]
+    rw [natAbs_mul_pow]
+    simp [Int.natCast_mul, Int.mul_assoc]
+
+#print axioms dyadic_le_iff
+#print axioms natAbs_mul_pow
+#print axioms dist_dyadic
+
+/-! ## 4c, STEP 5 — NEAREST MULTIPLE, on integers -/
+
+/-- A nonzero multiple of a positive step is at least one step away from zero. -/
+theorem step_le_mul (m s : Int) (hs : 0 < s) (hm : 1 <= m) : s <= m * s := by
+  have := Int.mul_le_mul_of_nonneg_right hm (Int.le_of_lt hs)
+  simpa using this
+
+/-- **Nothing beats the two neighbours.**  For any multiple `j * s` of the step,
+    the distance from `v` is at least `min r (s - r)`, where `r = v % s` — and
+    that minimum is exactly what rounding to the nearer neighbour achieves. -/
+theorem multiple_dist_ge (v s j : Int) (hs : 0 < s) :
+    min (v % s) (s - v % s) <= (v - j * s).natAbs := by
+  have hr0 : 0 <= v % s := Int.emod_nonneg v (by omega)
+  have hrs : v % s < s := Int.emod_lt_of_pos v hs
+  have hdiv : v / s * s + v % s = v := Int.ediv_mul_add_emod v s
+  have hkey : v - j * s = (v / s - j) * s + v % s := by
+    rw [Int.sub_mul]; omega
+  have habs : ((v - j * s).natAbs : Int)
+      = if 0 <= v - j * s then v - j * s else -(v - j * s) := by
+    by_cases h : 0 <= v - j * s
+    . rw [if_pos h, Int.natAbs_of_nonneg h]
+    . rw [if_neg h, ← Int.natAbs_neg, Int.natAbs_of_nonneg (by omega)]
+  by_cases h : v / s - j < 0
+  . -- omega treats `-(x) * s` and `x * s` as UNRELATED atoms; normalise first
+      -- so both facts speak about the same one.
+      have h2 : (v / s - j) * s <= -s := by
+        have hx := step_le_mul (-(v / s - j)) s hs (by omega)
+        rw [Int.neg_mul] at hx
+        omega
+      rw [habs, if_neg (by omega)]
+      omega
+  . by_cases h0 : v / s - j = 0
+    . rw [h0] at hkey
+      rw [habs, if_pos (by omega)]
+      omega
+    . have h2 : s <= (v / s - j) * s := step_le_mul _ s hs (by omega)
+      rw [habs, if_pos (by omega)]
+      omega
+
+#print axioms step_le_mul
+#print axioms multiple_dist_ge
+
+/-! ## 2. CORRECT ROUNDING — IEEE 754-2019 §4.3, declaratively
+
+No algorithm appears: `y` is representable, nothing representable is strictly
+closer to `q`, and the tie rule picks between the two that can be equidistant.
+-/
+
+/-- §4.3.1 roundTiesToEven, and the tie clause is a PARAMETER of the shape, not
+    baked in — `tieOk` is what distinguishes the two nearest modes. -/
+structure IsNearest (fmt : Format) (q y : Q) (tieOk : Q → Prop) : Prop where
+  /-- the answer is a value the format holds -/
+  repr : ReprQ fmt y
+  /-- nothing the format holds is strictly closer -/
+  nearest : ∀ z, ReprQ fmt z → Q.Le (Q.dist q y) (Q.dist q z)
+  /-- when some other representable value is EXACTLY as close, the tie rule decides -/
+  tie : (∃ z, ReprQ fmt z ∧ ¬ Q.Eq z y ∧ Q.Eq (Q.dist q z) (Q.dist q y)) → tieOk y
+
+/-- §4.3.2 the directed modes: `y` is representable, on the required side of `q`,
+    and nothing representable lies strictly between `y` and `q`. -/
+structure IsDirected (fmt : Format) (q y : Q) (side : Q → Q → Prop) : Prop where
+  /-- the answer is a value the format holds -/
+  repr : ReprQ fmt y
+  /-- it lies on the side of `q` the mode requires -/
+  onSide : side y q
+  /-- nothing the format holds is strictly between -/
+  closest : ∀ z, ReprQ fmt z → side z q → Q.Le (Q.dist q z) (Q.dist q y) → Q.Eq z y
+
+/-! ## 2a. CANONICALITY — and the tie rule is NOT statable without it
+
+A `Q` has no canonical significand: the SAME value has many `(m, e)` pairs and
+they differ in the PARITY of `m`.  Doubling `m` and decrementing `e` turns any
+significand even, so **"∃ an even significand" is VACUOUS** — it holds of every
+value, odd ones included.  Measured: `Q.dyadic 5 0`, `Q.dyadic 10 (-1)` and
+`Q.dyadic 20 (-2)` are the same value with significands 5, 10, 20.
+
+That matters for `IsNearest` above, whose `tieOk` PARAMETER has the right shape
+but, as first shipped, had **no canonicality notion in this file to instantiate
+it with** — and the obvious instantiation is the vacuous one.  A tie clause
+that is always true silently permits the wrong answer on every tie.  **Not
+wrong, but instantiable wrongly**, and the fix is additive.
+
+`IsCanonical` is the format's own normalization: the leading significand bit is
+set, or the value sits at `minExponent` (a subnormal).  That is exactly what
+core's `targetExponent` computes, and it is a fact about the FORMAT, not about
+the rational.
+-/
+
+/-- The format's canonical significand/exponent pair: normal (leading bit set)
+    or subnormal (sitting at `minExponent`).  IEEE 754-2019 §3.4. -/
+def IsCanonical (fmt : Format) (m : Int) (e : Int) : Prop :=
+  m.natAbs < 2 ^ fmt.mantissaBits ∧
+    (2 ^ (fmt.mantissaBits - 1) ≤ m.natAbs ∨ e = fmt.minExponent)
+
+instance (fmt : Format) (m e : Int) : Decidable (IsCanonical fmt m e) := by
+  unfold IsCanonical; infer_instance
+
+/-- IEEE 754-2019 §4.3.1's tie clause, stated where parity is well-defined:
+    at the CANONICAL significand, where each value has exactly one. -/
+def TieEven (fmt : Format) (y : Q) : Prop :=
+  ∃ (m : Int) (e : Int), IsCanonical fmt m e ∧ Q.Eq y (Q.dyadic m e) ∧ m % 2 = 0
+
+/-- The witness that makes the vacuity concrete: `5` and `10 * 2⁻¹` are the SAME
+    value, but only the first is canonical at a 3-bit significand — so the
+    even-significand representation of an odd value is ruled out, which is
+    exactly what the vacuous reading failed to do. -/
+theorem even_repr_of_odd_is_not_canonical :
+    ¬ IsCanonical { mantissaBitsWithoutImplicit := 2, exponentBits := 5 } 10 (-1) := by decide
+
+/-! ## 3. The predicate elaborates, and it says what it should on the EASY row:
+    an exactly representable value rounds to ITSELF, under any tie rule. -/
+
+theorem nearest_of_exact (fmt : Format) (q : Q) (tieOk : Q → Prop)
+    (hq : ReprQ fmt q) (htie : tieOk q) : IsNearest fmt q q tieOk where
+  repr := hq
+  nearest := by
+    intro z _
+    -- |q - q| is 0, and every `Q.dist` is a `natAbs` over a positive
+    -- denominator, hence ≥ 0.  No `ring`: this component depends on NO package
+    -- (charter, dependency posture), so the cancellation is done by hand.
+    have h0 : (q - q).num = 0 := by
+      show q.num * (q.den : Int) + (-q.num) * (q.den : Int) = 0
+      rw [Int.neg_mul, Int.add_right_neg]
+    show (Q.dist q q).num * (Q.dist q z).den ≤ (Q.dist q z).num * (Q.dist q q).den
+    have hz : (Q.dist q q).num = 0 := by simp [Q.dist, Q.abs, h0]
+    rw [hz, Int.zero_mul]
+    exact Int.mul_nonneg (Int.natCast_nonneg _) (Int.natCast_nonneg _)
+  tie := fun _ => htie
+
+/-- And the directed modes agree with it: an exact value is its own rounding. -/
+theorem directed_of_exact (fmt : Format) (q : Q) (side : Q → Q → Prop)
+    (hq : ReprQ fmt q) (hside : side q q)
+    (hanti : ∀ z, Q.Le (Q.dist q z) (Q.dist q q) → Q.Eq z q) :
+    IsDirected fmt q q side where
+  repr := hq
+  onSide := hside
+  closest := fun z _ _ h => hanti z h
+
+end LeanModels.SoftFloat

@@ -1,0 +1,141 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/string_concat_replication_ops/string_concat_replication_ops.sv",
+  "source_sha256": "e6e6a869e605b5bfb0c9db79899ac9ef67fb8b67912d5adaf80dce036446b581",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 43
+                  },
+                  "string_literal_concat_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 28
+                  },
+                  "string_literal_replication_write_noop": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 28
+                  },
+                  "name": "$display",
+                  "format": "%s",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 11,
+                        "col": 20,
+                        "end_line": 11,
+                        "end_col": 26
+                      },
+                      "width": 96,
+                      "bits": "010010000110010101101100011011000110111101011111010101110110111101110010011011000110010000100001",
+                      "string_source_display": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 30
+                  },
+                  "name": "$display",
+                  "format": "%s",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 20,
+                        "end_line": 12,
+                        "end_col": 28
+                      },
+                      "width": 128,
+                      "bits": "01110100011001010111001101110100011101000110010101110011011101000111010001100101011100110111010001110100011001010111001101110100",
+                      "string_source_display": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,69 @@
+/-
+Examples/system-verilog/sem2/rbw_comb — the always_comb self-read `y = t; t = a;`, REFUSED at
+ingestion by the always_comb self-read guard (WP4, 2026-10-28,
+`LeanModels/Sv/CombGuard2.lean`).
+Tied to the hand-built design `rbwDesign` of
+`LeanModels/Sv/Comb2ProcExample.lean` (`rbw_guard`, `rbw_refused`). The
+`harness/sv/cases2.json` row `rbw_comb` is a loud-refusal row
+(`AlwaysComb:self-read`). Measured before the guard, on its stimulus
+"a" = 00 01 10 11: Icarus 12 and Xcelium y = 00 00 01 10, the settle semantics
+(and Verilator 5.042, Yosys 0.53) y = 00 01 10 11 — IEEE 1800-2023 §9.2.2.2.1
+sides with Icarus, the synthesized netlist with the settle answer, so no
+answer is safe (retired declared divergence `sv-div-3`,
+`docs/sv-declared-divergences.json`).
+
+  rbw_comb.sv      — the SystemVerilog source
+  rbw_comb.sv.json — generated envelope (extractors/sv/extract.py --top)
+  agree.lean — THIS FILE: `load_design_sv2` refuses the envelope, and its
+               instantiation is `rbwDesign`'s declarations with the
+               guard's refusal of `rbwDesign`'s body as its one process
+-/
+import LeanModels.Sv.Ingest2
+import LeanModels.Sv.Comb2ProcExample
+
+/-!
+# The SV source is refused at ingestion
+
+`load_design_sv2` refuses the envelope at its defaults with the guard's
+message (pinned verbatim below). The instantiation `name.sem` would compute
+(`PDesign.instantiateG2`, the family of a flat envelope) has exactly
+`rbwDesign`'s declarations and ONE process: the loud
+`AlwaysComb:self-read` process the guard puts in place of `rbwBody`
+(`rbw_guard`). The lowering refuses the body as well (`rbw_refused`):
+nothing about it is proved through the always_comb settle theorem.
+-/
+
+namespace Examples.«system-verilog».sem2.rbw_comb.agree
+
+open LeanModels.Sv LeanModels.Sv.Comb2ProcExample
+
+/--
+error: load_design_sv2: 'Examples/system-verilog/sem2/rbw_comb/rbw_comb.sv.json' REFUSED — at the defaults, in the instantiated design of module 'rbw_comb': always_comb block reads bits [1:0] of 't' before writing them on some path through its body, and writes them later on that path: IEEE 1800-2023 §9.2.2.2.1 leaves the variables a block writes out of its implicit sensitivity list, so an event-driven simulator runs the block once per wake-up and that read sees the PREVIOUS run's value (Icarus 12, Xcelium), while the settle semantics re-runs the block to its fixpoint (as Verilator 5.042 and Yosys 0.53 do): no answer is safe, so the block is refused (write the bits before every read of them, or move the read after the last write) (`AlwaysComb:self-read`, `Stmt2.combAdmits`)
+-/
+#guard_msgs (whitespace := lax) in
+load_design_sv2 rbw_comb from "Examples/system-verilog/sem2/rbw_comb/rbw_comb.sv.json"
+
+/-- The envelope's instantiation at its defaults: `rbwDesign`'s
+declarations, and the guard's refusal of its body as the only process. -/
+def instantiated : IO Design2 := do
+  let text ← IO.FS.readFile "Examples/system-verilog/sem2/rbw_comb/rbw_comb.sv.json"
+  match loadPDesignString text with
+  | .error e => throw (IO.userError s!"envelope: {e}")
+  | .ok pd =>
+    match pd.instantiateG2 [] (PDesign.surfaceFuel []) with
+    | .ok d => pure d
+    | .timeout => throw (IO.userError "instantiation: timeout")
+    | .unsupported m => throw (IO.userError s!"instantiation: {m}")
+
+#eval show IO Unit from do
+  let d ← instantiated
+  unless d.name == rbwDesign.name do throw (IO.userError "name differs")
+  unless d.decls.toList == rbwDesign.decls.toList do throw (IO.userError "declarations differ")
+  unless toString (repr d.processes) ==
+      toString (repr #[combGuardProc rbwDesign.combWd rbwBody]) do
+    throw (IO.userError "processes differ from the guard's refusal of the body")
+  unless toString (repr d.processes) ==
+      toString (repr #[Process2.unsupported "AlwaysComb:self-read" (selfReadMsg ("t", 0, 2))]) do
+    throw (IO.userError "the refusal is not the guard's message on t[1:0]")
+
+end Examples.«system-verilog».sem2.rbw_comb.agree

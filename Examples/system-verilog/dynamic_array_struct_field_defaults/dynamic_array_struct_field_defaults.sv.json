@@ -1,0 +1,579 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv",
+  "source_sha256": "7408d893ff0329e41a2740b1c831b23871f7639b3622d92f254ccac0ddae1480",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 8,
+          "col": 1,
+          "end_line": 34,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 15
+            },
+            "name": "dst[0].id",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 10,
+                  "col": 14,
+                  "end_line": 10,
+                  "end_col": 15
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000111"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 15
+            },
+            "name": "dst[0].code",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 15
+              },
+              "width": 8,
+              "bits": "00000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 15
+            },
+            "name": "dst[1].id",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 10,
+                  "col": 14,
+                  "end_line": 10,
+                  "end_col": 15
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000111"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 15
+            },
+            "name": "dst[1].code",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 15
+              },
+              "width": 8,
+              "bits": "00000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 16,
+              "col": 3,
+              "end_line": 33,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 16,
+                "col": 11,
+                "end_line": 33,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 17
+                  },
+                  "dynamic_array_allocation_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 19,
+                      "col": 9,
+                      "end_line": 19,
+                      "end_col": 24
+                    },
+                    "width": 1,
+                    "op": "!=",
+                    "left": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 19,
+                        "col": 9,
+                        "end_line": 19,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010",
+                      "dynamic_array_literal_size": true,
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 19,
+                        "col": 23,
+                        "end_line": 19,
+                        "end_col": 24
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 19,
+                      "col": 26,
+                      "end_line": 22,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 20,
+                          "col": 7,
+                          "end_line": 20,
+                          "end_col": 46
+                        },
+                        "name": "$display",
+                        "format": "FAIL: size=%0d",
+                        "args": [
+                          {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 20,
+                              "col": 34,
+                              "end_line": 20,
+                              "end_col": 44
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000010",
+                            "dynamic_array_literal_size": true,
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 21,
+                          "col": 7,
+                          "end_line": 21,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 29,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 24,
+                      "col": 9,
+                      "end_line": 25,
+                      "end_col": 43
+                    },
+                    "width": 1,
+                    "op": "||",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 24,
+                        "col": 9,
+                        "end_line": 25,
+                        "end_col": 23
+                      },
+                      "width": 1,
+                      "op": "||",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 24,
+                          "col": 9,
+                          "end_line": 24,
+                          "end_col": 43
+                        },
+                        "width": 1,
+                        "op": "||",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 24,
+                            "col": 9,
+                            "end_line": 24,
+                            "end_col": 23
+                          },
+                          "width": 1,
+                          "op": "!=",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 24,
+                              "col": 9,
+                              "end_line": 24,
+                              "end_col": 18
+                            },
+                            "width": 32,
+                            "name": "dst[0].id",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 24,
+                              "col": 22,
+                              "end_line": 24,
+                              "end_col": 23
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000111"
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 24,
+                            "col": 27,
+                            "end_line": 24,
+                            "end_col": 43
+                          },
+                          "width": 1,
+                          "op": "!=",
+                          "left": {
+                            "kind": "SignedResize",
+                            "span": {
+                              "line": 24,
+                              "col": 27,
+                              "end_line": 24,
+                              "end_col": 38
+                            },
+                            "width": 32,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 24,
+                                "col": 27,
+                                "end_line": 24,
+                                "end_col": 38
+                              },
+                              "width": 8,
+                              "name": "dst[0].code",
+                              "signed": true
+                            }
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 24,
+                              "col": 42,
+                              "end_line": 24,
+                              "end_col": 43
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000000"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 25,
+                          "col": 9,
+                          "end_line": 25,
+                          "end_col": 23
+                        },
+                        "width": 1,
+                        "op": "!=",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 25,
+                            "col": 9,
+                            "end_line": 25,
+                            "end_col": 18
+                          },
+                          "width": 32,
+                          "name": "dst[1].id",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 25,
+                            "col": 22,
+                            "end_line": 25,
+                            "end_col": 23
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 25,
+                        "col": 27,
+                        "end_line": 25,
+                        "end_col": 43
+                      },
+                      "width": 1,
+                      "op": "!=",
+                      "left": {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 25,
+                          "col": 27,
+                          "end_line": 25,
+                          "end_col": 38
+                        },
+                        "width": 32,
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 25,
+                            "col": 27,
+                            "end_line": 25,
+                            "end_col": 38
+                          },
+                          "width": 8,
+                          "name": "dst[1].code",
+                          "signed": true
+                        }
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 25,
+                          "col": 42,
+                          "end_line": 25,
+                          "end_col": 43
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 25,
+                      "col": 45,
+                      "end_line": 29,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 26,
+                          "col": 7,
+                          "end_line": 27,
+                          "end_col": 64
+                        },
+                        "name": "$display",
+                        "format": "FAIL: dst0={%0d,%0h} dst1={%0d,%0h}",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 27,
+                              "col": 16,
+                              "end_line": 27,
+                              "end_col": 25
+                            },
+                            "width": 32,
+                            "name": "dst[0].id",
+                            "signed": true
+                          },
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 27,
+                              "col": 27,
+                              "end_line": 27,
+                              "end_col": 38
+                            },
+                            "width": 8,
+                            "name": "dst[0].code",
+                            "signed": true
+                          },
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 27,
+                              "col": 40,
+                              "end_line": 27,
+                              "end_col": 49
+                            },
+                            "width": 32,
+                            "name": "dst[1].id",
+                            "signed": true
+                          },
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 27,
+                              "col": 51,
+                              "end_line": 27,
+                              "end_col": 62
+                            },
+                            "width": 8,
+                            "name": "dst[1].code",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true,
+                          true,
+                          true,
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 28,
+                          "col": 7,
+                          "end_line": 28,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 31,
+                    "col": 5,
+                    "end_line": 31,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 32,
+                    "col": 5,
+                    "end_line": 32,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

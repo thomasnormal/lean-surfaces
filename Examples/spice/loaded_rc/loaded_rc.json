@@ -1,0 +1,89 @@
+{
+  "schema_version": "spice-0.1",
+  "language": "spice",
+  "frontend": {
+    "name": "spice-extract",
+    "version": "0.1"
+  },
+  "source_file": "Examples/spice/loaded_rc/loaded_rc.cir",
+  "source_sha256": "520cd6efd60a7d9441a171499c8803c937c7374b772ff0a47a8572a5ff5536a0",
+  "netlist": {
+    "kind": "Netlist",
+    "title": "Loaded RC step-response network",
+    "subckts": [],
+    "cards": [
+      {
+        "kind": "V",
+        "span": {
+          "line": 2,
+          "end_line": 2
+        },
+        "name": "vstep",
+        "nodes": [
+          "in",
+          "0"
+        ],
+        "value": {
+          "num": 5,
+          "den": 1
+        }
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 3,
+          "end_line": 3
+        },
+        "name": "rdrive",
+        "nodes": [
+          "in",
+          "out"
+        ],
+        "value": {
+          "num": 1000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 4,
+          "end_line": 4
+        },
+        "name": "rload",
+        "nodes": [
+          "out",
+          "0"
+        ],
+        "value": {
+          "num": 2000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "C",
+        "span": {
+          "line": 5,
+          "end_line": 5
+        },
+        "name": "cload",
+        "nodes": [
+          "out",
+          "0"
+        ],
+        "value": {
+          "num": 1,
+          "den": 1000000
+        }
+      },
+      {
+        "kind": "Op",
+        "span": {
+          "line": 6,
+          "end_line": 6
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

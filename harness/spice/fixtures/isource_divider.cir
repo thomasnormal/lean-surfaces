@@ -1,0 +1,6 @@
+* A 1 mA source drives two 1k resistors in series.
+I1 0 in DC 1m
+R1 in mid 1k
+R2 mid 0 1k
+.op
+.end

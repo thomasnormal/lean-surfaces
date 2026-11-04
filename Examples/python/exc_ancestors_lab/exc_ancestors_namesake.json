@@ -1,0 +1,588 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/exc_ancestors_lab/exc_ancestors_namesake.py",
+  "source_sha256": "1725a5edb86f8c00773c76ac1623b19311deb7dc9237bc0d40ff6fb3edba5d52",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 8
+        },
+        "name": "BaseException",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "Pass",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 8
+            }
+          }
+        ],
+        "exception_base": true
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 8
+        },
+        "name": "ArithmeticError",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "Pass",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 8
+            }
+          }
+        ],
+        "exception_base": true
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 9,
+          "col_offset": 0,
+          "end_lineno": 10,
+          "end_col_offset": 8
+        },
+        "name": "LookupError",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "Pass",
+            "span": {
+              "lineno": 10,
+              "col_offset": 4,
+              "end_lineno": 10,
+              "end_col_offset": 8
+            }
+          }
+        ],
+        "exception_base": true
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 17,
+          "end_col_offset": 17
+        },
+        "name": "base_user",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 17,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 15,
+                  "col_offset": 8,
+                  "end_lineno": 15,
+                  "end_col_offset": 27
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 15,
+                    "col_offset": 14,
+                    "end_lineno": 15,
+                    "end_col_offset": 27
+                  },
+                  "id": "BaseException"
+                }
+              }
+            ],
+            "exc_name": "BaseException",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 8,
+                  "end_lineno": 17,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 17,
+                    "col_offset": 15,
+                    "end_lineno": 17,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "41"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 20,
+          "col_offset": 0,
+          "end_lineno": 24,
+          "end_col_offset": 17
+        },
+        "name": "base_builtin",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 21,
+              "col_offset": 4,
+              "end_lineno": 24,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 8,
+                  "end_lineno": 22,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 15,
+                    "end_lineno": 22,
+                    "end_col_offset": 21
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 22,
+                      "col_offset": 15,
+                      "end_lineno": 22,
+                      "end_col_offset": 18
+                    },
+                    "id": "len"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 22,
+                        "col_offset": 19,
+                        "end_lineno": 22,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "BaseException",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 24,
+                  "col_offset": 8,
+                  "end_lineno": 24,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 24,
+                    "col_offset": 15,
+                    "end_lineno": 24,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "42"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 27,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 17
+        },
+        "name": "arithmetic_user",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 28,
+              "col_offset": 4,
+              "end_lineno": 31,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 29,
+                  "col_offset": 8,
+                  "end_lineno": 29,
+                  "end_col_offset": 29
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 29,
+                    "col_offset": 14,
+                    "end_lineno": 29,
+                    "end_col_offset": 29
+                  },
+                  "id": "ArithmeticError"
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 31,
+                  "col_offset": 8,
+                  "end_lineno": 31,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 31,
+                    "col_offset": 15,
+                    "end_lineno": 31,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "43"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 34,
+          "col_offset": 0,
+          "end_lineno": 38,
+          "end_col_offset": 17
+        },
+        "name": "arithmetic_builtin",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 8,
+                  "end_lineno": 36,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 36,
+                    "col_offset": 15,
+                    "end_lineno": 36,
+                    "end_col_offset": 21
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 36,
+                      "col_offset": 15,
+                      "end_lineno": 36,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 36,
+                      "col_offset": 20,
+                      "end_lineno": 36,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 8,
+                  "end_lineno": 38,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 38,
+                    "col_offset": 15,
+                    "end_lineno": 38,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "44"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 41,
+          "col_offset": 0,
+          "end_lineno": 45,
+          "end_col_offset": 17
+        },
+        "name": "lookup_user",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 45,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 43,
+                  "col_offset": 8,
+                  "end_lineno": 43,
+                  "end_col_offset": 25
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 43,
+                    "col_offset": 14,
+                    "end_lineno": 43,
+                    "end_col_offset": 25
+                  },
+                  "id": "LookupError"
+                }
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 45,
+                  "col_offset": 8,
+                  "end_lineno": 45,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 45,
+                    "col_offset": 15,
+                    "end_lineno": 45,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "45"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 48,
+          "col_offset": 0,
+          "end_lineno": 52,
+          "end_col_offset": 17
+        },
+        "name": "lookup_builtin",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 49,
+              "col_offset": 4,
+              "end_lineno": 52,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 50,
+                  "col_offset": 8,
+                  "end_lineno": 50,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 50,
+                    "col_offset": 15,
+                    "end_lineno": 50,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "kind": "Tuple",
+                    "span": {
+                      "lineno": 50,
+                      "col_offset": 15,
+                      "end_lineno": 50,
+                      "end_col_offset": 17
+                    },
+                    "elts": []
+                  },
+                  "index": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 50,
+                      "col_offset": 18,
+                      "end_lineno": 50,
+                      "end_col_offset": 19
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 52,
+                  "col_offset": 8,
+                  "end_lineno": 52,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 52,
+                    "col_offset": 15,
+                    "end_lineno": 52,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "46"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

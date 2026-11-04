@@ -1,0 +1,282 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assoc_system_empty_bounds_history/assoc_system_empty_bounds_history.sv",
+  "source_sha256": "084437f9a10ea2c674f6443a4631f111fdab95dc3ba2bf484d7e136c83911335",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 25
+            },
+            "name": "low_value",
+            "width": 32,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 27,
+              "end_line": 4,
+              "end_col": 37
+            },
+            "name": "high_value",
+            "width": 32,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 30
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "name": "low_value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 29
+                    },
+                    "width": 32,
+                    "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                    "associative_count_query": "$low",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 32
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": 32,
+                    "name": "high_value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 18,
+                      "end_line": 8,
+                      "end_col": 31
+                    },
+                    "width": 32,
+                    "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                    "associative_count_query": "$high",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 9,
+                      "end_line": 10,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 9,
+                        "end_line": 9,
+                        "end_col": 56
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "BitQuery",
+                        "span": {
+                          "line": 9,
+                          "col": 9,
+                          "end_line": 9,
+                          "end_col": 30
+                        },
+                        "width": 1,
+                        "op": "$isunknown",
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 20,
+                            "end_line": 9,
+                            "end_col": 29
+                          },
+                          "width": 32,
+                          "name": "low_value"
+                        },
+                        "controls": []
+                      },
+                      "right": {
+                        "kind": "BitQuery",
+                        "span": {
+                          "line": 9,
+                          "col": 34,
+                          "end_line": 9,
+                          "end_col": 56
+                        },
+                        "width": 1,
+                        "op": "$isunknown",
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 45,
+                            "end_line": 9,
+                            "end_col": 55
+                          },
+                          "width": 32,
+                          "name": "high_value"
+                        },
+                        "controls": []
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 10,
+                        "col": 9,
+                        "end_line": 10,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 10,
+                          "col": 9,
+                          "end_line": 10,
+                          "end_col": 22
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "associative_empty_query": "$size",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 10,
+                          "col": 26,
+                          "end_line": 10,
+                          "end_col": 27
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

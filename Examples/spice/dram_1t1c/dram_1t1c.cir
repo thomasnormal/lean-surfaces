@@ -1,0 +1,7 @@
+open 1T1C DRAM storage cell
+* word and bit are environment-driven ports. No testbench sources are part
+* of the reusable component.
+maccess store word bit 0 nmod
+cstore store 0 30f
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.end

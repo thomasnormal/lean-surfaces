@@ -1,0 +1,389 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/array_oob_reads/array_oob_reads.sv",
+  "source_sha256": "b2eed3a8f5f6ce6c0879321ab2c408899e31bbc32d8055017511d0d00c55ff4a",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 13,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "bits[0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 13,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "bits[1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 13,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "bits[2]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 13,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "bits[3]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 33
+            },
+            "name": "logic_values[0]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 33
+            },
+            "name": "logic_values[1]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 33
+            },
+            "name": "logic_values[2]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 33
+            },
+            "name": "logic_values[3]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 11,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "colors[0]",
+            "width": 2,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 11,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "colors[1]",
+            "width": 2,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 11,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "colors[2]",
+            "width": 2,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 11,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "colors[3]",
+            "width": 2,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 16,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 29
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 9,
+                        "end_line": 10,
+                        "end_col": 35
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 9,
+                          "col": 9,
+                          "end_line": 9,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 9,
+                            "end_line": 9,
+                            "end_col": 17
+                          },
+                          "width": 8,
+                          "bits": "00000000",
+                          "unpacked_array_oob_read": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 22,
+                            "end_line": 9,
+                            "end_col": 27
+                          },
+                          "width": 8,
+                          "bits": "00000000"
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 10,
+                          "col": 9,
+                          "end_line": 10,
+                          "end_col": 35
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 9,
+                            "end_line": 10,
+                            "end_col": 25
+                          },
+                          "width": 8,
+                          "bits": "xxxxxxxx",
+                          "unpacked_array_oob_read": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 30,
+                            "end_line": 10,
+                            "end_col": 35
+                          },
+                          "width": 8,
+                          "bits": "xxxxxxxx"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 11,
+                        "col": 9,
+                        "end_line": 11,
+                        "end_col": 29
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 11,
+                          "col": 9,
+                          "end_line": 11,
+                          "end_col": 19
+                        },
+                        "width": 2,
+                        "bits": "xx",
+                        "unpacked_array_oob_read": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 11,
+                          "col": 24,
+                          "end_line": 11,
+                          "end_col": 29
+                        },
+                        "width": 2,
+                        "bits": "xx"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

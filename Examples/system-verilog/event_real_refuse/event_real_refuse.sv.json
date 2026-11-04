@@ -1,0 +1,150 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/event_real_refuse/event_real_refuse.sv",
+  "source_sha256": "1a404a68bf0d0cf08dceae22ca53a712194d9c8dd83283a6354b12dbd2449ceb",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 13
+            },
+            "name": "seen",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "sv_kind": "SignalEventControl:clock",
+            "text": "always @(r)\n    seen = 1'b1;"
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 11,
+                    "col": 9,
+                    "end_line": 11,
+                    "end_col": 17
+                  },
+                  "floating_literal_write_noop": true
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "REAL EVENT REFUSED",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

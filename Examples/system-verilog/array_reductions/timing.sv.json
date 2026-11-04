@@ -1,0 +1,776 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/array_reductions/timing.sv",
+  "source_sha256": "b8e49ae2b87e6ea172fe13f2d3f219ae83a6695cb0d61dc244c1b390b4f44cf0",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 41
+            },
+            "name": "a[2]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 26,
+                "end_line": 2,
+                "end_col": 30
+              },
+              "width": 8,
+              "bits": "00000010"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 41
+            },
+            "name": "a[1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 31,
+                "end_line": 2,
+                "end_col": 35
+              },
+              "width": 8,
+              "bits": "00000011"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 41
+            },
+            "name": "a[0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 36,
+                "end_line": 2,
+                "end_col": 40
+              },
+              "width": 8,
+              "bits": "00000100"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 25
+            },
+            "name": "copy[-1]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 25
+            },
+            "name": "copy[0]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 25
+            },
+            "name": "copy[1]",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 20
+            },
+            "name": "saved",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 11
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 6,
+                        "col": 5,
+                        "end_line": 6,
+                        "end_col": 11
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 5,
+                          "end_line": 6,
+                          "end_col": 9
+                        },
+                        "width": 8,
+                        "name": "copy[-1]"
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 10,
+                          "end_line": 6,
+                          "end_col": 11
+                        },
+                        "width": 8,
+                        "name": "a[2]"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 6,
+                        "col": 5,
+                        "end_line": 6,
+                        "end_col": 11
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 5,
+                          "end_line": 6,
+                          "end_col": 9
+                        },
+                        "width": 8,
+                        "name": "copy[0]"
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 10,
+                          "end_line": 6,
+                          "end_col": 11
+                        },
+                        "width": 8,
+                        "name": "a[1]"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 6,
+                        "col": 5,
+                        "end_line": 6,
+                        "end_col": 11
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 5,
+                          "end_line": 6,
+                          "end_col": 9
+                        },
+                        "width": 8,
+                        "name": "copy[1]"
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 10,
+                          "end_line": 6,
+                          "end_col": 11
+                        },
+                        "width": 8,
+                        "name": "a[0]"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 10
+                    },
+                    "width": 8,
+                    "name": "saved"
+                  },
+                  "value": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 12,
+                      "end_line": 7,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "op": "+",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 12,
+                        "end_line": 7,
+                        "end_col": 19
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 12,
+                          "end_line": 7,
+                          "end_col": 19
+                        },
+                        "name": "a[2]",
+                        "width": 8
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 12,
+                          "end_line": 7,
+                          "end_col": 19
+                        },
+                        "name": "a[1]",
+                        "width": 8
+                      }
+                    },
+                    "right": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 12,
+                        "end_line": 7,
+                        "end_col": 19
+                      },
+                      "name": "a[0]",
+                      "width": 8
+                    },
+                    "array_reduction_lowered": "sum"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 9
+                    },
+                    "width": 8,
+                    "name": "a[1]"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 10,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": 8,
+                    "bits": "00010100"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 63
+                  },
+                  "name": "$display",
+                  "format": "snapshot %0d %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 37,
+                        "end_line": 10,
+                        "end_col": 42
+                      },
+                      "width": 8,
+                      "name": "saved"
+                    },
+                    {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 10,
+                        "col": 43,
+                        "end_line": 10,
+                        "end_col": 50
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 10,
+                          "col": 43,
+                          "end_line": 10,
+                          "end_col": 50
+                        },
+                        "width": 8,
+                        "op": "+",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 43,
+                            "end_line": 10,
+                            "end_col": 50
+                          },
+                          "name": "a[2]",
+                          "width": 8
+                        },
+                        "right": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 43,
+                            "end_line": 10,
+                            "end_col": 50
+                          },
+                          "name": "a[1]",
+                          "width": 8
+                        }
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 10,
+                          "col": 43,
+                          "end_line": 10,
+                          "end_col": 50
+                        },
+                        "name": "a[0]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    },
+                    {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 10,
+                        "col": 51,
+                        "end_line": 10,
+                        "end_col": 61
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 10,
+                          "col": 51,
+                          "end_line": 10,
+                          "end_col": 61
+                        },
+                        "width": 8,
+                        "op": "+",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 51,
+                            "end_line": 10,
+                            "end_col": 61
+                          },
+                          "name": "copy[-1]",
+                          "width": 8
+                        },
+                        "right": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 51,
+                            "end_line": 10,
+                            "end_col": 61
+                          },
+                          "name": "copy[0]",
+                          "width": 8
+                        }
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 10,
+                          "col": 51,
+                          "end_line": 10,
+                          "end_col": 61
+                        },
+                        "name": "copy[1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 9
+                    },
+                    "width": 8,
+                    "name": "a[2]"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 11,
+                      "col": 10,
+                      "end_line": 11,
+                      "end_col": 15
+                    },
+                    "width": 8,
+                    "bits": "00001010"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 8
+                  },
+                  "amount": 3,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 69
+                  },
+                  "name": "$display",
+                  "format": "live %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 29,
+                        "end_line": 13,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 13,
+                          "col": 29,
+                          "end_line": 13,
+                          "end_col": 37
+                        },
+                        "width": 32,
+                        "op": "+",
+                        "left": {
+                          "kind": "Squash2",
+                          "span": null,
+                          "width": 32,
+                          "operand": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 13,
+                              "col": 44,
+                              "end_line": 13,
+                              "end_col": 51
+                            },
+                            "width": 32,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 13,
+                                "col": 29,
+                                "end_line": 13,
+                                "end_col": 37
+                              },
+                              "name": "a[2]",
+                              "width": 8
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "Squash2",
+                          "span": null,
+                          "width": 32,
+                          "operand": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 13,
+                              "col": 44,
+                              "end_line": 13,
+                              "end_col": 51
+                            },
+                            "width": 32,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 13,
+                                "col": 29,
+                                "end_line": 13,
+                                "end_col": 37
+                              },
+                              "name": "a[1]",
+                              "width": 8
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Resize",
+                          "span": {
+                            "line": 13,
+                            "col": 44,
+                            "end_line": 13,
+                            "end_col": 51
+                          },
+                          "width": 32,
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 13,
+                              "col": 29,
+                              "end_line": 13,
+                              "end_col": 37
+                            },
+                            "name": "a[0]",
+                            "width": 8
+                          }
+                        }
+                      },
+                      "array_reduction_lowered": "sum",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 53,
+                        "end_line": 13,
+                        "end_col": 67
+                      },
+                      "width": 8,
+                      "op": "*",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 13,
+                          "col": 53,
+                          "end_line": 13,
+                          "end_col": 67
+                        },
+                        "width": 8,
+                        "op": "*",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 53,
+                            "end_line": 13,
+                            "end_col": 67
+                          },
+                          "name": "copy[-1]",
+                          "width": 8
+                        },
+                        "right": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 53,
+                            "end_line": 13,
+                            "end_col": 67
+                          },
+                          "name": "copy[0]",
+                          "width": 8
+                        }
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 53,
+                          "end_line": 13,
+                          "end_col": 67
+                        },
+                        "name": "copy[1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "product"
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

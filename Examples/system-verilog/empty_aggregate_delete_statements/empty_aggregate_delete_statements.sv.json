@@ -1,0 +1,199 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv",
+  "source_sha256": "b10619fc3634131ca613f1dd6bff4b1a2a441042450f49635e7287fc022856cb",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 27
+                  },
+                  "empty_aggregate_delete_statement": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 29
+                  },
+                  "empty_aggregate_delete_statement": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 9,
+                      "end_line": 8,
+                      "end_col": 63
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 9,
+                        "end_line": 8,
+                        "end_col": 33
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 9,
+                          "end_line": 8,
+                          "end_col": 28
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "zero_size_query": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 32,
+                          "end_line": 8,
+                          "end_col": 33
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 37,
+                        "end_line": 8,
+                        "end_col": 63
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 37,
+                          "end_line": 8,
+                          "end_col": 58
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "zero_size_query": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 62,
+                          "end_line": 8,
+                          "end_col": 63
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,216 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/always_latch_delay_refuse/always_latch_delay_refuse.sv",
+  "source_sha256": "9fe0ac6ca9b20d31671ccc603ba0d08a17de01ec5e37a44fdd960c991cfad752",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 20,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 9,
+              "end_line": 4,
+              "end_col": 11
+            },
+            "name": "en",
+            "width": 1,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 10
+            },
+            "name": "a",
+            "width": 1,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 9,
+              "end_line": 6,
+              "end_col": 10
+            },
+            "name": "q",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysLatch",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 11,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 0,
+                "col": 0,
+                "end_line": 0,
+                "end_col": 0
+              },
+              "sv_kind": "InvalidStatement",
+              "text": "begin\n    #1;\n    if (en) q = a;\n  end"
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 13,
+              "col": 3,
+              "end_line": 19,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 13,
+                "col": 11,
+                "end_line": 19,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 5,
+                      "end_line": 14,
+                      "end_col": 7
+                    },
+                    "width": 1,
+                    "name": "en"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 14
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 14
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 15,
+                      "col": 5,
+                      "end_line": 15,
+                      "end_col": 6
+                    },
+                    "width": 1,
+                    "name": "a"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 15,
+                      "col": 9,
+                      "end_line": 15,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 27
+                  },
+                  "name": "$display",
+                  "format": "UNREACHED",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

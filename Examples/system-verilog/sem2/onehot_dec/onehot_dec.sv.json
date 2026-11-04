@@ -1,0 +1,522 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "onehot_dec",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/onehot_dec/onehot_dec.sv",
+      "sha256": "1d4ff9af69625d1a8595883058619bd26b3c5a2d8230f5de9b1f567b2e814b9d"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 22,
+          "end_col": 10
+        },
+        "name": "onehot_dec",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 25
+            },
+            "name": "sel",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "en",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 22,
+              "end_line": 9,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 21,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 15,
+                "end_line": 21,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 6
+                    },
+                    "width": 4,
+                    "name": "y"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 16
+                    },
+                    "width": 4,
+                    "bits": "0000"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 11
+                    },
+                    "width": 1,
+                    "name": "en"
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 19,
+                      "end_col": 14
+                    },
+                    "stmts": [
+                      {
+                        "kind": "Case",
+                        "span": {
+                          "line": 14,
+                          "col": 7,
+                          "end_line": 19,
+                          "end_col": 14
+                        },
+                        "check": "none",
+                        "match": "normal",
+                        "subject": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 13,
+                            "end_line": 14,
+                            "end_col": 16
+                          },
+                          "width": 2,
+                          "name": "sel"
+                        },
+                        "items": [
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 15,
+                                  "col": 9,
+                                  "end_line": 15,
+                                  "end_col": 13
+                                },
+                                "width": 2,
+                                "bits": "00"
+                              }
+                            ],
+                            "body": {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 15,
+                                "col": 15,
+                                "end_line": 15,
+                                "end_col": 27
+                              },
+                              "target": {
+                                "kind": "BitSel",
+                                "span": {
+                                  "line": 15,
+                                  "col": 15,
+                                  "end_line": 15,
+                                  "end_col": 19
+                                },
+                                "width": 1,
+                                "value": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 15,
+                                    "end_line": 15,
+                                    "end_col": 16
+                                  },
+                                  "width": 4,
+                                  "name": "y"
+                                },
+                                "index": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 17,
+                                    "end_line": 15,
+                                    "end_col": 18
+                                  },
+                                  "value": 0,
+                                  "resolved_width": 32
+                                }
+                              },
+                              "value": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 15,
+                                  "col": 22,
+                                  "end_line": 15,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "bits": "1"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 16,
+                                  "col": 9,
+                                  "end_line": 16,
+                                  "end_col": 13
+                                },
+                                "width": 2,
+                                "bits": "01"
+                              }
+                            ],
+                            "body": {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 16,
+                                "col": 15,
+                                "end_line": 16,
+                                "end_col": 27
+                              },
+                              "target": {
+                                "kind": "BitSel",
+                                "span": {
+                                  "line": 16,
+                                  "col": 15,
+                                  "end_line": 16,
+                                  "end_col": 19
+                                },
+                                "width": 1,
+                                "value": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 16,
+                                    "col": 15,
+                                    "end_line": 16,
+                                    "end_col": 16
+                                  },
+                                  "width": 4,
+                                  "name": "y"
+                                },
+                                "index": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 16,
+                                    "col": 17,
+                                    "end_line": 16,
+                                    "end_col": 18
+                                  },
+                                  "value": 1,
+                                  "resolved_width": 32
+                                }
+                              },
+                              "value": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 16,
+                                  "col": 22,
+                                  "end_line": 16,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "bits": "1"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 17,
+                                  "col": 9,
+                                  "end_line": 17,
+                                  "end_col": 13
+                                },
+                                "width": 2,
+                                "bits": "10"
+                              }
+                            ],
+                            "body": {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 17,
+                                "col": 15,
+                                "end_line": 17,
+                                "end_col": 27
+                              },
+                              "target": {
+                                "kind": "BitSel",
+                                "span": {
+                                  "line": 17,
+                                  "col": 15,
+                                  "end_line": 17,
+                                  "end_col": 19
+                                },
+                                "width": 1,
+                                "value": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 17,
+                                    "col": 15,
+                                    "end_line": 17,
+                                    "end_col": 16
+                                  },
+                                  "width": 4,
+                                  "name": "y"
+                                },
+                                "index": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 17,
+                                    "col": 17,
+                                    "end_line": 17,
+                                    "end_col": 18
+                                  },
+                                  "value": 2,
+                                  "resolved_width": 32
+                                }
+                              },
+                              "value": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 17,
+                                  "col": 22,
+                                  "end_line": 17,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "bits": "1"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 18,
+                                  "col": 9,
+                                  "end_line": 18,
+                                  "end_col": 13
+                                },
+                                "width": 2,
+                                "bits": "11"
+                              }
+                            ],
+                            "body": {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 18,
+                                "col": 15,
+                                "end_line": 18,
+                                "end_col": 27
+                              },
+                              "target": {
+                                "kind": "BitSel",
+                                "span": {
+                                  "line": 18,
+                                  "col": 15,
+                                  "end_line": 18,
+                                  "end_col": 19
+                                },
+                                "width": 1,
+                                "value": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 18,
+                                    "col": 15,
+                                    "end_line": 18,
+                                    "end_col": 16
+                                  },
+                                  "width": 4,
+                                  "name": "y"
+                                },
+                                "index": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 18,
+                                    "col": 17,
+                                    "end_line": 18,
+                                    "end_col": 18
+                                  },
+                                  "value": 3,
+                                  "resolved_width": 32
+                                }
+                              },
+                              "value": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 18,
+                                  "col": 22,
+                                  "end_line": 18,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "bits": "1"
+                              }
+                            }
+                          }
+                        ],
+                        "default": null
+                      }
+                    ]
+                  },
+                  "else": null
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

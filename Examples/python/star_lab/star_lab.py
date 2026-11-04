@@ -1,0 +1,137 @@
+"""star_lab — starred DISPLAYS, the extractor lowering (checks-only).
+
+`[*a, 3]`, `{*a, 3}`, `(1, *a)` and `pair(*a)` are lowered by the extractor into
+`list((e1,) + tuple(a) + (e2,))` and `(e1,) + tuple(a) + (e2,)`
+(docs/memory-model.md §starred displays): zero new AST kinds, zero
+interpreter arms, zero proof arms. Starred call arguments use an unspellable
+`<star-arg>` marker that the call expands in place. For a set display the lowered list is
+passed to the existing `set(...)` constructor. `list(...)` appears only on
+the OUTSIDE — a fresh heap list is exactly what CPython builds there — and
+never as a concatenation operand, where a heap object would refuse.
+
+The loud frontier is pinned by refusal probes: a dict receiver and the
+unsupported nested starred-target shapes. Flat starred assignment and `for`
+targets use the same existing unpacking worker; nested forms remain loud.
+The flat form is shared by assignment and loop targets.
+"""
+
+
+def list_tail(k):
+    a = [1, 2]
+    return [*a, k]
+
+
+def list_head(k):
+    a = [1, 2]
+    return [k, *a]
+
+
+def list_two(k):
+    a = [1, 2]
+    b = [k]
+    return [*a, *b]
+
+
+def list_only():
+    a = [1, 2]
+    return [*a]
+
+
+def tuple_only():
+    a = [1, 2]
+    return (*a,)
+
+
+def tuple_head(k):
+    t = (1, 2)
+    return (k, *t)
+
+
+def tuple_tail(k):
+    t = (1, 2)
+    return (*t, k)
+
+
+def groups(k):
+    # two starred pieces and two literal groups: four operands, three `+`
+    a = [2, 3]
+    return [1, *a, k, *a]
+
+
+def empty():
+    return [*[]]
+
+
+def from_str(s):
+    return [*s]
+
+
+def from_range(n):
+    return [*range(n)]
+
+
+def from_tuple(k):
+    t = (1, 2)
+    return [*t, k]
+
+
+def nested(k):
+    a = [1, 2]
+    return [[*a], k]
+
+
+def fresh(k):
+    # the display ALLOCATES: `b` is a copy, so appending to it leaves `a`
+    # alone — the whole reason `list(...)` is on the outside
+    a = [1, 2]
+    b = [*a]
+    b.append(k)
+    return (len(a), len(b), a[0], b[2])
+
+
+def star_int():
+    # CPython: `TypeError: Value after * must be an iterable, not int`;
+    # the lowering raises `'int' object is not iterable` from `tuple()`.
+    # Same exception CLASS, different message — recorded, not glossed.
+    return [*5]
+
+
+def star_none():
+    return [*None]
+
+
+def pair(x, y):
+    return x + y
+
+
+def star_call():
+    # a starred CALL argument expands the eager list in place
+    a = [1, 2]
+    return pair(*a)
+
+
+def star_set():
+    # set display unpacking reuses the existing set constructor.  Observe it
+    # through len because a set itself cannot cross the public value boundary.
+    a = [1, 2]
+    return len({*a})
+
+
+def star_dict():
+    # `[*d]` is CPython's key iteration; `tuple(d)` refuses on the same
+    # order doctrine — loud, not wrong
+    d = {"x": 1, "y": 2}
+    return [*d]
+
+
+def star_target():
+    # position 2: assignment targets use the dedicated unpacking statement
+    x, *y = [1, 2, 3]
+    return (x, y)
+
+
+def star_for():
+    # a starred `for` target unpacks each item before the body runs
+    for a, *b, z in [[1, 2, 3]]:
+        return (a, b, z)
+    return None

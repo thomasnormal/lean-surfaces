@@ -1,0 +1,20 @@
+import Examples.python.ann_lab.proof
+
+open LeanModels LeanModels.Python
+
+load_program ann_lab from "Examples/python/ann_lab/ann_lab.json"
+
+#py_check ann_lab.ann_module_global(1) = 6
+#py_check ann_lab.ann_module_global(0) = 5
+#py_check ann_lab.ann_module_global(-5) = 0
+#py_check ann_lab.ann_novalue(3) = 3
+#py_check ann_lab.ann_attr_target(3) = 3
+
+load_program annotation_effect from "harness/scripts/ann_module_effect_script.json"
+
+#guard callFunction annotation_effect "read_target" #[] 4096 matches .ok (.int 3)
+
+theorem ann_module_global_total (offset : PyInt) :
+    ann_lab.ann_module_global(offset) ==> 5 + offset := by proofs
+
+#print axioms ann_module_global_total

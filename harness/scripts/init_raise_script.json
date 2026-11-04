@@ -1,0 +1,140 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/scripts/init_raise_script.py",
+  "source_sha256": "02b10146ebf4548782e30bb200ca9c38e0697363edc827d13a3419c0bb66aa99",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 12,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "leanpy corpus: A TOP-LEVEL STATEMENT THAT RAISES \u2014 a payoff row of THE\nONE PIPELINE (docs/memory-model.md \u00a7the one pipeline).\n\nCPython dies at `x = 1 // 0` with ZeroDivisionError and exits 1, having\nprinted nothing. Two pipelines ago the G1 fold ATTEMPTED this statement,\nthe attempt raised, and the rollback swallowed it \u2014 leanpy printed \"done\"\nand exited 0, the worst kind of answer; `initNothingSkipped` then refused\nthe program instead. With one pipeline there is no fold and no rollback:\nthe statement executes, the exception propagates out of the top level, and\nthe runner boundary maps it to exit 1 with the class name \u2014 CPython's own\nanswer.\n"
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 10
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 13,
+              "col_offset": 0,
+              "end_lineno": 13,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "BinOp",
+          "span": {
+            "lineno": 13,
+            "col_offset": 4,
+            "end_lineno": 13,
+            "end_col_offset": 10
+          },
+          "left": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 13,
+              "col_offset": 4,
+              "end_lineno": 13,
+              "end_col_offset": 5
+            },
+            "value": {
+              "type": "int",
+              "repr": "1"
+            }
+          },
+          "op": "FloorDiv",
+          "right": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 13,
+              "col_offset": 9,
+              "end_lineno": 13,
+              "end_col_offset": 10
+            },
+            "value": {
+              "type": "int",
+              "repr": "0"
+            }
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 15,
+          "col_offset": 0,
+          "end_lineno": 15,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 15,
+            "col_offset": 0,
+            "end_lineno": 15,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 15,
+              "col_offset": 0,
+              "end_lineno": 15,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 15,
+                "col_offset": 6,
+                "end_lineno": 15,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "str",
+                "value": "done"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

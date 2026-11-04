@@ -1,0 +1,3242 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "ripple_fa",
+ "envelope": "ripple_fa.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/ripple_fa/ripple_fa.sv",
+   "sha256": "7fc9ee36b3540d8f7f93ceddb7da9605b716a1d5ac22194ec906c99f8ce03745"
+  }
+ ],
+ "probe_points": "N=1;N=2;N=3;N=5;N=8;N=16",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 1
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "resolved": 1
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 1,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 2,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 2,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 2
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 2,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 2,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 2,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 3
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 3,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 4,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 4,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 5
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 5,
+       "resolved_width": 32
+      },
+      "resolved": 5
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 5,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 5,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 5,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 6,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 5,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 6,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 9
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 8,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 9,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 9,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 16
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "ripple_fa",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 16,
+       "resolved_width": 32
+      },
+      "resolved": 16
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 16
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 16
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cin",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "s",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 16
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "cout",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [],
+       "resolved": 1
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 17
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cin"
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "cout"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       ],
+       "part": null
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_bit",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 16,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "fa",
+        "module": "full_adder",
+        "path": [
+         {
+          "label": "g_bit",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 16,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "b",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 16,
+            "name": "b"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cin",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 17,
+            "name": "c"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "s",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 16,
+            "name": "s"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "cout",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 17,
+            "name": "c"
+           },
+           "index": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 1,
+             "resolved_width": 32
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "full_adder",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "full_adder",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "b",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cin",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "s",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "cout",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "s"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "^",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "^",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Ident",
+          "width": 1,
+          "name": "cin"
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "cout"
+        },
+        "value": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "|",
+         "left": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "a"
+          },
+          "right": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "b"
+          }
+         },
+         "right": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "&",
+          "left": {
+           "kind": "Ident",
+           "width": 1,
+           "name": "cin"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "a"
+           },
+           "right": {
+            "kind": "Ident",
+            "width": 1,
+            "name": "b"
+           }
+          }
+         }
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  }
+ ]
+}

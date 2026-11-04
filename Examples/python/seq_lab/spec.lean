@@ -1,0 +1,251 @@
+import LeanModels
+
+/-!
+# seq_lab — pass 3's value tiers at function level (checks-only example)
+
+Tuple/namedtuple slices (a namedtuple slice is a PLAIN tuple), tuple
+repetition, `sum(it[, start])` (the element fold IS `evalBinOp .add`; a
+str start is CPython's special-cased `TypeError`), `tuple(it)`, and
+`range` as the immediate `RVal.rangeV` — materialize-per-use, which is
+what makes RE-ITERATION exact (`range_reiter`). Range equality compares the
+integer sequence without materializing it. Range values also cross the public
+boundary as `Val.range`; range slices compose the source progression, while
+heap-list slices allocate a fresh list and cross the boundary as a `Val.list`
+snapshot.
+-/
+
+open LeanModels LeanModels.Python
+
+load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
+
+/-! ### slices -/
+
+#py_check seq_lab.slice_tuple(2, 6) =
+  (Val.tuple #[.int 30, .int 40, .int 50, .int 60])
+#py_check seq_lab.slice_computed(1) = (Val.tuple #[.int 30, .int 40])
+#py_check seq_lab.slice_step(-2) =
+  (Val.tuple #[.tuple #[.int 6, .int 4, .int 2],
+               .tuple #[.int 5, .int 4, .int 3],
+               .tuple #[.int 4, .int 5, .int 6]])
+#py_check seq_lab.slice_move(3) = (Val.tuple #[.int 3, .int 10])
+
+/-! ### repetition -/
+
+#py_check seq_lab.repeat(3) =
+  (Val.tuple #[.int 0, .int 0, .int 0, .int 7, .int 7])
+#py_check seq_lab.repeat(-1) = (Val.tuple #[.int 7, .int 7])
+#py_check seq_lab.repeat_left(2) =
+  (Val.tuple #[.int 1, .int 2, .int 1, .int 2])
+#py_check seq_lab.repeat_bool() = (Val.tuple #[.int 1, .int 2])
+
+/-! ### sum -/
+
+#py_check seq_lab.sum_ints(4) = 10
+#py_check seq_lab.sum_start(10) = 13
+#py_check seq_lab.sum_tuples() = (Val.tuple #[.int 1, .int 2, .int 3])
+#py_check seq_lab.sum_gen(5) = 30
+#py_check seq_lab.sum_str_start() raises
+  (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+#py_check seq_lab.sum_str_elems() raises
+  (.typeError "unsupported operand type(s) for +: 'int' and 'str'")
+#py_check seq_lab.sum_arity() raises
+  (.typeError "sum() takes at most 2 arguments (3 given)")
+
+/-! ### tuple() -/
+
+#py_check seq_lab.tuple_of_str("ab") = (Val.tuple #[.str "a", .str "b"])
+#py_check seq_lab.tuple_of_list(3) =
+  (Val.tuple #[.int 1, .int 2, .int 3, .int 4])
+#py_check seq_lab.tuple_of_gen(3) = (Val.tuple #[.int 0, .int 2, .int 4])
+#py_check seq_lab.tuple_of_range(3) = (Val.tuple #[.int 3, .int 2, .int 1])
+#py_check seq_lab.tuple_of_int() raises
+  (.typeError "'int' object is not iterable")
+#py_check seq_lab.tuple_index_oob() raises (.indexErrorTuple)
+#py_check seq_lab.string_index_oob() raises (.indexErrorString)
+
+/-! ### range -/
+
+#py_check seq_lab.range_len(1, 10, 3) = 3
+#py_check seq_lab.range_len(5, 1, -2) = 2
+#py_check seq_lab.range_for(4) = 14
+#py_check seq_lab.range_reiter(4) = (Val.tuple #[.int 6, .int 6])
+#py_check seq_lab.range_truthy(0) = 0
+#py_check seq_lab.range_truthy(2) = 1
+#py_check seq_lab.range_zero_step() raises
+  (.valueError "range() arg 3 must not be zero")
+#py_check seq_lab.range_next() raises
+  (.typeError "'range' object is not an iterator")
+#py_check seq_lab.range_extremum(5) = (Val.tuple #[.int 4, .int 0])
+#py_check seq_lab.range_empty_max() raises
+  (.valueError "max() arg is an empty sequence")
+#py_check seq_lab.enum_range(4) = 32
+#py_check seq_lab.range_eq(3) = true
+#py_check seq_lab.range_eq_stop() = true
+#py_check seq_lab.range_eq_single() = true
+#py_check seq_lab.range_eq_empty() = true
+#py_check seq_lab.range_eq_step() = false
+#py_check seq_lab.range_index(3) = 0
+#py_check seq_lab.range_index_negative(3) = 2
+#py_check seq_lab.range_index_step() = 8
+#py_check seq_lab.range_index_oob(3) raises (.indexErrorRange)
+#py_check seq_lab.range_index_type() raises
+  (.typeError "range indices must be integers or slices, not str")
+#py_check seq_lab.range_slice(8) =
+  (Val.range (.int 1) (.int 7) (.int 2))
+#py_check seq_lab.range_slice_reverse() =
+  (Val.range (.int 8) (.int 2) (.int (-4)))
+#py_check seq_lab.range_slice_empty() =
+  (Val.range (.int 5) (.int 5) (.int 1))
+#py_check seq_lab.range_slice_zero_step() raises
+  (.valueError "slice step cannot be zero")
+#py_check seq_lab.range_in(5) = true
+#py_check seq_lab.range_in_step() = true
+#py_check seq_lab.range_in_float() = true
+#py_check seq_lab.range_in_fraction() = false
+
+/-! ### range values at the public boundary -/
+
+#guard callFunction seq_lab "range_boundary" #[.int 3] 4096 ==
+  .ok (.range (.int 0) (.int 3) (.int 1))
+#py_check seq_lab.range_unpack() = 0
+#py_check seq_lab.range_unpack_step() = 5
+#py_check seq_lab.range_unpack_bad() raises
+  (.valueError "not enough values to unpack (expected 2, got 1)")
+#guard callFunction seq_lab "list_slice_loud" #[.int 2] 4096 ==
+  .ok (.list #[.int 1, .int 2])
+#py_check seq_lab.str_repeat_loud(2) = "abab"
+
+/-! ### pass 5: left shift and bitwise or (docs/memory-model.md §left
+shift and bitwise or) — the post-#158 shipped file's `1 << 63` and
+`live |= …`. `<<` is exact multiplication on all ints (negative count
+the faithful ValueError); `|` and `&` decide boolness first
+(`True | False` IS a bool — the differential rows pin the type through
+the harness's typed JSON), and NEGATIVE operands compute exactly:
+`Int.negSucc n` IS the complement representation, so nothing is guessed
+and pass 5's refusal is retired here (docs/memory-model.md §bitwise
+`&`). -/
+
+#py_check seq_lab.shl(1, 63) = 9223372036854775808
+#py_check seq_lab.shl(-3, 4) = -48
+#py_check seq_lab.shl_deadline() = 9223372036854775808
+#py_check seq_lab.shl(5, -1) raises (.valueError "negative shift count")
+#py_check seq_lab.shr(1, 1000000000000000000000000000000) = 0
+#py_check seq_lab.shr(-1, 1000000000000000000000000000000) = -1
+#py_check seq_lab.bor(6, 3) = 7
+#py_check seq_lab.bor(0, 0) = 0
+#py_check seq_lab.bor_aug(5) = true
+#py_check seq_lab.bor_aug(2) = false
+#py_check seq_lab.matmul_type_error(1, 2) raises
+  (.typeError "unsupported operand type(s) for @: 'int' and 'int'")
+
+#guard callFunction seq_lab "bor" #[.bool true, .bool false] 4096 == .ok (.bool true)
+#guard callFunction seq_lab "bor" #[.bool true, .int 2] 4096 == .ok (.int 3)
+#guard callFunction seq_lab "shl" #[.str "a", .int 1] 4096 ==
+  .exn (.typeError "unsupported operand type(s) for <<: 'str' and 'int'")
+
+/-! The shift BUDGET, pinned on both sides of its edge (docs/memory-model.md
+§left shift and bitwise or). Below it `<<` is untouched and exact; one past
+it the arm refuses LOUDLY instead of aborting the runner — before this
+guard, `1 << (10^30)` died `INTERNAL PANIC: Nat.pow exponent is too big`,
+which is neither an answer nor a refusal. -/
+
+#guard callFunction seq_lab "shl" #[.int 1, .int 4096] 4096 == .ok (.int (2 ^ 4096))
+
+#guard (match callFunction seq_lab "shl" #[.int 1, .int 1048576] 4096 with
+        | .ok _ => true | _ => false)
+#guard (match callFunction seq_lab "shl" #[.int 1, .int 1048577] 4096 with
+        | .unsupported _ => true | _ => false)
+#guard (match callFunction seq_lab "shl"
+          #[.int 1, .int 1000000000000000000000000000000] 4096 with
+        | .exn (.overflowError "too many digits in integer") => true | _ => false)
+#guard (match callFunction seq_lab "shl"
+          #[.int 1, .int shiftOverflowBudget] 4096 with
+        | .exn (.overflowError "too many digits in integer") => true | _ => false)
+#py_check seq_lab.bor_neg(-1) = -1
+#py_check seq_lab.bor_neg(-5) = -1
+#py_check seq_lab.bor_neg(3) = 7
+
+/-! `&`, the tail batch's construct 4: the same arm shape as `|`, one
+`intAnd` for every operand sign, and `&=` for free (one
+`ALLOWED_BINOPS` entry serves `BinOp` and `AugAssign` alike). -/
+
+#py_check seq_lab.band(12, 10) = 8
+#py_check seq_lab.band(255, 0) = 0
+#py_check seq_lab.band(11, 13) = 9
+#py_check seq_lab.band(-1, 3) = 3
+#py_check seq_lab.band(-5, 12) = 8
+#py_check seq_lab.band(12, -5) = 8
+#py_check seq_lab.band(-4, -3) = -4
+#py_check seq_lab.band(-3, -5) = -7
+#py_check seq_lab.band(-100, 7) = 4
+#py_check seq_lab.band(-1, -1) = -1
+#py_check seq_lab.band(-16, 15) = 0
+#py_check seq_lab.band_aug(0) = 15
+#py_check seq_lab.band_aug(1) = 7
+#py_check seq_lab.band_aug(2) = 6
+#py_check seq_lab.band_aug(3) = 4
+#py_check seq_lab.band_big() = 255
+
+#guard callFunction seq_lab "band" #[.bool true, .bool true] 4096 == .ok (.bool true)
+#guard callFunction seq_lab "band" #[.bool true, .bool false] 4096 == .ok (.bool false)
+#guard callFunction seq_lab "band" #[.bool false, .bool true] 4096 == .ok (.bool false)
+#guard callFunction seq_lab "band" #[.bool false, .bool false] 4096 == .ok (.bool false)
+#guard callFunction seq_lab "band" #[.bool true, .int 3] 4096 == .ok (.int 1)
+#guard callFunction seq_lab "band" #[.int 3, .bool true] 4096 == .ok (.int 1)
+#guard callFunction seq_lab "band" #[.int 1, .str "a"] 4096 ==
+  .exn (.typeError "unsupported operand type(s) for &: 'int' and 'str'")
+#guard callFunction seq_lab "band" #[.str "a", .int 1] 4096 ==
+  .exn (.typeError "unsupported operand type(s) for &: 'str' and 'int'")
+
+/-! `{1} & {2}` is set INTERSECTION in CPython, never a `TypeError`. No
+new arm is needed and no fake exception is invented: a set is a heap
+object, so `evalBinOp`'s `.ref` arm fires FIRST and refuses loudly. -/
+
+#guard callFunction seq_lab "band_set" #[] 4096 matches .unsupported _
+
+/-! ### a namedtuple SPREADS under `%` (§`%`-formatting on strings)
+
+`PyTuple_Check` succeeds on the subclass, so `str % Move(…)` takes the
+namedtuple's FIELDS as the argument list — measured, and required: one
+argument instead of three would fabricate `not enough arguments` for a
+program CPython runs. The envelope was RE-EXTRACTED for these rows. -/
+
+#py_check seq_lab.fmt_spread(1, 2) = "1/2/''"
+#py_check seq_lab.fmt_spread(0, -3) = "0/-3/''"
+#py_check seq_lab.fmt_spread_arity(1, 2) raises
+  (.typeError "not all arguments converted during string formatting")
+
+/-! ### the arity `TypeError`, in CPython's OWN two shapes (2026-08-16)
+
+Three WRONG FACTS in one message, and library mode's message tier found
+them: the model said `Move() takes 3 positional arguments but 1 were
+given`. CPython 3.9's `namedtuple` builds `__new__` by `eval`ing a
+LAMBDA whose first parameter is `_cls`, so the callee it names is
+`<lambda>`, the counts are one higher than the field count, and too FEW
+arguments is a different SENTENCE — the missing form, which lists the
+parameters the call did not reach. Every text measured live. -/
+
+#py_check seq_lab.move_few(1) raises
+  (.typeError "<lambda>() missing 2 required positional arguments: 'j' and 'prom'")
+#py_check seq_lab.move_none() raises
+  (.typeError "<lambda>() missing 3 required positional arguments: 'i', 'j', and 'prom'")
+#py_check seq_lab.move_many(1) raises
+  (.typeError "<lambda>() takes 4 positional arguments but 5 were given")
+
+/-! ### `range()` names the OFFENDING OBJECT, never its own requirements
+
+The three-argument arm answered `range() arguments must be integers`, a
+sentence CPython 3.9 does not produce; the one- and two-argument arms
+were already right. It names the FIRST bad argument left to right, and
+through the HEAP — `range({1: 2})` is `'dict'`, where the pure
+`typeName` would have put the `"object"` placeholder into a decided
+outcome. -/
+
+#py_check seq_lab.range3_step(5) raises
+  (.typeError "'list' object cannot be interpreted as an integer")
+#py_check seq_lab.range3_first(1) raises
+  (.typeError "'list' object cannot be interpreted as an integer")
+#py_check seq_lab.range3_str(5) raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check seq_lab.range1_dict() raises
+  (.typeError "'dict' object cannot be interpreted as an integer")

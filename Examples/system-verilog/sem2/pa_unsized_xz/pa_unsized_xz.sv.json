@@ -1,0 +1,1008 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "pa_unsized_xz",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/pa_unsized_xz/pa_unsized_xz.sv",
+      "sha256": "4be4d3081c1ee27b6f2af6a24641b471c60caf8aa6227dc429012fc916a1eb09"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 25,
+          "col": 1,
+          "end_line": 40,
+          "end_col": 10
+        },
+        "name": "pa_unsized_xz",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 26,
+              "col": 23,
+              "end_line": 26,
+              "end_col": 26
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 27,
+              "col": 23,
+              "end_line": 27,
+              "end_col": 24
+            },
+            "name": "s",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 28,
+              "col": 23,
+              "end_line": 28,
+              "end_col": 24
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 28,
+                      "col": 17,
+                      "end_line": 28,
+                      "end_col": 18
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 28,
+                      "col": 19,
+                      "end_line": 28,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 29,
+              "col": 23,
+              "end_line": 29,
+              "end_col": 25
+            },
+            "name": "z1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 29,
+                      "col": 17,
+                      "end_line": 29,
+                      "end_col": 19
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 29,
+                      "col": 20,
+                      "end_line": 29,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 30,
+              "col": 23,
+              "end_line": 30,
+              "end_col": 25
+            },
+            "name": "z2",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 30,
+                      "col": 17,
+                      "end_line": 30,
+                      "end_col": 19
+                    },
+                    "value": 35,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 30,
+                      "col": 20,
+                      "end_line": 30,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 36
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 31,
+              "col": 23,
+              "end_line": 31,
+              "end_col": 25
+            },
+            "name": "z3",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 31,
+                      "col": 17,
+                      "end_line": 31,
+                      "end_col": 19
+                    },
+                    "value": 47,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 31,
+                      "col": 20,
+                      "end_line": 31,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 48
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 32,
+              "col": 23,
+              "end_line": 32,
+              "end_col": 25
+            },
+            "name": "z4",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 32,
+                      "col": 17,
+                      "end_line": 32,
+                      "end_col": 19
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 32,
+                      "col": 20,
+                      "end_line": 32,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 33,
+              "col": 23,
+              "end_line": 33,
+              "end_col": 25
+            },
+            "name": "z5",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 33,
+                      "col": 17,
+                      "end_line": 33,
+                      "end_col": 19
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 33,
+                      "col": 20,
+                      "end_line": 33,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 35,
+              "col": 21,
+              "end_line": 35,
+              "end_col": 42
+            },
+            "name": "u1",
+            "module": "pa_unsized_xz_c40",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 35,
+                  "col": 28,
+                  "end_line": 35,
+                  "end_col": 32
+                },
+                "port": "i",
+                "dir": "in",
+                "expr": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 35,
+                    "col": 28,
+                    "end_line": 35,
+                    "end_col": 32
+                  },
+                  "sv_kind": "PortConnection:unsized-xz",
+                  "text": "'hx0"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 35,
+                  "col": 38,
+                  "end_line": 35,
+                  "end_col": 40
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 35,
+                    "col": 38,
+                    "end_line": 35,
+                    "end_col": 40
+                  },
+                  "width": 40,
+                  "name": "z1"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 36,
+              "col": 29,
+              "end_line": 36,
+              "end_col": 49
+            },
+            "name": "u2",
+            "module": "pa_unsized_xz_w",
+            "path": [],
+            "params": [
+              {
+                "name": "W",
+                "expr": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 36,
+                    "col": 24,
+                    "end_line": 36,
+                    "end_col": 26
+                  },
+                  "value": 36,
+                  "resolved_width": 32
+                }
+              }
+            ],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 36,
+                  "col": 36,
+                  "end_line": 36,
+                  "end_col": 39
+                },
+                "port": "i",
+                "dir": "in",
+                "expr": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 36,
+                    "col": 36,
+                    "end_line": 36,
+                    "end_col": 39
+                  },
+                  "sv_kind": "PortConnection:unsized-xz",
+                  "text": "'bz"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 36,
+                  "col": 45,
+                  "end_line": 36,
+                  "end_col": 47
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 36,
+                    "col": 45,
+                    "end_line": 36,
+                    "end_col": 47
+                  },
+                  "width": 36,
+                  "name": "z2"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 37,
+              "col": 29,
+              "end_line": 37,
+              "end_col": 50
+            },
+            "name": "u3",
+            "module": "pa_unsized_xz_w",
+            "path": [],
+            "params": [
+              {
+                "name": "W",
+                "expr": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 37,
+                    "col": 24,
+                    "end_line": 37,
+                    "end_col": 26
+                  },
+                  "value": 48,
+                  "resolved_width": 32
+                }
+              }
+            ],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 37,
+                  "col": 36,
+                  "end_line": 37,
+                  "end_col": 40
+                },
+                "port": "i",
+                "dir": "in",
+                "expr": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 37,
+                    "col": 36,
+                    "end_line": 37,
+                    "end_col": 40
+                  },
+                  "sv_kind": "PortConnection:unsized-xz",
+                  "text": "'hz1"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 37,
+                  "col": 46,
+                  "end_line": 37,
+                  "end_col": 48
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 37,
+                    "col": 46,
+                    "end_line": 37,
+                    "end_col": 48
+                  },
+                  "width": 48,
+                  "name": "z3"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 38,
+              "col": 21,
+              "end_line": 38,
+              "end_col": 52
+            },
+            "name": "u4",
+            "module": "pa_unsized_xz_c40",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 38,
+                  "col": 28,
+                  "end_line": 38,
+                  "end_col": 42
+                },
+                "port": "i",
+                "dir": "in",
+                "expr": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 38,
+                    "col": 28,
+                    "end_line": 38,
+                    "end_col": 42
+                  },
+                  "sv_kind": "PortConnection:unsized-xz",
+                  "text": "s ? 'hx0 : 'h5"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 38,
+                  "col": 48,
+                  "end_line": 38,
+                  "end_col": 50
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 38,
+                    "col": 48,
+                    "end_line": 38,
+                    "end_col": 50
+                  },
+                  "width": 40,
+                  "name": "z4"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 39,
+              "col": 21,
+              "end_line": 39,
+              "end_col": 46
+            },
+            "name": "u5",
+            "module": "pa_unsized_xz_c40",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 39,
+                  "col": 28,
+                  "end_line": 39,
+                  "end_col": 36
+                },
+                "port": "i",
+                "dir": "in",
+                "expr": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 39,
+                    "col": 28,
+                    "end_line": 39,
+                    "end_col": 36
+                  },
+                  "sv_kind": "PortConnection:unsized-xz",
+                  "text": "'hx0 | a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 39,
+                  "col": 42,
+                  "end_line": 39,
+                  "end_col": 44
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 39,
+                    "col": 42,
+                    "end_line": 39,
+                    "end_col": 44
+                  },
+                  "width": 40,
+                  "name": "z5"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 12,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "pa_unsized_xz_c40",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 46,
+              "end_line": 12,
+              "end_col": 47
+            },
+            "name": "i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 40,
+                      "end_line": 12,
+                      "end_col": 42
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 43,
+                      "end_line": 12,
+                      "end_col": 44
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 69,
+              "end_line": 12,
+              "end_col": 70
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 63,
+                      "end_line": 12,
+                      "end_col": 65
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 66,
+                      "end_line": 12,
+                      "end_col": 67
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 13,
+              "col": 10,
+              "end_line": 13,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 10,
+                "end_line": 13,
+                "end_col": 11
+              },
+              "width": 40,
+              "name": "o"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 14,
+                "end_line": 13,
+                "end_col": 15
+              },
+              "width": 40,
+              "name": "i"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 16,
+          "col": 1,
+          "end_line": 23,
+          "end_col": 10
+        },
+        "name": "pa_unsized_xz_w",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 17,
+              "col": 17,
+              "end_line": 17,
+              "end_col": 23
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 17,
+                      "end_line": 17,
+                      "end_col": 23
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 17,
+                      "end_line": 17,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 17,
+                "col": 21,
+                "end_line": 17,
+                "end_col": 23
+              },
+              "value": 40,
+              "resolved_width": 32
+            },
+            "resolved": 40
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 19,
+              "col": 24,
+              "end_line": 19,
+              "end_col": 25
+            },
+            "name": "i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 19,
+                      "col": 17,
+                      "end_line": 19,
+                      "end_col": 20
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 19,
+                        "col": 17,
+                        "end_line": 19,
+                        "end_col": 18
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 19,
+                        "col": 19,
+                        "end_line": 19,
+                        "end_col": 20
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 21,
+                      "end_line": 19,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 20,
+              "col": 24,
+              "end_line": 20,
+              "end_col": 25
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 20,
+                      "col": 17,
+                      "end_line": 20,
+                      "end_col": 20
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 20,
+                        "col": 17,
+                        "end_line": 20,
+                        "end_col": 18
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 20,
+                        "col": 19,
+                        "end_line": 20,
+                        "end_col": 20
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 21,
+                      "end_line": 20,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 22,
+              "col": 10,
+              "end_line": 22,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 22,
+                "col": 10,
+                "end_line": 22,
+                "end_col": 11
+              },
+              "width": 40,
+              "name": "o"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 22,
+                "col": 14,
+                "end_line": 22,
+                "end_col": 15
+              },
+              "width": 40,
+              "name": "i"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

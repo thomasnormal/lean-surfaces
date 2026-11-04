@@ -1,0 +1,44 @@
+chain -- attn: L-section attenuator with iterative impedance 3k (showpiece)
+* Section design (why the loaded per-stage ratio is 2/3 regardless of how
+* many sections follow): attn is a series 1k from a to b plus a shunt 6k
+* from b to ground. Its iterative impedance is Z with
+*   Z = 1k + (6k || Z)  =>  Z = 3k.
+* Terminate the last section in rt = 3k and, by induction, EVERY section
+* sees exactly 3k looking right: Zin = 1k + (6k || 3k) = 1k + 2k = 3k.
+* So each section's loaded transfer is (6k || 3k)/(1k + (6k || 3k)) = 2/3,
+* independent of the number of downstream sections, and a chain of N
+* sections gives v(out) = (2/3)^N * v(in) exactly.
+*
+* Top level: chains of N = 1, 2, 3 sections off the same ideal 5V source
+* (each terminated chain presents 3k, so they do not interact).
+* Lean-side family (spec.lean): chain : Nat -> Netlist instantiates the
+* extracted attn subckt N times; chain_attenuates: forall N >= 1,
+* v(out) = (2/3)^N * 5.
+*
+* ngspice 46 prevalidation (~/.local/bin/ngspice -b chain.cir, .op):
+*   Node    Voltage                      exact
+*   out3    1.481481e+00                 40/27 = (2/3)^3 * 5
+*   n2      2.222222e+00                 20/9
+*   n1      3.333333e+00                 10/3
+*   out2    2.222222e+00                 20/9  = (2/3)^2 * 5
+*   m2      3.333333e+00                 10/3
+*   out1    3.333333e+00                 10/3  = (2/3)^1 * 5
+*   in      5.000000e+00                 5
+*   Source  Current
+*   v1#branch  -5.00000e-03              -1/200 (three 3k chains in parallel = 1k)
+.subckt attn a b
+r1 a b 1k
+r2 b 0 6k
+.ends attn
+v1 in 0 dc 5
+x1 in out1 attn
+rt1 out1 0 3k
+x2a in m2 attn
+x2b m2 out2 attn
+rt2 out2 0 3k
+x3a in n1 attn
+x3b n1 n2 attn
+x3c n2 out3 attn
+rt3 out3 0 3k
+.op
+.end

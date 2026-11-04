@@ -1,0 +1,122 @@
+"""Annotated assignment (`AnnAssign`) — §L49 rung 2.
+
+docs/memory-model.md paragraph "annotated assignment" is the contract;
+docs/completeness.md rung 2 is the pricing. Every function here runs
+differentially against CPython 3.9 (harness/cases.json).
+
+THE MEASURED SPLIT. In a FUNCTION BODY PEP 526 does not evaluate the
+annotation at all, so `x: T = v` at a plain-name target is an ordinary
+assignment — exactly, with no condition on `T`. The rows below prove that
+by annotating with expressions that would RAISE if anyone evaluated them.
+At MODULE scope a simple target with a value and any annotation expression
+is admitted when the implicit table is unobservable; the exact
+`__annotations__ = table = {}` script idiom is also admitted and updates the
+shared heap mapping. The value is stored before the annotation runs, so a
+raising annotation leaves the target published. CLASS annotations stay loud,
+as does the value-less form, which binds nothing yet LOCALISES its name.
+"""
+
+g: "int" = 5
+
+
+def ann_module_global(n):
+    return g + n
+
+
+def ann_value(n):
+    x: int = n + 1
+    return x
+
+
+def ann_undefined_ann(n):
+    # the annotation names something that does not exist; CPython does not
+    # look, so neither does the model
+    x: NoSuchType = n
+    return x
+
+
+def ann_raising_ann(n):
+    # sharper: an annotation that would RAISE if it were evaluated. This is
+    # the row that makes "the annotation is not evaluated" falsifiable
+    # rather than asserted
+    x: (1 // 0) = n
+    return x
+
+
+def ann_subscript_ann(n):
+    # the modern spelling, whose annotation is a subscript of an undefined
+    # name -- still never evaluated
+    x: List[int] = n
+    return x
+
+
+def ann_str_ann(n):
+    # a string annotation (the forward-reference spelling)
+    x: "SomeForwardRef" = n
+    return x
+
+
+def ann_shadow_builtin(n):
+    # the TARGET shadows a builtin; the annotation names one. Neither is
+    # special: this is an ordinary local assignment
+    len: int = n
+    return len
+
+
+def ann_reassign(n):
+    x: int = 1
+    x = x + n
+    return x
+
+
+def ann_nested(n):
+    # the rewrite has to reach statements nested in compound bodies, which
+    # is what the extractor's `func_scope` flag is threaded for
+    t = 0
+    for i in [1, 2]:
+        y: int = i
+        t = t + y
+    if n > 0:
+        z: int = 10
+        t = t + z
+    while t < 0:
+        w: int = 1
+        t = t + w
+    return t
+
+
+def ann_aug(n):
+    total: int = 0
+    for i in range(n):
+        total += i
+    return total
+
+
+def ann_novalue(n):
+    # `x: int` binds nothing but localises the name. With no later read the
+    # declaration is an unobservable no-op.
+    x: int
+    return n
+
+
+def ann_novalue_read(n):
+    # CPython raises the exact UnboundLocalError: the annotation localised
+    # the name, and nothing ever bound it.
+    x: int
+    return x
+
+
+def ann_novalue_shadows_global(n):
+    # `g` is a module global holding 5, but the value-less annotation makes it
+    # LOCAL for the whole body, so CPython raises UnboundLocalError instead
+    # of reading the module global.
+    g: int
+    return g
+
+
+def ann_attr_target(n):
+    # A non-simple target (`simple == 0`) gets no `__annotations__` entry but
+    # its annotation is still evaluated before the ordinary store.
+    d = {}
+    d["k"]: int = n
+    return d["k"]

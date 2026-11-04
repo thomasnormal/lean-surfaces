@@ -1,0 +1,290 @@
+"""closure_lab — H7 nested defs and closures: the acceptance battery.
+
+The cell tier (docs/memory-model.md §nested defs and closures) admits nested
+defs whose enclosing frame shares every capture through a heap cell. Generator
+cells retain the same cell directory across suspension; escaped cells and
+unsupported compound `nonlocal` targets stay loud. A nested def inside a loop
+reuses the enclosing frame's cell. A direct nested-name call before its def
+is admitted through the static-local marker and raises CPython's
+`UnboundLocalError`.
+
+CPython is the oracle for every row.
+"""
+
+
+def basic(a):
+    b = a + 1
+
+    def inner(x):
+        return x * b + a
+    return inner(3)
+
+
+def param_only(a):
+    def f():
+        return a * 2
+    return f()
+
+
+def with_default(a):
+    def f(x, k=10):
+        return a * k + x
+    return f(1) + f(2, 3)
+
+
+def chain(a):
+    # a closure CAPTURING an earlier closure
+    def f():
+        return a + 1
+
+    def g():
+        return f() * 10
+    return g()
+
+
+def _mk(a):
+    def f():
+        return a * 3
+    return f
+
+
+def escape(a):
+    # the closure outlives its creator's frame; the snapshot survives
+    g = _mk(a)
+    return g()
+
+
+def identity_pair(a):
+    def f():
+        return a
+
+    def g():
+        return a
+    return (f == g, f == f, g is g)
+
+
+def truthy_closure(a):
+    def f():
+        return a
+    if f:
+        return 1
+    return 0
+
+
+def len_of_closure():
+    def f():
+        return 0
+    return len(f)
+
+
+def gen_closure(n):
+    lim = n * 2
+
+    def g():
+        i = 0
+        while i < lim:
+            yield i * i
+            i = i + 1
+    t = 0
+    for v in g():
+        t = t + v
+    return t
+
+
+def gen_closure_sorted(n):
+    def g():
+        i = n
+        while i > 0:
+            yield i % 3
+            i = i - 1
+    return sorted(g(), reverse=True)
+
+
+def gen_closure_any(n):
+    def g():
+        i = 0
+        while i < 5:
+            yield i == n
+            i = i + 1
+    return any(g())
+
+
+def rebound_after(a):
+    # the row that EXPOSES snapshot-vs-cell: CPython's f() sees the rebound
+    # a (its cell), a snapshot would see the old one. H7 cells ship `a` as
+    # `<cell>a`, and the call reads it from the defining frame.
+    def f():
+        return a
+    a = a + 1
+    return f()
+
+
+def cell_read_twice(a):
+    # the cell is read at EVERY call, so two calls straddling a rebinding
+    # answer differently — the property a snapshot cannot have
+    def f():
+        return a
+    first = f()
+    a = a * 10
+    return first * 100 + f()
+
+
+def two_closures_one_cell(a):
+    # ONE cell per frame, shared by every closure the frame creates
+    def f():
+        return a
+
+    def g():
+        return a * 2
+    a = a + 1
+    return f() * 10 + g()
+
+
+def cell_unbound_at_def(n):
+    # the cell is EMPTY when the def runs (`guard`'s shape in the shipped
+    # bound()); the call after the assignment reads it normally
+    def f():
+        return later + n
+    later = n * 5
+    return f()
+
+
+def gen_cell_before_call(a):
+    # the shipped `moves()` shape: a GENERATOR closure whose celled name is
+    # written after the def but before the generator is ever called
+    def g():
+        yield a
+        yield a + 1
+    a = a * 3
+    t = 0
+    for v in g():
+        t = t + v
+    return t
+
+
+def cell_escapes(a):
+    # the cell is read from the DEFINING frame at the call, so a closure
+    # that ESCAPES would read it stale — REFUSED at extraction
+    def f():
+        return a
+    a = a + 1
+    return f
+
+
+def escaped_cell_call(a):
+    # The closure escapes its defining frame, but the caller invokes it
+    # before the result crosses the public value boundary. The heap cell's
+    # stored content is the late-bound value CPython observes.
+    f = cell_escapes(a)
+    return f()
+
+
+def gen_cell_after_call(a):
+    # a generator reads its shared cell at every RESUME, so the rebinding
+    # between yields is visible just as it is in CPython
+    def g():
+        yield a
+        yield a
+    a = a + 1
+    t = 0
+    for v in g():
+        a = a + 1
+        t = t + v
+    return t
+
+
+def uses_nonlocal(a):
+    c = a
+
+    def f():
+        nonlocal c
+        c = c + 1
+    f()
+    return c
+
+
+def def_in_loop(a):
+    t = 0
+    while a > 0:
+        def f():
+            return a
+        t = t + f()
+        a = a - 1
+    return t
+
+
+def early_call(a):
+    r = f()
+
+    def f():
+        return a
+    return r
+
+
+def lam_basic(s, i, p):
+    # the shipped Position.move shape: a capture-free lambda assigned
+    # once, called after — H7's lambda-as-nested-def
+    put = lambda board, i, p: board[:i] + p + board[i + 1:]
+    board = put(s, i, p)
+    return put(board, 0, "X")
+
+
+def lam_capture(a):
+    k = a * 2
+    f = lambda x: x + k
+    return f(5)
+
+
+def lam_rebound(a):
+    # the exposing row again, lambda flavor: CPython's cell sees the
+    # rebound a, and so does the tier's
+    f = lambda: a
+    a = a + 1
+    return f()
+
+
+class TreeCounter:
+    """bound() arc pass 2 (docs/memory-model.md §nested defs and
+    closures, recursion addendum): the bound() SHAPE — a nested
+    generator yielding recursive results THROUGH the captured self,
+    folded below with a cutoff that abandons the drain. Each depth
+    executes its own `def kids():` (a fresh closure, a fresh generator);
+    `nodes` is the laziness observable — subtrees behind an abandoned
+    yield never run."""
+
+    def __init__(self):
+        self.nodes = 0
+
+    def tree(self, n, cut):
+        self.nodes = self.nodes + 1
+        if n == 0:
+            return 1
+
+        def kids():
+            k = 0
+            while k < 3:
+                yield self.tree(n - 1, cut)
+                k = k + 1
+
+        t = 0
+        for v in kids():
+            t = t + v
+            if t >= cut:
+                break
+        return t
+
+
+def gen_rec(n, cut):
+    c = TreeCounter()
+    t = c.tree(n, cut)
+    return (t, c.nodes)
+
+
+def rec_nested_name(n):
+    # The nested function captures its own name through the closure cell that
+    # CPython fills with the newly-created function before the first call.
+    def f(k):
+        if k == 0:
+            return 0
+        return 1 + f(k - 1)
+    return f(n)

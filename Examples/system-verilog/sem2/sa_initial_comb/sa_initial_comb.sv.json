@@ -1,0 +1,168 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sa_initial_comb",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sa_initial_comb/sa_initial_comb.sv",
+      "sha256": "f3569b9cc7ff950f7f7f8439faff1867c8a2a6a3730188c718911f8e4620fb1e"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "sa_initial_comb",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 16,
+              "end_line": 3,
+              "end_col": 17
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 17
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 20
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 6,
+                "end_col": 20
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 11,
+                  "end_line": 6,
+                  "end_col": 12
+                },
+                "width": 1,
+                "name": "y"
+              },
+              "value": {
+                "kind": "Literal",
+                "span": {
+                  "line": 6,
+                  "col": 15,
+                  "end_line": 6,
+                  "end_col": 19
+                },
+                "width": 1,
+                "bits": "0"
+              }
+            }
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 21
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 7,
+                "col": 15,
+                "end_line": 7,
+                "end_col": 21
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 15,
+                  "end_line": 7,
+                  "end_col": 16
+                },
+                "width": 1,
+                "name": "y"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 19,
+                  "end_line": 7,
+                  "end_col": 20
+                },
+                "width": 1,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 15,
+              "end_line": 7,
+              "end_col": 15
+            },
+            "sv_kind": "SlangAnalysis:MultipleAlwaysAssigns",
+            "text": "variable 'y' driven by always_comb procedure cannot be written to by any other process"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

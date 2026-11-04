@@ -1,0 +1,357 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/string_radix_literal/string_radix_literal.sv",
+  "source_sha256": "be1b3c274f926f65f30816f8f56a655dc59c06a05b913cd4eb75181649165995",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "name": "hv",
+            "width": 32,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 20,
+              "end_line": 6,
+              "end_col": 22
+            },
+            "name": "bv",
+            "width": 32,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 24,
+              "end_line": 6,
+              "end_col": 26
+            },
+            "name": "ov",
+            "width": 32,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 7
+                    },
+                    "width": 32,
+                    "name": "hv"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 10,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "width": 32,
+                    "bits": "0000000000000000000000000010xxxx",
+                    "string_literal_radix": "atohex",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 7
+                    },
+                    "width": 32,
+                    "name": "bv"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 9,
+                      "col": 10,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "width": 32,
+                    "bits": "000000000000000000000000000010x1",
+                    "string_literal_radix": "atobin",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 7
+                    },
+                    "width": 32,
+                    "name": "ov"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 10,
+                      "end_line": 10,
+                      "end_col": 20
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000111zzz",
+                    "string_literal_radix": "atooct",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 52
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 11,
+                        "col": 9,
+                        "end_line": 12,
+                        "end_col": 52
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 11,
+                          "col": 9,
+                          "end_line": 11,
+                          "end_col": 28
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 11,
+                            "col": 9,
+                            "end_line": 11,
+                            "end_col": 11
+                          },
+                          "width": 32,
+                          "name": "hv"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 16,
+                            "end_line": 11,
+                            "end_col": 28
+                          },
+                          "width": 32,
+                          "bits": "0000000000000000000000000010xxxx"
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 12,
+                          "col": 9,
+                          "end_line": 12,
+                          "end_col": 52
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 12,
+                            "col": 9,
+                            "end_line": 12,
+                            "end_col": 11
+                          },
+                          "width": 32,
+                          "name": "bv"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 12,
+                            "col": 16,
+                            "end_line": 12,
+                            "end_col": 52
+                          },
+                          "width": 32,
+                          "bits": "000000000000000000000000000010x1"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 52
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 9,
+                          "end_line": 13,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "ov"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 16,
+                          "end_line": 13,
+                          "end_col": 52
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000111zzz"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

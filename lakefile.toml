@@ -1,0 +1,108 @@
+name = "lean-models"
+defaultTargets = ["LeanModels", "Examples", "leanmodels-run", "circuit-dc-runner", "c-torture-run"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "v4.33.0-rc1"
+
+[[lean_lib]]
+name = "LeanModels"
+
+# ENVELOPES ARE BUILD INPUTS.  `load_program` reads a JSON envelope at
+# ELABORATION time, and lake knew nothing about it: editing an envelope
+# re-elaborated NOTHING, so a correct envelope fix looked green unchecked --
+# and so would a broken one.  A gate that cannot fail is worse than no gate,
+# because it is read as evidence.  `needs` mixes each named target's trace
+# into every module of this library (Lake/Build/Module.lean: the extraDep
+# job's trace is recovered by `getTrace` and mixed into `depTrace`, which is
+# added to the module trace), so a changed envelope now invalidates the
+# modules that load it.
+#
+# COST, ACCEPTED KNOWINGLY: `needs` is per-LIBRARY, not per-module, so ONE
+# envelope edit invalidates ALL 206 Examples modules.  That is acceptable
+# because an envelope edit always warranted its consumers' re-elaboration --
+# it is the case we were failing to do at all.  If it ever proves
+# intolerable the escape is a per-tier library split, not a narrower trace.
+#
+# ALSO ACCEPTED: over-coverage.  These directories hold 61 python and 8 spice
+# JSON files while only 51 are loaded by `load_program`, so editing a JSON
+# nothing loads also rebuilds.  Over-invalidation is the safe direction.
+[[lean_lib]]
+name = "Examples"
+globs = ["Examples.+"]
+needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes", "esEnvelopes", "svEnvelopes"]
+
+[[input_dir]]
+name = "circuitSources"
+path = "Examples/spice"
+text = true
+# `json` JOINS `cir` HERE, and the omission was the same inversion one level
+# up: this directory HAD a declaration that looked like coverage while
+# filtering its 8 JSON files out of it.  A partial filter reads as tracked.
+filter = { extension = ["cir", "json"] }
+
+# THE 51 LOADED ENVELOPES.  This tier had no declaration at all, which is why
+# every `load_program` site in it was untracked.  Of the three tiers only
+# verilog-a was genuinely covered.
+[[input_dir]]
+name = "pythonEnvelopes"
+path = "Examples/python"
+text = true
+filter = { extension = ["json"] }
+
+# THE C TIER'S OWN ENVELOPE, and the same omission one tier over.  754572e
+# closed this for python and named the shape; `Examples/c/sunfish/guards.lean`
+# does `load_c_program sunfishC from "Examples/c/sunfish/sunfish.json"` at
+# ELABORATION time, so that file is a build input and was tracked by nothing.
+# Regenerating the envelope did not invalidate the guards that read it, which
+# is the half a byte-identical regeneration selftest cannot cover: the selftest
+# proves the file is REPRODUCIBLE, this makes a CHANGED file rebuild.
+# (The 270 gcc.c-torture envelopes are NOT here and cannot be: the corpus is
+# GPL and lives outside the tree by docs/c23-goal.md §2. They are pinned by
+# content hash instead, which is the same guarantee bought a different way.)
+[[input_dir]]
+name = "cEnvelopes"
+path = "Examples/c"
+text = true
+filter = { extension = ["json"] }
+
+# THE ES TIER'S ENVELOPES (restored after a merge dropped 56bf840's addition:
+# the c-align branch predated it and a theirs-resolution reverted it — the
+# heading-survival class in a non-docs file). `load_es_program` reads these
+# fixtures at ELABORATION time.
+[[input_dir]]
+name = "esEnvelopes"
+path = "Examples/es"
+text = true
+filter = { extension = ["json"] }
+
+# THE SV TIER'S ENVELOPES, the same omission once more.  SystemVerilog
+# examples read their `.json` envelopes at ELABORATION time
+# (`load_design_sv2`, `EnvelopeIngest.loadFile`, and the `IO.FS.readFile`
+# fixture checks in `#eval`), so a regenerated envelope must re-elaborate its
+# consumers.  Same accepted cost as the other tiers: per-library
+# invalidation, and over-coverage of JSON nothing loads.
+[[input_dir]]
+name = "svEnvelopes"
+path = "Examples/system-verilog"
+text = true
+filter = { extension = ["json"] }
+
+[[input_dir]]
+name = "verilogASources"
+path = "Examples/verilog-a"
+text = true
+filter = { extension = ["va", "json"] }
+
+[[lean_exe]]
+name = "leanmodels-run"
+root = "Main"
+
+[[lean_exe]]
+name = "circuit-dc-runner"
+root = "LeanModels.Circuit.DCRunner"
+[[lean_exe]]
+name = "c-torture-run"
+root = "LeanModels.C.Torture"
+

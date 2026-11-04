@@ -1,0 +1,865 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/nested_fixed_array_dynamic_subarray_read_copy/nested_fixed_array_dynamic_subarray_read_copy.sv",
+  "source_sha256": "5172b9ad2b03907650562e687867f5d267eb80fd8789bf2cfb91bfc93f1bce8e",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[0][0]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[0][1]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[0][2]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[1][0]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[1][1]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "matrix[1][2]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 24
+            },
+            "name": "row[5]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 24
+            },
+            "name": "row[4]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 24
+            },
+            "name": "row[3]",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 14
+            },
+            "name": "index",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 16,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 57
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[0][0]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 18,
+                          "end_line": 8,
+                          "end_col": 22
+                        },
+                        "width": 4,
+                        "bits": "0001"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[0][1]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 24,
+                          "end_line": 8,
+                          "end_col": 28
+                        },
+                        "width": 4,
+                        "bits": "0010"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[0][2]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 30,
+                          "end_line": 8,
+                          "end_col": 34
+                        },
+                        "width": 4,
+                        "bits": "0011"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[1][0]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 39,
+                          "end_line": 8,
+                          "end_col": 43
+                        },
+                        "width": 4,
+                        "bits": "0100"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[1][1]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 45,
+                          "end_line": 8,
+                          "end_col": 49
+                        },
+                        "width": 4,
+                        "bits": "0101"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 8,
+                        "end_col": 57
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 5,
+                          "end_line": 8,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "matrix[1][2]"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 51,
+                          "end_line": 8,
+                          "end_col": 55
+                        },
+                        "width": 4,
+                        "bits": "0110"
+                      }
+                    }
+                  ],
+                  "fixed_array_nested_pattern_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "index"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 9,
+                      "col": 13,
+                      "end_line": 9,
+                      "end_col": 17
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 10,
+                      "col": 18,
+                      "end_line": 10,
+                      "end_col": 23
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 18,
+                        "end_line": 10,
+                        "end_col": 23
+                      },
+                      "width": 1,
+                      "name": "index"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 10,
+                        "col": 18,
+                        "end_line": 10,
+                        "end_col": 23
+                      },
+                      "width": 1,
+                      "bits": "0"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 24
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 5,
+                          "end_line": 10,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 8
+                          },
+                          "width": 4,
+                          "name": "row[5]"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 11,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "width": 4,
+                          "name": "matrix[0][0]"
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 5,
+                          "end_line": 10,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 8
+                          },
+                          "width": 4,
+                          "name": "row[4]"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 11,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "width": 4,
+                          "name": "matrix[0][1]"
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 5,
+                          "end_line": 10,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 8
+                          },
+                          "width": 4,
+                          "name": "row[3]"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 11,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "width": 4,
+                          "name": "matrix[0][2]"
+                        }
+                      }
+                    ]
+                  },
+                  "else": {
+                    "kind": "If",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 24
+                    },
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 10,
+                        "col": 18,
+                        "end_line": 10,
+                        "end_col": 23
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 10,
+                          "col": 18,
+                          "end_line": 10,
+                          "end_col": 23
+                        },
+                        "width": 1,
+                        "name": "index"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 10,
+                          "col": 18,
+                          "end_line": 10,
+                          "end_col": 23
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    },
+                    "then": {
+                      "kind": "Block",
+                      "span": {
+                        "line": 10,
+                        "col": 5,
+                        "end_line": 10,
+                        "end_col": 24
+                      },
+                      "stmts": [
+                        {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 5,
+                              "end_line": 10,
+                              "end_col": 8
+                            },
+                            "width": 4,
+                            "name": "row[5]"
+                          },
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 11,
+                              "end_line": 10,
+                              "end_col": 24
+                            },
+                            "width": 4,
+                            "name": "matrix[1][0]"
+                          }
+                        },
+                        {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 5,
+                              "end_line": 10,
+                              "end_col": 8
+                            },
+                            "width": 4,
+                            "name": "row[4]"
+                          },
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 11,
+                              "end_line": 10,
+                              "end_col": 24
+                            },
+                            "width": 4,
+                            "name": "matrix[1][1]"
+                          }
+                        },
+                        {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 10,
+                            "col": 5,
+                            "end_line": 10,
+                            "end_col": 24
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 5,
+                              "end_line": 10,
+                              "end_col": 8
+                            },
+                            "width": 4,
+                            "name": "row[3]"
+                          },
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 11,
+                              "end_line": 10,
+                              "end_col": 24
+                            },
+                            "width": 4,
+                            "name": "matrix[1][2]"
+                          }
+                        }
+                      ]
+                    },
+                    "else": null
+                  },
+                  "fixed_array_dynamic_subarray_read_copy_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 62
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 11,
+                        "col": 9,
+                        "end_line": 11,
+                        "end_col": 43
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 11,
+                          "col": 9,
+                          "end_line": 11,
+                          "end_col": 24
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 11,
+                            "col": 9,
+                            "end_line": 11,
+                            "end_col": 15
+                          },
+                          "width": 4,
+                          "name": "row[5]"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 20,
+                            "end_line": 11,
+                            "end_col": 24
+                          },
+                          "width": 4,
+                          "bits": "0100"
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 11,
+                          "col": 28,
+                          "end_line": 11,
+                          "end_col": 43
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 11,
+                            "col": 28,
+                            "end_line": 11,
+                            "end_col": 34
+                          },
+                          "width": 4,
+                          "name": "row[4]"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 39,
+                            "end_line": 11,
+                            "end_col": 43
+                          },
+                          "width": 4,
+                          "bits": "0101"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 11,
+                        "col": 47,
+                        "end_line": 11,
+                        "end_col": 62
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 47,
+                          "end_line": 11,
+                          "end_col": 53
+                        },
+                        "width": 4,
+                        "name": "row[3]"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 11,
+                          "col": 58,
+                          "end_line": 11,
+                          "end_col": 62
+                        },
+                        "width": 4,
+                        "bits": "0110"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

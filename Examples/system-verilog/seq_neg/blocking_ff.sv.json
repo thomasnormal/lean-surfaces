@@ -1,0 +1,184 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "blocking_ff",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/seq_neg/blocking_ff.sv",
+      "sha256": "52608610b7e1cc02637a6c3b3f04cc7c98529520704bd03360243b255c51dc86"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "blocking_ff",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 32,
+              "end_line": 2,
+              "end_col": 35
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 55,
+              "end_line": 2,
+              "end_col": 56
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 50,
+                      "end_line": 2,
+                      "end_col": 51
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 52,
+                      "end_line": 2,
+                      "end_col": 53
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 77,
+              "end_line": 2,
+              "end_col": 78
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 72,
+                      "end_line": 2,
+                      "end_col": 73
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 74,
+                      "end_line": 2,
+                      "end_col": 75
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 34
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 3,
+                "col": 28,
+                "end_line": 3,
+                "end_col": 34
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 28,
+                  "end_line": 3,
+                  "end_col": 29
+                },
+                "width": 4,
+                "name": "q"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 32,
+                  "end_line": 3,
+                  "end_col": 33
+                },
+                "width": 4,
+                "name": "d"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

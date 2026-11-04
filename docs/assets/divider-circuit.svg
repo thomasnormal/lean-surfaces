@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320"
+     viewBox="0 0 760 320" role="img"
+     aria-labelledby="title description">
+  <title id="title">Five-volt resistor divider</title>
+  <desc id="description">
+    A five-volt source drives a one-kilohm series resistor. The output node
+    connects through a two-kilohm resistor to ground.
+  </desc>
+
+  <rect width="760" height="320" fill="#ffffff"/>
+
+  <g fill="none" stroke="#1f2937" stroke-width="4"
+     stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top path and R1. -->
+    <path d="M150 70 H225"/>
+    <path d="M225 70 l15 -14 l24 28 l24 -28 l24 28 l24 -28 l24 28 l15 -14"/>
+    <path d="M375 70 H510"/>
+
+    <!-- Voltage source and its connections. -->
+    <path d="M150 70 V125"/>
+    <circle cx="150" cy="175" r="50"/>
+    <path d="M150 225 V260 H510"/>
+
+    <!-- R2 from output to ground. -->
+    <path d="M510 70 V110"/>
+    <path d="M510 110 l14 15 l-28 24 l28 24 l-28 24 l28 24 l-14 15"/>
+    <path d="M510 236 V260"/>
+
+    <!-- Ground. -->
+    <path d="M330 260 V278"/>
+    <path d="M300 278 H360"/>
+    <path d="M310 290 H350"/>
+    <path d="M320 302 H340"/>
+  </g>
+
+  <g fill="#1f2937" font-family="ui-monospace, SFMono-Regular, Consolas, monospace"
+     font-size="20">
+    <text x="136" y="42">in</text>
+    <text x="490" y="42">out</text>
+    <text x="270" y="38">R1  1 kOhm</text>
+    <text x="548" y="178">R2  2 kOhm</text>
+    <text x="42" y="181">V1  5 V</text>
+  </g>
+
+  <g fill="#1f2937">
+    <circle cx="150" cy="70" r="7"/>
+    <circle cx="510" cy="70" r="7"/>
+  </g>
+
+  <g fill="#1f2937" font-family="Arial, sans-serif" font-size="28"
+     text-anchor="middle">
+    <text x="150" y="165">+</text>
+    <text x="150" y="205">-</text>
+  </g>
+</svg>

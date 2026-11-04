@@ -1,0 +1,346 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "bit_param_fixed",
+ "envelope": "bit_param_fixed.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/sem2/bit_param_fixed/bit_param_fixed.sv",
+   "sha256": "dc8e2d9a90f61e2cecaf7f83b0a07a4b05efec00f58133eb85fe9b754a789451"
+  }
+ ],
+ "probe_points": "N=1;N=4;N=8",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 1
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "bit_param_fixed",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": null,
+      "default": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "resolved": 1
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      },
+      "two_state": true
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "BlockingAssign",
+       "target": {
+        "kind": "Ident",
+        "width": 8,
+        "name": "y"
+       },
+       "value": {
+        "kind": "Resize",
+        "width": 8,
+        "operand": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "a"
+        }
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 4
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "bit_param_fixed",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": null,
+      "default": {
+       "kind": "Int",
+       "value": 4,
+       "resolved_width": 32
+      },
+      "resolved": 4
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      },
+      "two_state": true
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "BlockingAssign",
+       "target": {
+        "kind": "Ident",
+        "width": 8,
+        "name": "y"
+       },
+       "value": {
+        "kind": "Resize",
+        "width": 8,
+        "operand": {
+         "kind": "Ident",
+         "width": 4,
+         "name": "a"
+        }
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "bit_param_fixed",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": null,
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "two_state": true
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "BlockingAssign",
+       "target": {
+        "kind": "Ident",
+        "width": 8,
+        "name": "y"
+       },
+       "value": {
+        "kind": "Ident",
+        "width": 8,
+        "name": "a"
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

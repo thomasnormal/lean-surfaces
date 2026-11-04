@@ -1,0 +1,482 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/enum_name_method/enum_name_method.sv",
+  "source_sha256": "811f28319cfc1bc16f1445d9168740ecbefbc101e6d0479a0fe0bacb1bdd1bb1",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 11,
+              "end_line": 5,
+              "end_col": 16
+            },
+            "name": "color",
+            "width": 2,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 19
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 10
+                    },
+                    "width": 2,
+                    "name": "color"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 13,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "width": 2,
+                    "bits": "01"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 42
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 9,
+                      "end_line": 8,
+                      "end_col": 23
+                    },
+                    "width": 1,
+                    "op": "==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 9,
+                        "end_line": 8,
+                        "end_col": 14
+                      },
+                      "width": 2,
+                      "name": "color"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 8,
+                        "col": 18,
+                        "end_line": 8,
+                        "end_col": 23
+                      },
+                      "width": 2,
+                      "bits": "01"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 42
+                    },
+                    "name": "$display",
+                    "format": "FAIL: %s",
+                    "args": [
+                      {
+                        "kind": "EnumName",
+                        "span": {
+                          "line": 11,
+                          "col": 28,
+                          "end_line": 11,
+                          "end_col": 40
+                        },
+                        "subject": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 11,
+                            "col": 28,
+                            "end_line": 11,
+                            "end_col": 33
+                          },
+                          "width": 2,
+                          "name": "color"
+                        },
+                        "cases": [
+                          {
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 11,
+                                "col": 28,
+                                "end_line": 11,
+                                "end_col": 40
+                              },
+                              "width": 2,
+                              "bits": "00"
+                            },
+                            "name": "RED"
+                          },
+                          {
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 11,
+                                "col": 28,
+                                "end_line": 11,
+                                "end_col": 40
+                              },
+                              "width": 2,
+                              "bits": "01"
+                            },
+                            "name": "GREEN"
+                          },
+                          {
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 11,
+                                "col": 28,
+                                "end_line": 11,
+                                "end_col": 40
+                              },
+                              "width": 2,
+                              "bits": "10"
+                            },
+                            "name": "BLUE"
+                          }
+                        ],
+                        "default": "",
+                        "enum_name_lowered": true
+                      }
+                    ],
+                    "arg_signed": [
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 10
+                    },
+                    "width": 2,
+                    "name": "color"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 12,
+                      "col": 13,
+                      "end_line": 12,
+                      "end_col": 17
+                    },
+                    "width": 2,
+                    "bits": "10"
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 39
+                  },
+                  "name": "$display",
+                  "format": "name=%s",
+                  "args": [
+                    {
+                      "kind": "EnumName",
+                      "span": {
+                        "line": 13,
+                        "col": 25,
+                        "end_line": 13,
+                        "end_col": 37
+                      },
+                      "subject": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 25,
+                          "end_line": 13,
+                          "end_col": 30
+                        },
+                        "width": 2,
+                        "name": "color"
+                      },
+                      "cases": [
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 13,
+                              "col": 25,
+                              "end_line": 13,
+                              "end_col": 37
+                            },
+                            "width": 2,
+                            "bits": "00"
+                          },
+                          "name": "RED"
+                        },
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 13,
+                              "col": 25,
+                              "end_line": 13,
+                              "end_col": 37
+                            },
+                            "width": 2,
+                            "bits": "01"
+                          },
+                          "name": "GREEN"
+                        },
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 13,
+                              "col": 25,
+                              "end_line": 13,
+                              "end_col": 37
+                            },
+                            "width": 2,
+                            "bits": "10"
+                          },
+                          "name": "BLUE"
+                        }
+                      ],
+                      "default": "",
+                      "enum_name_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 25
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 5,
+                      "end_line": 14,
+                      "end_col": 10
+                    },
+                    "width": 2,
+                    "name": "color"
+                  },
+                  "value": {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 14,
+                      "col": 13,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "width": 2,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 22,
+                        "end_line": 14,
+                        "end_col": 23
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000011"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 44
+                  },
+                  "name": "$display",
+                  "format": "unknown='%s'",
+                  "args": [
+                    {
+                      "kind": "EnumName",
+                      "span": {
+                        "line": 16,
+                        "col": 30,
+                        "end_line": 16,
+                        "end_col": 42
+                      },
+                      "subject": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 30,
+                          "end_line": 16,
+                          "end_col": 35
+                        },
+                        "width": 2,
+                        "name": "color"
+                      },
+                      "cases": [
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 30,
+                              "end_line": 16,
+                              "end_col": 42
+                            },
+                            "width": 2,
+                            "bits": "00"
+                          },
+                          "name": "RED"
+                        },
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 30,
+                              "end_line": 16,
+                              "end_col": 42
+                            },
+                            "width": 2,
+                            "bits": "01"
+                          },
+                          "name": "GREEN"
+                        },
+                        {
+                          "value": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 30,
+                              "end_line": 16,
+                              "end_col": 42
+                            },
+                            "width": 2,
+                            "bits": "10"
+                          },
+                          "name": "BLUE"
+                        }
+                      ],
+                      "default": "",
+                      "enum_name_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

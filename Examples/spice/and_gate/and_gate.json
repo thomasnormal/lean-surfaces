@@ -1,0 +1,207 @@
+{
+  "schema_version": "spice-0.1",
+  "language": "spice",
+  "frontend": {
+    "name": "spice-extract",
+    "version": "0.1"
+  },
+  "source_file": "Examples/spice/and_gate/and_gate.cir",
+  "source_sha256": "7900453b34c476f9eeb63353e06668f397a2fb5b0735c7a3ac337d2b6d5724e8",
+  "netlist": {
+    "kind": "Netlist",
+    "title": "transistor-level CMOS AND gate",
+    "subckts": [],
+    "cards": [
+      {
+        "kind": "M",
+        "span": {
+          "line": 8,
+          "end_line": 8
+        },
+        "name": "mpa",
+        "nodes": [
+          "nand",
+          "a",
+          "vdd",
+          "vdd"
+        ],
+        "model": "pmod"
+      },
+      {
+        "kind": "M",
+        "span": {
+          "line": 9,
+          "end_line": 9
+        },
+        "name": "mpb",
+        "nodes": [
+          "nand",
+          "b",
+          "vdd",
+          "vdd"
+        ],
+        "model": "pmod"
+      },
+      {
+        "kind": "M",
+        "span": {
+          "line": 10,
+          "end_line": 10
+        },
+        "name": "mna",
+        "nodes": [
+          "nand",
+          "a",
+          "nseries",
+          "0"
+        ],
+        "model": "nmod"
+      },
+      {
+        "kind": "M",
+        "span": {
+          "line": 11,
+          "end_line": 11
+        },
+        "name": "mnb",
+        "nodes": [
+          "nseries",
+          "b",
+          "0",
+          "0"
+        ],
+        "model": "nmod"
+      },
+      {
+        "kind": "M",
+        "span": {
+          "line": 13,
+          "end_line": 13
+        },
+        "name": "mpinv",
+        "nodes": [
+          "out",
+          "nand",
+          "vdd",
+          "vdd"
+        ],
+        "model": "pmod"
+      },
+      {
+        "kind": "M",
+        "span": {
+          "line": 14,
+          "end_line": 14
+        },
+        "name": "mninv",
+        "nodes": [
+          "out",
+          "nand",
+          "0",
+          "0"
+        ],
+        "model": "nmod"
+      },
+      {
+        "kind": "Model",
+        "span": {
+          "line": 17,
+          "end_line": 17
+        },
+        "name": "nmod",
+        "polarity": "nmos",
+        "parameters": [
+          {
+            "name": "level",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "vto",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "kp",
+            "value": {
+              "num": 1,
+              "den": 10000
+            }
+          },
+          {
+            "name": "lambda",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          },
+          {
+            "name": "is",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Model",
+        "span": {
+          "line": 18,
+          "end_line": 18
+        },
+        "name": "pmod",
+        "polarity": "pmos",
+        "parameters": [
+          {
+            "name": "level",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "vto",
+            "value": {
+              "num": -1,
+              "den": 1
+            }
+          },
+          {
+            "name": "kp",
+            "value": {
+              "num": 1,
+              "den": 20000
+            }
+          },
+          {
+            "name": "lambda",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          },
+          {
+            "name": "is",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Op",
+        "span": {
+          "line": 19,
+          "end_line": 19
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

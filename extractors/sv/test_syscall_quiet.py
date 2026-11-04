@@ -1,0 +1,81 @@
+"""Pure severity diagnostics are erased; effectful tasks stay loud."""
+
+import unittest
+
+from pyslang.ast import Compilation
+from pyslang.syntax import SyntaxTree
+
+import extract
+
+
+def lower(source):
+    tree = SyntaxTree.fromText(source)
+    compilation = Compilation()
+    compilation.addSyntaxTree(tree)
+    extract._SOURCE_BYTES = source.encode()
+    return extract.convert_design(tree.sourceManager, compilation)
+
+
+def nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from nodes(child)
+
+
+class QuietSeverityTasks(unittest.TestCase):
+    def test_literal_info_and_warning_are_empty(self):
+        design = lower(
+            'module top; initial begin $info("i"); $warning("w"); end endmodule')
+        self.assertEqual(
+            [node["name"] for node in nodes(design) if node.get("kind") == "SysCall"],
+            ["$info", "$warning"],
+        )
+        self.assertFalse(any(node.get("sv_kind") == "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_integral_argument_is_evaluated_and_diagnostic_dropped(self):
+        design = lower(
+            'module top; logic [3:0] x; initial $info("x=%0d", x); endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_opaque_real_and_time_arguments_are_erased_when_source_pure(self):
+        design = lower(
+            'module top; real r; initial begin '
+            '$info("r=%f t=%0t", r, $time); '
+            '$warning("literal=%f", 3.14); '
+            '$error("rt=%f", $realtime); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_effectful_real_argument_stays_loud(self):
+        design = lower(
+            'module top; int x; function real f(); x++; return 1.0; '
+            'endfunction initial $warning("r=%f", f()); endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_effectful_argument_stays_loud(self):
+        design = lower(
+            'module top; function int f(); return 1; endfunction '
+            'initial $warning("x=%0d", f()); endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_error_and_fatal_stay_loud(self):
+        design = lower(
+            'module top; initial begin $error("e"); $fatal(1, "f"); end endmodule')
+        kinds = [node.get("sv_kind") for node in nodes(design)]
+        self.assertEqual(kinds.count("ExpressionStatement:CallExpression"), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

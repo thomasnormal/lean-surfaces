@@ -1,0 +1,202 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "pi_explicit",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv",
+      "sha256": "c0874e3107988502b274a28ef75ce2e423c6fa1f431cc7aacf0b0eec861109a5"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "pi_explicit",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 21,
+              "end_line": 7,
+              "end_col": 24
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 26,
+              "end_line": 7,
+              "end_col": 27
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 32,
+              "end_line": 7,
+              "end_col": 33
+            },
+            "sv_kind": "PortSymbol:explicit-expression",
+            "text": "y"
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 11,
+              "col": 15,
+              "end_line": 11,
+              "end_col": 24
+            },
+            "name": "y",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 10,
+                      "end_line": 11,
+                      "end_col": 11
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 12,
+                      "end_line": 11,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 11,
+                "col": 19,
+                "end_line": 11,
+                "end_col": 24
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 12,
+              "end_col": 35
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 12,
+                "col": 25,
+                "end_line": 12,
+                "end_col": 35
+              },
+              "target": {
+                "kind": "BitSel",
+                "span": {
+                  "line": 12,
+                  "col": 25,
+                  "end_line": 12,
+                  "end_col": 29
+                },
+                "width": 1,
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 12,
+                    "col": 25,
+                    "end_line": 12,
+                    "end_col": 26
+                  },
+                  "width": 2,
+                  "name": "y"
+                },
+                "index": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 12,
+                    "col": 27,
+                    "end_line": 12,
+                    "end_col": 28
+                  },
+                  "value": 0,
+                  "resolved_width": 32
+                }
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 12,
+                  "col": 33,
+                  "end_line": 12,
+                  "end_col": 34
+                },
+                "width": 1,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

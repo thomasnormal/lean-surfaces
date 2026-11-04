@@ -1,0 +1,564 @@
+import LeanModels.Sv.Drive
+
+/-!
+# R1 inch 4a — waking suspended processes, and loading a `Design`
+
+Gaps that a process-free fixture concealed, closed together because none
+is testable without the others.
+
+**`regionQ` was only ever DRAINED** — `stepRegion` reads and clears it and
+nothing ever put an index in. `sawEdge`/`wakeEdges` are the missing half
+and live in `Slot.lean`, because `runSlots` has to call them and `Drive`
+imports `Slot`.
+
+**And `SvWorld` never mentioned `Design`.** `run` is `Design`-indexed;
+`runSlots` operated on a world someone hand-built. Until `elabDesign`
+exists the adequacy lemma cannot be *stated*, because there is no way to
+say "the same design" on both sides.
+
+**Waking was not enough: nothing was ever STARTED.** `stepRegion` reads
+`regionQ`; `ProcStatus.ready` is a different notion of readiness and no
+rule connected them. A design whose processes were all born `.ready` with
+an empty `regionQ` ran nothing at all — so no process ever reached its
+`@(posedge clk)`, and a process that is not suspended cannot be woken.
+`elabDesign` therefore schedules every process in Active at time 0, and
+`runProcOnce` re-enqueues a re-armed one; `stepRegion` drains its queue
+*before* the pass rather than clearing it after, so those re-entries are
+not thrown away by the pass that caused them. Three edits, one gap: an
+`always` block that runs exactly zero times instead of forever.
+
+**And the edge rule was half of §9.4.2.** It woke on `x→1` but not on
+`0→x`, while its own docstring claimed unknowns were never edges — three
+different rules in one definition. `edgeOn` states the clause: an `x`/`z`
+end IS an edge whenever the other end is a level. That is also the rule
+`Sem2.isNegedge` already had — and the two are now ONE definition,
+`isPosedge`/`isNegedge` in `Basic`, so the tier agrees with itself by
+construction rather than by inspection.
+
+## What is deliberately still LOUD
+
+The timed loader admits `always_comb`, `always_latch`, `always_ff`, and single-driver continuous `assign`
+through explicit implicit-sensitivity metadata on `ProcState`: each body runs
+once in Active at time zero, becomes dormant, and is queued again when a read
+signal changes. The legacy `elabDesign`/`runSelfCheck` path remains
+initial-only. Multiple continuous drivers stay loud until the scheduler has a
+net-driver table and IEEE four-state resolution; a last-writer approximation
+would be wrong. Delayed assignments and selected/concatenated targets remain
+outside this slice. A comb process that writes one of its own read signals is
+not silently treated as an edge wait; the write-name exclusion makes that
+self-trigger boundary explicit until the language-level guard is added.
+
+The timed region model admits literal level waits, while internally published
+edge events and other scheduler forms outside this slice remain loud. The M0 cycle model's
+fixpoint semantics remain separate; the timed runner uses the retained
+process table and the one Active/Inactive/NBA loop.
+-/
+
+namespace LeanModels.Sv
+
+open SelfCheck
+
+set_option autoImplicit false
+
+/-! ## Loading a design -/
+
+/-- One `Design` process as a schedulable `ProcState`.
+
+`always_ff @(posedge clk) body` becomes the residual
+`[waitEvent clk .pos, body]` **re-armed to itself** — which is the
+defunctionalized reading of `forever { @(posedge clk); body }`: run to the
+wait, suspend, and on completion reinstate the whole thing. -/
+def procOf : Process → Except String ProcState
+  | .alwaysFF clk body =>
+      let b : List SStmt := [.waitEvent clk .pos, .m0 body]
+      .ok { residual := b, status := .ready, arm := some b }
+  | .alwaysPlain clk body =>
+      let b : List SStmt := [.waitEvent clk .pos, .m0 body]
+      .ok { residual := b, status := .ready, arm := some b }
+  | .alwaysComb _ =>
+      .error "always_comb: comb sensitivity ('any read signal changed') has no Trigger; the region model needs a settle rule, and approximating it would be wrong"
+  | .assign _ _ =>
+      .error "continuous assign: timed scheduler required"
+  | .unsupported k t =>
+      .error s!"out-of-tier process '{k}': {t}"
+
+/-- Build the initial world for a `Design`: declaration-initialised signals
+and one `ProcState` per process. Loud on any process the region model
+cannot yet schedule.
+
+**Every process is SCHEDULED in Active at time 0**, not merely marked
+`.ready`. `stepRegion` reads `regionQ`, never `ProcStatus`, so those are
+two different notions of readiness and only one of them runs anything: a
+world whose processes are all `.ready` with an empty `regionQ` executes
+nothing at all, forever. Scheduling them is also §4.4's own rule — an
+`always_ff` starts at time 0, immediately reaches its `@(posedge clk)` and
+suspends there, and *that suspension is the only state from which
+`wakeEdges` can ever wake it*. -/
+def elabDesign (d : Design) : Except String SvWorld := do
+  let procs ← d.processes.mapM procOf
+  return { signals := initState d
+         , procs := procs
+         , regionQ := fun r => if r == Region.active then List.range procs.size else []
+         , out := {} }
+
+private partial def m0Writes : Stmt → List (Bool × String)
+  | .blockingAssign name _ | .nbaAssign name _ => [(false, name)]
+  | .ifStmt _ t e => m0Writes t ++ (e.toList.flatMap m0Writes)
+  | .block body => body.toList.flatMap m0Writes
+  | .unsupported _ _ => []
+
+private def targetWrite : PackedTarget → Bool × String
+  | .whole name _ _ | .selected name _ _ _ _ _ => (false, name)
+
+/-- Possible writes and edge sensitivities. This is conservative across
+branches: the kernel does not yet publish individual procedural edges. -/
+private partial def timedAccesses : SStmt → List (Bool × String)
+  | .m0 body => m0Writes body
+  | .assign _ name _ | .selectedAssign name _ _ _ _ _ _
+  | .selectedNbaAssign name _ _ _ _ _ _ | .localDecl name _ _ _ => [(false, name)]
+  -- `$dist_uniform` is an inout call: both the target and the seed are written.
+  | .distUniformAssign target seed _ _ _ => [(false, target), (false, seed)]
+  | .packedAssign targets _ | .packedNbaAssign targets _ => targets.map targetWrite
+  | .scanf _ _ outputs result => (outputs.flatten ++ result).map targetWrite
+  | .waitEvent signal _ => [(true, signal)]
+  | .waitExpr expression _ => expression.readNames.map (true, ·)
+  | .waitCond condition => (SExpr.readNames condition).map (fun name => (true, name))
+  | .ifStmt _ t e => timedAccesses t ++ (e.toList.flatMap timedAccesses)
+  | .block body => body.toList.flatMap timedAccesses
+  | .forLoop initializers _ steps body =>
+      initializers.toList.flatMap timedAccesses ++ steps.toList.flatMap timedAccesses ++
+        timedAccesses body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.flatMap timedAccesses ++ timedAccesses body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => timedAccesses body
+  | .breakLoop | .continueLoop | .triggerEvent _ | .sysCall _ _ _ | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _
+  | .finish | .skip
+  | .delay _ => []
+
+/-- Timing controls are illegal inside `always_comb`.  Keep that boundary at
+the timed loader rather than letting a suspended comb process become an
+unwakeable dormant process. -/
+partial def hasTimingControl : SStmt → Bool
+  | .delay _ | .waitEvent _ _ | .waitExpr _ _ | .waitCond _ | .triggerEvent _ => true
+  | .m0 _ | .assign _ _ _ | .selectedAssign _ _ _ _ _ _ _
+  | .selectedNbaAssign _ _ _ _ _ _ _ | .distUniformAssign _ _ _ _ _
+  | .packedAssign _ _ | .packedNbaAssign _ _ | .scanf _ _ _ _
+  | .breakLoop | .continueLoop | .localDecl _ _ _ _ | .sysCall _ _ _
+  | .strobe _ _ | .monitor _ _ | .severity _ | .fatal _ | .finish | .skip => false
+  | .ifStmt _ thenBranch elseBranch =>
+      hasTimingControl thenBranch || (elseBranch.map hasTimingControl).getD false
+  | .block body => body.toList.any hasTimingControl
+  | .forLoop initializers _ steps body =>
+      initializers.toList.any hasTimingControl || steps.toList.any hasTimingControl ||
+        hasTimingControl body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.any hasTimingControl || hasTimingControl body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => hasTimingControl body
+
+/-- An internally written edge source requires the kernel's per-publication
+wake rule; external stimulus is currently the only integrated edge source. -/
+def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
+  let accesses := d.procs.toList.flatMap fun proc =>
+    match proc with
+    | .initial body | .alwaysBody body | .alwaysImplicit body
+    | .alwaysComb body | .alwaysLatch body => timedAccesses body
+    | .alwaysPosedge clock body | .alwaysNegedge clock body
+    | .alwaysFF clock body | .alwaysFFNegedge clock body =>
+        (true, clock) :: timedAccesses body
+    | .alwaysFFGuarded clock _ _ body =>
+        (true, clock) :: timedAccesses body
+    | .alwaysFFReset clock reset body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetGuarded clock reset _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetGuardedReset clock reset _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetDualGuarded clock reset _ _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHigh clock reset body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHighGuarded clock reset _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHighGuardedReset clock reset _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFResetHighDualGuarded clock reset _ _ body =>
+        (true, clock) :: (true, reset) :: timedAccesses body
+    | .alwaysFFExprEvent expression _ body =>
+        expression.readNames.map (fun name => (true, name)) ++ timedAccesses body
+    | .alwaysFFExprReset clock _ reset _ body =>
+        (clock.readNames ++ reset.readNames).map (fun name => (true, name)) ++ timedAccesses body
+    | .alwaysFFExprEvents events body =>
+        events.flatMap (fun (expression, _) => expression.readNames.map (fun name => (true, name)))
+          ++ timedAccesses body
+    | .alwaysEvent events body =>
+        events.map (fun (name, _, _) => (true, name)) ++ timedAccesses body
+    | .alwaysExprEvent events body =>
+        events.flatMap (fun (event, _, _) =>
+          event.readNames.map (fun name => (true, name))) ++ timedAccesses body
+    | .alwaysMixedEvent events body =>
+        events.flatMap (fun (event, _, _) =>
+          event.readNames.map (fun name => (true, name))) ++ timedAccesses body
+    | .alwaysNamedEvent _ body => timedAccesses body
+    | .assign _ _ | .assignSelected _ _ _ _ _ _ _ => []
+    | .other _ _ => []
+  let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
+  accesses.any fun (watched, name) => watched && writes.contains name
+
+/-- Compile one source process to the existing retained statement interface.
+Plain `always` owns one loop residual, without an additional rearming carrier. -/
+private def timedProcOfRaw : SProc → Except String ProcState
+  | .initial body =>
+      pure { residual := [body], status := .ready }
+  | .alwaysBody body =>
+      if hasTimingControl body then
+        pure { residual := [.forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[] body], status := .ready }
+      else
+        .error "timed design rejects zero-delay always procedure"
+  | .alwaysImplicit body =>
+      let writes := SStmt.writeNames body
+      let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+      pure { residual := [body]
+           , status := .ready
+           , comb := true
+           , combReads := reads
+           , combBody := [body] }
+  | .alwaysComb body =>
+      if hasTimingControl body then
+        .error "timed design rejects timing control inside always_comb"
+      else
+        let writes := SStmt.writeNames body
+        let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+        pure { residual := [body]
+             , status := .ready
+             , comb := true
+             , combReads := reads
+             , combBody := [body] }
+  | .alwaysLatch body =>
+      if hasTimingControl body then
+        .error "timed design rejects timing control inside always_latch"
+      else
+        let writes := SStmt.writeNames body
+        let reads := (SStmt.readNames body).eraseDups.filter (fun name => !writes.contains name)
+        pure { residual := [body]
+             , status := .ready
+             , comb := true
+             , combReads := reads
+             , combBody := [body] }
+  | .assign target value =>
+      let body := .assign false target value
+      pure { residual := [body]
+           , status := .ready
+           , comb := true
+           , combReads := value.readNames.eraseDups
+           , combBody := [body]
+           , driverTarget := some target }
+  | .assignSelected target width descending indexSigned twoState index value =>
+      let body := .selectedAssign target width descending indexSigned twoState index value
+      pure { residual := [body]
+           , status := .ready
+           , comb := true
+           , combReads := (value.readNames ++ index.readNames).eraseDups
+           , combBody := [body]
+           , driverTarget := some target
+           , driverSelection := some (.selected target width descending indexSigned twoState index) }
+  | .alwaysPosedge clock body | .alwaysFF clock body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual }
+  | .alwaysFFGuarded clock edge guard body =>
+      let residual := [.waitEvent clock edge, body]
+      pure { residual, status := .ready, arm := some residual
+           , edgeGuard := some guard }
+  | .alwaysNegedge clock body | .alwaysFFNegedge clock body =>
+      let residual := [.waitEvent clock .neg, body]
+      pure { residual, status := .ready, arm := some residual }
+  | .alwaysFFReset clock reset body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset }
+  | .alwaysFFResetGuarded clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, edgeGuard := some guard }
+  | .alwaysFFResetGuardedReset clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetGuard := some guard }
+  | .alwaysFFResetDualGuarded clock reset clockGuard resetGuard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, edgeGuard := some clockGuard
+           , resetGuard := some resetGuard }
+  | .alwaysFFResetHigh clock reset body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos }
+  | .alwaysFFResetHighGuarded clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos
+           , edgeGuard := some guard }
+  | .alwaysFFResetHighGuardedReset clock reset guard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos
+           , resetGuard := some guard }
+  | .alwaysFFResetHighDualGuarded clock reset clockGuard resetGuard body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual
+           , resetTarget := some reset, resetEdge := .pos
+           , edgeGuard := some clockGuard, resetGuard := some resetGuard }
+  | .alwaysFFExprEvent expression edge body =>
+      let dependency := expression.readNames.head?.getD ""
+      let trigger := Trigger.atEdge dependency edge
+      let events := [(expression, edge, none)]
+      pure { residual := [body], status := .suspended trigger
+           , arm := some [body]
+           , eventExprs := events
+           , registration := some (.exprs events) }
+  | .alwaysFFExprReset clock clockEdge reset resetEdge body =>
+      let dependency := clock.readNames.head?.getD ""
+      let trigger := Trigger.atEdge dependency clockEdge
+      let events := [(clock, clockEdge, none), (reset, resetEdge, none)]
+      pure { residual := [body], status := .suspended trigger
+           , arm := some [body]
+           , eventExprs := events
+           , registration := some (.exprs events) }
+  | .alwaysFFExprEvents events body =>
+      match events with
+      | (expression, edge) :: _ =>
+          let dependency := expression.readNames.head?.getD ""
+          let trigger := Trigger.atEdge dependency edge
+          let retained := events.map fun (event, polarity) => (event, polarity, none)
+          pure { residual := [body], status := .suspended trigger
+               , arm := some [body]
+               , eventExprs := retained
+               , registration := some (.exprs retained) }
+      | [] => .error "timed design rejects an empty always_ff expression-event list"
+  | .alwaysEvent events body =>
+      match events with
+      | [] => .error "timed design rejects an empty event list"
+      | (signal, edge, _) :: _ =>
+          let trigger := Trigger.atEdge signal edge
+          let edgeEvents := events.map fun (name, polarity, _) => (name, polarity)
+          pure { residual := [body], status := .suspended trigger
+               , arm := some [body]
+               , eventEdges := edgeEvents
+               , eventGuards := events
+               , registration := some (.edges edgeEvents) }
+  | .alwaysExprEvent events body =>
+      match events with
+      | [] => .error "timed design rejects an empty event list"
+      | (event, edge, _) :: _ =>
+          let dependency := event.readNames.head?.getD ""
+          let trigger := Trigger.atEdge dependency edge
+          pure { residual := [body], status := .suspended trigger
+               , arm := some [body]
+               , eventExprs := events
+               , registration := some (.exprs events) }
+  | .alwaysMixedEvent events body =>
+      match events with
+      | [] => .error "timed design rejects an empty event list"
+      | (event, edge, _) :: _ =>
+          let dependency := event.readNames.head?.getD ""
+          let trigger := Trigger.atEdge dependency edge
+          pure { residual := [body], status := .suspended trigger
+               , arm := some [body]
+               , eventExprs := events
+               , eventExprByDependency := true
+               , registration := some (.exprs events) }
+  | .alwaysNamedEvent name body =>
+      let hidden := "$event:" ++ name
+      let trigger := Trigger.atEdge hidden .any
+      pure { residual := [body], status := .suspended trigger
+           , arm := some [body]
+           , eventEdges := [(hidden, .any)]
+           , eventGuards := [(hidden, .any, none)]
+           , registration := some (.edges [(hidden, .any)]) }
+  | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
+
+/-- Timing controls are illegal in every `always_ff` body.  Keep this guard
+outside the individual clock/reset encodings so the one contract covers
+positive, negative, guarded, and asynchronous-reset variants uniformly. -/
+private def alwaysFFBody : SProc → Option SStmt
+  | .alwaysFF _ body
+  | .alwaysFFGuarded _ _ _ body
+  | .alwaysFFNegedge _ body
+  | .alwaysFFReset _ _ body
+  | .alwaysFFResetGuarded _ _ _ body
+  | .alwaysFFResetGuardedReset _ _ _ body
+  | .alwaysFFResetDualGuarded _ _ _ _ body
+  | .alwaysFFResetHigh _ _ body
+  | .alwaysFFResetHighGuarded _ _ _ body
+  | .alwaysFFResetHighGuardedReset _ _ _ body
+  | .alwaysFFResetHighDualGuarded _ _ _ _ body => some body
+  | .alwaysFFExprEvent _ _ body => some body
+  | .alwaysFFExprReset _ _ _ _ body => some body
+  | .alwaysFFExprEvents _ body => some body
+  | _ => none
+
+def timedProcOf (proc : SProc) : Except String ProcState :=
+  match alwaysFFBody proc with
+  | some body =>
+      if hasTimingControl body then
+        .error "timed design rejects timing control inside always_ff"
+      else
+        timedProcOfRaw proc
+  | none => timedProcOfRaw proc
+
+/-- Public equations for the plain `always` loader boundary.  Keeping these
+equations here lets proof receipts state the timing-control premise without
+depending on the loader's private raw dispatcher. -/
+theorem timedProcOf_alwaysBody_of_timing (body : SStmt)
+    (h : hasTimingControl body = true) :
+    timedProcOf (.alwaysBody body) =
+      .ok { residual := [.forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[] body]
+          , status := .ready } := by
+  simp [timedProcOf, timedProcOfRaw, alwaysFFBody, h]
+  rfl
+
+theorem timedProcOf_alwaysBody_zero_delay (body : SStmt)
+    (h : hasTimingControl body = false) :
+    timedProcOf (.alwaysBody body) =
+      .error "timed design rejects zero-delay always procedure" := by
+  simp [timedProcOf, timedProcOfRaw, alwaysFFBody, h]
+
+/-- Build a scheduler world from the self-check envelope vocabulary.
+
+This surface admits `initial`, plain `always`, `always_comb`, `always_latch`,
+`always_ff`, finite scalar event-list `always`, single-driver continuous
+`assign`, and canonical positive-edge processes. Their continuations run through the existing
+scheduler with an explicit region oracle. Time is measured in that
+module's time-unit ticks; physical unit conversion is not inferred.
+`runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
+def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
+  if d.requiresTimeZero then
+    throw "timed design rejects time-zero-only $time lowering"
+  let assignTargets := d.procs.toList.filterMap fun proc =>
+    match proc with
+    | .assign target _ => some target
+    | _ => none
+  for target in assignTargets do
+    match d.decls.toList.find? (fun decl => decl.name == target) with
+    | none => throw s!"continuous assign target '{target}' is undeclared"
+    | some decl =>
+        if !decl.isNet && !decl.isOutput then
+          throw s!"continuous assign target '{target}' is not a net"
+  let procs ← d.procs.toList.mapM timedProcOf
+  if procs.isEmpty then
+    .error "timed design requires at least one procedural process"
+  let signals ← match SelfCheck.initDecls fuel d.decls.toList [] with
+    | .ok signals => pure signals
+    | .timeout => .error "timed design declaration initialization exhausted fuel"
+    | .unsupported msg => .error s!"timed design declaration initialization: {msg}"
+  let procs := procs.toArray
+  let readyIndices := (List.range procs.size).filter fun i =>
+    match procs[i]? with
+    | some ps => ps.status == .ready
+    | none => false
+  return { signals := signals
+         , procs := procs
+         , drivers := Array.replicate procs.size (none : Option LVec)
+         , regionQ := fun r => if r == Region.active then readyIndices else []
+         , out := {} }
+
+/-- A time-zero approximation cannot enter the timed executor at any fuel. -/
+theorem elabTimedDesign_requiresTimeZero (fuel : Nat) (d : SelfCheck.Design)
+    (restricted : d.requiresTimeZero = true) :
+    elabTimedDesign fuel d = .error "timed design rejects time-zero-only $time lowering" := by
+  simp [elabTimedDesign, restricted]
+  rfl
+
+/-! ## Guards -/
+
+section Guards
+
+/-- `always_ff @(posedge clk) n = 1;` — one process, one clock. -/
+private def ffDesign : Design :=
+  { name := "ff"
+  , decls := #[{ name := "clk", width := 1, isInput := true },
+               { name := "n", width := 4 }]
+  , processes := #[.alwaysFF "clk" (.blockingAssign "n" (.lit (LVec.ofNat 4 1)))] }
+
+-- an always_ff design LOADS, and its process is armed
+#guard (elabDesign ffDesign).toOption.isSome
+#guard ((elabDesign ffDesign).toOption.map (fun w => w.procs.size)) == some 1
+#guard ((elabDesign ffDesign).toOption.bind (fun w => (w.procs[0]?).map (·.arm.isSome))) == some true
+
+-- the legacy self-check loader still keeps always_comb loud
+#guard (elabDesign { name := "c", decls := #[], processes := #[.alwaysComb (.blockingAssign "y" (.ident "a"))] }).toOption.isNone
+
+/-! **THE RE-ARM GUARD.** Two posedges, and the process is still alive after
+the second — it re-armed rather than finishing. Before `ProcState.arm` this
+process was marked `.finished` after its first body completed and every
+later slot silently did nothing: a SHORTER TRACE, not an error. -/
+private def ffWorld : SvWorld := (elabDesign ffDesign).toOption.getD {}
+
+private def clkStim : List SvState :=
+  [[("clk", LVec.ofNat 1 0)], [("clk", LVec.ofNat 1 1)],
+   [("clk", LVec.ofNat 1 0)], [("clk", LVec.ofNat 1 1)]]
+
+/-- Run to completion and keep BOTH halves. `Drive`'s own `traceOf` is
+`private` to that module, so it is not in scope here; and the re-arm guard
+needs the final world, not just the trace. -/
+private def runOn (m : SvM RegionTrace) (w : SvWorld) : Option (RegionTrace × SvWorld) :=
+  match SvM.exec m w with
+  | .ok (.ok tr, w') => some (tr, w')
+  | _ => none
+
+private def isFinished (p : ProcState) : Bool :=
+  match p.status with
+  | .finished => true
+  | _ => false
+
+private def isWaitingOnEdge (p : ProcState) : Bool :=
+  match p.status with
+  | .suspended (.atEdge _ _) | .suspended (.atExpr _ _) => true
+  | _ => false
+
+private def ran : Option (RegionTrace × SvWorld) := runOn (runSlots ρ_src 256 clkStim) ffWorld
+
+-- the driver produces one slot per stimulus entry over a REAL loaded design
+#guard (ran.map (·.1.length)) == some 4
+
+-- the body DID run: `n` was assigned by the always block. This is the guard
+-- that fails if the process is loaded but never scheduled — `n` stays `x`
+-- and `toNat?` is `none`, not `some 1`.
+#guard (ran.bind (fun r => (SvState.lookup r.2.signals "n").bind LVec.toNat?)) == some 1
+
+-- and the process is NOT finished after two posedges: it re-armed
+#guard (ran.bind (fun r => (r.2.procs[0]?).map isFinished)) == some false
+
+-- ... and it is back to WAITING on its clock edge, which is what re-arming
+-- MEANS. Checked separately because a process that never ran at all would
+-- also be "not finished" — that is a vacuous pass, and it is the exact
+-- shape the process-free fixture kept producing.
+#guard (ran.bind (fun r => (r.2.procs[0]?).map isWaitingOnEdge)) == some true
+
+/-! **§9.4.2 edge detection.** An `x`/`z` end is an edge whenever the OTHER
+end is a level — leaving a known 0 and arriving at a known 1 are both
+posedges. Only `x→z`/`z→x` and a value against itself are edgeless. -/
+#guard sawEdge [("c", LVec.ofNat 1 0)] [("c", LVec.ofNat 1 1)] "c" .pos == true
+#guard sawEdge [("c", LVec.xVec 1)]    [("c", LVec.ofNat 1 1)] "c" .pos == true
+#guard sawEdge [("c", LVec.ofNat 1 0)] [("c", LVec.xVec 1)]    "c" .pos == true
+#guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.ofNat 1 1)] "c" .pos == false
+#guard sawEdge [("c", LVec.xVec 1)]    [("c", LVec.xVec 1)]    "c" .pos == false
+-- a falling clock is a negedge and NOT a posedge — the rule is directional
+#guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.ofNat 1 0)] "c" .pos == false
+#guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.ofNat 1 0)] "c" .neg == true
+-- ... and the negedge half is the exact mirror (`Basic.isNegedge`, the
+-- same definition the M1 reset phase reads)
+#guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.xVec 1)]    "c" .neg == true
+#guard sawEdge [("c", LVec.xVec 1)]    [("c", LVec.ofNat 1 0)] "c" .neg == true
+-- x -> z is NOT an edge in either direction: neither end is a level
+#guard sawEdge [("c", LVec.xVec 1)] [("c", LVec.replicate 1 .lz)] "c" .pos == false
+#guard sawEdge [("c", LVec.xVec 1)] [("c", LVec.replicate 1 .lz)] "c" .neg == false
+-- an undeclared signal reads x against x, so it can never wake anything
+#guard sawEdge [] [("c", LVec.ofNat 1 1)] "nosuch" .pos == false
+
+end Guards
+
+end LeanModels.Sv

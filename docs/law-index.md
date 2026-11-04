@@ -1,0 +1,1003 @@
+# THE LAW INDEX — every rule, and where it lives
+
+**This is the page a lane loads at session start.** It restates nothing. Each
+row is a **hook phrase** — the project's own words wherever possible — and a
+**pointer to the law's durable home**. Go there to read it; come back here to
+find it.
+
+Why an index and not a summary: §7.1a's lesson generalizes past the lock —
+*a protocol that lives only in the scratchpad is one purge from gone, and a
+pointer to a durable home is not a durable home.* A summary would be a
+fourteenth copy of each rule, which is the exact defect
+`docs/duplication-audit.md` measured. So: pointers only.
+
+**The index's own ids are `MEAS-`, `STMT-`, `PROOF-`, `OPS-` and `CLONE-`.**
+They are *not* amendment numbers — `A4` already means amendment 4 in §7.1a,
+and a second numbering over the same letter would be a citation trap.
+
+### Reading the pointers
+
+* `docs/family-architecture.md §7.1a` — section numbers, the doc's own `§N.N`
+  and `§N.Na` spelling.
+* `docs/backlog.md §Lnn` — the archive's `## Lnn` headings, cited the way the
+  doc cites them.
+* `docs/backlog/<lane>.md YYYY-MM-DD-<lane>-<n>` — per-lane entries (§9.5).
+* `AGENTS.md § <heading>` — AGENTS.md has **eight `##` headings and no `###`
+  at all**, so its laws are cited by heading plus the bullet, row or rule
+  name.
+* A script path — some laws live as **code**, and that is deliberate:
+  *the doc DESCRIBES, this script IS.*
+
+### Three traps in the citations themselves
+
+1. **Two amendment rows are marked LOST at source.** §7.1a's register carries
+   no recovered text for amendments 1 and 3. Any claim that the protocol is
+   fully written down is false by the register's own admission.
+2. **`docs/backlog.md`'s bare "law N" numbering has drifted** — §L41 records
+   *"the FIFTH renumber this lane has taken today"*, and §L34/§L38 cite a
+   "law 5" of an entry whose own list has three. Cite by the `§Lnn` that
+   houses the law, never by a bare law number.
+3. **`§5.1`/`§5.2` resolve differently depending on which file you stand in.**
+   `docs/duplication-audit.md` has its own `§5.1`/`§5.2`, unrelated to
+   `docs/family-architecture.md`'s. Always carry the filename.
+
+---
+
+## A. MEASUREMENT LAWS — how you measure, count, compare
+
+| id | hook | home |
+| --- | --- | --- |
+| MEAS-1 | census before pricing | `docs/family-architecture.md §3.2` item 4 |
+| MEAS-2 | one census-instrument pattern per tier; fixed name → fixed JSON path | `docs/family-architecture.md §5.4` |
+| MEAS-3 | a `--compare` mode against the committed JSON | `docs/family-architecture.md §5.4` |
+| MEAS-4 | every refusal path RUN, not admired | `docs/family-architecture.md §5.4` |
+| MEAS-5 | an empty census is an instrument fault, never a finding | `docs/family-architecture.md §5.4` |
+| MEAS-6 | double-run byte-identical, verified | `docs/family-architecture.md §5.4` |
+| MEAS-7 | every quoted number paired with the STATE it came from | `docs/family-architecture.md §5.4` |
+| MEAS-8 | the instrument stamps the frontend FAMILY and the profile | `docs/family-architecture.md §5.4` |
+| MEAS-9 | a gate that is a permanent SKIP is a check pretending | `docs/family-architecture.md §5.4` |
+| MEAS-10 | A NUMBER CARRIES THE STATE IT WAS MEASURED IN — the provenance law | `docs/family-architecture.md §5.4a` |
+| MEAS-11 | an axiom print is meaningful only from a zero-error elaboration | `docs/family-architecture.md §0.1 II(a)` |
+| MEAS-12 | a grep that agrees with your prior is the one to re-run | `docs/family-architecture.md §5.4a` |
+| MEAS-13 | a bare-word grep over prose is not a type census | `docs/family-architecture.md §3.1` |
+| MEAS-14 | two measurements of one fact, never checked against each other | `docs/family-architecture.md §3.1` |
+| MEAS-15 | VACUOUS is not a verdict — a nothing-run never scores agreement | `docs/family-architecture.md §5.3` |
+| MEAS-16 | DIVERGE must be zero, and REFUSE is never agreement | `docs/family-architecture.md §5.1` |
+| MEAS-17 | MATCH is MEMBERSHIP at enumerated sites, not equality | `docs/family-architecture.md §5.1` |
+| MEAS-18 | REFUSE's four causes retire on different schedules; never pooled | `docs/family-architecture.md §5.2` |
+| MEAS-19 | the manifest is generated and checked, never hand-maintained | `docs/family-architecture.md §5.5` |
+| MEAS-20 | coverage = stated / (stated + refused + out-of-tier), per edition | `docs/family-architecture.md §5.5` |
+| MEAS-21 | suites drive SCOPE; one exemplar drives the PROOF LIBRARY | `docs/family-architecture.md §5.6` |
+| MEAS-22 | a number is adopted when a SECOND rule reproduces it | `docs/family-architecture.md §1.2` |
+| MEAS-23 | a corpus's LICENSE and PROVENANCE are registry fields | `docs/family-architecture.md §1.2`, carried at §8 step 0 |
+| MEAS-24 | a corpus that vendors the standard it tests is disqualified | `docs/family-architecture.md §1.2` |
+| MEAS-25 | no ISO text is reproduced anywhere in this repository | `docs/family-architecture.md §2.1`, restated §11 |
+| MEAS-26 | the neutral layer is the measured INTERSECTION | `docs/family-architecture.md §1.3` |
+| MEAS-27 | CENSUS-GATED PLACEMENT — a sibling only when a measurement convicts | `docs/family-architecture.md §2.4` clause (1) |
+| MEAS-28 | duplication policed by an instrument, not by discipline | `docs/family-architecture.md §2.4` — gate: `tools/dupes.sh` |
+| MEAS-29 | clause citations must be checked data, not prose | `docs/family-architecture.md §2.5` |
+| MEAS-30 | inside a `.md` an untagged `§` is an internal reference | `docs/family-architecture.md §2.5` |
+| MEAS-31 | no step's claim is real until an instrument re-derives it | `docs/family-architecture.md §8` preamble |
+| MEAS-32 | LIGHT audit every keeper tick, FULL every ~10 landings | `docs/family-architecture.md §9.7` |
+| MEAS-33 | an audit that does not re-measure what it reported is prose again | `docs/family-architecture.md §9.7` |
+| MEAS-34 | an amendment from an incident is a hypothesis until re-run | `docs/family-architecture.md §9.7` |
+| MEAS-35 | a `--compare` that cannot exit nonzero cannot gate | `docs/family-architecture.md §9.1`; `docs/duplication-audit.md §1.2` (a) |
+| MEAS-36 | four `git_rev` copies swallow failure and stamp null | `docs/family-architecture.md §9.1`; `docs/duplication-audit.md §1.2` (b) |
+| MEAS-37 | the double-run clause is implemented ZERO times | `docs/duplication-audit.md §0` finding 2 |
+| MEAS-38 | nine + five spellings for two provenance concepts | `docs/duplication-audit.md §1.2` (c) |
+| MEAS-39 | 28 except-and-pass sites — silent degrade, censused | `docs/duplication-audit.md §1.2` (b) |
+| MEAS-40 | exit codes: 0 agree / 1 drift / 2 refusal | `docs/duplication-audit.md §1.3`, restated §10 |
+| MEAS-41 | a failed revision lookup must refuse, never stamp null | `docs/duplication-audit.md §10` item (b) |
+| MEAS-42 | verify a fix in BOTH directions (agree and drift) | `docs/duplication-audit.md §10`, the verification table |
+| MEAS-43 | say when no Lean was executed for a document's numbers | `docs/duplication-audit.md` front-matter |
+| MEAS-44 | a gate is not a census — §5.4 does not bind it | `docs/duplication-audit.md §7` |
+| MEAS-45 | non-vacuity reported as DELTAS is the law's stronger form | `docs/duplication-audit.md §7` |
+| MEAS-46 | rank tiers by `sole`, never by `present` | `AGENTS.md § Orientation` item 3 |
+| MEAS-47 | rank by `sole`, THEN price the winner before building it | `AGENTS.md § Orientation` item 3 |
+| MEAS-48 | BOTH ENDS pinned separately — oracle and frontend | `AGENTS.md § Orientation` item 3 |
+| MEAS-49 | a `live` count, so definitions-only never counts as a run | `AGENTS.md § Orientation` item 3 |
+| MEAS-50 | a routine harness run never executes arbitrary stdlib top level | `AGENTS.md § Orientation` item 3 |
+| MEAS-51 | never spawn one runner per row — one `--batch` process | `AGENTS.md § The workflow` |
+| MEAS-52 | both harnesses compare the exception CLASS, not just stdout+exit | `AGENTS.md § Orientation` item 3 |
+| MEAS-53 | `--self-test` walks a tree built to make the tool answer PURE | `AGENTS.md § Orientation` item 3, "Instrument discipline" |
+| MEAS-54 | do not ask a command that has nothing to say | `docs/backlog.md §L82` |
+| MEAS-55 | run the expression on the fixture and compare heap sizes FIRST | `docs/backlog.md §L25`, standing-law item 1 |
+| MEAS-56 | before writing a fuel NUMERAL, measure the minimum | `docs/backlog.md §L25`, standing-law item 2 |
+| MEAS-57 | eight seconds each, before any premise is written | `docs/backlog.md §L27` |
+| MEAS-58 | cache a computed fixture as a literal, pin it once | `docs/backlog.md §L28` finding 3 |
+| MEAS-59 | a classifier that absorbs what it does not recognize is confidently wrong | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-2` |
+| MEAS-60 | an empty diff measured nothing — it is not a docs-only landing | `docs/backlog/qol.md 2026-08-22-qol-1` — gate: `tools/triad.sh` |
+| MEAS-61 | sized from the pinned spec BEFORE being written | `docs/backlog/es.md 2026-08-22-es-1` |
+| MEAS-62 | CONFIDENCE, priced — HIGH only for what was read at the pin | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
+| MEAS-63 | a decoder that matches must also cite; an honest miss is loud | `docs/backlog/qol.md 2026-08-22-qol-3` |
+| MEAS-64 | a cross-lane transcription carries a TRIPWIRE, or it is a lie with a fuse | `docs/family-architecture.md §5.4` |
+| MEAS-65 | stamp the copy — a stamped copy goes out of date, an unstamped one goes wrong | `docs/family-architecture.md §5.4` |
+| MEAS-66 | enumerate what each gate is pointed AT; an unpointed claim is ungated | `docs/family-architecture.md §5.4b` |
+| MEAS-67 | a gate set is audited by ENUMERATION, never by execution | `docs/family-architecture.md §5.4b` |
+| MEAS-68 | an expected-to-fail artifact is the weakest gate in any set — pin the COUNT | `docs/family-architecture.md §5.4b` |
+| MEAS-69 | present-tense prose is FIXED; a dated record is ANNOTATED | `docs/family-architecture.md §5.4b` |
+| MEAS-70 | a pattern position is a position IN A DECLARATION, never a shape in a file | `docs/family-architecture.md §5.4a` |
+| MEAS-71 | a number a gate PUBLISHED is a second artifact — correct it where it was published | `docs/family-architecture.md §5.4a` |
+| MEAS-72 | an instrument selecting by content excludes ITSELF by identity, never by pattern | `docs/family-architecture.md §5.4` |
+| MEAS-73 | a check that cannot fire is the audit's own VACUOUS category | `docs/family-architecture.md §9.7` |
+| MEAS-74 | a no-code closure is closed when the AUDIT FILE carries the reason | `docs/family-architecture.md §9.7` |
+| MEAS-75 | MEAS-28's first consolidation: the Lean lexer once | `docs/family-architecture.md §2.4` — gate: `tools/leanlex.sh` |
+| MEAS-76 | an entry point REFUSES unknown arguments at line one | `docs/family-architecture.md §5.4` |
+| MEAS-77 | a correct refusal is not a mitigation — the hazard sits behind it | `docs/family-architecture.md §7.1a` A13 corollary |
+| MEAS-78 | an instrument optimization is proved by OUTPUT EQUALITY, never by speed | `docs/family-architecture.md §5.4a` |
+| MEAS-79 | the optimization that is also a SIMPLIFICATION deletes a distinction — pin it in a row | `docs/family-architecture.md §5.4a` |
+| MEAS-80 | two tools disagreeing: find the artifact that DEFINES the fact, one reader | `docs/family-architecture.md §5.4a` — gate: `tools/lakeinfo.sh` |
+| MEAS-81 | a guard must ask the question its MESSAGE claims to answer | `docs/family-architecture.md §5.4a` |
+| MEAS-82 | a guessed pointer is worse than a missing one — `UNRESOLVED`, never guessed | `docs/family-architecture.md §5.4b` — gate: `tools/laws.sh --gate-set` |
+| MEAS-83 | an empty field in a whitespace-separated record is not a field | `docs/family-architecture.md §5.4b` |
+| MEAS-84 | a fixture is not enforcement — strip the self-test before attributing | `docs/family-architecture.md §9.7` — gate: `tools/laws.sh` |
+| MEAS-85 | past the budget every count is a FLOOR, and the verdict goes to a FILE | `docs/family-architecture.md §9.7` |
+| MEAS-86 | heartbeats are a DETERMINISTIC step count; wall time is not — say why it was dropped | `docs/family-architecture.md §5.4a` |
+| MEAS-87 | a probe cannot certify its own definitions — the TREE's green ledger does | `docs/family-architecture.md §5.4a` |
+| MEAS-88 | check whose CLOSURE a file sits in before placing two things side by side | `docs/family-architecture.md §2.4` clause (1a) |
+| MEAS-89 | a table asserting how the interpreter classifies is unfalsifiable until the interpreter confirms it | `docs/family-architecture.md §5.2` |
+| MEAS-90 | a false blanket claim HIDES the real gap — the claim is why nobody looked | `docs/family-architecture.md §5.4` |
+| MEAS-91 | cite by NAME — fixing offsets buys one landing of accuracy | `docs/family-architecture.md §5.4` |
+| MEAS-92 | a row is closed when the CLAIM is true; a substituted remedy must SAY WHICH | `docs/family-architecture.md §9.7` |
+| MEAS-93 | a new instrument's FIRST finding is the one to re-run against the OLD input | `docs/family-architecture.md §5.4b` |
+| MEAS-94 | a DECLARATION is not a CALL; a CALL is not a RUN — the gate ladder's four states | `docs/family-architecture.md §5.4b` |
+| MEAS-95 | enumeration over-reports, execution under-reports — a gate set needs both | `docs/family-architecture.md §5.4b` |
+| MEAS-96 | a right action taken for a wrong STATED reason survives the fix | `docs/family-architecture.md §5.4b`; `docs/backlog/architecture.md 2026-08-23-architecture-32` |
+| MEAS-97 | an unconditional byte-comparing gate inherits every unpinned input it compares | `docs/family-architecture.md §5.4b` |
+| MEAS-98 | a green that holds because nobody has released is evidence about the WORLD | `docs/family-architecture.md §5.4b` |
+| MEAS-99 | a flagged wart plus a new gate is an armed bomb — re-read dormancy records | `docs/family-architecture.md §5.4b`, §9.7 trigger |
+| MEAS-100 | a RED BUILD is an outage of every gate behind it | `docs/family-architecture.md §5.4b` |
+| MEAS-101 | the PIN AUDIT belongs to the arming commit — both arms of any `||` fallback | `docs/family-architecture.md §5.4b` |
+| MEAS-102 | a hint is an instruction; one that reproduces the defect IS the defect | `docs/family-architecture.md §5.4b` |
+| MEAS-103 | a number from another tier prices yours only if the STRUCTURES match | cookbook §22; `docs/family-architecture.md §9.7` |
+| MEAS-104 | a NAMED blocker is a next step; an unnamed one is a wall | `docs/family-architecture.md §9.7` |
+| MEAS-105 | a census that names a LANGUAGE when it measured one of its TIERS | cookbook §22; `docs/backlog/architecture.md 2026-08-23-architecture-35` |
+| MEAS-106 | the tell is the UNIFORMITY, not the count — a wrong column, not a systemic bug | `docs/family-architecture.md §5.4b` |
+| MEAS-107 | an unexercised gate is not a gate; it is a claim | `docs/family-architecture.md §5.4b` |
+| MEAS-108 | zero for a class the tier CAN emit is about the CORPUS; cannot build, about the TIER | `docs/family-architecture.md §5.2` |
+| MEAS-109 | a well-named blocker NARROWS each time it is re-stated | `docs/family-architecture.md §9.7` |
+| MEAS-110 | a proof demotes the rows about the RELATION IT PROVED, and no others | `docs/family-architecture.md §5.4a` |
+| MEAS-111 | generalization by composition — a consumer widening a quantifier for free is a measurement | `docs/family-architecture.md §5.6` |
+| MEAS-112 | corpus-driven selection finds the frontier's traversable point BY CONSTRUCTION | `docs/family-architecture.md §9` |
+| MEAS-113 | an upstream representation's unit is not YOUR unit — a parser's kinds are the parser's | `docs/family-architecture.md §5.4a` |
+| MEAS-114 | re-run the census when the plan becomes EXPENSIVE — the last point a refutation is free | `docs/family-architecture.md §9.0a` |
+| MEAS-115 | a PERFORMANCE SYMPTOM is a modelling question — the faithful shape is often the cheap one | `docs/family-architecture.md §5.4a` |
+| MEAS-116 | once PROVED for one implementation, a spec adjudicates its SIBLINGS — a third adjudicator kind | `docs/family-architecture.md §5.6` |
+| MEAS-117 | named single rows beside an exhaustive sweep — so a failure lands BY NAME | `docs/family-architecture.md §5.6` |
+| MEAS-118 | ~~`+0` is a precedence fact~~ **RETRACTED** — a construct's delta is a function of the CURRENT VOCABULARY | `docs/family-architecture.md §9.0b` |
+| MEAS-118a | a law minted from a DELTA inherits the delta's baseline — state it, or it is a measurement pretending to be a principle | `docs/family-architecture.md §9.0b` |
+| MEAS-118b | a number from a one-off script can only be WITHDRAWN, never corrected | `docs/family-architecture.md §9.0b` |
+| MEAS-119 | THE CONJUNCTIVE LAW — price a rung against the FAMILY it belongs to, report both numbers | `docs/family-architecture.md §9.0b` |
+| MEAS-120 | decide whether a blocker lives in the VALUE or in the REFERENCE — different owners | `docs/family-architecture.md §5.4a` |
+| MEAS-121 | the discriminating case is `(FUNCTION, ARGUMENT)` — not the function alone | `docs/family-architecture.md §5.6` |
+| MEAS-122 | rows the wrong model PASSES < rows it FAILS < rows it CANNOT STATE | `docs/family-architecture.md §5.6` |
+| MEAS-123 | every symptom of a missing LEMMA is also a symptom of a missing IMPORT — grep the TREE | `docs/family-architecture.md §9.0a` |
+| MEAS-124 | pre-flight a name-collision grep for every name a landing DECLARES | `docs/family-architecture.md §9.0a` |
+| MEAS-125 | attribute staleness to a PHASE — queue and build are different costs | `docs/family-architecture.md §7.2` |
+| MEAS-126 | order work by what is SHARED, not by what is NEXT | `docs/family-architecture.md §9.0b` |
+| MEAS-127 | a predicted maintenance COST inherits the unit error of the construct it prices | `docs/family-architecture.md §5.4a` |
+| MEAS-128 | an OPENING is witnessed with the oracle's expectation, never a second decision site | `docs/family-architecture.md §5.4a` |
+| MEAS-129 | a coverage PIN is maintained in the landing that grows the artifact | `docs/family-architecture.md §5.4a` |
+| MEAS-130 | NO STANDING EXCEPTION — another lane's dated record is annotated by that lane, not on instruction | `docs/family-architecture.md §9.5a` |
+| MEAS-131 | enumerate a gate's scope by DISCOVERY — a list is maintained by the attention that wrote the defect | `docs/family-architecture.md §5.4b` — gate: `tools/ci.sh` argv-guards |
+| MEAS-132 | a newly written READER defaults to UNDER-reading, the direction that reports all clear | `docs/family-architecture.md §5.4b` |
+| MEAS-133 | a fixture is not a TOOL — the mirror of a fixture is not enforcement | `docs/family-architecture.md §5.4b` |
+| MEAS-134 | FLAG a duplicate, never de-dupe — a de-dupe could silently shrink a set | `docs/family-architecture.md §5.4b` |
+| MEAS-135 | a guard that ALWAYS fires is as useless as one that never can — MEAS-35's mirror | `docs/family-architecture.md §5.4b` |
+| MEAS-136 | a re-baseline names what the guard now watches AND reports that no published fact moved | `docs/family-architecture.md §5.4b` |
+| MEAS-137 | a duty that has never been EXECUTED is a plan, not a duty | `docs/family-architecture.md §5.4b` |
+| MEAS-138 | a PROCEDURE is not a GATE — instrument it, or rename it | `docs/family-architecture.md §5.4b` |
+| MEAS-139 | WAITING names an EXECUTABLE trigger, or it is a euphemism for stopped | `docs/family-architecture.md §9` |
+| MEAS-140 | a channel that greps the CONSTRUCTOR cannot see the TYPE — enumerate the KINDS of position | `docs/family-architecture.md §5.4a`; `tools/sites.sh` |
+| MEAS-141 | a leading dot and a qualifier are different dots — what PRECEDES the dot decides | `docs/family-architecture.md §5.4a` |
+| MEAS-142 | DUPLICATION IS DISCOVERED BY CHANGING, not by reading — grep the OLD VALUE | `docs/family-architecture.md §7.2` |
+| MEAS-143 | pair every "did not change" row with a "did happen" sibling | `docs/family-architecture.md §5.4b` |
+| MEAS-144 | a document that ENUMERATES a set owns that set's maintenance | `docs/family-architecture.md §7.2` |
+| MEAS-145 | a WITNESS must fail for the reason it names — the SPELLING has to be in tier | `docs/family-architecture.md §5.4` |
+| MEAS-146 | INAPPLICABLE, NOT OPTIONAL — a requested artifact with no subject | `docs/family-architecture.md §9.7` |
+| MEAS-147 | a zero DELTA across a capability inch is a claim about the INCH — three zeroes, never pooled | `docs/family-architecture.md §5.2` |
+| MEAS-148 | scope evidence per WORKING DIRECTORY (`--git-dir`) — the cache is part of what produced the green | `docs/family-architecture.md §5.4a-i` |
+| MEAS-149 | a ledger of ATTEMPTS is a log; a log is not evidence of a verdict | `docs/family-architecture.md §5.4a-i` |
+| MEAS-150 | A FULL BUILD IS ITS OWN ROOT, however it was reached | `docs/family-architecture.md §5.4a-i` |
+| MEAS-151 | unit rows test the CALLEE's arguments; only the seam tests the CALL SITE | `docs/family-architecture.md §5.4b` |
+| MEAS-152 | a transform on NOTHING produces nothing and reports success doing it | `docs/family-architecture.md §5.4b` |
+| MEAS-153 | when one predicate SUBSUMES another, ask it FIRST | `docs/family-architecture.md §5.4a-i` |
+| MEAS-154 | THE GOAL IS COMPLETION — full-spec support, measured by the tier's own conformance suite | `docs/family-architecture.md §9.0` |
+| MEAS-155 | every lane ledger carries its standing SPEC-COVERAGE number, per landing, stamped | `docs/family-architecture.md §9.0` |
+| MEAS-156 | a milestone is a WAYPOINT — "the exemplar is complete" never describes a TIER | `docs/family-architecture.md §9.0` |
+| MEAS-157 | a completion claim cites a SUITE NUMBER and its SHA, or it is about an artifact | `docs/family-architecture.md §9.0` |
+| MEAS-158 | THE SPEC SURFACE IS A CONSUMER — completion unlocks a deferral; the census still orders it | `docs/family-architecture.md §9.0` |
+| MEAS-159 | WAITING is a property of a SLICE, never of a LANE | `docs/family-architecture.md §9` |
+| MEAS-160 | the strongest row kills TWO wrong models in OPPOSITE directions — the direction names the culprit | `docs/family-architecture.md §5.6` |
+| MEAS-161 | a minted law caught its own lane's FUTURE error — the register is predictive, not only descriptive | `docs/family-architecture.md §9.7` |
+| MEAS-162 | a coverage table publishes TWO denominators and the cost of the choice | `docs/family-architecture.md §9.0` |
+| MEAS-163 | a SYNTACTIC-ONLY win must never be banked in a coverage number | `docs/family-architecture.md §9.0` |
+| MEAS-164 | no corpus witness RELOCATES the discriminator into the call — census, relocate, confirm | `docs/family-architecture.md §9.0` |
+| MEAS-165 | the conjunctive law's third level — a file needs every FUNCTION it calls, not the package's name | `docs/family-architecture.md §9.0b` |
+| MEAS-166 | an ALTERNATION derived from a census is a consequence; one adopted as convention is a rhythm | `docs/family-architecture.md §9.0b` |
+| MEAS-167 | a mechanism's acceptance case needs TWO entries — one row proves an answer, two prove a lookup | `docs/family-architecture.md §5.6` |
+| MEAS-168 | the gate lands WITH the capability — fixes-live-in-gates applied at birth skips the incident | `docs/family-architecture.md §5.6` |
+| MEAS-169 | import-REACHABILITY completes the pre-flight pair: names you USE that resolve nowhere | `docs/family-architecture.md §9.0a` |
+| MEAS-170 | a coverage number's DENOMINATOR counts what could have DISAGREED | `docs/family-architecture.md §9.0` |
+| MEAS-171 | a numerator earned by FORWARDING needs the theorem that the forwarding is faithful | `docs/family-architecture.md §9.0` |
+| MEAS-172 | a goal theorem nobody has TYPED is one nobody can typecheck against | `docs/family-architecture.md §9.0` |
+| MEAS-173 | a DECLINED alternative is recorded with the measurement that declined it | `docs/family-architecture.md §9.0` |
+| MEAS-174 | the NUMERATOR counts only what the family's definition ADMITS | `docs/family-architecture.md §9.0` |
+| MEAS-175 | a census that predicts its own gain TO THE UNIT is calibration evidence — **AMENDED**: only when PREDICTOR and SCORER are independent; a same-instrument match verifies TRANSCRIPTION, not truth | `docs/family-architecture.md §9.0` |
+| MEAS-176 | NAMED, NOT COUNTED — a live obligation kept out of the denominator until its premise is proved | `docs/family-architecture.md §9.0` |
+| MEAS-177 | a RE-FOUNDING's size is the count of statements that NAME the interpreter | `docs/family-architecture.md §5.4a` |
+| MEAS-178 | a SECTION CITATION is mechanically checkable — same class as the docs_check anchors | `docs/family-architecture.md §5.4b` |
+| MEAS-179 | when the ambient verdict is CONSTANT, every bit of information is in the pin | `docs/family-architecture.md §5.4b` |
+| MEAS-180 | "does not apply at all" is a claim about a LIBRARY — only writing the bridge measures it | `docs/family-architecture.md §8` item 11 |
+| MEAS-181 | record a correction as a REFINEMENT with both halves, never as an erratum | `docs/family-architecture.md §8` item 11 |
+| MEAS-182 | a qualifier may attach to a RANGE of dated entries — rewriting destroys what was known when | `docs/family-architecture.md §8` item 11 |
+| MEAS-183 | a STATUS COLUMN names what it measures — in-tree and rostered are separate facts | `docs/family-architecture.md §1.2` |
+| MEAS-184 | a verdict certifies a TREE, never a TITLE — compare the certified tree against the claim | `docs/family-architecture.md §5.4a-i` |
+| MEAS-185 | witness ranking **AMENDED**: tree identity FIRST, `Built`/`Replayed` SECOND, clock THIRD (duration is a corroborator, not the witness) | `docs/family-architecture.md §5.4a-i` |
+| MEAS-186 | a REFUSAL is a pending measurement — the model emits the datum the census cannot see | `docs/family-architecture.md §5.2` |
+| MEAS-187 | a clause number RESOLVES; a RANGE enumerates, and a range is edition-relative | `docs/family-architecture.md §2.5` |
+| MEAS-188 | a CORPUS can settle an edition question a missing document cannot — presence, never semantics | `docs/family-architecture.md §2.5` |
+| MEAS-189 | after "what is it pointed at", ask WHAT MAKES IT RUN — a gate reached by accident retires by accident | `docs/family-architecture.md §5.4b` |
+| MEAS-190 | PARTITION instruments by corpus dependence; the one that needs it names its re-acquisition | `docs/family-architecture.md §5.4b` |
+| MEAS-191 | a `+0` disclosed in the PLAN is a control; the same number in the retrospective is accounting | `docs/family-architecture.md §9.0b` |
+| MEAS-192 | non-vacuity is a CHAIN OF LINKS — a link whose only guard is nested within it is unguarded | `docs/family-architecture.md §5.3` |
+| MEAS-193 | a coverage bound has a DIRECTION and must state it — "syntactic ⇒ upper" is not general | `docs/family-architecture.md §9.0` |
+| MEAS-194 | a COUNT IN PROSE without its unit becomes whichever count the reader needs | `docs/family-architecture.md §3.2` |
+| MEAS-195 | an open-obligation census reads the DECLARATION, never the commentary | `docs/family-architecture.md §5.4a` |
+| MEAS-196 | a standing DISCLOSURE lives where the claim is served, not where the apology is filed | `docs/family-architecture.md §9.0` |
+| MEAS-197 | a loudness guard present in 1 of 163 files is DECLARED, not POINTED — record the ladder position with the law | `docs/family-architecture.md §7.1a` |
+| MEAS-198 | completeness is counted PER ORIENTATION, not per lemma NAME | `docs/family-architecture.md §9.0` |
+| MEAS-199 | a pin move is drift or deliberate — PRIOR DECLARATION plus named departures decides | `docs/family-architecture.md §5.4b` |
+| MEAS-200 | the LAST RUNG is the tall one — the census says so in advance, not after | `docs/family-architecture.md §9.0b` |
+| MEAS-201 | the acceptance hierarchy ranks CLAIMS, not CLAIMANTS — a coordinator's hypothesis enters at the same rung | `docs/family-architecture.md §5.6` |
+| MEAS-202 | a guard's REPUTATION and its MECHANISM drift apart silently — read the mechanism | `docs/family-architecture.md §7.2` |
+| MEAS-203 | RE-POINTING a guard is not monotone tightening — each flipped verdict owes its reasoning where the check lives | `docs/family-architecture.md §7.2` |
+| MEAS-204 | a defect in a PRIMITIVE: census its other callers before closing | `docs/family-architecture.md §7.2` |
+| MEAS-205 | ask the ORACLE that already answers — a label re-derived inline is a second, weaker classifier | `docs/family-architecture.md §7.2` |
+| MEAS-206 | a TAXONOMY OF ABSENCE belongs at the print statement, where a zero and a non-answer become one | `docs/family-architecture.md §7.2` |
+| MEAS-207 | a failure that only ever costs TIME has no constituency for fixing it | `docs/family-architecture.md §5.4b` |
+| MEAS-208 | AN ID IS ONE TOKEN — a migration-tolerant gate separates old-valid from never-valid | `docs/family-architecture.md §9.5` |
+| MEAS-209 | a CONVENTION in a charter can be a DEFECT in a tool — re-check prose rules against the program that reads them | `docs/family-architecture.md §9.5a` |
+| MEAS-210 | reconciliation splits: TENSE/STATUS at the merge, REASONING/LAWS inbound — does the edit change what it CLAIMS or WHEN | `docs/family-architecture.md §9.5a` |
+| MEAS-211 | the merge fixes what is FALSE; only the owner sees what is now REDUNDANT | `docs/family-architecture.md §9.5a` |
+| MEAS-212 | two remedies for one symptom: an ENTRY gets an id, a SECTION HEADER gets demoted — never an invented id | `docs/family-architecture.md §9.5` |
+| MEAS-213 | a guard that can NAME a defect it cannot CLASSIFY must hand it to someone who can | `docs/family-architecture.md §9.5` |
+| MEAS-214 | a DECLARED divergence is a DEBT, not a verdict — registered, aged and gated, never narrated | `docs/family-architecture.md §5.0a` |
+| MEAS-215 | the divergence register is gated BOTH ways — silently fixed is a stale claim, silently widened is worse | `docs/family-architecture.md §5.0a` |
+| MEAS-216 | declared divergences are a THIRD quantity in §9.0 — neither numerator nor denominator | `docs/family-architecture.md §5.0a` |
+| MEAS-217 | INHERITED is not ORIGINATED — the retirement condition lives upstream, and the citation is the obligation | `docs/family-architecture.md §5.0a` |
+| MEAS-218 | an INGESTION REWRITE is available exactly when the construct's meaning is decided by SYNTAX | `docs/family-architecture.md §5.4a` |
+| MEAS-219 | a census sampling from ONE POSITION measures that position's rule, not the construct's | `docs/family-architecture.md §5.4a` |
+| MEAS-220 | a docstring that ENUMERATES is a census no instrument re-runs; a CLOSED LIST argues against its own repair | `docs/family-architecture.md §5.4` |
+| MEAS-221 | a debt row's MODEL field is a MEASUREMENT — the row and its instrument land in one commit | `docs/family-architecture.md §5.0a` |
+| MEAS-222 | LAYERED INSTRUMENTS — the build gates the CONTENT, the harness gates the EXISTENCE | `docs/family-architecture.md §5.0a` |
+| MEAS-223 | a retirement condition names what must CHANGE and what must NOT — the negative half blocks the flattering repair | `docs/family-architecture.md §5.0a` |
+| MEAS-224 | INHERITED-FROM-SELF keeps the field: origin ≠ site, and the condition gets STRONGER | `docs/family-architecture.md §5.0a` |
+| MEAS-225 | reading master and BEING on master are different needs — a bare mirror satisfies the first | `docs/family-architecture.md §7.2` |
+| MEAS-226 | a witness is a TOKEN PLUS THE PHASE it was read from — a log is not a bag of lines | `docs/family-architecture.md §5.4a-i` |
+| MEAS-227 | the certified-tree boundary is expressed at MERGE GRANULARITY — separate shas, declared before | `docs/family-architecture.md §5.4a-i` |
+| MEAS-228 | to choose between model SHAPES, ask which one ACCEPTS a program the oracle REJECTS | `docs/family-architecture.md §5.6` |
+| MEAS-229 | a ROW COUNT is not acceptance power — the non-vacuity flips measure which rows do the work | `docs/family-architecture.md §5.6` |
+| MEAS-230 | a duplicated SPECIFICATION is found by the namespace, not by review | `docs/family-architecture.md §2.4` |
+| MEAS-231 | a plan that prices its next rung EXACTLY makes a falsifiable claim — the landing calibrates the instrument | `docs/family-architecture.md §9.0b` |
+| MEAS-232 | a refusal can be honest about the MODEL and false about the WORLD — only corpus-derived shapes catch it | `docs/family-architecture.md §5.2` |
+| MEAS-233 | where duplication is tempting, PIN BY `rfl` — not a second implementation that agrees | `docs/family-architecture.md §2.4` |
+| MEAS-234 | "empty for a statable reason" is a third kind of zero — the debt belongs on the refusal, not the gate | `docs/family-architecture.md §5.4b` |
+| MEAS-235 | a DEFERRAL carries its ladder position and its trigger, like a law | `docs/family-architecture.md §5.4b` |
+| MEAS-236 | COUNT DEFECTS AFTER UNIFICATION, never by error lines | `docs/family-architecture.md §7.1a` |
+| MEAS-237 | a library's own WORKAROUNDS are evidence about what it cannot do — the simprocs are the confession | `docs/family-architecture.md §7.1a` |
+| MEAS-238 | NOTHING CHECKS a ticket's base was ever green — the queue outlasts the fix | `docs/family-architecture.md §7.2` |
+| MEAS-239 | THREE STATES: green, red-on-my-work, ABORTED — collapsing the third concedes a defect you do not have | `docs/family-architecture.md §7.2` |
+| MEAS-240 | a finding about the TOOL that is also true of your own IN-FLIGHT tenure is an INCIDENT, not a finding | `docs/family-architecture.md §5.4a-i` |
+| MEAS-241 | check whether a tool defect is ALREADY FIXED UPSTREAM before reporting it as residual | `docs/family-architecture.md §7.2` |
+| MEAS-242 | a SOUND NARROWING has residual classes — safe-by-construction bounds what it LOSES, not what it ADMITS | `docs/family-architecture.md §5.4a` |
+| MEAS-243 | hand resolutions are TRAINING DATA for a rule; the rule's acceptance test is reproducing them EXACTLY | `docs/family-architecture.md §5.4a` |
+| MEAS-244 | the tell that an instrument ladder is climbed rather than dismantled: the SELF-TEST GETS LONGER | `docs/family-architecture.md §5.4b` |
+| MEAS-245 | a shape the rules once REQUIRED cannot become a failure the day a new rule lands | `docs/family-architecture.md §9.5a` |
+| MEAS-246 | conforming to one rule is when you are most likely to break its NEIGHBOUR | `docs/family-architecture.md §9.5a` |
+| MEAS-247 | a RECIPE transfers by reading; a FUNCTION is a constant — alike in the source, different in the tree | `docs/family-architecture.md §9.0` |
+| MEAS-248 | a standing block is a `###` SECTION, only landings are `##` ENTRIES — say the level or three lanes pick one | `docs/family-architecture.md §9.0` |
+| MEAS-249 | REGISTER SHAPE — per-tier DATA, one shared CHECKER, per-tier PROBE named in the row | `docs/family-architecture.md §5.0a` |
+| MEAS-250 | a divergence row names its KIND — `semantic` retires by remodelling, `provenance` by re-running | `docs/family-architecture.md §5.0a` |
+| MEAS-251 | REACHABILITY is part of a guard's definition — an unreachable refusal guards nothing | `docs/family-architecture.md §5.2` |
+| MEAS-252 | a DISPOSITION without its applied diff is aged like a divergence row | `docs/family-architecture.md §9.7` |
+| MEAS-253 | the RECIPIENT's measurement, not the sender's, closes an INBOUND row | `docs/family-architecture.md §9.5a` |
+| MEAS-254 | a diff between two censuses is only a number if both answered the SAME QUESTION | `docs/family-architecture.md §5.4` |
+| MEAS-255 | a registered UNASSERTED expectation is the falsifiable version of a TODO | `docs/family-architecture.md §5.6` |
+| MEAS-256 | the defect is not unreachability — it is a REFUSAL BELIEVED TO BE A BOUNDARY that is not one | `docs/family-architecture.md §5.2` |
+| MEAS-257 | a verification claim carries WHAT was verified — a sha-less "verified" is a TITLE | `docs/family-architecture.md §5.4a-i` |
+| MEAS-258 | the witness taxonomy is `Built` / `Replayed` / SILENT-CURRENT — only the DEPENDENTS disambiguate the third | `docs/family-architecture.md §5.4a-i` |
+| MEAS-259 | ANONYMOUS EVIDENCE CANNOT BE CITED — a probe is a NAMED declaration | `docs/family-architecture.md §5.0a` |
+| MEAS-260 | the register's checker FAILS on an empty set — a test passing because it found nothing is the unexercised gate | `docs/family-architecture.md §5.0a` |
+| MEAS-261 | the best retirement conditions have NO PLACE FOR AN OPINION TO ENTER — artifact presence, or a count reaching zero | `docs/family-architecture.md §5.0a` |
+| MEAS-262 | KIND changes the GUARD VOCABULARY, not just the retirement condition | `docs/family-architecture.md §5.0a` |
+| MEAS-263 | a row that says what it CANNOT measure is the register's honesty applied to itself | `docs/family-architecture.md §5.0a` |
+| MEAS-264 | convert a CLAIMS LIST into a THEOREM — where claim and subject share a build, the check belongs in the build | `docs/family-architecture.md §5.4` |
+| MEAS-265 | a check whose failure does not STOP THE NEXT STEP is not a gate, it is a comment | `docs/family-architecture.md §5.4b` |
+| MEAS-266 | a cross-lane instrument firing on another lane's code is the instrument WORKING — fix adjudication, never scope | `docs/family-architecture.md §5.4a` |
+| MEAS-267 | a census may return DONE — trustworthy only from a census that could have returned otherwise | `docs/family-architecture.md §9.0b` |
+| MEAS-268 | a REFUSAL names a SITE, not its CAUSE — witness the cause separately or the site gets blamed | `docs/family-architecture.md §5.2` |
+| MEAS-269 | an EPISTEMIC BOUNDARY is a fact about the instrument, not a gap in the model — **AMENDED**: it is itself a CLAIM and lands only after a witness attempt that failed to CONSTRUCT | `docs/family-architecture.md §5.2` |
+| MEAS-270 | an unreachable CHECK is kept; an unreachable REFUSAL is a defect — the claim is the discriminator | `docs/family-architecture.md §5.2` |
+| MEAS-271 | ORPHANED is the shape a deleted row leaves behind — check from the GUARDS back to the ROWS | `docs/family-architecture.md §5.0a` |
+| MEAS-272 | between a RULED IDIOM and an IMPLEMENTED PRECEDENT, follow the instance until the ruling has one | `docs/family-architecture.md §5.0a` |
+| MEAS-273 | an acceptance test written against a PATTERN inherits every future instance for free | `docs/family-architecture.md §5.0a` |
+| MEAS-274 | an exhaustiveness arm: PROVABLE → discharge in the type; otherwise REFUSAL-FORM, and GATE the by-construction claim | `docs/family-architecture.md §5.2` |
+| MEAS-275 | a warning is validated by a documented decision NOT to act, not by a saved incident | `docs/family-architecture.md §7.2` |
+| MEAS-276 | a clean rebase still produces a DIFFERENT COMMIT — the certificate names the one that was BUILT | `docs/family-architecture.md §5.4a-i` |
+| MEAS-277 | COMPOSITION is a census axis — singles find nothing on it, by construction | `docs/family-architecture.md §5.2` |
+| MEAS-278 | a refusal adopted to AVOID A DEBT is a weakening wearing a boundary's clothes | `docs/family-architecture.md §5.0a` |
+| MEAS-279 | a `has_not_widened` guard whose content is a passing AGREEMENT case exhibits the window's edge | `docs/family-architecture.md §5.0a` |
+| MEAS-280 | a divergence localized to a CONSTRUCTION-SITE difference has a mechanical retirement | `docs/family-architecture.md §5.0a` |
+| MEAS-281 | a milestone survives a divergence only by MEASUREMENT against it, stated where the number is read | `docs/family-architecture.md §9.0` |
+| MEAS-282 | a standing number landing in the SAME TREE as its last rung is SELF-CERTIFYING | `docs/family-architecture.md §9.0` |
+| MEAS-283 | LAWS DO NOT INOCULATE THEIR AUTHORS — gates do | `docs/family-architecture.md §5.3` |
+| MEAS-284 | a STRUCTURAL EDIT needs a structural bound and a counted check | `docs/family-architecture.md §5.4b` |
+| MEAS-285 | FALSE positives on another lane are worse than no gate — ship the cases it must NOT fire on | `docs/family-architecture.md §5.4a` |
+| MEAS-286 | a RESIDUE without its POPULATION is a number wearing a context it does not have | `docs/family-architecture.md §9.0` |
+| MEAS-287 | a refusal gate whose instrument measures a MONOTONE PROXY makes a transient condition permanent | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-288 | COST STRUCTURE IS SET BY INSTRUMENTS, NOT BY DEFECTS | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-289 | "my lane is blocked" is the worst reason to move a shared safety line — the fix lives with the gate's OWNER | `docs/family-architecture.md §5.4a` |
+| MEAS-290 | a requested acceptance clause is a HYPOTHESIS; the implementer's counter-measurement is part of the acceptance | `docs/family-architecture.md §5.0a` |
+| MEAS-291 | isolation demanded of TESTS is demanded of every process the session spawns — the informal ones are the gap | `docs/family-architecture.md §5.0a` |
+| MEAS-292 | §5.0a admits NO PERMANENT ROW — can the closing condition be NAMED? no experiment ⇒ epistemic boundary | `docs/family-architecture.md §5.0a` |
+| MEAS-293 | an oracle DISAGREEMENT is not a divergence when the SPEC admits both answers | `docs/family-architecture.md §5.0a` |
+| MEAS-294 | a SAMPLE whose order differs from its label's order is a different sample wearing the label | `docs/family-architecture.md §5.4b` |
+| MEAS-295 | a row that checks the CAPTION while the picture is wrong is not a test of the picture | `docs/family-architecture.md §5.4b` |
+| MEAS-296 | a WIDENING flag that silently does nothing makes an honest lane state a false coverage claim | `docs/family-architecture.md §5.4b` |
+| MEAS-297 | an instrument earns a NEW number by first reproducing an OLD one already gated | `docs/family-architecture.md §5.4b` |
+| MEAS-298 | a WHITELIST of legal positions claims the grammar; a BLACKLIST claims a few commands — only the second is parser-free | `docs/family-architecture.md §5.4a` |
+| MEAS-299 | MEMBERSHIP IN THE GREEN CORPUS as a parser proxy — admissible only when stated as WEAKER than parsing | `docs/family-architecture.md §5.4a` |
+| MEAS-300 | a fleet status is THREE NUMBERS — rungs assigned, executing, building — never "N lanes live" | `docs/family-architecture.md §1.2`, §9.0 |
+| MEAS-301 | DURABILITY LIVES IN ARTIFACTS, NOT IN AGENTS | `docs/family-architecture.md §7.2` |
+| MEAS-302 | a certificate over the WORKING TREE makes even uncommitted state recoverable | `docs/family-architecture.md §7.2` |
+| MEAS-303 | a FAST GREEN is honest when the first elaboration IS the certified one | `docs/family-architecture.md §5.4a-i` |
+| MEAS-304 | a green states what it COVERS and what it is CARRYING — a re-used verdict is a citation | `docs/family-architecture.md §5.4a-i` |
+| MEAS-305 | diagnostic machinery a green proves UNUSED becomes DEBT at the moment of the green | `docs/family-architecture.md §5.3` |
+| MEAS-306 | RETENTION against a dedup sweep needs the design reason stated AT THE ROW | `docs/family-architecture.md §5.3` |
+| MEAS-307 | price a LIFT against the DEFINITION's surface, not your own call sites | `docs/family-architecture.md §5.4a` |
+| MEAS-308 | LIFTED-VS-TIER-BOUND is decided by grep — does the PROOF mention a tier type? | `docs/family-architecture.md §3.4` |
+| MEAS-309 | a RELAYED number without its instrument name re-creates the defect the instrument fixed | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-310 | a retry loop that REBASES must re-run the closure check on each new base | `docs/family-architecture.md §5.4b` |
+| MEAS-311 | design rows against the TWO MOST NATURAL WRONG implementations, before either is written | `docs/family-architecture.md §5.6` |
+| MEAS-312 | a census may DISSOLVE a planned rung — the ordering was not a choice | `docs/family-architecture.md §9.0b` |
+| MEAS-313 | an ASSUMED BLOCKER is a claim about the corpus, as checkable as the count | `docs/family-architecture.md §9.0b` |
+| MEAS-314 | a census artifact's value includes every FUTURE instance of the traps it recorded | `docs/family-architecture.md §5.4b` |
+| MEAS-315 | the `+0`-in-plan control extends to a CHAIN — each rung discloses its zero, the chain says where the number moves | `docs/family-architecture.md §5.4b` |
+| MEAS-316 | THE COUNT CLOSED THE ROW; no assertion could have — a guard that fails when the debt is paid | `docs/family-architecture.md §5.0a` |
+| MEAS-317 | `retired_rows` — a ledger that forgets its closed rows cannot show that any row ever closes | `docs/family-architecture.md §5.0a` |
+| MEAS-318 | a row stays filed until the guard is MEASURED to flip — writing the code is not the condition | `docs/family-architecture.md §5.0a` |
+| MEAS-319 | an EXISTENCE check can find its own fixtures — the rejection fixture is the test whose success is a failure | `docs/family-architecture.md §5.0a` |
+| MEAS-320 | a worker living in a trunk file proves nothing — WHO CALLS IT decides | `docs/family-architecture.md §5.0a` |
+| MEAS-321 | pin a correction as a POSITIVE EXPECTATION — a belief is lost by silence, an expectation only by a failure | `docs/family-architecture.md §5.0a` |
+| MEAS-322 | PROSE REPEATED FOUR TIMES is the prose worth turning into a guard | `docs/family-architecture.md §5.4b` |
+| MEAS-323 | compose a tenure so its EVIDENCE does not share a failure domain with its RISK | `docs/family-architecture.md §5.4b` |
+| MEAS-324 | a REPORT has nothing to spend, so it has nothing to guard — the guard follows the resource | `docs/family-architecture.md §5.4b` |
+| MEAS-325 | a number's label names its SOURCE and its TRANSFORM — either alone is a shadow | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-326 | a REPRICING owes a census exactly like the first pricing — one instance replaces the population with itself | `docs/family-architecture.md §5.4a` |
+| MEAS-327 | an INFERENCE-built consumer table prices a component against demand nobody expressed | `docs/family-architecture.md §5.4a` |
+| MEAS-328 | the probe-pays law does not require the probe to FIND something | `docs/family-architecture.md §5.4a` |
+| MEAS-329 | a RETIRED DIVERGENCE LEAVES A MATCH where it stood — witness out, witness back | `docs/family-architecture.md §5.0a` |
+| MEAS-330 | a new census whose first hit lands on the FRESHEST code is aimed correctly | `docs/family-architecture.md §5.0a` |
+| MEAS-331 | a STATE PARTITION written before the first run is a HYPOTHESIS — the seam is a property of the corpus | `docs/family-architecture.md §9.0` |
+| MEAS-332 | a scoreboard's first job is not to be HIGH — it is to say WHICH ONE THING to fix next | `docs/family-architecture.md §9.0` |
+| MEAS-333 | a zero-state partition carries a CONSERVATION CHECK — it must sum | `docs/family-architecture.md §9.0` |
+| MEAS-334 | a principled refusal that is the tier's DELIVERABLE is not a debt — it is part of what the number means | `docs/family-architecture.md §9.0` |
+| MEAS-335 | a pin by REVISION claims a server's history; a pin by CONTENT claims the bytes — recompute locally | `docs/family-architecture.md §5.4a` |
+| MEAS-336 | a sample rule names its POPULATION, not only its ordering — reproducible-and-ambiguous is the worst combination | `docs/family-architecture.md §5.4a` |
+| MEAS-337 | ONE SPEC, THREE PROGRAMS — a spec's unity is not its implementation's | `docs/family-architecture.md §5.0a` |
+| MEAS-338 | a cost judgement made under pressure is re-priceable after the fact — and a decision that PAID is the one nobody re-examines | `docs/family-architecture.md §7.1a` |
+| MEAS-339 | a scoreboard reports the FIRST blocker, never the only one — the number counts ARRIVALS, not departures | `docs/family-architecture.md §9.0` |
+| MEAS-340 | a RESIDUAL inherits the error of every bucket you did NOT predict — predict what you will report | `docs/family-architecture.md §9.0` |
+| MEAS-341 | a FRONTIER measured from behind another frontier is a LOWER BOUND ON ITSELF | `docs/family-architecture.md §9.0` |
+| MEAS-342 | prediction is not calibration — a miss names a seam between the predicted and the measured quantity | `docs/family-architecture.md §9.0` |
+| MEAS-343 | a CONSTRAINT MET STRUCTURALLY survives the reader who never saw the ruling | `docs/family-architecture.md §5.0a` |
+| MEAS-344 | a charter overtaken by its own scoreboard is FLAGGED, never re-read charitably | `docs/family-architecture.md §9.0` |
+| MEAS-345 | the glob is by PATH, not by import graph — BUILD, do not reason about the lakefile | `docs/family-architecture.md §7.2` |
+| MEAS-346 | a check that EXISTS AND ISN'T RUN is not a check; it is a note about a check | `docs/family-architecture.md §5.4b` |
+| MEAS-347 | a band with an ARITHMETIC floor and a NAMED-IGNORANCE width can be right about a frontier it cannot see | `docs/family-architecture.md §9.0` |
+| MEAS-348 | a floor built from tests whose COMPLETION was already observed is arithmetic, not optimism | `docs/family-architecture.md §9.0` |
+| MEAS-349 | a bucket that has NEVER BEEN NON-ZERO is not a measured zero; nothing has reached it yet | `docs/family-architecture.md §9.0` |
+| MEAS-350 | only FRONTIER MOTION converts an unreached zero into a measured one — a zero's kind is a fact about the run | `docs/family-architecture.md §9.0` |
+| MEAS-351 | a frontier entry is ACTIONABLE when its instrument component is gone AND SAYS SO | `docs/family-architecture.md §9.0` |
+| MEAS-352 | a real frontier is FLAT AND WIDE; a spike inside one bucket is an instrument's signature | `docs/family-architecture.md §9.0` |
+| MEAS-353 | a LAYOUT computed from an undeclared rule is a FABRICATED LAYOUT — a fabricated column one abstraction up | `docs/family-architecture.md §4.2` |
+| MEAS-354 | a DATED SNAPSHOT ages within its own date — where a row moves daily, publish the ARC, not the endpoint | `docs/family-architecture.md §9.0` |
+| MEAS-355 | a tier whose model is RELATIONAL scores by OBLIGATIONS, not tests — the asymmetry is structural, not effort | `docs/family-architecture.md §9.0` |
+| MEAS-356 | an endgame described by the artifact it would REUSE is a claim about that artifact — open it before scheduling | `docs/family-architecture.md §9.0` |
+| MEAS-357 | RE-CENSUS EVERY BRANCH BEFORE PORTING — a proof source is a corpus and moves on someone else's schedule | `docs/family-architecture.md §5.4` |
+| MEAS-358 | price the rung BEFORE writing the code, so the number cannot be fitted afterwards | `docs/family-architecture.md §9.0` |
+| MEAS-359 | two behaviours aliasing in OPPOSITE directions: one code path fails one row whichever way it chooses — say which | `docs/family-architecture.md §9.0` |
+| MEAS-360 | a DEFECT REPORT is a claim about a tree — a stale toolkit reports the defect it is carrying | `docs/family-architecture.md §7.1a` |
+| MEAS-361 | a re-measured deferral can find a DIFFERENT line binds; the instrument PAIR makes a diagnosis survive its own success | `docs/family-architecture.md §7.1a` |
+| MEAS-362 | a WORLD is not pinned or free — EACH COORDINATE is; enumerate them and mark each by name | `docs/family-architecture.md §3.6` |
+| MEAS-363 | a true confirmation of the shape you CHECKED is not evidence about the shape you SKIPPED | `docs/family-architecture.md §3.6` |
+| MEAS-364 | STABILITY UNDER REFACTOR is the spec-half/interpreter-half split's measurable dividend — count what had to change | `docs/family-architecture.md §5.6` |
+| MEAS-365 | the SUBJECT OF A VERIFICATION IS IMMUTABLE TO THE VERIFIER — any fix that edits it changes the question | `docs/family-architecture.md §5.3` |
+| MEAS-366 | a proof obligation dischargeable ONLY by rewriting its subject has NOT been discharged | `docs/family-architecture.md §5.3` |
+| MEAS-367 | a SPINE claim graduates from design to measurement when the same rules discharge pairs they were not written for | `docs/family-architecture.md §7.1a` |
+| MEAS-368 | CLAIMS-LESS ERRORS ACCUMULATE — a wrong statement that costs its reader nothing is one nobody reports | `docs/family-architecture.md §5.4` |
+| MEAS-369 | where a fact is stated at TWO TIMES, the later is the measurement and the earlier owes the word PROJECTION | `docs/family-architecture.md §5.4` |
+| MEAS-370 | a guard STATES ITS OWN LIMIT IN THE CODE — it closes only the skew that begins after it lands | `docs/family-architecture.md §7.2` |
+| MEAS-371 | a coordinator's SITUATIONAL statements need timestamps or instruments, exactly as any number does | `docs/family-architecture.md §7.1a` |
+| MEAS-372 | an argument resting on WHAT THE TIER CANNOT DO has an expiry date nothing in the tree tracks | `docs/family-architecture.md §5.0a` |
+| MEAS-373 | a limitation-dependent argument CITES ITS LIMITATION BY NAME, so the inch that lifts it can grep its dependents | `docs/family-architecture.md §5.0a` |
+| MEAS-374 | a FLIP must exercise the behaviour it certifies — ask what the row would do if the new code were deleted | `docs/family-architecture.md §5.3` |
+| MEAS-375 | an audit's SCOPE DECLARATIONS belong IN its output — reach and labelling printed elsewhere are not printed | `docs/family-architecture.md §9.0` |
+| MEAS-376 | a hypothesis BOTH PARTIES WANT TRUE gets the cheapest check first — nobody present is positioned to doubt it | `docs/family-architecture.md §9.0` |
+| MEAS-377 | a one-time SWEEP is not a repeatable instrument — state the single-use scope and keep the guard | `docs/family-architecture.md §9.0` |
+| MEAS-378 | DIRECTIONAL COMPLETENESS — a kit is complete only for the corpus that built it (fourth axis) | `docs/family-architecture.md §9.0` |
+| MEAS-379 | an audit that CONFIRMS its subject is a result — eliminating the cheap explanation makes the expensive one legible | `docs/family-architecture.md §9.0` |
+| MEAS-380 | a kit is shared only where it is IMPORTED — import closure is a PER-CONSUMER fact | `docs/family-architecture.md §9.0` |
+| MEAS-381 | SELECTION COUNT is the most reliable way to pick WRONG — rank by reach (fourth reproduction) | `docs/family-architecture.md §9.0b` |
+| MEAS-382 | a package the model will NEVER RUN is not one it can be credited for | `docs/family-architecture.md §9.0b` |
+| MEAS-383 | a coordinator's cited pids, shas and trees are CLAIMS like any other; a mismatched stamp authorizes nothing | `docs/family-architecture.md §7.1a` |
+| MEAS-384 | independent identical NAMING is the same evidence as independent identical design | `docs/family-architecture.md §3.2` |
+| MEAS-385 | ACCIDENTALLY CORRECT IS WORSE THAN WRONG — nothing announces the day the accident ends | `docs/family-architecture.md §9.0` |
+| MEAS-386 | NOT EVERY REFUSAL IN AN ARM IS A BOUNDARY — status is STATED/PARTIAL/REFUSING, partial OUT of the numerator | `docs/family-architecture.md §5.5` |
+| MEAS-387 | a coverage table whose rows are LOAD-BEARING cannot rot in the safe direction — wire the row to the declaration | `docs/family-architecture.md §5.5` |
+| MEAS-388 | a lane reporting its OWN coverage is a single point of failure in its own scoreboard — remove the lane from the path | `docs/family-architecture.md §5.5` |
+| MEAS-389 | a denominator may be chosen for MOTION LEGIBILITY — publish it beside the completion number, never instead of it | `docs/family-architecture.md §9.0` |
+| MEAS-390 | a check that has NEVER FAILED is a design, not a control — reproduce the known failure too | `docs/family-architecture.md §5.4` |
+| MEAS-391 | an INSTRUMENT INVENTORY says which instruments compile the artifact and which compile a stand-in | `docs/family-architecture.md §5.4` |
+| MEAS-392 | a BLAST-RADIUS CENSUS spans every corpus that RUNS the language — files, embedded source strings, whole scripts | `docs/family-architecture.md §5.4` |
+| MEAS-393 | a design choice that ENLARGES a later proof is a cost the lane INCURRED, not a difficulty it discovered | `docs/family-architecture.md §9.0` |
+| MEAS-394 | REFUSING TO PRICE is a legitimate output when the prerequisite for pricing is a named, scheduled artifact | `docs/family-architecture.md §9.0` |
+| MEAS-395 | ANY PROSE ASSERTING A LIMIT EXPIRES — docstring, architecture note, proof prose, witness; four classes, stop qualifying | `docs/family-architecture.md §5.0a` |
+| MEAS-396 | a BLOCKER'S SCOPE is part of the blocker — "nothing gets through" and "nothing that FAILS gets through" price different rungs | `docs/family-architecture.md §9.0` |
+| MEAS-397 | where PREDICTOR AND SCORER SHARE AN INSTRUMENT, an exact match is a TRANSCRIPTION CHECK, not a calibration | `docs/family-architecture.md §9.0` |
+| MEAS-398 | two independent estimates land NEAR each other, not ON each other — an exact streak is the defect's signature | `docs/family-architecture.md §9.0` |
+| MEAS-399 | report whether a miss was in the MAGNITUDE or in the SUBJECT — only the first is calibration data | `docs/family-architecture.md §9.0` |
+| MEAS-400 | A WRONG BASELINE AND A RIGHT DELTA is the honest description — a difference survives an error both sides shared | `docs/family-architecture.md §9.0` |
+| MEAS-401 | a re-run against a CORRECTED BASELINE is a verification, not a new prediction — the lane labels it, not the reader | `docs/family-architecture.md §9.0` |
+| MEAS-402 | a GUARD IN PROSE is obeyed by whoever is reading it, and its AUTHOR is the least likely person to be reading it | `docs/family-architecture.md §9.0` |
+| MEAS-403 | a shape with TWO instances deserves a SWEEP for the third — the second member supplies the query | `docs/family-architecture.md §9.0` |
+| MEAS-404 | a GUESS OFFERED AS A FINDING is a defect even when reasonable — retract to UNKNOWN, never to another mechanism | `docs/family-architecture.md §9.0` |
+| MEAS-405 | an INSTRUMENT carrying an expiring claim is worse than a comment carrying one — it is what a reader trusts | `docs/family-architecture.md §5.0a` |
+| MEAS-406 | an INSTRUMENT FIX is validated by its FIRST CUSTOMER, not by its own suite | `docs/family-architecture.md §5.4` |
+| MEAS-407 | decide what a RED WILL MEAN before the run, and make the output carry the discriminator | `docs/family-architecture.md §5.0a` |
+| MEAS-408 | THE INSTRUMENT IS PART OF THE CLAIM — validate against a KNOWN ANSWER before publishing any denominator | `docs/family-architecture.md §9.0` |
+| MEAS-409 | a RECOUNT with the instrument still under suspicion is the same measurement taken again — validate first | `docs/family-architecture.md §9.0` |
+| MEAS-410 | a GATE'S VALUE is that it MOVES DISCOVERY (queue → keystroke), not that it prevents the defect | `docs/family-architecture.md §5.4b` |
+| MEAS-411 | a CLOSURE STATEMENT is scoped to exactly what closed, and says what the closure BUYS | `docs/family-architecture.md §9.0` |
+| MEAS-412 | a failure in a SHARED DEPENDENCY multiplies at the corpus's size — give it its own bucket or it reads as breadth | `docs/family-architecture.md §9.0` |
+| MEAS-413 | a partition can SUM while one row is N copies of one fact — conservation proves nothing lost, not independence | `docs/family-architecture.md §9.0` |
+| MEAS-414 | a FAILURE IS A VERDICT, NOT A ZERO — the scored line is drawn at EXECUTION, not at agreement | `docs/family-architecture.md §9.0` |
+| MEAS-415 | an EXCLUSION needs its own LIVENESS CHECK — it must refuse when its subject is deleted or fixed | `docs/family-architecture.md §5.5` |
+| MEAS-416 | REFUTED (waiting on work) and no-proof-exists (waiting on the world) age on opposite schedules — never pool them | `docs/family-architecture.md §5.5` |
+| MEAS-417 | a DIGEST ANYONE CAN RECOMPUTE beats a list nobody diffs — corpus drift becomes detectable, not merely possible | `docs/family-architecture.md §5.4` |
+| MEAS-418 | an exact RECONCILIATION to an independently known total is the cheapest validation against a known answer | `docs/family-architecture.md §5.4` |
+| MEAS-419 | structure a change so that PERFORMING it MEASURES the unknown its payoff depends on | `docs/family-architecture.md §9.0b` |
+| MEAS-420 | close a COST FLAG OUT LOUD when the cost does not arrive — otherwise the register samples only the flags that were right | `docs/family-architecture.md §7.1a` |
+| MEAS-421 | A CORPUS CAN ONLY CONTRADICT THE RULES IT EXERCISES — one program leaves untested assertions that look verified | `docs/family-architecture.md §5.6` |
+| MEAS-422 | a CONVERSION RATE measured behind one wall does not transfer to the next — a fix frees tests at their own point | `docs/family-architecture.md §9.0` |
+| MEAS-423 | a FLOOR SET BELOW the current number is a REGRESSION INSTRUMENT — it makes "nothing broke" checkable | `docs/family-architecture.md §9.0` |
+| MEAS-424 | `oracle-tests-compiler` — a conformance corpus contains tests a conforming semantics must FAIL; retires by RECLASSIFICATION | `docs/family-architecture.md §9.0` |
+| MEAS-425 | a CACHE-BASED CHECK is strongest on the edits that need it least — A17 is blindest to an interface move | `docs/family-architecture.md §7.1a` |
+| MEAS-426 | a PARTIAL MITIGATION that NAMES its remaining hole is a control; one that covers 90% and reports green is the defect again | `docs/family-architecture.md §7.1a` |
+| MEAS-427 | a kind name with a CORPUS-WIDE ZERO is a name the tier invented — vendor AST granularity is not spec granularity | `docs/family-architecture.md §5.4` |
+| MEAS-428 | a shape comes from the CORPUS or from a fixture MARKED SYNTHETIC — that marking is what separates a fixture from a guess | `docs/family-architecture.md §5.4` |
+| MEAS-429 | a ladder's ORDER and its COST PROFILE are independent facts — publish the pair, or each reader misreads the other | `docs/family-architecture.md §9.0b` |
+| MEAS-430 | a REGISTER IS OPERATIONAL when its rows are RUN, not read — one invocation carrying every probe shape is the proof | `docs/family-architecture.md §5.0a` |
+| MEAS-431 | a WELL-FORMED ENVELOPE DESCRIBING A DIFFERENT PROGRAM is caught by nothing downstream — check at the extraction boundary | `docs/family-architecture.md §5.4` |
+| MEAS-432 | an UNROWED FAILURE is attributed by its LOCATION IN THE PIPELINE, which is almost never where it came from | `docs/family-architecture.md §5.0a` |
+| MEAS-433 | A GATE NOT IN YOUR FLOOR CANNOT CONTRADICT YOUR ROWS — a floor owes an audit of its own COVERAGE | `docs/family-architecture.md §5.4b` |
+| MEAS-434 | every gate is only as wide as the NARROWEST FLOOR THAT OMITS IT — the missing entries are a set difference | `docs/family-architecture.md §5.4b` |
+| MEAS-435 | THE FIXTURE CHOSEN FOR ISOLATION CONCEALS THE GAP IT ISOLATES FROM — isolation fixtures come in pairs | `docs/family-architecture.md §5.4` |
+| MEAS-436 | a SHORT TRACE is the failure mode nobody notices — assert the LENGTH, or what the last element must be | `docs/family-architecture.md §5.4` |
+| MEAS-437 | CONSERVATION AT THE POPULATION LEVEL — a partition can be internally perfect and be a partition OF NOTHING | `docs/family-architecture.md §9.0` |
+| MEAS-438 | an instrument's missing INPUT and its missing SELF are the same defect at different depths | `docs/family-architecture.md §9.0` |
+| MEAS-439 | a retired row KEEPS `was_blocked_on` — a blocker that silently disappears leaves the instrument describing a vanished world | `docs/family-architecture.md §5.0a` |
+| MEAS-440 | a kind name with a corpus-wide zero: A GRAMMAR-WRITTEN WALKER WOULD LOOK FOR IT FOREVER — it never fails, it never matches | `docs/family-architecture.md §5.4` |
+| MEAS-441 | work aimed at a target nobody could see, landing on it, is evidence about the DECOMPOSITION — not luck | `docs/family-architecture.md §7.1a` |
+| MEAS-442 | ABSENCE AND SUCCESS ARE THE SAME COLOUR ON A GREEN BOARD — a count cannot say WHICH; commit the roster | `docs/family-architecture.md §5.4b` |
+| MEAS-443 | a guard that can only run WHERE THE EVIDENCE WAS PRODUCED is not a guard, it is a MEMORY of one | `docs/family-architecture.md §5.4b` |
+| MEAS-444 | a GATE THAT GLOBS A CORPUS reports OK when the corpus is missing — the absent-corpus hole one level down | `docs/family-architecture.md §5.4b` |
+| MEAS-445 | CHANGING TOOLS CHANGED THE REACH, AND THE REACH IS PART OF THE CLAIM — a swapped instrument re-opens validation | `docs/family-architecture.md §9.0` |
+| MEAS-446 | a ∀-STATEMENT ABOUT A DECK NOBODY HAS EXHIBITED is true and empty — pair the guarantee with a WITNESS obligation | `docs/family-architecture.md §5.3` |
+| MEAS-447 | a SEARCH MATCHING A NARROWER THING reports ABSENCE — and absence is the most actionable-looking answer there is | `docs/family-architecture.md §5.4` |
+| MEAS-448 | a FALSE WALL doesn't waste a tenure, it REDIRECTS A WORKSTREAM — treat absence as provisional | `docs/family-architecture.md §5.4` |
+| MEAS-449 | RE-DERIVE A FAMILY FROM THE TREE WHEN YOU START IT, never from the row that named it | `docs/family-architecture.md §5.4` |
+| MEAS-450 | a census recording the TECHNIQUE instead of the GAP prices landed work as outstanding | `docs/family-architecture.md §5.4` |
+| MEAS-451 | every instrument measuring something true, none measuring THE PATH A TEST TAKES — build the end-to-end one early | `docs/family-architecture.md §5.4b` |
+| MEAS-452 | an ERROR COUNT is not a defect count — the summary LOCATES, the full log COUNTS | `docs/family-architecture.md §9.0` |
+| MEAS-453 | a MILESTONE names what KIND of work remains; a number names HOW MUCH — a lane owes both | `docs/family-architecture.md §9.0` |
+| MEAS-454 | a law is not held until its ARITHMETIC is held — `scored = passed + failed` (row against the coordinator) | `docs/family-architecture.md §9.0` |
+| MEAS-455 | a COORDINATING HOLD is a claim about every lane it stops — measure per lane or scope it to the one measured | `docs/family-architecture.md §7.1a` |
+| MEAS-456 | a FRONTIER whose next item NAMES ITS OWN PREREQUISITE has stopped being open-ended | `docs/family-architecture.md §9.0b` |
+| MEAS-457 | A LEDGER THAT MAY NOT BE EMPTY CANNOT ALSO BE THE ARCHIVE — the claim and the history are different files | `docs/family-architecture.md §5.0a` |
+| MEAS-458 | A RULE ABOUT A CONTAINER IS UNTESTED UNTIL THE CONTAINER IS EMPTY — the boundary decides the rule | `docs/family-architecture.md §5.0a` |
+| MEAS-459 | a named exclusion that makes the number BIGGER is a whitewash; one that makes it SMALLER is a measurement | `docs/family-architecture.md §9.0` |
+| MEAS-460 | a prediction A GATE CAN CHECK is a claim; one only a human compares afterwards is a hope with a timestamp | `docs/family-architecture.md §5.4b` |
+| MEAS-461 | when the AMBIENT VERDICT IS CONSTANT, every bit of information is in the PIN — reading the constant is reading nothing | `docs/family-architecture.md §5.4b` |
+| MEAS-462 | a NEGATIVE SWEEP RESULT is worth exactly the check that produced it — "I read the handlers" is worth nothing at 36 | `docs/family-architecture.md §5.4` |
+| MEAS-463 | SWEEPS FIND NEIGHBOURS — the instrument built for one question is already pointed where the next one lives | `docs/family-architecture.md §5.4` |
+| MEAS-464 | THE ROW THAT NAMES A FAMILY IS A HYPOTHESIS ABOUT THE TREE, AND IT DECAYS — measured 5-for-5 wrong | `docs/family-architecture.md §5.4` |
+| MEAS-465 | NON-VACUITY HAS MORE THAN ONE IDIOM — counting the first calibrates the measure against the author's habits | `docs/family-architecture.md §5.4` |
+| MEAS-466 | below some corpus size, HAND-CLASSIFICATION WITH EVIDENCE QUOTED beats an unvalidated scanner | `docs/family-architecture.md §5.4` |
+| MEAS-467 | REACH is part of the CLAIM; LIVENESS is part of the POPULATION — where did I look, versus who can act | `docs/family-architecture.md §5.4b` |
+| MEAS-468 | RE-DERIVE A BLOCKER from the tree on a family's schedule — a blocked row's decay is silent in every artifact | `docs/family-architecture.md §9.0` |
+| MEAS-469 | OPTIMISING BELOW THE FLOOR IS MOTION, NOT PROGRESS — it costs the floor's one property, a red that names a family | `docs/family-architecture.md §9.0` |
+| MEAS-470 | THE COST LIVES IN INDIVIDUAL DEPTH-3 PROBES — guard count is countable, family is meaningful, neither is the unit | `docs/family-architecture.md §9.0b` |
+| MEAS-471 | a change to an instrument that produces a MEASURED ARTIFACT owes that differential — an inert guard is proved inert | `docs/family-architecture.md §5.4` |
+| MEAS-472 | A WATCH WHOSE MOST IMPORTANT SIGNAL PRODUCES NO ALARM IS NOT A WATCH — the probe gates its own tier's regression | `docs/family-architecture.md §5.0a` |
+| MEAS-473 | AN INSTRUMENT LIVES IN THE SPACE IT SEARCHES — the pattern is right about a world that contains the pattern | `docs/family-architecture.md §5.4` |
+| MEAS-474 | an instrument handling one pole explicitly and the other by accident is UNTESTED AT THE SECOND POLE | `docs/family-architecture.md §5.4` |
+| MEAS-475 | PICK A FIXTURE BASE BY THE PROPERTY IT NEEDS, NEVER BY SORT ORDER; "no fixture base" must not read as "passed" | `docs/family-architecture.md §5.4` |
+| MEAS-476 | a ROW CAN PASS WHILE THE PICTURE IS WRONG when the row tests the PART and the defect is in the SEQUENCE | `docs/family-architecture.md §5.4` |
+| MEAS-477 | A BUCKET OMITTED IS A CLAIM MADE — a missing bucket does not read as missing, it reads as empty | `docs/family-architecture.md §5.4` |
+| MEAS-478 | a CATEGORY ADDED TO A SET changes every AGGREGATE over that set — taxonomy changes land in folds, invisibly | `docs/family-architecture.md §5.4b` |
+| MEAS-479 | a RUNG REDUCED IS NOT A RUNG CLOSED — reporting a waypoint as a score borrows against the rung you eased | `docs/family-architecture.md §9.0` |
+| MEAS-480 | a PURELY ADDITIVE DEPENDENCY IS STILL A CHANGED DEPENDENCY — what makes it safe is THE DIFF, not the word | `docs/family-architecture.md §9.0` |
+| MEAS-481 | THE INTERIM FAILURES WERE THE POINT — a scoreboard that only ever goes up is reporting, not measuring | `docs/family-architecture.md §9.0` |
+| MEAS-482 | a PREDICTION OVER A CORPUS is ARITHMETIC ON NAMED TESTS, not an estimate of a total | `docs/family-architecture.md §9.0` |
+| MEAS-483 | a WELL-TYPED statement and a TRUE one are different claims — only one needs a witness | `docs/family-architecture.md §9.0` |
+| MEAS-484 | REGISTRATION IS NOT COVERAGE — an executable is in the build only if it is in `defaultTargets` | `docs/family-architecture.md §5.4b` |
+| MEAS-485 | ARMING AN UNMEASURED GATE is the inverse of the unexercised-gate failure — its noise becomes the tier's baseline | `docs/family-architecture.md §5.4b` |
+| MEAS-486 | a naive freshness comparison is A VERSION DETECTOR WEARING A FRESHNESS LABEL — PRESENT IS NOT PINNED | `docs/family-architecture.md §5.4b` |
+| MEAS-487 | where an instrument reads THE WORLD, its suite must include something FROM the world — a fixture is well-behaved | `docs/family-architecture.md §5.4b` |
+| MEAS-488 | A NAMING CONVENTION IS NOT A DEPENDENCY STRUCTURE — the reference graph is what the compiler obeys | `docs/family-architecture.md §9.0b` |
+| MEAS-489 | UNDER MACHINE-WIDE STARVATION THE VICTIM IS CHOSEN BY TIMING, NOT SIZE — OOM identity concludes nothing | `docs/family-architecture.md §9.0b` |
+| MEAS-490 | SHARDING A LEAF optimises a number that cannot be on the critical path — make the proof cheaper instead | `docs/family-architecture.md §9.0b` |
+| MEAS-491 | a CHECKPOINT saves work only if the state is cheaper to WRITE than to RECOMPUTE — never for a whole-machine state | `docs/family-architecture.md §9.0b` |
+| MEAS-492 | a computation is SPLITTABLE AT ITS INPUTS, not at its PROGRESS — ask what regenerates the rest | `docs/family-architecture.md §9.0b` |
+| MEAS-493 | BLOCKER-KIND GROUPING is the only grouping that says what an inch would cost | `docs/family-architecture.md §9.0b` |
+| MEAS-494 | a LATENT ROW comes into existence WITH THE CAPABILITY — it can be named before the capability exists | `docs/family-architecture.md §9.0b` |
+| MEAS-495 | A PREMISE NOBODY RE-MEASURES IS A PREMISE NOBODY HOLDS — an estimate hardens at the rate it is cited | `docs/family-architecture.md §7.1a` |
+| MEAS-496 | a PROXY proposed by someone who will not run it is a hypothesis with a schedule attached | `docs/family-architecture.md §7.1a` |
+| MEAS-497 | THE FINDING STANDS, THE METRIC IN IT DOES NOT — a conclusion and its prompting number retire separately | `docs/family-architecture.md §7.1a` |
+| MEAS-498 | A CENSUS CANNOT FIND A STEP THAT MENTIONS NOTHING — the missing step is a PIPELINE STAGE, not a file | `docs/family-architecture.md §5.4` |
+| MEAS-499 | TEXT-SHAPED EVIDENCE STANDING FOR STRUCTURAL: names, sort orders and prefixes read easily and are not the structure | `docs/family-architecture.md §5.4` |
+| MEAS-500 | A MEASUREMENT TAKEN AND NOT ACTED ON IS THE MOST EXPENSIVE KIND — audit CALL SITES before auditing checks | `docs/family-architecture.md §5.4b` |
+| MEAS-501 | A DENOMINATOR INHERITS THE MEANING OF WHATEVER THE NUMERATOR COUNTS — state what one unit IS | `docs/family-architecture.md §9.0` |
+| MEAS-502 | UNREACHABLE AT RUNTIME IS NOT INVISIBLE TO THE MODEL — structural certificates census the function table | `docs/family-architecture.md §5.4` |
+| MEAS-503 | a certificate that STILL ELABORATES but names a DIFFERENT CONSTRUCT is worse than one that fails | `docs/family-architecture.md §5.4` |
+| MEAS-504 | a NICE TIMEOUT and a HANG are indistinguishable from outside — "did not finish" is a fact about the clock | `docs/family-architecture.md §9.0` |
+| MEAS-505 | a DEFERRAL IS A DATED DECISION — measured gap at park: twelve rungs between a reason and its re-checking | `docs/family-architecture.md §7.1a` |
+| MEAS-506 | A PAUSE IS A MEASUREMENT OCCASION — write the park state while the instruments are warm; re-derive it on resumption | `docs/family-architecture.md §9.0 PARK` |
+| MEAS-507 | A LANE THAT ALWAYS ANSWERS THE COORDINATOR NEVER PROVES ANYTHING — rider load costs the register its testability | `docs/family-architecture.md §7.1a` |
+
+## B. STATEMENT LAWS — how a claim must be worded to mean something
+
+The worked forms, with the trap and the incident for each, are in
+**`docs/statement-cookbook.md`**. This section indexes the laws themselves.
+
+| id | hook | home |
+| --- | --- | --- |
+| STMT-1 | THE DEFINITION IS NEVER WEAKENED FOR PROVABILITY | `docs/family-architecture.md §0.1` principle I |
+| STMT-2 | definitional completeness outranks proof convenience, always | `docs/family-architecture.md §0.1` principle I |
+| STMT-3 | the trust boundary — DEFINITION trusted and minimal, LIBRARY never | `docs/family-architecture.md §0.1` principle II |
+| STMT-4 | the library grows BY DEMAND; its gaps are published, never papered | `docs/family-architecture.md §0.1` principle II |
+| STMT-5 | the preference ladder: symbolic ▸ kernel `decide` ▸ decide-class | `docs/family-architecture.md §0.1 II(a)` |
+| STMT-6 | the trust boundary is per-theorem and visible, never ambient | `docs/family-architecture.md §0.1 II(a)` |
+| STMT-7 | HARDNESS IS A SIGNAL TO THE PROGRAM, not to the definition | `docs/family-architecture.md §0.1` principle III |
+| STMT-8 | narrowing the ∀ until the theorem goes through is not available | `docs/family-architecture.md §0.1` principle III |
+| STMT-9 | the five model assumptions (discrete, finite, generated, quantified, termination-indexed) | `docs/family-architecture.md §6` |
+| STMT-10 | determinism quantifies over the TRACE, so it moves with the trace type | `docs/family-architecture.md §6` |
+| STMT-11 | every determinism/agreement claim is OBSERVATION-INDEXED | `docs/family-architecture.md §6`; cookbook §1 |
+| STMT-12 | THE ANTI-TAUTOLOGY RULE — determinism is a premise or a per-design theorem | `docs/family-architecture.md §6`; cookbook §1 |
+| STMT-13 | the permitted set is a per-site datum the tier carries | `docs/family-architecture.md §5.1` |
+| STMT-14 | FAMILY LAW — one `Except`/`throw` pattern, every tier | `docs/family-architecture.md §3.4` |
+| STMT-15 | `ρ` is what the program can talk about; `Halt` is what only the model can say | `docs/family-architecture.md §3.4` |
+| STMT-16 | no tier-local outcome types going forward | `docs/family-architecture.md §3.4` |
+| STMT-17 | refusal stays in `Halt`, with a STRUCTURED PAYLOAD | `docs/family-architecture.md §3.4` (the `unsupported` ruling) |
+| STMT-18 | the payload is never an observable | `docs/family-architecture.md §3.4` |
+| STMT-19 | the uncatchability invariant is TYPE-level, never lemma-level | `docs/family-architecture.md §3.4` |
+| STMT-20 | the monad layer ORDER is load-bearing | `docs/family-architecture.md §3.4` |
+| STMT-21 | adopted by SHAPE, not by spelling | `docs/family-architecture.md §3.4` |
+| STMT-22 | THE FIT BOUNDARY — "does this tier HAVE a run?" | `docs/family-architecture.md §3.4.1` |
+| STMT-23 | share only what is ALREADY parametric, measured | `docs/family-architecture.md §3.3` |
+| STMT-24 | WIDTH-PARAMETRICITY IS A REQUIREMENT, not a description | `docs/family-architecture.md §3.5.1` |
+| STMT-25 | widths are INSTANCES, never separate definitions | `docs/family-architecture.md §3.5.1` clause (1) |
+| STMT-26 | every layer-2 theorem stated over the general format | `docs/family-architecture.md §3.5.1` clause (2) |
+| STMT-27 | build over the general format, never over a fixed-width type | `docs/family-architecture.md §3.5.1` clause (3) |
+| STMT-28 | where core forces a fixed width, FLAG it — never absorb it | `docs/family-architecture.md §3.5.1` clause (3) |
+| STMT-29 | the flagship theorem factors through a shared vertex | `docs/family-architecture.md §3.5.2` |
+| STMT-30 | the unspecified residue routes to ∀-parameter / profile / REFUSE(environment) | `docs/family-architecture.md §3.5.4` |
+| STMT-31 | the schedule is an explicit parameter; the ∀ lives at theorem level | `docs/family-architecture.md §3.6` piece (1) |
+| STMT-32 | the monad carries one process's step; `W` carries the concurrency | `docs/family-architecture.md §3.6 (1a)` |
+| STMT-33 | the counterexample is FIRST-CLASS — a finite schedule replayed by `#guard` | `docs/family-architecture.md §3.6` piece (2); cookbook §3 |
+| STMT-34 | the DRF-SC fence is the standard's own clause, cited not invented | `docs/family-architecture.md §3.6` piece (3) |
+| STMT-35 | a racy program is a MEMBERSHIP site, not a refusal | `docs/family-architecture.md §3.6` |
+| STMT-36 | halt-with-race-report is always in the permitted set | `docs/family-architecture.md §3.6` |
+| STMT-37 | a lane may narrow the family span, never redeclare it at another shape | `docs/family-architecture.md §3.7` |
+| STMT-38 | the four-constructor outcome covenant | `docs/family-architecture.md §3.2` item 1 |
+| STMT-39 | the ∃-fuel threshold form, and `fuelMono` | `docs/family-architecture.md §3.2` item 2; cookbook §5, §10 |
+| STMT-40 | READ THE MODE OUT OF THE ARTEFACT, never out of an ambient setting | `docs/family-architecture.md §3.2` item 5 |
+| STMT-41 | the three envelope edges: schema version, top module, source-path spelling | `docs/family-architecture.md §3.2` item 5 |
+| STMT-42 | the batch protocol — one runner, one line per job, a `runner-error` row | `docs/family-architecture.md §3.2` item 6 |
+| STMT-43 | exit-code convention 0/1/3/4/5 — 3 and 4 are never agreement | `docs/family-architecture.md §3.2` item 7 |
+| STMT-44 | effects as world data; inputs as traces with a loud underrun | `docs/family-architecture.md §3.2` item 8 |
+| STMT-45 | "core only, no packages" is a PER-TIER discipline, not a repo fact | `docs/family-architecture.md §3.2` item 4 |
+| STMT-46 | three authorities — a tier declares which it is | `docs/family-architecture.md §4.1` |
+| STMT-47 | SPEC target / IMPLEMENTATION oracle / SUITE OWNER verdict authority | `docs/family-architecture.md §4.2` |
+| STMT-48 | a divergence between any two is a FINDING, and blocks none of them | `docs/family-architecture.md §4.2` |
+| STMT-49 | where the spec is silent or ambiguous: REFUSE | `docs/family-architecture.md §4.2` |
+| STMT-50 | the behavior-classes → refusal-taxonomy table before any semantics | `docs/family-architecture.md §4.3` |
+| STMT-51 | a near-empty `undefined` bucket is GATED, not hoped for | `docs/family-architecture.md §4.3` |
+| STMT-52 | the ∀/∃ flip distinguishes order-dependence from a membership site | `docs/family-architecture.md §4.3`; cookbook §19 |
+| STMT-53 | edition token — a valid Lean identifier | `docs/family-architecture.md §1.1` law 1 |
+| STMT-54 | edition token — self-identifying out of context | `docs/family-architecture.md §1.1` law 2 |
+| STMT-55 | edition token — an edition a reader can hold, never a point release | `docs/family-architecture.md §1.1` law 3 |
+| STMT-56 | edition token — it never renames | `docs/family-architecture.md §1.1` law 4 |
+| STMT-57 | `language_version` is first-class; the ingester REFUSES a mismatch | `docs/family-architecture.md §1.5` |
+| STMT-58 | `frontend.version` is the FRONTEND's FAMILY, never a point release | `docs/family-architecture.md §1.5` |
+| STMT-59 | THIN SIBLINGS OVER A THICK SHARED TRUNK | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-60 | no definition takes a version parameter | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-61 | theorems prove ONCE on the trunk | `docs/family-architecture.md §2.4` clause (2) — gate: `tools/editions.sh` reports the sibling/trunk theorem split; a duplicate finder cannot fire while the trunk holds 0 |
+| STMT-62 | THE ONE HONEST FORK — an arity change forks type and consumers | `docs/family-architecture.md §2.4` clause (3) |
+| STMT-63 | the edition parameter's granularity is language-decided | `docs/family-architecture.md §2.4` clause (4) |
+| STMT-64 | ONE extractor per language, never per edition | `docs/family-architecture.md §1.6` |
+| STMT-65 | SEPARATE THE SPEC HALF FROM THE INTERPRETER HALF, from theorem one | `docs/family-architecture.md §8` step 9; cookbook §6 |
+| STMT-66 | DECIDE FUEL'S FATE before writing the interpreter | `docs/family-architecture.md §8` step 7 |
+| STMT-67 | a second semantics owes an adequacy theorem | `docs/family-architecture.md §8.5` (with §3.4 clause b) |
+| STMT-68 | typed surface in statements — never `Val`, fuel, or the AST | `AGENTS.md § House rules`, "Typed surface in statements" |
+| STMT-69 | the strengthened partial-correctness form is the only admissible one | `AGENTS.md § Failure modes` closing; prohibition at `§ Never` bullet 6; cookbook §12 |
+| STMT-70 | threshold form for every spliced run | `AGENTS.md § House rules`, "Threshold form for every spliced run" |
+| STMT-71 | `@[spec]` only on Hoare-triple / simp shapes | `AGENTS.md § House rules` |
+| STMT-72 | the four judgment forms | `AGENTS.md § Judgment vocabulary`, the table |
+| STMT-73 | never prettify `//` to `/` without a sign hypothesis | `AGENTS.md § Judgment vocabulary`, elaboration notes |
+| STMT-74 | statements are NORMATIVE — reproduce them exactly | `AGENTS.md § Failure modes`, "Statement discipline when re-proving"; cookbook §21 |
+| STMT-75 | TIME IS AN INPUT — the clock is a finite trace, quantified | `AGENTS.md § Orientation` item 3, PASS 6 |
+| STMT-76 | the world is a free variable, stronger than a pinned initial world | `AGENTS.md § Orientation` item 3; cookbook §9, §11 |
+| STMT-77 | THE EXIT LAW — fuel as a PARAMETER, worlds THREADED | `docs/backlog.md §L24`; cookbook §5 |
+| STMT-78 | name the world, do not hide it in an `∃` | `docs/backlog.md §L26`; cookbook §9 |
+| STMT-79 | specs must be OUTPUT-DETERMINED | `docs/backlog.md §L61`; `docs/mvcgen-pilot.md §3.3`; cookbook §7 |
+| STMT-80 | `Triple` does not frame the state | `docs/backlog.md §L61`; `docs/mvcgen-pilot.md §3.3`; cookbook §16 |
+| STMT-81 | a membership site must never be spelled with `⊕` | `docs/backlog/research.md 2026-08-22-research-1`; `docs/proof-framework-research.md §5.4`; cookbook §2 |
+| STMT-82 | DIVERGE-with-witness is a LISBON triple, not an Incorrectness one | `docs/proof-framework-research.md §5.3`; cookbook §3 |
+| STMT-83 | refinement is ∀∃, and a function-valued projection kills the witness obligations | `docs/proof-framework-research.md §7.3`, §6.4; cookbook §18 |
+| STMT-84 | never write a bare polymorphic `throw` — named refusal primitives | `docs/mvcgen-pilot.md §1.4`; cookbook §8 |
+| STMT-85 | altitude lemmas persist, and `@[spec]` is their registry | `docs/backlog.md §L61`, origin §L17 |
+| STMT-86 | conclude in the residue's own spelling, with the computed heap | `docs/backlog.md §L61`, origin §L20; cookbook §14 |
+| STMT-87 | a conditional is a premise until a `rfl` retires it | `docs/backlog.md §L45` |
+| STMT-88 | no engine, no fixture, no depth means the general layer | `docs/backlog.md §L65` |
+| STMT-89 | if the TYPE enumerated the kinds, the type would BE the vocabulary claim | `docs/backlog.md §L86` |
+| STMT-90 | `Deterministic` is design-indexed — discharged or refuted, never assumed | `docs/backlog/sv.md 2026-08-22-sv-1` |
+| STMT-91 | THROW vs REFUSE kept straight; only the unmodeled refuses | `docs/backlog/es.md 2026-08-22-es-1` |
+| STMT-92 | a rung moves a refusal down the stack and makes it narrower | `docs/backlog/es.md 2026-08-22-es-1` |
+| STMT-93 | TIMEOUT is never conflated with REFUSE | `docs/backlog/c.md 2026-08-22-c-1` |
+| STMT-94 | a gate states what it cannot emit, and why | `docs/backlog/ada.md 2026-08-22-ada-1` |
+| STMT-95 | a short-circuit's out-world goes in the HYPOTHESIS, not the conclusion | `docs/c-semantics-design.md §4.3`; `docs/backlog.md §L83`; cookbook §13 |
+| STMT-96 | `FoldInv` carries the round obligation only — never both boundary directions | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-4`; cookbook §4 |
+| STMT-97 | a threshold judgment's inverses are THEOREMS, not `cases` | `docs/backlog.md §L58`; cookbook §10 |
+| STMT-98 | a premise is not paid until something DISCHARGES it | `docs/backlog.md §L25` standing-law item 3; cookbook §21 |
+| STMT-99 | an existential judgment is earned across theorems, not within one | `docs/backlog.md §L38`; cookbook §15 |
+| STMT-100 | a definition a LEMMA cannot state about is a fidelity gap | `docs/backlog.md §L88`, sharper form of §L82; cookbook §17 |
+| STMT-101 | ONE EXECUTION, TWO PROJECTIONS — an outcome and its class cannot drift | `docs/family-architecture.md §5.2` |
+| STMT-102 | the refusal-class field's PRESENCE is a theorem; absence means it did not refuse | `docs/family-architecture.md §5.2` |
+| STMT-103 | a stepper RECOVERS the walker as its non-suspending case — never a parallel implementation | `docs/family-architecture.md §3.6` (1a) |
+| STMT-104 | two executable implementations cost a parity APPARATUS; one plus a special case costs a THEOREM | `docs/family-architecture.md §3.6` (1a) |
+| STMT-105 | a datatype run costs CONGRUENCES; a transformer stack costs an OPENER | cookbook §22; `docs/family-architecture.md §3.4` |
+| STMT-106 | write the PROVED/CHECKED boundary before either half can close | `docs/family-architecture.md §5.4a`; cookbook §12 |
+| STMT-107 | a mis-bucketed refusal is MIS-SCHEDULED — the class determines who owes the work | `docs/family-architecture.md §5.2` |
+| STMT-108 | when a fix moves a boundary, guard BOTH sides — a paired guard | `docs/family-architecture.md §5.2` |
+| STMT-109 | choose the acceptance case that can FAIL under the wrong model, and take it NOW | `docs/family-architecture.md §5.6` |
+| STMT-110 | a guarantee inside an IMPLICATION guarantees nothing when the antecedent fails | `docs/family-architecture.md §8` (the polarity pair) |
+| STMT-111 | THE HONEST SIGNATURE — omit a redundant hypothesis; never accept-and-ignore | `docs/family-architecture.md §8` |
+| STMT-112 | a snapshot is WRONG BY ANSWERING, not by answering wrongly | `docs/family-architecture.md §5.1` |
+| STMT-113 | a nonstandard generated relation is not ORPHANED — price the BRIDGE (the crossing IFF) first | `docs/family-architecture.md §8` item 11 |
+| STMT-114 | A RESOLUTION CAN BE WRONG, NOT MERELY MISSING — every resolution rung owes a shadowing row | `docs/family-architecture.md §5.2` |
+| STMT-115 | a correctness gate bounds BOTH error directions — over-refusing is a failure mode | `docs/family-architecture.md §5.2` |
+| STMT-116 | a FALSE PREMISE does not weaken a theorem — it VACATES it, and a vacated theorem PASSES | `docs/family-architecture.md §5.3` |
+| STMT-117 | an `op_correct` statement mentions NO algorithm; the tie rule is a PARAMETER | cookbook §24 |
+| STMT-118 | an OMISSION is stated in the file, never silently completed | cookbook §24 |
+| STMT-119 | convergence on the PARAMETER plus divergence on the INSTANTIATION is a correct parameterization | `docs/family-architecture.md §5.2` |
+| STMT-120 | a goal theorem that only appears as the LAST LINE OF PLANS will never be written | `docs/family-architecture.md §9.0` |
+| STMT-121 | no part of a flagship's difficulty lives in its ASSEMBLY — a hard assembly is an obligation list that lies about its length | `docs/family-architecture.md §9.0` |
+| STMT-122 | a hypothesis's RATIONALE is checkable only as a row: drop it, and a specific named thing must happen | `docs/family-architecture.md §5.3` |
+| STMT-123 | a hypothesis can change LOUD → QUIET while statement and theorem hold still — observability is not measured | `docs/family-architecture.md §5.3` |
+| STMT-124 | hypothesis KINDS — tier / modelling / bridging — determine the retirement move | `docs/family-architecture.md §5.3` |
+| STMT-125 | a FALLBACK arm returning `true` converts a failing run into a passing row — vacuity by INVERSION | `docs/family-architecture.md §5.3` |
+| STMT-126 | the ATTESTING INSTRUMENT constrains how a definition must be written (`partial` blocks `#guard`) | `docs/family-architecture.md §7.1a` |
+| STMT-127 | "the RUN is correct" and "the CERTIFICATE is correct" are different claims — only the second is what a green IS | `docs/family-architecture.md §5.4a-i` |
+| STMT-128 | a lemma that CANNOT FAIL is not a lemma — symmetry is a reason to LOOK, never to KEEP | `docs/family-architecture.md §5.3` |
+| STMT-129 | a behaviour the language DEFINES as a failure is a value of the outcome type, never a tier gap | `docs/family-architecture.md §5.2` |
+| STMT-130 | carry a residual as a HYPOTHESIS, never a `sorry` — a `sorry` poisons neighbouring receipts | `docs/family-architecture.md §9.0` |
+| STMT-131 | a table the PROGRAM CANNOT CHANGE is a parameter; the world holds what EXECUTION mutates | `docs/family-architecture.md §5.6` |
+| STMT-132 | where a def's matcher has NO EQUATIONS, SPECIALISE it at the argument you care about — surgery is the last resort | `docs/family-architecture.md §7.1a` |
+| STMT-133 | the stranded route needs EQUATIONS, the open route needs only REDUCTION — open exactly when the discriminant is string-free | `docs/family-architecture.md §7.1a` |
+| STMT-134 | a branch structure PROVED to be a spec clause's case split is a spec-conformance fact, not an implementation detail | `docs/family-architecture.md §3.5` |
+| STMT-135 | point the acceptance test at the ALMOST-IDENTICAL WRONG MODEL, not at the design | `docs/family-architecture.md §5.4b` |
+| STMT-136 | a SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES — a stand-in may drop cost, never structure | `docs/family-architecture.md §5.4` |
+| STMT-137 | a step changing REPRESENTATION and not VALUE owes a LOSSLESSNESS argument, not a correctness one | `docs/family-architecture.md §3.5` |
+| STMT-138 | a GENERATED model can be better shaped than a hand mechanisation for a specific lemma — first datum for extraction | `docs/family-architecture.md §7.1a` |
+| STMT-139 | UNSTATABLE is a verdict, not HARD — with no map between the two sides, build the connective; do not attack the goal | `docs/statement-cookbook.md` entry 25 |
+| STMT-140 | name walls by the OPERATION and the reason, never by the TYPE — one wall's two sides decide reduce-vs-rewrite | `docs/family-architecture.md §7.1a` |
+| STMT-141 | SIBLING ARMS are the most dangerous place to reuse a lemma shape — ask where control goes, per arm, first | `docs/family-architecture.md §5.4` |
+| STMT-142 | where Isabelle must DESTRUCTURE an inductive relation the ∃-form is already destructured — cost moves to helpers | `docs/family-architecture.md §7.1a` |
+| STMT-143 | a constraint met BY CONSTRUCTION beats the same constraint carried as a HYPOTHESIS every consumer must discharge | `docs/family-architecture.md §7.1a` |
+| STMT-144 | a MAGNITUDE argument (where a value SITS) is a different proof shape from an EQUALITY argument | `docs/family-architecture.md §7.1a` |
+| STMT-145 | NO THIRD SPECIES — a closed taxonomy over the remaining arms licenses a rung as instantiation, not discovery | `docs/family-architecture.md §9.0b` |
+| STMT-146 | a SHAPE is portable, a CONDITION is not — a copied shape invites copied content | `docs/family-architecture.md §5.0a` |
+| STMT-147 | a model that CANNOT REPRESENT a construct must DECLINE it, not APPROXIMATE it — a dropped field has no verdict | `docs/family-architecture.md §5.4` |
+| STMT-148 | a FALSE UB ACCUSATION is worse than a refusal — a refusal is about the model, an accusation is about the program | `docs/family-architecture.md §5.4` |
+| STMT-149 | a MERGED definition can carry a guard the SPLIT form cannot express — the real argument for deduplication | `docs/family-architecture.md §9.0` |
+| STMT-150 | a REWRITE RULE and the GOAL must agree on one NORMAL FORM, and the GOAL'S is the one that wins | `docs/family-architecture.md §7.1a` |
+| STMT-151 | A CONSTANT CANNOT BE HALF-UPDATED — independently edited parts are not a constant, whatever it is called | `docs/family-architecture.md §5.4` |
+
+## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
+
+| id | hook | home |
+| --- | --- | --- |
+| PROOF-1 | never `sorry` or `admit` — anywhere, ever | `AGENTS.md § Never` bullet 1 |
+| PROOF-2 | decide-class tactics discouraged, not banned — receipt at the use site | `AGENTS.md § Never` bullet 2 |
+| PROOF-3 | a file whose header contracts their absence stays true or stops saying so | `AGENTS.md § Never` bullet 2 |
+| PROOF-4 | never edit generated files — edit the source, re-extract | `AGENTS.md § Never` bullet 3 |
+| PROOF-5 | never weaken, strengthen or "simplify" a recorded statement | `AGENTS.md § Never` bullet 4 |
+| PROOF-6 | never whitelist a mismatch into silence | `AGENTS.md § Never` bullet 5 |
+| PROOF-7 | a non-whitelisted mismatch is an interpreter bug: report it | `AGENTS.md § Never` bullet 5 |
+| PROOF-8 | never leave `lake build` red, and never `git commit` | `AGENTS.md § Never` bullet 7 |
+| PROOF-9 | never touch another lane's files or the spine as a side effect | `AGENTS.md § Never` bullet 8 |
+| PROOF-10 | induction on math variables, never on fuel | `AGENTS.md § House rules` |
+| PROOF-11 | non-vacuity FIRST — a `#py_check` before any theorem | `AGENTS.md § House rules`; restated `§ The workflow` |
+| PROOF-12 | `#print axioms` of every `@[spec]` theorem shows only the three axioms | `AGENTS.md § House rules` |
+| PROOF-13 | `py_simp` freezes recursion points | `AGENTS.md § House rules` |
+| PROOF-14 | kernel-reducibility is a tier constraint | `AGENTS.md § House rules` |
+| PROOF-15 | the three-file layout; ALL real proofs in `proof.lean` | `AGENTS.md § Orientation` item 4 |
+| PROOF-16 | statement duplication is typechecked by `:= by proofs` | `AGENTS.md § Orientation` item 4 |
+| PROOF-17 | do not "fix" a twin mismatch by proving in the spec file | `AGENTS.md § Failure modes` |
+| PROOF-18 | the differential must exit 0 before proving a new function's spec | `AGENTS.md § The workflow` |
+| PROOF-19 | validated against CPython, not against your reading of the docs | `AGENTS.md § The workflow` |
+| PROOF-20 | fix the doc, never the tree | `AGENTS.md § The workflow` |
+| PROOF-21 | the triad — build, then `docs_check`, then the differential | `AGENTS.md § The workflow`; `tools/triad.sh` |
+| PROOF-22 | the goal-shape → tactic table IS the tactic-choice law | `AGENTS.md § GOAL-SHAPE → TACTIC` |
+| PROOF-23 | a recursive function means induction on the math argument | `AGENTS.md § GOAL-SHAPE → TACTIC` row 8 |
+| PROOF-24 | `grind` e-matches ATOMIC facts — never re-conjoin split invariants | `AGENTS.md § Failure modes`; cookbook §20 |
+| PROOF-25 | `omega` ingests only unbranded `Int`/`Nat`-headed comparisons | `AGENTS.md § Failure modes`; `tools/diagnose.sh` `omega-no-constraints` |
+| PROOF-26 | never hand-count interpreter steps — threshold forms and generous slack | `AGENTS.md § Failure modes` |
+| PROOF-27 | doc comments attach to declarations only | `AGENTS.md § Failure modes`; `docs/backlog.md §L66`, §L82 |
+| PROOF-28 | `exact … (by …)` commits inside `first` — all-tactic attempts first | `AGENTS.md § Failure modes` |
+| PROOF-29 | any unclosed obligation is appended, never dropped | `AGENTS.md § GOAL-SHAPE → TACTIC`, closing |
+| PROOF-30 | never add a hypothesis to make a proof pass — that is a semantics finding | `AGENTS.md § Failure modes`, "Statement discipline when re-proving" |
+| PROOF-31 | never delete a hypothesis that turns out unneeded — record the fact | `AGENTS.md § Failure modes`, same paragraph |
+| PROOF-32 | SIMP DOCTRINE — dispatchers in, workers deliberately out | `AGENTS.md § Orientation` item 3 |
+| PROOF-33 | `cases` never abstracts hypotheses — use `split at h` | `AGENTS.md § Orientation` item 3 |
+| PROOF-34 | explicit `termination_by structural fuel` on every mutual member | `AGENTS.md § Orientation` item 3 |
+| PROOF-35 | conjuncts appended LAST, so existing projection paths survive | `AGENTS.md § Orientation` item 3 |
+| PROOF-36 | `cbv` is for the interpreter's residue, and its bound is `maxRecDepth` | `docs/family-architecture.md §5.6`; `docs/lean-structures-census.md §1.3` |
+| PROOF-37 | BUG BEFORE REFACTOR | `docs/family-architecture.md §9.1` |
+| PROOF-38 | CONSOLIDATION BY TOUCH, never big-bang; byte-identical across the move | `docs/family-architecture.md §9.2` |
+| PROOF-39 | port the SUCCESSOR; keep the predecessor as the record of what it fixed | `docs/family-architecture.md §9.2` |
+| PROOF-40 | the migration must never cost more than the defect it removes | `docs/family-architecture.md §9.2` — ungateable: cost is a judgement over lane-time and build invalidation; the only mechanical proxy is the half never in dispute |
+| PROOF-41 | the law gets ENFORCED in the shared helper, not remembered | `docs/family-architecture.md §9.4` |
+| PROOF-42 | THE LAZINESS LAW — every field takes its successor level inside its lambda | `docs/family-architecture.md §3.6 (1a)`; from `docs/backlog.md §L84` |
+| PROOF-43 | defunctionalize — the continuation becomes DATA in the world | `docs/family-architecture.md §3.6 (1a)` |
+| PROOF-44 | `show` for a residue's spelling — `rw` is syntactic | `docs/backlog.md §L41` |
+| PROOF-45 | `#guard` is a WEAKER oracle than `rfl` | `docs/backlog.md §L82`, sharpened §L88 |
+| PROOF-46 | a lint's first run accusing a passing file is the LINT being wrong | `docs/backlog.md §L82` |
+| PROOF-47 | a gate that cannot fail is decoration — the self-test breaks each edge | `docs/backlog.md §L75` |
+| PROOF-48 | NEVER HIDE ERRORS — no except-and-pass, no silent degrade | `docs/backlog.md` §L60, §L67, §L76 (named law, no single numbered home) |
+| PROOF-49 | model-matches-code — the model and the code land together | `docs/backlog.md §L61`, instance §L3; `AGENTS.md § Orientation` item 3 |
+| PROOF-50 | refuse rather than invent against a model that cannot express the notion | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-4` |
+| PROOF-51 | a skip arm pins existentially; an ADD arm must SPELL it | `docs/backlog.md §L28` finding 1 |
+| PROOF-52 | run the activity check BEFORE choosing a target | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-2` |
+| PROOF-53 | the dependency graph is SEMANTIC, not nominal — name rules run first | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-2` |
+| PROOF-54 | strip comments and strings before counting `sorry` | `docs/backlog/wasm.md 2026-08-22-wasm-1`; `harness/wasm_sorry_census.py` |
+| PROOF-55 | "0 sorry" can distinguish the emission MODE, not the progress | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
+| PROOF-56 | open the monad stack ONCE, where it is defined — the tell is unfolding `Functor.map` | cookbook §22 |
+| PROOF-57 | the covenant made mechanical — `run_bind`'s arms ARE the layer order | `docs/family-architecture.md §3.4` |
+| PROOF-58 | never touch the SCRUTINEE — rewrite the whole bind from a head equation | cookbook §23 |
+| PROOF-59 | `dsimp only` for the iota step; `simp only` will not reduce a literal-constructor match | cookbook §23 |
+
+## D. BUILD + OPS AMENDMENTS — the lock protocol and its register
+
+**§7.1a is the protocol's ONLY durable home**, and `tools/triad.sh` is the
+canonical implementation — *the doc DESCRIBES, this script IS.* Amendment
+numbers below are the register's own.
+
+| id | hook | home |
+| --- | --- | --- |
+| OPS-1 | base 1 — ONE full build at a time, machine-wide (`mkdir` spinlock) | `docs/family-architecture.md §7.1` rule 1; `tools/triad.sh` |
+| OPS-2 | never hold the lock while thinking or editing | `docs/family-architecture.md §7.1` rule 1 |
+| OPS-3 | A2 — release is `rm -rf` with a CHECKED status | `docs/family-architecture.md §7.1` rule 2 / §7.1a row 2; `tools/triad.sh` |
+| OPS-4 | `-j4` is an argument error on this lake — throttle by environment | `docs/family-architecture.md §7.1` rule 2; `tools/diagnose.sh` `unknown-option` |
+| OPS-5 | exit 143 (and 137) is a RESOURCE KILL, not a build failure | `docs/family-architecture.md §7.1` rule 2; `tools/triad.sh`; `tools/diagnose.sh` `resource-kill` |
+| OPS-6 | the 143/137 retry — re-run once, never record a red | `docs/family-architecture.md §7.1a` (OBSERVED WORKING); `tools/triad.sh` |
+| OPS-7 | base 3 — scratch loops without the lock, under `nice -n 19` | `docs/family-architecture.md §7.1` rule 3 |
+| OPS-8 | the scratch exemption is a property of the CLONE, not of the file | `docs/family-architecture.md §7.1` rule 3 |
+| OPS-9 | base 4 — one triad per landing, never per edit | `docs/family-architecture.md §7.1` rule 4; `tools/triad.sh` |
+| OPS-10 | stage, then build; no speculative builds | `docs/family-architecture.md §7.1` rule 4 |
+| OPS-11 | base 5 — a stale lock cleared only after verifying by parentage and cwd | `docs/family-architecture.md §7.1` rule 5 |
+| OPS-12 | THE TWO-PART STALENESS TEST, never simplified to pid-only | `docs/family-architecture.md §7.1` rule 5; `tools/triad.sh` |
+| OPS-13 | a lane's death does not imply its build's death | `docs/family-architecture.md §7.1` rule 5 |
+| OPS-14 | a broken liveness check falls FORWARD, into reclaiming a live lock | `docs/family-architecture.md §7.1` rule 5 |
+| OPS-15 | base 6 — never kill another lane's processes; kills by PARENTAGE only | `docs/family-architecture.md §7.1` rule 6; `tools/triad.sh` |
+| OPS-16 | the amendment register is the protocol's ONLY durable home | `docs/family-architecture.md §7.1a` |
+| OPS-17 | anything a lane must obey belongs in a git-tracked file | `docs/family-architecture.md §7.1a` |
+| OPS-18 | amendment 1 — LOST, no text recovered from any durable source | `docs/family-architecture.md §7.1a` register row 1 |
+| OPS-19 | amendment 3 — LOST, attribution survives, text does not | `docs/family-architecture.md §7.1a` register row 3 |
+| OPS-20 | A4 — the owner file is written ONCE, under `set -C` | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-21 | owner is a HINT; the process tree is the truth | `docs/family-architecture.md §7.1a` amendment 4 |
+| OPS-22 | A5 — the owner file is exactly `<lane> <pid>`, pid LAST | `docs/family-architecture.md §7.1a` row 5; `tools/triad.sh` |
+| OPS-23 | A7 — the release trap is OWNERSHIP-CHECKED | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-24 | "LOCK NOT MINE — left alone" is A7 firing, not a failure | `docs/family-architecture.md §7.1a` OBSERVED WORKING |
+| OPS-25 | A8 — a staleness verdict comes from ONE atomic re-read before the removal | `docs/family-architecture.md §7.1a` row 8; `tools/triad.sh` |
+| OPS-26 | A9 — a FIFO TICKET QUEUE, because the spinlock starves | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-27 | only the OLDEST ticket attempts the `mkdir` | `docs/family-architecture.md §7.1a` amendment 9 |
+| OPS-28 | tickets are `<epoch>-<pid>-<lane>`, reaped by pid liveness | `docs/family-architecture.md §7.1a` amendment 9 |
+| OPS-29 | refuse rather than enqueue an unsortable ticket | `tools/triad.sh` (ticket timestamps); `docs/duplication-audit.md §2.4` |
+| OPS-30 | A10 — the owner pid must SPAN THE TENURE, never a child stage's | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-31 | A11 — the lock covers ALL Lean execution, not just `lake build` | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-32 | `LEAN_NUM_THREADS=2`, `nice -n 19`, a 3 GB RSS line over OWN descendants | `docs/family-architecture.md §7.1a` amendment 11; `tools/triad.sh` |
+| OPS-33 | Thomas's own processes have ABSOLUTE priority | `docs/family-architecture.md §7.1a` amendment 11 |
+| OPS-34 | A12 — traps kill descendants RECURSIVELY; never bare-kill a wrapper | `docs/family-architecture.md §7.1a`; `tools/triad.sh` |
+| OPS-35 | `pkill -P` misses grandchildren — walk `ps -eo pid,ppid` as a BFS | `docs/family-architecture.md §7.1a` amendment 12; `tools/triad.sh` |
+| OPS-36 | `--lane` rejects hyphens, because A9's ticket format field-parses | `docs/family-architecture.md §7.1a`, operational note; `tools/triad.sh` |
+| OPS-37 | `tools/triad.sh` is the canonical wrapper; private scripts ran 38% violations | `docs/family-architecture.md §7.1a`; `docs/duplication-audit.md §2.2` |
+| OPS-38 | a missing amendment in a script is a DIFF | `docs/family-architecture.md §7.1a`; `docs/duplication-audit.md §2.3` |
+| OPS-39 | the doc DESCRIBES, this script IS | `tools/triad.sh` header |
+| OPS-40 | an amendment becomes a commit, and every lane gets it by rebase | `tools/triad.sh` header |
+| OPS-41 | assert success POSITIVELY — grep for `Build completed successfully` | `docs/family-architecture.md §7.1a`; `tools/triad.sh`; `tools/diagnose.sh` `build-did-not-happen` |
+| OPS-42 | `--classify` — docs / tier / spine; the tenure follows the LEAN | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| OPS-43 | the classification is a FLOOR, never a ceiling | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| OPS-44 | anything UNRECOGNIZED escalates and is NAMED, never absorbed | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| OPS-45 | a scoped green PRINTS its coverage statement beside the verdict | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| OPS-46 | less scope, ZERO invention — never run Lean to decide a target's spelling | `docs/backlog/qol.md 2026-08-22-qol-1` — gate: `tools/triad.sh` |
+| OPS-47 | `--self-test` runs NO Lean; `--classify-only` takes no tenure | `tools/triad.sh` usage |
+| OPS-48 | lock and queue paths overridable for sandboxing; a live run uses the real ones | `tools/triad.sh` header |
+| OPS-49 | the header IS the usage text | `tools/triad.sh` |
+| OPS-50 | SIGKILL a superseded runner, and delete the file in the same breath | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-5` |
+| OPS-51 | reading the fix is not the same as disarming the thing it fixes | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-5` |
+| OPS-52 | an amendment takes effect when the last script predating it is DEAD | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-5` |
+| OPS-53 | release must RE-READ ownership, never infer it from history | `docs/backlog/c.md 2026-08-22-c-1` |
+| OPS-54 | the 3 GB per-process line can kill correct builds — raise it deliberately | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-5` |
+| OPS-55 | `maybe`: present ⇒ run, absent ⇒ SKIP, reported, never silently omitted | `docs/family-architecture.md §3.2` item 9; `tools/ci.sh` |
+| OPS-56 | the summary always states what was and was not verified | `tools/ci.sh` header |
+| OPS-57 | an unlicensed binary is infrastructure absence, not disagreement | `tools/ci.sh` |
+| OPS-58 | the MARKER CONVENTION is normative; illustrative blocks skipped AND counted | `tools/docs_check.py` module docstring |
+| OPS-59 | the workspace ladder: CoW now, shared packages next, shared build REJECTED | `docs/family-architecture.md §9.6` |
+| OPS-60 | the LIGHT keeper-tick checks: lock owner, queue, concurrent builds by parentage | `docs/family-architecture.md §9.7` |
+| OPS-61 | a pre-push gate is PRICED and deliberately not proposed | `docs/duplication-audit.md §2.4` |
+| OPS-62 | adoption is per-lane, on dispatch | `tools/triad.sh` header; `docs/duplication-audit.md §2.4` |
+| OPS-63 | refuse to start a build inside a rebase/merge/cherry-pick | `tools/triad.sh` (A6 precondition); `docs/duplication-audit.md §2.4` |
+| OPS-64 | the register can sit one amendment behind its own birth | `docs/duplication-audit.md §2.3` |
+| OPS-65 | the rule applies to YOUR OWN runners first — the author's process predates the fix | `docs/family-architecture.md §7.1a` A16.2 |
+| OPS-66 | an unseeded clone is one accident away from a full Mathlib build | `docs/family-architecture.md §7.1a` A13 |
+| OPS-67 | a re-entry guard lives in something INHERITED, never something PASSED | `docs/family-architecture.md §7.1a` A11 |
+| OPS-68 | a step that can start Lean names the HOST it may start it on | `docs/family-architecture.md §7.1a` A11; `tools/ci.sh` |
+| OPS-69 | an announcement is GENERATED BY the code it announces, or it is prose about a plan | `docs/family-architecture.md §7.2` |
+| OPS-70 | NOT COMPILED IS NOT NOT RUN — A11 covers a file no target builds | `docs/family-architecture.md §7.1a` A11 |
+| OPS-71 | a value-taking flag REFUSES a missing value; it never defaults | `docs/family-architecture.md §5.4b`; `tools/argv.sh` |
+| OPS-72 | CLASSIFICATION NARROWS — default-on would make narrowing the default | `docs/family-architecture.md §7.2` |
+| OPS-73 | an advisory runs in a SUBSHELL — one that leaked would narrow the build it describes | `docs/family-architecture.md §7.2` |
+| OPS-74 | a build log says whose it is; an artifact with no identity is storage, not evidence | `docs/family-architecture.md §7.2` |
+| OPS-75 | a stamp added to a measured artifact owes a DIFFERENTIAL — same verdicts with and without | `docs/family-architecture.md §7.2` |
+| OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
+| OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
+| OPS-78 | a guard must hash the object the BUILD reads, never the one beside it (the enqueue stamp hashed the INDEX while `lake` built the WORKING TREE; fixed `22ed755`) | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
+| OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` — **SUNSET**: stamp v2 is live; applies only to v1-stamped tickets |
+| OPS-80 | accept-and-log tolerance is for tickets IN FLIGHT — a migration's grace window needs a DIRECTION | `docs/family-architecture.md §7.2` |
+| OPS-81 | the module system is opt-in per ROOT — unfolding proofs are portable only to legacy roots | `docs/family-architecture.md §7.1a` |
+| OPS-82 | a comment describing comment syntax cannot QUOTE it — name the delimiters, never spell them | `docs/family-architecture.md §7.1a` |
+| OPS-83 | a tactic dispatching on a goal's HEAD needs a stable head — a `def` unfolding to a binder has none | `docs/family-architecture.md §7.1a` |
+| OPS-84 | `with_reducible` per `apply` — each failure is one HEAD COMPARISON, not one unfolding | `docs/family-architecture.md §7.1a` |
+| OPS-85 | REPORT-THEN-CONTINUE — proceed to the named next rung; stop only on a ruling, a merge you consume, or a pending verdict | `docs/family-architecture.md §9.0-pre` |
+| OPS-86 | commit provenance comes from the ENVIRONMENT, never from a flag someone types | `docs/family-architecture.md §7.2` |
+| OPS-87 | when a guard refuses, ask whether the GUARD IS WRONG — never whether another door is open | `docs/family-architecture.md §5.4a` |
+| OPS-88 | state cross-spelling claims on MATCH-FREE lemmas — a match over an instantiation is a different constant | `docs/family-architecture.md §7.1a` |
+| OPS-89 | `no-goals` is never about the tactic it names — a discharged goal reads like a hard one | `docs/family-architecture.md §7.1a` |
+| OPS-90 | a trunk proof's `clear` line is INTERFACE, not hygiene — it constrains the induction motive | `docs/family-architecture.md §7.1a` |
+| OPS-91 | `/--` binds to the next DECLARATION; `/-!` stands alone; `#guard`/`#eval`/`#print` are COMMANDS | `docs/family-architecture.md §7.1a` |
+| OPS-92 | the FAST LOOP is only worth what you point it at — a cheap check run on the file you least feared is one you did not run | `docs/family-architecture.md §5.4b` |
+| OPS-93 | a CAPABILITY IS NOT A PRACTICE — the cure is coverage (every file the tenure touched), not vigilance | `docs/family-architecture.md §5.4b` |
+| OPS-94 | install a DISCRIMINATING GUARD while it has nothing to discriminate; later it arrives with a constituency against it | `docs/family-architecture.md §5.4b` |
+| OPS-95 | a GREP-BASED EXISTENCE CHECK answers "is this string here", not "is this thing declared" — require `def` AND `#guard` | `docs/family-architecture.md §5.4b` |
+| OPS-96 | STRIP COMMENTS FIRST — `^\s*def` matches inside a block comment, which IS the deleted-declaration case | `docs/family-architecture.md §5.4b` |
+| OPS-97 | before writing a fixture, GREP THE TREE — the counterexample the guard needs is often already checked in | `docs/family-architecture.md §5.4b` |
+| OPS-98 | a rule keyed to a SOURCE'S STATE degrades silently into its default — re-check the state PER USE | `docs/family-architecture.md §5.4` |
+| OPS-99 | design-by-precedent is proven by a DECLINED sibling choice, cited with the sibling's recorded reason | `docs/family-architecture.md §5.6` |
+| OPS-100 | a fixture missing the DECLARATION THE FEATURE READS tests an empty world under the feature's name — make it FAIL first | `docs/family-architecture.md §5.4` |
+| OPS-101 | a refusal naming a fix that DOESN'T WORK is worse than no refusal — execute the remedy before shipping it | `docs/family-architecture.md §5.4` |
+| OPS-102 | IDENTITY, NOT ANCESTRY: matches-nothing = local work, never behind; two states make a guard refuse its own maintainer | `docs/family-architecture.md §7.2` |
+| OPS-103 | a coordinator's MERGE RECIPE is a tool — same gate audit; run the all-docs marker scan after EVERY merge | `docs/family-architecture.md §7.2` |
+| OPS-104 | `set -e` DOES NOT APPLY INSIDE `&&` — run the command alone and read `$?` | `docs/family-architecture.md §9.1` |
+| OPS-105 | a REPAIR TO A CONTROL IS A CONTROL — it gets the control's audit, not the repair's | `docs/family-architecture.md §9.1` |
+| OPS-106 | where the spec names ONE correct result, a guess is strictly dominated — measured: 2 failing cases became 8 | `docs/family-architecture.md §3.5` |
+| OPS-107 | a control law ships with a WORKED COMPLIANT FORM — a prohibition alone gets re-derived, not copied | `docs/family-architecture.md §9.1` |
+| OPS-108 | a capability landed before its ENABLING CONTEXT is a regression wearing a feature's name — land it gated | `docs/family-architecture.md §5.2` |
+| OPS-109 | a CONTROL is validated against what the program REQUIRES, never against what the control RESEMBLES | `docs/family-architecture.md §5.0a` |
+| OPS-110 | a debt row's BLAST RADIUS is an object-identity claim — write the site at the granularity that is actually true | `docs/family-architecture.md §5.0a` |
+| OPS-111 | an IDIOM TABLE is indexed by ELIMINATOR, not by taste — contradicting idioms locate the key neither named | `docs/family-architecture.md §7.1a` |
+| OPS-112 | `cases` works where `induction` refuses — a refusal attached to ONE ELIMINATOR is not attached to the goal | `docs/family-architecture.md §7.1a` |
+| OPS-113 | BUNDLING IS CHEAPEST TO JUSTIFY WHEN A LANE IS WINNING — "while I'm in here" is a scope claim in a costume | `docs/family-architecture.md §9.2` |
+| OPS-114 | SHARED QUESTIONS GET ONE READER — two throttles disagreeing is not redundancy, it is a protocol with two truths | `docs/family-architecture.md §7.1a` |
+| OPS-115 | a FIX MUST NOT BE PICKED THE WAY THE DEFECT WAS PICKED — a better-feeling unmeasured value repeats the error | `docs/family-architecture.md §7.1a` |
+| OPS-116 | LABEL DECISIONS WITH THE MEASUREMENT THAT PRODUCED THEM — a bare constant is re-litigated by every reader | `docs/family-architecture.md §7.1a` |
+| OPS-117 | WRITE THE ROW BEFORE YOU UNDERSTAND THE DEFECT — the explaining window is when a divergence gets normalised | `docs/family-architecture.md §5.0a` |
+| OPS-118 | a row may carry a SELF-SET DEADLINE — "must not survive a second landing unchanged" is a tighter clock than the audit's | `docs/family-architecture.md §5.0a` |
+| OPS-119 | a guard that PINS A REFUSAL must go RED when the frontier moves past it — the expiring claim that tracks itself | `docs/family-architecture.md §5.0a` |
+| OPS-120 | FULL-AFTER-RED keys on WHAT THE RED UN-KNOWS — full or out-of-scope → FULL; diagnosed in-scope scoped red → re-ticket SCOPED | `docs/family-architecture.md §7.1a` |
+| OPS-121 | DECLARATION CONVERTS FABRICATION INTO PROFILE — pin it where a disagreeing host is rejected by name | `docs/family-architecture.md §4.2` |
+| OPS-122 | ONE QUESTION, ONE OWNER at the extraction boundary — two answers is a silent disagreement awaiting one input | `docs/family-architecture.md §5.4` |
+| OPS-123 | a tier that mints a PRIVATE KIND has left the register and kept its syntax — a new kind is a family ruling | `docs/family-architecture.md §5.4b` |
+| OPS-124 | THE GATE BUILDS WHAT THE GATE NEEDS — never put a gate's target in `defaultTargets` | `docs/family-architecture.md §5.4b` |
+| OPS-125 | an instrument's DATA stream and its PROGRESS stream are different channels — merging them makes data conditional on the build | `docs/family-architecture.md §5.4b` |
+| OPS-126 | "Isabelle-before-scratch" is a DEFAULT, NOT A CEILING — a default never beaten is a policy nobody has tested | `docs/family-architecture.md §7.1a` |
+| OPS-127 | BUILD THE RETIREMENT TO FAIL — a debt that can drain away unnoticed will, and nobody can say when | `docs/family-architecture.md §5.0a` |
+| OPS-128 | a retirement condition NAMES THE REJECTED ROUTE, not just the accepted one — otherwise it defers the decision | `docs/family-architecture.md §5.0a` |
+| OPS-129 | ASKING WHETHER THE SCRIPT NAMES LAKE IS NOT ASKING WHAT THE GATE RUNS — trace the call, or say you did not | `docs/family-architecture.md §5.4b` |
+| OPS-130 | a lane that BREACHED an exclusive resource does not verify its own fix with it — borrow another lane's measurement | `docs/family-architecture.md §5.4b` |
+| OPS-131 | a SIGNATURE-SHAPED CHECK answers a signature-shaped question — a behaviour claim must CALL the thing | `docs/family-architecture.md §5.4b` |
+| OPS-132 | a CERTIFICATE CANNOT BE SPLIT WITHOUT CHANGING IT — the win is OVERLAP, not DIVISION | `docs/family-architecture.md §9.0b` |
+| OPS-133 | a THEIRS-RESOLUTION on a branch cut before a later master commit SILENTLY REVERTS IT — heading-survival check, per commit | `docs/family-architecture.md §7.2` |
+| OPS-134 | a REBASE BEFORE A PUSH replaces the tree the gates ran on — measure drift against closure + gate inputs, or push what was gated | `docs/family-architecture.md §7.2` |
+| OPS-135 | COMMIT BEFORE REPORT — the report is the last step, not the step that displaces the commit | `docs/family-architecture.md §7.2` |
+| OPS-136 | a law learned through one tool arrives filed UNDER THAT TOOL — state a law's SCOPE in the law | `docs/family-architecture.md §5.4` |
+| OPS-137 | RULED: `rows:[]` is legal iff `retired_rows` is non-empty; both empty → DELETE; retired rows KEEP THEIR GUARDS | `docs/family-architecture.md §5.0a` |
+| OPS-138 | a BACKGROUNDED command's exit status is a fact about the FORK, not about the WORK | `docs/family-architecture.md §5.4b` |
+| OPS-139 | NEVER READ A STATUS THROUGH A PIPE, and never trust a number that does not name its instrument | `docs/family-architecture.md §5.4b` |
+| OPS-140 | when an instrument records WHAT THE SOURCE IS, the field must not be one the source also owns — disjoint BY NAMING | `docs/family-architecture.md §5.4` |
+| OPS-141 | a REJECTED DESIGN'S FAILURES are kept as regression cases, so the idea cannot be retried without meeting them | `docs/family-architecture.md §5.4` |
+| OPS-142 | a SUCCESSOR BRIEF IS AN INSTRUMENT — correct it against the tree before acting on it | `docs/family-architecture.md §5.4` |
+| OPS-143 | THE CHECK MUST GATE, NOT ANNOTATE — a check whose output is a log line is a comment with a computation attached | `docs/family-architecture.md §7.1a` |
+| OPS-144 | READ THE SIGNATURE, don't infer it from the name — a name is an author's claim, a signature is enforced | `docs/family-architecture.md §5.4` |
+| OPS-145 | THREE STATEMENTS OF ONE RULE IN ONE FILE IS NOT DOCUMENTATION, IT IS THREE RULES — the spec decides which survives | `docs/family-architecture.md §7.1a` |
+| OPS-146 | a STATUS WORD must carry ONE SEVERITY across everything it labels — `watch` for a healthy archive, `FAIL` for a breach | `docs/family-architecture.md §5.0a` |
+| OPS-147 | a REVERSAL is recorded as a SUPERSEDED NOTE — erasing the reasoning destroys the evidence the rule was tested | `docs/family-architecture.md §5.0a` |
+| OPS-148 | SWEEP SPEC: grep each tier's instruments for branches assuming a non-empty register; deliver a NAMED NEGATIVE | `docs/family-architecture.md §5.0a` |
+| OPS-149 | the FIRST TIER THROUGH A NEW RULING publishes the TRAPS, not just the code — relay before the next implementer fires | `docs/family-architecture.md §5.4b` |
+| OPS-150 | THE PROTOCOL'S OWN ARTIFACT must not be able to invalidate its own ticket — refuse at ENQUEUE, never stamp-exclude | `docs/family-architecture.md §7.1a` |
+| OPS-151 | a REFUSAL THAT PRINTS THE RECOVERY ORDERING is a control; one that prints only the problem is an obstacle | `docs/family-architecture.md §7.1a` |
+| OPS-152 | a GATE WITH A BYPASS AT THE CALL SITE is the gate-not-annotate defect wearing the gate as a costume | `docs/family-architecture.md §7.1a` |
+| OPS-153 | when ONE ACCESSOR is asked for two types by two callers, THE CALL SITES MUST SAY WHICH | `docs/family-architecture.md §5.4` |
+| OPS-154 | a REFUSAL PATH THAT HAS NEVER BEEN EXECUTED is a comment with a `raise` in it | `docs/family-architecture.md §5.4b` |
+| OPS-155 | a GUARD ON THE NAME covers one of two routes; only WITHHOLDING THE BUILD PRODUCTS answers the other | `docs/family-architecture.md §5.4b` |
+| OPS-156 | A VIEW THAT HIDES ONE THING MUST NOT QUIETLY CHANGE ANOTHER — pin `GIT_DIR`; measure both directions | `docs/family-architecture.md §5.4b` |
+| OPS-157 | ENUMERATE TERMINAL STATES FROM THE SOURCE, not from memory of what the tool prints | `docs/family-architecture.md §7.1a` |
+| OPS-158 | a GREP NEGATIVE is bounded by the vocabulary you guessed — the unguessed word is the one a lenient exit uses | `docs/family-architecture.md §7.1a` |
+| OPS-159 | A PUSH IS NOT LANDED UNTIL `git ls-remote` SAYS SO | `docs/family-architecture.md §7.1a` |
+| OPS-160 | HARDENING AN INSTRUMENT DOES NOT HARDEN THE HAND THAT REACHES PAST IT | `docs/family-architecture.md §7.1a` |
+| OPS-161 | AN ALARM NOBODY CAN TRUST IS WORSE THAN NO ALARM | `docs/family-architecture.md §7.1a` |
+| OPS-162 | ABLATION-VALIDATE a detector — break it on purpose to confirm it notices | `docs/family-architecture.md §9.0` |
+
+## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
+
+| id | hook | home |
+| --- | --- | --- |
+| CLONE-1 | A13 — cache seeding is MANDATORY, and it is copy-on-write | `docs/family-architecture.md §7.1a` |
+| CLONE-2 | `cp -Rpc` — `-c` clones the blocks, `-p` preserves Lake's timestamps | `docs/family-architecture.md §7.1a` amendment 13 |
+| CLONE-3 | seed only from a peer with NO build running and an untorn tree | `docs/family-architecture.md §7.1a` amendment 13 |
+| CLONE-4 | THE A13 CAVEAT — seeding takes the peer's BRANCH too | `docs/family-architecture.md §7.1a` |
+| CLONE-5 | check `git branch --show-current` immediately after seeding | `docs/family-architecture.md §7.1a` |
+| CLONE-6 | push `HEAD:master`, never bare `master` | `docs/family-architecture.md §7.1a` |
+| CLONE-7 | seeding inherits the REMOTES too — `origin` may be a stale local bundle | `docs/family-architecture.md §7.1a` |
+| CLONE-8 | identity — BRANCH AND REMOTES BOTH — is INHERITED, not chosen | `docs/family-architecture.md §7.1a` |
+| CLONE-9 | after seeding run `git remote -v`; compare only against `github/master` | `docs/family-architecture.md §7.1a`; `tools/triad.sh --classify` |
+| CLONE-10 | `git rev-list HEAD..origin/master` reading 0 against a bundle is not proof | `docs/family-architecture.md §7.1a`; `tools/diagnose.sh` `seeded-clone-identity` |
+| CLONE-11 | fetch-rebase before every push | `docs/family-architecture.md §7.2` |
+| CLONE-12 | read your own backlog section at PUSH time, not at draft time | `docs/family-architecture.md §7.2` |
+| CLONE-13 | after a rebase touching `.lean`, re-run build and differential before pushing | `docs/family-architecture.md §7.2` |
+| CLONE-14 | A6 — never fetch-rebase while a build runs in the same clone | `docs/family-architecture.md §7.2` / §7.1a row 6; `tools/triad.sh` |
+| CLONE-15 | the order is `stage → build → rebase`, or `rebase → build` | `docs/family-architecture.md §7.2` |
+| CLONE-16 | a red from a torn tree is not evidence of anything | `docs/family-architecture.md §7.2`; `tools/diagnose.sh` `unknown-constant` |
+| CLONE-17 | it discharges nothing and convicts nothing — re-run clean | `docs/family-architecture.md §7.2` |
+| CLONE-18 | BACKLOG V2 — `docs/backlog/<lane>.md`, appended only by its own lane | `docs/family-architecture.md §9.5` |
+| CLONE-19 | ids `YYYY-MM-DD-<lane>-<n>` need no reservation | `docs/family-architecture.md §9.5` |
+| CLONE-20 | migration is append-only; every existing `§Lnn` keeps resolving | `docs/family-architecture.md §9.5` |
+| CLONE-21 | `docs/backlog.md` becomes a GENERATED index | `docs/family-architecture.md §9.5` |
+| CLONE-22 | verify `git remote -v` AND the upstream in a clone you did not create | `docs/backlog.md §L86`; `docs/duplication-audit.md §6.3` |
+| CLONE-23 | the branch trap is current state, not folklore | `docs/duplication-audit.md §6.3`; `docs/backlog.md §L89` |
+| CLONE-24 | an audit that only confirms is not an audit | `docs/duplication-audit.md §6.3` |
+| CLONE-25 | a workspace helper refuses if the peer builds or the tree is torn | `docs/duplication-audit.md §6.5` |
+| CLONE-26 | the merge target prints ref, sha AND remote URL; the A13 caveat is loud | `tools/triad.sh --classify`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| CLONE-27 | unstaged `.lean` files the classification did not cover are counted and named | `tools/triad.sh --classify`; `docs/backlog/qol.md 2026-08-22-qol-1` |
+| CLONE-28 | local branch, no upstream tracking, no PR, no comment, no contact | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-4` |
+| CLONE-29 | "no Lean run, no build, no ticket taken" — the docs-only declaration | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-4`; `docs/duplication-audit.md §7` |
+| CLONE-30 | sparse-fetch a foreign corpus read-only, and `df` first (A11) | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-4` |
+| CLONE-31 | no private hostnames in tracked files | `docs/family-architecture.md §1.2` (one standing violation flagged there) |
+| CLONE-32 | sweep, do not note — a stale artifact is not disarmed by being recorded | `docs/backlog/sunfish-rtrack.md 2026-08-22-sunfish-rtrack-5` |
+| CLONE-33 | a lane tag is a bare word, and it replaces the lane's private script | `docs/backlog/es.md 2026-08-22-es-1`; `tools/triad.sh` |
+
+---
+
+## What this index does not do
+
+It does not rank. Every row here is standing law, and a lane that needs to
+know which one *bites first* on a given landing should read
+`docs/family-architecture.md §9` — the standing strategy — rather than
+inferring priority from position in a table.
+
+And it does not close. A law arrives when an incident mints it: append the
+row when you append the backlog entry, in the same landing, so the index
+never becomes the thing a lane has to remember to update.

@@ -1,0 +1,214 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "neg_latch",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/comb_ovr/neg/neg_latch.sv",
+      "sha256": "d115a8fd03a24c229fc5ddc3a427cd6fbfda613ed8a26277cc4b23124850390a"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "neg_latch",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 37,
+              "end_line": 2,
+              "end_col": 38
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 32,
+                      "end_line": 2,
+                      "end_col": 33
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 34,
+                      "end_line": 2,
+                      "end_col": 35
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 52,
+              "end_line": 2,
+              "end_col": 53
+            },
+            "name": "e",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 74,
+              "end_line": 2,
+              "end_col": 75
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 69,
+                      "end_line": 2,
+                      "end_col": 70
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 71,
+                      "end_line": 2,
+                      "end_col": 72
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 5,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 5,
+                "end_line": 4,
+                "end_col": 18
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 18
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 9,
+                      "end_line": 4,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "e"
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 4,
+                      "col": 12,
+                      "end_line": 4,
+                      "end_col": 18
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 12,
+                        "end_line": 4,
+                        "end_col": 13
+                      },
+                      "width": 4,
+                      "name": "y"
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 16,
+                        "end_line": 4,
+                        "end_col": 17
+                      },
+                      "width": 4,
+                      "name": "a"
+                    }
+                  },
+                  "else": null
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

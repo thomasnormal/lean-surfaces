@@ -1,0 +1,370 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/package_storage/timers.sv",
+  "source_sha256": "d48ab7996a04b86762a95aecc0c47849bcc1ebb2e917193aedf84db13ddf6905",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 21,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 16
+            },
+            "name": "$package:6:Shared:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 15,
+                  "end_line": 2,
+                  "end_col": 16
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000101"
+              }
+            },
+            "signed": true,
+            "package_storage": true,
+            "source_package": "Shared",
+            "source_name": "value"
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 7,
+                      "col": 7,
+                      "end_line": 7,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "$package:6:Shared:value",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 8,
+                        "col": 13,
+                        "end_line": 8,
+                        "end_col": 14
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000001000"
+                    }
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "$package:6:Shared:value",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 10,
+                        "col": 14,
+                        "end_line": 10,
+                        "end_col": 16
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000001101"
+                    }
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 42
+                  },
+                  "name": "$display",
+                  "format": "later %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 27,
+                        "end_line": 12,
+                        "end_col": 40
+                      },
+                      "width": 32,
+                      "name": "$package:6:Shared:value",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 15,
+              "col": 3,
+              "end_line": 20,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 15,
+                "col": 11,
+                "end_line": 20,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 35
+                  },
+                  "name": "$display",
+                  "format": "before %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 17,
+                        "col": 28,
+                        "end_line": 17,
+                        "end_col": 33
+                      },
+                      "width": 32,
+                      "name": "$package:6:Shared:value",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 18,
+                      "col": 7,
+                      "end_line": 18,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 42
+                  },
+                  "name": "$display",
+                  "format": "after %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 19,
+                        "col": 27,
+                        "end_line": 19,
+                        "end_col": 40
+                      },
+                      "width": 32,
+                      "name": "$package:6:Shared:value",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

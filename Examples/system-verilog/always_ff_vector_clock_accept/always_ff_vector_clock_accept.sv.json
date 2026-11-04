@@ -1,0 +1,299 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/always_ff_vector_clock_accept/always_ff_vector_clock_accept.sv",
+  "source_sha256": "aa6f8a6d3c05a06f8faf8a00440ba7b190dad51bf47f2e0906d579ea24400118",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 26
+            },
+            "name": "bus",
+            "width": 2,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 4,
+                "col": 21,
+                "end_line": 4,
+                "end_col": 26
+              },
+              "width": 2,
+              "bits": "00"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 17
+            },
+            "name": "q",
+            "width": 1,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 13,
+                "end_line": 5,
+                "end_col": 17
+              },
+              "width": 1,
+              "bits": "0"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysFFExpr",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 15
+            },
+            "expression": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 23,
+                "end_line": 7,
+                "end_col": 26
+              },
+              "width": 2,
+              "name": "bus"
+            },
+            "edge": "pos",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 8,
+                "col": 5,
+                "end_line": 8,
+                "end_col": 15
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 5,
+                  "end_line": 8,
+                  "end_col": 6
+                },
+                "width": 1,
+                "name": "q"
+              },
+              "value": {
+                "kind": "Literal",
+                "span": {
+                  "line": 8,
+                  "col": 10,
+                  "end_line": 8,
+                  "end_col": 14
+                },
+                "width": 1,
+                "bits": "1"
+              }
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 16,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 9,
+                    "end_line": 11,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 12
+                    },
+                    "width": 2,
+                    "name": "bus"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 11,
+                      "col": 15,
+                      "end_line": 11,
+                      "end_col": 20
+                    },
+                    "width": 2,
+                    "bits": "01"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 50
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 10
+                      },
+                      "width": 1,
+                      "name": "q"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 13,
+                        "col": 15,
+                        "end_line": 13,
+                        "end_col": 19
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 13,
+                      "col": 21,
+                      "end_line": 13,
+                      "end_col": 61
+                    },
+                    "name": "$display",
+                    "format": "ALWAYS_FF VECTOR CLOCK PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 50
+                    },
+                    "name": "$display",
+                    "format": "ALWAYS_FF VECTOR CLOCK FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

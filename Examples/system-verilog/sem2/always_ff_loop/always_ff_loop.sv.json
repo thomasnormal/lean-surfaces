@@ -1,0 +1,323 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "always_ff_loop",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/always_ff_loop/always_ff_loop.sv",
+      "sha256": "ec8a3d04ebf206fa14b96548826557a1b511ad952b99f50e3652e124c05a8260"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "always_ff_loop",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 21,
+              "end_line": 4,
+              "end_col": 22
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 22,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 5,
+                "end_line": 9,
+                "end_col": 20
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 20
+                  },
+                  "stmts": [
+                    {
+                      "kind": "NonblockingAssign",
+                      "span": {
+                        "line": 9,
+                        "col": 7,
+                        "end_line": 9,
+                        "end_col": 20
+                      },
+                      "target": {
+                        "kind": "BitSel",
+                        "span": {
+                          "line": 9,
+                          "col": 7,
+                          "end_line": 9,
+                          "end_col": 11
+                        },
+                        "width": 1,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 7,
+                            "end_line": 9,
+                            "end_col": 8
+                          },
+                          "width": 2,
+                          "name": "q"
+                        },
+                        "index": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 9,
+                            "col": 9,
+                            "end_line": 9,
+                            "end_col": 10
+                          },
+                          "value": 0,
+                          "resolved_width": 32
+                        }
+                      },
+                      "value": {
+                        "kind": "BitSel",
+                        "span": {
+                          "line": 9,
+                          "col": 15,
+                          "end_line": 9,
+                          "end_col": 19
+                        },
+                        "width": 1,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 15,
+                            "end_line": 9,
+                            "end_col": 16
+                          },
+                          "width": 2,
+                          "name": "d"
+                        },
+                        "index": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 9,
+                            "col": 17,
+                            "end_line": 9,
+                            "end_col": 18
+                          },
+                          "value": 0,
+                          "resolved_width": 32
+                        }
+                      }
+                    },
+                    {
+                      "kind": "NonblockingAssign",
+                      "span": {
+                        "line": 9,
+                        "col": 7,
+                        "end_line": 9,
+                        "end_col": 20
+                      },
+                      "target": {
+                        "kind": "BitSel",
+                        "span": {
+                          "line": 9,
+                          "col": 7,
+                          "end_line": 9,
+                          "end_col": 11
+                        },
+                        "width": 1,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 7,
+                            "end_line": 9,
+                            "end_col": 8
+                          },
+                          "width": 2,
+                          "name": "q"
+                        },
+                        "index": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 9,
+                            "col": 9,
+                            "end_line": 9,
+                            "end_col": 10
+                          },
+                          "value": 1,
+                          "resolved_width": 32
+                        }
+                      },
+                      "value": {
+                        "kind": "BitSel",
+                        "span": {
+                          "line": 9,
+                          "col": 15,
+                          "end_line": 9,
+                          "end_col": 19
+                        },
+                        "width": 1,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 15,
+                            "end_line": 9,
+                            "end_col": 16
+                          },
+                          "width": 2,
+                          "name": "d"
+                        },
+                        "index": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 9,
+                            "col": 17,
+                            "end_line": 9,
+                            "end_col": 18
+                          },
+                          "value": 1,
+                          "resolved_width": 32
+                        }
+                      }
+                    }
+                  ],
+                  "symbolic_for_unrolled": true,
+                  "symbolic_for_iterations": 2
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

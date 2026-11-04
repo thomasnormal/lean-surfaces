@@ -1,0 +1,308 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "neg_rbw",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/comb_ovr/neg/neg_rbw.sv",
+      "sha256": "c6ad811a2ce3b6221857aa56e894cbce697a1008bb2b664861d5abd633a6abc1"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "neg_rbw",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 35,
+              "end_line": 2,
+              "end_col": 36
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 30,
+                      "end_line": 2,
+                      "end_col": 31
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 32,
+                      "end_line": 2,
+                      "end_col": 33
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 38,
+              "end_line": 2,
+              "end_col": 39
+            },
+            "name": "b",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 30,
+                      "end_line": 2,
+                      "end_col": 31
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 32,
+                      "end_line": 2,
+                      "end_col": 33
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 53,
+              "end_line": 2,
+              "end_col": 54
+            },
+            "name": "e",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 75,
+              "end_line": 2,
+              "end_col": 76
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 70,
+                      "end_line": 2,
+                      "end_col": 71
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 72,
+                      "end_line": 2,
+                      "end_col": 73
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 15,
+                "end_line": 6,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 11
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 5,
+                      "end_line": 4,
+                      "end_col": 6
+                    },
+                    "width": 4,
+                    "name": "y"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 9,
+                      "end_line": 4,
+                      "end_col": 10
+                    },
+                    "width": 4,
+                    "name": "a"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 22
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 9,
+                      "end_line": 5,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "e"
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 22
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 5,
+                        "col": 12,
+                        "end_line": 5,
+                        "end_col": 13
+                      },
+                      "width": 4,
+                      "name": "y"
+                    },
+                    "value": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 5,
+                        "col": 16,
+                        "end_line": 5,
+                        "end_col": 21
+                      },
+                      "width": 4,
+                      "op": "^",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 5,
+                          "col": 16,
+                          "end_line": 5,
+                          "end_col": 17
+                        },
+                        "width": 4,
+                        "name": "y"
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 5,
+                          "col": 20,
+                          "end_line": 5,
+                          "end_col": 21
+                        },
+                        "width": 4,
+                        "name": "b"
+                      }
+                    }
+                  },
+                  "else": null
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

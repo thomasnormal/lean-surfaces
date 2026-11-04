@@ -1,0 +1,1177 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "boundary_divider",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/division/boundary_divider.sv",
+      "sha256": "e2055b87440152e8ce5f3f88f0d76434ff80e326515650f411f80e4837892051"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "boundary_divider",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 17,
+              "end_line": 2,
+              "end_col": 22
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 21,
+                "end_line": 2,
+                "end_col": 22
+              },
+              "value": 8,
+              "resolved_width": 32
+            },
+            "resolved": 8
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 23,
+              "end_line": 4,
+              "end_col": 28
+            },
+            "name": "value",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 4,
+                        "col": 16,
+                        "end_line": 4,
+                        "end_col": 17
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 4,
+                        "col": 18,
+                        "end_line": 4,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 20,
+                      "end_line": 4,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 23,
+              "end_line": 5,
+              "end_col": 38
+            },
+            "name": "concat_quotient",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 20,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 23,
+              "end_line": 6,
+              "end_col": 36
+            },
+            "name": "repl_quotient",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 17,
+                      "end_line": 6,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 20,
+                      "end_line": 6,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 23,
+              "end_line": 7,
+              "end_col": 38
+            },
+            "name": "reduce_quotient",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 20,
+                      "end_line": 7,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 23,
+              "end_line": 8,
+              "end_col": 45
+            },
+            "name": "unsigned_cast_quotient",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 20,
+                      "end_line": 8,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 23,
+              "end_line": 9,
+              "end_col": 43
+            },
+            "name": "signed_cast_quotient",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 20,
+                      "end_line": 9,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 62
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 25
+              },
+              "width": 32,
+              "name": "concat_quotient"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 11,
+                "col": 28,
+                "end_line": 11,
+                "end_col": 62
+              },
+              "width": 32,
+              "op": "u/",
+              "left": {
+                "kind": "Resize",
+                "span": {
+                  "line": 11,
+                  "col": 28,
+                  "end_line": 11,
+                  "end_col": 55
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 11,
+                    "col": 28,
+                    "end_line": 11,
+                    "end_col": 55
+                  },
+                  "width": 8,
+                  "parts": [
+                    {
+                      "kind": "SignedResize",
+                      "span": {
+                        "line": 11,
+                        "col": 30,
+                        "end_line": 11,
+                        "end_col": 53
+                      },
+                      "width": 8,
+                      "operand": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 11,
+                          "col": 30,
+                          "end_line": 11,
+                          "end_col": 53
+                        },
+                        "width": 8,
+                        "op": "-",
+                        "left": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 11,
+                            "col": 30,
+                            "end_line": 11,
+                            "end_col": 45
+                          },
+                          "width": 8,
+                          "op": "-",
+                          "operand": {
+                            "kind": "Cast",
+                            "span": {
+                              "line": 11,
+                              "col": 31,
+                              "end_line": 11,
+                              "end_col": 45
+                            },
+                            "width": 8,
+                            "signed": true,
+                            "operand": {
+                              "kind": "Resize",
+                              "span": {
+                                "line": 11,
+                                "col": 39,
+                                "end_line": 11,
+                                "end_col": 44
+                              },
+                              "width": 8,
+                              "operand": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 11,
+                                  "col": 39,
+                                  "end_line": 11,
+                                  "end_col": 44
+                                },
+                                "width": 8,
+                                "name": "value"
+                              }
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "SignedResize",
+                          "span": {
+                            "line": 11,
+                            "col": 48,
+                            "end_line": 11,
+                            "end_col": 53
+                          },
+                          "width": 8,
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 11,
+                              "col": 48,
+                              "end_line": 11,
+                              "end_col": 53
+                            },
+                            "width": 4,
+                            "bits": "1000"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "right": {
+                "kind": "Resize",
+                "span": {
+                  "line": 11,
+                  "col": 58,
+                  "end_line": 11,
+                  "end_col": 62
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 11,
+                    "col": 58,
+                    "end_line": 11,
+                    "end_col": 62
+                  },
+                  "width": 8,
+                  "bits": "00000010"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 12,
+              "col": 10,
+              "end_line": 12,
+              "end_col": 63
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 10,
+                "end_line": 12,
+                "end_col": 23
+              },
+              "width": 32,
+              "name": "repl_quotient"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 12,
+                "col": 26,
+                "end_line": 12,
+                "end_col": 63
+              },
+              "width": 32,
+              "op": "u/",
+              "left": {
+                "kind": "Resize",
+                "span": {
+                  "line": 12,
+                  "col": 26,
+                  "end_line": 12,
+                  "end_col": 56
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Repl",
+                  "span": {
+                    "line": 12,
+                    "col": 26,
+                    "end_line": 12,
+                    "end_col": 56
+                  },
+                  "width": 16,
+                  "count": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 27,
+                      "end_line": 12,
+                      "end_col": 28
+                    },
+                    "value": 2,
+                    "resolved_width": 32
+                  },
+                  "operand": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 12,
+                      "col": 28,
+                      "end_line": 12,
+                      "end_col": 55
+                    },
+                    "width": 8,
+                    "parts": [
+                      {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 12,
+                          "col": 30,
+                          "end_line": 12,
+                          "end_col": 53
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 12,
+                            "col": 30,
+                            "end_line": 12,
+                            "end_col": 53
+                          },
+                          "width": 8,
+                          "op": "-",
+                          "left": {
+                            "kind": "Unary",
+                            "span": {
+                              "line": 12,
+                              "col": 30,
+                              "end_line": 12,
+                              "end_col": 45
+                            },
+                            "width": 8,
+                            "op": "-",
+                            "operand": {
+                              "kind": "Cast",
+                              "span": {
+                                "line": 12,
+                                "col": 31,
+                                "end_line": 12,
+                                "end_col": 45
+                              },
+                              "width": 8,
+                              "signed": true,
+                              "operand": {
+                                "kind": "Resize",
+                                "span": {
+                                  "line": 12,
+                                  "col": 39,
+                                  "end_line": 12,
+                                  "end_col": 44
+                                },
+                                "width": 8,
+                                "operand": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 12,
+                                    "col": 39,
+                                    "end_line": 12,
+                                    "end_col": 44
+                                  },
+                                  "width": 8,
+                                  "name": "value"
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "kind": "SignedResize",
+                            "span": {
+                              "line": 12,
+                              "col": 48,
+                              "end_line": 12,
+                              "end_col": 53
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 12,
+                                "col": 48,
+                                "end_line": 12,
+                                "end_col": 53
+                              },
+                              "width": 4,
+                              "bits": "1000"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "right": {
+                "kind": "Resize",
+                "span": {
+                  "line": 12,
+                  "col": 59,
+                  "end_line": 12,
+                  "end_col": 63
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 12,
+                    "col": 59,
+                    "end_line": 12,
+                    "end_col": 63
+                  },
+                  "width": 8,
+                  "bits": "00000010"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 13,
+              "col": 10,
+              "end_line": 13,
+              "end_col": 63
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 10,
+                "end_line": 13,
+                "end_col": 25
+              },
+              "width": 32,
+              "name": "reduce_quotient"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 13,
+                "col": 28,
+                "end_line": 13,
+                "end_col": 63
+              },
+              "width": 32,
+              "op": "u/",
+              "left": {
+                "kind": "Resize",
+                "span": {
+                  "line": 13,
+                  "col": 29,
+                  "end_line": 13,
+                  "end_col": 55
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Reduce",
+                  "span": {
+                    "line": 13,
+                    "col": 29,
+                    "end_line": 13,
+                    "end_col": 55
+                  },
+                  "width": 1,
+                  "op": "^",
+                  "operand": {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 13,
+                      "col": 31,
+                      "end_line": 13,
+                      "end_col": 54
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 31,
+                        "end_line": 13,
+                        "end_col": 54
+                      },
+                      "width": 8,
+                      "op": "-",
+                      "left": {
+                        "kind": "Unary",
+                        "span": {
+                          "line": 13,
+                          "col": 31,
+                          "end_line": 13,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "op": "-",
+                        "operand": {
+                          "kind": "Cast",
+                          "span": {
+                            "line": 13,
+                            "col": 32,
+                            "end_line": 13,
+                            "end_col": 46
+                          },
+                          "width": 8,
+                          "signed": true,
+                          "operand": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 13,
+                              "col": 40,
+                              "end_line": 13,
+                              "end_col": 45
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 13,
+                                "col": 40,
+                                "end_line": 13,
+                                "end_col": 45
+                              },
+                              "width": 8,
+                              "name": "value"
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 13,
+                          "col": 49,
+                          "end_line": 13,
+                          "end_col": 54
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 49,
+                            "end_line": 13,
+                            "end_col": 54
+                          },
+                          "width": 4,
+                          "bits": "1000"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "right": {
+                "kind": "Resize",
+                "span": {
+                  "line": 13,
+                  "col": 59,
+                  "end_line": 13,
+                  "end_col": 63
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 13,
+                    "col": 59,
+                    "end_line": 13,
+                    "end_col": 63
+                  },
+                  "width": 1,
+                  "bits": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 76
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 32
+              },
+              "width": 32,
+              "name": "unsigned_cast_quotient"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 14,
+                "col": 35,
+                "end_line": 14,
+                "end_col": 76
+              },
+              "width": 32,
+              "op": "u/",
+              "left": {
+                "kind": "Resize",
+                "span": {
+                  "line": 14,
+                  "col": 35,
+                  "end_line": 14,
+                  "end_col": 69
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Cast",
+                  "span": {
+                    "line": 14,
+                    "col": 35,
+                    "end_line": 14,
+                    "end_col": 69
+                  },
+                  "width": 8,
+                  "signed": false,
+                  "operand": {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 14,
+                      "col": 45,
+                      "end_line": 14,
+                      "end_col": 68
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 14,
+                        "col": 45,
+                        "end_line": 14,
+                        "end_col": 68
+                      },
+                      "width": 8,
+                      "op": "-",
+                      "left": {
+                        "kind": "Unary",
+                        "span": {
+                          "line": 14,
+                          "col": 45,
+                          "end_line": 14,
+                          "end_col": 60
+                        },
+                        "width": 8,
+                        "op": "-",
+                        "operand": {
+                          "kind": "Cast",
+                          "span": {
+                            "line": 14,
+                            "col": 46,
+                            "end_line": 14,
+                            "end_col": 60
+                          },
+                          "width": 8,
+                          "signed": true,
+                          "operand": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 14,
+                              "col": 54,
+                              "end_line": 14,
+                              "end_col": 59
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 14,
+                                "col": 54,
+                                "end_line": 14,
+                                "end_col": 59
+                              },
+                              "width": 8,
+                              "name": "value"
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 14,
+                          "col": 63,
+                          "end_line": 14,
+                          "end_col": 68
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 14,
+                            "col": 63,
+                            "end_line": 14,
+                            "end_col": 68
+                          },
+                          "width": 4,
+                          "bits": "1000"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "right": {
+                "kind": "Resize",
+                "span": {
+                  "line": 14,
+                  "col": 72,
+                  "end_line": 14,
+                  "end_col": 76
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 14,
+                    "col": 72,
+                    "end_line": 14,
+                    "end_col": 76
+                  },
+                  "width": 8,
+                  "bits": "00000010"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 15,
+              "col": 10,
+              "end_line": 15,
+              "end_col": 73
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 15,
+                "col": 10,
+                "end_line": 15,
+                "end_col": 30
+              },
+              "width": 32,
+              "name": "signed_cast_quotient"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 15,
+                "col": 33,
+                "end_line": 15,
+                "end_col": 73
+              },
+              "width": 32,
+              "op": "s/",
+              "left": {
+                "kind": "SignedResize",
+                "span": {
+                  "line": 15,
+                  "col": 33,
+                  "end_line": 15,
+                  "end_col": 65
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Cast",
+                  "span": {
+                    "line": 15,
+                    "col": 33,
+                    "end_line": 15,
+                    "end_col": 65
+                  },
+                  "width": 8,
+                  "signed": true,
+                  "operand": {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 15,
+                      "col": 41,
+                      "end_line": 15,
+                      "end_col": 64
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 15,
+                        "col": 41,
+                        "end_line": 15,
+                        "end_col": 64
+                      },
+                      "width": 8,
+                      "op": "-",
+                      "left": {
+                        "kind": "Unary",
+                        "span": {
+                          "line": 15,
+                          "col": 41,
+                          "end_line": 15,
+                          "end_col": 56
+                        },
+                        "width": 8,
+                        "op": "-",
+                        "operand": {
+                          "kind": "Cast",
+                          "span": {
+                            "line": 15,
+                            "col": 42,
+                            "end_line": 15,
+                            "end_col": 56
+                          },
+                          "width": 8,
+                          "signed": true,
+                          "operand": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 15,
+                              "col": 50,
+                              "end_line": 15,
+                              "end_col": 55
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 15,
+                                "col": 50,
+                                "end_line": 15,
+                                "end_col": 55
+                              },
+                              "width": 8,
+                              "name": "value"
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 15,
+                          "col": 59,
+                          "end_line": 15,
+                          "end_col": 64
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 59,
+                            "end_line": 15,
+                            "end_col": 64
+                          },
+                          "width": 4,
+                          "bits": "1000"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "right": {
+                "kind": "SignedResize",
+                "span": {
+                  "line": 15,
+                  "col": 68,
+                  "end_line": 15,
+                  "end_col": 73
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 15,
+                    "col": 68,
+                    "end_line": 15,
+                    "end_col": 73
+                  },
+                  "width": 8,
+                  "bits": "00000010"
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

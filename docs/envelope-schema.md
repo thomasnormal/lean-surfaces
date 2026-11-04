@@ -1,0 +1,156 @@
+# Standardized AST envelope — schema v0.1 (Python payload)
+
+One JSON document per source file. The **envelope** is language-neutral; the node
+vocabulary inside `module` is per-language and mirrors the language's own frontend
+(here: CPython `ast`, field names preserved exactly). Extractors must emit
+**deterministic** output: `json.dump(..., indent=2)` with natural (insertion) key
+order as specified below; same input bytes ⇒ same output bytes.
+
+## Envelope
+
+```json
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {"name": "cpython-ast", "version": "3.9.25"},
+  "source_file": "Examples/python/sum_to/sum_to.py",
+  "source_sha256": "<hex sha256 of source bytes>",
+  "module": { "kind": "Module", "body": [ <stmt>... ] },
+  "lean_blocks": [ {"first_line": 9, "last_line": 14, "text": "theorem ...\n..."} ]
+}
+```
+
+`lean_blocks[i].text` is the joined inner lines (comment markers stripped per
+DESIGN.md), no trailing newline; `first_line`/`last_line` are the 1-based lines of
+the `# lean[` and `# ]` markers.
+
+## Spans
+
+Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
+"end_lineno": EL, "end_col_offset": EC}` — CPython's own numbers (1-based lines,
+0-based cols, exclusive ends).
+
+## Statement nodes (`kind` + fields, in this key order: kind, span, then fields)
+
+| kind | fields |
+|---|---|
+| `FunctionDef` | `name`: str, `args`: [param…], `args_unsupported`: str \| null, `locals_unsupported`: str \| null (set for dynamic local-shadowing calls or locally bound exception names that remain outside the faithful static-local marker path; a direct nested-def call before its definition is admitted and raises `UnboundLocalError` at runtime; "assigns" counts only REAL binding targets — bare names and tuple/list/starred nests of them; subscript/attribute targets bind nothing), `has_global`: true (emitted ONLY when the def's whole subtree, nested scopes included, contains a `global` statement — consumed by ingestion's namedtuple binding census), `is_generator`: true (H4; emitted ONLY when the def's OWN scope contains a `yield`/`yield from` — CPython's purely syntactic, scope-local rule, reachability irrelevant; unlike `has_global` this does NOT descend into nested scopes, since a nested def's yield makes the NESTED function the generator), `body`: [stmt…] |
+| `ClassDef` (H3) | `name`: str, `class_unsupported`: str \| null (set for bases — inheritance is loudly out of tier — class keywords/metaclass, decorators, or class-level statements other than defs/docstrings/`pass`; the class is still represented, instantiation refuses loudly), `namedtuple_base`: expr (emitted ONLY when the single base is a plain `namedtuple(…)` call — the value-like subclass shape; ingestion validates and the module census promotes or demotes it), `has_global`: true (emitted ONLY when present — see `FunctionDef`), `body`: [stmt…] (methods arrive as `FunctionDef` nodes; ingestion flattens them into `Module.functions` under `"<class>.<method>"` qualified names and records the class in `Module.classes`) |
+| `Return` | `value`: expr \| null |
+| `Assign` | `targets`: [expr…] (length 1 in the supported tier; chained `a=b=1` gives length > 1), `value`: expr |
+| `AugAssign` | `target`: expr, `op`: binop-name, `value`: expr |
+| `While` | `test`: expr, `body`: [stmt…], `orelse`: [stmt…] |
+| `For` | `target`: expr, `iter`: expr, `body`: [stmt…], `orelse`: [stmt…] (plain `for` only; `async for` is a different CPython node class and stays `Unsupported`) |
+| `If` | `test`: expr, `body`: [stmt…], `orelse`: [stmt…] (elif = nested If in orelse, as CPython does) |
+| `Expr` | `value`: expr |
+| `Yield` (H4) | `value`: expr, PRESENT only when the source wrote one (a bare `yield` carries none — ingestion fills `Constant None`, CPython's own compilation, exactly like `Slice`). Emitted only for a `yield` in STATEMENT position (`ast.Expr` wrapping `ast.Yield`); a `yield` in EXPRESSION position receives a `send` value and stays `Unsupported` |
+| `Pass`, `Break`, `Continue` | — |
+| `Unsupported` | `py_kind`: str (CPython class name, e.g. `"Try"`, `"With"`), `text`: str (`ast.unparse`, truncated to ≤200 chars) |
+
+`param` = `{"arg": "n", "span": {…}}`, plus an OPTIONAL `"default"`: const
+(the Constants encoding below) when the parameter has a LITERAL default —
+an `ast.Constant` of int/bool/str/None, e.g. `{"arg": "lo", "span": {…},
+"default": {"type": "int", "repr": "0"}}`. The key is emitted only when
+present (a default-free param keeps exactly the two historical keys, so
+default-free sources produce byte-identical envelopes). Note `lo=-1` is
+NOT a literal default (CPython parses it as `UnaryOp(USub, Constant)`),
+nor is a `Name` (`method=EASTER_WESTERN`), a call, or `[]`/`{}`. If the
+function uses any NON-literal default, `*args`, keyword-only args,
+`**kwargs`, or decorators, set `args_unsupported` to a short reason string
+(else `null`), emit NO `default` keys, and still list the plain positional
+params.
+
+Any statement kind not in this table is emitted as `Unsupported` (the extractor
+never fails on syntactically valid Python).
+
+## Expression nodes
+
+| kind | fields |
+|---|---|
+| `Constant` | `value`: const (below) |
+| `Name` | `id`: str |
+| `BinOp` | `left`: expr, `op`: one of `Add Sub Mult Div FloorDiv Mod Pow LShift RShift BitOr BitXor BitAnd`, `right`: expr |
+| `UnaryOp` | `op`: one of `USub Not`, `operand`: expr |
+| `JoinedStr` | `values`: [expr…], preserving CPython's literal text and formatted fields. Ingestion concatenates the admitted parts left-to-right |
+| `FormattedValue` | `value`: expr, `conversion`: CPython's integer code (`-1`, `115` for `!s`, `114` for `!r`), `format_spec`: null, an empty `JoinedStr`, or a one-part literal `JoinedStr`. Ingestion uses an intrinsic conversion, never a synthesized `str`/`repr` name lookup; literal `d`, `>5`, and `03d` specifications for integer/Boolean fields are lowered to the synthetic format worker. Dynamic, multi-part, and richer format specifications plus `!a` remain `Unsupported` gaps |
+| `BoolOp` | `op`: one of `And Or`, `values`: [expr…] (≥2) |
+| `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE Is IsNot In NotIn`…], `comparators`: [expr…] (same length as ops). Since H1-proper every `is`/`is not` is emitted structurally (identity is decided dynamically: refs by address, `None` by the singleton test; the remaining out-of-tier operand forms are refused loudly by the interpreter, not the extractor) |
+| `Call` | `func`: expr, `args`: [expr…], `call_unsupported`: str \| null (set when keywords/starargs present) |
+| `List` / `Tuple` | `elts`: [expr…] |
+| `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; pre-3.9 `ExtSlice`/`Index` nodes → whole Subscript becomes `Unsupported`) |
+| `Slice` | `value`: expr, `lower`/`upper`/`step`: expr, each PRESENT only when the source wrote it (`s[::-1]` carries only `step`). A `Subscript` whose `slice` is an `ast.Slice` (H5 strings). Ingestion fills absent components with `Constant None` — CPython's own compilation (`BUILD_SLICE` pushes `None`), so `s[:i]` and `s[None:i:None]` ingest identically |
+| `IfExp` | `test`: expr, `body`: expr, `orelse`: expr (`body if test else orelse`, H5) |
+| `GeneratorExp` (H4) | `elt`: expr, `target`: expr, `iter`: expr, `ifs`: [expr…] — the SINGLE-clause, non-`async` shape only; a multi-clause or `async` genexp stays `Unsupported`. CPython compiles every genexp into an implicit generator FUNCTION whose first argument is the already-evaluated outer iterator, and ingestion performs exactly that lowering |
+| `Dict` | `keys`: [expr…], `values`: [expr…] (same length; `{**d}` expansion keeps the whole node `Unsupported` with `py_kind` `"Dict:unpack"`). Structured for the heap layer (H0, docs/memory-model.md); the value-tier interpreter refuses it loudly until H1 |
+| `Attribute` | `value`: expr, `attr`: str. Structured (H0); refused loudly until the heap/class stages |
+| `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |
+
+Operator names are CPython's class names verbatim (`Mult` not `Mul`, `LtE` not `Le`).
+An unlisted binary operator (e.g. `MatMult`) makes the containing node
+`Unsupported`, with that operator's name included in `py_kind`
+(e.g. `"BinOp:MatMult"`). Every comparison operator is emitted structurally;
+the interpreter owns dynamic operand restrictions.
+
+## Constants
+
+`{"type":"int","repr":"123"}` (decimal string, non-negative — CPython parses `-5`
+as `USub(Constant 5)`) | `{"type":"bool","value":true}` | `{"type":"str","value":"…"}`
+| `{"type":"none"}` | `{"type":"ellipsis"}`. The latter is Python's singleton
+`...`; the builtin name `Ellipsis` remains a `Name` node, preserving shadowing.
+Float constants use `{"type":"float","bits":"4591870180066957722"}`:
+the decimal string is the exact unsigned 64-bit binary64 representation,
+not a decimal approximation. Ingestion rejects words outside `[0, 2^64)`.
+Bytes constants use `{"type":"bytes","value":[0,128,255]}`: an array of
+integer octets in `[0, 256)`, with no Unicode conversion. Ingestion rejects
+negative or out-of-range octets. Complex constants remain `Unsupported`
+(`"Constant:complex"`).
+
+## Worked example
+
+`add.py`:
+```python
+# Examples/python/add/add.py (function only)
+def add(a, b):
+    return a + b
+```
+
+```json
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {"name": "cpython-ast", "version": "3.9.25"},
+  "source_file": "Examples/python/add/add.py",
+  "source_sha256": "…",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {"lineno": 1, "col_offset": 0, "end_lineno": 2, "end_col_offset": 16},
+        "name": "add",
+        "args": [
+          {"arg": "a", "span": {"lineno": 1, "col_offset": 8, "end_lineno": 1, "end_col_offset": 9}},
+          {"arg": "b", "span": {"lineno": 1, "col_offset": 11, "end_lineno": 1, "end_col_offset": 12}}
+        ],
+        "args_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {"lineno": 2, "col_offset": 4, "end_lineno": 2, "end_col_offset": 16},
+            "value": {
+              "kind": "BinOp",
+              "span": {"lineno": 2, "col_offset": 11, "end_lineno": 2, "end_col_offset": 16},
+              "left": {"kind": "Name", "span": {"lineno": 2, "col_offset": 11, "end_lineno": 2, "end_col_offset": 12}, "id": "a"},
+              "op": "Add",
+              "right": {"kind": "Name", "span": {"lineno": 2, "col_offset": 15, "end_lineno": 2, "end_col_offset": 16}, "id": "b"}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}
+```
+
+(Span values above are illustrative; emit whatever CPython reports.)

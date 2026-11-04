@@ -1,0 +1,112 @@
+// Config override for the sail-riscv reference emulator (applied on top of
+// its --rv32 defaults) scoping it to the LeanModels/Rv model's fragment:
+// RV32IMC + Zicsr + Zifencei, machine mode only, priv v1.11, misaligned
+// data access allowed (no trap), PMP absent.
+//
+// Everything the Lean model treats as an illegal instruction must also be
+// illegal in the oracle, so every extension outside the fragment is
+// disabled — including the ones that give meaning to encodings inside the
+// fragment's opcode space (Zcb/Zcmop in C space, Zicond/Zimop/Zawrs in
+// OP/SYSTEM space, Zicbo* in MISC-MEM space).
+//
+// wfi_is_nop stays false: the WFI diff cases construct a pending-but-
+// globally-disabled interrupt first, so WFI wakes immediately on both
+// sides. The simple_interrupt_generator (MMIO at 0xC000000) is the
+// injection path for MSI/MEI interrupt-dispatch cases.
+{
+  "base": {
+    "writable_misa": false,
+    "privileged_isa_version": "Privileged_ISA_1_11",
+    "mstatus": {
+      "fs_legal_states": "ExtContext_Off",
+      "vs_legal_states": "ExtContext_Off"
+    }
+  },
+  "memory": {
+    "physaddr_bits": 32,
+    "pmp": { "count": 0, "usable_count": 0 }
+  },
+  "extensions": {
+    "M": { "supported": true },
+    "A": { "supported": false },
+    "F": { "supported": false },
+    "D": { "supported": false },
+    "V": { "support_level": "Disabled" },
+    "B": { "supported": false },
+    "S": { "supported": false },
+    "U": { "supported": false },
+    "Zibi": { "supported": false },
+    "Zic64b": { "supported": false },
+    "Zicbom": { "supported": false },
+    "Zicbop": { "supported": false },
+    "Zicboz": { "supported": false },
+    "Ziccamoa": { "supported": false },
+    "Ziccamoc": { "supported": false },
+    "Ziccif": { "supported": false },
+    "Zicclsm": { "supported": false },
+    "Ziccrse": { "supported": false },
+    "Zicfilp": { "supported": false },
+    "Zicfiss": { "supported": false },
+    "Zicond": { "supported": false },
+    "Zicntr": { "supported": false },
+    "Zihintntl": { "supported": false },
+    "Zihintpause": { "supported": false },
+    "Zihpm": { "supported": false },
+    "Zimop": { "supported": false },
+    "Zabha": { "supported": false },
+    "Zacas": { "supported": false },
+    "Zama16b": { "supported": false },
+    "Zawrs": { "supported": false },
+    "Zfa": { "supported": false },
+    "Zfbfmin": { "supported": false },
+    "Zfh": { "supported": false },
+    "Zfhmin": { "supported": false },
+    "Zca": { "supported": true },
+    "Zcf": { "supported": false },
+    "Zcd": { "supported": false },
+    "Zcb": { "supported": false },
+    "Zcmop": { "supported": false },
+    "Zbc": { "supported": false },
+    "Zbkb": { "supported": false },
+    "Zbkc": { "supported": false },
+    "Zbkx": { "supported": false },
+    "Zknd": { "supported": false },
+    "Zkne": { "supported": false },
+    "Zknh": { "supported": false },
+    "Zkr": { "supported": false },
+    "Zksed": { "supported": false },
+    "Zksh": { "supported": false },
+    "Zkt": { "supported": false },
+    "Zvabd": { "supported": false },
+    "Zvfbfmin": { "supported": false },
+    "Zvfbfwma": { "supported": false },
+    "Zvfh": { "supported": false },
+    "Zvfhmin": { "supported": false },
+    "Zvbb": { "supported": false },
+    "Zvbc": { "supported": false },
+    "Zvkg": { "supported": false },
+    "Zvkned": { "supported": false },
+    "Zvknha": { "supported": false },
+    "Zvknhb": { "supported": false },
+    "Zvksed": { "supported": false },
+    "Zvksh": { "supported": false },
+    "Zvkt": { "supported": false },
+    "Ssccptr": { "supported": false },
+    "Sscofpmf": { "supported": false },
+    "Sscounterenw": { "supported": false },
+    "Sstc": { "supported": false },
+    "Sstvala": { "supported": false },
+    "Svade": { "supported": false },
+    "Svadu": { "supported": false },
+    "Svinval": { "supported": false },
+    "Svvptc": { "supported": false },
+    "Svbare": { "supported": false },
+    "Sv32": { "supported": false },
+    "Smcntrpmf": { "supported": false },
+    "Stateen": {
+      "Smstateen": { "supported": false },
+      "Ssstateen": { "supported": false }
+    },
+    "Ssqosid": { "supported": false }
+  }
+}

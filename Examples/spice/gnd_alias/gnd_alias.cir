@@ -1,0 +1,12 @@
+gnd alias regression -- ngspice aliases gnd/GND to ground node 0
+* Mixed-spelling deck: the same electrical topology written with `gnd`,
+* `GND`, and `0`. The frontend must merge all three into the single ground.
+*
+* ngspice 46 prevalidation (~/.local/bin/ngspice -b gnd_alias.cir, .op):
+*   in         5.000000e+00     exact 5
+*   v1#branch  -1.00000e-02     exact -1/100 (both 1k resistors conduct)
+V1 in gnd DC 5
+R1 in GND 1k
+R2 in 0 1k
+.op
+.end

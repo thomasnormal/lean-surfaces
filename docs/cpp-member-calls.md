@@ -1,0 +1,411 @@
+# Direct calls on existing integral receivers
+
+2026-10-20. N4950 [expr.call] and [class.mfct.non.static] permit a narrow
+source bridge over the existing integral member getter and class receiver
+projection surfaces. `IntegralMemberCallSyntax.admit` accepts a
+`CXXMemberCallExpr` with exactly one `MemberExpr` child, an arrow or direct-dot
+receiver, a
+validated identifier name, a `referencedMemberDecl` handle, and one direct
+receiver `DeclRefExpr` with its own handle and qualified type spelling. A second
+child is an argument and refuses as `unsupportedArguments`; the call result's
+qualified type spelling is also retained. Missing or computed receiver/result
+evidence stays loud, and the referenced declaration must explicitly be a
+`CXXMethodDecl` when resolved through probe metadata. Clang's raw JSON may carry
+that method reference as either an object with `kind`/`id` or a string id;
+`admitResolved` validates the latter against the complete probe. The callee
+`MemberExpr` is retained at its Clang `prvalue` category.
+
+`IntegralMemberCall.bind` takes the expected receiver handle, an already
+admitted `IntegralMemberGetter`, and a caller-supplied
+`ClassReceiverProjection`. It checks the method handle and source name, checks
+the receiver handle, derives the selected class name from the projection's
+receiver path, and compares its pointer spelling to the retained receiver
+type. It then checks the projection with the getter and matches the result
+spelling against the admitted integral result, including represented builtin
+aliases. Invocation
+delegates to `ClassReceiverProjection.invoke`, so the existing object identity,
+constness, lifetime, field ownership, conversion and memory-preservation
+rules remain authoritative. The retained syntax is provenance only.
+
+The AST method id is an occurrence handle; declaration probes may map that
+occurrence to a different canonical method handle. `IntegralMemberCallSyntax`
+starts with the occurrence as its canonical placeholder, and
+`resolveCanonical` accepts exactly one distinct `CXXMethodDecl` canonical handle
+from the probe, and that handle must also have an explicit self-canonical
+`CXXMethodDecl` row (duplicate identical rows are harmless). Missing, non-method,
+target-less, name-mismatched, or conflicting rows refuse loudly. Binding compares the resolved handle with the
+canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
+cross a redeclaration or overload identity boundary.
+Arrow calls compare the retained receiver type with `<class name> *`; direct-dot
+calls compare it with `<class name>`. Both forms still require the caller's
+explicit existing-object projection and receiver declaration handle. A single
+`LValueToRValue` `ImplicitCastExpr` around a direct pointer `DeclRefExpr` is
+retained as receiver evidence, and a nested `NoOp` wrapper is retained as well;
+other casts and computed bases remain loud.
+`CXXThisExpr` bases refuse as `missing-this-owner` because the call node does
+not carry a receiver declaration handle; an enclosing method context is not
+guessed from a raw call fragment. A pointer-valued data-member receiver is now
+retained when its outer `LValueToRValue` and inner `MemberExpr` are explicitly
+typed, arrow-based, and backed by a `FieldDecl` handle. The evidence keeps the
+field handle, its base declaration handle, field spelling, and conversion chain.
+It remains provenance only: binding and invocation still require an independently
+supplied projection for the resulting receiver, and no member offset or pointer
+value is inferred.
+Callers that start from raw AST are expected to use `admitResolved`, which
+performs both syntax admission and this canonical resolution in one operation.
+`extractors/cpp/census_member_calls.lean` applies that operation to every
+retained `CXXMemberCallExpr` in a complete probe and emits an auditable JSON
+admission/refusal census. It is bounded and read-only: no receiver, object
+state, body execution, overload lookup or native agreement is inferred.
+For argument refusals it reports both the retained child-kind shape and the
+recursive child tree, so a future argument tier can be priced against source
+evidence before evaluation semantics are added. The recursive tree preserves
+conversion kinds such as `IntegralCast` and `NullToPointer`; a top-level kind
+alone would merge those into one unsupported bucket.
+Receiver refusals likewise retain the member kind, arrow/dot spelling, value
+category, and base child kinds for a future receiver tier.
+The census preserves nested base trees and cast kinds, including
+`UncheckedDerivedToBase(CXXThisExpr)` and `LValueToRValue(MemberExpr(...))`, so
+`this` and derived-base work can be priced independently.
+The census also groups the remaining generic refusals into disjoint families:
+nested member-call bases.
+
+On the 542-call TinyXML2 probe, the current census admits 70 calls. The 1
+remaining generic receiver refusal is a nested member-call base. The four newly
+admitted member-field bases have the exact leading shape
+`ImplicitCastExpr:LValueToRValue(MemberExpr(ImplicitCastExpr:LValueToRValue(DeclRefExpr)))`
+on an arrow call. The remaining generic shape is:
+
+| family | retained receiver base |
+| --- | --- |
+| member-call (1) | `CXXMemberCallExpr(MemberExpr(ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)))` on an arrow call |
+
+### Typed call-chain boundary
+
+The remaining nested receiver is a call-chain shape, not a receiver cast. A
+future admission must retain the inner `CXXMemberCallExpr` occurrence and its
+canonical method identity, the inner result type and value category, and the
+outer member-call occurrence that consumes that result. The outer receiver
+cannot be typed from the inner method name or from a copied class spelling.
+
+Invocation must sequence the inner call before the outer receiver projection,
+threading the same object store and any observable effects through both calls.
+The evidence therefore needs an explicit inner result object or reference,
+its lifetime and ownership relation to the outer receiver, and a state/effect
+trace for the inner body. A body that mutates or replaces the result object,
+returns a temporary with no retained lifetime, or raises before the outer call
+remains a refusal. Receiver conversion evidence is checked separately after
+the result object is established; it is never inferred from the chain.
+
+The one TinyXML2 nested-member-call refusal has no such result-object or body
+witness today. The kernel witness keeps it loud as `unsupportedReceiver` until
+those records and a two-call sequencing rule exist, while the ordinary direct
+receiver and field-base tiers remain unchanged.
+
+The other 472 refusals in that run are 314 unsupported argument lists, 155
+missing `this` owners, and 2 malformed names. This is source pricing only:
+the census still performs no receiver conversion, object lookup, or call.
+The kernel battery includes a matching nested-call witness and checks that it
+refuses as `unsupportedReceiver`; admitting it would require a typed result
+object, a second call's body and state/effect sequencing, so it is priced as a
+separate call-chain tier.
+
+The argument census gives the next narrow candidate a concrete price. Twelve
+refused calls pass a direct `IntegerLiteral` (`int`) as their only argument;
+two more use the distinct tree `ImplicitCastExpr:IntegralCast(IntegerLiteral)`.
+The direct literals are all the value `0` in the pinned source. They are still
+refused: the current member-call bridge has no method-parameter evidence and
+its invocation path is the zero-argument integral getter. A future integer
+argument tier must retain the literal occurrence, source type, converted type,
+and the selected method's parameter declaration before it can evaluate a call;
+it must not treat a literal's presence as proof of overload selection or
+conversion safety.
+
+`IntegralMemberIntegerArgument.admit` now captures that direct slice as typed
+evidence: the artifact-local literal handle, source spelling (`int`), normalized
+`CppTypeEvidence.builtin .int`, and nonnegative value. Its separate `bind`
+operation requires an explicit parameter handle and independently supplied
+exact-`int` parameter type. It performs no lookup, overload resolution,
+conversion, object mutation, or execution; wrappers and other literal types
+remain loud, including the measured `IntegralCast` wrapper. This keeps the
+parameter-binding and conversion boundaries visible while the zero-argument
+getter remains the only executable member-call path.
+
+`IntegralMemberIntegerArgument.parameter` closes the remaining evidence gap for
+this slice. Given a canonical `CXXMethodDecl` handle and ordinal, it requires a
+self-canonical method metadata row, a matching structured parameter-type list,
+and the corresponding `ParmVarDecl` child in the retained AST. It returns the
+parameter handle, ordinal, name, source spelling, and normalized type.
+`bindTo` accepts only matching argument/parameter evidence. Missing, repeated,
+misordered, or non-`int` parameter witnesses refuse; no parameter is inferred
+from a method name or from the argument's position alone.
+
+The census applies this witness to the real probe as a pricing check. All 12
+direct `int` literal arguments bind to a retained parameter (`Set` once at
+ordinal 2 and `SetError` eleven times at ordinal 1). The stricter canonical
+method profile passes for `Set` once and refuses the 11 `SetError` rows: its
+canonical declaration is declaration-only and variadic, while the defining
+occurrence is also variadic. This is a deliberate loud boundary rather than a
+fallback to a redeclaration's body. The callable census additionally classifies
+that defining `SetError` body as an instance method requiring object semantics,
+with `CXXConstructExpr`, allocation/deletion, member calls, and control flow in
+its body. Successful argument bindings therefore do not count as runtime
+admissions; they identify both the canonical-signature wall and the next
+object-backed method-body tier precisely.
+
+The same census walks every retained member-call occurrence whose selected
+method metadata has an enumeration result type, including calls that still
+refuse on arguments or receivers. The pinned TinyXML2 artifact contains **43**
+such calls: `XMLError` **38**, `ElementClosingType` **3**, and `Whitespace` **2**.
+Their raw result spellings agree with the witnessed enum names in all 43 cases;
+unknown or inconsistent method-result metadata remains a named census refusal.
+This is real-artifact source telemetry, not a native execution or differential
+claim: the calls still require their own object, argument, and enum-value
+admission before execution.
+
+`MemberGetterTests.test_enum_representation_value_differential` supplies the
+small native control: a real `enum Error : unsigned int` getter is compiled
+and run at `-O0` and `-O2` under UBSan for four underlying values, and Lean
+checks the same rows through `IntegralMemberEnumCall.invoke` with an explicit
+class projection. The native outputs agree across optimization levels and all
+four rows pass the kernel check. This validates the explicit representation,
+receiver, and value transport only; it does not turn handwritten test handles
+into Clang provenance or admit general enum method execution.
+
+`IntegralMemberEnumGetter.admit` prices the first body shape without executing
+it: a canonical method profile must have no parameters and an enum result that
+matches the oracle's enum handle, its defining body must resolve uniquely, and
+the body must expose the witnessed direct `this` field. On the same probe this
+admits **5** getter profiles (`ElementClosingType` **3**, `Whitespace` **2**);
+the **38** `XMLError` result calls refuse because their bodies do not expose
+that direct-field shape. This is the next execution precondition, not a
+fallback to a name-based getter.
+
+`MemberGetterTests.test_enum_getter_probe_differential` provides the
+probe-backed counterpart to the representation control. It compiles three
+direct calls to an `Error : unsigned int` getter, loads the Clang probe,
+admits the canonical getter/body/field/profile witnesses, and invokes
+`IntegralMemberEnumCall` against supplied object state before reading each
+result back. Native `-O0`/`-O2` rows are compared with Lean; absent pinned
+Clang/plugin inputs produce an explicit skip.
+
+`IntegralMemberMethodBody.admit` then resolves the body relation independently
+of the profile. The real census finds exactly one definition for each involved
+canonical method: `Set → Set` once and `SetError →` its distinct defining
+occurrence eleven times. Duplicate identical rows are accepted, while a second
+defining handle or conflicting body ownership refuses. This relation is still
+provenance only; selecting a body does not execute it or waive the variadic and
+object-semantics walls above.
+
+The next object-state price is now measured by a source-order body walk. The
+first object event is `member-call` for `Set` and
+`this-member:_errorID` for all 11 `SetError` definitions. Thus `SetError`
+requires a live receiver and a readable `_errorID` subobject before its first
+statement can be evaluated; this is an object-frame precondition, not a
+default value. The walk is telemetry only and does not lower member offsets,
+constructors, allocation, or destruction.
+
+`IntegralMemberThisFieldAccess.admit` turns that first direct receiver access
+into a typed precondition: it checks the defining method's parent, the field's
+`FieldDecl` handle and parent, arrow/lvalue category, receiver spelling, and
+field spelling. The probe admits `_errorID:XMLError:XMLError` for all 11
+`SetError` bodies. The one `Set` body has no direct `this->field` witness and
+refuses this narrower precondition, as expected from its first `member-call`
+event.
+
+`IntegralMemberEnumProfile.admit` follows the field's structured type evidence
+to its enum declaration and retains the enum handle, constant count, explicit
+value count, and any fixed-underlying-type spelling. The probe reports
+`XMLError:20:1:<absent>` for all 11 `SetError` accesses: one explicit zero and
+19 implicitly sequenced constants, with no fixed underlying type retained.
+Reading the field therefore still needs an enum representation decision; the
+profile refuses to manufacture an `int` layout from the spelling alone.
+
+`IntegralMemberEnumRepresentation.withOracle` makes that decision explicit at
+the caller boundary. The census currently supplies `.unsignedInt` as a
+pricing oracle for this probe; this is harness input, not a representation fact
+recovered from Clang. A retained fixed-underlying spelling must agree with the
+oracle, and `bool` is rejected as outside this integral field tier. Unknown or
+unsupported representations therefore remain loud instead of acquiring a
+guessed ABI layout.
+
+`IntegralMemberEnumValue.evaluate` is the corresponding state boundary. It
+requires the field handle from the typed access witness, a valid target
+profile, and a caller-supplied stored `IntegralValue` whose format exactly
+matches the chosen underlying type. It preserves the enum representation tag;
+it does not convert the value to an unrelated builtin, read an offset, or
+derive a value from the enumerator list. A field mismatch, invalid target,
+format mismatch, or invalid stored value refuses.
+
+`IntegralMemberEnumValue.read` composes this value check with the existing
+`ClassReceiverProjection.invoke` path. The projection remains the sole source
+of object identity, member ownership, lifetime, and stored-cell validation; the
+enum layer supplies only the field witness and representation oracle. A stale,
+wrong-owner, malformed, or otherwise unbound snapshot therefore refuses at the
+projection/getter boundary rather than producing an enum result.
+
+`IntegralMemberEnumValue.write` uses the same explicit projection and
+representation boundary for mutation. It validates a writable synthetic getter,
+checks the new stored value's exact underlying format, and delegates the actual
+update to `IntegralObjectStore.assign`. Const receivers, wrong projections,
+malformed storage, and unsupported value formats remain loud; no field offset or
+object identity is inferred by the enum layer.
+
+`MemberGetterTests.test_enum_field_mutation_differential` compares assignment
+and readback of a real `enum Error : unsigned int` member at `-O0` and `-O2`
+under UBSan with the same four rows through the admitted setter witness,
+`IntegralMemberEnumSetter.write`, and `read`. The native rows agree and the
+Lean checks pass; this validates the existing object-store update path without
+admitting a general enum setter or a guessed layout.
+
+The source census now records direct assignment shapes separately from readable
+`this` fields. In the pinned TinyXML2 probe, all **11** `SetError` definitions
+expose a direct `this->_errorID = ...` write, recorded as
+`0x...:_errorID` telemetry. This is a body-shape price only: it does not bind a
+parameter, execute a setter, or infer a member offset.
+
+`IntegralMemberEnumSetter.admit` is the corresponding narrow source witness for
+an executable setter candidate: a non-variadic `void set(Enum)` with exactly one
+parameter and a direct `this->field = parameter` assignment. Kernel controls admit
+that synthetic shape and reject a mismatched parameter handle. The real
+`SetError` methods remain outside it because their variadic signatures are
+refused before body execution; their 11 direct writes stay telemetry rather than
+fabricated setter calls.
+
+The census now applies that setter profile to direct enum-field assignments. It
+reports **0** setter profiles on TinyXML2: all **11** `_errorID` candidates
+refuse with `profile:unsupported-body` (the variadic signature), while the
+non-enum `Set` writes refuse at enum-field typing. This keeps the method-body
+and parameter boundary explicit before any setter execution is attempted.
+
+`IntegralMemberEnumSetterCall` adds the call-level wrapper for the admitted
+synthetic shape. It checks canonical method and receiver identity, the `void`
+result spelling, the enum argument's exact representation, and the existing
+projection before invoking the setter write. Kernel controls observe `7 → 9`
+through this wrapper and reject a representation or result mismatch; no source
+call parser or variadic TinyXML2 setter is widened by it.
+
+`IntegralMemberEnumArgument.admit` preserves the separate source argument
+boundary for a direct enum `DeclRefExpr`: occurrence, referenced declaration,
+source spelling, and structured enum identity are retained, while casts and
+integer literals refuse. `bindWithArgument` checks that witness against the
+admitted setter parameter before using a caller-supplied enum value. The kernel
+battery accepts the typed argument and rejects an `int` spelling, an
+`ImplicitCastExpr`, and an integer literal. These controls keep the setter
+boundary from silently adding source conversions.
+
+The source census now joins each retained call argument to its selected method
+metadata before pricing this boundary. It examines only parameter positions
+whose structured type is an enumeration, then accepts a direct
+`DeclRefExpr` when its qualified spelling matches the witnessed enum name and
+its referenced declaration handle is present. Casts, non-reference argument
+nodes, missing type spellings, and mismatched enum spellings are emitted as
+named refusals; variadic arguments beyond the structured parameter list are
+not treated as enum parameters. On the 542-call TinyXML2 probe, **23** enum
+argument shapes are admitted, all
+`XMLError:tinyxml2::XMLError:DeclRefExpr`, and the enum-argument refusal set is
+empty. The same 23 positions join to one parameter witness
+`0x...7def0:0x...7d810:0:XMLError` (the concrete handles are retained in the
+JSON report), with no parameter-provenance refusals. This is source provenance
+only: no enum value is evaluated and the variadic `SetError` calls remain
+outside execution.
+
+`IntegralMemberEnumArgument.evaluate` is the next value boundary. It accepts
+the retained enum identity plus an explicit representation oracle, target
+profile, and caller-supplied underlying `IntegralValue`; it checks the source
+spelling and enum handle, validates the target format, and preserves the enum
+tag. Invalid formats, values, profiles, and enum identities refuse without a
+conversion or a fabricated enumerator value. `bindWithArgumentValue` threads
+that result into the admitted synthetic setter call, while the existing
+separate-value binder remains available for callers that already hold a typed
+enum value. The four-row setter differential now uses this source-argument
+evaluation path; the matching Clang 21.1.8 oracle is still an explicit
+skip when unavailable.
+
+`IntegralMemberEnumArgument.parameter` closes the declaration side of that
+boundary. Given a canonical method handle, ordinal, and the same enum
+representation, it joins the structured parameter-type list to exactly one
+`ParmVarDecl`, retaining the parameter handle, name, source spelling, and
+ordinal. Repeated or missing method/AST rows, length disagreements, wrong
+enum identities, and spelling mismatches refuse. `bindToEvidence` accepts only
+matching argument and parameter type evidence; the existing setter admission
+still supplies its own body witness, so this addition does not select an
+overload or execute a variadic method. The real census carries all 23
+parameter witnesses into `IntegralMemberMethodProfile.admit`; all 23 stop at
+the named `unsupported-body` profile refusal, with no enum argument reaching
+setter execution. `bindWithArgumentParameterValue` now requires that same
+parameter witness before evaluating and invoking a setter call; the call
+record retains it as source provenance.
+
+The census JSON always emits `enum_argument_parameter_refusals` alongside
+`enum_argument_parameters`, even when both the structured metadata join and
+the AST `ParmVarDecl` join are clean. Malformed method rows, missing
+declarations, ordinal gaps, and type/spelling disagreements therefore remain
+visible as named telemetry instead of disappearing from an empty result.
+
+The counter contract has a bounded synthetic check. Running
+`prlimit --as=17179869184 env LEAN_NUM_THREADS=1 lake env lean -j 1 --run
+extractors/cpp/census_member_calls.lean --self-test`
+exercises one accepted join plus malformed parameter metadata, a missing
+`ParmVarDecl`, an out-of-range ordinal, and a wrong enum parameter type. It
+also checks that a malformed structured-parameter lookup is retained when the
+source argument's qualified spelling names an enum; that refusal is prefixed
+`metadata:` so it cannot be confused with a later `ParmVarDecl` join. The
+check prints the same two counter fields and exits nonzero if either the
+accepted entry or any refusal is lost.
+
+The kernel battery also mutates independent copies of this evidence: a wrong
+parameter type, an out-of-range ordinal, a malformed parameter-type row, and a
+missing `ParmVarDecl` all refuse before argument binding. These are provenance
+controls only; they do not turn a malformed probe into a callable setter.
+
+The body relation is priced independently so the profile refusal cannot hide
+the next source requirement. All 23 witnessed arguments resolve the same
+canonical-to-defining method pair and expose the first object event
+`this-member:_errorID`; no body or object-event refusal occurs. This remains
+telemetry: the live receiver, field state, and variadic body are not executed.
+
+Typing that event succeeds for all 23 body witnesses: the field access is
+`_errorID:XMLError:XMLError`, its enum profile is
+`XMLError:20:1:<absent>`, and the explicit census oracle selects
+`XMLError:unsigned int`. There are no field, enum-profile, or representation
+refusals. The underlying choice is still an oracle input; it is not recovered
+from TinyXML2's absent fixed-underlying spelling.
+
+With that typed witness in hand, `IntegralMemberEnumSetter.admit` is still
+explicitly refused for all 23 positions at `profile:unsupported-body`; no
+setter profile is admitted. This preserves the non-variadic setter contract
+and records the exact wall before any assignment or call transport is used.
+
+`MemberGetterTests.test_enum_setter_probe_differential` is the first
+source-backed setter control. It compiles three direct enum-constant calls,
+loads the matching Clang probe, admits the setter/body/field/parameter
+witnesses from that probe, and drives `bindWithArgumentValue` through the
+existing object store before reading the field back. Native `-O0` and `-O2`
+rows are compared with Lean; when the pinned Clang 21.1.8/plugin pair is not
+installed the test reports an explicit skip, never a fabricated agreement.
+
+`IntegralMemberEnumCall` exposes that read as a call result without widening
+the ordinary integral getter. It requires the already selected method and
+receiver handles, the typed field witness, the oracle-backed enum profile, and
+an existing projection. The retained result spelling must be the enum name (or
+its `enum`/qualified spelling); an ordinary builtin result, mismatched method,
+receiver, or result type refuses. Invocation then delegates to
+`IntegralMemberEnumValue.read`, so the object-state and storage checks are
+unchanged.
+
+This is not overload resolution or a general method-call evaluator. Arguments,
+temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
+qualified dispatch, construction, writes and calls whose target body is not an
+admitted getter remain refusals. No method is selected from a name, and the
+receiver handle never manufactures an object or an ABI address.
+
+Kernel controls cover successful arrow and direct-dot calls with result **7**, canonical resolution
+and invocation through a noncanonical occurrence, missing or malformed call
+children, argument refusal, non-arrow receivers, missing method handles, missing
+receiver/result types, bad names, non-method targets, method/canonical/name/
+receiver-handle mismatches, receiver-type mismatch and result-type mismatch.
+The controls use the existing projection's exact object state; no native
+differential claim is made by this source bridge. Native getter and
+class-subobject batteries remain the separate oracle for the underlying
+already-admitted body and object projection.

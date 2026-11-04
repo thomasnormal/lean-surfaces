@@ -1,0 +1,257 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/empty_associative_delete_statements/empty_associative_delete_statements.sv",
+  "source_sha256": "c20c845af832058861445089e001d24a51885ef1d5549951bfb5b2099dc3b4c5",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 31
+                  },
+                  "associative_empty_delete_statement": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 22
+                  },
+                  "associative_empty_delete_statement": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 25
+                  },
+                  "associative_empty_delete_statement": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 9,
+                      "end_line": 9,
+                      "end_col": 74
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 9,
+                        "end_line": 9,
+                        "end_col": 50
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 9,
+                          "col": 9,
+                          "end_line": 9,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 9,
+                            "end_line": 9,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000",
+                          "associative_empty_query": "num",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 26,
+                            "end_line": 9,
+                            "end_col": 27
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 9,
+                          "col": 31,
+                          "end_line": 9,
+                          "end_col": 50
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 31,
+                            "end_line": 9,
+                            "end_col": 45
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000",
+                          "associative_empty_query": "size",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 49,
+                            "end_line": 9,
+                            "end_col": 50
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 54,
+                        "end_line": 9,
+                        "end_col": 74
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 9,
+                          "col": 54,
+                          "end_line": 9,
+                          "end_col": 69
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "associative_empty_query": "num",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 9,
+                          "col": 73,
+                          "end_line": 9,
+                          "end_col": 74
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 10,
+                      "col": 7,
+                      "end_line": 10,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

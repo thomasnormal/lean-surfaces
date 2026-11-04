@@ -1,0 +1,997 @@
+#!/usr/bin/env bash
+# tools/check.sh — ONE file, elaborated against a WARM clone's oleans.
+#
+# WHY THIS FILE EXISTS.  The edit-check loop is the proof writer's inner loop,
+# and the only cheap way to run it is `lake env lean` on a single file against
+# oleans somebody else already built.  §7.1 rule 3 allows exactly that — and
+# then amends itself, because a lane got it wrong in the obvious way:
+#
+#   "AND ONLY IN A WARM CLONE — THE EXEMPTION IS A PROPERTY OF THE CLONE, NOT
+#    OF THE FILE.  `lake env lean` on a dependency-free scratch file is cheap
+#    only where the dependencies are already resolved; in a COLD clone the
+#    same command resolves and downloads them, which is Lean execution
+#    outside the lock (A11) and a GB-scale download instead of CoW seeding
+#    (A13).  This lane made exactly that mistake, reading rule 3 as being
+#    about the file when it is about the clone."
+#
+# A rule whose precondition cannot be seen is a rule that gets guessed.  So
+# this script does not ask the lane to know whether the clone is warm: it
+# CHECKS, names the case it found, and refuses when the case is not one rule 3
+# covers.  Three cases, and the script always says which one it is in:
+#
+#   TENURE    — the build lock's owner pid is US or one of our ancestors.
+#               Anything goes; we are inside a ticket (A11).
+#   SCRATCH   — the target is outside every lake library glob AND every
+#               project import already has an olean.  Rule 3's exemption,
+#               with its warm-clone amendment CHECKED rather than assumed.
+#   REFUSE    — anything else, and it says which: a library-glob file (that
+#               is the build's own graph — take a ticket), or a cold clone
+#               (seed first per A13, then probe).
+#
+# The lake libraries are READ FROM lakefile.toml, not hardcoded here — a
+# hardcoded glob is a second copy of the lakefile that goes stale silently.
+#
+# --iterate — THE PROOF-ITERATION CASE, AND IT IS A COURTESY PROTOCOL.
+#
+# Read this before using it.  `--iterate` runs Lean OUTSIDE the build lock.
+# Everything it does to stay polite — the load line, the memory-pressure line, the
+# machine-wide single-slot, yielding to the owner's workloads — is COURTESY:
+# checked at the moment it starts, and not enforced by anything afterwards.
+# Another lane can take a tenure a second later, the machine can fill up, and
+# nothing will stop this process.  THE ONLY GUARANTEE THIS MODE MAKES IS THE
+# RSS CEILING: 3 GB on its own chain, and it KILLS rather than pauses, because
+# nothing else is watching an unticketed process.  Everything else is a
+# promise about the moment of starting.
+#
+# WHY IT EXISTS.  Paying a TENURE PER COMPILE makes proof iteration
+# unaffordable: the C lane measured ~85 MINUTES PER COMPILE for a 300-line
+# proof, which is not a slow loop, it is no loop at all.
+#
+# Permitted only while all of these hold, CHECKED ON EVERY RUN:
+#
+#   1. ONE iterate MACHINE-WIDE — not one per lane.  A shared directory
+#      (/tmp/ls-iterate/), one live entry total, staleness by the TWO-PART
+#      test.  Two lanes iterating is the shape that took the box down at
+#      load 29, just smaller.
+#   2. load average below 10          — refused by number, not by feel
+#   3. memory pressure below 50%      — likewise, and it is a CURRENT-STATE
+#      reading on both platforms (macOS read a HIGH-WATER mark until 2026-08-24)
+#   4. every project import already has an olean (the warm-clone rule again)
+#
+# And the STOP condition MIRRORS THE START, on both axes: the same function
+# decides both, so a loop whose machine degrades mid-flight is refused its
+# NEXT run, by number.  (Load and pressure never kill a run in progress — only the
+# RSS ceiling does that.)
+#
+# A11 is not being weakened.  The lock exists because concurrent BUILDS took
+# the machine down at load 29, and a single-file elaboration on a quiet
+# machine is not that.  This is the one exemption A11's own rationale allows,
+# made CONDITIONAL AND MEASURED rather than asserted — and A11's priority
+# clause is unchanged and printed on every run: THOMAS'S OWN PROCESSES HAVE
+# ABSOLUTE PRIORITY, and this mode yields to owner workloads.
+#
+# USAGE
+#   tools/check.sh path/to/file.lean        # decide, then elaborate
+#   tools/check.sh --explain path/to/f.lean # decide and PRINT, run nothing
+#   tools/check.sh --iterate --lane <you> path/to/file.lean
+#   tools/check.sh --axioms 'Foo.bar,Foo.baz' path/to/file.lean
+#   tools/check.sh --clone <path>   # the target lives in ANOTHER checkout
+#   tools/check.sh --self-test              # every refusal path RUN, no Lean
+#
+# EXIT  0 elaborated clean (or --explain)   1 Lean reported errors
+#       2 REFUSED — nothing was run
+#
+# Core modules (`Init`, `Std`, `Lean`, `Lake`) ship with the toolchain and are
+# NOT olean-checked here; probing them would mean starting a Lean process to
+# ask where they live, and that is the thing this script exists to gate.
+
+set -u
+
+CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# WHERE THE TARGET LIVES, which is not always where this script lives.
+#
+# The out-of-clone refusal below is RIGHT — a path outside the checkout cannot
+# be classified against its lakefile, and silently elaborating one would be the
+# wrong-tree family again.  But its SCOPE was the script's own clone, so the
+# Lean tier's export corner — whose work lives in a foreign lean4export
+# checkout BY CHARTER — could never use `--iterate` at all.  A17's courtesy
+# loop was machine-wide in its wording and per-clone in its reach:
+#
+# > A courtesy protocol scoped to one clone is invisible to a lane whose work
+# > is in another.
+#
+# So the guard is re-pointed, never removed, and only ON REQUEST.  What follows
+# the target are the TARGET-RELATIVE reads: its lakefile globs, its oleans, the
+# directory the elaboration runs in.  What does NOT follow it are the
+# CHARTER-relative reads — A17's own citation and this repo's backlog driver
+# are claims about OUR repository and stay here.  The load and pressure lines
+# are untouched: they are machine-wide facts and have no clone.
+TARGET_CLONE="${LS_CHECK_CLONE:-}"
+LOCK="${LS_LOCK:-/tmp/ls-build.lock}"
+NICE="${LS_NICE:-19}"
+EXPLAIN=0
+SELF_TEST=0
+AXIOMS=""
+TARGET=""
+ITERATE=0
+LANE=""
+ITER_DIR="${LS_ITERATE_DIR:-/tmp/ls-iterate}"    # MACHINE-WIDE, one live entry
+MAX_LOAD="${LS_ITERATE_MAX_LOAD:-10}"
+# THE LINE IS UNCHANGED AT 50: the C lane's finding was the INSTRUMENT, not
+# the threshold, and "my lane is blocked" is the worst reason to move a shared
+# safety line.  The old env name still works so nobody's wrapper breaks.
+MAX_PRESS_PCT="${LS_ITERATE_MAX_PRESSURE_PCT:-${LS_ITERATE_MAX_SWAP_PCT:-50}}"
+# 3 GB, and deliberately STRICTER than A16's 5 GB per-process tenure line: a
+# tenure has a watchdog and a lock behind it, an unticketed iterate has only
+# this.  It kills, it does not pause.
+ITER_RSS_LIMIT_KB="${LS_ITERATE_RSS_LIMIT_KB:-3145728}"
+THREADS="${LEAN_NUM_THREADS:-2}"
+
+usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
+die()   { echo "check.sh: $*" >&2; exit 2; }
+
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --clone)     need_val "$#" "$1"; TARGET_CLONE="$2"; shift 2 ;;
+    --explain)   EXPLAIN=1; shift ;;
+    --iterate)   ITERATE=1; shift ;;
+    --axioms)    need_val "$#" "$1"; AXIOMS="$2"; shift 2 ;;
+    --lane)      need_val "$#" "$1"; LANE="$2"; shift 2 ;;
+    --self-test) SELF_TEST=1; shift ;;
+    -h|--help)   usage ;;
+    -*)          die "unknown argument '$1'" ;;
+    *)           TARGET="$1"; shift ;;
+  esac
+done
+
+# ------------------------------------------------------------- the lakefile
+# "Check, don't assume" — the library roots come from lakefile.toml.
+# The lakefile reader is SHARED with triad.sh — the two disagreed about a
+# repo-root `.lean` until it was, and two protocol tools disagreeing about one
+# file eventually gets trusted in the wrong direction.
+LAKEINFO="$(dirname "${BASH_SOURCE[0]}")/lakeinfo.sh"
+[ -r "$LAKEINFO" ] || { echo "check.sh: missing $LAKEINFO" >&2; exit 2; }
+# shellcheck source=/dev/null
+. "$LAKEINFO"
+
+glob_class() { lake_glob_class "${TARGET_CLONE:-$CLONE}" "$1"; }
+
+# ---------------------------------------------------------------- imports
+imports_of() {                  # file -> imported module names, one per line
+  sed -n 's/^[ \t]*import[ \t][ \t]*\([A-Za-z0-9_.«»]*\).*/\1/p' "$1"
+}
+
+is_core_module() {              # toolchain-provided: not our olean to check
+  case "${1%%.*}" in Init|Std|Lean|Lake) return 0 ;; *) return 1 ;; esac
+}
+
+olean_for() {                   # module -> olean path, or '' when absent
+  local rel c
+  rel="$(printf '%s' "$1" | sed 's/[«»]//g' | tr '.' '/')"
+  for c in "${TARGET_CLONE:-$CLONE}/.lake/build/lib/lean/$rel.olean" \
+           "${TARGET_CLONE:-$CLONE}"/.lake/packages/*/.lake/build/lib/lean/"$rel".olean; do
+    [ -f "$c" ] && { echo "$c"; return 0; }
+  done
+  echo ""; return 1
+}
+
+missing_oleans() {              # file -> project imports with no olean
+  local m
+  for m in $(imports_of "$1"); do
+    is_core_module "$m" && continue
+    [ -n "$(olean_for "$m")" ] || echo "$m"
+  done
+}
+
+# ------------------------------------------------------------ the tenure
+# A5: the owner file is `<lane> <pid>`, pid LAST.  A4's corollary: the owner
+# is a HINT and the process tree is the truth — so ownership is decided by
+# ANCESTRY, not by matching a lane tag a stale file could be lying about.
+lock_is_ours() {
+  local owner pid p guard=0
+  owner="$(cat "$LOCK/owner" 2>/dev/null)" || return 1
+  [ -n "$owner" ] || return 1
+  pid="$(printf '%s' "$owner" | awk '{print $NF}')"
+  case "$pid" in ''|*[!0-9]*) return 1 ;; esac
+  p=$$
+  while [ -n "$p" ] && [ "$p" != "0" ] && [ "$p" != "1" ]; do
+    [ "$p" = "$pid" ] && return 0
+    guard=$((guard + 1)); [ "$guard" -gt 64 ] && return 1
+    p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
+  done
+  return 1
+}
+
+# ------------------------------------------- IS THIS RUN A MEASUREMENT?
+# From the successor lane's instrumented proof run, which counted "0 open
+# arms" TWICE while (a) looping in `simp` until the heartbeat timeout and
+# (b) erroring inside a `first` chain — `split` fails HARD, escapes the chain,
+# and never reaches the fallback the counter counts.
+#
+#   > A counter that counts goals reaching a fallback reads an ERROR as a
+#   > SUCCESS.
+#
+# It is the same shape as `#print axioms` on a failed statement: a success
+# signal that SURVIVES the failure it should report.  So a run is not a
+# measurement until its exit code, its warning classes and its two known
+# runaway modes have been read — and this says so in one line, because a
+# report nobody reads at a glance is a report that gets skipped at 2am.
+warning_classes() {             # output -> the distinct NON-sorry warnings
+  grep -E 'warning:' "$1" 2>/dev/null \
+    | grep -v "declaration uses 'sorry'" \
+    | sed 's/^.*warning: *//' | cut -c1-72 | sort -u
+}
+
+# rc, output -> the report on stdout, and the one-line verdict LAST.
+run_verdict() {
+  local rc="$1" f="$2" nerr nsorry nwarn nother hb mrd reasons="" cls
+  [ -f "$f" ] || { echo "    (no output captured)"; echo "  VERDICT  NOT A MEASUREMENT: no output was captured"; return 1; }
+  nerr="$(grep -cE '^error|error:' "$f" 2>/dev/null || true)"
+  nsorry="$(grep -c "declaration uses 'sorry'" "$f" 2>/dev/null || true)"
+  nwarn="$(grep -cE 'warning:' "$f" 2>/dev/null || true)"
+  nother=$((nwarn - nsorry))
+  hb="$(grep -cE 'maximum number of heartbeats|\(deterministic\) timeout' "$f" 2>/dev/null || true)"
+  mrd="$(grep -cE 'maxRecDepth|maximum recursion depth' "$f" 2>/dev/null || true)"
+
+  printf '    exit code      %s\n' "$rc"
+  printf '    warnings       %s total — %s sorry, %s other\n' "$nwarn" "$nsorry" "$nother"
+  if [ "$nother" -gt 0 ]; then
+    warning_classes "$f" | sed 's/^/      other: /'
+  fi
+  # The two runaway modes get their own lines whether or not they fired: an
+  # absent line is information too, and "heartbeats none" is what lets a lane
+  # trust the run without re-reading the log.
+  if [ "$hb" -gt 0 ]; then
+    printf '    heartbeats     %s line(s) — THE RUN DID NOT FINISH THINKING:\n' "$hb"
+    grep -E 'maximum number of heartbeats|\(deterministic\) timeout' "$f" | head -3 | cut -c1-96 | sed 's/^/      /'
+  else
+    printf '    heartbeats     none\n'
+  fi
+  if [ "$mrd" -gt 0 ]; then
+    printf '    maxRecDepth    %s line(s) — see tools/diagnose.sh --explain max-rec-depth (THREE causes):\n' "$mrd"
+    grep -E 'maxRecDepth|maximum recursion depth' "$f" | head -3 | cut -c1-96 | sed 's/^/      /'
+  else
+    printf '    maxRecDepth    none\n'
+  fi
+
+  [ "$rc" != "0" ]    && reasons="${reasons:+$reasons; }exit $rc"
+  [ "$nerr" -gt 0 ]   && reasons="${reasons:+$reasons; }$nerr error line(s)"
+  [ "$hb" -gt 0 ]     && reasons="${reasons:+$reasons; }heartbeat timeout"
+  [ "$mrd" -gt 0 ]    && reasons="${reasons:+$reasons; }maxRecDepth"
+  if [ "$nother" -gt 0 ]; then
+    cls="$(warning_classes "$f" | head -1)"
+    reasons="${reasons:+$reasons; }$nother non-sorry warning(s): ${cls:-unknown}"
+  fi
+
+  if [ -n "$reasons" ]; then
+    printf '  VERDICT  NOT A MEASUREMENT: %s\n' "$reasons"
+    return 1
+  fi
+  printf '  VERDICT  TRUSTWORTHY: exit 0, sorry-only warnings\n'
+  return 0
+}
+
+# §0.1 II(a): a declaration whose STATEMENT failed prints "does not depend on
+# any axioms" — CLEANER than the truth.  So the axiom lines are reported only
+# from a run that was a measurement, and otherwise refused BY NAME.
+# `printf '%s'` WITHOUT A TRAILING NEWLINE loses the last element: `read`
+# returns non-zero at a partial final line, so the loop body never runs for it.
+# `--axioms 'A,B'` appended only A; `--axioms 'OneName'` appended NOTHING AT
+# ALL — and since 9dae608 made this flag the evidence standard, a single-name
+# axiom claim through it has been unverifiable and looked green.
+append_axiom_prints() {         # file, "a,b,c" -> appends, echoes the COUNT
+  local file="$1" names="$2" d n=0
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    printf '#print axioms %s\n' "$d" >> "$file" || return 1
+    n=$((n + 1))
+  done <<NAMES
+$(printf '%s\n' "$names" | tr ',' '\n')
+NAMES
+  echo "$n"
+}
+
+axiom_report() {                # output, trustworthy(0/1), names REQUESTED
+  local f="$1" ok="$2" want="${3:-0}" found
+  found="$(grep -cE "depends on axioms|does not depend on any axioms" "$f" 2>/dev/null || true)"
+  if [ "$ok" != "0" ]; then
+    printf '    axioms         NOT REPORTED — this run was not a measurement, and a failed\n'
+    printf '                   STATEMENT prints "does not depend on any axioms" (§0.1 II(a))\n'
+    return 0
+  fi
+  # ABSENCE IS NOT ZERO.  The old guard opened with `grep -q … || return 0`,
+  # so a run that printed NO axiom line at all said nothing and left the
+  # verdict green — this tool's own law (a success signal that survives the
+  # failure it should report) firing on the guard built to enforce it.
+  if [ "$found" != "$want" ]; then
+    printf '    axioms         REFUSED — %s name(s) requested, %s axiom line(s) printed.\n' "$want" "$found"
+    printf '                   ABSENCE IS NOT ZERO: a name that produced no line was never\n'
+    printf '                   checked, so a verdict quoting this run is unverifiable.\n'
+    return 1
+  fi
+  printf '    axioms         %s of %s requested (from a clean elaboration):\n' "$found" "$want"
+  grep -E "depends on axioms|does not depend on any axioms" "$f" | cut -c1-96 | sed 's/^/      /'
+}
+
+# ------------------------------------------------- the machine, measured
+# Every reader is MOCKABLE, because a guard whose refusal path cannot be
+# executed is a guard nobody has tested.  The self-test drives all three.
+# THE MACHINE-WIDE INSTRUMENTS live in one file, because triad.sh sizes its
+# build from the same readings this uses to permit an iteration.  Two tools
+# asking the same question of the machine must ask it the same way.
+. "$(dirname "${BASH_SOURCE[0]}")/instruments.sh"
+
+descendants() {                 # BFS over ps, never `pgrep -P` (A12's lesson)
+  ps -eo pid,ppid 2>/dev/null | awk -v root="$1" '
+    NR > 1 { child[$2] = child[$2] " " $1 }
+    END { n = 1; q[1] = root
+          for (i = 1; i <= n; i++) {
+            split(child[q[i]], kids, " ")
+            for (k in kids) if (kids[k] != "") { n++; q[n] = kids[k]; print kids[k] } } }'
+}
+
+has_lean_descendant() {
+  [ -n "${LS_MOCK_LEAN_CHILD:-}" ] && { [ "$LS_MOCK_LEAN_CHILD" = "1" ]; return $?; }
+  local kid
+  for kid in $(descendants "$1"); do
+    case "$(ps -o comm= -p "$kid" 2>/dev/null)" in *lean*|*lake*) return 0 ;; esac
+  done
+  return 1
+}
+
+# THE SLOT IS MACHINE-WIDE.  One live entry in a shared directory, whatever
+# lane it belongs to: two lanes iterating at once is the shape that took the
+# box down at load 29, only smaller.  Entry filename IS the pid; its contents
+# are `<lane> <pid>`, A5's format, so a human reading the directory sees who.
+iterate_entry() { printf '%s/%s\n' "$ITER_DIR" "$$"; }
+
+# The TWO-PART test again (§7.1 rule 5), and the failure direction is the same:
+# an unparseable entry is treated as LIVE, so a bad file refuses a new iterate
+# rather than reclaiming one that is running.
+iterate_entry_live() {          # entry file -> 0 when its holder is alive
+  local f="$1" owner pid
+  [ -f "$f" ] || return 1
+  owner="$(cat "$f" 2>/dev/null)"; [ -n "$owner" ] || return 1
+  pid="$(printf '%s' "$owner" | awk '{print $NF}')"     # A5: pid LAST
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac          # unparseable => live
+  kill -0 "$pid" 2>/dev/null || return 1                # part 1: dead => stale
+  has_lean_descendant "$pid" || return 1                # part 2: no Lean => stale
+  return 0
+}
+
+iterate_live_holder() {         # -> the contents of the live entry, or ''
+  local f
+  [ -d "$ITER_DIR" ] || return 1
+  for f in "$ITER_DIR"/*; do
+    [ -f "$f" ] || continue
+    case "$f" in *"/$$") continue ;; esac               # never ourselves
+    if iterate_entry_live "$f"; then
+      cat "$f" 2>/dev/null
+      return 0
+    fi
+    rm -f "$f" 2>/dev/null                              # stale: reaped, quietly
+  done
+  return 1
+}
+
+# ONE function decides START and STOP, so "the stop mirrors the start" is true
+# by construction rather than by two lists agreeing.
+QUIET_REASON=""
+machine_is_quiet() {            # -> '' when quiet, else the reason, by number
+                                #    (also sets QUIET_REASON + the ITER_* numbers)
+  local l p
+  l="$(read_load)"
+  # "<pct> <instrument>" in ONE value: the number and what produced it cannot
+  # drift apart, and a subshell cannot hand back two variables anyway.
+  p="$(read_pressure)"
+  ITER_LOAD="$l"; ITER_PRESS="${p%% *}"; ITER_PRESS_SRC="${p#* }"
+  if over "$l" "$MAX_LOAD"; then
+    QUIET_REASON="load average is $l, over the line of $MAX_LOAD"
+    echo "$QUIET_REASON"; return 0
+  fi
+  if over "$ITER_PRESS" "$MAX_PRESS_PCT"; then
+    # THE INSTRUMENT IS PART OF THE REASON.  An unlabelled percentage is what
+    # made a uptime-long high-water mark read as a pressure reading.
+    QUIET_REASON="memory pressure is ${ITER_PRESS}% in use per ${ITER_PRESS_SRC}, over the line of ${MAX_PRESS_PCT}%"
+    echo "$QUIET_REASON"; return 0
+  fi
+  QUIET_REASON=""
+  echo ""
+}
+
+# The one guarantee this mode makes.  Pure, so both directions are testable.
+iterate_rss_verdict() {         # limit_kb  < "<pid> <rss_kb>" rows
+  awk -v lim="$1" '
+    { total += $2; if ($2 > worst) { worst = $2; wpid = $1 } }
+    END { if (total > lim) printf "kill %s %d\n", (wpid == "" ? "-" : wpid), total
+          else print "ok" }'
+}
+
+# The citation checks itself, and "present" is not "adopted": A17 landed in
+# §7.1a as a DRAFT row while this was being written, which would have silently
+# turned the honest note off.  Three states, three messages.
+a17_status() {                  # -> absent | draft | adopted
+  local doc="$CLONE/docs/family-architecture.md" row
+  [ -f "$doc" ] || { echo absent; return 0; }
+  row="$(grep -m1 '^| 17 ' "$doc" 2>/dev/null)"
+  if [ -z "$row" ]; then
+    grep -q 'AMENDMENT 17' "$doc" 2>/dev/null || { echo absent; return 0; }
+    row="$(grep -m1 'AMENDMENT 17' "$doc")"
+  fi
+  case "$row" in *DRAFT*|*draft*) echo draft ;; *) echo adopted ;; esac
+}
+
+ITER_LOAD=""; ITER_PRESS=""; ITER_PRESS_SRC=""
+decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
+  local holder reason _p
+  VERDICT=""; WHY=""; MISSING=""
+  ITER_LOAD="$(read_load)"
+  _p="$(read_pressure)"; ITER_PRESS="${_p%% *}"; ITER_PRESS_SRC="${_p#* }"
+  if holder="$(iterate_live_holder)"; then
+    VERDICT="refuse-concurrent"
+    WHY="an iterate is already running MACHINE-WIDE ($holder). One slot total, whatever lane holds it: two single-file elaborations are the shape that took the machine down at load 29, just smaller"
+    return 0
+  fi
+  reason="$(machine_is_quiet)"
+  if [ -n "$reason" ]; then
+    case "$reason" in
+      load*) VERDICT="refuse-load"
+             WHY="$reason. Lock-free iteration is a courtesy permitted on a QUIET machine, and this one is not quiet" ;;
+      *)     VERDICT="refuse-pressure"
+             WHY="$reason. A machine under memory pressure turns one elaboration into everybody's slowdown" ;;
+    esac
+    return 0
+  fi
+  MISSING="$(missing_oleans "${TARGET_CLONE:-$CLONE}/$1" 2>/dev/null || true)"
+  if [ -n "$MISSING" ]; then
+    VERDICT="refuse-cold"
+    WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports — resolving them here is Lean execution outside the lock (A11) and a GB-scale download (A13). Seed first, then iterate"
+    return 0
+  fi
+  VERDICT="iterate"
+  WHY="conditions met — lock-free per A17: load $ITER_LOAD < $MAX_LOAD, memory pressure ${ITER_PRESS}% < ${MAX_PRESS_PCT}% per ${ITER_PRESS_SRC}, imports warm, the machine-wide iterate slot is free. COURTESY ONLY — yields to owner workloads (Thomas's own processes have absolute priority, A11), and the sole guarantee is the $((ITER_RSS_LIMIT_KB / 1048576)) GB RSS ceiling, which KILLS"
+  return 0
+}
+
+# ------------------------------------------------------------- the verdict
+# Sets VERDICT (tenure|scratch|refuse-library|refuse-cold) and WHY.
+VERDICT=""; WHY=""; MISSING=""
+decide() {                      # decide <repo-relative-path>
+  local cls
+  VERDICT=""; WHY=""; MISSING=""
+  if lock_is_ours; then
+    VERDICT="tenure"
+    WHY="the build lock's owner pid ($(awk '{print $NF}' "$LOCK/owner" 2>/dev/null)) is us or an ancestor — we are inside a ticket (A11)"
+    return 0
+  fi
+  cls="$(glob_class "$1")"
+  if [ "$cls" = "library" ]; then
+    VERDICT="refuse-library"
+    WHY="'$1' is inside a lake library glob — that is the build's own graph, not a scratch file. Rule 3's exemption does not cover it: take a ticket (tools/triad.sh --lane <you>). LIBRARY FILE: the in-file '#print axioms' ledger via a tenure is the evidence path — --axioms is for SCRATCH files, and this refusal is by design, not a gap"
+    return 0
+  fi
+  MISSING="$(missing_oleans "${TARGET_CLONE:-$CLONE}/$1" 2>/dev/null || true)"
+  if [ -n "$MISSING" ]; then
+    VERDICT="refuse-cold"
+    WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports. Running it here would RESOLVE AND DOWNLOAD them — Lean execution outside the lock (A11) and a GB-scale download instead of CoW seeding (A13). Seed first (A13), then probe"
+    return 0
+  fi
+  VERDICT="scratch"
+  WHY="'$1' is outside every lake library glob and every project import already has an olean — rule 3's exemption, warm-clone amendment CHECKED"
+  return 0
+}
+
+# --------------------------------------------------------------- self-test
+# §5.4's law: every refusal path RUN, not admired.  NO LEAN IS EXECUTED here
+# — the whole point of the script is the decision, and the decision is pure.
+if [ "$SELF_TEST" = "1" ]; then
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/check-selftest.XXXXXX")" || die "no temp dir"
+  trap 'rm -rf "$tmp"' EXIT
+  ok=0; bad=0
+  check() { if [ "$2" = "$3" ]; then ok=$((ok+1)); echo "  ok   $1"; \
+            else bad=$((bad+1)); echo "  FAIL $1: got '$2' want '$3'"; fi; }
+
+  # A clone with the same SHAPE as the real one: a lakefile naming two libs
+  # and an exe root, a build tree with one olean, and files in both classes.
+  fake="$tmp/clone"
+  mkdir -p "$fake/LeanModels/Core" "$fake/Examples/python/x" "$fake/scratch" \
+           "$fake/.lake/build/lib/lean/LeanModels/Core" \
+           "$fake/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib"
+  cat > "$fake/lakefile.toml" <<'TOML'
+name = "lean-models"
+defaultTargets = ["LeanModels", "Examples"]
+[[lean_lib]]
+name = "LeanModels"
+[[lean_lib]]
+name = "Examples"
+globs = ["Examples.+"]
+[[lean_exe]]
+name = "leanmodels-run"
+root = "Main"
+TOML
+  : > "$fake/.lake/build/lib/lean/LeanModels/Core/Basic.olean"
+  : > "$fake/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Tactic.olean"
+  printf 'import LeanModels.Core.Basic\nimport Std.Do.Triple\n' > "$fake/scratch/warm.lean"
+  printf 'import LeanModels.Core.Basic\nimport LeanModels.Python.Semantics\n' > "$fake/scratch/cold.lean"
+  printf 'import Mathlib.Tactic\n' > "$fake/scratch/pkg.lean"
+  printf 'import LeanModels.Core.Basic\n' > "$fake/LeanModels/Core/New.lean"
+  printf 'import LeanModels.Core.Basic\n' > "$fake/Examples/python/x/proof.lean"
+  CLONE="$fake"
+  export LS_LOCK="$tmp/lock"; LOCK="$LS_LOCK"
+
+  check "the lakefile's libs are READ, not hardcoded" \
+        "$(lake_lib_roots "$CLONE" | tr '\n' ' ' | sed 's/ *$//')" "LeanModels Examples Main"
+  check "a LeanModels path is library-class"  "$(glob_class LeanModels/Core/New.lean)" "library"
+  check "an Examples path is library-class"   "$(glob_class Examples/python/x/proof.lean)" "library"
+  check "the exe root is library-class"       "$(glob_class Main.lean)" "library"
+  check "a scratch path is scratch-class"     "$(glob_class scratch/warm.lean)" "scratch"
+  check "and so is a doc's .lean"             "$(glob_class docs/mvcgen-pilot.lean)" "scratch"
+
+  check "imports are parsed"        "$(imports_of "$fake/scratch/warm.lean" | tr '\n' ' ' | sed 's/ *$//')" "LeanModels.Core.Basic Std.Do.Triple"
+  check "a core import is core"     "$(is_core_module Std.Do.Triple && echo core)" "core"
+  check "a project import is not"   "$(is_core_module LeanModels.Core.Basic && echo core)" ""
+  check "a present olean resolves"  "$(olean_for LeanModels.Core.Basic | sed "s|$fake/||")" ".lake/build/lib/lean/LeanModels/Core/Basic.olean"
+  check "a package olean resolves"  "$(olean_for Mathlib.Tactic | sed "s|$fake/||")" ".lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Tactic.olean"
+  check "an absent olean does not"  "$(olean_for LeanModels.Python.Semantics)" ""
+  check "guillemets are stripped"   "$(printf '%s' 'Examples.«system-verilog».t' | sed 's/[«»]//g' | tr '.' '/')" "Examples/system-verilog/t"
+  check "core imports are not required to have oleans" \
+        "$(missing_oleans "$fake/scratch/warm.lean")" ""
+
+  decide scratch/warm.lean
+  check "WARM scratch file -> scratch"        "$VERDICT" "scratch"
+  decide scratch/pkg.lean
+  check "a package import counts as warm"     "$VERDICT" "scratch"
+  decide scratch/cold.lean
+  check "a MISSING olean -> refuse-cold"      "$VERDICT" "refuse-cold"
+  check "  ...and it names A13"               "$(printf '%s' "$WHY" | grep -c 'A13')" "1"
+  decide LeanModels/Core/New.lean
+  check "a LIBRARY file -> refuse-library"    "$VERDICT" "refuse-library"
+  check "  ...and it says take a ticket"      "$(printf '%s' "$WHY" | grep -c 'take a ticket')" "1"
+  check "  ...and NAMES the evidence path"    "$(printf '%s' "$WHY" | grep -c "in-file '#print axioms' ledger")" "1"
+  check "  ...saying the refusal is BY DESIGN" "$(printf '%s' "$WHY" | grep -c 'by design, not a gap')" "1"
+  decide Examples/python/x/proof.lean
+  check "an Examples file -> refuse-library"  "$VERDICT" "refuse-library"
+
+  # The tenure case: a lock whose owner pid IS us outranks every refusal.
+  mkdir -p "$LOCK"; printf 'qol %s\n' "$$" > "$LOCK/owner"
+  decide LeanModels/Core/New.lean
+  check "under OUR tenure a library file is fine" "$VERDICT" "tenure"
+  decide scratch/cold.lean
+  check "under OUR tenure a cold clone is fine"   "$VERDICT" "tenure"
+  printf 'other 999999\n' > "$LOCK/owner"
+  decide scratch/cold.lean
+  check "ANOTHER lane's lock is not our tenure"   "$VERDICT" "refuse-cold"
+  printf 'go-lane lake pid 43341 (cwd /x/lean-go)\n' > "$LOCK/owner"
+  decide scratch/warm.lean
+  check "an UNPARSEABLE owner is not our tenure"  "$VERDICT" "scratch"
+  rm -rf "$LOCK"
+  decide scratch/warm.lean
+  check "no lock at all is not our tenure"        "$VERDICT" "scratch"
+
+  # ---- --iterate: the tightened A17 spec, every refusal EXECUTED
+  echo "  -- iterate"
+  ITER_DIR="$tmp/iter"; mkdir -p "$ITER_DIR"
+  LANE="testlane"; ITERATE=1
+  export LS_MOCK_LOAD=1.0 LS_MOCK_PRESSURE="5.0 mock:fixture"
+
+  decide_iterate LeanModels/Core/New.lean
+  check "a quiet machine + warm clone -> iterate" "$VERDICT" "iterate"
+  check "  ...and the WHY cites A17"              "$(printf '%s' "$WHY" | grep -c 'lock-free per A17')" "1"
+  check "  ...names the priority clause"          "$(printf '%s' "$WHY" | grep -c 'yields to owner workloads')" "1"
+  check "  ...and says COURTESY ONLY"             "$(printf '%s' "$WHY" | grep -c 'COURTESY ONLY')" "1"
+  check "  ...naming the RSS ceiling as the guarantee" "$(printf '%s' "$WHY" | grep -c '3 GB RSS ceiling')" "1"
+  check "  ...on a LIBRARY file the ticket path refuses" \
+        "$(decide LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-library"
+
+
+  # ---- BOTH PLATFORMS' PARSERS, on CANNED OUTPUT (the C lane's finding)
+  # Neither parser can be exercised on the other platform's box, so both are
+  # driven from recorded text.  The macOS numbers below are this machine's
+  # real readings at the moment the fix was written.
+  echo "  -- pressure instruments"
+  saved_press="${LS_MOCK_PRESSURE:-}"; unset LS_MOCK_PRESSURE
+  mfile="$tmp/meminfo"
+  printf 'MemTotal:       16384000 kB\nSwapTotal:       2097152 kB\nSwapFree:        1048576 kB\n' > "$mfile"
+  check "linux: SwapFree is CURRENT state"     "$(LS_MOCK_MEMINFO="$mfile" read_pressure | awk '{print $1}')" "50.0"
+  check "  ...and it names its instrument"     "$(LS_MOCK_MEMINFO="$mfile" read_pressure | awk '{print $2}')" "meminfo:SwapTotal-SwapFree(linux)"
+  printf 'SwapTotal:             0 kB\nSwapFree:              0 kB\n' > "$tmp/meminfo0"
+  check "  ...a swapless box is 0, not an error" "$(LS_MOCK_MEMINFO="$tmp/meminfo0" read_pressure)" "0 meminfo:no-swap"
+
+  # The macOS rows must not see the HOST's /proc/meminfo: read_pressure takes
+  # the Linux instrument first whenever it is readable, so on a Linux runner
+  # these rows would silently read the real box instead of the recorded text.
+  saved_meminfo="${LS_MOCK_MEMINFO-__unset__}"
+  export LS_MOCK_MEMINFO="$tmp/no-such-meminfo"
+
+  # macOS, verbatim from `memory_pressure` on this box: 52% free -> 48% in use,
+  # against the same 50% line the high-water reading was failing at 84.3%.
+  mp="$(printf 'Pageins: 210948053\nPageouts: 1145554\n\nSystem-wide memory free percentage: 52%%\n')"
+  check "macos: free%% becomes in-use"          "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $1}')" "48.0"
+  check "  ...naming instrument AND platform"   "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $2}')" "memory_pressure:100-free%(macos)"
+  # POLARITY, PINNED: 52% free is 48% in use, and the label must say which.
+  check "  ...and the label states the TRANSFORM" \
+        "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | grep -c '100-free')" "1"
+  check "  ...so the number is not the free%%"   \
+        "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print ($1 == 52.0) ? "free" : "in-use"}')" "in-use"
+  # THE REGRESSION THIS FIXES, as a row: the same box, both instruments.
+  check "  ...and 48%% PERMITS where 84.3%% refused" \
+        "$(LS_MOCK_PRESSURE="$(LS_MOCK_MEMPRESSURE="$mp" read_pressure)" machine_is_quiet)" ""
+  check "  ...while the high-water number would have refused" \
+        "$(LS_MOCK_PRESSURE="84.3 vm.swapusage:used(high-water)" machine_is_quiet | grep -c 'over the line')" "1"
+
+  # The kernel level is the fallback, mapped onto the SAME 0-100 line.
+  nomp="no free percentage in this output"
+  check "macos: level 1 is normal"              "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=1 read_pressure)" "0 memorystatus_vm_pressure_level=1-normal(macos)"
+  check "  ...level 2 is warn, and refuses"     "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=2 read_pressure | awk '{print $1}')" "75"
+  check "  ...level 4 is critical"              "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=4 read_pressure | awk '{print $1}')" "100"
+  check "  ...and warn actually REFUSES"        \
+        "$(LS_MOCK_PRESSURE="$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=2 read_pressure)" machine_is_quiet | grep -c 'over the line of 50%')" "1"
+
+  # ABSENCE IS NOT PRESSURE.  A courtesy line that blocks because it could not
+  # measure is this same defect one level down, so it permits and SAYS so.
+  check "no instrument at all is NAMED"         "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=0 read_pressure)" "0 unavailable(no-instrument)"
+  check "  ...and permits rather than blocking" \
+        "$(LS_MOCK_PRESSURE="0 unavailable(no-instrument)" machine_is_quiet)" ""
+  if [ "$saved_meminfo" = __unset__ ]; then unset LS_MOCK_MEMINFO
+  else export LS_MOCK_MEMINFO="$saved_meminfo"; fi
+  [ -n "$saved_press" ] && export LS_MOCK_PRESSURE="$saved_press"
+
+  # THE STOP MIRRORS THE START: one function, asserted on both axes.
+  check "quiet machine -> no stop reason"         "$(machine_is_quiet)" ""
+  check "stop mirrors start on LOAD"              "$(LS_MOCK_LOAD=42.5 machine_is_quiet)" \
+        "load average is 42.5, over the line of 10"
+  check "stop mirrors start on PRESSURE"          "$(LS_MOCK_PRESSURE="87.3 mock:fixture" machine_is_quiet)" \
+        "memory pressure is 87.3% in use per mock:fixture, over the line of 50%"
+  # THE INSTRUMENT IS IN THE REFUSAL, because an unlabelled percentage is what
+  # let a high-water mark pass for a pressure reading for a whole day.
+  check "  ...and the reason NAMES its instrument" \
+        "$(LS_MOCK_PRESSURE="87.3 memory_pressure:100-free%(macos)" machine_is_quiet | grep -c 'per memory_pressure:100-free%(macos)')" "1"
+  # THE STOP LINE MUST PRINT WHAT IT JUST MEASURED.  `$(machine_is_quiet)` is
+  # a SUBSHELL: the numbers it takes die with it, and the STOP line then shows
+  # the numbers from the START of the run beside a fresh verdict.
+  ITER_PRESS=""; ITER_PRESS_SRC=""
+  LS_MOCK_PRESSURE="7.5 mock:stop-path" machine_is_quiet >/dev/null
+  check "the STOP path keeps the numbers it took" "$ITER_PRESS $ITER_PRESS_SRC" "7.5 mock:stop-path"
+  check "  ...and the reason comes back too"      "$QUIET_REASON" ""
+  ITER_PRESS=""; ITER_PRESS_SRC=""
+  _ignored="$(LS_MOCK_PRESSURE="7.5 mock:subshell" machine_is_quiet)"
+  check "  ...while a subshell call loses them"   "$ITER_PRESS$ITER_PRESS_SRC" ""
+
+  LS_MOCK_LOAD=42.5 decide_iterate LeanModels/Core/New.lean
+  check "high load refuses"                       "$VERDICT" "refuse-load"
+  check "  ...with the STOP function's own words" "$(printf '%s' "$WHY" | grep -c 'load average is 42.5, over the line of 10')" "1"
+  LS_MOCK_LOAD=10 decide_iterate LeanModels/Core/New.lean
+  check "load exactly AT the line is allowed"     "$VERDICT" "iterate"
+  LS_MOCK_PRESSURE="87.3 mock:fixture" decide_iterate LeanModels/Core/New.lean
+  check "high pressure refuses"                   "$VERDICT" "refuse-pressure"
+  check "  ...naming the NUMBER"                  "$(printf '%s' "$WHY" | grep -c '87.3')" "1"
+
+  decide_iterate scratch/cold.lean
+  check "a cold clone refuses"                    "$VERDICT" "refuse-cold"
+  check "  ...naming A13"                         "$(printf '%s' "$WHY" | grep -c 'A13')" "1"
+
+  # THE SLOT IS MACHINE-WIDE.  A real foreign pid, from a DIFFERENT lane.
+  sleep 120 & other=$!
+  printf 'some-other-lane %s\n' "$other" > "$ITER_DIR/$other"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "a SECOND iterate refuses ACROSS LANES"   "$VERDICT" "refuse-concurrent"
+  check "  ...naming the holder's lane"           "$(printf '%s' "$WHY" | grep -c 'some-other-lane')" "1"
+  check "  ...and it outranks the load check"     "$(LS_MOCK_LOAD=99 LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-concurrent"
+  LS_MOCK_LEAN_CHILD=0 decide_iterate LeanModels/Core/New.lean
+  check "part 2: a live pid with no Lean is STALE" "$VERDICT" "iterate"
+  check "  ...and the stale entry was REAPED"      "$(ls "$ITER_DIR" | grep -c "^$other\$")" "0"
+  kill "$other" 2>/dev/null; wait "$other" 2>/dev/null
+
+  printf 'dead-lane 999999\n' > "$ITER_DIR/999999"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "part 1: a DEAD holder is reclaimed"      "$VERDICT" "iterate"
+  printf 'go-lane lake pid 43341 (cwd /x)\n' > "$ITER_DIR/bogus"
+  decide_iterate LeanModels/Core/New.lean
+  check "an UNPARSEABLE holder is never reclaimed" "$VERDICT" "refuse-concurrent"
+  rm -f "$ITER_DIR"/*
+  check "our OWN entry never blocks us" \
+        "$(printf 'testlane %s\n' "$$" > "$ITER_DIR/$$"; LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "iterate"
+  rm -f "$ITER_DIR"/*
+
+  # ---- THE OUT-OF-CLONE GUARD, AND ITS OPT-IN (the Lean tier's export corner)
+  # Driven through the FLAG PATH: the guard lives in the main flow, so no
+  # helper-level row can see it.  LS_MOCK_LOAD forces an immediate refuse-load
+  # so the run stops before any elaboration -- what is under test is whether
+  # the guard let the path through, not what happens after.
+  fgn="$tmp/foreign"; mkdir -p "$fgn"
+  printf 'name = "e"\n[[lean_lib]]\nname = "Export"\n' > "$fgn/lakefile.toml"
+  printf -- '-- x\n' > "$fgn/x.lean"
+  guard_out() {                 # extra args... -> the run's output
+    LS_MOCK_LOAD=99 timeout 60 bash "$0" --lane t --iterate "$@" 2>&1
+  }
+  check "a foreign target is REFUSED by default" \
+        "$(guard_out "$fgn/x.lean" | grep -c 'is outside')" "1"
+  check "  ...and the refusal NAMES the opt-in" \
+        "$(guard_out "$fgn/x.lean" | grep -c 'clone <path>')" "1"
+  check "--clone ACCEPTS the same target"       \
+        "$(guard_out --clone "$fgn" "$fgn/x.lean" | grep -c 'is outside')" "0"
+  check "  ...and LS_CHECK_CLONE does too"      \
+        "$(LS_CHECK_CLONE="$fgn" guard_out "$fgn/x.lean" | grep -c 'is outside')" "0"
+  check "  ...reaching the machine-wide lines"  \
+        "$(guard_out --clone "$fgn" "$fgn/x.lean" | grep -c 'load average is 99')" "1"
+  check "a bad --clone is refused by name"      \
+        "$(guard_out --clone "$tmp/nope" "$fgn/x.lean" | grep -c "is not a directory")" "1"
+  # THE IN-CLONE PATH IS UNCHANGED, which is the half that must not regress.
+  check "an in-clone target still passes"       \
+        "$(guard_out "$CLONE/tools/check.sh" | grep -c 'is outside')" "0"
+
+
+  # The self-updating citation, in all three states.
+  a17dir="$tmp/a17"; mkdir -p "$a17dir/docs"
+  saved_clone="$CLONE"; CLONE="$a17dir"
+  check "no doc at all -> absent"          "$(a17_status)" "absent"
+  printf '# doc\n| 16 | something | new |\n' > "$a17dir/docs/family-architecture.md"
+  check "no A17 row -> absent"             "$(a17_status)" "absent"
+  printf '| 17 | the iteration loop | **DRAFT — five tightenings** |\n' >> "$a17dir/docs/family-architecture.md"
+  check "a DRAFT row -> draft, not adopted" "$(a17_status)" "draft"
+  printf '# doc\n| 17 | the iteration loop | **carried** |\n' > "$a17dir/docs/family-architecture.md"
+  check "a carried row -> adopted"          "$(a17_status)" "adopted"
+  CLONE="$saved_clone"
+
+  # THE ONE GUARANTEE: the RSS ceiling, asserted in BOTH directions.
+  check "a chain under the ceiling survives" \
+        "$(printf '10 1000000\n11 1000000\n' | iterate_rss_verdict 3145728)" "ok"
+  check "a chain over the ceiling is KILLED" \
+        "$(printf '10 2000000\n11 2000000\n' | iterate_rss_verdict 3145728 | awk '{print $1}')" "kill"
+  check "  ...naming the worst offender"  \
+        "$(printf '10 500000\n11 3000000\n' | iterate_rss_verdict 3145728 | awk '{print $2}')" "11"
+  check "the ceiling is 3 GB, stricter than A16's tenure line" \
+        "$ITER_RSS_LIMIT_KB" "3145728"
+
+  # ---- IS THIS RUN A MEASUREMENT?  (the successor lane's "0 open arms")
+  echo "  -- run verdict"
+  v="$tmp/verdict"; mkdir -p "$v"
+
+  printf 'info: elaborated\n' > "$v/clean.out"
+  check "clean run -> TRUSTWORTHY" \
+        "$(run_verdict 0 "$v/clean.out" | grep -c 'VERDICT  TRUSTWORTHY: exit 0, sorry-only warnings')" "1"
+  check "  ...and both runaway modes read 'none'" \
+        "$(run_verdict 0 "$v/clean.out" | grep -cE 'heartbeats     none|maxRecDepth    none')" "2"
+
+  printf "f.lean:3:0: warning: declaration uses 'sorry'\nf.lean:9:0: warning: declaration uses 'sorry'\n" > "$v/sorry.out"
+  check "sorry-only warnings stay TRUSTWORTHY" \
+        "$(run_verdict 0 "$v/sorry.out" | grep -c 'TRUSTWORTHY')" "1"
+  check "  ...and the sorries are COUNTED"  \
+        "$(run_verdict 0 "$v/sorry.out" | grep -c 'warnings       2 total — 2 sorry, 0 other')" "1"
+
+  check "a nonzero exit is NOT A MEASUREMENT" \
+        "$(run_verdict 1 "$v/clean.out" | grep -c 'NOT A MEASUREMENT: exit 1')" "1"
+
+  # THE CASE THAT MINTED THIS: an error inside a `first` chain, where a
+  # fallback-counting instrument read the error as a success.
+  printf 'f.lean:12:2: error: tactic split failed\ninfo: done\n' > "$v/escaped.out"
+  check "an ERROR with exit 0 is still NOT A MEASUREMENT" \
+        "$(run_verdict 0 "$v/escaped.out" | grep -c 'NOT A MEASUREMENT: 1 error line')" "1"
+
+  printf 'f.lean:1:1: error: (deterministic) timeout at `whnf`, maximum number of heartbeats (200000) has been reached\n' > "$v/hb.out"
+  check "a heartbeat timeout is CALLED OUT" \
+        "$(run_verdict 1 "$v/hb.out" | grep -c 'THE RUN DID NOT FINISH THINKING')" "1"
+  check "  ...and named in the verdict"    \
+        "$(run_verdict 1 "$v/hb.out" | grep -c 'heartbeat timeout')" "1"
+
+  printf 'f.lean:2:2: error: maximum recursion depth has been reached\n' > "$v/mrd.out"
+  check "maxRecDepth is CALLED OUT"        \
+        "$(run_verdict 1 "$v/mrd.out" | grep -c 'maxRecDepth    1 line')" "1"
+  check "  ...pointing at its THREE causes" \
+        "$(run_verdict 1 "$v/mrd.out" | grep -c 'THREE causes')" "1"
+
+  printf "f.lean:4:0: warning: declaration uses 'sorry'\nf.lean:7:9: warning: unused variable 'fuel'\n" > "$v/other.out"
+  check "a NON-sorry warning voids the measurement" \
+        "$(run_verdict 0 "$v/other.out" | grep -c 'NOT A MEASUREMENT: 1 non-sorry warning')" "1"
+  check "  ...and its class is LISTED"     \
+        "$(run_verdict 0 "$v/other.out" | grep -c 'other: unused variable')" "1"
+
+  check "no output at all is NOT A MEASUREMENT" \
+        "$(run_verdict 0 "$v/does-not-exist" | grep -c 'no output was captured')" "1"
+
+  # §0.1 II(a): the axiom line is the one that reads CLEANER than the truth.
+  printf "'thm' does not depend on any axioms\nf.lean:1:1: error: unknown identifier\n" > "$v/ax-bad.out"
+  run_verdict 0 "$v/ax-bad.out" >/dev/null; vok=$?
+  check "a failed run REFUSES to report axioms" \
+        "$(axiom_report "$v/ax-bad.out" "$vok" 1 | grep -c 'NOT REPORTED')" "1"
+  check "  ...citing the mode table"       \
+        "$(axiom_report "$v/ax-bad.out" "$vok" 1 | grep -c '§0.1 II(a)')" "1"
+  printf "'thm' depends on axioms: [propext, Classical.choice, Quot.sound]\n" > "$v/ax-ok.out"
+  run_verdict 0 "$v/ax-ok.out" >/dev/null; vok=$?
+  check "a clean run DOES report them"     \
+        "$(axiom_report "$v/ax-ok.out" "$vok" 1 | grep -c 'propext')" "1"
+
+  # ---- THE DROPPED NAME.  `printf '%s'` with no trailing newline loses the
+  # LAST element, so `--axioms 'OneName'` appended nothing and the absence was
+  # silent.  Measured by the fuelMono lane; these rows are the regression.
+  ax="$tmp/ax"; mkdir -p "$ax"
+  : > "$ax/one.lean"
+  check "a SINGLE name is appended, not dropped" "$(append_axiom_prints "$ax/one.lean" 'OneName')" "1"
+  check "  ...and the line is really there"      "$(grep -c '#print axioms OneName' "$ax/one.lean")" "1"
+  : > "$ax/two.lean"
+  check "the LAST of several is not dropped"     "$(append_axiom_prints "$ax/two.lean" 'A,B')" "2"
+  check "  ...and B is the one that used to go"  "$(grep -c '#print axioms B' "$ax/two.lean")" "1"
+  : > "$ax/three.lean"
+  check "an empty element is skipped, not counted" "$(append_axiom_prints "$ax/three.lean" 'A,,B')" "2"
+
+  # ---- ABSENCE IS NOT ZERO: fewer lines than names must REFUSE, loudly.
+  printf "'a' depends on axioms: [propext]\n" > "$ax/one.out"
+  check "1 requested, 1 printed -> reported"  "$(axiom_report "$ax/one.out" 0 1 | grep -c 'propext')" "1"
+  check "2 requested, 1 printed -> REFUSED"   "$(axiom_report "$ax/one.out" 0 2 | grep -c 'REFUSED')" "1"
+  check "  ...and it exits nonzero"           "$(axiom_report "$ax/one.out" 0 2 >/dev/null; echo $?)" "1"
+  check "  ...saying absence is not zero"     "$(axiom_report "$ax/one.out" 0 2 | grep -c 'ABSENCE IS NOT ZERO')" "1"
+  : > "$ax/none.out"
+  check "1 requested, NONE printed -> REFUSED" "$(axiom_report "$ax/none.out" 0 1 | grep -c 'REFUSED')" "1"
+  check "  ...the case that used to be SILENT" "$(axiom_report "$ax/none.out" 0 1 >/dev/null; echo $?)" "1"
+
+  unset LS_MOCK_LOAD LS_MOCK_PRESSURE LS_MOCK_LEAN_CHILD
+  ITERATE=0; LANE=""
+
+  echo "self-test: $ok ok, $bad failed"
+  [ "$bad" = "0" ] || exit 1
+  exit 0
+fi
+
+# ------------------------------------------------------------------- main
+[ -n "$TARGET" ] || die "a .lean file is required (or --self-test)"
+[ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
+[ -n "${TARGET_CLONE:-$CLONE}" ] || TARGET_CLONE="$CLONE"
+[ -d "${TARGET_CLONE:-$CLONE}" ] || die "--clone '$TARGET_CLONE' is not a directory"
+case "$TARGET" in *.lean) ;; *) die "'$TARGET' is not a .lean file" ;; esac
+
+# Same one-per-clone merge-driver fix the triad does — a lane that only ever
+# runs check.sh still rebases, and still pays the INDEX.md conflict.
+[ -x "$CLONE/tools/backlog-index.sh" ] && \
+  "$CLONE/tools/backlog-index.sh" --dir "$CLONE" --ensure-driver 2>/dev/null || true
+
+# Normalise to a repo-relative path, so the glob test means what it says.
+ABS="$TARGET"
+case "$ABS" in /*) ;; *) ABS="$(pwd)/$TARGET" ;; esac
+[ -f "$ABS" ] || die "no such file: $TARGET"
+REL="${ABS#"${TARGET_CLONE:-$CLONE}"/}"
+case "$REL" in /*)
+  die "'$TARGET' is outside '$TARGET_CLONE'. A path outside the checkout cannot be classified against its lakefile. If the target legitimately lives in another checkout — the Lean tier's export corner does, by charter — name it: --clone <path> (or LS_CHECK_CLONE=<path>)." ;;
+esac
+
+if [ "$ITERATE" = "1" ]; then
+  [ -n "$LANE" ] || die "--iterate requires --lane <name>: the one-per-lane slot is a pidfile keyed by it"
+  case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+" ;; esac
+  decide_iterate "$REL"
+else
+  decide "$REL"
+fi
+
+CMD="nice -n $NICE lake env lean $REL"
+echo "check.sh: $REL"
+if [ "$VERDICT" = "iterate" ]; then
+  echo "  CASE   iterate: conditions met — lock-free per A17"
+else
+  echo "  CASE   $VERDICT"
+fi
+echo "  WHY    $WHY"
+# §5.4a: the numbers this run was PERMITTED BY ride the run.
+[ "$ITERATE" = "1" ] && printf '  STATE  load %s (line %s), memory pressure %s%% (line %s%%) via %s, lane %s\n' \
+  "$ITER_LOAD" "$MAX_LOAD" "$ITER_PRESS" "$MAX_PRESS_PCT" "$ITER_PRESS_SRC" "$LANE"
+case "$VERDICT" in
+  refuse-*)
+    [ -n "$MISSING" ] && printf '  MISSING %s\n' "$(printf '%s' "$MISSING" | tr '\n' ' ')"
+    echo "  REFUSED — nothing was run."
+    exit 2 ;;
+esac
+# The citation checks itself: A17 is being drafted, and a pointer to a rule
+# that is not yet written is the thing this repository keeps paying for.
+if [ "$ITERATE" = "1" ]; then
+  case "$(a17_status)" in
+    absent)
+      echo "  NOTE   A17 has NO ROW in §7.1a. This run's permission rests on the"
+      echo "         conditions above, which were CHECKED, not on the register." ;;
+    draft)
+      echo "  NOTE   A17 is in §7.1a but marked DRAFT. Present is not adopted: this"
+      echo "         run's permission rests on the conditions above, which were"
+      echo "         CHECKED. The note clears when the row does." ;;
+  esac
+fi
+echo "  RUN    $CMD"
+if [ "$EXPLAIN" = "1" ]; then
+  echo "  --explain: nothing was run."
+  exit 0
+fi
+cd "${TARGET_CLONE:-$CLONE}" || die "cannot cd '$TARGET_CLONE'"
+ITER_WATCHDOG=""
+ENTRY=""
+cleanup_iterate() {
+  [ -n "$ITER_WATCHDOG" ] && kill "$ITER_WATCHDOG" 2>/dev/null
+  [ -n "$ENTRY" ] && rm -f "$ENTRY" "$ENTRY.guard" 2>/dev/null
+  return 0
+}
+if [ "$ITERATE" = "1" ]; then
+  # A5's format, and the pid SPANS the run (A10's shape at a smaller scale).
+  mkdir -p "$ITER_DIR" 2>/dev/null || die "cannot create '$ITER_DIR'"
+  ENTRY="$(iterate_entry)"
+  printf '%s %s\n' "$LANE" "$$" > "$ENTRY" || die "cannot write '$ENTRY'"
+  trap 'cleanup_iterate' EXIT INT TERM
+  export LEAN_NUM_THREADS="$THREADS"
+  echo "  RUN    LEAN_NUM_THREADS=$THREADS $CMD"
+  # THE ONLY GUARANTEE THIS MODE MAKES.  It KILLS rather than pauses, because
+  # nothing else is watching an unticketed process.  A16's lesson applies at
+  # this scale too: the guard is NOT in its own kill set.
+  (
+    while kill -0 $$ 2>/dev/null; do
+      sleep 10
+      g="$(cat "$ENTRY.guard" 2>/dev/null)"
+      case "$g" in ''|*[!0-9]*) g=0 ;; esac
+      excl=" $g $(descendants "$g" 2>/dev/null | tr '\n' ' ') "
+      rows=""
+      for pp in $(descendants $$); do
+        case "$excl" in *" $pp "*) continue ;; esac
+        rr="$(ps -o rss= -p "$pp" 2>/dev/null | tr -d ' ')"
+        case "$rr" in ''|*[!0-9]*) continue ;; esac
+        rows="$rows$pp $rr
+"
+      done
+      case "$(printf '%s' "$rows" | iterate_rss_verdict "$ITER_RSS_LIMIT_KB")" in
+        kill\ *)
+          tot="$(printf '%s' "$rows" | awk '{t += $2} END {print t+0}')"
+          echo "ITERATE RSS CEILING: chain at $((tot / 1024)) MB > $((ITER_RSS_LIMIT_KB / 1024)) MB — KILLING (this mode's only guarantee)" >&2
+          for pp in $(descendants $$); do
+            case "$excl" in *" $pp "*) continue ;; esac
+            kill -9 "$pp" 2>/dev/null
+          done ;;
+      esac
+    done
+  ) & ITER_WATCHDOG=$!
+  printf '%s\n' "$ITER_WATCHDOG" > "$ENTRY.guard" 2>/dev/null
+fi
+# --axioms runs a TEMP COPY with `#print axioms` appended, so the axiom lines
+# come from the SAME elaboration whose exit code and warnings are being read —
+# an axiom print from a different run is a number without its state (§5.4a).
+RUN_TARGET="$REL"
+AXCOPY=""
+if [ -n "$AXIOMS" ]; then
+  AXCOPY="$(mktemp "${TMPDIR:-/tmp}/check-axioms.XXXXXX.lean")" || die "no temp file"
+  cat "${TARGET_CLONE:-$CLONE}/$REL" > "$AXCOPY" || die "cannot copy '$REL'"
+  printf '\n' >> "$AXCOPY"
+  AX_WANT="$(append_axiom_prints "$AXCOPY" "$AXIOMS")" || die "cannot write '$AXCOPY'"
+  [ "${AX_WANT:-0}" -gt 0 ] || die "--axioms '$AXIOMS' named nothing to print"
+  RUN_TARGET="$AXCOPY"
+  echo "  AXIOMS   appended $AX_WANT #print axioms for: $AXIOMS (run from a temp copy, so"
+  echo "           error paths below name that copy rather than $REL)"
+fi
+
+RUN_LOG="$(mktemp "${TMPDIR:-/tmp}/check-run.XXXXXX")" || die "no temp file"
+# shellcheck disable=SC2086
+nice -n "$NICE" lake env lean "$RUN_TARGET" 2>&1 | tee "$RUN_LOG"
+RUN_RC="${PIPESTATUS[0]}"
+
+# A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.
+echo
+run_verdict "$RUN_RC" "$RUN_LOG"
+VERDICT_OK=$?
+if [ -n "$AXIOMS" ]; then
+  if ! axiom_report "$RUN_LOG" "$VERDICT_OK" "${AX_WANT:-0}"; then
+    echo "  VERDICT  NOT A MEASUREMENT: the axiom section refused (see above)"
+    VERDICT_OK=1
+  fi
+fi
+[ -n "$AXCOPY" ] && rm -f "$AXCOPY"
+rm -f "$RUN_LOG"
+
+if [ "$ITERATE" = "1" ]; then
+  cleanup_iterate
+  # THE STOP MIRRORS THE START: the same function, the same numbers — and the
+  # numbers must be the ones this call just TOOK.  `$(machine_is_quiet)` runs
+  # it in a SUBSHELL, so the ITER_* values it measured were discarded and the
+  # line below printed the numbers from the START of the run: a fresh verdict
+  # beside a stale reading, which is the same family as the instrument bug
+  # this file was just fixed for.  Called directly; the reason comes back in a
+  # global instead of on stdout.
+  machine_is_quiet >/dev/null; stop_reason="$QUIET_REASON"
+  if [ -n "$stop_reason" ]; then
+    echo "  STOP   $stop_reason — the NEXT run will refuse (the stop mirrors the start)"
+  else
+    echo "  STOP   conditions still hold (load $ITER_LOAD, memory pressure ${ITER_PRESS}% via ${ITER_PRESS_SRC}) — another run is permitted"
+  fi
+fi
+exit "$RUN_RC"

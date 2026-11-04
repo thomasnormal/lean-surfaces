@@ -1,0 +1,144 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/shortrealtobits_literal/shortrealtobits_literal.sv",
+  "source_sha256": "0f1b2a2afb798ff9fa6e0410c063e385b0ce0675642bebc4638f5ab5c7ea5565",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 27
+                  },
+                  "shortrealtobits_literal_statement": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 10,
+                      "col": 9,
+                      "end_line": 10,
+                      "end_col": 49
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 10,
+                        "col": 9,
+                        "end_line": 10,
+                        "end_col": 31
+                      },
+                      "width": 32,
+                      "bits": "11000000001000000000000000000000",
+                      "shortrealtobits_literal": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 10,
+                        "col": 36,
+                        "end_line": 10,
+                        "end_col": 49
+                      },
+                      "width": 32,
+                      "bits": "11000000001000000000000000000000"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 13,
+                      "col": 7,
+                      "end_line": 13,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

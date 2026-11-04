@@ -1,0 +1,2434 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/test_loops/values.sv",
+  "source_sha256": "dbe625214394cb90bb5c8504e4cbd43bca9d1d2fd46604d406bc40d90860c385",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 28,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 11
+            },
+            "name": "n",
+            "width": 32,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 13,
+              "end_line": 2,
+              "end_col": 16
+            },
+            "name": "sum",
+            "width": 32,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 18,
+              "end_line": 2,
+              "end_col": 23
+            },
+            "name": "tails",
+            "width": 32,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 14,
+              "end_line": 3,
+              "end_col": 19
+            },
+            "name": "guard",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 14,
+              "end_line": 4,
+              "end_col": 25
+            },
+            "name": "proof_value",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 2,
+              "end_line": 27,
+              "end_col": 5
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 10,
+                "end_line": 27,
+                "end_col": 5
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 6,
+                    "col": 2,
+                    "end_line": 6,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 6,
+                      "col": 2,
+                      "end_line": 6,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 6,
+                      "col": 4,
+                      "end_line": 6,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 6,
+                    "col": 7,
+                    "end_line": 6,
+                    "end_col": 20
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 6,
+                      "col": 13,
+                      "end_line": 6,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 6,
+                      "col": 16,
+                      "end_line": 6,
+                      "end_col": 19
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 16,
+                        "end_line": 6,
+                        "end_col": 17
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 6,
+                        "col": 16,
+                        "end_line": 6,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 16,
+                          "end_line": 6,
+                          "end_col": 17
+                        },
+                        "width": 32,
+                        "name": "n",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 21,
+                    "end_line": 6,
+                    "end_col": 51
+                  },
+                  "name": "$display",
+                  "format": "while_false %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 48,
+                        "end_line": 6,
+                        "end_col": 49
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 2,
+                    "end_line": 7,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 2,
+                      "end_line": 7,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 4,
+                      "end_line": 7,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 7,
+                    "col": 7,
+                    "end_line": 7,
+                    "end_col": 24
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 21,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 7,
+                      "col": 10,
+                      "end_line": 7,
+                      "end_col": 13
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 10,
+                        "end_line": 7,
+                        "end_col": 11
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 10,
+                        "end_line": 7,
+                        "end_col": 13
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 10,
+                          "end_line": 7,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "n",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 25,
+                    "end_line": 7,
+                    "end_col": 52
+                  },
+                  "name": "$display",
+                  "format": "do_false %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 49,
+                        "end_line": 7,
+                        "end_col": 50
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 2,
+                    "end_line": 8,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 2,
+                      "end_line": 8,
+                      "end_col": 7
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 8,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": 4,
+                    "bits": "x0z0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 17,
+                    "end_line": 8,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 8,
+                    "col": 22,
+                    "end_line": 8,
+                    "end_col": 39
+                  },
+                  "condition": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 28,
+                      "end_line": 8,
+                      "end_col": 33
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 8,
+                      "col": 35,
+                      "end_line": 8,
+                      "end_col": 38
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 35,
+                        "end_line": 8,
+                        "end_col": 36
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 35,
+                        "end_line": 8,
+                        "end_col": 38
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 35,
+                          "end_line": 8,
+                          "end_col": 36
+                        },
+                        "width": 32,
+                        "name": "n",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 8,
+                    "col": 40,
+                    "end_line": 8,
+                    "end_col": 72
+                  },
+                  "name": "$display",
+                  "format": "while_unknown %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 69,
+                        "end_line": 8,
+                        "end_col": 70
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 2,
+                    "end_line": 9,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 2,
+                      "end_line": 9,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 9,
+                      "col": 4,
+                      "end_line": 9,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 9,
+                    "col": 7,
+                    "end_line": 9,
+                    "end_col": 28
+                  },
+                  "condition": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 21,
+                      "end_line": 9,
+                      "end_col": 26
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 9,
+                      "col": 10,
+                      "end_line": 9,
+                      "end_col": 13
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 9,
+                        "col": 10,
+                        "end_line": 9,
+                        "end_col": 11
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 10,
+                        "end_line": 9,
+                        "end_col": 13
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 9,
+                          "col": 10,
+                          "end_line": 9,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "n",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 9,
+                    "col": 29,
+                    "end_line": 9,
+                    "end_col": 58
+                  },
+                  "name": "$display",
+                  "format": "do_unknown %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 9,
+                        "col": 55,
+                        "end_line": 9,
+                        "end_col": 56
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 2,
+                    "end_line": 10,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 2,
+                      "end_line": 10,
+                      "end_col": 7
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 8,
+                      "end_line": 10,
+                      "end_col": 15
+                    },
+                    "width": 4,
+                    "bits": "1xz0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 17,
+                    "end_line": 10,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 17,
+                      "end_line": 10,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 19,
+                      "end_line": 10,
+                      "end_col": 20
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 10,
+                    "col": 22,
+                    "end_line": 10,
+                    "end_col": 64
+                  },
+                  "condition": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 28,
+                      "end_line": 10,
+                      "end_col": 33
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 10,
+                      "col": 35,
+                      "end_line": 10,
+                      "end_col": 64
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 41,
+                          "end_line": 10,
+                          "end_col": 44
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 41,
+                            "end_line": 10,
+                            "end_col": 42
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 10,
+                            "col": 41,
+                            "end_line": 10,
+                            "end_col": 44
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 10,
+                              "col": 41,
+                              "end_line": 10,
+                              "end_col": 42
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 46,
+                          "end_line": 10,
+                          "end_col": 60
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 46,
+                            "end_line": 10,
+                            "end_col": 51
+                          },
+                          "width": 4,
+                          "name": "guard"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 52,
+                            "end_line": 10,
+                            "end_col": 59
+                          },
+                          "width": 4,
+                          "bits": "0xz0"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 2,
+                    "end_line": 11,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "while_known_one %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 33,
+                        "end_line": 11,
+                        "end_col": 34
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 2,
+                    "end_line": 12,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 2,
+                      "end_line": 12,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 12,
+                      "col": 4,
+                      "end_line": 12,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 6,
+                    "end_line": 12,
+                    "end_col": 12
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 6,
+                      "end_line": 12,
+                      "end_col": 9
+                    },
+                    "width": 32,
+                    "name": "sum",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 12,
+                      "col": 10,
+                      "end_line": 12,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 12,
+                    "col": 13,
+                    "end_line": 12,
+                    "end_col": 65
+                  },
+                  "condition": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 12,
+                      "col": 60,
+                      "end_line": 12,
+                      "end_col": 63
+                    },
+                    "width": 1,
+                    "op": "s<",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 60,
+                        "end_line": 12,
+                        "end_col": 61
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 62,
+                        "end_line": 12,
+                        "end_col": 63
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    }
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 12,
+                      "col": 16,
+                      "end_line": 12,
+                      "end_col": 53
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 12,
+                          "col": 22,
+                          "end_line": 12,
+                          "end_col": 25
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 12,
+                            "col": 22,
+                            "end_line": 12,
+                            "end_col": 23
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 12,
+                            "col": 22,
+                            "end_line": 12,
+                            "end_col": 25
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 12,
+                              "col": 22,
+                              "end_line": 12,
+                              "end_col": 23
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "If",
+                        "span": {
+                          "line": 12,
+                          "col": 26,
+                          "end_line": 12,
+                          "end_col": 43
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 12,
+                            "col": 29,
+                            "end_line": 12,
+                            "end_col": 33
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 12,
+                              "col": 29,
+                              "end_line": 12,
+                              "end_col": 30
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 12,
+                              "col": 32,
+                              "end_line": 12,
+                              "end_col": 33
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011"
+                          }
+                        },
+                        "then": {
+                          "kind": "Continue",
+                          "span": {
+                            "line": 12,
+                            "col": 34,
+                            "end_line": 12,
+                            "end_col": 43
+                          }
+                        },
+                        "else": null
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 12,
+                          "col": 43,
+                          "end_line": 12,
+                          "end_col": 50
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 12,
+                            "col": 43,
+                            "end_line": 12,
+                            "end_col": 46
+                          },
+                          "width": 32,
+                          "name": "sum",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 12,
+                            "col": 43,
+                            "end_line": 12,
+                            "end_col": 49
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 12,
+                              "col": 43,
+                              "end_line": 12,
+                              "end_col": 46
+                            },
+                            "width": 32,
+                            "name": "sum",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 12,
+                              "col": 48,
+                              "end_line": 12,
+                              "end_col": 49
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 2,
+                    "end_line": 13,
+                    "end_col": 40
+                  },
+                  "name": "$display",
+                  "format": "do_continue %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 33,
+                        "end_line": 13,
+                        "end_col": 34
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 35,
+                        "end_line": 13,
+                        "end_col": 38
+                      },
+                      "width": 32,
+                      "name": "sum",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 2,
+                    "end_line": 14,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 2,
+                      "end_line": 14,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 4,
+                      "end_line": 14,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 6,
+                    "end_line": 14,
+                    "end_col": 12
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 6,
+                      "end_line": 14,
+                      "end_col": 9
+                    },
+                    "width": 32,
+                    "name": "sum",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 14,
+                    "col": 13,
+                    "end_line": 14,
+                    "end_col": 61
+                  },
+                  "condition": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 14,
+                      "col": 19,
+                      "end_line": 14,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "op": "s<",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 19,
+                        "end_line": 14,
+                        "end_col": 20
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 21,
+                        "end_line": 14,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    }
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 14,
+                      "col": 24,
+                      "end_line": 14,
+                      "end_col": 61
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 14,
+                          "col": 30,
+                          "end_line": 14,
+                          "end_col": 33
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 30,
+                            "end_line": 14,
+                            "end_col": 31
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 30,
+                            "end_line": 14,
+                            "end_col": 33
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 30,
+                              "end_line": 14,
+                              "end_col": 31
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "If",
+                        "span": {
+                          "line": 14,
+                          "col": 34,
+                          "end_line": 14,
+                          "end_col": 51
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 37,
+                            "end_line": 14,
+                            "end_col": 41
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 37,
+                              "end_line": 14,
+                              "end_col": 38
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 14,
+                              "col": 40,
+                              "end_line": 14,
+                              "end_col": 41
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011"
+                          }
+                        },
+                        "then": {
+                          "kind": "Continue",
+                          "span": {
+                            "line": 14,
+                            "col": 42,
+                            "end_line": 14,
+                            "end_col": 51
+                          }
+                        },
+                        "else": null
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 14,
+                          "col": 51,
+                          "end_line": 14,
+                          "end_col": 58
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 51,
+                            "end_line": 14,
+                            "end_col": 54
+                          },
+                          "width": 32,
+                          "name": "sum",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 51,
+                            "end_line": 14,
+                            "end_col": 57
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 51,
+                              "end_line": 14,
+                              "end_col": 54
+                            },
+                            "width": 32,
+                            "name": "sum",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 56,
+                              "end_line": 14,
+                              "end_col": 57
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 2,
+                    "end_line": 15,
+                    "end_col": 43
+                  },
+                  "name": "$display",
+                  "format": "while_continue %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 15,
+                        "col": 36,
+                        "end_line": 15,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 15,
+                        "col": 38,
+                        "end_line": 15,
+                        "end_col": 41
+                      },
+                      "width": 32,
+                      "name": "sum",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 16,
+                    "col": 2,
+                    "end_line": 16,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 16,
+                      "col": 2,
+                      "end_line": 16,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 16,
+                      "col": 4,
+                      "end_line": 16,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 16,
+                    "col": 6,
+                    "end_line": 16,
+                    "end_col": 42
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 16,
+                      "col": 39,
+                      "end_line": 16,
+                      "end_col": 40
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000001"
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 16,
+                      "col": 9,
+                      "end_line": 16,
+                      "end_col": 32
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 16,
+                          "col": 15,
+                          "end_line": 16,
+                          "end_col": 18
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 16,
+                            "col": 15,
+                            "end_line": 16,
+                            "end_col": 16
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 16,
+                            "col": 15,
+                            "end_line": 16,
+                            "end_col": 18
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 16,
+                              "col": 15,
+                              "end_line": 16,
+                              "end_col": 16
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "Break",
+                        "span": {
+                          "line": 16,
+                          "col": 19,
+                          "end_line": 16,
+                          "end_col": 25
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 16,
+                          "col": 25,
+                          "end_line": 16,
+                          "end_col": 28
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 16,
+                            "col": 25,
+                            "end_line": 16,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 16,
+                            "col": 25,
+                            "end_line": 16,
+                            "end_col": 28
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 16,
+                              "col": 25,
+                              "end_line": 16,
+                              "end_col": 26
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 16,
+                    "col": 43,
+                    "end_line": 16,
+                    "end_col": 70
+                  },
+                  "name": "$display",
+                  "format": "do_break %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 67,
+                        "end_line": 16,
+                        "end_col": 68
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 17,
+                    "col": 2,
+                    "end_line": 17,
+                    "end_col": 6
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 17,
+                      "col": 2,
+                      "end_line": 17,
+                      "end_col": 3
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 17,
+                      "col": 4,
+                      "end_line": 17,
+                      "end_col": 5
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 17,
+                    "col": 6,
+                    "end_line": 17,
+                    "end_col": 38
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 17,
+                      "col": 12,
+                      "end_line": 17,
+                      "end_col": 13
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000001"
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 17,
+                      "col": 15,
+                      "end_line": 17,
+                      "end_col": 38
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 17,
+                          "col": 21,
+                          "end_line": 17,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 17,
+                            "col": 21,
+                            "end_line": 17,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 17,
+                            "col": 21,
+                            "end_line": 17,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 17,
+                              "col": 21,
+                              "end_line": 17,
+                              "end_col": 22
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "Break",
+                        "span": {
+                          "line": 17,
+                          "col": 25,
+                          "end_line": 17,
+                          "end_col": 31
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 17,
+                          "col": 31,
+                          "end_line": 17,
+                          "end_col": 34
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 17,
+                            "col": 31,
+                            "end_line": 17,
+                            "end_col": 32
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 17,
+                            "col": 31,
+                            "end_line": 17,
+                            "end_col": 34
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 17,
+                              "col": 31,
+                              "end_line": 17,
+                              "end_col": 32
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 39,
+                    "end_line": 17,
+                    "end_col": 69
+                  },
+                  "name": "$display",
+                  "format": "while_break %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 17,
+                        "col": 66,
+                        "end_line": 17,
+                        "end_col": 67
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 18,
+                    "col": 2,
+                    "end_line": 18,
+                    "end_col": 10
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 18,
+                      "col": 2,
+                      "end_line": 18,
+                      "end_col": 7
+                    },
+                    "width": 32,
+                    "name": "tails",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 18,
+                      "col": 8,
+                      "end_line": 18,
+                      "end_col": 9
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 18,
+                    "col": 10,
+                    "end_line": 18,
+                    "end_col": 14
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 18,
+                      "col": 10,
+                      "end_line": 18,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "name": "n",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 18,
+                      "col": 12,
+                      "end_line": 18,
+                      "end_col": 13
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 18,
+                    "col": 14,
+                    "end_line": 18,
+                    "end_col": 74
+                  },
+                  "condition": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 18,
+                      "col": 69,
+                      "end_line": 18,
+                      "end_col": 72
+                    },
+                    "width": 1,
+                    "op": "s<",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 18,
+                        "col": 69,
+                        "end_line": 18,
+                        "end_col": 70
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 18,
+                        "col": 71,
+                        "end_line": 18,
+                        "end_col": 72
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010"
+                    }
+                  },
+                  "body": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 18,
+                      "col": 17,
+                      "end_line": 18,
+                      "end_col": 62
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 18,
+                          "col": 23,
+                          "end_line": 18,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 18,
+                            "col": 23,
+                            "end_line": 18,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "name": "n",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 18,
+                            "col": 23,
+                            "end_line": 18,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 18,
+                              "col": 23,
+                              "end_line": 18,
+                              "end_col": 24
+                            },
+                            "width": 32,
+                            "name": "n",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "While",
+                        "span": {
+                          "line": 18,
+                          "col": 27,
+                          "end_line": 18,
+                          "end_col": 58
+                        },
+                        "condition": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 18,
+                            "col": 33,
+                            "end_line": 18,
+                            "end_col": 34
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        },
+                        "body": {
+                          "kind": "Block",
+                          "span": {
+                            "line": 18,
+                            "col": 35,
+                            "end_line": 18,
+                            "end_col": 58
+                          },
+                          "stmts": [
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 18,
+                                "col": 41,
+                                "end_line": 18,
+                                "end_col": 48
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 18,
+                                  "col": 41,
+                                  "end_line": 18,
+                                  "end_col": 46
+                                },
+                                "width": 32,
+                                "name": "tails",
+                                "signed": true
+                              },
+                              "value": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 18,
+                                  "col": 41,
+                                  "end_line": 18,
+                                  "end_col": 48
+                                },
+                                "width": 32,
+                                "op": "+",
+                                "left": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 18,
+                                    "col": 41,
+                                    "end_line": 18,
+                                    "end_col": 46
+                                  },
+                                  "width": 32,
+                                  "name": "tails",
+                                  "signed": true
+                                },
+                                "right": {
+                                  "kind": "Literal",
+                                  "span": null,
+                                  "width": 32,
+                                  "bits": "00000000000000000000000000000001"
+                                }
+                              }
+                            },
+                            {
+                              "kind": "Break",
+                              "span": {
+                                "line": 18,
+                                "col": 49,
+                                "end_line": 18,
+                                "end_col": 55
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 19,
+                    "col": 2,
+                    "end_line": 19,
+                    "end_col": 37
+                  },
+                  "name": "$display",
+                  "format": "nested %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 19,
+                        "col": 28,
+                        "end_line": 19,
+                        "end_col": 29
+                      },
+                      "width": 32,
+                      "name": "n",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 19,
+                        "col": 30,
+                        "end_line": 19,
+                        "end_col": 35
+                      },
+                      "width": 32,
+                      "name": "tails",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 20,
+                    "col": 2,
+                    "end_line": 20,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 20,
+                      "col": 2,
+                      "end_line": 20,
+                      "end_col": 13
+                    },
+                    "width": 8,
+                    "name": "proof_value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 20,
+                      "col": 14,
+                      "end_line": 20,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "bits": "10100101"
+                  }
+                },
+                {
+                  "kind": "While",
+                  "span": {
+                    "line": 21,
+                    "col": 2,
+                    "end_line": 21,
+                    "end_col": 29
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 21,
+                      "col": 8,
+                      "end_line": 21,
+                      "end_col": 9
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 21,
+                      "col": 11,
+                      "end_line": 21,
+                      "end_col": 29
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 21,
+                        "col": 11,
+                        "end_line": 21,
+                        "end_col": 22
+                      },
+                      "width": 8,
+                      "name": "proof_value"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 21,
+                        "col": 23,
+                        "end_line": 21,
+                        "end_col": 28
+                      },
+                      "width": 8,
+                      "bits": "01011010"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 22,
+                    "col": 2,
+                    "end_line": 22,
+                    "end_col": 37
+                  },
+                  "name": "$display",
+                  "format": "pretest %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 22,
+                        "col": 24,
+                        "end_line": 22,
+                        "end_col": 35
+                      },
+                      "width": 8,
+                      "name": "proof_value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 23,
+                    "col": 2,
+                    "end_line": 23,
+                    "end_col": 33
+                  },
+                  "condition": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 23,
+                      "col": 30,
+                      "end_line": 23,
+                      "end_col": 31
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  },
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 23,
+                      "col": 5,
+                      "end_line": 23,
+                      "end_col": 23
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 23,
+                        "col": 5,
+                        "end_line": 23,
+                        "end_col": 16
+                      },
+                      "width": 8,
+                      "name": "proof_value"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 23,
+                        "col": 17,
+                        "end_line": 23,
+                        "end_col": 22
+                      },
+                      "width": 8,
+                      "bits": "01011010"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 24,
+                    "col": 2,
+                    "end_line": 24,
+                    "end_col": 38
+                  },
+                  "name": "$display",
+                  "format": "posttest %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 24,
+                        "col": 25,
+                        "end_line": 24,
+                        "end_col": 36
+                      },
+                      "width": 8,
+                      "name": "proof_value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "DoWhile",
+                  "span": {
+                    "line": 25,
+                    "col": 2,
+                    "end_line": 25,
+                    "end_col": 25
+                  },
+                  "condition": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 25,
+                      "col": 18,
+                      "end_line": 25,
+                      "end_col": 23
+                    },
+                    "width": 4,
+                    "name": "guard"
+                  },
+                  "body": {
+                    "kind": "Break",
+                    "span": {
+                      "line": 25,
+                      "col": 5,
+                      "end_line": 25,
+                      "end_col": 11
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 26,
+                    "col": 2,
+                    "end_line": 26,
+                    "end_col": 10
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

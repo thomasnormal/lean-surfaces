@@ -1,0 +1,1127 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "symbolic_parameter_for_header_shapes",
+ "envelope": "symbolic_parameter_for_header_shapes.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/sem2/symbolic_parameter_for_header_shapes/symbolic_parameter_for_header_shapes.sv",
+   "sha256": "12301110161942a1879362b9cacf7bd25c7391258132bee24b1c2e63d1777cab"
+  }
+ ],
+ "probe_points": "N=3;N=5;N=8",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 3
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "symbolic_parameter_for_header_shapes",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "y"
+         },
+         "value": {
+          "kind": "Literal",
+          "width": 8,
+          "bits": "00000000"
+         }
+        },
+        {
+         "kind": "For",
+         "iterator": "i",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          },
+          "value": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "j",
+         "init": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s>=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "-",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "j"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "k",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "k"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 5
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "symbolic_parameter_for_header_shapes",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 5,
+       "resolved_width": 32
+      },
+      "resolved": 5
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "y"
+         },
+         "value": {
+          "kind": "Literal",
+          "width": 8,
+          "bits": "00000000"
+         }
+        },
+        {
+         "kind": "For",
+         "iterator": "i",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          },
+          "value": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "j",
+         "init": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s>=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "-",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "j"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "k",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "k"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "symbolic_parameter_for_header_shapes",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "y"
+         },
+         "value": {
+          "kind": "Literal",
+          "width": 8,
+          "bits": "00000000"
+         }
+        },
+        {
+         "kind": "For",
+         "iterator": "i",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          },
+          "value": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "j",
+         "init": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s>=",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "-",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "j"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "j"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        },
+        {
+         "kind": "For",
+         "iterator": "k",
+         "init": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         },
+         "condition": {
+          "kind": "Binary",
+          "width": 1,
+          "op": "s<",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "step": {
+          "kind": "Binary",
+          "op": "+",
+          "left": {
+           "kind": "GenvarRef",
+           "name": "k"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          }
+         },
+         "body": {
+          "kind": "BlockingAssign",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 8,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "k"
+           }
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "y"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "k"
+            }
+           }
+          }
+         },
+         "symbolic_for_parameter": true
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

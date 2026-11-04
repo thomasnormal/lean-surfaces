@@ -1,0 +1,72 @@
+{
+  "caveats": [
+    "A green run does NOT establish consistency of Lean's type theory (Godel; see docs/lean-tier-charter.md section 0).",
+    "lean4lean's own README states it is derived from the C++ kernel and 'is not really an independent implementation', so agreement is weaker evidence than agreement with a from-scratch checker."
+  ],
+  "checker": "lean4lean",
+  "checker_commit": "e0e3f6bcccb840cb0ea6f11c2b274ada93a12e00",
+  "modules_checked": 8,
+  "oracle": "the C++ kernel's implicit accept, carried by every .olean",
+  "rows": [
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Init.Prelude",
+      "seconds": 0.9,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Init.Core",
+      "seconds": 0.8,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Init.Data.List.Basic",
+      "seconds": 1.0,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Init.Data.Nat.Basic",
+      "seconds": 0.9,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Init.Data.Array.Basic",
+      "seconds": 1.0,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Std.Data.HashMap.Basic",
+      "seconds": 1.2,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Lean.Expr",
+      "seconds": 1.4,
+      "verdict": "MATCH"
+    },
+    {
+      "detail": "",
+      "exit_code": 0,
+      "module": "Lean.Elab.Command",
+      "seconds": 2.6,
+      "verdict": "MATCH"
+    }
+  ],
+  "schema": "lean-independent-check/1",
+  "verdicts": {
+    "MATCH": 8
+  }
+}

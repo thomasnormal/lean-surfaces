@@ -1,0 +1,198 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/pure_string_query_statements_adapter/pure_string_query_statements_adapter.sv",
+  "source_sha256": "c5ddcf71bae9ec119e9c2b6cdad8a7c0c0d027a5cb2e95b2301923aaccb4c67f",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 30,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 14,
+              "col": 3,
+              "end_line": 29,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 14,
+                "col": 11,
+                "end_line": 29,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 24
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 23
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 23
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 24
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 18
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 17
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 21,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 20
+                  },
+                  "string_query_statement": "len"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 23
+                  },
+                  "string_query_statement": "getc"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 22
+                  },
+                  "string_query_statement": "atoi"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 25
+                  },
+                  "string_query_statement": "atobin"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 25,
+                    "end_col": 23
+                  },
+                  "string_query_statement": "compare"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 26,
+                    "col": 5,
+                    "end_line": 26,
+                    "end_col": 24
+                  },
+                  "string_query_statement": "icompare"
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 27,
+                    "col": 5,
+                    "end_line": 27,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

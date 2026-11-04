@@ -1,0 +1,188 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/default_display_format/default_display_format.sv",
+  "source_sha256": "36b7a9158c6165b1309ff3ffddae386d90fef7fe12f357c1d6ccb03bd240b793",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 8,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 13,
+              "end_line": 9,
+              "end_col": 26
+            },
+            "name": "value",
+            "width": 8,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 8,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 9,
+                  "col": 21,
+                  "end_line": 9,
+                  "end_col": 26
+                },
+                "width": 8,
+                "bits": "10101111"
+              }
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 12,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 20
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 21
+                  },
+                  "name": "$display",
+                  "format": "%d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 14,
+                        "end_line": 14,
+                        "end_col": 19
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ],
+                  "default_format": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 19
+                  },
+                  "name": "$write",
+                  "format": "%d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 15,
+                        "col": 12,
+                        "end_line": 15,
+                        "end_col": 17
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ],
+                  "default_format": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 14
+                  },
+                  "name": "$display",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 20
+                  },
+                  "name": "$display",
+                  "format": "%s",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 17,
+                        "col": 14,
+                        "end_line": 17,
+                        "end_col": 18
+                      },
+                      "width": 40,
+                      "bits": "0110100001100101011011000110110001101111",
+                      "string_source_default_display": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ],
+                  "default_format": true
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

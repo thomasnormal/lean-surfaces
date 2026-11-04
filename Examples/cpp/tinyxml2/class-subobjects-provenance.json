@@ -1,0 +1,44 @@
+{
+  "format": "cpp-original-class-subobjects-1",
+  "revision": "321ea883b7190d4e85cae5512a12e5eaa8f8731f",
+  "source_sha256": {
+    "tinyxml2.cpp": "d5a7fd2ad255d716c4d2a64d5686f90c7e27a8285c49c59a5d105cb400bdf703",
+    "tinyxml2.h": "02f2389feb67fbb3efe42aaa6942034bc7d54695f357c5aac3cbd2f78a06ca4a"
+  },
+  "frontend": "Clang/LLVM 21.1.8",
+  "target": "x86_64-conda-linux-gnu",
+  "language": "C++23",
+  "profile": "LP64; signed 8-bit char",
+  "probe_bytes": 35509721,
+  "probe_sha256": "ce2b760fec4f5eae42bae76753a3d54a3611ecf792b1ed9af62455d55ce7f2c0",
+  "probe_plugin_sha256": "54bb92e3b00e4b3039a856a98293ca06267b37c9b83c1ed42cc11178f2a352d8",
+  "literal_sha256": {
+    "ElementHierarchy.lean": "aef8252971fb6e7ccdada6ea582f8129beba343b4a6350c77fed8339c684920f",
+    "DocumentHierarchy.lean": "5cb6ab3e39367c4d1542caa289c5145e10bec3ce1da1c74b35a8d6c935fd9274",
+    "BaseGetLineNum.lean": "5ade76748f8a46e28efd2907157199c132c7d05eb926c28f628a6a95a407e7ca"
+  },
+  "paths": {
+    "ElementHierarchy.lean": [
+      122,
+      21
+    ],
+    "DocumentHierarchy.lean": [
+      122,
+      23
+    ],
+    "BaseGetLineNum.lean": [
+      122,
+      15,
+      24
+    ]
+  },
+  "tool_sha256": {
+    "extractors/cpp/export_class_hierarchy.lean": "977f3e214fa746192fb564b8d3fad051fc97d1aedd9cefc76796ccb80ddb778a",
+    "extractors/cpp/export_member_getter.lean": "b2e8613ccb06082aa92965fa8aef265aa2ff6c0816549c77b9705636644a7e8d",
+    "extractors/cpp/canonical_probe.cpp": "85841db9ccea9714b6d5e922038657d2f99c831b2e9fb1e29fdb1c2fae968687",
+    "LeanModels/Cpp/ClassSubobjects.lean": "cce6f30c37babfd680823dd1e3b63734e9c9c0dde039eac3bde3c8e1dd3d8dc6"
+  },
+  "trusted_boundary": "Clang, canonical probe, validators, class/getter lowering and representation printers; capture correspondence is external evidence",
+  "state_boundary": "existing complete root, all nonvirtual base occurrences and selected integral member; construction, parsing, destruction and virtual dispatch not modeled",
+  "license": "zlib; see LICENSE-tinyxml2.txt"
+}

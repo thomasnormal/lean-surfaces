@@ -1,0 +1,335 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "package_enum_param_fixed",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/package_enum_param_fixed/package_enum_param_fixed.sv",
+      "sha256": "23d672ef10090f3bbe71afa0be01b39ddec986ab76424bc01a0964d83caf363f"
+    }
+  ],
+  "packages": [
+    "package_enum_param_fixed_pkg"
+  ],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "package_enum_param_fixed",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 7,
+              "col": 51,
+              "end_line": 7,
+              "end_col": 88
+            },
+            "name": "S",
+            "type": {
+              "kind": "TypeRef",
+              "name": "state_t",
+              "from_package": "package_enum_param_fixed_pkg",
+              "resolved": 2
+            },
+            "default": {
+              "kind": "EnumRef",
+              "span": {
+                "line": 7,
+                "col": 55,
+                "end_line": 7,
+                "end_col": 88
+              },
+              "type": "state_t",
+              "member": "RUN",
+              "from_package": "package_enum_param_fixed_pkg"
+            },
+            "resolved": 1
+          }
+        ],
+        "types": [
+          {
+            "kind": "EnumType",
+            "span": {
+              "line": 3,
+              "col": 11,
+              "end_line": 3,
+              "end_col": 55
+            },
+            "name": "state_t",
+            "from_package": "package_enum_param_fixed_pkg",
+            "base_width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 25,
+                      "end_line": 3,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "members": [
+              {
+                "name": "IDLE",
+                "value": 0
+              },
+              {
+                "name": "RUN",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 21,
+              "end_line": 9,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 16,
+                      "end_line": 9,
+                      "end_col": 17
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 18,
+                      "end_line": 9,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 22,
+              "end_line": 10,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 10,
+                      "col": 17,
+                      "end_line": 10,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 10,
+                      "col": 19,
+                      "end_line": 10,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 13,
+                "col": 5,
+                "end_line": 14,
+                "end_col": 49
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 49
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "op": "==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 10
+                      },
+                      "width": 2,
+                      "name": "a"
+                    },
+                    "right": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 13,
+                        "col": 14,
+                        "end_line": 13,
+                        "end_col": 15
+                      },
+                      "name": "S"
+                    }
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 55
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 17,
+                        "end_line": 13,
+                        "end_col": 18
+                      },
+                      "width": 2,
+                      "name": "y"
+                    },
+                    "value": {
+                      "kind": "EnumRef",
+                      "span": {
+                        "line": 13,
+                        "col": 21,
+                        "end_line": 13,
+                        "end_col": 54
+                      },
+                      "type": "state_t",
+                      "member": "RUN",
+                      "from_package": "package_enum_param_fixed_pkg"
+                    }
+                  },
+                  "else": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 49
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 10,
+                        "end_line": 14,
+                        "end_col": 11
+                      },
+                      "width": 2,
+                      "name": "y"
+                    },
+                    "value": {
+                      "kind": "EnumRef",
+                      "span": {
+                        "line": 14,
+                        "col": 14,
+                        "end_line": 14,
+                        "end_col": 48
+                      },
+                      "type": "state_t",
+                      "member": "IDLE",
+                      "from_package": "package_enum_param_fixed_pkg"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

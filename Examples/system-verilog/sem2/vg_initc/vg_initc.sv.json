@@ -1,0 +1,195 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "vg_initc",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/vg_initc/vg_initc.sv",
+      "sha256": "a2f570c8867b188f0a9423d0a9d436352e4c4fbccfa905c97e38e33d2fee35a0"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 10,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "vg_initc",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 11,
+              "col": 16,
+              "end_line": 11,
+              "end_col": 17
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 22,
+              "end_line": 12,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 17,
+                      "end_line": 12,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 19,
+                      "end_line": 12,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 14,
+              "col": 15,
+              "end_line": 14,
+              "end_col": 24
+            },
+            "name": "t",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 11
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 12,
+                      "end_line": 14,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 14,
+                "col": 19,
+                "end_line": 14,
+                "end_col": 24
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 15,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 24
+            },
+            "sv_kind": "ProceduralBlockSymbol:initialized-variable",
+            "text": "always_comb writes 't', which has a declaration initializer: IEEE 1800-2023 counts the initialization as a procedural assignment (\u00a76.5, \u00a710.5) and forbids any other process to assign an always_comb variable (\u00a79.2.2.2, \u00a79.2.2.4); Xcelium 24.03 rejects the design (*E,MULAXX) where Icarus 12.0, Yosys 0.53 and slang run it, so the tools split on its legality (drop the initializer, or write the variable from a plain `always` procedure)"
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 11
+              },
+              "width": 2,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 14,
+                "end_line": 16,
+                "end_col": 15
+              },
+              "width": 2,
+              "name": "t"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

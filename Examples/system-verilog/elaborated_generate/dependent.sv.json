@@ -1,0 +1,158 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/elaborated_generate/dependent.sv",
+  "source_sha256": "6286f6fd4b952add5e318ee19ac9dc49e0daa863f2a6dacb6a265175d73323dd",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 23
+            },
+            "name": "source_value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 22,
+                  "end_line": 2,
+                  "end_col": 23
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000110"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 4,
+              "col": 9,
+              "end_line": 4,
+              "end_col": 29
+            },
+            "sv_kind": "Generate:initializer-order",
+            "text": "value = source_value",
+            "generated_scope": [
+              "1",
+              "live"
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 72
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 6,
+                "end_col": 72
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 6,
+                    "col": 17,
+                    "end_line": 6,
+                    "end_col": 20
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 21,
+                    "end_line": 6,
+                    "end_col": 59
+                  },
+                  "name": "$display",
+                  "format": "dependent %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 47,
+                        "end_line": 6,
+                        "end_col": 57
+                      },
+                      "width": 32,
+                      "name": "$generate:3:top:1:1:4:live:66:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 60,
+                    "end_line": 6,
+                    "end_col": 68
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

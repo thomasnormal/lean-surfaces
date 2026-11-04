@@ -1,0 +1,635 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assignment_patterns/keys.sv",
+  "source_sha256": "bcd982ec66249bae5119b7d56d8e38a8888d6c29fd39d15d344fe55fb48e09e9",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 11,
+              "end_line": 2,
+              "end_col": 67
+            },
+            "name": "keyed",
+            "width": 32,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 2,
+                "col": 19,
+                "end_line": 2,
+                "end_col": 67
+              },
+              "width": 32,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 24,
+                    "end_line": 2,
+                    "end_col": 28
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 33,
+                    "end_line": 2,
+                    "end_col": 37
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 42,
+                    "end_line": 2,
+                    "end_col": 46
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 50,
+                    "end_line": 2,
+                    "end_col": 54
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 64,
+                    "end_line": 2,
+                    "end_col": 66
+                  },
+                  "width": 1,
+                  "bits": "0"
+                }
+              ],
+              "assignment_pattern_lowered": true,
+              "source_pattern": "StructuredAssignmentPatternExpression",
+              "signed": true
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 53
+            },
+            "name": "down",
+            "width": 4,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 3,
+                "col": 22,
+                "end_line": 3,
+                "end_col": 53
+              },
+              "width": 4,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 34,
+                    "end_line": 3,
+                    "end_col": 38
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 48,
+                    "end_line": 3,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "x"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 48,
+                    "end_line": 3,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "x"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 26,
+                    "end_line": 3,
+                    "end_col": 30
+                  },
+                  "width": 1,
+                  "bits": "1"
+                }
+              ],
+              "assignment_pattern_lowered": true,
+              "source_pattern": "StructuredAssignmentPatternExpression"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 53
+            },
+            "name": "up",
+            "width": 4,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 4,
+                "col": 21,
+                "end_line": 4,
+                "end_col": 53
+              },
+              "width": 4,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 26,
+                    "end_line": 4,
+                    "end_col": 30
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 48,
+                    "end_line": 4,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "z"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 48,
+                    "end_line": 4,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "z"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 34,
+                    "end_line": 4,
+                    "end_col": 38
+                  },
+                  "width": 1,
+                  "bits": "0"
+                }
+              ],
+              "assignment_pattern_lowered": true,
+              "source_pattern": "StructuredAssignmentPatternExpression"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 8,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 48
+                  },
+                  "name": "$display",
+                  "format": "keys %h %b %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 31,
+                        "end_line": 6,
+                        "end_col": 36
+                      },
+                      "width": 32,
+                      "name": "keyed",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 38,
+                        "end_line": 6,
+                        "end_col": 42
+                      },
+                      "width": 4,
+                      "name": "down"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 44,
+                        "end_line": 6,
+                        "end_col": 46
+                      },
+                      "width": 4,
+                      "name": "up"
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

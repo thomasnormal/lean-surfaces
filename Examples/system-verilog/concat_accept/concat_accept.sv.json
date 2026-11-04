@@ -1,0 +1,483 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/concat_accept/concat_accept.sv",
+  "source_sha256": "9261915323198c87078eb3ac14cdb31f43ea0865a0e493af44ead78b9460584e",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 26,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 19
+            },
+            "name": "high",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 18
+            },
+            "name": "low",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 21
+            },
+            "name": "joined",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 15,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "repeated",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 25,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 25,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 9
+                    },
+                    "width": 4,
+                    "name": "high"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 9,
+                      "col": 12,
+                      "end_line": 9,
+                      "end_col": 16
+                    },
+                    "width": 4,
+                    "bits": "1010"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 8
+                    },
+                    "width": 4,
+                    "name": "low"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 11,
+                      "end_line": 10,
+                      "end_col": 15
+                    },
+                    "width": 4,
+                    "bits": "0101"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 26
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 11
+                    },
+                    "width": 8,
+                    "name": "joined"
+                  },
+                  "value": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 11,
+                      "col": 14,
+                      "end_line": 11,
+                      "end_col": 25
+                    },
+                    "width": 8,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 15,
+                          "end_line": 11,
+                          "end_col": 19
+                        },
+                        "width": 4,
+                        "name": "high"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 21,
+                          "end_line": 11,
+                          "end_col": 24
+                        },
+                        "width": 4,
+                        "name": "low"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 25
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 9,
+                        "end_line": 12,
+                        "end_col": 15
+                      },
+                      "width": 8,
+                      "name": "joined"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 20,
+                        "end_line": 12,
+                        "end_col": 25
+                      },
+                      "width": 8,
+                      "bits": "10100101"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 12,
+                      "col": 27,
+                      "end_line": 15,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 13,
+                          "col": 7,
+                          "end_line": 13,
+                          "end_col": 38
+                        },
+                        "name": "$display",
+                        "format": "FAIL concatenation",
+                        "args": [],
+                        "arg_signed": []
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 14,
+                          "col": 7,
+                          "end_line": 14,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 29
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 17,
+                      "col": 5,
+                      "end_line": 17,
+                      "end_col": 13
+                    },
+                    "width": 8,
+                    "name": "repeated"
+                  },
+                  "value": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 17,
+                      "col": 16,
+                      "end_line": 17,
+                      "end_col": 28
+                    },
+                    "width": 8,
+                    "parts": [
+                      {
+                        "kind": "Concat",
+                        "span": {
+                          "line": 17,
+                          "col": 18,
+                          "end_line": 17,
+                          "end_col": 27
+                        },
+                        "width": 4,
+                        "parts": [
+                          {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 17,
+                              "col": 19,
+                              "end_line": 17,
+                              "end_col": 26
+                            },
+                            "width": 4,
+                            "bits": "0011"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "Concat",
+                        "span": {
+                          "line": 17,
+                          "col": 18,
+                          "end_line": 17,
+                          "end_col": 27
+                        },
+                        "width": 4,
+                        "parts": [
+                          {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 17,
+                              "col": 19,
+                              "end_line": 17,
+                              "end_col": 26
+                            },
+                            "width": 4,
+                            "bits": "0011"
+                          }
+                        ]
+                      }
+                    ],
+                    "replication_lowered": true,
+                    "replication_count": 2
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 18,
+                      "col": 9,
+                      "end_line": 18,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 18,
+                        "col": 9,
+                        "end_line": 18,
+                        "end_col": 17
+                      },
+                      "width": 8,
+                      "name": "repeated"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 18,
+                        "col": 22,
+                        "end_line": 18,
+                        "end_col": 27
+                      },
+                      "width": 8,
+                      "bits": "00110011"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 18,
+                      "col": 29,
+                      "end_line": 21,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 19,
+                          "col": 7,
+                          "end_line": 19,
+                          "end_col": 36
+                        },
+                        "name": "$display",
+                        "format": "FAIL replication",
+                        "args": [],
+                        "arg_signed": []
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 20,
+                          "col": 7,
+                          "end_line": 20,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

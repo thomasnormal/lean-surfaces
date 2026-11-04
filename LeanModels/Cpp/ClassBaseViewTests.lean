@@ -1,0 +1,343 @@
+import LeanModels.Cpp.ClassBaseViews
+
+namespace LeanModels.Cpp.ClassBaseViewTests
+
+private def h (name : String) : FrontendHandle := ⟨name⟩
+private def b (name access : String := "public") : ClassBaseSpec :=
+  {target := h name, access, writtenAccess := access, name}
+private def hierarchy : ClassHierarchy := {
+  root := h "D", classes := [
+    {declaration := h "D", isAbstract := false, bases := [b "L", b "R"],
+      fields := [], friends := [], name := "D"},
+    {declaration := h "L", isAbstract := true, bases := [b "B"],
+      fields := [], friends := [], name := "L"},
+    {declaration := h "R", isAbstract := true, bases := [b "B"],
+      fields := [], friends := [], name := "R"},
+    {declaration := h "B", isAbstract := true, bases := [],
+      fields := [], friends := [], name := "B"}]}
+
+private def memory (constant : Bool := false) : IntegralObjectStore := {
+  profile := .lp64,
+  objects := {objects := ([h "D", h "L", h "B", h "R", h "B"].map
+    (fun name => ⟨.automatic, integralMemberViewType (.record name) constant,
+      .aliveInitialized⟩))},
+  values := [none, none, none, none, none]}
+
+private def viewOn (hierarchy : ClassHierarchy) (source target : List Nat)
+    (constant : Bool := false) : ClassBaseView :=
+  {hierarchy, objects := [0, 1, 2, 3, 4], sourcePath := source,
+    targetPath := target, memory := memory constant}
+
+private def view (source target : List Nat) (constant : Bool := false) : ClassBaseView :=
+  viewOn hierarchy source target constant
+
+private def contextualOn (hierarchy : ClassHierarchy) (source target : List Nat)
+    (context : String) : ClassBaseView :=
+  {viewOn hierarchy source target with accessContext := some (h context)}
+
+private def observed (candidate : ClassBaseView) : Option ObjectId :=
+  match candidate.convert with
+  | .ok (returned, object) => if returned == candidate.memory then some object else none
+  | _ => none
+
+private def castOn (candidate : ClassBaseView) (source target : String) : ClassBaseCast :=
+  {view := candidate, sourceDeclaration := h source, targetDeclaration := h target}
+
+private def observedCast (candidate : ClassBaseCast) : Option ObjectId :=
+  match candidate.execute with
+  | .ok (returned, object) => if returned == candidate.view.memory then some object else none
+  | _ => none
+
+private def rawText (value : String) : Raw := .string value
+private def rawObject (fields : List (String × Raw)) : Raw := .object fields
+
+private def rawType (qualType : String) : Raw :=
+  rawObject [("qualType", rawText qualType)]
+
+private def rawDeclRef (qualType : String) : Raw :=
+  rawObject [
+    ("kind", rawText "DeclRefExpr"),
+    ("type", rawType qualType),
+    ("referencedDecl", rawObject [
+      ("kind", rawText "ParmVarDecl"), ("id", rawText "0x1")])]
+
+private def rawLValue (qualType : String) (operand : Raw) : Raw :=
+  rawObject [
+    ("kind", rawText "ImplicitCastExpr"),
+    ("castKind", rawText "LValueToRValue"),
+    ("type", rawType qualType),
+    ("inner", .array [operand])]
+
+private def rawDerivedToBase (targetType : String) (sourceType : String) : Raw :=
+  rawObject [
+    ("kind", rawText "ImplicitCastExpr"),
+    ("castKind", rawText "DerivedToBase"),
+    ("type", rawType targetType),
+    ("path", .array [rawObject [("name", rawText "B")]]),
+    ("inner", .array [rawLValue sourceType (rawDeclRef sourceType)])]
+
+private def rawDerivedToBaseNamed (targetType sourceType pathName : String) : Raw :=
+  rawObject [
+    ("kind", rawText "ImplicitCastExpr"),
+    ("castKind", rawText "DerivedToBase"),
+    ("type", rawType targetType),
+    ("path", .array [rawObject [("name", rawText pathName)]]),
+    ("inner", .array [rawLValue sourceType (rawDeclRef sourceType)])]
+
+private def rawBaseCast (sourceType targetType : String) : Raw :=
+  rawObject [
+    ("kind", rawText "CXXStaticCastExpr"),
+    ("castKind", rawText "NoOp"),
+    ("type", rawType targetType),
+    ("inner", .array [rawDerivedToBase targetType sourceType])]
+
+private def rawBaseCastNamed (sourceType targetType pathName : String) : Raw :=
+  rawObject [
+    ("kind", rawText "CXXStaticCastExpr"),
+    ("castKind", rawText "NoOp"),
+    ("type", rawType targetType),
+    ("inner", .array [rawDerivedToBaseNamed targetType sourceType pathName])]
+
+private def syntaxError (raw : Raw) (sourceType targetType : String) :
+    Option ClassBaseCastSyntaxError :=
+  match ClassBaseCastSyntax.admit raw sourceType targetType with
+  | .ok _ => none
+  | .error reason => some reason
+
+private def observedAdmittedCast (raw : Raw) : Option ObjectId :=
+  match ClassBaseCastSyntax.admit raw "D *" "L *" with
+  | .error _ => none
+  | .ok admitted =>
+      observedCast (ClassBaseCastSyntax.bind admitted (castOn (view [] [0]) "D" "L"))
+
+private def boundSyntax (raw : Raw) : Option ClassBaseCastSyntax :=
+  match ClassBaseCastSyntax.admit raw "D *" "L *" with
+  | .error _ => none
+  | .ok admitted =>
+      (ClassBaseCastSyntax.bind admitted (castOn (view [] [0]) "D" "L")).syntaxEvidence
+
+private def observedResolved (raw : Raw) (source target : String)
+    (candidate : ClassBaseView) : Option ObjectId :=
+  match ClassBaseCastSyntax.admit raw (source ++ " *") (target ++ " *") with
+  | .error _ => none
+  | .ok admitted =>
+      match ClassBaseCastSyntax.resolve admitted candidate with
+      | .error _ => none
+      | .ok cast => observedCast cast
+
+private def resolveError (raw : Raw) (source target : String)
+    (candidate : ClassBaseView) : Option ClassBaseCastError :=
+  match ClassBaseCastSyntax.admit raw (source ++ " *") (target ++ " *") with
+  | .error _ => none
+  | .ok admitted =>
+      match ClassBaseCastSyntax.resolve admitted candidate with
+      | .error reason => some reason
+      | .ok _ => none
+
+private def malformedResolveError (evidence : ClassBaseCastSyntax)
+    (candidate : ClassBaseView) : Option ClassBaseCastError :=
+  match ClassBaseCastSyntax.resolve evidence candidate with
+  | .error reason => some reason
+  | .ok _ => none
+
+set_option maxRecDepth 10000 in
+private theorem kernelViews :
+    [
+      observed (view [] [0]) == some 1,
+      observed (view [] [1]) == some 3,
+      observed (view [0] [0, 0]) == some 2,
+      observed (view [1] [1, 0]) == some 4,
+      observed (view [] [0, 0]) == some 2,
+      observed (view [0] [1, 0]) == none,
+      observed (view [0] [0]) == none,
+      observed (view [0] [9]) == none,
+      observed (view [] [0, 0] true) == some 2,
+      observed {view [] [0] with objects := [0, 1, 1, 3, 4]} == none,
+      observed {view [] [0] with objects := [0, 1, 2, 3]} == none,
+      observed {view [] [0] with memory := {memory with values := [none]}} == none,
+      observed {view [] [0] with hierarchy := {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "private", b "R"]}))}} == none,
+      observed {view [] [0] with hierarchy := {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "protected", b "R"]}))}} == none,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"]}))} [] [0] "D") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"]}))} [] [0] "L") == none,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"], friends := [h "friend_fn"]}))} [] [0]
+          "friend_fn") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "D") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "protected", b "R"], friends := [h "F"]}))} [] [0] "F") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "R") == none,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 1 (fun shape =>
+            {shape with bases := [b "B" "protected"]}))} [] [0, 0] "D") == some 2,
+      observedCast (castOn (view [] [0]) "D" "L") == some 1,
+      observedCast (castOn (view [] [0]) "L" "L") == none,
+      observedCast (castOn (view [] [0]) "D" "B") == none,
+      observedCast (castOn {view [] [0] with hierarchy := {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "private", b "R"]}))}} "D" "L") == none,
+      observedCast (castOn (contextualOn {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") "D" "L") == some 1
+    ].all id = true := by decide
+
+set_option maxRecDepth 100000 in
+private theorem kernelCastSyntax :
+    [
+      (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").isOk,
+      (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").toOption ==
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1", basePath := ["B"]},
+      boundSyntax (rawBaseCast "D *" "L *") ==
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1", basePath := ["B"]},
+      observedAdmittedCast (rawBaseCast "D *" "L *") == some 1,
+      syntaxError (rawBaseCast "D *" "L *") "D *" "L *" == none,
+      syntaxError (rawBaseCast "D *" "L *") "L *" "L *" == some .malformedType,
+      syntaxError (rawObject [("kind", rawText "BinaryOperator")]) "D *" "L *" ==
+        some .notStaticCast,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "BitCast"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawDerivedToBase "L *" "D *"])]) "D *" "L *" ==
+        some .unsupportedCastKind,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "BaseToDerived"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject [("name", rawText "B")]]),
+          ("inner", .array [rawLValue "D *" (rawDeclRef "D *")])]])])
+        "D *" "L *" == some .unsupportedCastKind,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array []),
+          ("inner", .array [rawLValue "D *" (rawDeclRef "D *")])]])])
+        "D *" "L *" == some .missingBasePath,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject []]),
+          ("inner", .array [rawLValue "D *" (rawDeclRef "D *")])]])])
+        "D *" "L *" == some .malformedChildren,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawDerivedToBase "L *" "D *"])] )
+        "D *" "B *" == some .malformedType,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject [("name", rawText "B")]]),
+          ("inner", .array [rawLValue "D *" (rawObject [
+            ("kind", rawText "MemberExpr")])])]])])
+        "D *" "L *" == some .unsupportedOperand,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject [("name", rawText "B")]]),
+          ("inner", .array [rawLValue "D *" (rawObject [
+            ("kind", rawText "DeclRefExpr"),
+            ("type", rawType "D *")])])]])])
+        "D *" "L *" == some .unsupportedOperand
+      , observedResolved (rawBaseCastNamed "D *" "L *" "L") "D" "L" (view [] [9]) == some 1
+      , observedResolved (rawBaseCastNamed "L *" "B *" "B") "L" "B" (view [0] [9]) == some 2
+      , resolveError (rawBaseCastNamed "D *" "R *" "L") "D" "R" (view [] [9]) ==
+          some .targetTypeMismatch
+      , resolveError (rawBaseCastNamed "D *" "L *" "Missing") "D" "L" (view [] [9]) ==
+          some .unresolvedBasePath
+      , resolveError (rawBaseCastNamed "R *" "L *" "L") "R" "L" (view [] [9]) ==
+          some .sourceTypeMismatch
+      , resolveError (rawBaseCastNamed "D *" "L *" "L") "D" "L"
+          ({view [] [9] with hierarchy := {hierarchy with classes :=
+            (hierarchy.classes.modify 0 (fun shape =>
+              {shape with bases := [b "L", {b "R" with name := "L"}]}))}}) ==
+          some .unresolvedBasePath
+      , malformedResolveError
+          {sourceType := "D", targetType := "L *", operand := h "0x1", basePath := ["L"]}
+          (view [] [9]) == some .syntaxMismatch
+    ].all id = true := by decide
+
+#print axioms kernelViews
+#print axioms ClassBaseView.convert_of_check
+#print axioms ClassBaseView.convert_memory
+#print axioms ClassBaseCast.execute_memory
+
+def classBaseStaticCastWitness : Bool :=
+  observedAdmittedCast (rawBaseCast "D *" "L *") == some 1
+
+#guard classBaseStaticCastWitness
+
+def classBasePrivateAccessWitness : Bool :=
+  observed (contextualOn {hierarchy with classes :=
+    (hierarchy.classes.modify 0 (fun shape =>
+      {shape with bases := [b "L" "private", b "R"]}))} [] [0] "D") == some 1
+
+#guard classBasePrivateAccessWitness
+
+def classBaseProtectedAccessWitness : Bool :=
+  observed (contextualOn {hierarchy with classes :=
+    (hierarchy.classes.modify 1 (fun shape =>
+      {shape with bases := [b "B" "protected"]}))} [] [0, 0] "D") == some 2
+
+#guard classBaseProtectedAccessWitness
+
+def classBaseFriendAccessWitness : Bool :=
+  observed (contextualOn {hierarchy with classes :=
+    (hierarchy.classes.modify 0 (fun shape =>
+      {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))}
+    [] [0] "F") == some 1
+
+#guard classBaseFriendAccessWitness
+
+def classBaseNamedPathWitness : Bool :=
+  observedResolved (rawBaseCastNamed "D *" "L *" "L") "D" "L" (view [] [9]) == some 1
+
+#guard classBaseNamedPathWitness
+
+def classBaseNestedNamedPathWitness : Bool :=
+  observedResolved (rawBaseCastNamed "L *" "B *" "B") "L" "B" (view [0] [9]) == some 2
+
+#guard classBaseNestedNamedPathWitness
+
+end LeanModels.Cpp.ClassBaseViewTests

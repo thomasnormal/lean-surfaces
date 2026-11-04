@@ -1,0 +1,239 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "loop_mixed_signed_refuse",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/loop_mixed_signed_refuse/loop_mixed_signed_refuse.sv",
+      "sha256": "3af19ef64fd9c2b3f37db7c6afb8425487b6480ab744898005cf77627faf263b"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "loop_mixed_signed_refuse",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 23
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 17,
+                      "end_line": 3,
+                      "end_col": 18
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 22,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 17,
+                      "end_line": 4,
+                      "end_col": 18
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 19,
+                      "end_line": 4,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 15,
+                "end_line": 10,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 15
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 6
+                    },
+                    "width": 8,
+                    "name": "q"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 9,
+                      "end_line": 7,
+                      "end_col": 14
+                    },
+                    "width": 8,
+                    "bits": "00000000"
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 27
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 8,
+                        "col": 14,
+                        "end_line": 8,
+                        "end_col": 15
+                      },
+                      "name": "i",
+                      "width": 32,
+                      "two_state": true,
+                      "init": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 8,
+                            "col": 18,
+                            "end_line": 8,
+                            "end_col": 20
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "operand": {
+                            "kind": "Int",
+                            "span": {
+                              "line": 8,
+                              "col": 19,
+                              "end_line": 8,
+                              "end_col": 20
+                            },
+                            "value": 1,
+                            "resolved_width": 32
+                          }
+                        }
+                      },
+                      "signed": true
+                    },
+                    {
+                      "kind": "Unsupported",
+                      "span": {
+                        "line": 8,
+                        "col": 5,
+                        "end_line": 9,
+                        "end_col": 27
+                      },
+                      "sv_kind": "ForLoopStatement",
+                      "text": "for (int i = -1; i < 2'd2; i++)\n      q[i + 1] = d[i + 1];"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,400 @@
+{
+  "corpora": {
+    "c-testsuite": {
+      "by_status": {
+        "ok": 219,
+        "parse-error": 1
+      },
+      "date": "2020-03-09",
+      "distinct_libc_calls": 26,
+      "freestanding": 157,
+      "hosted_headers": {
+        "math.h": 1,
+        "stdio.h": 61,
+        "stdlib.h": 3,
+        "string.h": 2,
+        "wchar.h": 1
+      },
+      "in_vocab": 197,
+      "in_vocab_written": 201,
+      "libc_calls_by_name": {
+        "__builtin_expect": 1,
+        "__builtin_va_start": 1,
+        "calloc": 1,
+        "fclose": 1,
+        "fgetc": 1,
+        "fgets": 1,
+        "fopen": 1,
+        "fprintf": 1,
+        "fread": 1,
+        "fwrite": 1,
+        "getc": 1,
+        "memcmp": 1,
+        "memcpy": 1,
+        "memset": 1,
+        "printf": 68,
+        "putchar": 1,
+        "sin": 1,
+        "sprintf": 1,
+        "strcat": 1,
+        "strchr": 1,
+        "strcmp": 1,
+        "strcpy": 2,
+        "strlen": 2,
+        "strncmp": 1,
+        "strncpy": 1,
+        "strrchr": 1
+      },
+      "license": "harness MIT; TEST CASES are third-party -- 150 from scc (ISC), 69 from tinycc (LGPL-2.1)",
+      "needs_cpp": 45,
+      "needs_libc": 62,
+      "no_libc_calls": 149,
+      "oracle": "expected stdout (.expected beside each test)",
+      "outside_vocab_written_by_kind": {
+        "CaseStmt": 8,
+        "ConstantArrayType": 1,
+        "DefaultStmt": 6,
+        "EnumType": 1,
+        "GenericSelectionExpr": 1,
+        "ImplicitValueInitExpr": 2,
+        "IndirectFieldDecl": 3,
+        "NullStmt": 7,
+        "QualType": 1,
+        "StmtExpr": 2,
+        "SwitchStmt": 8,
+        "VAArgExpr": 1
+      },
+      "parsed": 219,
+      "reachable": 147,
+      "rev": "5c7275656d751de0e68b2d340a95b5681858ed07",
+      "sampled": false,
+      "slug": "c-testsuite/c-testsuite",
+      "tests_censused": 220,
+      "tests_total": 220,
+      "vendorable": "NO -- the tinycc-derived 69 are LGPL-2.1"
+    },
+    "clang-c23": {
+      "by_status": {
+        "ok": 12,
+        "parse-error": 25
+      },
+      "date": "2026-08-22",
+      "distinct_libc_calls": 5,
+      "freestanding": 11,
+      "hosted_headers": {
+        "stdatomic.h": 1
+      },
+      "in_vocab": 2,
+      "in_vocab_written": 3,
+      "libc_calls_by_name": {
+        "__builtin_add_overflow": 1,
+        "__builtin_constant_p": 1,
+        "__builtin_mul_overflow": 1,
+        "__builtin_sub_overflow": 1,
+        "__builtin_unreachable": 1
+      },
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "needs_cpp": 3,
+      "needs_libc": 1,
+      "no_libc_calls": 9,
+      "oracle": "clang -verify diagnostics, NOT behavior -- 58 -verify / 17 -fsyntax-only / 6 -emit-llvm",
+      "outside_vocab_written_by_kind": {
+        "AtomicType": 1,
+        "CXXNullPtrLiteralExpr": 1,
+        "CaseStmt": 2,
+        "DefaultStmt": 1,
+        "GenericSelectionExpr": 1,
+        "ImplicitValueInitExpr": 1,
+        "NullStmt": 1,
+        "OffsetOfExpr": 1,
+        "StaticAssertDecl": 5,
+        "SwitchStmt": 2
+      },
+      "parsed": 12,
+      "reachable": 3,
+      "rev": "4bf956fe0e14aa7a6a91cad3feee99fd6eeea8f2",
+      "sampled": false,
+      "slug": "llvm/llvm-project",
+      "tests_censused": 37,
+      "tests_total": 37,
+      "vendorable": "YES (with notice)"
+    },
+    "fujitsu-C": {
+      "by_status": {
+        "ok": 300
+      },
+      "date": "2026-08-21",
+      "distinct_libc_calls": 28,
+      "freestanding": 0,
+      "hosted_headers": {
+        "complex.h": 7,
+        "math.h": 46,
+        "stdio.h": 300,
+        "stdlib.h": 24
+      },
+      "in_vocab": 283,
+      "in_vocab_written": 283,
+      "libc_calls_by_name": {
+        "atan": 1,
+        "atanf": 1,
+        "cimagf": 1,
+        "copysign": 3,
+        "copysignf": 3,
+        "cos": 3,
+        "cosf": 2,
+        "creal": 2,
+        "crealf": 3,
+        "creall": 2,
+        "exp": 1,
+        "expf": 1,
+        "fabs": 8,
+        "fabsf": 13,
+        "fmod": 3,
+        "fmodf": 3,
+        "log": 1,
+        "log10": 1,
+        "log10f": 1,
+        "logf": 1,
+        "printf": 276,
+        "puts": 24,
+        "sin": 2,
+        "sinf": 2,
+        "sqrt": 1,
+        "sqrtf": 1,
+        "tan": 1,
+        "tanf": 1
+      },
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "needs_cpp": 283,
+      "needs_libc": 300,
+      "no_libc_calls": 0,
+      "oracle": "expected stdout: the tests print OK/NG",
+      "outside_vocab_written_by_kind": {
+        "NullStmt": 17
+      },
+      "parsed": 300,
+      "reachable": 0,
+      "rev": "9f978c1c6d466897b07fa602cfc087ba9e5d73ea",
+      "sampled": true,
+      "slug": "fujitsu/compiler-test-suite",
+      "tests_censused": 300,
+      "tests_total": 37191,
+      "vendorable": "YES (with notice)"
+    },
+    "gcc-c23-run": {
+      "by_status": {
+        "ok": 48,
+        "parse-error": 28
+      },
+      "date": "2026-08-22",
+      "distinct_libc_calls": 23,
+      "freestanding": 32,
+      "hosted_headers": {
+        "c23-empty-init-warn-1.c": 1,
+        "c23-empty-init-warn-2.c": 1,
+        "c23-empty-init-warn-4.c": 10,
+        "c23-stdarg-4.c": 1,
+        "c23-stdarg-6.c": 1,
+        "fenv.h": 1,
+        "stdatomic.h": 1
+      },
+      "in_vocab": 14,
+      "in_vocab_written": 27,
+      "libc_calls_by_name": {
+        "__builtin_abort": 10,
+        "__builtin_inff": 2,
+        "__builtin_isnan": 1,
+        "__builtin_nanf": 2,
+        "__builtin_unreachable": 1,
+        "__builtin_va_end": 3,
+        "__builtin_va_start": 3,
+        "__c11_atomic_is_lock_free": 1,
+        "abort": 18,
+        "exit": 17,
+        "f": 1,
+        "fetestexcept": 1,
+        "g": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 1,
+        "h5": 1,
+        "h6": 1,
+        "h7": 1,
+        "memset": 1,
+        "not_defined": 1,
+        "strcmp": 1
+      },
+      "license": "GPL-3.0-or-later",
+      "needs_cpp": 12,
+      "needs_libc": 16,
+      "no_libc_calls": 19,
+      "oracle": "exit status (dg-do run); the other 272 c23-* tests are compile-only or diagnostic",
+      "outside_vocab_written_by_kind": {
+        "CXXBoolLiteralExpr": 2,
+        "CXXNullPtrLiteralExpr": 1,
+        "DesignatedInitUpdateExpr": 6,
+        "GenericSelectionExpr": 5,
+        "ImaginaryLiteral": 2,
+        "ImplicitValueInitExpr": 11,
+        "NullStmt": 1,
+        "OffsetOfExpr": 1,
+        "StaticAssertDecl": 2,
+        "VAArgExpr": 3
+      },
+      "parsed": 48,
+      "reachable": 11,
+      "rev": "9e54d865af9361413b9c84e11dddfe652cb4ca81",
+      "sampled": false,
+      "slug": "gcc-mirror/gcc",
+      "tests_censused": 76,
+      "tests_total": 76,
+      "vendorable": "NO -- GPL"
+    },
+    "gcc-torture-exec": {
+      "by_status": {
+        "ok": 246,
+        "parse-error": 54
+      },
+      "date": "2026-08-22",
+      "distinct_libc_calls": 39,
+      "freestanding": 231,
+      "hosted_headers": {
+        "setjmp.h": 1,
+        "stdio.h": 8,
+        "stdlib.h": 9,
+        "string.h": 4,
+        "vfprintf-chk-1.c": 1
+      },
+      "in_vocab": 7,
+      "in_vocab_written": 206,
+      "libc_calls_by_name": {
+        "__builtin_abort": 72,
+        "__builtin_abs": 1,
+        "__builtin_bswap64": 1,
+        "__builtin_constant_p": 1,
+        "__builtin_memcpy": 3,
+        "__builtin_memset": 3,
+        "__builtin_mul_overflow": 2,
+        "__builtin_prefetch": 1,
+        "__builtin_printf": 5,
+        "__builtin_signbit": 1,
+        "__builtin_strcmp": 2,
+        "__builtin_strcpy": 2,
+        "__builtin_strlen": 2,
+        "__builtin_unreachable": 1,
+        "__builtin_va_end": 10,
+        "__builtin_va_start": 10,
+        "abort": 162,
+        "exit": 95,
+        "free": 1,
+        "func": 1,
+        "longjmp": 1,
+        "malloc": 2,
+        "memchr": 1,
+        "memcmp": 1,
+        "memcpy": 3,
+        "memset": 3,
+        "printf": 2,
+        "strcmp": 4,
+        "strcpy": 3,
+        "strlen": 4
+      },
+      "license": "GPL-3.0-or-later (part of GCC; measured: 0 of the sampled torture files carry a per-file header, so they inherit the repository's)",
+      "needs_cpp": 38,
+      "needs_libc": 15,
+      "no_libc_calls": 7,
+      "oracle": "exit status: abort() on failure, return 0 on success",
+      "outside_vocab_written_by_kind": {
+        "AddrLabelExpr": 1,
+        "BinaryConditionalOperator": 1,
+        "CaseStmt": 11,
+        "DefaultStmt": 9,
+        "EmptyDecl": 1,
+        "EnumType": 1,
+        "GCCAsmStmt": 1,
+        "ImaginaryLiteral": 2,
+        "ImplicitValueInitExpr": 3,
+        "IndirectGotoStmt": 1,
+        "NullStmt": 8,
+        "OffsetOfExpr": 1,
+        "OpaqueValueExpr": 1,
+        "StmtExpr": 2,
+        "SwitchStmt": 11,
+        "VAArgExpr": 9,
+        "VectorType": 5
+      },
+      "parsed": 246,
+      "reachable": 196,
+      "rev": "9e54d865af9361413b9c84e11dddfe652cb4ca81",
+      "sampled": false,
+      "slug": "gcc-mirror/gcc",
+      "tests_censused": 300,
+      "tests_total": 300,
+      "vendorable": "NO -- GPL"
+    }
+  },
+  "instrument": "harness/c_suite_census.py",
+  "note": "Per-test rows are NOT stored: the corpora are FETCHED, not vendored, and each row is reproducible from the pinned revision. Counts marked 'written' exclude clang-synthesized attribute nodes -- see docs/c23-goal.md.",
+  "reach_ladder": {
+    "basis": "freestanding, parsed tests across all five corpora",
+    "steps": [
+      {
+        "add": null,
+        "clear": 357,
+        "of": 431
+      },
+      {
+        "add": "SwitchStmt",
+        "clear": 357,
+        "of": 431
+      },
+      {
+        "add": "CaseStmt",
+        "clear": 361,
+        "of": 431
+      },
+      {
+        "add": "ImplicitValueInitExpr",
+        "clear": 366,
+        "of": 431
+      },
+      {
+        "add": "NullStmt",
+        "clear": 374,
+        "of": 431
+      },
+      {
+        "add": "DefaultStmt",
+        "clear": 383,
+        "of": 431
+      },
+      {
+        "add": "VAArgExpr",
+        "clear": 393,
+        "of": 431
+      },
+      {
+        "add": "StaticAssertDecl",
+        "clear": 398,
+        "of": 431
+      },
+      {
+        "add": "DesignatedInitUpdateExpr",
+        "clear": 403,
+        "of": 431
+      },
+      {
+        "add": "VectorType",
+        "clear": 408,
+        "of": 431
+      },
+      {
+        "add": "GenericSelectionExpr",
+        "clear": 411,
+        "of": 431
+      }
+    ]
+  },
+  "vocab_source": "docs/c-construct-census.json (rung 0 = the 45 kinds tools/ctwin/sunfish.c uses)"
+}

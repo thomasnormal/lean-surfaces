@@ -1,0 +1,5902 @@
+{
+  "clauses_total": 28,
+  "core": {
+    "by_category": {
+      "Bounded (Run-Time) Errors": 93,
+      "Documentation Requirements": 10,
+      "Dynamic Semantics": 907,
+      "Erroneous Execution": 95,
+      "Examples": 927,
+      "Implementation Advice": 296,
+      "Implementation Permissions": 198,
+      "Implementation Requirements": 142,
+      "Legality Rules": 865,
+      "Metrics": 1,
+      "NOTES": 0,
+      "Name Resolution Rules": 243,
+      "Post-Compilation Rules": 41,
+      "Static Semantics": 6167,
+      "Syntax": 546,
+      "Usage": 4
+    },
+    "clauses": [
+      "1",
+      "10",
+      "11",
+      "12",
+      "13",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "A",
+      "B",
+      "J"
+    ],
+    "paragraphs": 11156,
+    "subclauses": 373
+  },
+  "core_clauses_1_13": {
+    "by_category": {
+      "Bounded (Run-Time) Errors": 57,
+      "Documentation Requirements": 4,
+      "Dynamic Semantics": 859,
+      "Erroneous Execution": 23,
+      "Examples": 823,
+      "Implementation Advice": 162,
+      "Implementation Permissions": 159,
+      "Implementation Requirements": 69,
+      "Legality Rules": 806,
+      "Metrics": 1,
+      "NOTES": 0,
+      "Name Resolution Rules": 229,
+      "Post-Compilation Rules": 41,
+      "Static Semantics": 1707,
+      "Syntax": 480,
+      "Usage": 4
+    },
+    "clauses": [
+      "1",
+      "10",
+      "11",
+      "12",
+      "13",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "paragraphs": 5927,
+    "subclauses": 232
+  },
+  "edition": {
+    "informal_name": "Ada 2022",
+    "international_standard": "ISO/IEC 8652:2023"
+  },
+  "files_censused": [
+    {
+      "clause": "1",
+      "file": "RM-01.TXT",
+      "paragraphs": 284,
+      "sha256": "6a54c5cf300d106c4cd6fc56a81e8763d66a38ea8b3bc595d53f66a6eddd38ff",
+      "subclauses": 14
+    },
+    {
+      "clause": "2",
+      "file": "RM-02.TXT",
+      "paragraphs": 139,
+      "sha256": "0879ee922e32761f3b9c0ce1abd24e37b17024c77c7c36089d8ca6d26d5b3cda",
+      "subclauses": 11
+    },
+    {
+      "clause": "3",
+      "file": "RM-03.TXT",
+      "paragraphs": 1073,
+      "sha256": "2af553b0d9c80189e8484c58862aa6065345d8cab9eb4f1a83617267941e2473",
+      "subclauses": 41
+    },
+    {
+      "clause": "4",
+      "file": "RM-04.TXT",
+      "paragraphs": 1012,
+      "sha256": "d2904d5e84374b163da11270a416ed378c3b28612caf125085d63bcbf6e022d7",
+      "subclauses": 33
+    },
+    {
+      "clause": "5",
+      "file": "RM-05.TXT",
+      "paragraphs": 261,
+      "sha256": "4c2ec7b74b6aedfb19cb58b912fdc850a739608890af6d9aec844066eb676f76",
+      "subclauses": 13
+    },
+    {
+      "clause": "6",
+      "file": "RM-06.TXT",
+      "paragraphs": 419,
+      "sha256": "21b1042cdb6094df5af9f7e6a589761cf9ac621c6f93603c8999f06dccd4d69e",
+      "subclauses": 14
+    },
+    {
+      "clause": "7",
+      "file": "RM-07.TXT",
+      "paragraphs": 314,
+      "sha256": "d0002098ae6d939a028c0afd6fdfaf657bb648d917538b504b7e50a83ad5a8af",
+      "subclauses": 11
+    },
+    {
+      "clause": "8",
+      "file": "RM-08.TXT",
+      "paragraphs": 240,
+      "sha256": "0ed86b64b0bd0de42088e22db458d0caa3b76abb28346030e4a9f43405e16013",
+      "subclauses": 12
+    },
+    {
+      "clause": "9",
+      "file": "RM-09.TXT",
+      "paragraphs": 630,
+      "sha256": "057ce56d8438ff2387cba4ae46c5cdb66f97a093b87b1c2910cec1d651526d68",
+      "subclauses": 21
+    },
+    {
+      "clause": "10",
+      "file": "RM-10.TXT",
+      "paragraphs": 232,
+      "sha256": "41d29b66d3fb911c3762f06c30df8d937d7de7e3fb8b9840e84e8050c4e58059",
+      "subclauses": 9
+    },
+    {
+      "clause": "11",
+      "file": "RM-11.TXT",
+      "paragraphs": 190,
+      "sha256": "c13df501bd1ab773e1953cee0397e5dbd605ad70232d5820979f0d527dc6f19d",
+      "subclauses": 9
+    },
+    {
+      "clause": "12",
+      "file": "RM-12.TXT",
+      "paragraphs": 277,
+      "sha256": "95cf116f7a098f025f1ca732a264ccfb39635589d381624f2353ed4b0613a23c",
+      "subclauses": 13
+    },
+    {
+      "clause": "13",
+      "file": "RM-13.TXT",
+      "paragraphs": 856,
+      "sha256": "8d438711fb510556c379249c5676f82a322d14c531b1e9b10d492b85728b417a",
+      "subclauses": 31
+    },
+    {
+      "clause": "A",
+      "file": "RM-A.TXT",
+      "paragraphs": 4507,
+      "sha256": "a8bb0f889107fd15f35f150b05664100ad1c99d14dec86cfe0b11fd91251c414",
+      "subclauses": 102
+    },
+    {
+      "clause": "B",
+      "file": "RM-B.TXT",
+      "paragraphs": 503,
+      "sha256": "7a2c2c13476bef1e23cfb4573114273e94cf4aae817995f8387419b6a9f65bfc",
+      "subclauses": 8
+    },
+    {
+      "clause": "C",
+      "file": "RM-C.TXT",
+      "paragraphs": 329,
+      "sha256": "00dc7c3797d6873d0a87185e49eebfa62da3c4a9bae76785cfafe740d7a4fe11",
+      "subclauses": 17
+    },
+    {
+      "clause": "D",
+      "file": "RM-D.TXT",
+      "paragraphs": 668,
+      "sha256": "3a9fc3cb81ef2d07b6433f9d3bc1ad45ac66cb4b967bf80b947939517e36f203",
+      "subclauses": 30
+    },
+    {
+      "clause": "E",
+      "file": "RM-E.TXT",
+      "paragraphs": 180,
+      "sha256": "25ebd5d14c13429b642230321cdbf89a4e8ff0bf78838feaecd9ef92167eee19",
+      "subclauses": 10
+    },
+    {
+      "clause": "F",
+      "file": "RM-F.TXT",
+      "paragraphs": 235,
+      "sha256": "631d2dabca3ba6c3bdeb0787f6593319948f0c4e37c0f5e52a74de2cb7440ace",
+      "subclauses": 8
+    },
+    {
+      "clause": "G",
+      "file": "RM-G.TXT",
+      "paragraphs": 509,
+      "sha256": "9159090f8fc44912886a5b1300cca7edd0548861fc9ee18469f7ac6f9f41909e",
+      "subclauses": 16
+    },
+    {
+      "clause": "H",
+      "file": "RM-H.TXT",
+      "paragraphs": 162,
+      "sha256": "06cf9064d37e19edb992fdc109ece5d215b3aff14b56374eb9900c0b60dfa888",
+      "subclauses": 11
+    },
+    {
+      "clause": "J",
+      "file": "RM-J.TXT",
+      "paragraphs": 219,
+      "sha256": "605b7b827ed3565c2d8e8967014891226ac5908cbef879f51695b0279e274208",
+      "subclauses": 31
+    },
+    {
+      "clause": "K",
+      "file": "RM-K.TXT",
+      "paragraphs": 494,
+      "sha256": "3c2ffe38531ffc7434af37a3234c782f1cc964b3effd8f4cf7ea201efcb2e1de",
+      "subclauses": 2
+    },
+    {
+      "clause": "L",
+      "file": "RM-L.TXT",
+      "paragraphs": 87,
+      "sha256": "3ca6fe0e07e59d7ac182feceaf3d20e169713c0dd42208ecda4f184af1db334b",
+      "subclauses": 0
+    },
+    {
+      "clause": "M",
+      "file": "RM-M.TXT",
+      "paragraphs": 433,
+      "sha256": "715ecc1f8893a13a33ec7466c490c782338c15001c173edd36c4cb1afb3a0524",
+      "subclauses": 3
+    },
+    {
+      "clause": "N",
+      "file": "RM-N.TXT",
+      "paragraphs": 1,
+      "sha256": "37c0ec1b37efa2e6915c5ebedcf3c5f19ea1081413ded93461ff6f18ca4a40d4",
+      "subclauses": 0
+    },
+    {
+      "clause": "P",
+      "file": "RM-P.TXT",
+      "paragraphs": 2,
+      "sha256": "9fdffd6390950d8fb9431ceb646cf93f680b97e9769dd29ee9e666945951d648",
+      "subclauses": 2
+    },
+    {
+      "clause": "Q",
+      "file": "RM-Q.TXT",
+      "paragraphs": 6,
+      "sha256": "af3b5cf3800f368edb5feb1d16a50a16d1621baae56bb6494ad2194fdd9b2e60",
+      "subclauses": 5
+    }
+  ],
+  "files_skipped": [
+    "RM-00.TXT",
+    "RM-IDX.TXT",
+    "RM-Lib.TXT",
+    "RM-TOC.TXT",
+    "RM-TTL.TXT"
+  ],
+  "frontend": "none \u2014 the ARM's own plain-text rendering",
+  "instrument": "harness/ada_spec_census.py",
+  "language": "Ada",
+  "language_version": "Ada2022",
+  "paragraphs_by_category": {
+    "Bounded (Run-Time) Errors": 104,
+    "Documentation Requirements": 68,
+    "Dynamic Semantics": 1340,
+    "Erroneous Execution": 115,
+    "Examples": 963,
+    "Implementation Advice": 387,
+    "Implementation Permissions": 275,
+    "Implementation Requirements": 343,
+    "Legality Rules": 953,
+    "Metrics": 61,
+    "NOTES": 0,
+    "Name Resolution Rules": 248,
+    "Post-Compilation Rules": 67,
+    "Static Semantics": 6973,
+    "Syntax": 572,
+    "Usage": 6
+  },
+  "paragraphs_total": 14262,
+  "paragraphs_uncategorized": 1787,
+  "specialized_needs_annexes": {
+    "by_category": {
+      "Bounded (Run-Time) Errors": 11,
+      "Documentation Requirements": 58,
+      "Dynamic Semantics": 433,
+      "Erroneous Execution": 20,
+      "Examples": 36,
+      "Implementation Advice": 91,
+      "Implementation Permissions": 77,
+      "Implementation Requirements": 201,
+      "Legality Rules": 88,
+      "Metrics": 60,
+      "NOTES": 0,
+      "Name Resolution Rules": 5,
+      "Post-Compilation Rules": 26,
+      "Static Semantics": 806,
+      "Syntax": 26,
+      "Usage": 2
+    },
+    "clauses": [
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H"
+    ],
+    "paragraphs": 2083,
+    "subclauses": 92
+  },
+  "subclauses": [
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1",
+      "paragraphs": 0,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.1",
+      "paragraphs": 1,
+      "title": "Scope"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.1.1",
+      "paragraphs": 15,
+      "title": "Extent"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Metrics",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Usage",
+        "Examples"
+      ],
+      "file": "RM-01.TXT",
+      "id": "1.1.2",
+      "paragraphs": 41,
+      "title": "Structure"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-01.TXT",
+      "id": "1.1.3",
+      "paragraphs": 23,
+      "title": "Conformity of an Implementation"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.1.4",
+      "paragraphs": 25,
+      "title": "Method of Description and Syntax Notation"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-01.TXT",
+      "id": "1.1.5",
+      "paragraphs": 12,
+      "title": "Classification of Errors"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.2",
+      "paragraphs": 5,
+      "title": "Normative References"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.2.1",
+      "paragraphs": 11,
+      "title": "Bibliography"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3",
+      "paragraphs": 1,
+      "title": "Terms and Definitions"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3.1",
+      "paragraphs": 87,
+      "title": "Types, Objects, and their Properties"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3.2",
+      "paragraphs": 8,
+      "title": "Subprograms and their Properties"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3.3",
+      "paragraphs": 37,
+      "title": "Other Syntactic Constructs"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3.4",
+      "paragraphs": 11,
+      "title": "Runtime Actions"
+    },
+    {
+      "categories": [],
+      "file": "RM-01.TXT",
+      "id": "1.3.5",
+      "paragraphs": 7,
+      "title": "Exceptional Situations"
+    },
+    {
+      "categories": [],
+      "file": "RM-02.TXT",
+      "id": "2",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.1",
+      "paragraphs": 30,
+      "title": "Character Set"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.2",
+      "paragraphs": 15,
+      "title": "Lexical Elements, Separators, and Delimiters"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.3",
+      "paragraphs": 12,
+      "title": "Identifiers"
+    },
+    {
+      "categories": [
+        "Syntax"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.4",
+      "paragraphs": 3,
+      "title": "Numeric Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.4.1",
+      "paragraphs": 10,
+      "title": "Decimal Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.4.2",
+      "paragraphs": 10,
+      "title": "Based Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.5",
+      "paragraphs": 5,
+      "title": "Character Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.6",
+      "paragraphs": 10,
+      "title": "String Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.7",
+      "paragraphs": 6,
+      "title": "Comments"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.8",
+      "paragraphs": 34,
+      "title": "Pragmas"
+    },
+    {
+      "categories": [
+        "Syntax"
+      ],
+      "file": "RM-02.TXT",
+      "id": "2.9",
+      "paragraphs": 3,
+      "title": "Reserved Words"
+    },
+    {
+      "categories": [],
+      "file": "RM-03.TXT",
+      "id": "3",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.1",
+      "paragraphs": 13,
+      "title": "Declarations"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.2",
+      "paragraphs": 14,
+      "title": "Types and Subtypes"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.2.1",
+      "paragraphs": 16,
+      "title": "Type Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.2.2",
+      "paragraphs": 15,
+      "title": "Subtype Declarations"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.2.3",
+      "paragraphs": 9,
+      "title": "Classification of Operations"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.2.4",
+      "paragraphs": 61,
+      "title": "Subtype Predicates"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.3",
+      "paragraphs": 50,
+      "title": "Objects and Named Numbers"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.3.1",
+      "paragraphs": 42,
+      "title": "Object Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.3.2",
+      "paragraphs": 11,
+      "title": "Number Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.4",
+      "paragraphs": 43,
+      "title": "Derived Types and Classes"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.4.1",
+      "paragraphs": 15,
+      "title": "Derivation Classes"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5",
+      "paragraphs": 63,
+      "title": "Scalar Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.1",
+      "paragraphs": 16,
+      "title": "Enumeration Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.2",
+      "paragraphs": 9,
+      "title": "Character Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.3",
+      "paragraphs": 1,
+      "title": "Boolean Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.4",
+      "paragraphs": 40,
+      "title": "Integer Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.5",
+      "paragraphs": 21,
+      "title": "Operations of Discrete Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.6",
+      "paragraphs": 9,
+      "title": "Real Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.7",
+      "paragraphs": 22,
+      "title": "Floating Point Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.8",
+      "paragraphs": 4,
+      "title": "Operations of Floating Point Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.9",
+      "paragraphs": 29,
+      "title": "Fixed Point Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.5.10",
+      "paragraphs": 18,
+      "title": "Operations of Fixed Point Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.6",
+      "paragraphs": 34,
+      "title": "Array Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.6.1",
+      "paragraphs": 22,
+      "title": "Index Constraints and Discrete Ranges"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.6.2",
+      "paragraphs": 18,
+      "title": "Operations of Array Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.6.3",
+      "paragraphs": 8,
+      "title": "String Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.7",
+      "paragraphs": 38,
+      "title": "Discriminants"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.7.1",
+      "paragraphs": 15,
+      "title": "Discriminant Constraints"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.7.2",
+      "paragraphs": 4,
+      "title": "Operations of Discriminated Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.8",
+      "paragraphs": 34,
+      "title": "Record Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.8.1",
+      "paragraphs": 31,
+      "title": "Variant Parts and Discrete Choices"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.9",
+      "paragraphs": 56,
+      "title": "Tagged Types and Type Extensions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.9.1",
+      "paragraphs": 22,
+      "title": "Type Extensions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.9.2",
+      "paragraphs": 31,
+      "title": "Dispatching Operations of Tagged Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.9.3",
+      "paragraphs": 20,
+      "title": "Abstract Types and Subprograms"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.9.4",
+      "paragraphs": 36,
+      "title": "Interface Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.10",
+      "paragraphs": 29,
+      "title": "Access Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.10.1",
+      "paragraphs": 39,
+      "title": "Incomplete Type Declarations"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.10.2",
+      "paragraphs": 89,
+      "title": "Operations of Access Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.11",
+      "paragraphs": 15,
+      "title": "Declarative Parts"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules"
+      ],
+      "file": "RM-03.TXT",
+      "id": "3.11.1",
+      "paragraphs": 10,
+      "title": "Completions of Declarations"
+    },
+    {
+      "categories": [],
+      "file": "RM-04.TXT",
+      "id": "4",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1",
+      "paragraphs": 17,
+      "title": "Names"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.1",
+      "paragraphs": 10,
+      "title": "Indexed Components"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.2",
+      "paragraphs": 11,
+      "title": "Slices"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.3",
+      "paragraphs": 24,
+      "title": "Selected Components"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.4",
+      "paragraphs": 20,
+      "title": "Attributes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Syntax",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples",
+        "Usage"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.5",
+      "paragraphs": 19,
+      "title": "User-Defined References"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Syntax",
+        "Name Resolution Rules",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.1.6",
+      "paragraphs": 23,
+      "title": "User-Defined Indexing"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.2",
+      "paragraphs": 16,
+      "title": "Literals"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.2.1",
+      "paragraphs": 24,
+      "title": "User-Defined Literals"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3",
+      "paragraphs": 6,
+      "title": "Aggregates"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3.1",
+      "paragraphs": 43,
+      "title": "Record Aggregates"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3.2",
+      "paragraphs": 15,
+      "title": "Extension Aggregates"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3.3",
+      "paragraphs": 68,
+      "title": "Array Aggregates"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3.4",
+      "paragraphs": 32,
+      "title": "Delta Aggregates"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Syntax",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.3.5",
+      "paragraphs": 96,
+      "title": "Container Aggregates"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.4",
+      "paragraphs": 34,
+      "title": "Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5",
+      "paragraphs": 17,
+      "title": "Operators and Expression Evaluation"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.1",
+      "paragraphs": 14,
+      "title": "Logical Operators and Short-circuit Control Forms"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.2",
+      "paragraphs": 62,
+      "title": "Relational Operators and Membership Tests"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.3",
+      "paragraphs": 14,
+      "title": "Binary Adding Operators"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.4",
+      "paragraphs": 3,
+      "title": "Unary Adding Operators"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.5",
+      "paragraphs": 38,
+      "title": "Multiplying Operators"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.6",
+      "paragraphs": 13,
+      "title": "Highest Precedence Operators"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.7",
+      "paragraphs": 25,
+      "title": "Conditional Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.8",
+      "paragraphs": 14,
+      "title": "Quantified Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.9",
+      "paragraphs": 12,
+      "title": "Declare Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.5.10",
+      "paragraphs": 55,
+      "title": "Reduction Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.6",
+      "paragraphs": 98,
+      "title": "Type Conversions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.7",
+      "paragraphs": 11,
+      "title": "Qualified Expressions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.8",
+      "paragraphs": 33,
+      "title": "Allocators"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Implementation Requirements",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.9",
+      "paragraphs": 66,
+      "title": "Static Expressions and Static Subtypes"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.9.1",
+      "paragraphs": 15,
+      "title": "Statically Matching Constraints and Subtypes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-04.TXT",
+      "id": "4.10",
+      "paragraphs": 63,
+      "title": "Image Attributes"
+    },
+    {
+      "categories": [],
+      "file": "RM-05.TXT",
+      "id": "5",
+      "paragraphs": 2,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.1",
+      "paragraphs": 23,
+      "title": "Simple and Compound Statements - Sequences of Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.2",
+      "paragraphs": 28,
+      "title": "Assignment Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.2.1",
+      "paragraphs": 8,
+      "title": "Target Name Symbols"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.3",
+      "paragraphs": 7,
+      "title": "If Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.4",
+      "paragraphs": 18,
+      "title": "Case Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.5",
+      "paragraphs": 41,
+      "title": "Loop Statements"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Erroneous Execution"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.5.1",
+      "paragraphs": 37,
+      "title": "User-Defined Iterator Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.5.2",
+      "paragraphs": 27,
+      "title": "Generalized Loop Iteration"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.5.3",
+      "paragraphs": 37,
+      "title": "Procedural Iterators"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.6",
+      "paragraphs": 7,
+      "title": "Block Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.6.1",
+      "paragraphs": 9,
+      "title": "Parallel Block Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.7",
+      "paragraphs": 9,
+      "title": "Exit Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-05.TXT",
+      "id": "5.8",
+      "paragraphs": 8,
+      "title": "Goto Statements"
+    },
+    {
+      "categories": [],
+      "file": "RM-06.TXT",
+      "id": "6",
+      "paragraphs": 2,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.1",
+      "paragraphs": 49,
+      "title": "Subprogram Declarations"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.1.1",
+      "paragraphs": 78,
+      "title": "Preconditions and Postconditions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules",
+        "Implementation Permissions"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.1.2",
+      "paragraphs": 44,
+      "title": "The Global and Global'Class Aspects"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.2",
+      "paragraphs": 15,
+      "title": "Formal Parameter Modes"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.3",
+      "paragraphs": 11,
+      "title": "Subprogram Bodies"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.3.1",
+      "paragraphs": 39,
+      "title": "Conformance Rules"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.3.2",
+      "paragraphs": 5,
+      "title": "Inline Expansion of Subprograms"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.4",
+      "paragraphs": 32,
+      "title": "Subprogram Calls"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.4.1",
+      "paragraphs": 51,
+      "title": "Parameter Associations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.5",
+      "paragraphs": 35,
+      "title": "Return Statements"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.5.1",
+      "paragraphs": 16,
+      "title": "Nonreturning Subprograms"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.6",
+      "paragraphs": 9,
+      "title": "Overloading of Operators"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.7",
+      "paragraphs": 8,
+      "title": "Null Procedures"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-06.TXT",
+      "id": "6.8",
+      "paragraphs": 25,
+      "title": "Expression Functions"
+    },
+    {
+      "categories": [],
+      "file": "RM-07.TXT",
+      "id": "7",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.1",
+      "paragraphs": 17,
+      "title": "Package Specifications and Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.2",
+      "paragraphs": 15,
+      "title": "Package Bodies"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.3",
+      "paragraphs": 31,
+      "title": "Private Types and Private Extensions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.3.1",
+      "paragraphs": 23,
+      "title": "Private Operations"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.3.2",
+      "paragraphs": 51,
+      "title": "Type Invariants"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.3.3",
+      "paragraphs": 12,
+      "title": "Default Initial Conditions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.3.4",
+      "paragraphs": 32,
+      "title": "Stable Properties of a Type"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.4",
+      "paragraphs": 14,
+      "title": "Deferred Constants"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.5",
+      "paragraphs": 37,
+      "title": "Limited Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.6",
+      "paragraphs": 45,
+      "title": "Assignment and Finalization"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Permissions"
+      ],
+      "file": "RM-07.TXT",
+      "id": "7.6.1",
+      "paragraphs": 36,
+      "title": "Completion and Finalization"
+    },
+    {
+      "categories": [],
+      "file": "RM-08.TXT",
+      "id": "8",
+      "paragraphs": 2,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.1",
+      "paragraphs": 25,
+      "title": "Declarative Region"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.2",
+      "paragraphs": 14,
+      "title": "Scope of Declarations"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Name Resolution Rules",
+        "Legality Rules"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.3",
+      "paragraphs": 36,
+      "title": "Visibility"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.3.1",
+      "paragraphs": 16,
+      "title": "Overriding Indicators"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.4",
+      "paragraphs": 20,
+      "title": "Use Clauses"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5",
+      "paragraphs": 7,
+      "title": "Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5.1",
+      "paragraphs": 24,
+      "title": "Object Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5.2",
+      "paragraphs": 6,
+      "title": "Exception Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5.3",
+      "paragraphs": 8,
+      "title": "Package Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5.4",
+      "paragraphs": 29,
+      "title": "Subprogram Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.5.5",
+      "paragraphs": 7,
+      "title": "Generic Renaming Declarations"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules"
+      ],
+      "file": "RM-08.TXT",
+      "id": "8.6",
+      "paragraphs": 46,
+      "title": "The Context of Overload Resolution"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9",
+      "paragraphs": 12,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.1",
+      "paragraphs": 40,
+      "title": "Task Units and Task Objects"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.2",
+      "paragraphs": 11,
+      "title": "Task Execution - Task Activation"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.3",
+      "paragraphs": 21,
+      "title": "Task Dependence - Termination of Tasks"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.4",
+      "paragraphs": 48,
+      "title": "Protected Units and Protected Objects"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Syntax"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.5",
+      "paragraphs": 79,
+      "title": "Intertask Communication"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.5.1",
+      "paragraphs": 22,
+      "title": "Protected Subprograms and Protected Actions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.5.2",
+      "paragraphs": 43,
+      "title": "Entries and Accept Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.5.3",
+      "paragraphs": 31,
+      "title": "Entry Calls"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.5.4",
+      "paragraphs": 30,
+      "title": "Requeue Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.6",
+      "paragraphs": 40,
+      "title": "Delay Statements, Duration, and Time"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.6.1",
+      "paragraphs": 99,
+      "title": "Formatting, Time Zones, and other operations for Time"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.7",
+      "paragraphs": 4,
+      "title": "Select Statements"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.7.1",
+      "paragraphs": 24,
+      "title": "Selective Accept"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.7.2",
+      "paragraphs": 9,
+      "title": "Timed Entry Calls"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.7.3",
+      "paragraphs": 6,
+      "title": "Conditional Entry Calls"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.7.4",
+      "paragraphs": 14,
+      "title": "Asynchronous Transfer of Control"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.8",
+      "paragraphs": 26,
+      "title": "Abort of a Task - Abort of a Sequence of Statements"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.9",
+      "paragraphs": 8,
+      "title": "Task and Entry Attributes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.10",
+      "paragraphs": 21,
+      "title": "Shared Variables"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.10.1",
+      "paragraphs": 26,
+      "title": "Conflict Check Policies"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-09.TXT",
+      "id": "9.11",
+      "paragraphs": 16,
+      "title": "Example of Tasking and Synchronization"
+    },
+    {
+      "categories": [],
+      "file": "RM-10.TXT",
+      "id": "10",
+      "paragraphs": 3,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Implementation Permissions"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1",
+      "paragraphs": 4,
+      "title": "Separate Compilation"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.1",
+      "paragraphs": 43,
+      "title": "Compilation Units - Library Units"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.2",
+      "paragraphs": 34,
+      "title": "Context Clauses - With Clauses"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Examples"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.3",
+      "paragraphs": 24,
+      "title": "Subunits of Compilation Units"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Implementation Permissions"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.4",
+      "paragraphs": 10,
+      "title": "The Compilation Process"
+    },
+    {
+      "categories": [
+        "Post-Compilation Rules",
+        "Implementation Permissions"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.5",
+      "paragraphs": 3,
+      "title": "Pragmas and Program Units"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.1.6",
+      "paragraphs": 6,
+      "title": "Environment-Level Visibility Rules"
+    },
+    {
+      "categories": [
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.2",
+      "paragraphs": 35,
+      "title": "Program Execution"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Implementation Advice",
+        "Static Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions",
+        "Syntax"
+      ],
+      "file": "RM-10.TXT",
+      "id": "10.2.1",
+      "paragraphs": 70,
+      "title": "Elaboration Control"
+    },
+    {
+      "categories": [],
+      "file": "RM-11.TXT",
+      "id": "11",
+      "paragraphs": 2,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.1",
+      "paragraphs": 8,
+      "title": "Exception Declarations"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.2",
+      "paragraphs": 13,
+      "title": "Exception Handlers"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Name Resolution Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.3",
+      "paragraphs": 20,
+      "title": "Raise Statements and Raise Expressions"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.4",
+      "paragraphs": 8,
+      "title": "Exception Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.4.1",
+      "paragraphs": 28,
+      "title": "The Package Exceptions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.4.2",
+      "paragraphs": 41,
+      "title": "Pragmas Assert and Assertion_Policy"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.4.3",
+      "paragraphs": 12,
+      "title": "Example of Exception Handling"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.5",
+      "paragraphs": 51,
+      "title": "Suppressing Checks"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-11.TXT",
+      "id": "11.6",
+      "paragraphs": 7,
+      "title": "Exceptions and Optimization"
+    },
+    {
+      "categories": [],
+      "file": "RM-12.TXT",
+      "id": "12",
+      "paragraphs": 3,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.1",
+      "paragraphs": 25,
+      "title": "Generic Declarations"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.2",
+      "paragraphs": 12,
+      "title": "Generic Bodies"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.3",
+      "paragraphs": 30,
+      "title": "Generic Instantiation"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.4",
+      "paragraphs": 15,
+      "title": "Formal Objects"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5",
+      "paragraphs": 20,
+      "title": "Formal Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5.1",
+      "paragraphs": 34,
+      "title": "Formal Private and Derived Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5.2",
+      "paragraphs": 8,
+      "title": "Formal Scalar Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5.3",
+      "paragraphs": 16,
+      "title": "Formal Array Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5.4",
+      "paragraphs": 13,
+      "title": "Formal Access Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.5.5",
+      "paragraphs": 7,
+      "title": "Formal Interface Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.6",
+      "paragraphs": 42,
+      "title": "Formal Subprograms"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.7",
+      "paragraphs": 36,
+      "title": "Formal Packages"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-12.TXT",
+      "id": "12.8",
+      "paragraphs": 16,
+      "title": "Example of a Generic Package"
+    },
+    {
+      "categories": [],
+      "file": "RM-13.TXT",
+      "id": "13",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.1",
+      "paragraphs": 51,
+      "title": "Operational and Representation Aspects"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.1.1",
+      "paragraphs": 50,
+      "title": "Aspect Specifications"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.2",
+      "paragraphs": 10,
+      "title": "Packed Types"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Erroneous Execution",
+        "Implementation Advice",
+        "Implementation Requirements",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.3",
+      "paragraphs": 128,
+      "title": "Operational and Representation Attributes"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.4",
+      "paragraphs": 23,
+      "title": "Enumeration Representation Clauses"
+    },
+    {
+      "categories": [],
+      "file": "RM-13.TXT",
+      "id": "13.5",
+      "paragraphs": 1,
+      "title": "Record Layout"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.5.1",
+      "paragraphs": 40,
+      "title": "Record Representation Clauses"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.5.2",
+      "paragraphs": 5,
+      "title": "Storage Place Attributes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.5.3",
+      "paragraphs": 9,
+      "title": "Bit Ordering"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.6",
+      "paragraphs": 10,
+      "title": "Change of Representation"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.7",
+      "paragraphs": 38,
+      "title": "The Package System"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.7.1",
+      "paragraphs": 15,
+      "title": "The Package System.Storage_Elements"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.7.2",
+      "paragraphs": 6,
+      "title": "The Package System.Address_To_Access_Conversions"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.8",
+      "paragraphs": 14,
+      "title": "Machine Code Insertions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.9",
+      "paragraphs": 17,
+      "title": "Unchecked Type Conversions"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Bounded (Run-Time) Errors"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.9.1",
+      "paragraphs": 16,
+      "title": "Data Validity"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.9.2",
+      "paragraphs": 15,
+      "title": "The Valid Attribute"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.10",
+      "paragraphs": 5,
+      "title": "Unchecked Access Value Creation"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Static Semantics",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11",
+      "paragraphs": 56,
+      "title": "Storage Management"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.1",
+      "paragraphs": 5,
+      "title": "Storage Allocation Attributes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.2",
+      "paragraphs": 23,
+      "title": "Unchecked Storage Deallocation"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.3",
+      "paragraphs": 21,
+      "title": "Default Storage Pools"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.4",
+      "paragraphs": 36,
+      "title": "Storage Subpools"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.5",
+      "paragraphs": 12,
+      "title": "Subpool Reclamation"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.11.6",
+      "paragraphs": 29,
+      "title": "Storage Subpool Example"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Implementation Permissions",
+        "Static Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.12",
+      "paragraphs": 27,
+      "title": "Pragma Restrictions and Pragma Profile"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Post-Compilation Rules"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.12.1",
+      "paragraphs": 41,
+      "title": "Language-Defined Restrictions and Profiles"
+    },
+    {
+      "categories": [],
+      "file": "RM-13.TXT",
+      "id": "13.13",
+      "paragraphs": 1,
+      "title": "Streams"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.13.1",
+      "paragraphs": 40,
+      "title": "The Streams Subsystem"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.13.2",
+      "paragraphs": 78,
+      "title": "Stream-Oriented Attributes"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-13.TXT",
+      "id": "13.14",
+      "paragraphs": 33,
+      "title": "Freezing Rules"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A",
+      "paragraphs": 6,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.1",
+      "paragraphs": 63,
+      "title": "The Package Standard"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.2",
+      "paragraphs": 4,
+      "title": "The Package Ada"
+    },
+    {
+      "categories": [],
+      "file": "RM-A.TXT",
+      "id": "A.3",
+      "paragraphs": 1,
+      "title": "Character Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.3.1",
+      "paragraphs": 7,
+      "title": "The Packages Characters, Wide_Characters, and Wide_Wide_Characters"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.3.2",
+      "paragraphs": 53,
+      "title": "The Package Characters.Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.3.3",
+      "paragraphs": 27,
+      "title": "The Package Characters.Latin_1"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.3.4",
+      "paragraphs": 35,
+      "title": "The Package Characters.Conversions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.3.5",
+      "paragraphs": 76,
+      "title": "The Package Wide_Characters.Handling"
+    },
+    {
+      "categories": [],
+      "file": "RM-A.TXT",
+      "id": "A.3.6",
+      "paragraphs": 1,
+      "title": "The Package Wide_Wide_Characters.Handling"
+    },
+    {
+      "categories": [],
+      "file": "RM-A.TXT",
+      "id": "A.4",
+      "paragraphs": 1,
+      "title": "String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.1",
+      "paragraphs": 6,
+      "title": "The Package Strings"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.2",
+      "paragraphs": 68,
+      "title": "The Package Strings.Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.3",
+      "paragraphs": 130,
+      "title": "Fixed-Length String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.4",
+      "paragraphs": 120,
+      "title": "Bounded-Length String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.5",
+      "paragraphs": 99,
+      "title": "Unbounded-Length String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.6",
+      "paragraphs": 8,
+      "title": "String-Handling Sets and Mappings"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.7",
+      "paragraphs": 52,
+      "title": "Wide_String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.8",
+      "paragraphs": 52,
+      "title": "Wide_Wide_String Handling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.9",
+      "paragraphs": 23,
+      "title": "String Hashing"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.10",
+      "paragraphs": 22,
+      "title": "String Comparison"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.11",
+      "paragraphs": 126,
+      "title": "String Encoding"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.4.12",
+      "paragraphs": 36,
+      "title": "Universal Text Buffers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5",
+      "paragraphs": 5,
+      "title": "The Numerics Packages"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.1",
+      "paragraphs": 48,
+      "title": "Elementary Functions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.2",
+      "paragraphs": 67,
+      "title": "Random Number Generation"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.3",
+      "paragraphs": 75,
+      "title": "Attributes of Floating Point Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.4",
+      "paragraphs": 25,
+      "title": "Attributes of Fixed Point Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.5",
+      "paragraphs": 3,
+      "title": "Big Numbers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.6",
+      "paragraphs": 25,
+      "title": "Big Integers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.5.7",
+      "paragraphs": 29,
+      "title": "Big Reals"
+    },
+    {
+      "categories": [],
+      "file": "RM-A.TXT",
+      "id": "A.6",
+      "paragraphs": 1,
+      "title": "Input-Output"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.7",
+      "paragraphs": 16,
+      "title": "External Files and File Objects"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8",
+      "paragraphs": 4,
+      "title": "Sequential and Direct Files"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8.1",
+      "paragraphs": 32,
+      "title": "The Generic Package Sequential_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8.2",
+      "paragraphs": 34,
+      "title": "File Management"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8.3",
+      "paragraphs": 10,
+      "title": "Sequential Input-Output Operations"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8.4",
+      "paragraphs": 35,
+      "title": "The Generic Package Direct_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.8.5",
+      "paragraphs": 17,
+      "title": "Direct Input-Output Operations"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.9",
+      "paragraphs": 11,
+      "title": "The Generic Package Storage_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10",
+      "paragraphs": 11,
+      "title": "Text Input-Output"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.1",
+      "paragraphs": 102,
+      "title": "The Package Text_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.2",
+      "paragraphs": 8,
+      "title": "Text File Management"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.3",
+      "paragraphs": 25,
+      "title": "Default Input, Output, and Error Files"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.4",
+      "paragraphs": 12,
+      "title": "Specification of Line and Page Lengths"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.5",
+      "paragraphs": 52,
+      "title": "Operations on Columns, Lines, and Pages"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.6",
+      "paragraphs": 15,
+      "title": "Get and Put Procedures"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.7",
+      "paragraphs": 29,
+      "title": "Input-Output of Characters and Strings"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.8",
+      "paragraphs": 26,
+      "title": "Input-Output for Integer Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.9",
+      "paragraphs": 43,
+      "title": "Input-Output for Real Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.10",
+      "paragraphs": 21,
+      "title": "Input-Output for Enumeration Types"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.11",
+      "paragraphs": 29,
+      "title": "Input-Output for Bounded Strings"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.10.12",
+      "paragraphs": 29,
+      "title": "Input-Output for Unbounded Strings"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.11",
+      "paragraphs": 5,
+      "title": "Wide Text Input-Output and Wide Wide Text Input-Output"
+    },
+    {
+      "categories": [],
+      "file": "RM-A.TXT",
+      "id": "A.12",
+      "paragraphs": 1,
+      "title": "Stream Input-Output"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.12.1",
+      "paragraphs": 63,
+      "title": "The Package Streams.Stream_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.12.2",
+      "paragraphs": 7,
+      "title": "The Package Text_IO.Text_Streams"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.12.3",
+      "paragraphs": 5,
+      "title": "The Package Wide_Text_IO.Text_Streams"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.12.4",
+      "paragraphs": 5,
+      "title": "The Package Wide_Wide_Text_IO.Text_Streams"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Erroneous Execution"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.13",
+      "paragraphs": 18,
+      "title": "Exceptions in Input-Output"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.14",
+      "paragraphs": 6,
+      "title": "File Sharing"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.15",
+      "paragraphs": 23,
+      "title": "The Package Command_Line"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.15.1",
+      "paragraphs": 3,
+      "title": "The Packages Wide_Command_Line and Wide_Wide_Command_Line"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.16",
+      "paragraphs": 140,
+      "title": "The Package Directories"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.16.1",
+      "paragraphs": 38,
+      "title": "The Package Directories.Hierarchical_File_Names"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.16.2",
+      "paragraphs": 3,
+      "title": "The Packages Wide_Directories and Wide_Wide_Directories"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.17",
+      "paragraphs": 36,
+      "title": "The Package Environment_Variables"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.17.1",
+      "paragraphs": 3,
+      "title": "The Packages Wide_Environment_Variables and Wide_Wide_Environment_Variables"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18",
+      "paragraphs": 14,
+      "title": "Containers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.1",
+      "paragraphs": 10,
+      "title": "The Package Containers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.2",
+      "paragraphs": 375,
+      "title": "The Generic Package Containers.Vectors"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.3",
+      "paragraphs": 242,
+      "title": "The Generic Package Containers.Doubly_Linked_Lists"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.4",
+      "paragraphs": 122,
+      "title": "Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.5",
+      "paragraphs": 105,
+      "title": "The Generic Package Containers.Hashed_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.6",
+      "paragraphs": 143,
+      "title": "The Generic Package Containers.Ordered_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.7",
+      "paragraphs": 145,
+      "title": "Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.8",
+      "paragraphs": 130,
+      "title": "The Generic Package Containers.Hashed_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.9",
+      "paragraphs": 163,
+      "title": "The Generic Package Containers.Ordered_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.10",
+      "paragraphs": 336,
+      "title": "The Generic Package Containers.Multiway_Trees"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.11",
+      "paragraphs": 13,
+      "title": "The Generic Package Containers.Indefinite_Vectors"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.12",
+      "paragraphs": 12,
+      "title": "The Generic Package Containers.Indefinite_Doubly_Linked_Lists"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.13",
+      "paragraphs": 13,
+      "title": "The Generic Package Containers.Indefinite_Hashed_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.14",
+      "paragraphs": 13,
+      "title": "The Generic Package Containers.Indefinite_Ordered_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.15",
+      "paragraphs": 5,
+      "title": "The Generic Package Containers.Indefinite_Hashed_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.16",
+      "paragraphs": 5,
+      "title": "The Generic Package Containers.Indefinite_Ordered_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.17",
+      "paragraphs": 12,
+      "title": "The Generic Package Containers.Indefinite_Multiway_Trees"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.18",
+      "paragraphs": 76,
+      "title": "The Generic Package Containers.Indefinite_Holders"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.19",
+      "paragraphs": 29,
+      "title": "The Generic Package Containers.Bounded_Vectors"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.20",
+      "paragraphs": 29,
+      "title": "The Generic Package Containers.Bounded_Doubly_Linked_Lists"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.21",
+      "paragraphs": 33,
+      "title": "The Generic Package Containers.Bounded_Hashed_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.22",
+      "paragraphs": 27,
+      "title": "The Generic Package Containers.Bounded_Ordered_Maps"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.23",
+      "paragraphs": 32,
+      "title": "The Generic Package Containers.Bounded_Hashed_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.24",
+      "paragraphs": 26,
+      "title": "The Generic Package Containers.Bounded_Ordered_Sets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.25",
+      "paragraphs": 34,
+      "title": "The Generic Package Containers.Bounded_Multiway_Trees"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.26",
+      "paragraphs": 17,
+      "title": "Array Sorting"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.27",
+      "paragraphs": 18,
+      "title": "The Generic Package Containers.Synchronized_Queue_Interfaces"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.28",
+      "paragraphs": 12,
+      "title": "The Generic Package Containers.Unbounded_Synchronized_Queues"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.29",
+      "paragraphs": 14,
+      "title": "The Generic Package Containers.Bounded_Synchronized_Queues"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.30",
+      "paragraphs": 17,
+      "title": "The Generic Package Containers.Unbounded_Priority_Queues"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.31",
+      "paragraphs": 15,
+      "title": "The Generic Package Containers.Bounded_Priority_Queues"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.32",
+      "paragraphs": 16,
+      "title": "The Generic Package Containers.Bounded_Indefinite_Holders"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.18.33",
+      "paragraphs": 31,
+      "title": "Example of Container Use"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-A.TXT",
+      "id": "A.19",
+      "paragraphs": 12,
+      "title": "The Package Locales"
+    },
+    {
+      "categories": [
+        "Implementation Requirements"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B",
+      "paragraphs": 2,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.1",
+      "paragraphs": 52,
+      "title": "Interfacing Aspects"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.2",
+      "paragraphs": 14,
+      "title": "The Package Interfaces"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.3",
+      "paragraphs": 132,
+      "title": "Interfacing with C and C++"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.3.1",
+      "paragraphs": 61,
+      "title": "The Package Interfaces.C.Strings"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Erroneous Execution",
+        "Examples"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.3.2",
+      "paragraphs": 49,
+      "title": "The Generic Package Interfaces.C.Pointers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.3.3",
+      "paragraphs": 29,
+      "title": "Unchecked Union Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.4",
+      "paragraphs": 124,
+      "title": "Interfacing with COBOL"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-B.TXT",
+      "id": "B.5",
+      "paragraphs": 40,
+      "title": "Interfacing with Fortran"
+    },
+    {
+      "categories": [],
+      "file": "RM-C.TXT",
+      "id": "C",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Advice",
+        "Documentation Requirements"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.1",
+      "paragraphs": 16,
+      "title": "Access to Machine Operations"
+    },
+    {
+      "categories": [
+        "Implementation Requirements"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.2",
+      "paragraphs": 2,
+      "title": "Required Representation Support"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.3",
+      "paragraphs": 31,
+      "title": "Interrupt Support"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Metrics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.3.1",
+      "paragraphs": 24,
+      "title": "Protected Procedure Handlers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.3.2",
+      "paragraphs": 30,
+      "title": "The Package Interrupts"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.4",
+      "paragraphs": 15,
+      "title": "Preelaboration Requirements"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Syntax",
+        "Legality Rules",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.5",
+      "paragraphs": 11,
+      "title": "Aspect Discard_Names"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6",
+      "paragraphs": 41,
+      "title": "Shared Variable Control"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6.1",
+      "paragraphs": 6,
+      "title": "The Package System.Atomic_Operations"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Examples"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6.2",
+      "paragraphs": 24,
+      "title": "The Package System.Atomic_Operations.Exchange"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6.3",
+      "paragraphs": 11,
+      "title": "The Package System.Atomic_Operations.Test_and_Set"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Usage"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6.4",
+      "paragraphs": 20,
+      "title": "The Package System.Atomic_Operations.Integer_Arithmetic"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions",
+        "Usage"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.6.5",
+      "paragraphs": 20,
+      "title": "The Package System.Atomic_Operations.Modular_Arithmetic"
+    },
+    {
+      "categories": [],
+      "file": "RM-C.TXT",
+      "id": "C.7",
+      "paragraphs": 1,
+      "title": "Task Information"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Documentation Requirements"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.7.1",
+      "paragraphs": 23,
+      "title": "The Package Task_Identification"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Metrics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.7.2",
+      "paragraphs": 36,
+      "title": "The Package Task_Attributes"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution"
+      ],
+      "file": "RM-C.TXT",
+      "id": "C.7.3",
+      "paragraphs": 17,
+      "title": "The Package Task_Termination"
+    },
+    {
+      "categories": [
+        "Metrics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D",
+      "paragraphs": 6,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.1",
+      "paragraphs": 31,
+      "title": "Task Priorities"
+    },
+    {
+      "categories": [],
+      "file": "RM-D.TXT",
+      "id": "D.2",
+      "paragraphs": 1,
+      "title": "Priority Scheduling"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.1",
+      "paragraphs": 30,
+      "title": "The Task Dispatching Model"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.2",
+      "paragraphs": 23,
+      "title": "Task Dispatching Pragmas"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.3",
+      "paragraphs": 15,
+      "title": "Preemptive Dispatching"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.4",
+      "paragraphs": 14,
+      "title": "Non-Preemptive Dispatching"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.5",
+      "paragraphs": 19,
+      "title": "Round Robin Dispatching"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Documentation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.2.6",
+      "paragraphs": 38,
+      "title": "Earliest Deadline First Dispatching"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.3",
+      "paragraphs": 34,
+      "title": "Priority Ceiling Locking"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Implementation Permissions",
+        "Implementation Advice",
+        "Static Semantics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.4",
+      "paragraphs": 29,
+      "title": "Entry Queuing Policies"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.4.1",
+      "paragraphs": 8,
+      "title": "Admission Policies"
+    },
+    {
+      "categories": [],
+      "file": "RM-D.TXT",
+      "id": "D.5",
+      "paragraphs": 1,
+      "title": "Dynamic Priorities"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Documentation Requirements",
+        "Metrics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.5.1",
+      "paragraphs": 19,
+      "title": "Dynamic Priorities for Tasks"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Metrics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.5.2",
+      "paragraphs": 12,
+      "title": "Dynamic Priorities for Protected Objects"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Documentation Requirements",
+        "Metrics",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.6",
+      "paragraphs": 12,
+      "title": "Preemptive Abort"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.7",
+      "paragraphs": 48,
+      "title": "Tasking Restrictions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Metrics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.8",
+      "paragraphs": 51,
+      "title": "Monotonic Time"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Documentation Requirements",
+        "Metrics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.9",
+      "paragraphs": 13,
+      "title": "Delay Accuracy"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.10",
+      "paragraphs": 16,
+      "title": "Synchronous Task Control"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.10.1",
+      "paragraphs": 15,
+      "title": "Synchronous Barriers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.11",
+      "paragraphs": 20,
+      "title": "Asynchronous Task Control"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Metrics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.12",
+      "paragraphs": 12,
+      "title": "Other Optimizations and Determinism Rules"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.13",
+      "paragraphs": 10,
+      "title": "The Ravenscar and Jorvik Profiles"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Metrics",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.14",
+      "paragraphs": 34,
+      "title": "Execution Time"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.14.1",
+      "paragraphs": 29,
+      "title": "Execution Time Timers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Erroneous Execution",
+        "Implementation Requirements"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.14.2",
+      "paragraphs": 38,
+      "title": "Group Execution Time Budgets"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.14.3",
+      "paragraphs": 7,
+      "title": "Execution Time of Interrupt Handlers"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Metrics",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.15",
+      "paragraphs": 27,
+      "title": "Timing Events"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.16",
+      "paragraphs": 18,
+      "title": "Multiprocessor Implementation"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Advice",
+        "Documentation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-D.TXT",
+      "id": "D.16.1",
+      "paragraphs": 38,
+      "title": "Multiprocessor Dispatching Domains"
+    },
+    {
+      "categories": [
+        "Post-Compilation Rules",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E",
+      "paragraphs": 8,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Implementation Permissions"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.1",
+      "paragraphs": 16,
+      "title": "Partitions"
+    },
+    {
+      "categories": [],
+      "file": "RM-E.TXT",
+      "id": "E.2",
+      "paragraphs": 12,
+      "title": "Categorization of Library Units"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Static Semantics",
+        "Post-Compilation Rules"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.2.1",
+      "paragraphs": 13,
+      "title": "Shared Passive Library Units"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Erroneous Execution"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.2.2",
+      "paragraphs": 25,
+      "title": "Remote Types Library Units"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Post-Compilation Rules",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.2.3",
+      "paragraphs": 20,
+      "title": "Remote Call Interface Library Units"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Bounded (Run-Time) Errors"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.3",
+      "paragraphs": 7,
+      "title": "Consistency of a Distributed System"
+    },
+    {
+      "categories": [
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.4",
+      "paragraphs": 24,
+      "title": "Remote Subprogram Calls"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules",
+        "Dynamic Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.4.1",
+      "paragraphs": 9,
+      "title": "Asynchronous Remote Calls"
+    },
+    {
+      "categories": [
+        "Examples"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.4.2",
+      "paragraphs": 13,
+      "title": "Example of Use of a Remote Access-to-Class-Wide Type"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-E.TXT",
+      "id": "E.5",
+      "paragraphs": 33,
+      "title": "Partition Communication Subsystem"
+    },
+    {
+      "categories": [
+        "Implementation Advice"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F",
+      "paragraphs": 7,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Advice",
+        "Examples"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.1",
+      "paragraphs": 4,
+      "title": "Machine_Radix Attribute Definition Clause"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.2",
+      "paragraphs": 17,
+      "title": "The Package Decimal"
+    },
+    {
+      "categories": [],
+      "file": "RM-F.TXT",
+      "id": "F.3",
+      "paragraphs": 20,
+      "title": "Edited Output for Decimal Types"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.3.1",
+      "paragraphs": 52,
+      "title": "Picture String Formation"
+    },
+    {
+      "categories": [
+        "Dynamic Semantics",
+        "Examples"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.3.2",
+      "paragraphs": 78,
+      "title": "Edited Output Generation"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.3.3",
+      "paragraphs": 45,
+      "title": "The Package Text_IO.Editing"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.3.4",
+      "paragraphs": 6,
+      "title": "The Package Wide_Text_IO.Editing"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-F.TXT",
+      "id": "F.3.5",
+      "paragraphs": 6,
+      "title": "The Package Wide_Wide_Text_IO.Editing"
+    },
+    {
+      "categories": [
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G",
+      "paragraphs": 8,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-G.TXT",
+      "id": "G.1",
+      "paragraphs": 1,
+      "title": "Complex Arithmetic"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.1.1",
+      "paragraphs": 58,
+      "title": "Complex Types"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.1.2",
+      "paragraphs": 49,
+      "title": "Complex Elementary Functions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.1.3",
+      "paragraphs": 37,
+      "title": "Complex Input-Output"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.1.4",
+      "paragraphs": 1,
+      "title": "The Package Wide_Text_IO.Complex_IO"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.1.5",
+      "paragraphs": 1,
+      "title": "The Package Wide_Wide_Text_IO.Complex_IO"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2",
+      "paragraphs": 3,
+      "title": "Numeric Performance Requirements"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Implementation Permissions"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.1",
+      "paragraphs": 16,
+      "title": "Model of Floating Point Arithmetic"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.2",
+      "paragraphs": 13,
+      "title": "Model-Oriented Attributes of Floating Point Types"
+    },
+    {
+      "categories": [
+        "Implementation Requirements"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.3",
+      "paragraphs": 27,
+      "title": "Model of Fixed Point Arithmetic"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.4",
+      "paragraphs": 19,
+      "title": "Accuracy Requirements for the Elementary Functions"
+    },
+    {
+      "categories": [
+        "Implementation Requirements"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.5",
+      "paragraphs": 5,
+      "title": "Performance Requirements for Random Number Generation"
+    },
+    {
+      "categories": [
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.2.6",
+      "paragraphs": 15,
+      "title": "Accuracy Requirements for Complex Arithmetic"
+    },
+    {
+      "categories": [],
+      "file": "RM-G.TXT",
+      "id": "G.3",
+      "paragraphs": 1,
+      "title": "Vector and Matrix Manipulation"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.3.1",
+      "paragraphs": 92,
+      "title": "Real Vectors and Matrices"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Implementation Advice"
+      ],
+      "file": "RM-G.TXT",
+      "id": "G.3.2",
+      "paragraphs": 163,
+      "title": "Complex Vectors and Matrices"
+    },
+    {
+      "categories": [],
+      "file": "RM-H.TXT",
+      "id": "H",
+      "paragraphs": 7,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Post-Compilation Rules",
+        "Documentation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.1",
+      "paragraphs": 9,
+      "title": "Pragma Normalize_Scalars"
+    },
+    {
+      "categories": [
+        "Documentation Requirements"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.2",
+      "paragraphs": 2,
+      "title": "Documentation of Implementation Decisions"
+    },
+    {
+      "categories": [],
+      "file": "RM-H.TXT",
+      "id": "H.3",
+      "paragraphs": 1,
+      "title": "Reviewable Object Code"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Post-Compilation Rules",
+        "Implementation Requirements",
+        "Implementation Advice"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.3.1",
+      "paragraphs": 22,
+      "title": "Pragma Reviewable"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.3.2",
+      "paragraphs": 11,
+      "title": "Pragma Inspection_Point"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Implementation Requirements",
+        "Documentation Requirements",
+        "Erroneous Execution"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.4",
+      "paragraphs": 51,
+      "title": "High Integrity Restrictions"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.4.1",
+      "paragraphs": 5,
+      "title": "Aspect No_Controlled_Parts"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.5",
+      "paragraphs": 7,
+      "title": "Pragma Detect_Blocking"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Post-Compilation Rules",
+        "Dynamic Semantics",
+        "Implementation Advice",
+        "Implementation Permissions"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.6",
+      "paragraphs": 17,
+      "title": "Pragma Partition_Elaboration_Policy"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.7",
+      "paragraphs": 10,
+      "title": "Extensions to Global and Global'Class Aspects"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules",
+        "Examples"
+      ],
+      "file": "RM-H.TXT",
+      "id": "H.7.1",
+      "paragraphs": 20,
+      "title": "The Use_Formal and Dispatching Aspects"
+    },
+    {
+      "categories": [],
+      "file": "RM-J.TXT",
+      "id": "J",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Implementation Requirements"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.1",
+      "paragraphs": 10,
+      "title": "Renamings of Library Units"
+    },
+    {
+      "categories": [
+        "Syntax"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.2",
+      "paragraphs": 5,
+      "title": "Allowed Replacements of Characters"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Dynamic Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.3",
+      "paragraphs": 11,
+      "title": "Reduced Accuracy Subtypes"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.4",
+      "paragraphs": 2,
+      "title": "The Constrained Attribute"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.5",
+      "paragraphs": 9,
+      "title": "ASCII"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.6",
+      "paragraphs": 2,
+      "title": "Numeric_Error"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.7",
+      "paragraphs": 2,
+      "title": "At Clauses"
+    },
+    {
+      "categories": [
+        "Static Semantics",
+        "Dynamic Semantics",
+        "Bounded (Run-Time) Errors",
+        "Documentation Requirements",
+        "Implementation Permissions",
+        "Examples"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.7.1",
+      "paragraphs": 23,
+      "title": "Interrupt Entries"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.8",
+      "paragraphs": 5,
+      "title": "Mod Clauses"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.9",
+      "paragraphs": 3,
+      "title": "The Storage_Size Attribute"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.10",
+      "paragraphs": 8,
+      "title": "Specific Suppression of Checks"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.11",
+      "paragraphs": 2,
+      "title": "The Class Attribute of Untagged Incomplete Types"
+    },
+    {
+      "categories": [
+        "Syntax"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.12",
+      "paragraphs": 1,
+      "title": "Pragma Interface"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.13",
+      "paragraphs": 5,
+      "title": "Dependence Restriction Identifiers"
+    },
+    {
+      "categories": [
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.14",
+      "paragraphs": 6,
+      "title": "Character and Wide_Character Conversion Functions"
+    },
+    {
+      "categories": [
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Advice"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15",
+      "paragraphs": 9,
+      "title": "Aspect-related Pragmas"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics",
+        "Implementation Permissions"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.1",
+      "paragraphs": 6,
+      "title": "Pragma Inline"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.2",
+      "paragraphs": 4,
+      "title": "Pragma No_Return"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.3",
+      "paragraphs": 4,
+      "title": "Pragma Pack"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.4",
+      "paragraphs": 5,
+      "title": "Pragma Storage_Size"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.5",
+      "paragraphs": 15,
+      "title": "Interfacing Pragmas"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.6",
+      "paragraphs": 4,
+      "title": "Pragma Unchecked_Union"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.7",
+      "paragraphs": 8,
+      "title": "Pragmas Interrupt_Handler and Attach_Handler"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.8",
+      "paragraphs": 10,
+      "title": "Shared Variable Pragmas"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.9",
+      "paragraphs": 6,
+      "title": "Pragma CPU"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.10",
+      "paragraphs": 5,
+      "title": "Pragma Dispatching_Domain"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.11",
+      "paragraphs": 12,
+      "title": "Pragmas Priority and Interrupt_Priority"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Name Resolution Rules",
+        "Legality Rules",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.12",
+      "paragraphs": 5,
+      "title": "Pragma Relative_Deadline"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.13",
+      "paragraphs": 4,
+      "title": "Pragma Asynchronous"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics",
+        "Legality Rules"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.14",
+      "paragraphs": 14,
+      "title": "Elaboration Control Pragmas"
+    },
+    {
+      "categories": [
+        "Syntax",
+        "Static Semantics"
+      ],
+      "file": "RM-J.TXT",
+      "id": "J.15.15",
+      "paragraphs": 13,
+      "title": "Distribution Pragmas"
+    },
+    {
+      "categories": [],
+      "file": "RM-K.TXT",
+      "id": "K",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-K.TXT",
+      "id": "K.1",
+      "paragraphs": 99,
+      "title": "Language-Defined Aspects"
+    },
+    {
+      "categories": [],
+      "file": "RM-K.TXT",
+      "id": "K.2",
+      "paragraphs": 394,
+      "title": "Language-Defined Attributes"
+    },
+    {
+      "categories": [],
+      "file": "RM-L.TXT",
+      "id": "L",
+      "paragraphs": 87,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-M.TXT",
+      "id": "M",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-M.TXT",
+      "id": "M.1",
+      "paragraphs": 54,
+      "title": "Specific Documentation Requirements"
+    },
+    {
+      "categories": [],
+      "file": "RM-M.TXT",
+      "id": "M.2",
+      "paragraphs": 203,
+      "title": "Implementation-Defined Characteristics"
+    },
+    {
+      "categories": [],
+      "file": "RM-M.TXT",
+      "id": "M.3",
+      "paragraphs": 175,
+      "title": "Implementation Advice"
+    },
+    {
+      "categories": [],
+      "file": "RM-N.TXT",
+      "id": "N",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-P.TXT",
+      "id": "P",
+      "paragraphs": 0,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-P.TXT",
+      "id": "P.1",
+      "paragraphs": 1,
+      "title": "Syntax Rules"
+    },
+    {
+      "categories": [],
+      "file": "RM-P.TXT",
+      "id": "P.2",
+      "paragraphs": 1,
+      "title": "Syntax Cross Reference"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q",
+      "paragraphs": 1,
+      "title": "(clause intro)"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q.1",
+      "paragraphs": 1,
+      "title": "Language-Defined Packages"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q.2",
+      "paragraphs": 1,
+      "title": "Language-Defined Types and Subtypes"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q.3",
+      "paragraphs": 1,
+      "title": "Language-Defined Subprograms"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q.4",
+      "paragraphs": 1,
+      "title": "Language-Defined Exceptions"
+    },
+    {
+      "categories": [],
+      "file": "RM-Q.TXT",
+      "id": "Q.5",
+      "paragraphs": 1,
+      "title": "Language-Defined Objects"
+    }
+  ],
+  "subclauses_carrying_category": {
+    "Bounded (Run-Time) Errors": 40,
+    "Documentation Requirements": 31,
+    "Dynamic Semantics": 181,
+    "Erroneous Execution": 47,
+    "Examples": 157,
+    "Implementation Advice": 101,
+    "Implementation Permissions": 99,
+    "Implementation Requirements": 90,
+    "Legality Rules": 164,
+    "Metrics": 12,
+    "NOTES": 0,
+    "Name Resolution Rules": 98,
+    "Post-Compilation Rules": 20,
+    "Static Semantics": 351,
+    "Syntax": 162,
+    "Usage": 4
+  },
+  "subclauses_total": 477
+}

@@ -1,0 +1,614 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/module_hierarchy/arrays.sv",
+  "source_sha256": "2f4664d266dc515662fb9a843cfcef3d837e8c4cd3b4d2b3b07f7b3cbf0cca65",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:0:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "0",
+              "a",
+              "0"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:1:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "0",
+              "a",
+              "1"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:2:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "0",
+              "a",
+              "2"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:3:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "0",
+              "a",
+              "3"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:0:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "1",
+              "grid",
+              "0"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:1:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "1",
+              "grid",
+              "1"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:2:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "1",
+              "grid",
+              "2"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 14
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:3:19:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 13,
+                  "end_line": 2,
+                  "end_col": 14
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "1",
+              "grid",
+              "3"
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 7,
+                      "col": 7,
+                      "end_line": 7,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 19
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": 32,
+                    "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:3:19:value",
+                    "signed": true,
+                    "elaboration_lowered": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 8,
+                        "col": 16,
+                        "end_line": 8,
+                        "end_col": 18
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000001011"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 16
+                    },
+                    "width": 32,
+                    "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:0:19:value",
+                    "signed": true,
+                    "elaboration_lowered": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 9,
+                        "col": 17,
+                        "end_line": 9,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000010110"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 22
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:0:19:value",
+                    "signed": true,
+                    "elaboration_lowered": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 10,
+                        "col": 19,
+                        "end_line": 10,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000100001"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 84
+                  },
+                  "name": "$display",
+                  "format": "array %0d %0d %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 38,
+                        "end_line": 11,
+                        "end_col": 48
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:3:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 49,
+                        "end_line": 11,
+                        "end_col": 59
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:2:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 60,
+                        "end_line": 11,
+                        "end_col": 70
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:1:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 71,
+                        "end_line": 11,
+                        "end_col": 82
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:0:1:a:1:0:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true,
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 94
+                  },
+                  "name": "$display",
+                  "format": "grid %0d %0d %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 37,
+                        "end_line": 12,
+                        "end_col": 50
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:3:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 51,
+                        "end_line": 12,
+                        "end_col": 64
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:2:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 65,
+                        "end_line": 12,
+                        "end_col": 78
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:1:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 79,
+                        "end_line": 12,
+                        "end_col": 92
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:1:4:grid:1:0:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true,
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "hierarchy_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

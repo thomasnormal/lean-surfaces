@@ -1,0 +1,228 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/min_typ_max/unknown.sv",
+  "source_sha256": "0e495a69a067340b5cf7d60d8a36aee9e4d48d21fa69ab4331fd2c0acd2ebc0e",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 10,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 14,
+              "end_line": 2,
+              "end_col": 24
+            },
+            "name": "four_state",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 12,
+              "end_line": 3,
+              "end_col": 21
+            },
+            "name": "two_state",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 9,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 11,
+                "end_line": 9,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 36
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 15
+                    },
+                    "width": 8,
+                    "name": "four_state"
+                  },
+                  "value": {
+                    "kind": "MinTypMax",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 34
+                    },
+                    "width": 8,
+                    "choice": "typ",
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 5,
+                        "col": 23,
+                        "end_line": 5,
+                        "end_col": 28
+                      },
+                      "width": 8,
+                      "bits": "zzzzzzzz"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 53
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 6,
+                      "col": 5,
+                      "end_line": 6,
+                      "end_col": 14
+                    },
+                    "width": 8,
+                    "name": "two_state"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": {
+                      "line": 6,
+                      "col": 16,
+                      "end_line": 6,
+                      "end_col": 51
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "MinTypMax",
+                      "span": {
+                        "line": 6,
+                        "col": 16,
+                        "end_line": 6,
+                        "end_col": 51
+                      },
+                      "width": 8,
+                      "choice": "typ",
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 6,
+                          "col": 28,
+                          "end_line": 6,
+                          "end_col": 39
+                        },
+                        "width": 8,
+                        "bits": "01xz0101"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 51
+                  },
+                  "name": "$display",
+                  "format": "states %h %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 29,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 8,
+                      "name": "four_state"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 40,
+                        "end_line": 7,
+                        "end_col": 49
+                      },
+                      "width": 8,
+                      "name": "two_state"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

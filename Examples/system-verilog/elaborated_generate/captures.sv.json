@@ -1,0 +1,513 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/elaborated_generate/captures.sv",
+  "source_sha256": "19285e28b06e77e510bbabf5ea6a60ac26957b651b3530eb1989c864e94da8d5",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 9,
+              "end_line": 3,
+              "end_col": 14
+            },
+            "name": "$generate:3:top:1:0:7:workers:1:0:65:value",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true,
+            "generated_scope": [
+              "0",
+              "workers",
+              "0"
+            ]
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 9,
+              "end_line": 3,
+              "end_col": 14
+            },
+            "name": "$generate:3:top:1:0:7:workers:1:1:65:value",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true,
+            "generated_scope": [
+              "0",
+              "workers",
+              "1"
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 5,
+              "end_line": 4,
+              "end_col": 29
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 13,
+                "end_line": 4,
+                "end_col": 28
+              },
+              "stmts": [
+                {
+                  "kind": "LocalDecl",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "name": "$intra:3:top:1:0:7:workers:1:0:84",
+                  "width": 32,
+                  "two_state": false,
+                  "init": {
+                    "kind": "Squash2",
+                    "span": {
+                      "line": 4,
+                      "col": 24,
+                      "end_line": 4,
+                      "end_col": 28
+                    },
+                    "width": 32,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 4,
+                        "col": 24,
+                        "end_line": 4,
+                        "end_col": 28
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 4,
+                          "col": 24,
+                          "end_line": 4,
+                          "end_col": 25
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "signed": true,
+                        "elaboration_lowered": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 4,
+                          "col": 26,
+                          "end_line": 4,
+                          "end_col": 28
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000011110"
+                      }
+                    }
+                  },
+                  "automatic_intra": true
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": null
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "target": {
+                    "kind": "ConcatTarget",
+                    "span": {
+                      "line": 4,
+                      "col": 13,
+                      "end_line": 4,
+                      "end_col": 28
+                    },
+                    "width": 32,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 13,
+                          "end_line": 4,
+                          "end_col": 18
+                        },
+                        "width": 32,
+                        "name": "$generate:3:top:1:0:7:workers:1:0:65:value",
+                        "signed": true,
+                        "two_state": true
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": null,
+                    "name": "$intra:3:top:1:0:7:workers:1:0:84",
+                    "width": 32
+                  }
+                }
+              ],
+              "intra_assignment_lowered": true
+            },
+            "generated_scope": [
+              "0",
+              "workers",
+              "0"
+            ]
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 5,
+              "end_line": 4,
+              "end_col": 29
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 13,
+                "end_line": 4,
+                "end_col": 28
+              },
+              "stmts": [
+                {
+                  "kind": "LocalDecl",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "name": "$intra:3:top:1:0:7:workers:1:1:84",
+                  "width": 32,
+                  "two_state": false,
+                  "init": {
+                    "kind": "Squash2",
+                    "span": {
+                      "line": 4,
+                      "col": 24,
+                      "end_line": 4,
+                      "end_col": 28
+                    },
+                    "width": 32,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 4,
+                        "col": 24,
+                        "end_line": 4,
+                        "end_col": 28
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 4,
+                          "col": 24,
+                          "end_line": 4,
+                          "end_col": 25
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001",
+                        "signed": true,
+                        "elaboration_lowered": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 4,
+                          "col": 26,
+                          "end_line": 4,
+                          "end_col": 28
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000011110"
+                      }
+                    }
+                  },
+                  "automatic_intra": true
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": null
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 13,
+                    "end_line": 4,
+                    "end_col": 28
+                  },
+                  "target": {
+                    "kind": "ConcatTarget",
+                    "span": {
+                      "line": 4,
+                      "col": 13,
+                      "end_line": 4,
+                      "end_col": 28
+                    },
+                    "width": 32,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 13,
+                          "end_line": 4,
+                          "end_col": 18
+                        },
+                        "width": 32,
+                        "name": "$generate:3:top:1:0:7:workers:1:1:65:value",
+                        "signed": true,
+                        "two_state": true
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": null,
+                    "name": "$intra:3:top:1:0:7:workers:1:1:84",
+                    "width": 32
+                  }
+                }
+              ],
+              "intra_assignment_lowered": true
+            },
+            "generated_scope": [
+              "0",
+              "workers",
+              "1"
+            ]
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 12,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 12,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 7,
+                      "col": 7,
+                      "end_line": 7,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 69
+                  },
+                  "name": "$display",
+                  "format": "pending %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 33,
+                        "end_line": 8,
+                        "end_col": 49
+                      },
+                      "width": 32,
+                      "name": "$generate:3:top:1:0:7:workers:1:0:65:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 51,
+                        "end_line": 8,
+                        "end_col": 67
+                      },
+                      "width": 32,
+                      "name": "$generate:3:top:1:0:7:workers:1:1:65:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 8
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 70
+                  },
+                  "name": "$display",
+                  "format": "captured %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 34,
+                        "end_line": 10,
+                        "end_col": 50
+                      },
+                      "width": 32,
+                      "name": "$generate:3:top:1:0:7:workers:1:0:65:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 52,
+                        "end_line": 10,
+                        "end_col": 68
+                      },
+                      "width": 32,
+                      "name": "$generate:3:top:1:0:7:workers:1:1:65:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

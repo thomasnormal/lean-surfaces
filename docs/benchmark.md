@@ -1,0 +1,618 @@
+# Python benchmark — real-world target scoreboard (v1)
+
+A fixed suite of real, important Python functions (CPython stdlib + PyPI),
+vendored **byte-verbatim** under `Examples/python/bench_*/`, whose
+proved/blocked status is tracked here. The suite is the measuring stick for
+tier growth: a status only flips to `provable-now` when the tier actually
+supports every construct the function executes, and only flips to **proved**
+when a `proof.lean` with no `sorry`/`admit`/`native_decide`/axioms lands.
+
+Ground rules (inherited from `docs/DESIGN.md` and the rsa_inverse precedent):
+
+- **Vendoring**: function bodies are byte-verbatim copies of the original
+  source, with line ranges and per-segment sha256 recorded in each file's
+  module docstring. Names that occur *only* inside `raise` statements or
+  `except` clauses (exception classes) are not vendored — the rsa_inverse
+  rule: no valid-input run evaluates them.
+- **Envelopes**: every vendored source has its envelope
+  (`bench_x/bench_x.json`) extracted by `extractors/python/extract.py`.
+  Since the F1 sprint, LITERAL defaults (int/bool/str/None) ride on the
+  params as `"default"` payloads and are in tier; only NON-literal defaults
+  (easter's `method=EASTER_WESTERN`) still show
+  `args_unsupported: "defaults"` — that is expected and *is* the data.
+- **Unreached ≠ supported-needed**: the interpreter refuses an `Unsupported`
+  statement only when execution reaches it (`execStmt`, Semantics.lean).
+  A `raise` guard behind a false condition needs *no* tier growth — only a
+  hypothesis in the theorem (rsa_inverse's `NotRelativePrimeError` argument).
+- Re-extraction check (2026-07-29, HEAD 12b222a+): all 17 pre-existing
+  `Examples/python/*` sources re-extracted; every existing envelope
+  byte-identical.
+- Re-extraction check (2026-07-30, F1/F2 sprint): all sources re-extracted
+  with the defaults-emitting extractor; all 17 pre-existing envelopes again
+  byte-identical (no existing example uses defaults or `is`); the 12
+  `bench_*` envelopes changed as expected (literal defaults now on params,
+  `is None` now an in-tier `Compare`), and are byte-stable under double
+  extraction.
+- Re-extraction check (2026-07-31, call:sorted sprint): extractor
+  unchanged by design (a `sorted` call is a plain `Call` node — exact
+  `len` analogy); all 21 envelopes re-extracted **byte-identical**,
+  `bench_statistics.json` included.
+
+## Flagships vs. census rows
+
+The suite plays two different roles, and rows are labeled by which one they
+serve (curation rule set 2026-07-31):
+
+- **Flagships** are the functions whose *proofs are interesting* — the
+  correctness argument needs an invariant or induction that is not visible in
+  the code text (binary-search bounds, the heap property). These carry the
+  narrative and are what we showcase. Current flagships: **`rsa_inverse`**
+  (proved — `Examples/python/rsa_inverse`, the pre-benchmark precedent:
+  python-rsa's extended-Euclid modular inverse, Bézout invariant),
+  **`bisect`** (proved), **`heapq._siftdown`/`_siftup`** (next; drives the
+  mutation tier), and **`statistics`** (medians **proved** 2026-07-31 via the
+  call:sorted tier feature — see the as-built record below; `median` proper
+  stays a float frontier marker).
+- **Census rows** are tier instrumentation: formula- and fold-shaped
+  functions (checksums, calendar math, string munging, date formulas) whose
+  specs are nearly definitional. **The vendored census suites were deleted
+  2026-07-31** (see "Removed suites" below) — the census function is now
+  served by the not-vendored references table and by the archived data at
+  the removal commit. New vendoring follows the flagship bar: no
+  checksum-class targets; candidates must have invariant content (e.g.
+  `fractions.limit_denominator` best-rational-approximation, pure-Python
+  `isqrt`, `date.toordinal`/`fromordinal` as a proved bijection).
+
+## Bands
+
+- **Band A — flagship**: CPython `bisect`. Smallest tier step, biggest name.
+- **Band B — pure-int / near-tier**: checksum arithmetic and calendar math
+  whose cores are Presburger-flavored integer folds. All Band-B suites were
+  census rows and were removed 2026-07-31.
+- **Band C — frontier markers**: representatives of hard feature classes
+  (float results, in-place mutation). The remaining vendored Band-C suites
+  are the two unproved flagships; heavy targets stay census references
+  only.
+
+## Scoreboard
+
+Origin shas abbreviated to 12 hex chars; full sha256 (file, sdist, and
+per-segment) are in each vendored file's docstring. Status is against the
+tier at HEAD (nothing beyond DESIGN.md v0). "callee X" means the function's
+own body adds no new blocker but it calls blocked same-file function X.
+
+| # | Target (vendored dir / function) | Origin + version + sha | Band | Status | Candidate spec (honest) | Notes |
+|---|---|---|---|---|---|---|
+| 1 | bench_bisect / `bisect_left` | CPython 3.9.25 bisect.py `6f213241b0d2` | A | **PROVED** (2026-07-30, cold-prover run; `Examples/python/bench_bisect/spec.lean`: `bisect_left_terminates` — unconditional, no sortedness — `bisect_left_sorted`, `bisect_left_insertion_point`, `bisect_left_partial`) | sorted int list `a`, `lo=0`: returns least `i ≤ len a` with `∀ j < i, a[j] < x` and `∀ j ≥ i, x ≤ a[j]` — proved as stated, plus the deterministic value `(a.takeWhile (· < x)).length` | 3.9 signature `(a,x,lo=0,hi=None)`: NO keyword-only `key` (3.10+), no slicing. Both defaults engaged; the unreachable `Raise` guard discharged by `lo = 0` (rsa_inverse precedent). |
+| 2 | bench_bisect / `bisect_right` | CPython 3.9.25 bisect.py `6f213241b0d2` | A | **PROVED** (as row 1; `bisect_right_terminates`, `bisect_right_total`, `bisect_right_sorted`, `bisect_right_insertion_point`, `bisect_right_partial`) | same with `a[j] ≤ x` / `x < a[j]` — proved, plus the deterministic value `(a.takeWhile (· ≤ x)).length` | Identical shape to bisect_left. |
+| 3 | bench_statistics / `median` | CPython 3.9.25 statistics.py `8dd0406ee898` | C | Nonempty integer-data runs execute on odd and even lengths; the general correctness proof is still pending. Empty-input `raise` remains loud. | odd n: middle element of sorted data; even n: binary64 mean of the two middle integers | True division is now modeled; no blanket float exclusion or new general theorem is claimed. |
+| 4 | bench_statistics / `median_low` | same | C | **PROVED** (2026-07-31, call:sorted sprint; independently reproduced the same day by a cold-prover run — see "Cold-prover runs (2026-07-31 — the medians)"; `Examples/python/bench_statistics/spec.lean`: `median_low_total` — deterministic value `(sortInts data).getD ((n−1)/2) 0` — `median_low_rank` (membership + at-least-k counts over SYMBOLIC data), `median_low_partial`, `median_low_presorted`, `median_low_le_median_high`) | `sorted(data)[(n-1)//2]` for nonempty data — proved as stated | The empty-input `Raise` discharged by `data ≠ []` (unreached-guard rule, as predicted). |
+| 5 | bench_statistics / `median_high` | same | C | **PROVED** (as row 4, cold-reproduced likewise; `median_high_total` — value `(sortInts data).getD (n/2) 0` — `median_high_rank`, `median_high_partial`, `median_high_presorted`) | `sorted(data)[n//2]` for nonempty data — proved as stated | |
+| 6 | bench_heapq_sift / `_siftdown` | CPython 3.9.25 heapq.py `0351667ed3af` | C | blocked-by {Subscript-store, BinOp:RShift, **caller-visible mutation** (aliasing)} | restores heap invariant on `heap[startpos..pos]`, permutation of input | **Mutation marker**: value semantics cannot show the caller the in-place writes; needs a state-threading transform (return the list), which breaks byte-verbatim calling convention. |
+| 7 | bench_heapq_sift / `_siftup` | same | C | blocked-by {Subscript-store, caller-visible mutation, callee `_siftdown`} | as row 6 from a leaf push | These two are the real runtime code: the C accelerator does not replace underscore helpers. |
+
+### Census references (NOT vendored — status tracked, bodies stay upstream)
+
+| Target | Origin | Why reference-only | Blockers |
+|---|---|---|---|
+| `statistics.mean` | CPython 3.9.25 statistics.py `8dd0406ee898` | drags in `_sum`/`_convert`/`Fraction` machinery (100+ lines, heavy) | import-call {iter, list, _sum, _convert}, Assert, tuple-unpack of call result, Attribute, true division → float |
+| `bisect.insort_left` / `insort_right` | CPython 3.9.25 bisect.py `6f213241b0d2` | 2-line bodies, but the point is `a.insert(lo, x)` — method-call mutation | Attribute call + caller-visible mutation, defaults |
+| `stdnum.verhoeff.checksum` / `stdnum.damm.checksum` | python-stdnum 2.2 | reference **module-level table constants** — v0 `callFunction` has no globals, so vendoring them cannot run | module-globals (a blocker class no syntax census row shows), For, enumerate/reversed genexp, nested subscripts |
+| stdnum `compact`/`format` idiom (e.g. `es.dni.compact`) | python-stdnum 2.2 | 203 `compact` + 94 `format` functions gated on `stdnum.util.clean`/`isdigits` (regex) | Attribute str/re methods, import-call |
+
+## Scoreboard summary (2026-07-31 — post call:sorted sprint)
+
+- Vendored: **7 functions / 3 suites** (all flagships). **Proved: 4**
+  (bisect_left, bisect_right — both by cold prover agents working from the
+  repo docs alone; see "Cold-prover runs (2026-07-30)" below — and
+  median_low, median_high via the call:sorted tier feature, each
+  independently reproduced by a same-day cold-prover run from the repo
+  docs; see "Cold-prover runs (2026-07-31 — the medians)"). Blocked: 3.
+- Flagship view: **3 of 4 flagships proved** (rsa_inverse — outside this
+  suite's numbering — bisect, and the statistics medians; heapq sift is
+  the scoreboard's remaining frontier, and `median` proper stays a float
+  marker inside the statistics suite).
+- Landed proof artifacts: `Examples/python/bench_bisect/{spec,proof}.lean`
+  (9 theorems) and `Examples/python/bench_statistics/{spec,proof}.lean`
+  (9 theorems: the 2 deterministic totals, 2 rank characterizations, 2
+  `~~>` forms, 2 pre-sorted corollaries, low ≤ high). Axiom audit: every
+  landed theorem depends on exactly
+  `[propext, Classical.choice, Quot.sound]` — now pinned in-tree:
+  `bench_statistics/spec.lean` ends with an explicit `#print axioms`
+  block over its nine theorems (adopted from the cold deliverables). No
+  `sorry`/`admit`/`native_decide` anywhere. (The calendar proofs and the
+  iso7064 loud-refusal census spec were removed with their suites — see
+  "Removed suites".)
+- Flagship non-vacuity (interpreter-checked, not just census: surprise #2
+  below says the envelope can lie): the vendored `bisect_left`/`bisect_right`
+  run from their envelope agree with CPython 3.9.25 on sorted-list probes at
+  arities 2 (both defaults filled — the `hi is None` branch), 3, and 4;
+  `lo < 0` is the sole path reaching the residual `Unsupported Raise`
+  (CPython: `ValueError`, Lean: loud `unsupported`), confirming the
+  proof-side `lo ≥ 0` classification. The vendored medians run from their
+  envelope agree with CPython 3.9.25 on the full 12-input probe table
+  (odd/even, unsorted, duplicates, negatives, singleton, all-equal —
+  pinned as the 24 `#py_check` rows of bench_statistics/spec.lean, list
+  arguments being CLI-inexpressible per the bisect precedent) plus the
+  int-arg TypeError edges in `harness/cases.json`; the empty list is the
+  sole path reaching the residual `Unsupported Raise` (vendored-file
+  CPython: `NameError: StatisticsError` — not vendored by the rsa_inverse
+  rule; Lean: loud `unsupported`), confirming the proof-side `data ≠ []`
+  classification.
+- Blocker histogram over the 3 blocked functions (a function counts once
+  per blocker): Raise 1 · BinOp:Div→float 1 · Subscript-store 2 ·
+  caller-visible mutation 2 · BinOp:RShift 1 · callee-only 1. (The
+  wide-census histogram over the removed 26 census functions is archived
+  at the removal commit.)
+- Projection: tier + reference-type/mutation tier → **6/7** (rows 6–7,
+  the heapq pair). Row 3 (`median`) honestly stays: its even-length
+  branch is float division, out of `Val` v0. (The previous projection —
+  "tier + {call:sorted} → 4/7" — was cashed in by this sprint, exactly
+  as stated.)
+
+## Removed suites (2026-07-31)
+
+Nine census suites (26 functions) were deleted per the flagship curation
+rule: bench_calendar (its isleap/leapdays proofs included), bench_capwords,
+bench_dni_check, bench_easter, bench_iso7064_mod_11_10 (its loud-refusal
+census spec included), bench_iso7064_mod_11_2, bench_iso7064_mod_97_10,
+bench_luhn, bench_stdnum_luhn. Their vendored sources, envelopes, proofs,
+scoreboard rows, wide-census blocker histogram, and unlock projections
+remain available at commit `87a783a` (last commit before removal). The
+historical sections below (cold-prover runs, F1/F2 as-built record,
+surprises) reference some of these suites; they are kept verbatim as the
+record of work that actually happened.
+
+## Flagship plan: `bisect_left` / `bisect_right`
+
+Claim under test: *"bisect needs {defaults, is-None} only."* — **settled
+2026-07-30: the F1/F2 sprint landed both features and the claim held.**
+Post-sprint census of the re-extracted `bench_bisect.json`: both functions
+have `args_unsupported: null`, `lo`/`hi` carry `default` payloads
+(`{"type":"int","repr":"0"}` / `{"type":"none"}`), `hi is None` is an
+in-tier `Compare [Is]` node, and the SOLE remaining `Unsupported` node per
+function is the `Raise` guard — proof-side only, per the third row below.
+Construct inventory, verified against the vendored bytes (the two functions
+are construct-identical):
+
+| Construct (exact counts per function) | Tier status |
+|---|---|
+| 4 params `(a, x, lo=0, hi=None)`, both defaults **Constant** (`0`, `None`) | ~~`args_unsupported: "defaults"`~~ → **F1 LANDED** (params carry `default` payloads; call arity window `nparams − ndefaults ≤ n ≤ nparams`) |
+| `hi is None` → ~~envelope `Unsupported Compare:Is`~~ | **F2 LANDED** (`Is`/`IsNot` in tier iff one side of the link is the literal `None`) |
+| `if lo < 0: raise ValueError('lo must be non-negative')` → `Unsupported Raise` (the `ValueError` call is inside it) | **NO tier growth** — statement is refused only if reached; theorems take `lo ≥ 0` (default `lo=0` satisfies it). rsa_inverse precedent. |
+| docstring (`Expr` + `Constant:str`), `hi = len(a)` (`Call:len`), `while lo < hi` (`Compare:Lt`), `mid = (lo+hi)//2` (`BinOp:Add`, `BinOp:FloorDiv`), `a[mid] < x` (`Subscript`, `Compare:Lt`), `lo = mid+1` / `hi = mid` (`Assign`), `return lo` | all in-tier today |
+| Full histogram per function: Assign 4 · BinOp:Add 2 · BinOp:FloorDiv 1 · Call:len 1 · Compare:Lt 3 · Constant:int 3 · Constant:str 1 · Expr 1 · If 3 · Name 17 · Return 1 · Subscript 1 · While 1 · Unsupported{Raise, Compare:Is} | — |
+
+**Verdict: claim is 95% right, one loud caveat.** The construct list has a
+*third* off-tier item — the `raise ValueError` guard — but it demands no tier
+feature, only the `lo ≥ 0` hypothesis (automatic when using the defaults).
+No other surprises: on this toolchain (Python **3.9.25**) there is **no
+keyword-only `key` parameter** (added in 3.10 — vendoring from a newer
+CPython would have brought keyword-only args into Band A) and **no slicing**
+anywhere in either function.
+
+### Band-A tier growth — LANDED 2026-07-30 (as-built record)
+
+**F1 — literal parameter defaults** (shipped exactly as planned, with one
+sharpening: "constant" tightened to *literal* — `ast.Constant` of
+int/bool/str/None; a negative number `lo=-1` parses as
+`UnaryOp(USub, Constant)` and is therefore non-literal, out of tier).
+- Envelope schema: a param object MAY carry `"default": <const>` (existing
+  const encoding), emitted only when present — verified: all 17 existing
+  envelopes byte-identical on re-extraction; default-free params keep
+  exactly the two historical keys.
+- Extractor: literal defaults clear `args_unsupported`; ANY non-literal
+  default (Name, negative number, call, `[]`) keeps
+  `args_unsupported: "defaults"` with NO `default` keys — mixed
+  literal/non-literal included. `*args`/kw-only/`**kwargs`/decorators
+  unchanged (still refused).
+- Lean: `Param.default : Option Const`; `callFunction` arity rule is the
+  window `nparams − ndefaults ≤ nargs ≤ nparams` (`arityOk`, with
+  `arityOk_full` embedding the old exact rule); `mkCallEnv` fills omitted
+  trailing params (`defaultBindings`). Def-time-vs-call-time: CPython
+  evaluates defaults once at `def` time; for literals, call-time filling is
+  observationally identical (nothing to mutate/rebind) — the mutable-default
+  footgun is unrepresentable by the literals-only rule. Arity violations →
+  one canonical `TypeError` message (the harness compares exception class
+  names, so CPython's per-case wording differences are immaterial).
+- Surface: `py_check`/`py_prove` inherit the window through the interpreter;
+  the VC bridges got general-arity forms (`PyTriple.callsTo_arityOk`,
+  `…exists_callsTo_arityOk`, `…exists_callsTo_toVal_arityOk`,
+  `…raises_arityOk` — every pre-existing bridge theorem keeps its exact
+  statement as an exact-arity corollary) and `py_vcgen` applies the general
+  forms, so `f(x) ==> v` with omitted optionals walks end-to-end
+  (VCTests.lean `scale` smoke: arities 1 and 3, `#py_check` at 1/2/3).
+- Differential rows: `Examples/python/opt_args/` — 38 CPython-vs-Lean calls
+  across 8 functions (with/without optionals, too-few/too-many → TypeError,
+  int/str/bool/None defaults) — all green.
+
+**F2 — `is` / `is not` with a literal `None` side** (shipped as planned).
+- Extractor: `Is`/`IsNot` survive per-link IFF one side of that comparison
+  link is the literal `None` (either side); chained `x is None is None` is
+  in-tier, `x is y is None` is not (first link). Everything else stays a
+  whole-node `Unsupported "Compare:Is[Not]"` — identity on ints/strs is
+  CPython-implementation-defined (small-int caching, interning).
+- Lean: `x is None ⟺ x = Val.none` (`Val.isNone`); `is not` its negation;
+  a hand-built AST comparing two non-`None` values is refused loudly.
+  Chain/evaluation-order rules unchanged.
+- Differential rows: in the same opt_args suite — `is None`/`is not None`
+  over ints and `None` (flowing through defaults and intra-module calls,
+  since the harness CLI passes ints only), both branches, `None is None`.
+
+**Explicitly NOT needed for Band A**: Raise/Try, ValueError, keyword-only
+args, slices, Attribute, any new builtin. Flagship theorem shape (spec
+layer of DESIGN.md): for `a` a sorted int list,
+`CallsTo m "bisect_left" #[.list a, .int x] (.int i)` with
+`0 ≤ i ≤ a.size`, `∀ j < i, a[j] < x`, `∀ j ≥ i, x ≤ a[j]` — the two-arg
+call exercises **both** defaults, and `lo = 0` discharges the guard.
+
+**FLAGSHIP LANDED (2026-07-30)**: exactly that shape (surface form, `⇓`
+and `==>`), proved by two independent cold prover agents and adapted into
+`Examples/python/bench_bisect/{spec,proof}.lean` — plus strengthenings the
+plan did not ask for: UNCONDITIONAL termination (any list, no sortedness)
+and the deterministic `takeWhile`-length value forms. "Explicitly NOT
+needed" held: the proofs use no Raise/Try/keyword/slice/Attribute/builtin
+support. What the plan did NOT predict: both loop proofs had to leave the
+`py_vcgen`/`py_loop` path because the body creates `mid` on its first
+iteration (see "Cold-prover runs" below, framework fix F-2).
+
+## Flagship plan: `heapq._siftdown`/`_siftup` and `statistics` medians
+
+What each of the two (at planning time) unproved flagships actually needs
+(2026-07-31; the medians landed the same day — see their as-built record
+below):
+
+**heapq sift (rows 6–7, Band C)** — the real CPython runtime code (the C
+accelerator does not replace the underscore helpers). Spec shape: the
+returned/updated list is a permutation of the input that restores the heap
+invariant on the affected range — an inductive argument over the
+parent-chain walk, flagship-grade. Blockers: `Subscript-store`,
+`BinOp:RShift` (cheap), and the hard one, **caller-visible mutation** —
+value semantics cannot show the caller the in-place writes. This is the
+designated driver for the reference-type/heap tier (the `~ref~` design
+banked in the heap-tier notes): the benchmark's next tier investment should
+be justified by this pair, not by more census rows.
+
+**statistics medians (rows 4–5, Band C) — LANDED 2026-07-31 (as-built
+record).** The plan's claim — *one tier feature away: `call:sorted`* —
+held exactly. As built:
+- Extractor/envelope: **zero change** (exact `len` analogy — `sorted(xs)`
+  was always a plain in-tier `Call` node; the builtin lives entirely in the
+  interpreter's name-resolution order). Only a regression test landed
+  (`test_extract.py`: plain call in-tier; `key=`/`reverse=` carry
+  `call_unsupported: "keywords"`; `sorted`-shadowing assignment trips the
+  static-locals guard). All 21 existing envelopes byte-identical on
+  re-extraction.
+- Lean: `sortedVal` next to `lenVal` (Semantics.lean) — all-int list →
+  NEW ascending list via `sortInts`, a **structural insertion sort**,
+  kernel-reducible on purpose: core's `List.mergeSort` is well-founded
+  recursion and does NOT kernel-reduce, which would have broken
+  `#py_check`/`py_check`/`py_vcgen` (the mergeSort trap, recorded in
+  AGENTS.md). Arity/non-iterable → honest CPython-exact `TypeError`s;
+  str/tuple/non-int-element → loud `unsupported` (CPython succeeds there);
+  builtin-as-value refused; a module-level `def sorted` shadows the
+  builtin (`findFunction` first). One mechanical FuelMono case added
+  (Obs.lean). `py_vcgen` fix: the walker's call-assignment interception
+  now keys on module-table membership (`calleeInModule`), so
+  `data = sorted(data)` rides ordinary symbolic execution (VCTests smoke:
+  `sorted_len(data) ==> len(data)` over symbolic data).
+- Proofs (`Examples/python/bench_statistics/{spec,proof}.lean`, 9
+  theorems, standard axioms only): deterministic totals
+  `median_low_total` / `median_high_total` (`==>` with values
+  `(sortInts data).getD ((n−1)/2) 0` / `… (n/2) 0` under `data ≠ []` —
+  one rank expression covers both of median_low's parity branches), the
+  planned rank characterization over SYMBOLIC data `median_low_rank` /
+  `median_high_rank` (membership + at-least-k counts via
+  `sortInts_pairwise`/`sortInts_perm`, harvested from Mathlib's
+  `List.insertionSort` through the `sortInts_eq` bridge), `~~>` forms,
+  pre-sorted-input corollaries (`sortInts` fixpoint), and
+  `median_low_le_median_high`. The empty-input `raise StatisticsError`
+  guard was discharged by `data ≠ []` (unreached-guard rule, as planned —
+  no Try/Raise tier growth).
+- Differential: 12-input CPython ground-truth table pinned as 24
+  `#py_check` rows (list args are CLI-inexpressible — bisect precedent);
+  3 int-arg `cases.json` rows (not-iterable ×2, arity) flipped from
+  would-be NameError mismatches to MATCH.
+
+`median` proper (row 3) stays a frontier marker: its even-length branch
+is float division, honestly out of `Val` v0. `mean` via exact `_sum`
+(census reference) is the long-game statistics target once Fraction
+machinery is in reach.
+
+## Cold-prover runs (2026-07-30)
+
+Method: four INDEPENDENT fresh agents ("cold provers"), each given only a
+target name and told to work from the repo's own docs (AGENTS.md,
+`docs/**`, the example files) — no coaching, no tier edits allowed, all
+scratch confined to `/tmp` (repo verified untouched afterwards). This is
+the campaign's legibility measurement: can a stranger prove real targets
+from the documentation alone? Every deliverable was re-verified at HEAD by
+the landing pass: `lake env lean` exit 0; no `sorry`/`admit`/
+`native_decide`; `#print axioms` = `[propext, Classical.choice,
+Quot.sound]` on every audited theorem.
+
+### Results
+
+| Target | Outcome | Attempts (scratch artifacts) | Top stuck-point | Doc verdict |
+|---|---|---|---|---|
+| bench_bisect / `bisect_left` (Band A flagship) | **PROVED** — 4 theorems, incl. unconditional termination (no sortedness hypothesis at all) | 1 deliverable + 6 probe files | the loop body CREATES `mid` on iteration 1 (`Env.set` appends a slot), so the documented `py_vcgen`/`py_loop` recipe cannot align the loop state; fell back to hand-instantiating `execWhile_total_of_invariant` with an `Option Int` mid-slot and a hand-transcribed loop AST (`#guard`-checked against the loaded envelope) | docs sufficed end-to-end (`py_threshold`, `py_simp`, `execWhile_at_least`, threshold discipline all used as documented); the growing-env case was UNdocumented — goal-shape row added to AGENTS.md this pass |
+| bench_bisect / `bisect_right` (Band A flagship) | **PROVED** — ∃-form total correctness (CPython's docstring contract); landed strengthened (see adaptation deltas) | 1 deliverable + ~40 probe/iteration artifacts | same growing-env wall, modeled as a `grown : Bool` flag; the costliest part was splicing the loop lemma back into `callFunction` (the `py_begin` entry lemma + `execWhile_at_least` + a hand-found fuel offset) | same verdict as prover 0; the loop-splice dance consumed most of the ~35 compile iterations — packaged-lemma/tactic candidate (fix F-3) |
+| bench_iso7064_mod_11_10 (`checksum`/`calc_check_digit`/`validate`/`is_valid`) | **BLOCKED-CONFIRMED** (honest negative): proved the blockage itself as theorems — every call `.timeout ∨ .unsupported` for EVERY argument and fuel, hence no `==>` and no `==>!` — plus algorithm-level model correctness (roundtrip, uniqueness, substitution detection, transposition counterexample) validated against 120 CPython ground-truth rows | 1 deliverable + 6 probes | the tier gap exactly as the scoreboard said ({For, call:int} / {Try} / {call:str}); NEW finding: `calc_check_digit`'s `str(...)` makes v0 raise `NameError("str")` where CPython returns `'3'` — loud in outcome, wrong in KIND (fix F-1) | scoreboard rows 5–8 and surprise #2 ("check the interpreter, not the envelope") both confirmed EXACT; the tasking pointed at a nonexistent dir name (`bench_stdnum`) and the prover recovered from the scoreboard table alone |
+| "luhn or Band B" (fallback taken: bench_calendar / `isleap` + `leapdays`) | **PROVED** — `isleap`, `leapdays` closed form, AND the per-year reference-count theorem (`leapCount`) | 2 attempts + 5 spike files | none on the final target (`py_prove`, one `Nat` induction, `omega`); the real work was verifying read-only that every Luhn-suite function is genuinely tier-blocked before invoking the offered fallback | benchmark.md's provable-now labels were accurate and actionable; the `#py_check`-first house rule was followed from AGENTS.md alone |
+
+Score: **3 of 4 targets proved; the 4th target was tier-blocked by design
+and the prover proved the blockage rather than faking progress** — the
+"loudly, never wrongly" property held under adversarial-ish use.
+
+### Adaptation deltas (cold deliverable → landed tree)
+
+Statements were only ever STRENGTHENED, never weakened:
+
+- `bisect_left`: landed verbatim. Cosmetics: support namespace
+  `ColdBisect` → `BL`; `bisect_core` → `bisect_left_core`; one unused
+  helper (`indexVal_toVal`) dropped.
+- `bisect_right`: the cold ∃-form claim landed unchanged as
+  `bisect_right_total`; landing added `bisect_right_terminates`
+  (unconditional — required re-deriving the loop obligations under a
+  bounds-only invariant), `bisect_right_sorted` (deterministic
+  `takeWhile (· ≤ x)` value), `bisect_right_insertion_point` (`⇓`), and
+  `bisect_right_partial` (`~~>`), for API symmetry with `bisect_left`.
+  Two scratch `example` probes dropped; two `unusedSimpArgs` lints
+  silenced by `set_option … in`.
+- `bench_calendar`: landed verbatim (statements unchanged); `leapCount`
+  moved into the proof namespace; 22 differential rows added to
+  `harness/cases.json` (all green vs CPython 3.9.25).
+- `bench_iso7064_mod_11_10`: the scratch file's tier theorems and model
+  development were NOT landed (blocked target ⇒ checks-only census spec
+  per the house layout); its interpreter-status rows landed in
+  `spec.lean`, and its stuck-point analysis is quoted verbatim below.
+
+### Stuck-point analysis, verbatim (the blocked target)
+
+From the cold deliverable's header
+(`/tmp/coldprover_iso7064_mod_11_10/iso7064_mod_11_10.lean`, the file's
+own "honesty contract" — reproduced verbatim as the legibility record):
+
+> 1. No positive `==>` theorem about these functions is provable through
+>    the repo's definitional interpreter today — and this file PROVES
+>    that, not just asserts it: `checksum_run`/`validate_run`/
+>    `is_valid_run` show every call either times out or is refused loudly
+>    (`Res.unsupported`, naming the out-of-tier statement), for EVERY
+>    argument value and EVERY fuel. That is the framework's "loudly,
+>    never wrongly" guarantee, instantiated as kernel-checked theorems.
+>    Corollaries kill both arrows: no `==>`, no `==>!` (checksum/
+>    validate/is_valid never return AND never raise).
+>
+> 2. `calc_check_digit_run` documents a FIDELITY ARTIFACT: its body's
+>    `str(...)` call hits the v0 name-resolution rule (local env → module
+>    functions → builtin `len` → NameError, docs/DESIGN.md "Name
+>    resolution"), so the v0 semantics *raises* `NameError("str")` where
+>    CPython returns `'3'`. The positive `==>!` theorem below is a true
+>    statement about the v0 model and a FALSE statement about CPython —
+>    stated only to pin the gap (cf. docs/benchmark.md "surprise #2":
+>    check claims against the interpreter, not the envelope).
+>
+> 3. The functional correctness of the *algorithm the vendored code
+>    implements* is proved against a Lean model transcribed line-by-line
+>    from the vendored bytes (Python `%` = `Int.fmod`, `check or 10` =
+>    truthiness fallback, fold init 5). The model is differentially
+>    validated against CPython 3.9.25 running the actual vendored file on
+>    40 inputs x 3 functions (120 `#guard` rows below, generated
+>    2026-07-30, stdnum exception classes injected per the vendoring
+>    rule). Proved: range (every checksum state is a digit 0..9);
+>    `checksum_append_calc` (the roundtrip
+>    `validate(number + calc_check_digit(number))` succeeds — for EVERY
+>    `List Int`, no digit hypothesis needed); `calc_check_digit_unique`
+>    (it is the UNIQUE such digit); `substitution_detected` (THE point of
+>    ISO 7064 — every single-digit substitution error changes the
+>    checksum, hence is caught); `isValid_iff`
+>    (`is_valid n = true ↔ checksum n = 1`, incl. the empty-string
+>    truthiness corner of `bool(validate(number))`);
+>    `transposition_not_detected` (the adjacent-transposition guarantee
+>    is REFUTED by witness — `checksum "56" = checksum "65"`, and both
+>    "560" and "650" validate; CPython concurs on all four facts).
+>
+> 4. The INTENDED bridging spec — `iso7064.checksum(s) ==> checksumStr s`
+>    — is not merely unproved: its negation is a theorem of the current
+>    tier (`checksum_no_result`). It becomes provable exactly when
+>    {For-over-str, call:int} land (docs/benchmark.md projection row).
+
+### Framework fixes indicated (NOT implemented this pass — next wave)
+
+- **F-1 (semantics, fidelity-in-kind)**: builtin names in call position
+  (`str`, `int`, `bool`, …) fall through v0 name resolution to
+  `NameError` — the model RAISES where CPython RETURNS. The refusal is
+  loud but of the wrong kind (`.exn`, not `.unsupported`); it can make a
+  `==>!` theorem that is false of CPython. Until call:str/int/bool land,
+  unresolved names that are Python builtins should refuse
+  `.unsupported`. Found by cold prover 2; pinned in-tree by the
+  `calc_check_digit` row of `bench_iso7064_mod_11_10/spec.lean` (that
+  row must flip, never be deleted). Differential-harness rule: any such
+  change goes through `harness/cases.json` rows first.
+- **F-2 (proof layer)**: loops whose body CREATES a variable on the
+  first iteration (CPython's `mid = (lo+hi)//2` idiom) defeat
+  `py_vcgen`/`py_loop` — both Band-A provers independently fell back to
+  hand-instantiated `execWhile_total_of_invariant` with an
+  `Option`/`Bool` env-shape flag. Teach the loop tactics an env-growth
+  story (pre-roll the first iteration or normalize the env), or package
+  the hand pattern. Interim: goal-shape row added to AGENTS.md
+  (this pass), pointing at `Examples/python/bench_bisect/proof.lean`.
+- **F-3 (proof layer, ergonomics)**: splicing a proven `execWhile` run
+  back into `callFunction` (`py_begin`'s `hentry` + `execWhile_at_least`
+  + hand-found fuel offsets like `fl + 26`) is where prover 1 burned
+  most of its ~35 iterations. A packaged splice lemma/tactic that hides
+  the offset arithmetic would cut flagship-class proof cost the most.
+- **F-4 (harness)**: `leanmodels-run` parses CLI args as ints only, so
+  the PROVED flagship has no `harness/cases.json` rows — the
+  highest-value differential targets are exactly the list/str-taking
+  ones. Extend `parseCli` with list/str literals.
+- **F-5 (tier growth, already projected)**: {For-over-str, call:int,
+  call:str, IfExp} → 9/33 proved-able; + {Try, Raise, call:bool} →
+  13/33. Cold prover 2 re-confirmed these are the exact blockers on the
+  iso7064 quartet (and would make its 120-row validated model the
+  ready-made spec layer).
+- **F-6 (library)**: all three proving agents re-derived the same
+  marshalled-list indexing lemmas (`arr_getD`/`arrVal_getElem`/
+  `getD_eq_getElem`, sorted-`Pairwise`-to-`getD` monotonicity,
+  `takeWhile`-length characterizations). Promote them from
+  `bench_bisect/proof.lean` into a shared list-spec lemma file.
+- **F-7 (notebook tooling, found by this landing's CI run)**: the
+  `%%lean` magic's `NotebookHeader` cache (`tools/lean_magic.py`,
+  `_rebuild_header`) keys on the envelope set only — NOT on the
+  `LeanModels` build — so any ABI change (F1's `Param.default` field)
+  leaves a stale `notebooks/work/NotebookHeader.olean` and the notebooks
+  CI step fails with kernel `Param.mk` arity mismatches until the
+  gitignored cache is deleted by hand. Include the `LeanModels` olean
+  fingerprint (or `lake` build stamp) in `_header_key`.
+
+## Cold-prover runs (2026-07-31 — the medians)
+
+Method as in the 2026-07-30 wave: two INDEPENDENT fresh agents, one
+medians target each, repo docs only, all scratch confined to the session
+scratchpad (repo verified untouched — only the two new landed `.lean`
+files were present, from the sprint, not from the provers). Both
+deliverables re-verified by this landing pass: `lake env lean` exit 0, no
+`sorry`/`admit`/`native_decide`, `#print axioms` = the standard triple on
+all four target theorems each (helpers on subsets).
+
+**HEADLINE CAVEAT (both provers lead with it): these were NOT cold
+discovery runs.** The call:sorted sprint had landed
+`bench_statistics/{spec,proof}.lean` in the working tree the same day, and
+orientation surfaces the answer immediately (scoreboard rows 4–5 say
+PROVED; AGENTS.md's `sorted` goal-shape row names
+`bench_statistics/proof.lean` as the proof to imitate). Both provers
+found the landed proof, said so openly, and reproduced it standalone
+(own namespace, every helper re-derived, nothing imported from the
+Examples tree). These runs therefore measure
+**reproducibility-from-repo**, not discovery legibility — the discovery
+datapoint for call:sorted is burned (fix F-8). Their near-empty
+stuck-point logs must be discounted accordingly.
+
+### Results
+
+| Target | Outcome | Attempts (scratch artifacts) | Top stuck-point | Doc verdict |
+|---|---|---|---|---|
+| bench_statistics / `median_low` (Band C flagship) | **REPRODUCED** (see caveat) — all 4 landed `median_low` theorems (total, rank, `~~>`, presorted), self-contained, 17-declaration `#print axioms` audit | 1 deliverable + 1 probe file | the tasking/repo-state mismatch itself (target already proved in-tree — same genus as the 2026-07-30 `bench_stdnum` nonexistent-dir incident) | conditional on the caveat: for *reproduction* the docs + exemplar are fully sufficient — a single dead-end compile in the entire run (the doc-comment trap below) |
+| bench_statistics / `median_high` (Band C flagship) | **REPRODUCED** (see caveat) — same 4-theorem set; captured full audit output | 1 deliverable + captured `out.txt` | same mismatch; plus AGENTS.md line 3 ("core only, no packages") contradicting the Mathlib-importing exemplar | the AGENTS.md `sorted`-row recipe is exact and complete — every named fact load-bearing and sufficient; the core closed on the first out-of-tree compile |
+
+### Adaptation deltas (cold deliverable → landed tree)
+
+Unlike the 2026-07-30 wave, the landed proofs PREDATE these cold runs, so
+adaptation ran in reverse: the landing pass verified the cold files
+against the tree mechanically and adopted the one thing they added.
+
+- Statements: all 8 cold theorem statements (4 per prover) are
+  verbatim-identical to the landed ones — nothing strengthened, nothing
+  weakened; namespaces `ColdProver.MedianLow`/`ColdProver.MedianHigh`
+  correspond to `Examples.python.bench_statistics.proof`.
+- Landed-only surplus (no cold twin, as expected from single-target
+  charters): `median_low_le_median_high` (cross-function) and the
+  `Val`-level bridge `sortedVal_int_list`.
+- Helpers: the two provers independently re-derived the identical
+  14-lemma support stack (sort bridge ×6, access/count ×4, rank ×3,
+  `length_pos`) — byte-identical to each other and to `proof.lean` up to
+  two cosmetics in the median_high file (`sorted_getD` swaps a
+  `rw`/`exact` order; the rank lemmas inline
+  `(sortInts_perm data).countP_eq` instead of naming `hperm`). Zero merge
+  work; **F-6 re-confirmed a third and fourth time** — four independent
+  agents have now re-derived the same list-spec lemmas.
+- Non-vacuity: each cold file's 9 `#py_check` rows are a subset of
+  spec.lean's 24-row pinned table; the empty-list
+  `#guard … matches .unsupported` tier-edge idiom matches exactly.
+- **Adopted into the tree (this landing)**: the cold files' explicit
+  `#print axioms` audit blocks — `spec.lean` now ends with the block over
+  its nine theorems (previously the audit was run by hand and recorded
+  only here).
+
+### Stuck-point findings (both provers, deduplicated)
+
+1. **The metric was burned** (both provers' top finding): a cold run
+   against an already-solved target cannot measure discovery legibility.
+   → F-8.
+2. **AGENTS.md line 3 is stale**: "core only, no packages" — but
+   `lakefile.toml` requires Mathlib and the exemplar imports
+   `Mathlib.Data.List.Sort`. A truly cold prover taking line 3 at face
+   value would re-derive the `Pairwise`/`Perm` machinery from core
+   (substantial wasted work). Today the exemplar's own import note (the
+   `List.pairwise_insertionSort` pin-rename remark) is what corrects the
+   record. → F-9.
+3. **Doc-comment-on-command trap** (the only compile error either prover
+   hit, verbatim): attaching `/-- … -/` to a `#guard` fails with
+   `unexpected token '#guard'; expected 'lemma'` — the message never
+   mentions the doc comment, and the house `/-! … -/` idiom before
+   command blocks was not documented as load-bearing. → AGENTS.md
+   failure-mode row added this pass.
+4. **`arrVal_getElem` reads as a library lemma** in AGENTS.md's `sorted`
+   row but greps to nothing under `LeanModels/` — it is example-local
+   (bench_bisect, bench_statistics), as are
+   `sorted_getD`/`getD_eq_getElem`. Momentarily confusing (F-6 again).
+   → AGENTS.md failure-mode row added this pass.
+5. **What worked, zero fight**: the `sorted` goal-shape recipe reproduced
+   verbatim compiled first try out-of-tree; `load_program`'s
+   relative-path-resolves-against-cwd rule is documented inside its own
+   error message (good design — standalone compile worked first try);
+   `#py_check`-first house rule followed from AGENTS.md alone; the
+   Mathlib-pin rename note pre-empted a real lookup; the axiom bar was
+   met as stated (target theorems exactly the triple, helpers subsets).
+
+### Framework fixes indicated (continuing the numbering)
+
+- **F-8 (campaign methodology)**: cold-prover dispatch must pin a repo
+  revision predating the target's landing (or strip the landed example
+  from the tree) — otherwise the run measures reproducibility, not
+  discovery. Both medians datapoints were burned this way; the tasking
+  and the tree must be reconciled at dispatch time (same genus as the
+  2026-07-30 `bench_stdnum` incident).
+- **F-9 (docs, one line)**: fix AGENTS.md line 3 — the toolchain line
+  predates the Mathlib dependency. (Out of this landing's additive-only
+  AGENTS.md write set; the two additive failure-mode rows landed, the
+  header-line edit deliberately did not.)
+
+## Surprises found while vendoring (loud list)
+
+1. **The bisect claim was missing the `raise` guard** (`if lo < 0: raise
+   ValueError(...)`) — harmless (unreachable-branch argument) but it must be
+   stated: the envelope contains an `Unsupported Raise` node and the theorem
+   carries `lo ≥ 0`.
+2. **`'%02d' % n` masquerades as in-tier** (row 15): `BinOp:Mod` is an
+   allowed envelope node, so no syntax census flags it; only the interpreter
+   knows (`.unsupported "'%' string formatting"`). Any future "provable-now"
+   claim must be checked against the *interpreter*, not the envelope.
+3. **easter's default is a `Name`, not a constant** — F1 (constant defaults)
+   does not unlock it; module-constant defaults are a separate, harder
+   feature (def-time evaluation / global folding).
+4. **verhoeff/damm cannot be vendored runnable at all** in v0: their table
+   constants live at module level and `callFunction` has no globals. A
+   whole blocker class ("module-globals") that per-function syntax censuses
+   do not surface.
+5. The three iso7064 `validate` segments (and the three `is_valid`) are
+   **byte-identical across modules** (equal segment sha256) — one proved
+   spec shape will replay three times.
+6. Vendoring from Python 3.9.25 (not 3.10+) is load-bearing for Band A:
+   3.10's `bisect` adds keyword-only `key=None`, which would drag
+   keyword-only args into the flagship's minimal feature set.
+
+## Regeneration / verification
+
+- Envelopes: `python3 extractors/python/extract.py Examples/python/bench_*/bench_*.py`
+  (byte-stable; no `# lean[` blocks, so no companions are generated).
+- Proofs: `lake build` from the repo root (the `Examples` glob picks up
+  `bench_bisect/{spec,proof}.lean` and
+  `bench_statistics/{spec,proof}.lean`); axiom audit: `#print axioms` on
+  each spec-side theorem must print exactly
+  `[propext, Classical.choice, Quot.sound]`
+  (`bench_statistics/spec.lean` pins the block in-tree).
+- Differential rows: `python3 harness/diff_test.py` (includes the
+  medians' int-arg TypeError rows; list-taking calls are inexpressible —
+  CLI is int-only, see fix F-4 — their concrete runs are
+  `#py_check`/`#guard` lines in the spec files instead).
+- Byte-verbatim audit: each vendored docstring lists original file sha256 +
+  line ranges + per-segment sha256; slice those lines from the original and
+  compare hashes.
+- Originals: CPython files from this machine's `/usr/lib64/python3.9/`;
+  PyPI sdists pinned by sha256 in each header (`pip download --no-deps`,
+  2026-07-21): python_stdnum-2.2 `e95fcfa858a7…`, luhn-0.2.0
+  `917174cecce8…`, python-dateutil-2.9.0.post0 `37dd54208da7…`.
+- Authenticity: every vendored module was executed against its upstream
+  (installed stdlib / unpacked sdist) on the sample inputs recorded in its
+  docstring — all agree (2026-07-29, Python 3.9.25).

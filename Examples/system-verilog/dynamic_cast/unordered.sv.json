@@ -1,0 +1,178 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/dynamic_cast/unordered.sv",
+  "source_sha256": "d81576dc0e8c4eb1faaa725bde1c5ac32e93c8dc39459a78d76771f0e2fa32c7",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 6,
+              "end_line": 3,
+              "end_col": 7
+            },
+            "name": "e",
+            "width": 3,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 13,
+              "end_line": 3,
+              "end_col": 14
+            },
+            "name": "r",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 2,
+              "end_line": 4,
+              "end_col": 89
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 4,
+                "end_col": 89
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 16,
+                    "end_line": 4,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "width": 3,
+                    "name": "e"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "width": 3,
+                    "bits": "001"
+                  }
+                },
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 4,
+                    "col": 21,
+                    "end_line": 4,
+                    "end_col": 42
+                  },
+                  "sv_kind": "DynamicCast:expression-effects",
+                  "text": "unordered dependent operands"
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 43,
+                    "end_line": 4,
+                    "end_col": 76
+                  },
+                  "name": "$display",
+                  "format": "unordered %0d %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 71,
+                        "end_line": 4,
+                        "end_col": 72
+                      },
+                      "width": 32,
+                      "name": "r",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 73,
+                        "end_line": 4,
+                        "end_col": 74
+                      },
+                      "width": 3,
+                      "name": "e"
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 77,
+                    "end_line": 4,
+                    "end_col": 85
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

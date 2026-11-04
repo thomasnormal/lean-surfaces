@@ -1,0 +1,812 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "signed_localparam_cast",
+ "envelope": "signed_localparam_cast.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/sem2/signed_localparam_cast/signed_localparam_cast.sv",
+   "sha256": "7e46458fec251307f7f40e5b6ed9f700a67941a07e36097bd03c0a8644724085"
+  }
+ ],
+ "probe_points": "E=4;E=8;E=12",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "E",
+     "value": 4
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "signed_localparam_cast",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "E",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 4,
+       "resolved_width": 32
+      },
+      "resolved": 4
+     },
+     {
+      "kind": "LocalParam",
+      "name": "BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "-",
+       "left": {
+        "kind": "Binary",
+        "width": 32,
+        "op": "<<",
+        "left": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "E"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       },
+       "right": {
+        "kind": "Int",
+        "value": 1,
+        "resolved_width": 32
+       }
+      },
+      "resolved": 7
+     },
+     {
+      "kind": "LocalParam",
+      "name": "DOUBLE_BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "*",
+       "left": {
+        "kind": "Int",
+        "value": 2,
+        "resolved_width": 32
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "BIAS"
+       }
+      },
+      "resolved": 14,
+      "signed": true
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "e",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "E"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "q",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "net_as_variable": true
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 12,
+       "name": "q"
+      },
+      "value": {
+       "kind": "Binary",
+       "width": 12,
+       "op": "-",
+       "left": {
+        "kind": "Cast",
+        "width": 12,
+        "signed": true,
+        "operand": {
+         "kind": "Concat",
+         "width": 12,
+         "parts": [
+          {
+           "kind": "Repl",
+           "width": 8,
+           "count": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Int",
+             "value": 12,
+             "resolved_width": 32
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "E"
+            }
+           },
+           "operand": {
+            "kind": "Concat",
+            "width": 1,
+            "parts": [
+             {
+              "kind": "Literal",
+              "width": 1,
+              "bits": "0"
+             }
+            ]
+           }
+          },
+          {
+           "kind": "Ident",
+           "width": 4,
+           "name": "e"
+          }
+         ]
+        }
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "DOUBLE_BIAS"
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "E",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "signed_localparam_cast",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "E",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     },
+     {
+      "kind": "LocalParam",
+      "name": "BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "-",
+       "left": {
+        "kind": "Binary",
+        "width": 32,
+        "op": "<<",
+        "left": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "E"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       },
+       "right": {
+        "kind": "Int",
+        "value": 1,
+        "resolved_width": 32
+       }
+      },
+      "resolved": 127
+     },
+     {
+      "kind": "LocalParam",
+      "name": "DOUBLE_BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "*",
+       "left": {
+        "kind": "Int",
+        "value": 2,
+        "resolved_width": 32
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "BIAS"
+       }
+      },
+      "resolved": 254,
+      "signed": true
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "e",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "E"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "q",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "net_as_variable": true
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 12,
+       "name": "q"
+      },
+      "value": {
+       "kind": "Binary",
+       "width": 12,
+       "op": "-",
+       "left": {
+        "kind": "Cast",
+        "width": 12,
+        "signed": true,
+        "operand": {
+         "kind": "Concat",
+         "width": 12,
+         "parts": [
+          {
+           "kind": "Repl",
+           "width": 4,
+           "count": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Int",
+             "value": 12,
+             "resolved_width": 32
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "E"
+            }
+           },
+           "operand": {
+            "kind": "Concat",
+            "width": 1,
+            "parts": [
+             {
+              "kind": "Literal",
+              "width": 1,
+              "bits": "0"
+             }
+            ]
+           }
+          },
+          {
+           "kind": "Ident",
+           "width": 8,
+           "name": "e"
+          }
+         ]
+        }
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "DOUBLE_BIAS"
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "E",
+     "value": 12
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "signed_localparam_cast",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "E",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 12,
+       "resolved_width": 32
+      },
+      "resolved": 12
+     },
+     {
+      "kind": "LocalParam",
+      "name": "BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "-",
+       "left": {
+        "kind": "Binary",
+        "width": 32,
+        "op": "<<",
+        "left": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "E"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       },
+       "right": {
+        "kind": "Int",
+        "value": 1,
+        "resolved_width": 32
+       }
+      },
+      "resolved": 2047
+     },
+     {
+      "kind": "LocalParam",
+      "name": "DOUBLE_BIAS",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "expr": {
+       "kind": "Binary",
+       "width": 32,
+       "op": "*",
+       "left": {
+        "kind": "Int",
+        "value": 2,
+        "resolved_width": 32
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "BIAS"
+       }
+      },
+      "resolved": -2,
+      "signed": true
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "e",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "E"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "q",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 11,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "net_as_variable": true
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 12,
+       "name": "q"
+      },
+      "value": {
+       "kind": "Binary",
+       "width": 12,
+       "op": "-",
+       "left": {
+        "kind": "Cast",
+        "width": 12,
+        "signed": true,
+        "operand": {
+         "kind": "Concat",
+         "width": 12,
+         "parts": [
+          {
+           "kind": "Repl",
+           "width": 0,
+           "count": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Int",
+             "value": 12,
+             "resolved_width": 32
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "E"
+            }
+           },
+           "operand": {
+            "kind": "Concat",
+            "width": 1,
+            "parts": [
+             {
+              "kind": "Literal",
+              "width": 1,
+              "bits": "0"
+             }
+            ]
+           }
+          },
+          {
+           "kind": "Ident",
+           "width": 12,
+           "name": "e"
+          }
+         ]
+        }
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "DOUBLE_BIAS"
+       }
+      }
+     }
+    ],
+    "generates": [],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

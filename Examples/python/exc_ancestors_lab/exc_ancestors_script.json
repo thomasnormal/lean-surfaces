@@ -1,0 +1,753 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/exc_ancestors_lab/exc_ancestors_script.py",
+  "source_sha256": "3978e41277218df3eeac736a5fc629516f1842f86579e9cc4c5827b600c19f02",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 12
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 1,
+              "col_offset": 0,
+              "end_lineno": 1,
+              "end_col_offset": 6
+            },
+            "id": "values"
+          }
+        ],
+        "value": {
+          "kind": "List",
+          "span": {
+            "lineno": 1,
+            "col_offset": 9,
+            "end_lineno": 1,
+            "end_col_offset": 12
+          },
+          "elts": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 1,
+                "col_offset": 10,
+                "end_lineno": 1,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 20
+        },
+        "body": [
+          {
+            "kind": "ImportFrom",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 51
+            },
+            "module": "zzz_no_such_ancestor_module",
+            "names": [
+              "missing"
+            ]
+          }
+        ],
+        "exc_name": "BaseException",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 6,
+                "col_offset": 4,
+                "end_lineno": 6,
+                "end_col_offset": 20
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 4,
+                  "end_lineno": 6,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 4,
+                    "end_lineno": 6,
+                    "end_col_offset": 10
+                  },
+                  "id": "values"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 18,
+                    "end_lineno": 6,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": null
+      },
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 14,
+          "end_col_offset": 20
+        },
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 12,
+              "end_col_offset": 24
+            },
+            "body": [
+              {
+                "kind": "ImportFrom",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 8,
+                  "end_lineno": 10,
+                  "end_col_offset": 55
+                },
+                "module": "zzz_no_such_ancestor_module",
+                "names": [
+                  "missing"
+                ]
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 8,
+                  "end_lineno": 12,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 12,
+                    "col_offset": 8,
+                    "end_lineno": 12,
+                    "end_col_offset": 24
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 8,
+                      "end_lineno": 12,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 8,
+                        "end_lineno": 12,
+                        "end_col_offset": 14
+                      },
+                      "id": "values"
+                    },
+                    "attr": "append"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 22,
+                        "end_lineno": 12,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "9"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ],
+        "exc_name": "BaseException",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 14,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 14,
+                "col_offset": 4,
+                "end_lineno": 14,
+                "end_col_offset": 20
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 4,
+                  "end_lineno": 14,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 4,
+                    "end_lineno": 14,
+                    "end_col_offset": 10
+                  },
+                  "id": "values"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 18,
+                    "end_lineno": 14,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": null
+      },
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 16,
+          "col_offset": 0,
+          "end_lineno": 22,
+          "end_col_offset": 20
+        },
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 17,
+              "col_offset": 4,
+              "end_lineno": 20,
+              "end_col_offset": 24
+            },
+            "body": [
+              {
+                "kind": "ImportFrom",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 8,
+                  "end_lineno": 18,
+                  "end_col_offset": 55
+                },
+                "module": "zzz_no_such_ancestor_module",
+                "names": [
+                  "missing"
+                ]
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 20,
+                  "col_offset": 8,
+                  "end_lineno": 20,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 20,
+                    "col_offset": 8,
+                    "end_lineno": 20,
+                    "end_col_offset": 24
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 20,
+                      "col_offset": 8,
+                      "end_lineno": 20,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 20,
+                        "col_offset": 8,
+                        "end_lineno": 20,
+                        "end_col_offset": 14
+                      },
+                      "id": "values"
+                    },
+                    "attr": "append"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 20,
+                        "col_offset": 22,
+                        "end_lineno": 20,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "9"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ],
+        "exc_name": "BaseException",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 22,
+                "col_offset": 4,
+                "end_lineno": 22,
+                "end_col_offset": 20
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 4,
+                  "end_lineno": 22,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 4,
+                    "end_lineno": 22,
+                    "end_col_offset": 10
+                  },
+                  "id": "values"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 18,
+                    "end_lineno": 22,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "3"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": null
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 24,
+          "col_offset": 0,
+          "end_lineno": 24,
+          "end_col_offset": 16
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 24,
+              "col_offset": 0,
+              "end_lineno": 24,
+              "end_col_offset": 7
+            },
+            "id": "mapping"
+          }
+        ],
+        "value": {
+          "kind": "Dict",
+          "span": {
+            "lineno": 24,
+            "col_offset": 10,
+            "end_lineno": 24,
+            "end_col_offset": 16
+          },
+          "keys": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 24,
+                "col_offset": 11,
+                "end_lineno": 24,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          ],
+          "values": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 24,
+                "col_offset": 14,
+                "end_lineno": 24,
+                "end_col_offset": 15
+              },
+              "value": {
+                "type": "int",
+                "repr": "7"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 29,
+          "end_col_offset": 20
+        },
+        "body": [
+          {
+            "kind": "For",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 22
+            },
+            "target": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 26,
+                "col_offset": 8,
+                "end_lineno": 26,
+                "end_col_offset": 18
+              },
+              "elts": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 8,
+                    "end_lineno": 26,
+                    "end_col_offset": 11
+                  },
+                  "id": "key"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 13,
+                    "end_lineno": 26,
+                    "end_col_offset": 18
+                  },
+                  "id": "value"
+                }
+              ]
+            },
+            "iter": {
+              "kind": "Call",
+              "span": {
+                "lineno": 26,
+                "col_offset": 22,
+                "end_lineno": 26,
+                "end_col_offset": 37
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 22,
+                  "end_lineno": 26,
+                  "end_col_offset": 35
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 22,
+                    "end_lineno": 26,
+                    "end_col_offset": 29
+                  },
+                  "id": "mapping"
+                },
+                "attr": "items"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 27,
+                  "col_offset": 8,
+                  "end_lineno": 27,
+                  "end_col_offset": 22
+                },
+                "targets": [
+                  {
+                    "kind": "Subscript",
+                    "span": {
+                      "lineno": 27,
+                      "col_offset": 8,
+                      "end_lineno": 27,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 27,
+                        "col_offset": 8,
+                        "end_lineno": 27,
+                        "end_col_offset": 15
+                      },
+                      "id": "mapping"
+                    },
+                    "index": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 27,
+                        "col_offset": 16,
+                        "end_lineno": 27,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  }
+                ],
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 27,
+                    "col_offset": 21,
+                    "end_lineno": 27,
+                    "end_col_offset": 22
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "8"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          }
+        ],
+        "exc_name": "BaseException",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 29,
+              "col_offset": 4,
+              "end_lineno": 29,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 29,
+                "col_offset": 4,
+                "end_lineno": 29,
+                "end_col_offset": 20
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 29,
+                  "col_offset": 4,
+                  "end_lineno": 29,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 29,
+                    "col_offset": 4,
+                    "end_lineno": 29,
+                    "end_col_offset": 10
+                  },
+                  "id": "values"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 29,
+                    "col_offset": 18,
+                    "end_lineno": 29,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "4"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": null
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 31,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 31,
+            "col_offset": 0,
+            "end_lineno": 31,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 31,
+              "col_offset": 0,
+              "end_lineno": 31,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 31,
+                "col_offset": 6,
+                "end_lineno": 31,
+                "end_col_offset": 12
+              },
+              "id": "values"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

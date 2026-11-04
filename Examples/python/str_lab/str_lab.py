@@ -1,0 +1,418 @@
+"""The H5 string-tier acceptance set: slices (both step directions,
+omitted/negative/clamped bounds, CPython's step-first validation order)
+and the method trio swapcase/isupper/index — every function here runs
+differentially against CPython 3.9 (harness/cases.json). The loud
+frontier (Unicode case mapping outside Latin-1, out-of-tier str methods, list slices,
+index start/end arguments) is pinned by whitelisted rows."""
+
+
+def rev(s):
+    return s[::-1]
+
+
+def mid(s, a, b):
+    return s[a:b]
+
+
+def head(s, n):
+    return s[:n]
+
+
+def tail(s, n):
+    return s[n:]
+
+
+def every_second(s):
+    return s[::2]
+
+
+def back_step(s, a, b):
+    return s[a:b:-2]
+
+
+def copy_all(s):
+    return s[:]
+
+
+def swap(s):
+    return s.swapcase()
+
+
+def isup(s):
+    return s.isupper()
+
+
+def idx(s, t):
+    return s.index(t)
+
+
+def board_flip(s):
+    # Position.rotate's exact string chain (sunfish.py line 231)
+    return s[::-1].swapcase()
+
+
+def put(board, i, p):
+    # Position.move's put lambda, as a def (sunfish.py line 238)
+    return board[:i] + p + board[i + 1 :]
+
+
+def slice_of_int(n):
+    return n[0:2]
+
+
+def step_zero(s):
+    return s[::0]
+
+
+def bad_lower(s, t):
+    return s[t:]
+
+
+def order_probe(s, t):
+    # the step validates FIRST (PySlice_Unpack): ValueError, not the
+    # lower bound's TypeError
+    return s[t::0]
+
+
+def swap_arg_raises(s):
+    return s.swapcase(1)
+
+
+def idx_arg_raises(s, n):
+    return s.index(n)
+
+
+def upper_of(s):
+    # LIVE since H6 (`value()`'s capture lookup needs it); Unicode outside
+    # the Latin-1 case table stays loud
+    return s.upper()
+
+
+def lower_flag(s):
+    return s.islower()
+
+
+def join_list(sep):
+    return sep.join(["a", "b", "c"])
+
+
+def join_tuple(sep):
+    return sep.join(("a", "b"))
+
+
+def join_string(sep):
+    return sep.join("ab")
+
+
+def join_empty(sep):
+    return sep.join([])
+
+
+def join_dict(sep):
+    return sep.join({"a": 1, "b": 2})
+
+
+def join_bad_item(sep):
+    return sep.join(["a", 2])
+
+
+def join_bad_arity(sep):
+    return sep.join()
+
+
+def join_generator(sep):
+    return sep.join(x for x in ["a", "b"])
+
+
+def list_slice_is_loud():
+    return [1, 2, 3][::-1]
+
+
+def idx_toomany(s, t, a):
+    return s.index(t, a, 0, 1)
+
+
+def idx_start(s, t, a):
+    return s.index(t, a)
+
+
+def idx_start_end(s, t, a, b):
+    return s.index(t, a, b)
+
+
+def idx_negative(s, t, a):
+    return s.index(t, a)
+
+
+def idx_bad_bound(s, t, a):
+    return s.index(t, "x")
+
+
+def cast_int(s):
+    # pass 8 (docs/memory-model.md §the cast tier): int(<str>) -- the
+    # bounded decimal grammar, including CPython's Unicode decimal digits
+    # and whitespace; malformed strings raise the faithful ValueError
+    return int(s)
+
+
+def cast_str(n):
+    # str(...) value-only: exact decimals, True/False, identity, None
+    return str(n)
+
+
+# `%`-formatting (docs/memory-model.md §`%`-formatting on strings): the
+# admitted tier is BARE %s/%r/%d/%% over the scalar inventory, CPython's
+# single left-to-right pass, both arity TypeErrors faithful. The
+# minilanguage and every other conversion character stay loud.
+
+
+def fmt_opcode(op):
+    # opcode.py line 36 verbatim: a %r of an int inside a 1-tuple
+    return "<%r>" % (op,)
+
+
+def fmt_repr(v):
+    return "%r" % (v,)
+
+
+def fmt_bare(v):
+    # a NON-tuple right operand is one argument -- same answer as (v,)
+    return "%r" % v
+
+
+def fmt_str(v):
+    return "%s" % (v,)
+
+
+def fmt_dec(v):
+    # bool coerces (%d of True is '1' where %s of it is 'True'); a
+    # non-number is the faithful TypeError
+    return "%d" % (v,)
+
+
+def fmt_pair(a, b):
+    return "%s=%d" % (a, b)
+
+
+def fmt_pct(n):
+    # %% emits one '%' and consumes NO argument
+    return "%d%% done" % (n,)
+
+
+def fmt_noargs():
+    return "abc" % ()
+
+
+def fmt_leftover(v):
+    # no conversion at all: the argument is left over -> TypeError
+    return "abc" % (v,)
+
+
+def fmt_short(a):
+    # two conversions, one argument -> TypeError
+    return "%d %d" % (a,)
+
+
+def fmt_order(a, b):
+    # ONE left-to-right pass: the first conversion's TypeError is raised
+    # before the arity of the rest is ever considered
+    return "%d %d" % (a, b)
+
+
+def fmt_nonascii_s():
+    return "%s" % ("héllo",)
+
+
+def fmt_nonascii_r():
+    # Unicode printable characters use CPython's direct repr spelling.
+    return "%r" % ("λ😀",)
+
+
+def fmt_latin1_controls():
+    # C1 controls, NBSP, and soft hyphen retain CPython's hex escapes.
+    return "%r" % ("\x80\xa0\xad",)
+
+
+def fmt_unicode_r():
+    # Unicode printability and escaping follow CPython's Unicode 13.0 repr table.
+    return "%r" % ("λ",)
+
+
+def fmt_width(n):
+    # fixed width decimal formatting pads with spaces on the left
+    return "%5d" % (n,)
+
+
+def fmt_hex(n):
+    # a conversion character CPython supports and this tier does not
+    return "%x" % (n,)
+
+
+def fmt_bad(n):
+    # CPython raises ValueError: unsupported format character 'q'.
+    # The tier models this faithful error.
+    return "%q" % (n,)
+
+
+def fmt_trailing(n):
+    # CPython raises ValueError: incomplete format.
+    return "%d%" % (n,)
+
+
+def fmt_container():
+    # tuple values are ref-free at the boundary and use their deterministic
+    # repr spelling for both %s and %r
+    return "%s" % ((1, 2),)
+
+
+def fmt_mapping():
+    # the %(key)s mapping protocol over a heap dict, with scalar conversion
+    # rendering and insertion-order-independent string-key lookup
+    return "%(k)s" % {"k": 1}
+
+
+# The MAPPING right operand (docs/memory-model.md §`%`-formatting on
+# strings, "the mapping right operand"). PyUnicode_Format sets ctx.dict
+# when PyMapping_Check(args) passes and args is neither a tuple nor a
+# str -- a LIST and a RANGE both pass -- and the trailing "not all
+# arguments converted" check is guarded on !ctx.dict. So a leftover is
+# an error for an int and NOT an error for a list.
+
+
+def fmt_bare_leftover(v):
+    # no conversion at all. A non-mapping v is the leftover TypeError; a
+    # list or a range comes back as the format string, UNCHANGED
+    return "abc" % v
+
+
+def fmt_seq_arg(v):
+    # the mapping is still the ONE positional argument (arglen == -1), so
+    # %s consumes it; boundary list snapshots have a pure value-only repr
+    return "%s" % v
+
+
+def fmt_dec_seq(v):
+    # the one argument reaching %d is the WHOLE mapping, so this is the
+    # faithful `%d format: a number is required, not list` -- and it is
+    # raised on the FIRST conversion, before the second one's arity is
+    # ever considered (a non-mapping v takes the same row to
+    # `not enough arguments`, which ctx.dict never suppresses)
+    return "%d %d" % v
+
+
+def fmt_range_leftover():
+    # range passes PyMapping_Check too: the skip is not list-specific
+    return "abc" % range(3)
+
+
+def fmt_dict_leftover():
+    # CPython's ctx.dict suppresses the leftover-argument TypeError, even
+    # when the format contains no conversion
+    return "abc" % {"k": 1}
+
+
+def fmt_int(n):
+    # bare %i is CPython's integer conversion, equivalent to bare %d
+    return "%i" % (n,)
+
+
+def fmt_char(value):
+    # bare %c accepts an integer code point or a one-character string
+    return "%c" % (value,)
+
+
+def fmt_oct(n):
+    # bare %o is bounded lowercase octal over integer values
+    return "%o" % (n,)
+
+
+def fmt_unsigned(n):
+    # bare %u shares CPython's decimal integer conversion path
+    return "%u" % (n,)
+
+
+def fmt_ascii(value):
+    # bare %a uses CPython's ASCII-escaped repr conversion
+    return "%a" % (value,)
+
+
+def fmt_left_width(n):
+    # the minus flag left-aligns the fixed width field
+    return "%-5d" % (n,)
+
+
+def fmt_zero_width(n):
+    # the zero flag pads after the sign for a fixed width field
+    return "%05d" % (n,)
+
+
+def builtin_hex(n):
+    return hex(n)
+
+
+def builtin_hex_noargs():
+    return hex()
+
+
+def builtin_oct(n):
+    return oct(n)
+
+
+def builtin_oct_noargs():
+    return oct()
+
+
+def builtin_bin(n):
+    return bin(n)
+
+
+def builtin_bin_noargs():
+    return bin()
+
+
+def builtin_ascii(value):
+    return ascii(value)
+
+
+def builtin_ascii_noargs():
+    return ascii()
+
+
+def builtin_ascii_container():
+    return ascii([1])
+
+
+def builtin_round(n):
+    return round(n)
+
+
+def builtin_round_noargs():
+    return round()
+
+
+def builtin_format(value):
+    # The value-only format() slice shares CPython's default __format__ text
+    # with str(); the bare decimal specification is pinned below.
+    return format(value)
+
+
+def builtin_format_empty(value):
+    return format(value, "")
+
+
+def builtin_format_noargs():
+    return format()
+
+
+def builtin_format_bad_spec(value):
+    # The bare decimal integer specification is the first non-empty format
+    # mini-language rung; flags, widths, and other codes remain loud.
+    return format(value, "d")
+
+
+def builtin_format_bad_type(value):
+    return format(value, 1)
+
+
+def builtin_format_toomany(value):
+    return format(value, "", 0)

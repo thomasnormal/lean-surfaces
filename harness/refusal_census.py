@@ -1,0 +1,1343 @@
+#!/usr/bin/env python3
+"""refusal_census.py — the REFUSAL SURFACE, measured (docs/completeness.md).
+
+    python3 harness/refusal_census.py [--grammar] [--whitelist] [--scripts]
+                                      [--no-build] [--runner CMD]
+                                      [--json OUT] [--keep DIR]
+
+Three questions, three modes, one law: **every census claim is a run**,
+never a reading of the source.
+
+``--grammar`` — THE GRAMMAR CENSUS. One minimal witness per production of
+  CPython 3.9's ``ast`` grammar (25 statements, 27 expressions, 13 binary
+  / 4 unary / 10 comparison / 2 boolean operators, plus the four
+  ``Constant`` payload types the extractor forks on). Each witness is a
+  whole PROGRAM: it is extracted, run under the pinned oracle, run
+  through the model, and the two are compared. The verdict is
+  ``MATCH`` / ``REFUSE`` / ``DIVERGE`` / ``TIMEOUT`` / ``EXTRACT``, and
+  the refusal MESSAGE is printed beside it — so the census reports which
+  layer refused (extractor, ingestion, or interpreter) in the only way
+  that cannot be wrong.
+
+  WHAT A `MATCH` DOES AND DOES NOT CLAIM. It claims: this production is
+  reachable and the model agreed with CPython on this witness. It does
+  NOT claim the production is wholly in tier — `op.Mult` matches on
+  `2 * 3` and refuses on `"ab" * 3`. The grammar census is a LOWER bound
+  on coverage; the refusal-message tables below are the upper bound. Both
+  are needed and neither substitutes for the other (docs/backlog.md §L14:
+  a statement-level `Unsupported` count is not an ingestion verdict —
+  run the thing).
+
+``--whitelist`` — THE WHITELIST CENSUS. `harness/cases.json`'s
+  ``"expect": "unsupported"`` rows are the closed-function surface's
+  recorded gaps. This mode runs them all through one ``--batch`` process,
+  reads the refusal MESSAGE off each, and buckets them by the construct
+  CLASS recorded in ``WHITELIST_CLASS`` below. A whitelisted row with no
+  class entry is an ERROR: the census must cover the whole whitelist, so
+  a new gap cannot be added without being classified.
+
+  Since the model emits its own §5.2 REFUSAL CLASS (`--observations`,
+  `Monadic.refusalClass`), this mode also reports that DISTRIBUTION and
+  gates two invariants on it: every interpreter refusal carries one of
+  §5.2's four class names, and none carries ``undefined`` — Python has no
+  undefined behaviour, and this is the outside check on the structural
+  claim ``Monadic/Spec.lean`` makes from the inside. That class is a
+  DIFFERENT field from ``WHITELIST_CLASS`` and is never compared with it.
+
+``--scripts`` — the same for `harness/scripts.json`'s
+  ``"expect": "unsupported"`` rows (the whole-program surface).
+
+Exit status is 1 on any DRIFT: a witness whose measured verdict differs
+from the recorded one, a whitelisted row with no class, or a class table
+that cannot be built. Drift is the point — this file is a census, and a
+census that is not re-measurable is a story.
+
+Nothing is written beside any source: the witnesses are written to a
+temporary directory (``--keep DIR`` to inspect them) and their envelopes
+go to the shared leanpy cache, exactly as `harness/script_corpus.py` does.
+
+Python 3.9 compatible.
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _reexec_under_pinned_frontend():
+    """Both ends pinned, the `harness/script_corpus.py` fix verbatim: the
+    witnesses below use 3.8+ syntax (walrus, f-strings) and 3.9 is the
+    version the tier is specified against, so the interpreter that PARSES
+    them and the interpreter that RUNS them must both be the pin."""
+    if os.environ.get("LEANPY_NO_REEXEC"):
+        return
+    want = os.environ.get("LEANPY_FRONTEND") or "python3.9"
+    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_FRONTEND"):
+        return
+    from shutil import which
+    exe = which(want)
+    if exe is None:
+        print("harness/refusal_census.py: WARNING the pinned frontend %r is "
+              "not installed; extracting with %s instead — the census would "
+              "measure a different grammar" % (want, sys.version.split()[0]),
+              file=sys.stderr)
+        return
+    if os.path.realpath(exe) == os.path.realpath(sys.executable):
+        return
+    os.environ["LEANPY_NO_REEXEC"] = "1"
+    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+
+
+# Only as a script: an importer's argv is not ours to re-run.
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
+
+sys.path.insert(0, os.path.join(REPO_ROOT, "harness"))
+# `harness/leanpy_survey.py` owns the whole-program verdict vocabulary this
+# census reports in — the oracle pin, the batch stdout join, the exception
+# CLASS comparison and the leanpy module load. Reuse them rather than
+# growing a second copy that can drift from the survey's own verdicts.
+import leanpy_survey  # noqa: E402
+from diff_test import batch_job
+
+leanpy = leanpy_survey.leanpy
+lean_stdout = leanpy_survey.lean_stdout
+cpython_exc_class = leanpy_survey.cpython_exc_class
+ORACLE = os.environ.get("LEANPY_CPYTHON") or leanpy_survey.default_oracle()
+
+
+# ---------------------------------------------------------------------------
+# THE GRAMMAR WITNESSES
+#
+# One per production of the 3.9 ASDL grammar, keyed `<sort>.<Production>`.
+# `expect` is the MEASURED verdict at the pass that recorded it, never a
+# prediction; `note` says what the verdict means for arbitrary Python.
+# ---------------------------------------------------------------------------
+
+W = []
+
+# Which expectation column `--grammar` checks; set from --target in main().
+EXPECT_KEY = "expect"
+
+
+def w(wid, src, expect, note):
+    """`mono` is the expectation under `--target monadic`, when it DIFFERS.
+
+    The rebuild is not required to be a clone: inch 3a opens the live dict
+    cursor on the monadic definition ONLY (the trunk gains a refuse arm by
+    the no-backwards-compat ruling), so a witness may legitimately refuse on
+    one interpreter and run on the other. Encoding that here keeps the census
+    a scoreboard for BOTH rather than a parity check that has to be switched
+    off the moment the two diverge on purpose."""
+    W.append({"id": wid, "src": src.lstrip("\n"), "expect": expect,
+              "note": note})
+
+
+# --- stmt (25 productions) -------------------------------------------------
+w("stmt.FunctionDef", """
+def f(x):
+    return x + 1
+print(f(1))
+""", "MATCH", "plain positional def")
+w("stmt.AsyncFunctionDef", """
+async def f():
+    return 1
+print(0)
+""", "MATCH", "dead module-level async definition is never observed")
+w("stmt.ClassDef", """
+class C:
+    def __init__(self, x):
+        self.x = x
+print(C(3).x)
+""", "MATCH", "H3 class tier, default protocol only")
+w("stmt.Return", """
+def f():
+    return 7
+print(f())
+""", "MATCH", "")
+w("stmt.Delete", """
+x = 1
+del x
+print(2)
+""", "MATCH", "bare-name del at module scope")
+w("stmt.Assign", """
+x = 1
+print(x)
+""", "MATCH", "")
+w("stmt.AugAssign", """
+x = 1
+x += 2
+print(x)
+""", "MATCH", "")
+w("stmt.AnnAssign", """
+x: int = 1
+print(x)
+""", "MATCH",
+  "an unshadowed builtin type annotation has no effect observable in the "
+  "tier, so the assignment is admitted")
+w("stmt.AnnAssign-forward", """
+x: "int" = 1
+print(x)
+""", "MATCH",
+  "A forward-reference string annotation evaluates after the value is "
+  "stored; its unobservable annotation-table store is omitted only when "
+  "the module never explicitly binds __annotations__")
+w("stmt.AnnAssign-local", """
+def f(n):
+    x: int = n + 1
+    return x
+print(f(1))
+""", "MATCH",
+  "FUNCTION scope: PEP 526 never evaluates the annotation, so this is an "
+  "ordinary assign — was REFUSE, landed by §L49 rung 2")
+w("stmt.AnnAssign-novalue", """
+def f(n):
+    x: int
+    return n
+print(f(1))
+""", "MATCH",
+  "an unobserved value-less local annotation is erased safely")
+w("stmt.For", """
+for i in [1, 2]:
+    print(i)
+""", "MATCH", "")
+w("stmt.AsyncFor", """
+async def f(xs):
+    async for x in xs:
+        print(x)
+print(0)
+""", "MATCH", "dead async definition is never observed")
+w("stmt.While", """
+i = 0
+while i < 2:
+    print(i)
+    i += 1
+""", "MATCH", "")
+w("stmt.If", """
+if 1 < 2:
+    print(1)
+else:
+    print(2)
+""", "MATCH", "")
+w("stmt.With", """
+class C:
+    def __enter__(self):
+        return 1
+    def __exit__(self, a, b, c):
+        return False
+with C() as v:
+    print(v)
+""", "MATCH", "single synchronous context-manager item")
+w("stmt.AsyncWith", """
+async def f(c):
+    async with c as v:
+        print(v)
+print(0)
+""", "MATCH", "dead async definition is never observed")
+w("stmt.Raise", """
+raise ValueError("boom")
+""", "MATCH", "one positional string is retained by the measured builtin PyErr payload form")
+w("stmt.Raise-empty-constructor", """
+raise ValueError()
+""", "MATCH",
+  "a direct zero-argument exception constructor lowers to the admitted "
+  "class-identity raise; payload-bearing constructors remain loud")
+w("stmt.Raise-class", """
+raise ValueError
+""", "MATCH", "bare admitted builtin exception class; other payload forms remain unfinished")
+w("stmt.Try", """
+try:
+    print(1)
+except ValueError:
+    print(2)
+""", "MATCH",
+  "FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. "
+  "WHAT THIS ROW PROVES AND DOES NOT: the production is reachable and the "
+  "program answers 1 — the handler never FIRES here, so the catch itself is "
+  "exercised by `exc_lab::except_builtin(0)` and `except_exception`, not by "
+  "this witness. A grammar row is a lower bound on coverage, never the catch")
+w("stmt.Assert", """
+assert 1 == 1
+print("ok")
+""", "MATCH", "assertion failure uses the admitted builtin exception hierarchy")
+w("stmt.Import", """
+import math
+print(1)
+""", "MATCH", "unobserved pinned math import has no tier-visible effect")
+w("stmt.ImportFrom", """
+from math import sqrt
+print(1)
+""", "MATCH", "unobserved pinned math import has no tier-visible effect")
+w("stmt.Global", """
+g = 1
+def f():
+    global g
+    g = 2
+f()
+print(g)
+""", "MATCH", "direct scalar global declarations read and write the shared module globals")
+w("stmt.Nonlocal", """
+def outer():
+    c = 1
+    def inner():
+        nonlocal c
+        c = c + 1
+    inner()
+    return c
+print(outer())
+""", "MATCH", "direct nonlocal scalar reads and writes use shared closure cells")
+w("stmt.Expr", """
+print(1)
+""", "MATCH", "")
+w("stmt.Pass", """
+pass
+print(1)
+""", "MATCH", "")
+w("stmt.Break", """
+for i in [1, 2]:
+    break
+print(i)
+""", "MATCH", "")
+w("stmt.Continue", """
+t = 0
+for i in [1, 2]:
+    if i == 1:
+        continue
+    t = t + i
+print(t)
+""", "MATCH", "")
+
+# --- expr (27 productions) -------------------------------------------------
+w("expr.BoolOp", """
+print(1 and 2)
+""", "MATCH", "")
+w("expr.NamedExpr", """
+if (n := 5) > 1:
+    print(n)
+""", "MATCH", "§L14's walrus, general expression position")
+w("expr.BinOp", """
+print(1 + 2)
+""", "MATCH", "")
+w("expr.UnaryOp", """
+print(-1)
+""", "MATCH", "")
+w("expr.Lambda", """
+f = lambda x: x + 1
+print(f(1))
+""", "MATCH", "module-scope single-target lambda only")
+w("expr.IfExp", """
+print(1 if 2 > 1 else 3)
+""", "MATCH", "")
+w("expr.Dict", """
+print({1: 2})
+""", "MATCH", "")
+w("expr.Set", """
+print(len({1, 2}))
+""", "MATCH", "lowered to set(list) at ingestion; order remains unobservable")
+w("expr.ListComp", """
+print([x + 1 for x in [1, 2]])
+""", "MATCH", "desugared to list(genexp) at ingestion")
+w("expr.SetComp", """
+print(len({x for x in [1, 2]}))
+""", "MATCH", "lowered to set(generator) at ingestion")
+w("expr.DictComp", """
+print({x: x for x in [1, 2]})
+""", "MATCH", "lowered to dict(generator) at ingestion")
+w("expr.GeneratorExp", """
+print(sum(x for x in [1, 2]))
+""", "MATCH", "lowered to a synthesized generator function")
+w("expr.Await", """
+async def f(c):
+    return await c
+print(0)
+""", "MATCH", "dead async definition is never observed")
+w("expr.Yield", """
+def g():
+    yield 1
+    yield 2
+print(sum(g()))
+""", "MATCH", "statement position only")
+w("expr.YieldFrom", """
+def g():
+    yield from [1, 2]
+print(sum(g()))
+""", "MATCH", "inlined at ingestion")
+w("expr.Compare", """
+print(1 < 2)
+""", "MATCH", "")
+w("expr.Call", """
+print(len([1, 2]))
+""", "MATCH", "")
+w("expr.JoinedStr", """
+n = 3
+print(f"{n}")
+""", "MATCH", "intrinsic str/repr replacement fields; nonempty specs remain a gap")
+w("expr.FormattedValue", """
+n = 3
+print(f"a{n}b")
+""", "MATCH", "intrinsic conversions; !a and nonempty format specs remain gaps")
+w("expr.FormattedValue-repr", """
+str = 7
+repr = 8
+value = 'quoted'
+print(f"{value!r}")
+""", "MATCH", "repr conversion bypasses shadowed builtin names")
+w("expr.FormattedValue-debug", """
+value = 3
+print(f"{value=}")
+""", "MATCH", "CPython supplies debug text and default repr conversion")
+w("expr.FormattedValue-empty-spec", """
+value = 'quoted'
+print(f"{value!r:}")
+""", "MATCH", "explicit empty format specification")
+w("expr.Constant", """
+print(1, "a", True, None)
+""", "MATCH", "the int/str/bool/None inventory")
+w("expr.Attribute", """
+class C:
+    def __init__(self):
+        self.x = 1
+print(C().x)
+""", "MATCH", "")
+w("expr.Subscript", """
+print([1, 2][0])
+""", "MATCH", "")
+w("expr.Starred", """
+a = [1, 2]
+print([*a])
+""", "MATCH", "display position only")
+w("expr.Name", """
+x = 1
+print(x)
+""", "MATCH", "")
+w("expr.List", """
+print([1, 2])
+""", "MATCH", "")
+w("expr.Tuple", """
+print((1, 2))
+""", "MATCH", "")
+w("expr.Slice", """
+print("abcd"[1:3])
+""", "MATCH", "str receivers; list/tuple slices allocate and refuse")
+
+# --- dict iteration: rung 3's surface, one witness per consumer ------------
+# All REFUSE today. They are written as the ACCEPTANCE BATTERY for the rung:
+# each flips to MATCH as its consumer lands, and the two live-cursor rows
+# below carry the semantics the census measured (docs/memory-model.md
+# paragraph "dict iteration").
+w("dict.for", """
+d = {2: 'b', 1: 'a'}
+for k in d:
+    print(k)
+""", "MATCH",
+  "the live cursor — inch 3a. Was REFUSE/mono=MATCH while there were two "
+  "interpreters; there is one now, so the opened answer is THE answer")
+w("dict.list", """
+print(list({2: 'b', 1: 'a'}))
+""", "MATCH", "a DRAINING consumer: no mutation window — landed by §L53 rung 3b")
+w("dict.tuple", """
+print(tuple({2: 'b', 1: 'a'}))
+""", "MATCH", "landed by §L53 rung 3b")
+w("dict.sorted", """
+print(sorted({2: 'b', 1: 'a'}))
+""", "MATCH", "landed by §L53 rung 3b")
+w("dict.sum", """
+print(sum({2: 20, 1: 10}))
+""", "MATCH", "landed by §L53 rung 3b")
+w("dict.max", """
+print(max({2: 'b', 1: 'a'}))
+""", "MATCH", "landed by §L53 rung 3b")
+w("dict.star", """
+d = {2: 'b', 1: 'a'}
+print([*d])
+""", "MATCH", "landed by §L53 rung 3b")
+w("dict.for-in-function", """
+def f():
+    d = {2: 'b', 1: 'a', 5: 'c'}
+    out = []
+    for k in d:
+        if k == 1:
+            continue
+        out.append(k)
+        if len(out) == 2:
+            break
+    return tuple(out)
+print(f())
+""", "MATCH",
+  "the cursor at FUNCTION scope — execGen's arm, and it exercises `break` "
+  "and `continue` through the new frame (which is why `genBreak`/"
+  "`genContinue` had to treat `forDict` as a LOOP frame, not bookkeeping)")
+w("dict.for-keys", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for k in d.keys():
+        out.append(k)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for k in d.keys()` at function scope — inch 3c-i-a")
+w("dict.for-values", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for v in d.values():
+        out.append(v)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for v in d.values()` — the VALUES view, whose element is the "
+  "value, not the key")
+w("dict.values", """
+d = {2: 'b', 1: 'a'}
+print(sorted(d.values()))
+""", "MATCH", "the VALUES view, consumed immediately — inch 3c-i-b")
+w("dict.items-consumed", """
+d = {2: 'b', 1: 'a'}
+print(list(d.items()))
+""", "MATCH", "the ITEMS view, consumed immediately — inch 3c-i-b")
+w("dict.view-escapes", """
+d = {1: 'a'}
+k = d.keys()
+d[2] = 'b'
+print(list(k))
+""", "MATCH",
+  "3c-ii: the first-class `Obj.dictView` retains the dictionary address, so "
+  "the later insertion is visible when `list(k)` consumes the live view")
+w("dict.values-identity-eq", """
+d = {1: 'a'}
+print(d.values() == d.values())
+""", "MATCH",
+  "THE TRAP, measured: CPython answers FALSE. A values view defines no "
+  "equality, so it compares by IDENTITY — while `d.keys() == {1}` is True "
+  "by SET equality. A model that treated the three views alike would be "
+  "silently wrong here, in the direction that looks most reasonable")
+w("dict.keys-set-algebra", """
+d = {2: 'b', 1: 'a'}
+print(sorted(d.keys() & {1, 9}))
+""", "MATCH",
+  "key-view/set intersection allocates a fresh heap set; `sorted` makes "
+  "the set's hash iteration order unobservable. Other set algebra and "
+  "values-view operations remain outside the tier")
+w("del.dict-key", """
+d = {2: 'b', 1: 'a'}
+del d[2]
+print(d)
+""", "MATCH", "dict item deletion — the ingestion rewrite to `<dictdel>(d, k)`")
+w("del.dict-missing", """
+d = {1: 'a'}
+del d[9]
+print('unreachable')
+""", "MATCH", "CPython raises KeyError(9) and the tier reproduces it")
+w("del.dict-reinsert-order", """
+d = {1: 'a', 2: 'b', 3: 'c'}
+del d[2]
+d[2] = 'z'
+print(list(d))
+""", "MATCH",
+  "deletion does NOT hold the slot: reinsertion APPENDS, so the entries "
+  "array stays exactly the insertion sequence every cursor here reads")
+w("del.dict-churn", """
+d = {1: 1, 2: 2, 3: 3}
+for k in d:
+    if k == 2:
+        del d[1]
+        d[99] = 9
+print('unreachable')
+""", "MATCH",
+  "THE REGIME DELETION MAKES REACHABLE. Same-size key-set churn is NOT "
+  "guessable: this shape raises CPython's SECOND RuntimeError ('dictionary "
+  "keys changed during iteration'), while churning at the FIRST key, or "
+  "putting the same key back, completes SILENTLY — the entries-array layout "
+  "is what separates them (2026-08-23-pycomplete-15 measured four shapes). "
+  "Permanently loud, and reachable for the first time because `del` landed")
+w("del.non-dict-receiver", """
+xs = [1, 2]
+del xs[0]
+print(xs)
+""", "MATCH",
+  "H2 heap-list item deletion through the shared `<dictdel>` ingestion rewrite")
+w("del.attribute", """
+class Box:
+    def __init__(self):
+        self.x = 1
+        self.keep = 2
+b = Box()
+del b.x
+print(b.keep)
+""", "MATCH", "instance attribute deletion through the `<attrdel>` ingestion rewrite")
+w("dict.enumerate", """
+d = {2: 'b', 1: 'a'}
+for i, k in enumerate(d):
+    print(i, k)
+""", "MATCH", "the key cursor with an index — inch 3c-i-c")
+w("dict.enumerate-start", """
+d = {2: 'b', 1: 'a'}
+print(list(enumerate(d, 5)))
+print(list(enumerate(d, -3)))
+""", "MATCH",
+  "the START is an `int`, not a `Nat`: CPython counts from a negative "
+  "start as readily as a positive one — inch 3c-i-c")
+w("dict.enumerate-escapes", """
+d = {1: 'a'}
+e = enumerate(d)
+d[2] = 'b'
+print('bound')
+""", "MATCH",
+  "THE RULED DELTA (2026-08-23-pycomplete-13 (c)): binding an enumerate and "
+  "then GROWING the dict is SILENT in CPython — the guard is on the STEP, "
+  "not the bind, so reaching the print is the whole observation. `print(e)` "
+  "would answer an ADDRESS and `type(e).__name__` leaves the tier at "
+  "`type`, which would test a different construct than this row names")
+w("dict.enumerate-resize", """
+d = {1: 'a'}
+e = enumerate(d)
+d[2] = 'b'
+print(next(e))
+""", "MATCH",
+  "the same two statements as `dict.enumerate-escapes` with a different "
+  "THIRD line, and that pairing is the point: stepping after the growth "
+  "RAISES `RuntimeError`. A bind-time guard passes one and fails the other; "
+  "a snapshot fails the other way; neither passes both by accident")
+w("dict.enumerate-of-items", """
+d = {2: 'b', 1: 'a'}
+print(list(enumerate(d.items())))
+""", "MATCH",
+  "the enumerate cursor now retains the dictionary view kind, so the live "
+  "items view yields indexed `(key, value)` pairs")
+# --- §iter: `iter(d)` + `next` over dict KEYS (2026-08-23-pycomplete-17/18).
+# The flagship's key source; the frame is `enumDict` without the index. Every
+# expectation below is CPython 3.9.19's own, measured before the design.
+w("dict.iter-next", """
+d = {2: 'b', 1: 'a'}
+print(next(iter(d)))
+""", "MATCH",
+  "the flagship's key expression, minimal: CPython answers 2 — the FIRST key "
+  "in INSERTION order, which is what makes `next(iter(d))` an eviction policy "
+  "and not an arbitrary pick")
+w("dict.iter-steps", """
+d = {2: 'b', 1: 'a'}
+it = iter(d)
+print(next(it))
+print(next(it))
+""", "MATCH",
+  "ONE cursor, stepped twice. `next` already implemented both its forms, so "
+  "the inch bought the stepping for free — the frame is the whole cost")
+w("dict.iter-empty", """
+print(next(iter({}), -1))
+""", "MATCH",
+  "the 2-argument `next` on an EXHAUSTED-at-birth cursor: CPython answers "
+  "the default, and the 1-argument form on the same cursor is StopIteration")
+w("dict.iter-escapes", """
+d = {1: 'a'}
+it = iter(d)
+d[2] = 'b'
+print('bound')
+""", "MATCH",
+  "`dict.enumerate-escapes` again, at a different builtin: binding an "
+  "iterator and then GROWING the dict is SILENT in CPython — the guard is on "
+  "the STEP, not the bind, so reaching the print is the whole observation")
+w("dict.iter-resize", """
+d = {1: 'a'}
+it = iter(d)
+d[2] = 'b'
+print(next(it))
+""", "MATCH",
+  "the same two statements with a different THIRD line, and that pairing is "
+  "the point: stepping after the growth RAISES RuntimeError. A bind-time "
+  "guard passes one and fails the other; a snapshot fails the other way")
+w("dict.iter-exhausted", """
+d = {1: 'a'}
+it = iter(d)
+print(next(it))
+print(next(it, -1))
+d[2] = 'b'
+print(next(it, -2))
+""", "MATCH",
+  "THE EXHAUSTION BOUNDARY, measured: an iterator STEPPED PAST the end is "
+  "DEAD (CPython clears its `di_dict`), so a later growth is silent and the "
+  "default comes back. One that has merely yielded its LAST key is still "
+  "LIVE and still raises — the frame reproduces both because the pop happens "
+  "at the step that FINDS the end, never at the last yield")
+w("dict.iter-for", """
+d = {2: 'b', 1: 'a'}
+for k in iter(d):
+    print(k)
+""", "MATCH",
+  "THE WITNESS FOR THE ALLOCATOR CENSUS. `iter` is the THIRD expression that "
+  "can allocate an `Obj.generator` without a generator `def` (`enumerate` and "
+  "`count` are the others), so it had to join `Expr.genAllocFree`. Without "
+  "that line this program reports ordinary Python as an internal heap "
+  "well-formedness violation — the 2026-08-13 incident, replayed")
+w("dict.iter-churn", """
+d = {1: 1, 2: 2, 3: 3}
+it = iter(d)
+print(next(it))
+del d[2]
+d[9] = 9
+print(next(it))
+""", "MATCH",
+  "THE CHURN GUARD through the `iter` cursor rather than a `for`. CPython "
+  "answers 1 then 3 SILENTLY here, and the SAME churn one step later raises "
+  "'dictionary keys changed during iteration' instead — what separates them "
+  "is `di_len` reaching zero with a live entry still ahead of the cursor. "
+  "The model has no such counter, so the regime stays permanently LOUD")
+w("dict.iter-of-list", """
+print(next(iter([7, 8])))
+""", "MATCH",
+  "THE RECEIVER BOUNDARY, now ANSWERED. `list_iterator` is a PLAIN INDEX "
+  "cursor — `it_index` against the CURRENT length, re-read every call — so "
+  "there is no entries-array layout to guess and the row closed without "
+  "declaring a divergence, unlike the dict cursor which owed two. The "
+  "remaining receivers are still an inch each: `str_iterator`, "
+  "`tuple_iterator`, `range_iterator`, `set_iterator` (hash order — group A), "
+  "and `iter(g) is g` for a generator")
+# --- §genexp: `next(<genexp over dict KEYS with a filter>)`, the flagship's
+# OTHER eviction line (2026-08-24-pycomplete-19). At MODULE scope the captured
+# names are module-level, so they are `outer` names and not captures at all --
+# which is why these run where the function-scope local-capture row refuses.
+w("dict.genexp-next", """
+d = {2: 'b', 1: 'a'}
+root = 2
+print(next(k for k in d if k != root))
+""", "MATCH",
+  "the flagship's key expression: CPython answers 1 -- the first key in "
+  "INSERTION order that passes the filter. The genexp lowers to a synthesized "
+  "generator whose `for k in <dict>` is rung 3a's cursor, so this surface cost "
+  "ZERO model sites -- the inch is the measurement, not the build")
+w("dict.genexp-nomatch", """
+d = {1: 'a'}
+root = 1
+print(next(k for k in d if k != root))
+""", "MATCH",
+  "no key passes the filter, so the 1-argument `next` is the faithful "
+  "StopIteration -- and `dict.genexp-default` is the same program with the "
+  "2-argument form answering -1 instead")
+w("dict.genexp-default", """
+d = {1: 'a'}
+root = 1
+print(next((k for k in d if k != root), -1))
+""", "MATCH", "the 2-argument form on the same empty filter")
+w("dict.genexp-drain", """
+d = {2: 'b', 1: 'a'}
+root = 2
+print(list(k for k in d if k != root))
+""", "MATCH",
+  "the same filter under a DRAINING consumer, which is a different lowering "
+  "admission path (`list` is in drainingBuiltins, `next` is not) reaching the "
+  "same cursor")
+# `dict.genexp-bound-is-loud` MEASURED DIVERGE at §pycomplete-19, moved to the
+# register as `pyc-div-2`, and COMES BACK HERE as a MATCH at §pycomplete-20 --
+# the cursor is now created with the genexp object, as PEP 289 requires. A row
+# that leaves for the register and returns to the census is the retirement
+# working: the debt was registered, gated, paid, and the witness is the receipt.
+w("dict.genexp-bound-is-loud", """
+d = {1: 'a'}
+g = (k for k in d)
+d[3] = 'c'
+print(next(g))
+""", "MATCH",
+  "PEP 289 calls `iter()` on the outermost iterable when the genexp OBJECT is "
+  "made, so the cursor's size guard predates this growth and CPython raises "
+  "RuntimeError. The tier answered 1 until the cursor moved to construction "
+  "time; `dict.genfun-mutate-after-create` is the neighbour proving the fix "
+  "did not make every generator eager")
+w("dict.genfun-mutate-after-create", """
+def keys_of(dd):
+    for k in dd:
+        yield k
+d = {1: 'a'}
+g = keys_of(d)
+d[3] = 'c'
+print(next(g))
+print(list(g))
+""", "MATCH",
+  "THE NEGATIVE HALF, and it is why the fix is genexp-only: calling a generator "
+  "FUNCTION runs no code, so CPython has called no `iter()`. Measured: it "
+  "answers 1 and then [3] -- it walks the GROWN dict without complaint. A tier "
+  "that made every generator eager would RAISE here and be wrong")
+w("del.dict-next-iter", """
+d = {1: 'a', 2: 'b'}
+del d[next(iter(d))]
+print(d)
+""", "MATCH",
+  "THE FLAGSHIP LINE (sunfish.py:541 `del self.tp_score[next(iter("
+  "self.tp_score))]`), whole. Inch (1) landed the `del`, inch (2) the key: "
+  "the cursor is ABANDONED before the deletion runs, so the hazard the "
+  "guards exist for is never on this path")
+w("dict.keys", """
+print(list({2: 'b', 1: 'a'}.keys()))
+""", "MATCH",
+  "a view method in CONSUMING position — landed by inch 3c-i-b's ingestion "
+  "rewrite, on a dict LITERAL receiver, which the rewrite handles like any "
+  "other receiver expression")
+w("dict.items", """
+d = {2: 'b', 1: 'a'}
+for k, v in d.items():
+    print(k, v)
+""", "MATCH",
+  "MEASURED CORRECTION — the live cursor is already BUILT at MODULE scope "
+  "(the script executor's `.items()` shell). Rung 3 is an EXTENSION, not a "
+  "construction")
+w("dict.items-in-function", """
+def f():
+    d = {2: 'b', 1: 'a'}
+    t = 0
+    for k, v in d.items():
+        t = t + k
+    return t
+print(f())
+""", "MATCH",
+  "the SAME loop inside a function — 3a gave the bare-key form a cursor at "
+  "every scope; 3c-i-a gives the VIEW forms one too")
+w("dict.items-grow", """
+d = {1: 1}
+for k, v in d.items():
+    d[k + 5] = 0
+print('unreachable')
+""", "MATCH",
+  "MEASURED: the module-scope shell already raises CPython's RuntimeError "
+  "VERBATIM ('dictionary changed size during iteration') — the size guard "
+  "is faithful TODAY, so inch 3a inherits it rather than inventing it")
+w("dict.items-update", """
+d = {1: 1, 2: 2}
+for k, v in d.items():
+    d[k] = v * 100
+print(d[1], d[2])
+""", "MATCH", "the admissible regime, already exact at module scope")
+w("dict.update-value-during-iter", """
+d = {1: 1, 2: 2}
+for k in d:
+    d[k] = d[k] * 100
+print(d[1], d[2])
+""", "MATCH",
+  "MEASURED admissible: updating an EXISTING key's value during iteration "
+  "is fine in CPython — the regime inch 3a reproduces exactly")
+w("dict.grow-during-iter", """
+d = {1: 1}
+for k in d:
+    d[k + 10] = 0
+print('unreachable')
+""", "MATCH",
+  "MEASURED: CPython raises RuntimeError('dictionary changed size during "
+  "iteration') at the NEXT step — inch 3a reproduces THAT, not refuses it")
+w("dict.churn-during-iter", """
+d = {1: 1, 2: 2, 3: 3}
+for k in d:
+    if k == 2:
+        del d[1]
+        d[99] = 9
+print('unreachable')
+""", "MATCH",
+  "MEASURED, and a CROSS-RUNG dependency: this witness reports `del d[k]`, "
+  "which refuses FIRST, so the hazard is unreachable today — and the day "
+  "dict deletion lands it becomes required. A SAME-SIZE key-set change is "
+  "storage-layout dependent: CPython raises a SECOND, different "
+  "RuntimeError('dictionary keys changed during iteration') here, and "
+  "moving the deletion ahead of the cursor "
+  "makes it answer [1, 2, 99] with no error at all. Permanently LOUD.")
+
+# --- Constant payloads the extractor forks on ------------------------------
+w("const.float", """
+print(1.5)
+""", "MATCH", "binary64 float literal and shortest decimal rendering")
+w("const.bytes", """
+print(len(b"ab"))
+""", "MATCH", "immutable bytes literals and sequence operations")
+w("const.complex", """
+print(1j)
+""", "MATCH",
+  "The exact direct print(1j) observation is rendered as CPython's `1j`; other complex uses remain loud because the runtime has no complex value type")
+w("const.ellipsis", """
+x = ...
+print(x, x is Ellipsis)
+""", "MATCH", "Ellipsis is a truthy singleton, also available through the builtin name")
+
+# --- operator (13) ---------------------------------------------------------
+w("op.Add", "print(1 + 2)\n", "MATCH", "")
+w("op.Sub", "print(3 - 1)\n", "MATCH", "")
+w("op.Mult", "print(2 * 3)\n", "MATCH",
+  "scalar and immutable/boundary sequence repetition; heap-list aliasing is stateful")
+w("op.Div", "print(6 / 2)\n", "MATCH", "true division rounds directly to binary64")
+w("op.FloorDiv", "print(7 // 2)\n", "MATCH", "Int.fdiv")
+w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; bare `%` string formatting is a second tier")
+w("op.Pow", "print(2 ** 3)\n", "MATCH",
+  "MEASURED CORRECTION: `**` is in tier; bounded negative integer "
+  "exponents now return binary64")
+w("op.Pow-negative", "print(2 ** -1)\n", "MATCH",
+  "bounded negative integer exponent returns binary64")
+w("op.LShift", "print(1 << 4)\n", "MATCH", "budget-capped shift width")
+w("op.RShift", "print(16 >> 2)\n", "MATCH",
+  "was REFUSE; §L39 rung 1 landed it (op.RShift-budget is its edge)")
+w("op.RShift-budget", "print(1 >> 10 ** 30)\n", "MATCH",
+  "large counts saturate by operand bit length before the shift budget")
+w("op.BitOr", "print(5 | 2)\n", "MATCH", "")
+w("op.BitXor", "print(5 ^ 3)\n", "MATCH",
+  "was REFUSE — the one witness that found the whole rung; §L39 landed it")
+w("op.BitAnd", "print(5 & 3)\n", "MATCH", "")
+w("op.MatMult", "print(1 @ 2)\n", "MATCH",
+  "faithful TypeError for the admitted scalar operand tier")
+
+# --- unaryop (4) -----------------------------------------------------------
+w("op.UAdd", "print(+3)\n", "MATCH", "was REFUSE; §L39 rung 1")
+w("op.USub", "print(-3)\n", "MATCH", "")
+w("op.Not", "print(not 0)\n", "MATCH", "")
+w("op.Invert", "print(~5)\n", "MATCH", "was REFUSE; §L39 rung 1")
+
+# --- cmpop (10) ------------------------------------------------------------
+w("op.Eq", "print(1 == 1)\n", "MATCH", "")
+w("op.NotEq", "print(1 != 2)\n", "MATCH", "")
+w("op.Lt", "print(1 < 2)\n", "MATCH", "")
+w("op.LtE", "print(1 <= 1)\n", "MATCH", "")
+w("op.Gt", "print(2 > 1)\n", "MATCH", "")
+w("op.GtE", "print(2 >= 2)\n", "MATCH", "")
+w("op.Is", "print([] is [])\n", "MATCH", "refs by address; two immediates refuse")
+w("op.IsNot", "print([] is not [])\n", "MATCH", "")
+w("op.In", "print(1 in [1, 2])\n", "MATCH", "")
+w("op.NotIn", "print(3 not in [1, 2])\n", "MATCH", "")
+
+# --- boolop (2) ------------------------------------------------------------
+w("op.And", "print(1 and 2)\n", "MATCH", "")
+w("op.Or", "print(0 or 2)\n", "MATCH", "")
+
+
+# ---------------------------------------------------------------------------
+# THE WHITELIST CLASSIFICATION
+#
+# `<example>::<function>` -> construct class, for every
+# `"expect": "unsupported"` row of harness/cases.json. Unclassified rows
+# fail the run: the census covers the whole whitelist or it is not one.
+# ---------------------------------------------------------------------------
+
+# THE §5.2 REFUSAL CLASSES — `LeanModels/Core/Outcome.lean`'s `RefusalCause`,
+# which the model emits as `class` under `--observations`. There are FOUR, and
+# they are **NOT** the `WHITELIST_CLASS` taxonomy below.
+#
+#   WHITELIST_CLASS names WHICH GAP a row is  — `fstring.conversion`,
+#                                               `del.name-set-census`, …
+#   the model's `class` names WHAT KIND of refusal the model made.
+#
+# The two share the word "class" and nothing else. Comparing them for equality
+# was this check's first version, and it produced 109 confident DRIFT lines
+# that were all the same conflation. **Two fields with the same NAME are not
+# the same field** — the census's own law, applied to the census.
+SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
+
+WHITELIST_CLASS = {
+    "bytes_lab::numeric_int_still_loud": "bytes.numeric-parsing",
+    "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
+    "float_lab::constructor_heap": "float.constructor-protocols",
+    "float_lab::attribute_still_loud": "float.attributes",
+    "bench_bisect::bisect_left": "exc.raise",
+    "dict_lab::ret_dict": "boundary.heap-value",
+    "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
+    "with_lab::multiple_items": "with.multiple-items",
+    "with_lab::explicit_init": "with.explicit-constructor",
+    "str_lab::cast_int": "builtin.int-of-str",
+    "str_lab::swap": "str.non-ascii",
+    "str_lab::isup": "str.non-ascii",
+    "str_lab::fmt_width": "format.percent-minilanguage",
+    "str_lab::fmt_hex": "format.percent-minilanguage",
+    "str_lab::fmt_bad": "format.percent-minilanguage",
+    "str_lab::fmt_trailing": "format.percent-minilanguage",
+    "float_lab::constructor": "float.text-nan-or-unicode-repr",
+    "int_string::explicit_base": "builtin.int-of-str",
+    "string_repeat::repeat_live_list": "op.Mult-repetition",
+    "tuple_repeat::repeat_empty_length": "op.Mult-repetition",
+    "tuple_repeat::repeat_right": "op.Mult-repetition",
+    "tuple_repeat::repeat_left": "op.Mult-repetition",
+    "tuple_repeat::repeat_aug": "op.Mult-repetition",
+    "tuple_repeat::repeat_empty": "op.Mult-repetition",
+    "tuple_repeat::repeat_namedtuple": "op.Mult-repetition",
+    "tuple_repeat::repeat_namedtuple_left": "op.Mult-repetition",
+    "tuple_repeat::repeat_namedtuple_aug": "op.Mult-repetition",
+    "repr_lab::instance": "render.identity",
+    "repr_lab::closure": "render.identity",
+    "repr_lab::generator": "render.identity",
+    "exc_handlers_lab::handler_binding": "exc.handler",
+    "exc_ancestors_lab::late_shadow": "exc.handler",
+    "builtin_raise_lab::raised_instance": "exc.raise",
+    "gen_lab::walrus_leak": "genexp.lowering-admission",
+    "gen_lab::upto": "boundary.generator",
+    "gen_lab::gen_at_boundary": "boundary.generator",
+    "gen_lab::send_is_loud": "generator.send-throw-close",
+    "gen_lab::gen_assigned_rebound_still_loud": "genexp.lowering-admission",
+    "gen_lab::drain_unbound": "genexp.lowering-admission",
+    "gen_lab::yf_leak_drive": "genexp.lowering-admission",
+    "dict_lab::genexp_local_capture_default_still_loud": "genexp.lowering-admission",
+    "exc_lab::time_live": "clock.underrun",
+    # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT
+    # this table when builtin classes became matchable; this row is what keeps
+    # the boundary falsifiable -- an ancestor the tier refuses BY NAME rather
+    # than deriving a catch set it has never enumerated.
+    "exc_lab::except_ancestor_still_loud": "exc.ancestor-class",
+    "closure_lab::rec_nested_name": "closure.admission",
+    "closure_lab::cell_escapes": "closure.admission",
+    "seq_lab::band_set": "set.order",
+    "seq_lab::str_repeat_loud": "op.Mult-repetition",
+    "clock_lab::armed": "exc.handler",
+    "clock_lab::read_clock": "clock.underrun",
+    "star_lab::star_target": "starred.position",
+    "fstring_lab::format_spec": "fstring.format-spec",
+    "fstring_lab::format_spec_num": "fstring.format-spec",
+    "fstring_lab::dynamic_format_spec_bad": "fstring.format-spec",
+    "fstring_repr::instance": "render.identity",
+    # `del_lab::del_sub` LEFT this table with §del: clause 4 admits a single
+    # subscript target and ingestion rewrites it, so the row is now `match`.
+    # §del: the same-size KEY-SET CHURN regime, REACHABLE for the first time
+    # because deletion landed (2026-08-23-pycomplete-15 measured it: some
+    # shapes raise CPython's second RuntimeError, some complete silently, and
+    # the entries-array layout is what separates them). Permanently loud.
+    "dict_lab::del_churn_first_key": "dict.keyset-churn",
+    "dict_lab::del_churn_same_key_back": "dict.keyset-churn",
+    "dict_lab::del_churn_middle_key": "dict.keyset-churn",
+    # §iter: the SAME churn regime reached through the `iter`/`next` cursor
+    # instead of a `for`. 2026-08-23-pycomplete-17 measured why it is one
+    # regime and not two: CPython's `dict_keyiterator` raises "keys changed"
+    # only when `di_len` hits zero with a live entry still ahead of the
+    # cursor, so the same churn answers silently one step earlier and raises
+    # one step later. The model has no `di_len`, so the guard stays LOUD.
+    "dict_lab::iter_churn_still_loud": "dict.keyset-churn",
+    # §iter: the RECEIVER boundary. `iterFrame` answers a cursor for a heap
+    # dict and refuses every other receiver, because CPython has a distinct
+    # iterator TYPE per receiver and each carries its own mutation regime.
+    "dict_lab::iter_list_recv_still_loud": "iter.non-dict-receiver",
+    # The sentinel form's non-callable TypeError is now admitted; callable
+    # iterator construction remains outside the tier and is not in this
+    # non-callable witness census.
+}
+
+# The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused
+# and the rebuild answered, and it explicitly refused to adjudicate them --
+# `harness/monadic_gate.py` did, by checking the rebuild against the ORACLE.
+# That gate is deleted with the window, so leaving the table would turn it
+# into exactly the silencer its own comment disclaimed. Instead the two rows
+# were migrated in `harness/cases.json` from `expect: unsupported` to
+# `expect: match`: they leave the whitelist entirely and CPython adjudicates
+# them as ordinary differential rows. Records-vs-adjudicates is preserved --
+# the adjudicator is just diff_test now.
+
+SCRIPT_CLASS = {
+    "nan_floor_script": "float.nan-payload",
+    "nan_division_script": "float.nan-payload",
+    "cls_effect_script": "class.creation-effect",
+    "ann_module_script": "annassign.module-scope",
+    "ann_module_effect_script": "annassign.module-scope",
+    "cls_deco_script": "class.creation-effect",
+    "star_target_script": "starred.position",
+}
+
+
+# ---------------------------------------------------------------------------
+# Running
+# ---------------------------------------------------------------------------
+
+def run_batch(runner_cmd, lines, flag, extra=()):
+    """One runner process for the whole list; returns the parsed result
+    lines in order. `flag` is `--batch` or `--script-batch`; `extra` is
+    appended verbatim (`--observations`, for the refusal CLASS)."""
+    fd, jobs_path = tempfile.mkstemp(
+        dir=os.path.join(REPO_ROOT, "harness"),
+        prefix=".census_jobs.", suffix=".jsonl")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    out = []
+    try:
+        proc = subprocess.Popen(list(runner_cmd) + [flag, jobs_path] + list(extra),
+                                cwd=REPO_ROOT, stdout=subprocess.PIPE,
+                                text=True)
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            if not line.startswith("{"):
+                print("runner: %s" % line, file=sys.stderr)
+                continue
+            out.append(json.loads(line))
+        proc.wait()
+    finally:
+        os.unlink(jobs_path)
+    while len(out) < len(lines):
+        out.append({"status": "runner-error",
+                    "msg": "runner produced %d of %d results"
+                           % (len(out), len(lines))})
+    return out
+
+
+def oracle_run(path):
+    proc = subprocess.run([ORACLE, path], cwd=REPO_ROOT,
+                          capture_output=True, text=True)
+    return proc.stdout, proc.returncode, proc.stderr
+
+
+def verdict_of(cpy, model):
+    """The verdict, in `harness/leanpy_survey.py`'s vocabulary and by its
+    rule: stdout and exit code must agree, and an `exn` outcome must agree
+    on the exception CLASS as well (CPython exits 1 for every uncaught
+    exception, so stdout + exit alone cannot tell two apart)."""
+    cout, ccode, cerr = cpy
+    status = model.get("status")
+    if status == "unsupported":
+        return "REFUSE", model.get("msg", "")
+    if status == "timeout":
+        return "TIMEOUT", ""
+    if status == "runner-error":
+        return "ERROR", model.get("msg", "")
+    if status == "exn" and cpython_exc_class(cerr) != model.get("exn"):
+        return "DIVERGE", ("model raised %s | cpython raised %s"
+                           % (model.get("exn"), cpython_exc_class(cerr)))
+    lout, lcode = lean_stdout(model), model.get("exit")
+    if cout == lout and ccode == lcode:
+        return "MATCH", ""
+    return "DIVERGE", ("model exit %s stdout %r | cpython exit %d stdout %r"
+                       % (lcode, lout, ccode, cout))
+
+
+def grammar_census(runner_cmd, keep, results):
+    work = keep or tempfile.mkdtemp(prefix="census-witnesses-")
+    os.makedirs(work, exist_ok=True)
+    cache = leanpy.default_cache()
+    os.makedirs(cache, exist_ok=True)
+    paths, jobs, live = [], [], []
+    for item in W:
+        p = os.path.join(work, item["id"].replace(".", "-") + ".py")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(item["src"])
+        env = leanpy.envelope_for(p, cache)
+        if env is None:
+            results.append((item["id"], "EXTRACT", "", item[EXPECT_KEY]))
+            continue
+        paths.append(p)
+        jobs.append(json.dumps({"path": env}, separators=(",", ":")))
+        live.append(item)
+    models = run_batch(runner_cmd, jobs, "--script-batch")
+    drift = 0
+    for item, path, model in zip(live, paths, models):
+        got, detail = verdict_of(oracle_run(path), model)
+        results.append((item["id"], got, detail, item[EXPECT_KEY]))
+        if got != item[EXPECT_KEY]:
+            drift += 1
+    return drift, work
+
+
+def print_grammar(results):
+    width = max(len(r[0]) for r in results)
+    print("=" * 72)
+    print("GRAMMAR CENSUS — a witness per CPython 3.9 `ast` production, plus"
+          " measured edge rows")
+    print("=" * 72)
+    for wid, got, detail, expect in results:
+        flag = "" if got == expect else "   <<< DRIFT (recorded %s)" % expect
+        print("%-*s  %-8s %s%s" % (width, wid, got, detail[:100], flag))
+    live = sum(1 for r in results if r[1] == "MATCH")
+    print("-" * 72)
+    # AUDIT docs/quality-audit-2026-08-23.md §python: this printed the ROW
+    # count as a PRODUCTION count. They stopped being the same number the
+    # moment edge rows and per-construct witnesses were added (an edge row is
+    # a second witness for a production already counted), so the grammar's
+    # 81 productions were being reported as 113. Witnesses is what this
+    # actually counts, and witnesses is what it now says.
+    print("%d witnesses: %d MATCH, %d REFUSE, %d other"
+          % (len(results), live,
+             sum(1 for r in results if r[1] == "REFUSE"),
+             sum(1 for r in results if r[1] not in ("MATCH", "REFUSE"))))
+
+
+def bucket(rows):
+    """rows: (class, key, message) -> ordered class table."""
+    out = {}
+    for cls, key, msg in rows:
+        e = out.setdefault(cls, {"n": 0, "rep": key, "msgs": set()})
+        e["n"] += 1
+        if msg:
+            e["msgs"].add(msg)
+    return out
+
+
+def print_buckets(title, table, total):
+    print("=" * 72)
+    print(title)
+    print("=" * 72)
+    width = max([len(c) for c in table] + [5])
+    for cls in sorted(table, key=lambda c: (-table[c]["n"], c)):
+        e = table[cls]
+        msg = sorted(e["msgs"])[0] if e["msgs"] else "(no message)"
+        print("%-*s  %3d  %-28s %s" % (width, cls, e["n"], e["rep"], msg[:70]))
+    print("-" * 72)
+    print("%d rows in %d classes" % (total, len(table)))
+
+
+def whitelist_census(runner_cmd):
+    with open(os.path.join(REPO_ROOT, "harness", "cases.json"),
+              encoding="utf-8") as f:
+        cases = json.load(f)
+    jobs, keys = [], []
+    unclassified = []
+    for case in cases:
+        if case.get("expect") != "unsupported":
+            continue
+        stem = os.path.splitext(os.path.basename(case["file"]))[0]
+        key = "%s::%s" % (stem, case["function"])
+        if key not in WHITELIST_CLASS:
+            unclassified.append(key)
+            continue
+        env = os.path.splitext(case["file"])[0] + ".json"
+        for args in case["args"]:
+            jobs.append(batch_job(env, case["function"], args, case.get("fuel")))
+            keys.append(key)
+    # `--observations` is what carries the model's OWN refusal class. Without
+    # it the table below is a hand-maintained claim that nothing can falsify;
+    # with it, every whitelisted row is checked against the classification the
+    # interpreter actually made. The flag's other fields (`stdout`,
+    # `args_after`) are read by nobody here and are harmless: this census reads
+    # named fields, it does not compare whole dicts the way diff_test does.
+    models = run_batch(runner_cmd, jobs, "--batch", ("--observations",))
+    rows = []
+    not_refused = []
+    by_class = {}          # §5.2 class -> count
+    boundary = 0           # refusals raised at the BOUNDARY, not by the tier
+    bad_class = []         # a class name outside §5.2's four
+    undefined_rows = []    # Python has none; this is that claim, falsifiable
+    for key, model in zip(keys, models):
+        if model.get("status") != "unsupported":
+            not_refused.append((key, model.get("status")))
+        else:
+            measured = model.get("class")
+            if measured is None:
+                # NOT drift. `class` is present exactly on INTERPRETER
+                # refusals (`Monadic.refusalClass_isSome_iff`), so its absence
+                # says this run reached a world and the boundary FREEZE
+                # refused instead — a statement about the boundary, not about
+                # the tier. Counted so a silent change in that population is
+                # visible; never flagged.
+                boundary += 1
+            elif measured not in SEC52_CLASSES:
+                bad_class.append((key, measured))
+            else:
+                by_class[measured] = by_class.get(measured, 0) + 1
+                if measured == "undefined":
+                    undefined_rows.append(key)
+        rows.append((WHITELIST_CLASS[key], key, model.get("msg", "")))
+    print_buckets("WHITELIST CENSUS — harness/cases.json "
+                  "`expect: unsupported` rows", bucket(rows), len(rows))
+    drift = 0
+    for key in unclassified:
+        print("DRIFT: whitelisted row %s has no class in WHITELIST_CLASS"
+              % key)
+        drift += 1
+    for key, status in not_refused:
+        print("DRIFT: %s is whitelisted but the model answered %s"
+              % (key, status))
+        drift += 1
+    # THE §5.2 COLUMN, MEASURED. Before the model emitted its class this
+    # census could only report the prose; the distribution below is the
+    # scoreboard column §5.2 exists for, taken off the model rather than off a
+    # table somebody maintained by hand.
+    print("§5.2 classes measured: %s; boundary-freeze refusals (no class, by "
+          "design): %d"
+          % (", ".join("%s=%d" % kv for kv in sorted(by_class.items()))
+             or "none", boundary))
+    for key, measured in bad_class:
+        print("DRIFT: %s reported class %r, which is not one of §5.2's four"
+              % (key, measured))
+        drift += 1
+    # THE FALSIFIABLE CLAIM. `Monadic/Spec.lean` gates "Python has no undefined
+    # behaviour" STRUCTURALLY, from the inside — the tier's refusal API has no
+    # entry point that can build the class. This is the same claim checked from
+    # the OUTSIDE, on the real corpus: if a row ever comes back `undefined`,
+    # the structural argument has a hole and this line is how it surfaces.
+    for key in undefined_rows:
+        print("DRIFT: %s came back class `undefined` -- Python has NO undefined "
+              "behaviour, and Monadic/Spec.lean gates that structurally; this "
+              "is that claim failing from the outside" % key)
+        drift += 1
+    return drift
+
+
+def scripts_census(runner_cmd):
+    with open(os.path.join(REPO_ROOT, "harness", "scripts.json"),
+              encoding="utf-8") as f:
+        script_rows = json.load(f)
+    cache = leanpy.default_cache()
+    jobs, keys = [], []
+    drift = 0
+    for row in script_rows:
+        if row.get("expect") != "unsupported":
+            continue
+        stem = os.path.splitext(os.path.basename(row["file"]))[0]
+        if stem not in SCRIPT_CLASS:
+            print("DRIFT: loud script %s has no class in SCRIPT_CLASS" % stem)
+            drift += 1
+            continue
+        env = leanpy.envelope_for(row["file"], cache)
+        jobs.append(json.dumps({"path": env}, separators=(",", ":")))
+        keys.append(stem)
+    models = run_batch(runner_cmd, jobs, "--script-batch")
+    rows = []
+    for key, model in zip(keys, models):
+        if model.get("status") != "unsupported":
+            print("DRIFT: %s is a loud row but the model answered %s"
+                  % (key, model.get("status")))
+            drift += 1
+        rows.append((SCRIPT_CLASS[key], key, model.get("msg", "")))
+    print_buckets("SCRIPT CENSUS — harness/scripts.json "
+                  "`expect: unsupported` rows", bucket(rows), len(rows))
+    return drift
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="refusal_census.py")
+    p.add_argument("--grammar", action="store_true")
+    p.add_argument("--whitelist", action="store_true")
+    p.add_argument("--scripts", action="store_true")
+    p.add_argument("--no-build", action="store_true")
+    p.add_argument("--runner", default="lake exe leanmodels-run")
+    p.add_argument("--json", default=None)
+    p.add_argument("--keep", default=None,
+                   help="write the grammar witnesses here and keep them")
+    opts = p.parse_args(argv)
+    if not (opts.grammar or opts.whitelist or opts.scripts):
+        opts.grammar = opts.whitelist = opts.scripts = True
+
+    os.chdir(REPO_ROOT)
+    runner_cmd = opts.runner.split()
+    print("interpreter: LeanModels/Python/Monadic/ (the runner's; the theorems are about Semantics.lean)")
+    # THE AMENDMENT 14 CONTRACT (tools/triad.sh 4d32526): the TENURE builds the
+    # runner and exports LS_RUNNER_PREBUILT=1. A gate must never build the tree
+    # — it defeats --build-target narrowing and surfaces an unrelated build
+    # failure as a GATE failure, attributing the number to the wrong thing
+    # (§5.4a). Unset, build ONLY the runner.
+    if not opts.no_build and not os.environ.get("LS_RUNNER_PREBUILT"):
+        if subprocess.run(["lake", "build", "leanmodels-run"], cwd=REPO_ROOT).returncode != 0:
+            print("error: `lake build` failed", file=sys.stderr)
+            return 2
+
+    drift = 0
+    grammar = []
+    if opts.grammar:
+        d, work = grammar_census(runner_cmd, opts.keep, grammar)
+        drift += d
+        print_grammar(grammar)
+        if opts.keep:
+            print("witnesses kept in %s" % work)
+    if opts.whitelist:
+        drift += whitelist_census(runner_cmd)
+    if opts.scripts:
+        drift += scripts_census(runner_cmd)
+
+    ver = subprocess.run([ORACLE, "-V"], capture_output=True, text=True)
+    print("oracle: %s" % ((ver.stdout or ver.stderr).strip(),))
+    if opts.json:
+        with open(opts.json, "w", encoding="utf-8") as f:
+            json.dump({"grammar": [{"id": a, "verdict": b, "detail": c,
+                                    "recorded": d} for a, b, c, d in grammar]},
+                      f, indent=1)
+    print("%d drift%s" % (drift, "" if drift == 1 else "s"))
+    return 1 if drift else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

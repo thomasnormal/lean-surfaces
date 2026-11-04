@@ -1,0 +1,212 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.19"
+  },
+  "source_file": "Examples/python/sum_to/sum_to.py",
+  "source_sha256": "720479f83f5e888cbcd5df62645836fe1c70db613cc95a75233c123e0fb2173c",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 12
+        },
+        "name": "sum_to",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 5
+                },
+                "id": "s"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 8,
+                "end_lineno": 2,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 3,
+                "col_offset": 10,
+                "end_lineno": 3,
+                "end_col_offset": 15
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 10,
+                  "end_lineno": 3,
+                  "end_col_offset": 11
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 14,
+                    "end_lineno": 3,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 8,
+                  "end_lineno": 4,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 8,
+                    "end_lineno": 4,
+                    "end_col_offset": 9
+                  },
+                  "id": "s"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 13,
+                    "end_lineno": 4,
+                    "end_col_offset": 14
+                  },
+                  "id": "n"
+                }
+              },
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 8,
+                  "end_lineno": 5,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 8,
+                    "end_lineno": 5,
+                    "end_col_offset": 9
+                  },
+                  "id": "n"
+                },
+                "op": "Sub",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 13,
+                    "end_lineno": 5,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 6,
+                "col_offset": 11,
+                "end_lineno": 6,
+                "end_col_offset": 12
+              },
+              "id": "s"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 9,
+      "last_line": 37,
+      "text": "/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,\nSurface.lean \u2014 fixed generous fuel; minimal-fuel pinning retired). -/\n#py_check sum_to(10) = 55\n#py_check sum_to(0) = 0\n\n/-- `Int`-core of `sum_to_total`, by the VC walker (`py_vcgen`,\nVCTactic.lean). The loop counts *down*: the Python variable `n` is\nmutated, so it must be a clause binder \u2014 the initial value gets the\ncapitalized binder `N` (the walker's counterpart of `py_loop`'s\n`(state := \u2026)` shadowing escape hatch, cf. Examples/python/gcd/proof.lean).\nInvariant: `s` already holds the summed tail `(n+1) + \u22ef + N`, stated\nmultiplication-free as `2*s = (N - n)*(N + n + 1)`, plus the range\n`0 \u2264 n \u2264 N`; the measure is `n` itself. Residuals: the `return` (the\nnegated test and range force `n' = 0`, `grind` divides), rest `grind`. -/\nprivate theorem sum_to_core (N : PyInt) (hN : 0 \u2264 N) : sum_to(N) ==> N * (N + 1) / 2 := by\n  py_vcgen [sum_to]\n    (inv := fun (s n : Int) => 0 \u2264 n \u2227 n \u2264 N \u2227 2 * s = (N - n) * (N + n + 1))\n    (dec := fun (s n : Int) => n.toNat)\n  case ret =>\n    obtain rfl : n' = 0 := by omega\n    grind\n  all_goals grind\n\n/-- Total correctness for `n \u2265 0`: `sum_to(n)` terminates and returns the\n`n`-th triangular number \u2014 the `Int`-core above at the public binder. -/\ntheorem sum_to_total (n : PyInt) (hn : 0 \u2264 n) : sum_to(n) ==> n * (n + 1) / 2 :=\n  sum_to_core n hn"
+    }
+  ]
+}

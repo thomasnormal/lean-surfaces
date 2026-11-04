@@ -1,0 +1,3261 @@
+-- LEGACY: statement target of pre-rebuild theorems; compiles, refuses what
+-- it does not implement, gains no consumers; deleted when re-founded.
+import LeanModels.Python.VC2
+import LeanModels.Python.LoopTactic
+
+/-!
+# `py_vcgen` — the VC-generating walker (py_vcgen layer 3)
+
+The tactic that turns the layer-1/2 rules (VC.lean/VC2.lean) into a proof
+*surface*: from a `f(args) ==> v` (`CallsTo`) goal — or a `PyTriple` goal
+whose precondition is `fun env => env = <literal>` — it bridges to the
+whole-function-body triple (`PyTriple.callsTo`) and walks the statement list,
+applying the structural rules and discharging every interpreter obligation by
+captured symbolic execution, so that only mathematics remains.
+
+Surface:
+
+* `py_vcgen [prog]` / `py_vcgen [prog, aux…]` (extra idents are additional
+  constants to unfold during captured runs — hand-built `FunctionDefn`
+  constants of test modules) — walk with no loop clauses: each loop's
+  invariant and measure are left as *delayed goals* (mvcgen-style): for the
+  i-th loop in source order, goals `case inv<i>` and `case dec<i>` come
+  first, presenting the loop's *assigned* variables as a NAMED binder
+  telescope in the goal context — `total i : Int ⊢ Prop` resp. `⊢ Nat` —
+  so the clause is written as a bare proposition/measure over the Python
+  names (`case inv1 => exact 0 ≤ i`, `case dec1 => exact i.toNat`), NOT as
+  a lambda. (Design note: a function-typed goal `Int → ⋯ → Prop` would be
+  consumed *positionally* by `exact fun … => …`, silently cross-wiring
+  binders written in the wrong order — with the telescope in the context
+  there is no order to get wrong, and a stray lambda is a loud type
+  error.) Assigning them instantiates the math residuals that mention
+  them. A `break`-carrying loop additionally gets `case exit<i>` (same
+  telescope) — the exit-clause request the clause form takes as
+  `(exit<i> := …)`; without it the loop's exit fact would silently weaken
+  to the bare invariant.
+* `py_vcgen [prog] (inv := fun (x y : Int) => …) (dec := fun (x y : Int) => …)`
+  — clause form: the i-th `(inv := …) (dec := …)` pair belongs to the i-th
+  `while` in source order (any label starting with `inv` resp. `dec` works:
+  `inv1`, `dec1`, …; loops are indexed by a pre-scan, so an `if`-fork that
+  reaches the same loop twice consumes the same pair twice). Binder names
+  must be the Python names of variables **assigned in that loop's body** and
+  present at loop entry — matched BY NAME, in any order (they select the
+  environment slots, exactly as
+  `py_loop`); unassigned variables stay pinned to their current symbolic
+  values, so the invariant refers to them directly (`n` in `tri`, `oa`/`ob`
+  in `extended_gcd` need no clause mention). A clause for an inner loop is
+  elaborated *at its loop's program point*, so it may also refer to the
+  enclosing loops' variables by name. An optional `(exit<i> := fun (x…) => P)`
+  clause (index = loop number, default 1; binders a subset of that loop's
+  `inv` binders) states the i-th loop's exit fact explicitly — REQUIRED for
+  a `break`-carrying loop whose continuation needs more than the bare
+  invariant: the test-false exit must then imply `P` (an `exit`-tagged
+  residual) and each `break` site must establish it (with its branch facts
+  `hif` in scope, which is the point).
+
+The walk (each step is a layer-1/2 rule; nothing is proved by whole-program
+execution):
+
+* **straight-line segments** (assignments incl. tuple targets, `augAssign`,
+  `pass`, expression statements, and a terminating `return`/`break`/
+  `continue`) are discharged by one *captured* symbolic execution (`py_simp`'s
+  lemma set at fuel 64, all local `Prop` hypotheses available as rewrites)
+  spliced through `PyTriple.run_seq` or `PyTriple.of_exec`;
+* **`if`** — `PyStmtTriple.ifStmt` with each branch walked under its test
+  fact (`hif`); the joined midcondition is the disjunction of the branches'
+  fall-through states, so the walk after the `if` forks per branch
+  (`PyTriple.or_pre`); a branch whose test fact normalizes to `False` is
+  closed without touching its body (`raise`-unreachability, the
+  `rsa_inverse.inverse` pattern);
+* **`while`** — `PyStmtTriple.whileLoop` (VC2.lean) instantiated from the
+  clause pair: the invariant is
+  `fun env => ∃ x₁ … xₖ tail, env = <shape> ∧ inv x₁ … xₖ` where `<shape>`
+  pins unassigned slots and `tail` absorbs **environment growth** (variables
+  first assigned inside the body live behind the symbolic tail via
+  `Env.lookup_set_self`/`Env.lookup_set_ne`/`Env.set_set` — no hand-unrolled
+  first iteration, the `rsa_inverse` pain point); the measure reads its
+  variables back off the environment through `envInt`; the test-value
+  function `tv` is derived by symbolic evaluation of the test at the shape
+  (no Miller unification needed). Without an `exit` clause a body `break`
+  weakens the loop's exit fact to the bare invariant (no negated test);
+* **`for`** — `PyStmtTriple.forLoop` (VC2.lean): the while recipe MINUS the
+  measure. The iterated values are captured before the loop begins, so the
+  invariant is indexed by the REMAINING elements and termination is
+  structural. Surface consequences: a `for` consumes an `inv` clause but NO
+  `dec`, and its `inv` binds the remaining-element list FIRST, then its Int
+  slots by name — `(inv := fun (rest : List Int) (best : Int) => …)`, or
+  delayed as `case inv1 => …` with `rest` in the context. The loop TARGET
+  is bound by the loop itself, once per element, and lives behind the
+  symbolic tail like any body-created variable. A `break`-carrying `for`
+  REQUIRES its `exit` clause: the invariant at the empty remainder is not
+  the exit fact after a `break`, and the while rule's silent weakening is
+  deliberately not repeated. The walker reads the iterable's captured value
+  as a boundary/value LIST whose elements are marshalled (`xs.map elt`) or
+  int literals; `for` over a heap list (H2's live index cursor), over a
+  `str` or a `range` refuse loudly and want the layer-2 rule by hand, and
+  a GENERATOR refuses with its own rule named (`PyStmtTriple.forGen`, and
+  `EvalsIn.genCall` for the call that binds one) — the rules exist, the
+  walker's invariant grammar does not reach them yet (docs/backlog.md §L3
+  TAIL LANDED). `for … else` has no rule at all — the interpreter refuses
+  it;
+* **calls** — `x = f(…)` / `(a, b, c) = f(…)` (the call the whole
+  right-hand side, `PyStmtTriple.assign` ∘ `EvalsTo.call`) and
+  `return f(…)` (`PyStmtTriple.retExpr` ∘ `EvalsTo.call`, which is the
+  "any other expression position" that primitive was built for). Both go
+  through the same front half (`buildCallEvalsTo`): the callee fact is
+  found among local `CallsTo` hypotheses first — ∀-QUANTIFIED ones
+  included, which is what makes a recursion IH usable, since the natural
+  shape of one is `∀ b, f(…, b) ==> …` — then in the `@[py_spec]`
+  registry; spec preconditions are discharged by `assumption`/`omega`, or
+  appended as `side` goals. A return-position call to a BUILTIN stays
+  straight-line, as before.
+
+Residual goals are pure mathematics over named atoms (`py_loop`
+presentation: invariant conjuncts split into `hinv1`, `hinv2`, …; the loop
+test as `hcont`; branch facts as `hif`; post-loop values primed), tagged
+`init`, `preserve`, `dec`, `exit`, `ret`, `err`, `side`. When several
+residuals share a tag (two `preserve` goals from split invariant
+conjuncts), the first keeps the bare tag and the rest are numbered
+(`preserve2`, `preserve3`, …) — `case preserve => …` would otherwise
+silently take only the first. Anything the recipes cannot close is
+*appended* as a goal, never dropped.
+
+Entry forms: a `CallsTo` goal (`==>`/`⇓`; bridged via
+`PyTriple.callsTo_arityOk`, so a body that can fall off the end leaves a
+`v = None` residual); a `PyTriple` goal whose precondition reduces to
+`fun env => env = <literal>`; or a relational existential
+`∃ v, f(args) ==> v ∧ Φ v` — with a raw `Val`-typed binder used literally
+(bridged via `PyTriple.exists_callsTo_arityOk`) or a marshalled spec-typed
+binder (`∃ v : PyInt, f(args) ==> v ∧ Φ v`, the surface elaboration
+putting `ToVal.toVal v` in the result slot; bridged via
+`PyTriple.exists_callsTo_toVal_arityOk`). The `_arityOk` bridges are the
+F1-defaults general forms: their arity-window side condition computes at
+literal modules and closes by `rfl` whether the call supplies every
+argument or omits trailing defaulted ones.
+
+v1 restrictions (deliberate): loop clause variables are `Int`-valued and
+must exist at loop entry; loop `orelse` is empty (the layer-2 rule's
+restriction); `if`-branches are straight-line (terminators allowed; no
+nested `if`/`while`/call); calls appear only as the whole right-hand side
+of an assignment or the whole returned expression, with a fully literal
+environment (not under an enclosing loop's symbolic tail); a loop test may
+not read a variable first assigned
+inside the loop body, and a `for`'s ITERABLE may not either (its value is
+captured once, at loop entry); `Raises` (`==>!`) goals are not walked.
+-/
+
+namespace LeanModels.Python
+
+/-! ## Environment-reading helpers (spec-side) -/
+
+/-- Read an `Int`-valued variable off a frame's locals (`0` when absent or
+non-`int`) — how a loop measure derived by `py_vcgen` reads its variables
+back from the interpreter state (`μ := fun st => dec (envInt st "i") …`).
+Reduces by `simp [envInt, Env.lookup]` at literal states. -/
+def envInt (st : FrameState) (x : String) : Int :=
+  match Env.lookup st.locals x with
+  | some (.int i) => i
+  | _ => 0
+
+/-- Lookup after `Env.set` at the same key. With `Env.lookup_set_ne` and
+`Env.set_set`, this is what keeps a loop-body-created variable (living
+behind the invariant's symbolic environment tail) readable and writable
+without the tail ever becoming literal. Polymorphic (`Env.lookup`/`Env.set`
+are since H1); used at `RVal`. -/
+theorem Env.lookup_set_self {α} (e : List (String × α)) (k : String) (v : α) :
+    Env.lookup (Env.set e k v) k = some v := by
+  induction e with
+  | nil => simp [Env.set, Env.lookup]
+  | cons kv rest ih =>
+    obtain ⟨kk, kw⟩ := kv
+    by_cases hk : (kk == k) = true
+    · simp [Env.set, hk, Env.lookup]
+    · have hk' : (kk == k) = false := by simpa using hk
+      simp [Env.set, hk', Env.lookup, ih]
+
+/-- Lookup after `Env.set` at a different key (see `Env.lookup_set_self`). -/
+theorem Env.lookup_set_ne {α} (e : List (String × α)) {k k' : String}
+    (h : (k' == k) = false) (v : α) :
+    Env.lookup (Env.set e k v) k' = Env.lookup e k' := by
+  have hne : (k == k') = false := by
+    simp only [beq_eq_false_iff_ne] at h ⊢
+    exact fun he => h he.symm
+  induction e with
+  | nil => simp [Env.set, Env.lookup, hne]
+  | cons kv rest ih =>
+    obtain ⟨kk, kw⟩ := kv
+    by_cases hk : (kk == k) = true
+    · have hkv : (kk == k') = false := by
+        have : kk = k := by simpa using hk
+        simpa [this] using hne
+      simp [Env.set, hk, Env.lookup, hne, hkv]
+    · have hk' : (kk == k) = false := by simpa using hk
+      simp [Env.set, hk', Env.lookup, ih]
+
+/-- Overwrite after `Env.set` at the same key (see `Env.lookup_set_self`). -/
+theorem Env.set_set {α} (e : List (String × α)) (k : String) (v w : α) :
+    Env.set (Env.set e k v) k w = Env.set e k w := by
+  induction e with
+  | nil => simp [Env.set]
+  | cons kv rest ih =>
+    obtain ⟨kk, kw⟩ := kv
+    by_cases hk : (kk == k) = true
+    · have : kk = k := by simpa using hk
+      simp [Env.set, this]
+    · have hk' : (kk == k) = false := by simpa using hk
+      simp [Env.set, hk', ih]
+
+/-! ## Marshalled-list indexing (spec-side)
+
+The shape every symbolic subscript read leaves in a residual goal: the
+interpreter reads a boundary list through `getElem?` and MAPS the
+marshalling over the result, defaulting when out of range. Three example
+proofs each carried their own copy of this lemma (`arrVal_getElem` in
+`bench_bisect`, `bench_statistics`, `sf_bound_rec`, plus two copies of the
+`getD`/`getElem` bridge); the content lives here now, and each site is one
+instantiation. -/
+
+/-- Mapping over an IN-RANGE `getElem?` and defaulting is the map applied at
+the element. Unbounded this is FALSE: out of range the left side is `d` and
+the right side is `f` of nothing. -/
+theorem map_getElem?_getD {α β : Type} (f : α → β) (d : β) (l : List α)
+    (n : Nat) (h : n < l.length) :
+    (Option.map f l[n]?).getD d = f l[n] := by
+  rw [List.getElem?_eq_getElem h]; rfl
+
+/-- The `getD`/`getElem` bridge at an in-range index, general form (core
+states it the other way round). -/
+theorem getD_eq_getElem_gen {α : Type} (l : List α) (n : Nat) (d : α)
+    (h : n < l.length) : l.getD n d = l[n] :=
+  (List.getElem_eq_getD d).symm
+
+/-- The `getD`/`getElem` bridge on an int list at the `0` default — the
+signature the example proofs already call (`getD_eq_getElem a n h`). -/
+theorem getD_eq_getElem (l : List Int) (n : Nat) (h : n < l.length) :
+    l.getD n 0 = l[n] := getD_eq_getElem_gen l n 0 h
+
+/-- The `arrVal_getElem` family at the surface marshalling, `getElem`
+form. -/
+theorem arrVal_getElem (l : List Int) (n : Nat) (h : n < l.length) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal) l[n]?).getD RVal.none
+      = RVal.int l[n] :=
+  map_getElem?_getD _ _ l n h
+
+/-- Python's negative-index fold, collapsed at a non-negative index. A
+conditional REWRITE rather than an arithmetic decision on the `ite`
+condition: the side condition `0 ≤ i` is a rewrite hypothesis, so
+`captureDischarge`'s `omega` half sees it, and nothing has to decide
+`i < 0` as a term. -/
+theorem ifNeg_index (i : Int) (n : Nat) (h : 0 ≤ i) :
+    (if i < 0 then i + (n : Int) else i) = i := if_neg (by omega)
+
+/-- The marshalled boundary-list subscript in the shape the interpreter
+actually leaves — Python's negative-index fold still standing as an `ite` —
+for an index the loop's own facts put in range. The side condition is
+stated over `i` rather than over the folded `Nat`, which is what lets
+`captureDischarge`'s `omega` half prove it straight from the invariant
+(`0 ≤ i`) and the loop test. -/
+theorem arrVal_indexVal (l : List Int) (i : Int)
+    (h : 0 ≤ i ∧ i < (l.length : Int)) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal)
+        l[(if i < 0 then i + (l.length : Int) else i).toNat]?).getD RVal.none
+      = RVal.int l[i.toNat] := by
+  obtain ⟨h0, hl⟩ := h
+  rw [if_neg (by omega)]
+  exact arrVal_getElem l i.toNat (by omega)
+
+/-- The same, `getD` form (what a loop invariant carrying `a.getD n 0`
+needs). -/
+theorem arrVal_getD (l : List Int) (n : Nat) (h : n < l.length) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal) l[n]?).getD RVal.none
+      = RVal.int (l.getD n 0) := by
+  rw [arrVal_getElem l n h, getD_eq_getElem l n h]
+
+/-! ## Strings as lists of characters (spec-side)
+
+Every string operation the tier performs is defined THROUGH `String.toList`
+— `strCharVals`, the `.str` arm of `indexVal`, `strContains` via
+`strFindAux` — so none of Lean's `String.Pos`/UTF-8 machinery is on the
+path, and a symbolic string reasons exactly like the `List Char` it wraps.
+These are the bridges that say so. They are the string twins of the
+`arrVal_getElem` family above: same shape, same in-range side condition,
+same discharger.
+
+(Landing L1 of docs/generator-tier-architecture.md. The rest of that memo
+is owner-gated; this family is ordinary depth tooling and pays for any
+symbolic-string proof, tier or no tier.) -/
+
+/-- `normIndex` at a non-negative in-range index is the index itself.
+Python's negative-index fold is the `if` inside it; this is the arm every
+in-tier subscript takes. -/
+theorem normIndex_of_nonneg (i : Int) (n : Nat) (h0 : 0 ≤ i)
+    (hlt : i < (n : Int)) : normIndex i n = some i.toNat := by
+  simp only [normIndex, if_neg (by omega : ¬ i < 0)]
+  rw [if_pos (by omega)]
+
+/-- A string's Python length is its character-list length. -/
+theorem strLength_eq_toList (s : String) : s.length = s.toList.length :=
+  String.length_toList.symm
+
+/-- **The string subscript**, in the shape the interpreter leaves: reading
+`s[i]` at an in-range non-negative `i` is the character list read. The side
+condition is stated over `i`, so `captureDischarge`'s `omega` half proves
+it from a loop invariant exactly as it does for `arrVal_indexVal`. -/
+theorem strIndex_ok (s : String) (i : Int) (h0 : 0 ≤ i)
+    (hlt : i < (s.length : Int)) :
+    indexVal (.str s) (.int i)
+      = .ok (.str (String.singleton (s.toList.getD i.toNat ' '))) := by
+  simp only [indexVal, asInt, normIndex_of_nonneg i s.length h0 hlt]
+
+/-- `strFindAux` for a ONE-character needle is list membership — the whole
+of the membership family, because the guards `gen_moves` writes
+(`q in " \nPNBRQK"`, `p in "PNK"`) are single characters against a literal
+alphabet. -/
+theorem strFindAux_singleton_isSome (l : List Char) (c : Char) :
+    (strFindAux l [c]).isSome = l.contains c := by
+  induction l with
+  | nil => simp [strFindAux]
+  | cons x xs ih =>
+    by_cases h : x = c
+    · simp [strFindAux, h]
+    · simp [strFindAux, ih, Ne.symm h]
+
+/-- Membership of a single character in a string, as a list `contains`.
+The reference enumeration's `inStr` is definitionally this, so the two
+sides of a membership guard meet without a case split over the literal. -/
+theorem strContains_singleton (s : String) (c : Char) :
+    strContains s (String.singleton c) = s.toList.contains c := by
+  rw [strContains, String.toList_singleton, strFindAux_singleton_isSome]
+
+/-- Iterating a string yields its characters as one-character strings, in
+the `String.singleton` spelling the subscript also produces (the definition
+says `String.ofList [c]`; one spelling downstream is worth the lemma). -/
+theorem ofList_singleton (c : Char) : String.ofList [c] = String.singleton c :=
+  String.toList_injective (by simp)
+
+theorem strCharVals_eq_map (s : String) :
+    strCharVals s = s.toList.map (fun c => RVal.str (String.singleton c)) := by
+  simp only [strCharVals, ofList_singleton]
+
+/-- Equality of two one-character strings is equality of the characters. -/
+theorem valEq_singleton (a b : Char) :
+    valEq (.str (String.singleton a)) (.str (String.singleton b))
+      = .ok (a == b) := by
+  have hinj : (String.singleton a == String.singleton b) = (a == b) := by
+    by_cases h : a = b
+    · simp [h]
+    · have hne : String.singleton a ≠ String.singleton b := fun hs =>
+        h (by simpa using congrArg String.toList hs)
+      rw [beq_eq_false_iff_ne.mpr hne, beq_eq_false_iff_ne.mpr h]
+  show Res.ok (String.singleton a == String.singleton b) = Res.ok (a == b)
+  rw [hinj]
+
+/-! ## Run splicing -/
+
+/-- Append two decided runs: statements that fell through (`.next`) followed
+by any decided run of the rest — the fuel bookkeeping is internal
+(`execStmt_mono`/`execStmts_mono` at a summed witness). This is the engine
+of `PyTriple.run_seq`. -/
+private theorem execStmts_append_run {m : Module} {l₁ l₂ : List Stmt}
+    {st st' : FrameState} {r : Run FrameState RFlow}
+    (h1 : ∃ f, execStmts m f st l₁ = .ok st' .next)
+    (h2 : ∃ f, execStmts m f st' l₂ = r) (hr : r ≠ .timeout) :
+    ∃ f, execStmts m f st (l₁ ++ l₂) = r := by
+  induction l₁ generalizing st with
+  | nil =>
+    obtain ⟨f, hf⟩ := h1
+    match f, hf with
+    | f + 1, hf =>
+      simp only [execStmts] at hf
+      have henv : st = st' := (Run.ok.inj hf).1
+      subst henv
+      simpa using h2
+  | cons s l₁' ih =>
+    obtain ⟨f, hf⟩ := h1
+    match f, hf with
+    | f + 1, hf =>
+      simp only [execStmts, Run.bind_eq_ok] at hf
+      obtain ⟨st₁, flow, hstep, htail⟩ := hf
+      cases flow with
+      | next =>
+        obtain ⟨g, hg⟩ := ih ⟨f, htail⟩
+        refine ⟨f + g + 1, ?_⟩
+        simp only [List.cons_append, execStmts]
+        rw [execStmt_mono hstep (by simp) (f + g) (by omega)]
+        simpa using execStmts_mono hg hr (f + g) (by omega)
+      | ret v => simp at htail
+      | brk => simp at htail
+      | cont => simp at htail
+
+/-- Splice one captured straight-line run in front of a triple for the rest:
+`pre` ran to `st'` with `.next` at some concrete fuel, so the triple for
+`pre ++ rest` from `E` follows from the triple for `rest` from `st'`. This
+is how `py_vcgen` discharges a straight-line segment before a control
+point. -/
+theorem PyTriple.run_seq {m : Module} {E E' : FrameState} {f : Nat}
+    {pre rest : List Stmt} {Q : PyPost}
+    (h1 : execStmts m f E pre = .ok E' .next)
+    (h2 : PyTriple m (fun st => st = E') rest Q) :
+    PyTriple m (fun st => st = E) (pre ++ rest) Q := by
+  rintro st rfl
+  obtain ⟨r, t, hr, hrun⟩ := h2.exec rfl
+  obtain ⟨g, hg⟩ := execStmts_append_run ⟨f, h1⟩ ⟨t, hrun t (Nat.le_refl t)⟩
+    (PyPost.holds_ne_timeout hr)
+  refine ⟨g, fun F hF => ?_⟩
+  rw [execStmts_mono hg (PyPost.holds_ne_timeout hr) F hF]
+  exact hr
+
+/-! ## Precondition-normalization rules
+
+`py_vcgen` constructs preconditions in a small grammar —
+`fun env => env = E`, `∃ x, P`, `P ∧ H`, `P ∨ P`, `False` — and strips them
+down to the `env = E` form the walker consumes with the rules below (each
+is one `apply` + `intro`). -/
+
+universe u
+
+/-- Strip an existential from the precondition. -/
+theorem PyTriple.exists_pre {α : Sort u} {m : Module} {ss : List Stmt}
+    {Q : PyPost} {P : α → FrameState → Prop}
+    (h : ∀ x, PyTriple m (P x) ss Q) :
+    PyTriple m (fun st => ∃ x, P x st) ss Q :=
+  fun st hP => hP.elim fun x hx => h x st hx
+
+/-- Hoist an existential out of a conjunction in the precondition. -/
+theorem PyTriple.exists_and_pre {α : Sort u} {m : Module} {ss : List Stmt}
+    {Q : PyPost} {P : α → FrameState → Prop} {H : FrameState → Prop}
+    (h : ∀ x, PyTriple m (fun st => P x st ∧ H st) ss Q) :
+    PyTriple m (fun st => (∃ x, P x st) ∧ H st) ss Q :=
+  fun st hP => hP.1.elim fun x hx => h x st ⟨hx, hP.2⟩
+
+/-- Reassociate a conjunction in the precondition. -/
+theorem PyTriple.and_assoc_pre {m : Module} {ss : List Stmt} {Q : PyPost}
+    {P H₁ H₂ : FrameState → Prop}
+    (h : PyTriple m (fun st => P st ∧ (H₁ st ∧ H₂ st)) ss Q) :
+    PyTriple m (fun st => (P st ∧ H₁ st) ∧ H₂ st) ss Q :=
+  fun st hP => h st ⟨hP.1.1, hP.1.2, hP.2⟩
+
+/-- Move the pure part of an `st = E ∧ H st` precondition into hypothesis
+position (instantiated at `E`) — after this the precondition is walkable. -/
+theorem PyTriple.eq_and_pre {m : Module} {ss : List Stmt} {Q : PyPost}
+    {E : FrameState} {H : FrameState → Prop}
+    (h : H E → PyTriple m (fun st => st = E) ss Q) :
+    PyTriple m (fun st => st = E ∧ H st) ss Q :=
+  fun st hP => h (hP.1 ▸ hP.2) st hP.1
+
+/-- Split a disjunctive precondition (an `if`-join). -/
+theorem PyTriple.or_pre {m : Module} {ss : List Stmt} {Q : PyPost}
+    {P₁ P₂ : FrameState → Prop} (h1 : PyTriple m P₁ ss Q) (h2 : PyTriple m P₂ ss Q) :
+    PyTriple m (fun st => P₁ st ∨ P₂ st) ss Q :=
+  fun st hP => hP.elim (h1 st) (h2 st)
+
+/-- A dead join point (both `if`-branches escaped, or an unreachable
+branch: the `raise`-unreachability pattern). -/
+theorem PyTriple.false_pre {m : Module} {ss : List Stmt} {Q : PyPost} :
+    PyTriple m (fun _ => False) ss Q :=
+  fun _ hP => hP.elim
+
+/-! ## The relational bridge
+
+`PyTriple.callsTo` (VC2.lean) requires the returned value fixed up front;
+relational specs (`extended_gcd`'s Bezout coefficients) only know it
+*exists*. This bridge closes the gap: prove the whole-body triple with an
+arbitrary predicate `Φ` on the returned value (a `PyTriple` goal `py_vcgen`
+walks directly), get `∃ v, CallsTo … v ∧ Φ v`. -/
+
+/-- Triple → arrow, relational form, general-arity (F1 defaults): the
+hypothesis is the arity window `arityOk f.params args.size` — trailing
+defaulted arguments may be omitted at the call site, `mkCallEnv` fills
+them. This is the bridge `py_vcgen` applies for a `∃ v, …` goal (the side
+condition computes to `true = true` at literal modules and closes by
+`rfl`). `PyTriple.exists_callsTo` is the exact-arity corollary. -/
+theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
+    (harity : arityOk f.params args.size = true)
+    (h : PyTriple m
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        f.body.toList
+        { next := fun _ => False
+          ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
+    ∃ v, CallsTo m fname args v ∧ Φ v := by
+  obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
+  have hrt := hrun t (Nat.le_refl t)
+  cases r with
+  | ok st' flow =>
+    cases flow with
+    | next => exact hr.elim
+    | ret rv =>
+      obtain ⟨v, rfl, hΦ⟩ := hr
+      refine ⟨v, ⟨t + 1, ?_⟩, hΦ⟩
+      unfold callFunction
+      rw [callIn]
+      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, RVal.freezeB_thaw]
+    | brk => exact hr.elim
+    | cont => exact hr.elim
+  | exn st' e => exact hr.elim
+  | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
+  | unsupported msg => exact hr.elim
+
+/-- Triple → arrow, relational form: a whole-body triple whose `ret` arm
+asserts `Φ` of the (frozen) returned value (and whose `next` arm is
+`False` — the body always returns) yields an existential `CallsTo`. -/
+theorem PyTriple.exists_callsTo {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        f.body.toList
+        { next := fun _ => False
+          ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
+    ∃ v, CallsTo m fname args v ∧ Φ v :=
+  PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk hgen
+    (by rw [harity]; exact arityOk_full f.params) h
+
+/-- The relational bridge, marshalled form: `exists_callsTo` with the
+existential ranging over a *spec type* `α` (`PyInt`, `PyBool`, …) rather
+than raw `Val`. This is the shape the surface notation actually produces —
+`∃ v : PyInt, f(args) ==> v ∧ Φ v` elaborates the returned-value slot as
+`ToVal.toVal v`, not as the bound variable itself — so it is the form
+`py_vcgen`'s existential entry bridges through for a non-`Val` binder. The
+triple's `ret` arm asserts the returned RUNTIME value is the thawed
+marshalling of some `x : α` satisfying `Φ` (the walker discharges the
+`rv = RVal.thaw (ToVal.toVal x)` equation by unification at each captured
+return site, leaving `Φ x` as the `ret` residual). -/
+theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
+    {m : Module} {fname : String} {f : FunctionDefn} {args : Array Val}
+    {Φ : α → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
+    (harity : arityOk f.params args.size = true)
+    (h : PyTriple m
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        f.body.toList
+        { next := fun _ => False
+          ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
+    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x := by
+  obtain ⟨v, hv, x, rfl, hΦ⟩ :=
+    PyTriple.exists_callsTo_arityOk (Φ := fun v => ∃ x : α, v = ToVal.toVal x ∧ Φ x)
+      hf hargsOk hlocalsOk hgen harity
+      (h.consequence (fun _ hp => hp)
+        { next := fun _ hfalse => hfalse.elim
+          ret := fun rv st hrv =>
+            hrv.elim fun x hx => ⟨ToVal.toVal x, hx.1, x, rfl, hx.2⟩
+          brk := fun _ hfalse => hfalse.elim
+          cont := fun _ hfalse => hfalse.elim
+          err := fun _ _ hfalse => hfalse.elim })
+  exact ⟨x, hv, hΦ⟩
+
+@[inherit_doc PyTriple.exists_callsTo_toVal_arityOk]
+theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
+    {fname : String} {f : FunctionDefn} {args : Array Val} {Φ : α → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        f.body.toList
+        { next := fun _ => False
+          ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
+    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x :=
+  PyTriple.exists_callsTo_toVal_arityOk hf hargsOk hlocalsOk hgen
+    (by rw [harity]; exact arityOk_full f.params) h
+
+/-! ## The walker (meta level) -/
+
+namespace PyVCGen
+
+open Lean Elab Tactic Meta PyLoopTactic
+
+/-- Fuel for every captured symbolic run (a depth bound, so a generous
+constant covers everything straight-line). -/
+def fuelK : Nat := 64
+
+/-- Interpreter definitions unfolded during captured symbolic execution
+(the `py_simp` list plus `envInt`). -/
+def interpUnfolds : List Name :=
+  [``execStmts, ``execStmt, ``evalExpr, ``evalExprs, ``evalBoolChain,
+   ``evalCompareChain, ``evalDictItems, ``findFunction, ``mkCallEnv, ``arityOk,
+   ``defaultBindings, ``Env.lookup, ``Env.set,
+   ``Const.toVal, ``Const.toRVal, ``truthy, ``truthyH, ``asInt, ``RVal.isNone,
+   ``RVal.isEllipsis, ``RVal.isNotImplemented,
+   ``RVal.thaw, ``RVal.thawList, ``RVal.thawArgs, ``RVal.freeze,
+   ``RVal.freezeList, ``RVal.freezeB, ``RVal.freezeListB,
+   ``valEq, ``valEqList,
+   ``intCmp, ``strCmp, ``evalCompareOp, ``evalCompareOpH, ``evalBinOp,
+   ``evalBinOpMultH, ``heapListRepeatOperandH, ``heapListRepeatOperandRightH,
+   ``strFormat,
+   ``evalUnaryOp, ``evalUnaryOpH,
+   ``lenVal, ``lenValH, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
+   ``indexValH,
+   ``checkBytesIndex, ``checkBytesCompare, ``bytesOperandCheck,
+   ``hashableKey, ``hashableKeyList, ``keyEq, ``keyEqList, ``RVal.unhashName,
+   ``keyHasInstanceRef, ``keyHasInstanceRefList, ``keyRefusal,
+   ``dictFind, ``dictStore, ``dictBuild, ``heapIndex, ``heapStore, ``heapLen,
+   ``heapContains, ``heapContainsScan, ``valContains, ``heapGet, ``heapAppend,
+   ``heapPop, ``heapInsert,
+   ``heapAttrStore, ``findClass, ``findClassAux, ``classAt, ``getClass?,
+   ``attrReadPlan, ``attrReadResult, ``attrCallPlan, ``execAttrCall,
+   ``endsWithUU, ``dunderShaped, ``hasExtraDunder,
+   ``findNamedTuple, ``findNamedTupleAux, ``fieldIndex, ``ntupleProtoName,
+   ``ntupleMethodName, ``ntupleAttr, ``ntupleCallPlan,
+   ``sliceVal, ``strCallPlan,
+   ``RVal.refFree, ``RVal.refFreeList,
+   ``Val.listFree, ``Val.listFreeList, ``Val.listFreeArgs,
+   ``Heap.get?, ``Heap.update, ``danglingMsg,
+   ``targetNames, ``bindAll, ``assignTo, ``assignToH,
+   ``unpackSeq, ``unpackStoreH,
+   ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
+   ``absVal, ``intCastArgs, ``intCastVal, ``boolCastArgs, ``divmodArgs,
+   ``importErrorHandlerMatch, ``admittedBuiltinExc, ``builtinExcCatches,
+   ``strOfVal, ``strOfValH, ``reprArgs, ``formatValueH, ``ordVal, ``chrVal, ``isBuiltinName,
+   ``markUnboundLocals, ``stmtHasUnboundLocal, ``stmtHasUnboundLocalList,
+   ``hasLateRaiseNames, ``directRaiseName, ``directAssignName,
+   ``hasDirectAssignAfter, ``hasTypeErrorHandlerMarker,
+   ``stmtHasTypeErrorTarget, ``stmtHasTypeErrorTargetList,
+   ``markUnboundLocals_noop,
+   ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,
+   ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
+   ``globalsDirty, ``Stmt.g1Dirty, ``Stmt.g1Binds, ``Stmt.g1BindsList,
+   ``Stmt.g1Stores, ``Stmt.g1StoresList, ``Expr.g1Primary,
+   ``Expr.g1TargetStores, ``Expr.g1TargetStoresList,
+   ``targetBindsG, ``targetBindsListG, ``benignImportBinds, ``isModuleDunder,
+   ``resolvedG, ``resolvedGAux, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
+   ``evalGlobalDictItems, ``globalFuel,
+   ``sumArgs, ``sumFold, ``rangeLen, ``rangeValsAux, ``rangeVals, ``rangeMake,
+   ``RangeBound.toRVal, ``asRangeBound, ``rangeBoundRepr,
+   ``lenMultBuiltinName,
+   ``seqBudget, ``shiftBudget, ``tupleRepeat, ``seqSlice, ``seqSliceElems,
+   ``g1DivGate, ``g1ExecCandidate, ``g1HeapPure, ``g1HeapPureList,
+   ``Stmt.defFree, ``Stmt.defFreeList, ``topLevelDefFree,
+   ``initFoldLive, ``initFoldStep, ``initExecStmt, ``initItemsLoop,
+   ``initBodyStmts, ``flushInitLocals, ``initBindable, ``initExecFuel,
+   ``stmtIsClockImport, ``moduleClockOk, ``clockRecvOk, ``isClockCall,
+   ``envInt]
+
+/-! The interpreter's heap-aware binary dispatch tests `op == .bitAnd`.
+`BinOp` intentionally derives `BEq` without `DecidableEq`, so the default
+simplifier does not reduce that generated equality even when `op` is a
+concrete constructor.  Expose its constructor reduction to the VC walker's
+simp context; this is a proof-layer bridge, not a semantic shortcut. -/
+theorem binOpBeqBitAnd (op : BinOp) :
+    (op == .bitAnd) = (match op with | .bitAnd => true | _ => false) := by
+  cases op <;> rfl
+
+theorem binOpBeqMult (op : BinOp) :
+    (op == .mult) = (match op with | .mult => true | _ => false) := by
+  cases op <;> rfl
+
+/-- Rewrite lemmas added to captured symbolic execution: the branch-collapse
+of loop tests, the symbolic-tail environment lemmas, and the `sorted`
+bridges (`sortInts`/`insertLe` stay frozen — symbolic goals keep the
+compact `sortInts data` handle; these two lemmas let the run step through a
+marshalled `sorted(data)` call and its downstream `len`/index bounds). -/
+def interpLemmas : List Name :=
+  [``ite_ok_bool, ``binOpBeqBitAnd, ``binOpBeqMult, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
+   ``asIntList_map_int, ``asIntList_map_toVal, ``asIntList_map_thaw_comp,
+   ``sortInts_length,
+   -- the marshalled SUBSCRIPT read, conditional on the index being in
+   -- range: `captureDischarge` proves that side condition from the loop
+   -- invariant and the test (§the arithmetic discharger)
+   ``arrVal_getElem, ``arrVal_getD, ``arrVal_indexVal, ``ifNeg_index,
+   -- the string twins (L1): a symbolic board reads as its character list
+   ``strIndex_ok, ``strContains_singleton, ``valEq_singleton]
+
+/-- The truthiness-normalization set: turns `truthy <captured value> = true`
+facts into the clean arithmetic propositions residual goals should show. -/
+def normLemmas : List Name :=
+  [``decide_eq_true_eq, ``decide_eq_false_iff_not, ``Bool.not_eq_true',
+   ``Bool.not_eq_false', ``Bool.not_eq_eq_eq_not, ``Bool.not_true,
+   ``Bool.not_false, ``beq_iff_eq, ``beq_eq_false_iff_ne, ``bne_iff_ne,
+   ``Decidable.not_not, ``Res.ok.injEq]
+
+/-- Definitions unfolded by the normalization set. -/
+def normUnfolds : List Name := [``truthy, ``envInt, ``Env.lookup]
+
+/-- Presentation lemmas for residual goals (marshalling peeled, `Val`
+injectivity applied). -/
+def presentLemmas : List Name :=
+  [``toVal_int, ``toVal_nat, ``toVal_bool, ``toVal_str, ``toVal_val,
+   ``toVal_list, ``toVal_int_triple, ``Val.int.injEq, ``Val.bool.injEq,
+   ``Val.str.injEq, ``Val.tuple.injEq, ``Val.list.injEq,
+   ``RVal.int.injEq, ``RVal.bool.injEq, ``RVal.str.injEq,
+   ``RVal.tuple.injEq, ``RVal.listV.injEq]
+
+/-- The three simp contexts of a `py_vcgen` run: `exec` (symbolic
+execution: default set + interpreter unfolds + program literal), `norm`
+(truthiness normalization only), `present` (residual-goal cleanup). -/
+structure SimpPack where
+  exec : Simp.Context
+  norm : Simp.Context
+  present : Simp.Context
+  procs : Simp.SimprocsArray
+
+private def addAll (thms : SimpTheorems) (unfolds lemmas : List Name) :
+    MetaM SimpTheorems := do
+  let mut thms := thms
+  for n in unfolds do
+    thms ← thms.addDeclToUnfold n
+  for n in lemmas do
+    thms ← thms.addConst n
+  return thms
+
+/-- Prove a proposition with `omega` from the accessible facts, or fail.
+
+`Omega.omega` proves `False` from a fact list — it is not a goal-directed
+entry point — so this mirrors what the `omega` TACTIC does around it:
+`falseOrByContra` first (which puts the negated goal into the context),
+then hand it every local hypothesis. Calling it on the goal directly looks
+like it works and silently proves nothing, because the goal never enters
+the constraint set. -/
+def omegaProve (goal : Lean.Expr) : MetaM (Option Lean.Expr) := do
+  let g ← mkFreshExprSyntheticOpaqueMVar goal
+  try
+    let some g' ← g.mvarId!.falseOrByContra | return none
+    g'.withContext do
+      Lean.Elab.Tactic.Omega.omega (← getLocalHyps).toList g'
+    pure (some (← instantiateMVars g))
+  catch _ => pure none
+
+/-- Is this side condition worth handing to `omega`? A cheap syntactic
+gate: comparisons, equalities and their negations. Everything else fails in
+`omega` anyway, and the gate keeps the common case (a `beq` guard already
+settled by the default discharger) off the arithmetic path. -/
+private def isArithSide (e : Lean.Expr) : Bool :=
+  match e.getAppFn with
+  | .const n _ =>
+    n == ``LT.lt || n == ``LE.le || n == ``GT.gt || n == ``GE.ge ||
+    n == ``Eq || n == ``Ne || n == ``Not || n == ``And
+  | _ => false
+
+/-- Does this proposition come from the INTERPRETER's own index plumbing —
+a subscript's range check or Python's negative-index fold — rather than
+from the program's arithmetic?
+
+Keyed on a LENGTH mention, deliberately: `Int.toNat` alone also matches a
+loop MEASURE (`rsa_inverse`'s `(b - 1).toNat`), and deciding those atoms
+sends `omega` down every comparison in the run — measured, it blew that
+proof's simp step budget. The negative-index fold, whose condition `i < 0`
+mentions no length, is handled by the `ifNeg_index` rewrite instead, whose
+side condition goes to the discharger.
+
+The gate matters: `decideArith` must not start deciding a loop's ordinary
+comparisons, because those are the walker's residuals and every existing
+proof is written against their shape. Keying on `Int.toNat` / `List.length`
+/ `Array.size` (with a literal `0` bound for the fold) keeps the simprocs
+where the subscript lives and out of `nested_flow`'s and `rsa_inverse`'s
+arithmetic. -/
+private def isIndexGuard (e : Lean.Expr) : Bool :=
+  let mentions (n : Name) : Bool := (e.find? (·.isConstOf n)).isSome
+  mentions ``List.length || mentions ``Array.size
+
+/-- The discharger captured runs use for conditional rewrites: simp's own
+default first, then `omega` over the accessible hypotheses.
+
+The arithmetic half is what lets a SUBSCRIPT reduce. A loop body's
+`xs[i]` captures as `(Option.map … xs[i.toNat]?).getD RVal.none`, whose
+rewrite (`arrVal_getElem`) is conditional on `i.toNat < xs.length` — a fact
+the loop invariant and the loop test do supply, but only to an arithmetic
+prover. Without this the capture stops dead at the subscript, which is what
+kept `sf_bound_loop`/`sf_bound_rec` on hand proofs. `omega` sees the local
+context, so the invariant conjuncts (`0 ≤ i`, `i ≤ xs.length`) and the test
+fact (`i < n`, with `n = xs.length` already substituted by the walker) are
+exactly its premises. -/
+def captureDischarge : Simp.Discharge := fun e => do
+  match ← Simp.dischargeDefault? e with
+  | some prf => return some prf
+  | none =>
+    let e ← instantiateMVars e
+    if e.hasExprMVar || !isArithSide e then return none
+    match ← omegaProve e with
+    | some prf => return some prf
+    | none => return none
+
+/-- Decide an arithmetic atom from the accessible facts. When `omega`
+proves the atom (or its negation) from the local context it collapses to
+`True` (or `False`).
+
+This is the half a DISCHARGER cannot do. Simp asks a discharger only about
+the hypotheses of conditional rewrites; the interpreter's own guards are
+`ite` CONDITIONS — a subscript's range check
+`if (0 ≤ k) ∧ (k < len) then some … else none`, the negative-index fold
+`if i < 0 then i + len else i` — and those are decided by simplifying the
+condition, which needs arithmetic in the simp set itself. Without this a
+captured `xs[i]` stops at the range check even though the loop invariant
+says the index is in range, which is what kept `sf_bound_loop` and
+`sf_bound_rec` on hand proofs. -/
+def decideArith : Simp.Simproc := fun e => do
+  unless isArithSide e && isIndexGuard e do return .continue
+  let e ← instantiateMVars e
+  if e.hasExprMVar then return .continue
+  let tryOmega (goal : Lean.Expr) : SimpM (Option Lean.Expr) :=
+    liftM (omegaProve goal)
+  match ← tryOmega e with
+  | some prf =>
+    return .done { expr := Lean.mkConst ``True, proof? := ← mkAppM ``eq_true #[prf] }
+  | none =>
+    match ← tryOmega (Lean.mkApp (Lean.mkConst ``Not) e) with
+    | some prf =>
+      return .done { expr := Lean.mkConst ``False, proof? := ← mkAppM ``eq_false #[prf] }
+    | none => return .continue
+
+-- one declaration per keyed shape: an unascribed `_ < _` elaborates at the
+-- DEFAULT numeric type (`Nat`) and then never matches an `Int` comparison,
+-- which is exactly the way this silently does nothing
+simproc_decl decideArithLtInt ((_ : Int) < (_ : Int)) := decideArith
+simproc_decl decideArithLeInt ((_ : Int) ≤ (_ : Int)) := decideArith
+simproc_decl decideArithLtNat ((_ : Nat) < (_ : Nat)) := decideArith
+simproc_decl decideArithLeNat ((_ : Nat) ≤ (_ : Nat)) := decideArith
+simproc_decl decideArithAnd (_ ∧ _) := decideArith
+
+/-- Build the simp contexts, `progs` the program constants to unfold. -/
+def mkPack (progs : List Name) : MetaM SimpPack := do
+  let congr ← getSimpCongrTheorems
+  let execThms ← addAll (← getSimpTheorems)
+    (interpUnfolds ++ progs) interpLemmas
+  let normThms ← addAll (← getSimpTheorems) normUnfolds
+    (normLemmas ++ interpLemmas)
+  let presentThms ← addAll (← getSimpTheorems) (normUnfolds ++ progs)
+    (normLemmas ++ presentLemmas ++ interpLemmas)
+  -- the arithmetic simprocs ride with every captured run (see `decideArith`)
+  let mut procs ← Simp.getSimprocs
+  procs ← procs.add ``decideArithLtInt (post := true)
+  procs ← procs.add ``decideArithLeInt (post := true)
+  procs ← procs.add ``decideArithLtNat (post := true)
+  procs ← procs.add ``decideArithLeNat (post := true)
+  procs ← procs.add ``decideArithAnd (post := true)
+  return {
+    -- captured runs discharge more side conditions than they used to (the
+    -- arithmetic half), so the rewrite cascade behind one run is longer;
+    -- the default 100000-step budget is a walker-internal limit, not a
+    -- user-visible one, and a run that needs more is not a run that is
+    -- looping (measured on `rsa_inverse`, the longest one in the gallery)
+    exec := ← Simp.mkContext { maxSteps := 1000000 } #[execThms] congr
+    norm := ← Simp.mkContext {} #[normThms] congr
+    present := ← Simp.mkContext {} #[presentThms] congr
+    procs := #[procs] }
+
+/-- All accessible `Prop`-typed hypotheses of the current local context —
+supplied to every captured run as rewrite rules (this is how a loop-test
+fact `hcont : b ≠ 0` decides the `ZeroDivisionError` guard of `%`, and a
+branch fact `hif` decides a nested test). -/
+def currentFacts : MetaM (Array FVarId) := do
+  let mut out := #[]
+  for d in ← getLCtx do
+    if d.isImplementationDetail then continue
+    if (← isProp d.type) then
+      out := out.push d.fvarId
+  return out
+
+/-- Extend a simp context with hypothesis facts. -/
+def addFacts (ctx : Simp.Context) (facts : Array FVarId) :
+    MetaM Simp.Context := do
+  let mut thms := ctx.simpTheorems
+  for fv in facts do
+    try
+      thms ← thms.addTheorem (.fvar fv) (mkFVar fv)
+    catch _ => pure ()
+  return ctx.setSimpTheorems thms
+
+
+/-- Symbolically execute `e` (an interpreter term) with the local `Prop`
+hypotheses as extra rewrites; returns the normal form and a proof `e = nf`. -/
+def captureRun (pack : SimpPack) (e : Lean.Expr) :
+    MetaM (Lean.Expr × Lean.Expr) := do
+  let ctx ← addFacts pack.exec (← currentFacts)
+  let (r, _) ← Meta.simp e ctx pack.procs (discharge? := some captureDischarge)
+  let prf ← match r.proof? with
+    | some p =>
+      -- Pin the equation's syntactic form: simp folds definitional steps
+      -- away, so the proof's inferred type may show an unfolded lhs.
+      mkExpectedTypeHint p (← mkEq e r.expr)
+    | none => mkEqRefl e
+  return (r.expr, prf)
+
+/-- Prove a PINNED equation `run = .ok E v` where `E` is the walker's known
+mid-state: the captured normal form's out-state may have been rewritten by
+local hypotheses (state is data since H1 — a post-loop `hcont : b' = 0`
+rewrites the state's `RVal.int b'`), so instead of reusing the captured
+proof, the pinned equation is proved as a GOAL — the same fact set then
+normalizes BOTH sides to the drifted form and `rfl` closes. -/
+def provePinned (pack : SimpPack) (ty : Lean.Expr) : MetaM Lean.Expr := do
+  let g ← mkFreshExprMVar ty .syntheticOpaque
+  let ctx ← addFacts pack.exec (← currentFacts)
+  let r? ← try
+      Prod.fst <$> Meta.simpGoal g.mvarId! ctx pack.procs (some captureDischarge)
+    catch _ => pure (some (#[], g.mvarId!))
+  match r? with
+  | none => return g
+  | some (_, g') =>
+    let closed ← g'.withContext do
+      let t ← instantiateMVars (← g'.getType)
+      match t.eq? with
+      | some (_, lhs, _) =>
+        try
+          let gs ← g'.apply (← mkEqRefl lhs)
+          pure gs.isEmpty
+        catch _ => pure false
+      | none => pure false
+    unless closed do
+      throwError "py_vcgen: could not pin a captured run at the walker's mid-state:{indentExpr ty}"
+    return g
+
+/-- Apply a constant to optional arguments, filling `none` positions (and
+missing trailing hypotheses) with fresh metavariables — the `apply`-ready
+partial-application builder (`mkAppOptM` refuses unassigned mvars). -/
+def appOpt (n : Name) (args : Array (Option Lean.Expr)) : MetaM Lean.Expr := do
+  let f ← mkConstWithFreshMVarLevels n
+  let mut e := f
+  let mut ty ← inferType f
+  for a in args do
+    ty ← whnf ty
+    let .forallE _ d b _ := ty
+      | throwError "py_vcgen: internal — too many arguments for {n}"
+    match a with
+    | some x =>
+      unless ← isDefEq d (← inferType x) do
+        throwError "py_vcgen: internal — argument type mismatch for {n}: expected{indentExpr d}\ngot{indentExpr (← inferType x)}"
+      e := mkApp e x
+      ty := b.instantiate1 x
+    | none =>
+      let mv ← mkFreshExprMVar d
+      e := mkApp e mv
+      ty := b.instantiate1 mv
+  return e
+
+/-- Normalize a proposition with the truthiness set; returns the normal form
+and (when changed) a proof `p = p'`. -/
+def normProp (pack : SimpPack) (p : Lean.Expr) :
+    MetaM (Lean.Expr × Option Lean.Expr) := do
+  let (r, _) ← Meta.simp p pack.norm pack.procs
+  return (r.expr, r.proof?)
+
+/-! ### Literal introspection -/
+
+/-- `Array α` literal → its `List` literal. -/
+def arrToList (a : Lean.Expr) : MetaM Lean.Expr := do
+  let a ← whnfR a
+  if a.isAppOfArity ``Array.mk 2 then return a.getArg! 1
+  else if a.isAppOfArity ``List.toArray 2 then return a.getArg! 1
+  else throwError "py_vcgen: expected a literal array:{indentExpr a}"
+
+/-- Split a `List` literal into its element expressions and its terminator
+(the trailing `List.nil` or any non-`cons` tail); sees through
+`Array.toList` of literal arrays. -/
+partial def parseListLit (e : Lean.Expr) : MetaM (Array Lean.Expr × Lean.Expr) := do
+  let e ← whnfR e
+  if e.isAppOfArity ``List.cons 3 then
+    let (rest, tail) ← parseListLit (e.getArg! 2)
+    return (#[e.getArg! 1] ++ rest, tail)
+  else if e.isAppOfArity ``Array.toList 2 then
+    parseListLit (← arrToList (e.getArg! 1))
+  else
+    return (#[], e)
+
+/-- Is this expression the `List.nil` terminator? -/
+def isNilTail (e : Lean.Expr) : Bool := e.isAppOfArity ``List.nil 1
+
+/-- Rebuild a `List` literal from elements and a tail expression. -/
+def mkListLit' (ty : Lean.Expr) (elems : Array Lean.Expr) (tail : Lean.Expr) :
+    Lean.Expr :=
+  elems.foldr (fun e acc =>
+    mkApp3 (Lean.mkConst ``List.cons [Level.zero]) ty e acc) tail
+
+/-- The `String × RVal` pair type of environment entries (locals bind
+runtime values since H1). -/
+def entryTy : Lean.Expr :=
+  mkApp2 (Lean.mkConst ``Prod [Level.zero, Level.zero]) (Lean.mkConst ``String)
+    (Lean.mkConst ``RVal)
+
+/-- The `List (String × RVal)` locals type. -/
+def envTy : Lean.Expr := mkApp (Lean.mkConst ``List [Level.zero]) entryTy
+
+/-- The `FrameState` type (the walker's state space since H1). -/
+def stateTy : Lean.Expr := Lean.mkConst ``FrameState
+
+/-- Build a `FrameState` literal from a world and a locals expression. -/
+def mkState (w env : Lean.Expr) : Lean.Expr :=
+  mkApp2 (Lean.mkConst ``FrameState.mk) w env
+
+/-- A frame-state shape: the pinned world (KNOWN in the stage-1 geometry —
+the `initWorld m` term, never symbolic), then the locals as named literal
+cons-entries, a spine of `Env.set` writes (outermost first — variables
+that grew into the symbolic region), over a symbolic tail. The `sets`
+region is where loop-body-created variables live (`Env.set (… tl …) "q"
+v`), readable/writable through `Env.lookup_set_self`/`Env.set_set` without
+the tail ever becoming literal. -/
+structure EnvShape where
+  world : Lean.Expr
+  entries : Array (String × Lean.Expr)
+  sets : Array (String × Lean.Expr) := #[]
+  tail : Lean.Expr
+
+/-- Parse a `FrameState` expression into its pinned world, its literal
+cons-prefix, its `Env.set` tail spine, and its symbolic tail. -/
+def parseEnvShape (e : Lean.Expr) : MetaM EnvShape := do
+  let e ← whnfR e
+  unless e.isAppOfArity ``FrameState.mk 2 do
+    throwError "py_vcgen: state is not a literal `⟨world, locals⟩`:{indentExpr e}"
+  -- reducible whnf: a `{ st with locals := … }` update (the `for` rule's
+  -- body precondition) leaves the world as a projection of a constructor
+  let world ← whnfR (e.getArg! 0)
+  let (elems, tail) ← parseListLit (e.getArg! 1)
+  let mut entries := #[]
+  for el in elems do
+    let el ← whnfR el
+    unless el.isAppOfArity ``Prod.mk 4 do
+      throwError "py_vcgen: environment entry is not a literal pair:{indentExpr el}"
+    let nameE ← whnfR (el.getArg! 2)
+    let .lit (.strVal name) := nameE
+      | throwError "py_vcgen: environment name is not a string literal:{indentExpr nameE}"
+    entries := entries.push (name, el.getArg! 3)
+  let mut sets := #[]
+  let mut base ← whnfR tail
+  for _ in [0:64] do
+    if base.isAppOfArity ``Env.set 4 then
+      let .lit (.strVal k) ← whnfR (base.getArg! 2)
+        | throwError "py_vcgen: `Env.set` key is not a string literal:{indentExpr base}"
+      sets := sets.push (k, base.getArg! 3)
+      base ← whnfR (base.getArg! 1)
+    else
+      break
+  return { world, entries, sets, tail := base }
+
+/-- Rebuild the LOCALS expression of a shape. -/
+def mkLocalsExpr (sh : EnvShape) : Lean.Expr :=
+  let tail := sh.sets.foldr (init := sh.tail) fun (k, v) acc =>
+    mkApp4 (Lean.mkConst ``Env.set [Level.zero]) (Lean.mkConst ``RVal)
+      acc (mkStrLit k) v
+  mkListLit' entryTy
+    (sh.entries.map fun (n, v) =>
+      mkApp4 (Lean.mkConst ``Prod.mk [Level.zero, Level.zero])
+        (Lean.mkConst ``String) (Lean.mkConst ``RVal) (mkStrLit n) v)
+    tail
+
+/-- Rebuild the full `FrameState` expression from a shape. -/
+def mkEnvExpr (sh : EnvShape) : Lean.Expr :=
+  mkState sh.world (mkLocalsExpr sh)
+
+/-- The names assigned (as `Name`/`Tuple`/`List` targets or `augAssign`
+targets) anywhere in a statement, recursively through `if`/`while`. -/
+partial def stmtAssignedNames (s : Lean.Expr) : MetaM (Array String) := do
+  let s ← whnfR s
+  let fn := s.getAppFn
+  let .const c _ := fn | return #[]
+  let fromTarget (t : Lean.Expr) : MetaM (Array String) := do
+    let t ← whnfR t
+    if t.isAppOfArity ``Expr.name 2 then
+      let .lit (.strVal n) ← whnfR (t.getArg! 0) | return #[]
+      return #[n]
+    else if t.isAppOfArity ``Expr.tuple 2 || t.isAppOfArity ``Expr.list 2 then
+      let (elems, _) ← parseListLit (← arrToList (t.getArg! 0))
+      let mut out := #[]
+      for el in elems do
+        let el ← whnfR el
+        if el.isAppOfArity ``Expr.name 2 then
+          if let .lit (.strVal n) := ← whnfR (el.getArg! 0) then
+            out := out.push n
+      return out
+    else return #[]
+  match c with
+  | ``Stmt.assign => do
+    let (tgts, _) ← parseListLit (← arrToList (s.getArg! 0))
+    let mut out := #[]
+    for t in tgts do out := out ++ (← fromTarget t)
+    return out
+  | ``Stmt.augAssign => fromTarget (s.getArg! 0)
+  | ``Stmt.ifStmt | ``Stmt.whileLoop => do
+    let (b1, _) ← parseListLit (← arrToList (s.getArg! 1))
+    let (b2, _) ← parseListLit (← arrToList (s.getArg! 2))
+    let mut out := #[]
+    for t in b1 ++ b2 do out := out ++ (← stmtAssignedNames t)
+    return out
+  | ``Stmt.forStmt => do
+    -- the loop TARGET is assigned by the loop itself, once per element
+    let (b1, _) ← parseListLit (← arrToList (s.getArg! 2))
+    let (b2, _) ← parseListLit (← arrToList (s.getArg! 3))
+    let mut out ← fromTarget (s.getArg! 0)
+    for t in b1 ++ b2 do out := out ++ (← stmtAssignedNames t)
+    return out
+  | _ => return #[]
+
+/-- Every `f(…)` callee NAME appearing anywhere in an AST literal — a plain
+structural walk of the Lean term, so nested statements, array literals and
+optional fields are all covered without a per-constructor case.
+
+These are the names a captured run must LOOK UP in the environment before
+it can call them (the interpreter checks for a local shadowing the builtin
+first), which is why the loop rules have to say something about them: see
+`mkTailFreeFacts`. -/
+partial def calleeNames (e : Lean.Expr) : Array String :=
+  go e #[]
+where
+  go (e : Lean.Expr) (acc : Array String) : Array String :=
+    let acc :=
+      if e.isAppOfArity ``Expr.call 5 then
+        let fn := e.getArg! 0
+        if fn.isAppOfArity ``Expr.name 2 then
+          match fn.getArg! 0 with
+          | .lit (.strVal n) => if acc.contains n then acc else acc.push n
+          | _ => acc
+        else acc
+      else acc
+    match e with
+    | .app f a => go a (go f acc)
+    | .lam _ t b _ => go b (go t acc)
+    | .forallE _ t b _ => go b (go t acc)
+    | .letE _ t v b _ => go b (go v (go t acc))
+    | .mdata _ b => go b acc
+    | .proj _ _ b => go b acc
+    | _ => acc
+
+/-- `Env.lookup tl "n" = none` — the fact a captured run needs to decide
+that a call to `n` is NOT shadowed by a local living behind the invariant's
+symbolic environment tail.
+
+Without it a builtin call inside a loop body wedges the walker: the
+interpreter's shadowing check reduces past every literal entry and then
+stops dead at `Env.lookup tl "max"`. The fact is true at loop entry (the
+tail is `[]` there, so it closes by `rfl`) and preserved across an
+iteration (the tail only grows by `Env.set tl "<target>" v` for targets the
+loop assigns, and `Env.lookup_set_ne` steps past those), so it costs the
+invariant nothing that the walker cannot discharge itself. -/
+def mkTailFreeFact (tail : Lean.Expr) (n : String) : Lean.Expr :=
+  let rvalTy := Lean.mkConst ``RVal
+  mkApp3 (Lean.mkConst ``Eq [.succ .zero])
+    (mkApp (Lean.mkConst ``Option [Level.zero]) rvalTy)
+    (mkApp3 (Lean.mkConst ``Env.lookup [Level.zero]) rvalTy tail (mkStrLit n))
+    (mkApp (Lean.mkConst ``Option.none [Level.zero]) rvalTy)
+
+/-- Right-nest a non-empty conjunct array (`f₁ ∧ (f₂ ∧ f₃)`). -/
+def conjChain (xs : Array Lean.Expr) : Lean.Expr :=
+  xs.pop.foldr (init := xs.back!) mkAnd
+
+/-- Append conjuncts at the END of a right-nested `∧` chain, so the
+invariant's own conjuncts keep their positions (and therefore their
+`hinv1`, `hinv2`, … presentation) and the plumbing facts land after them. -/
+partial def appendConj (core : Lean.Expr) (extra : Array Lean.Expr) : Lean.Expr :=
+  if extra.isEmpty then core
+  else if core.isAppOfArity ``And 2 then
+    mkAnd (core.getArg! 0) (appendConj (core.getArg! 1) extra)
+  else mkAnd core (conjChain extra)
+
+/-- Does the statement contain a `break` at its own loop level (recursing
+into `if`s but not into nested loops)? -/
+partial def stmtHasBreak (s : Lean.Expr) : MetaM Bool := do
+  let s ← whnfR s
+  let .const c _ := s.getAppFn | return false
+  match c with
+  | ``Stmt.brk => return true
+  | ``Stmt.ifStmt => do
+    let (b1, _) ← parseListLit (← arrToList (s.getArg! 1))
+    let (b2, _) ← parseListLit (← arrToList (s.getArg! 2))
+    (b1 ++ b2).anyM stmtHasBreak
+  | _ => return false
+
+/-- All loop statements (`while` and `for`) in a statement list, in source
+order (recursing through `if` branches and loop bodies) — the loop⇄clause
+index, robust across `if`-forks re-walking the same loop. `inv` clauses are
+consumed by every loop here; `dec` clauses by the `while`s only (a `for`'s
+element list is structurally decreasing, so it has no measure) — see
+`VCCtx.decIndex`. -/
+partial def collectLoops (ss : Array Lean.Expr) : MetaM (Array Lean.Expr) := do
+  let mut out := #[]
+  for s in ss do
+    let s ← whnfR s
+    let .const c _ := s.getAppFn | continue
+    match c with
+    | ``Stmt.whileLoop =>
+      out := out.push s
+      let (b, _) ← parseListLit (← arrToList (s.getArg! 1))
+      out := out ++ (← collectLoops b)
+    | ``Stmt.forStmt =>
+      out := out.push s
+      let (b, _) ← parseListLit (← arrToList (s.getArg! 2))
+      out := out ++ (← collectLoops b)
+    | ``Stmt.ifStmt =>
+      let (b1, _) ← parseListLit (← arrToList (s.getArg! 1))
+      let (b2, _) ← parseListLit (← arrToList (s.getArg! 2))
+      out := out ++ (← collectLoops b1) ++ (← collectLoops b2)
+    | _ => continue
+  return out
+
+/-! ### PyPost plumbing -/
+
+/-- The five arms of a `PyPost` expression (direct constructor arguments
+when literal, projection applications otherwise). -/
+def getPostArms (q : Lean.Expr) :
+    MetaM (Lean.Expr × Lean.Expr × Lean.Expr × Lean.Expr × Lean.Expr) := do
+  let q' ← whnfR q
+  if q'.isAppOfArity ``PyPost.mk 5 then
+    -- whnfR each field: nested `{Q with next := R}` posts store the
+    -- untouched arms as projection applications of the inner literal.
+    return (← whnfR (q'.getArg! 0), ← whnfR (q'.getArg! 1),
+            ← whnfR (q'.getArg! 2), ← whnfR (q'.getArg! 3),
+            ← whnfR (q'.getArg! 4))
+  else
+    return (← mkAppM ``PyPost.next #[q], ← mkAppM ``PyPost.ret #[q],
+            ← mkAppM ``PyPost.brk #[q], ← mkAppM ``PyPost.cont #[q],
+            ← mkAppM ``PyPost.err #[q])
+
+/-! ### Residual bookkeeping -/
+
+/-- Per-arm residual tag: the case name, and whether the arm is the loop
+body's `Inv ∧ μ < n` conjunction (split into `preserve` + `dec` goals). -/
+structure ArmTag where
+  tag : Name
+  split2 : Bool := false
+
+/-- Residual tags for the five arms of the current postcondition. -/
+structure PostTags where
+  next : ArmTag
+  ret : ArmTag
+  brk : ArmTag
+  cont : ArmTag
+  err : ArmTag
+
+/-- The walker's state and configuration. -/
+structure VCCtx where
+  pack : SimpPack
+  mE : Lean.Expr
+  /-- `inv` clauses in source order — one per LOOP (`while` and `for`). -/
+  invs : Array Term
+  /-- `dec` clauses in source order — one per `while` loop (a `for` needs no
+  measure). -/
+  decs : Array Term
+  /-- Optional per-loop exit clauses, keyed by 0-based loop index. -/
+  exits : Array (Nat × Term)
+  loops : Array Lean.Expr
+  residuals : IO.Ref (Array MVarId)
+  clauseGoals : IO.Ref (Array MVarId)
+  delayed : IO.Ref (Array (Nat × Lean.Expr × Lean.Expr))
+  /-- Delayed exit-clause metavariables (loop index ↦ mvar): in delayed mode
+  a `break`-carrying loop gets its exit clause requested as a goal
+  (`exit<i>`), mirroring `inv<i>`/`dec<i>`. -/
+  delayedExits : IO.Ref (Array (Nat × Lean.Expr))
+
+/-- The `dec`-clause index of the `li`-th loop: the i-th `while` takes the
+i-th `dec`, because `for` loops consume no `dec` at all. (With no `for` in
+the function this is the identity, so every pre-`for` proof keeps its
+positional pairing.) -/
+def VCCtx.decIndex (ctx : VCCtx) (li : Nat) : MetaM Nat := do
+  let mut k := 0
+  for i in [0:li] do
+    if (← whnfR ctx.loops[i]!).isAppOf ``Stmt.whileLoop then k := k + 1
+  return k
+
+/-- `MVarId.apply`, dropping the delayed inv/dec clause metavariables from
+the returned goals (they are tracked separately and would otherwise leak
+back out of every application whose term mentions them). -/
+def applyC (ctx : VCCtx) (g : MVarId) (e : Lean.Expr) : MetaM (List MVarId) := do
+  let gs ← g.apply e
+  let cg ← ctx.clauseGoals.get
+  return gs.filter (fun g' => !cg.contains g')
+
+/-- Scrub plumbing hypotheses out of an `exit`-tagged residual: the
+symbolic environment tail `tl` (and any shadowed copies) is presentation
+noise once the shape solving is done — clear every clearable hypothesis so
+named; `env`/`heqE` no longer arise (`destructInvHyp` substitutes them
+away). A `tl` the goal still mentions (an environment-growth exit fact
+quantifying over the tail, `nested_flow`'s inner loop) survives — it is
+content there, not noise. -/
+def scrubExitNoise (g : MVarId) : MetaM MVarId := do
+  let fvs ← g.withContext do
+    let mut fvs : Array FVarId := #[]
+    for d in ← getLCtx do
+      if d.isImplementationDetail then continue
+      if [`tl, `env, `heqE].contains d.userName.eraseMacroScopes then
+        fvs := fvs.push d.fvarId
+    pure fvs
+  g.tryClearMany fvs
+
+/-- Present a residual goal: cleanup simp, `assumption` attempt, tag, push.
+Never drops a goal it cannot close. -/
+def addResidual (ctx : VCCtx) (g : MVarId) (tag : Name) : MetaM Unit := do
+  let r ← try
+      Prod.fst <$> Meta.simpGoal g ctx.pack.present ctx.pack.procs
+    catch _ => pure (some (#[], g))   -- no-progress simp: present as-is
+  match r with
+  | none => return
+  | some (_, g) =>
+    match ← g.withContext (do
+        match ← findLocalDeclWithType? (← g.getType) with
+        | some fv => g.assign (mkFVar fv); pure true
+        | none => pure false) with
+    | true => return
+    | false =>
+      let g ← if tag == `exit then scrubExitNoise g else pure g
+      g.setTag tag
+      ctx.residuals.modify (·.push g)
+
+/-! ### The conjunction/witness solver -/
+
+/-- Solve a postcondition-arm shape (`∃`-nests over an environment
+equation, conjunctions, `if`-join disjunctions): equations with unification
+variables must close by `isDefEq` (they pin the witnesses); ground leaves
+close by `rfl`-unification or `assumption`, and otherwise become residual
+metavariable goals (returned with the proof). In `strict` mode no residuals
+are allowed (used to pick an `if`-join disjunct). -/
+partial def solveShape (ctx : VCCtx) (ty : Lean.Expr) (strict : Bool) :
+    MetaM (Option (Lean.Expr × Array MVarId)) := do
+  let ty := (← instantiateMVars ty).headBeta
+  if ty.isAppOfArity ``And 2 then
+    let some (p1, r1) ← solveShape ctx (ty.getArg! 0) strict | return none
+    let some (p2, r2) ← solveShape ctx (ty.getArg! 1) strict | return none
+    return some (mkApp4 (Lean.mkConst ``And.intro) (ty.getArg! 0)
+      (ty.getArg! 1) p1 p2, r1 ++ r2)
+  else if ty.isAppOfArity ``Or 2 then
+    let a := ty.getArg! 0
+    let b := ty.getArg! 1
+    let attempt (side : Lean.Expr) (isLeft : Bool) (st : Bool) :
+        MetaM (Option (Lean.Expr × Array MVarId)) := do
+      let s ← saveState
+      match ← solveShape ctx side st with
+      | some (p, rs) =>
+        let intro := if isLeft then ``Or.inl else ``Or.inr
+        return some (mkApp3 (Lean.mkConst intro) a b p, rs)
+      | none => restoreState s; return none
+    if let some r ← attempt a true true then return some r
+    if let some r ← attempt b false true then return some r
+    if strict then return none
+    if let some r ← attempt a true false then return some r
+    if let some r ← attempt b false false then return some r
+    return none
+  else if ty.isAppOfArity ``Exists 2 then
+    let α := ty.getArg! 0
+    let p := ty.getArg! 1
+    let w ← mkFreshExprMVar α
+    let some (inner, rs) ← solveShape ctx (p.beta #[w]) strict | return none
+    unless (← instantiateMVars w).findMVar? (fun _ => true) |>.isNone do
+      return none
+    let u ← getLevel α
+    return some (mkApp4 (Lean.mkConst ``Exists.intro [u]) α p
+      (← instantiateMVars w) inner, rs)
+  else if ty.isAppOfArity ``Eq 3 then
+    let lhs := ty.getArg! 1
+    let rhs := ty.getArg! 2
+    -- Thaw inversion (H1): `X = RVal.thaw ?v` with `X` known and `?v` a
+    -- bare witness mvar (the raw-`Val` relational binder) is not
+    -- unifiable — `thaw ?v` is stuck — but FREEZING the captured runtime
+    -- value decides the witness: `?v := w` with `freeze X = .ok w`, and
+    -- `RVal.eq_thaw_of_freeze` supplies the equation.
+    if rhs.isAppOfArity ``RVal.thaw 1 then
+      let arg ← instantiateMVars (rhs.getArg! 0)
+      if arg.isMVar && !(← instantiateMVars lhs).hasExprMVar then
+        let (fr, prfF) ← captureRun ctx.pack (← mkAppM ``RVal.freeze #[lhs])
+        let fr' ← whnfR fr
+        if fr'.isAppOfArity ``Res.ok 2 then
+          let w := fr'.getArg! 1
+          if ← isDefEq arg w then
+            let prfF' ← mkExpectedTypeHint prfF
+              (← mkEq (← mkAppM ``RVal.freeze #[lhs])
+                (← mkAppM ``Res.ok #[w]))
+            let prf ← mkAppM ``RVal.eq_thaw_of_freeze #[lhs, prfF']
+            return some (prf, #[])
+    let hasMVar := (← instantiateMVars ty).hasExprMVar
+    let s ← saveState
+    if ← withReducible (isDefEq lhs rhs) then
+      return some (← mkEqRefl (← instantiateMVars lhs), #[])
+    restoreState s
+    if ← isDefEq lhs rhs then
+      return some (← mkEqRefl (← instantiateMVars lhs), #[])
+    restoreState s
+    match ← findLocalDeclWithType? (← instantiateMVars ty) with
+    | some fv => return some (mkFVar fv, #[])
+    | none =>
+    if hasMVar then return none
+    if strict then return none
+    let g ← mkFreshExprMVar ty .syntheticOpaque
+    return some (g, #[g.mvarId!])
+  else if ty.isConstOf ``True then
+    return some (Lean.mkConst ``True.intro, #[])
+  else if ty.isConstOf ``False then
+    if strict then return none
+    let g ← mkFreshExprMVar ty .syntheticOpaque
+    return some (g, #[g.mvarId!])
+  else
+    match ← findLocalDeclWithType? (← instantiateMVars ty) with
+    | some fv => return some (mkFVar fv, #[])
+    | none =>
+      if strict then return none
+      if (← instantiateMVars ty).hasExprMVar && !ty.getAppFn.isMVar then
+        return none
+      let g ← mkFreshExprMVar ty .syntheticOpaque
+      return some (g, #[g.mvarId!])
+
+/-- Close a goal through `solveShape`, pushing the leaves as residuals
+tagged `tag`; falls back to presenting the whole goal. -/
+def closeByShape (ctx : VCCtx) (g : MVarId) (tag : Name) : MetaM Unit := do
+  g.withContext do
+    let ty ← Core.betaReduce (← instantiateMVars (← g.getType))
+    match ← solveShape ctx ty false with
+    | some (prf, residuals) =>
+      g.assign prf
+      for r in residuals do
+        addResidual ctx r tag
+    | none =>
+      addResidual ctx g tag
+
+/-- Close an arm goal per its tag: a loop-body `next`/`cont` arm
+(`Inv ∧ μ < n`) is split into a `preserve` part and a `dec` part. -/
+def closeArm (ctx : VCCtx) (g : MVarId) (at_ : ArmTag) : MetaM Unit := do
+  g.withContext do
+    let ty ← Core.betaReduce (← instantiateMVars (← g.getType))
+    if at_.split2 && ty.isAppOfArity ``And 2 then
+      let gL ← mkFreshExprMVar (ty.getArg! 0) .syntheticOpaque
+      let gR ← mkFreshExprMVar (ty.getArg! 1) .syntheticOpaque
+      g.assign (mkApp4 (Lean.mkConst ``And.intro) (ty.getArg! 0)
+        (ty.getArg! 1) gL gR)
+      closeByShape ctx gL.mvarId! at_.tag
+      closeByShape ctx gR.mvarId! `dec
+    else
+      closeByShape ctx g at_.tag
+
+/-! ### Goal parsing -/
+
+/-- Statement classification for the walk. -/
+inductive StmtKind where
+  | plain | term | ctrlWhile | ctrlFor | ctrlIf | ctrlCall | ctrlRet
+deriving BEq, Inhabited
+
+/-- Classify one statement: control (`while`/`for`/`if`/call-assignment),
+terminator (`return`/`break`/`continue`), or plain straight-line. -/
+def classify (s : Lean.Expr) : MetaM StmtKind := do
+  let s ← whnfR s
+  let .const c _ := s.getAppFn | return .plain
+  match c with
+  | ``Stmt.whileLoop => return .ctrlWhile
+  | ``Stmt.forStmt => return .ctrlFor
+  | ``Stmt.ifStmt => return .ctrlIf
+  | ``Stmt.ret => do
+    -- `return f(…)` is a call site (the callee-in-module downgrade in
+    -- `walk` sends a BUILTIN callee back to `.term`, where the captured
+    -- run handles it as before)
+    let v ← whnfR (s.getArg! 0)
+    if v.isAppOfArity ``Option.some 2 then
+      let e ← whnfR (v.getArg! 1)
+      if e.isAppOfArity ``Expr.call 5 then
+        let fn ← whnfR (e.getArg! 0)
+        let unsup ← whnfR (e.getArg! 3)
+        if fn.isAppOfArity ``Expr.name 2 && unsup.isAppOfArity ``Option.none 1 then
+          return .ctrlRet
+    return .term
+  | ``Stmt.brk | ``Stmt.cont => return .term
+  | ``Stmt.assign => do
+    let rhs ← whnfR (s.getArg! 1)
+    if rhs.isAppOfArity ``Expr.call 5 then
+      let fn ← whnfR (rhs.getArg! 0)
+      let unsup ← whnfR (rhs.getArg! 3)
+      if fn.isAppOfArity ``Expr.name 2 && unsup.isAppOfArity ``Option.none 1 then
+        return .ctrlCall
+    return .plain
+  | _ => return .plain
+
+/-- Does a `.ctrlCall` statement's callee resolve in the MODULE function
+table? Only module functions go through the callee-spec rule
+(`handleCall`, which demands a `CallsTo` fact); a BUILTIN callee
+(`len`/`sorted` — `findFunction` misses, the interpreter's name-resolution
+order falls through to the builtin branch) rides ordinary symbolic
+execution instead: its helper (`lenVal`/`sortedVal`) is in `interpUnfolds`,
+so the captured run steps straight through it. Without this downgrade,
+`data = sorted(data)` would be intercepted and fail with a bogus
+"no `CallsTo` fact for callee `sorted`". An unknown name also downgrades —
+the captured run then raises the honest `NameError`. -/
+def calleeInModule (ctx : VCCtx) (m call : Lean.Expr) : MetaM Bool := do
+  let fnE ← whnfR ((← whnfR call).getArg! 0)
+  let (rF, _) ← captureRun ctx.pack
+    (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
+  return !(← whnfR rF).isAppOfArity ``Option.none 1
+
+/-- Is this expression a call to a module GENERATOR function? Decided from
+the SYNTAX and the function table, never from a captured run — and that is
+the point: `callIn` is a frozen recursion point, so `evalExpr` over
+`upto(n)` does not reduce, and a walker step that asks the interpreter what
+a generator call evaluates to gets stuck (and prints the whole module
+literal saying so). Whoever needs to know "is this a generator?" must ask
+here, before any symbolic execution. -/
+def isGeneratorCall (ctx : VCCtx) (m e : Lean.Expr) : MetaM Bool := do
+  let e ← whnfR e
+  unless e.isAppOfArity ``Expr.call 5 do return false
+  let fnE ← whnfR (e.getArg! 0)
+  unless fnE.isAppOfArity ``Expr.name 2 do return false
+  let (rF, _) ← captureRun ctx.pack
+    (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
+  let rF ← whnfR rF
+  unless rF.isAppOfArity ``Option.some 2 do return false
+  let gen ← whnfR (mkApp (Lean.mkConst ``FunctionDefn.isGenerator) (rF.getArg! 1))
+  return gen.isConstOf ``Bool.true
+
+/-- The refusal a generator `for` earns, and why it is a refusal rather
+than an arm: the RULE exists (`PyStmtTriple.forGen`, VCGen.lean §L3, with
+`EvalsIn.genCall` in front of it), but the walker cannot build the
+invariant it needs. Every invariant `handleFor`/`handleWhile` construct
+pins ONE world (`EnvShape.world`) and varies only environment slots; a
+generator loop's invariant must range over the object's CONFIGURATION,
+which lives in the world. Priced in docs/backlog.md §L3 TAIL LANDED. -/
+def genForRefusal : String :=
+  "py_vcgen: `for` over a GENERATOR is outside the v1 recipe. The rule exists — `PyStmtTriple.forGen` (LeanModels/Python/VCGen.lean §L3), fed by `EvalsIn.genCall` — but the walker cannot drive it: its invariants pin ONE world (`EnvShape.world`) and vary only environment slots, while a generator loop's invariant must range over the object's configuration IN the world (docs/backlog.md §L3 TAIL LANDED). Apply the rule by hand; `Examples/python/gen_lab/proof.lean` (`total_calls`, `two_phase_calls`) is the worked shape."
+
+/-- The refusal a CALL to a generator function earns. Without it the
+callee-spec lookup asks for a `CallsTo` fact that cannot exist: calling a
+generator returns a suspended OBJECT, not a value, so its spec is an
+`EvalsIn` and its statement rule is `PyStmtTriple.assignNameIn`. -/
+def genCallRefusal (fname : String) : String :=
+  s!"py_vcgen: `{fname}` is a GENERATOR function, so it has no `CallsTo` fact and cannot get one — calling it ALLOCATES a suspended object instead of returning a value. Its spec is `EvalsIn.genCall`, and `PyStmtTriple.assignNameIn` binds the result to a name (LeanModels/Python/VCGen.lean §L3); the walker drives neither yet (docs/backlog.md §L3 TAIL LANDED). `Examples/python/gen_lab/proof.lean` (`two_phase_calls`) is the worked shape."
+
+/-- The call expression of a `.ctrlCall` (assignment) or `.ctrlRet`
+(`return`) statement. -/
+def callExprOf (s : Lean.Expr) : MetaM Lean.Expr := do
+  let s ← whnfR s
+  match s.getAppFn with
+  | .const ``Stmt.assign _ => whnfR (s.getArg! 1)
+  | .const ``Stmt.ret _ => whnfR ((← whnfR (s.getArg! 0)).getArg! 1)
+  | _ => throwError "py_vcgen: internal — not a call statement" 
+
+/-- The `Stmt` type constant. -/
+def stmtTy : Lean.Expr := Lean.mkConst ``Stmt
+/-- `List.nil` at `Stmt`. -/
+def nilStmts : Lean.Expr :=
+  mkApp (Lean.mkConst ``List.nil [Level.zero]) stmtTy
+/-- Rebuild a literal `List Stmt`. -/
+def mkStmtsLit (ss : Array Lean.Expr) : Lean.Expr := mkListLit' stmtTy ss nilStmts
+
+/-- A parsed and normalized `PyTriple` goal: precondition
+`fun env => env = E` with `E` in literal shape, statement list literal. -/
+structure TripleGoal where
+  g : MVarId
+  m : Lean.Expr
+  E : Lean.Expr
+  shape : EnvShape
+  stmts : Array Lean.Expr
+  Q : Lean.Expr
+
+/-- Extract `E` from a `fun env => env = E` precondition. -/
+def envOfPred (P : Lean.Expr) : MetaM Lean.Expr := do
+  let P ← instantiateMVars P
+  match P with
+  | .lam _ _ body _ =>
+    if body.isAppOfArity ``Eq 3 && body.getArg! 1 == .bvar 0 &&
+        !(body.getArg! 2).hasLooseBVars then
+      return body.getArg! 2
+    else
+      throwError "py_vcgen: precondition is not `fun env => env = E`:{indentExpr P}"
+  | _ => throwError "py_vcgen: precondition is not a lambda:{indentExpr P}"
+
+/-- The state-equality precondition `fun st => st = E`. -/
+def mkEqPred (E : Lean.Expr) : MetaM Lean.Expr :=
+  withLocalDeclD `env stateTy fun env =>
+    mkLambdaFVars #[env] (mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env E)
+
+/-- Split the goals of a `consequence` application into
+`(h, hpre, hpost)`. -/
+def splitConsGoals (gs : List MVarId) : MetaM (MVarId × MVarId × MVarId) := do
+  let mut h : Option MVarId := none
+  let mut hpre : Option MVarId := none
+  let mut hpost : Option MVarId := none
+  for g in gs do
+    let t ← instantiateMVars (← g.getType)
+    if t.isAppOf ``PyTriple || t.isAppOf ``PyStmtTriple then h := some g
+    else if t.isAppOf ``PyPost.Entails then hpost := some g
+    else hpre := some g
+  let (some a, some b, some c) := (h, hpre, hpost)
+    | throwError "py_vcgen: internal — consequence goals"
+  return (a, b, c)
+
+/-- Split the goals of a `PyTriple.seq` application into `(h1, h2)`. -/
+def splitSeqGoals (gs : List MVarId) : MetaM (MVarId × MVarId) := do
+  let mut h1 : Option MVarId := none
+  let mut h2 : Option MVarId := none
+  for g in gs do
+    let t ← instantiateMVars (← g.getType)
+    if t.isAppOf ``PyStmtTriple then h1 := some g
+    else if t.isAppOf ``PyTriple then h2 := some g
+  let (some a, some b) := (h1, h2)
+    | throwError "py_vcgen: internal — seq goals"
+  return (a, b)
+
+/-- Parse a `PyTriple` goal into its parts, normalizing the precondition to
+`fun env => env = <literal shape>` (through captured reduction +
+`consequence` when needed) and the statement list to a literal. -/
+partial def parseTripleGoal (ctx : VCCtx) (g : MVarId) : MetaM TripleGoal := do
+  g.withContext do
+    let tgtOrig ← instantiateMVars (← g.getType)
+    let tgt ← Core.betaReduce tgtOrig
+    unless tgt.isAppOfArity ``PyTriple 4 do
+      throwError "py_vcgen: expected a PyTriple goal:{indentExpr tgt}"
+    -- Inspect through the beta-reduced form, but rebuild with the ORIGINAL
+    -- components: beta-variant types containing the delayed clause mvars are
+    -- not decidable by `isDefEq` (opaque flex applications), identical ones
+    -- are.
+    let m := tgtOrig.getArg! 0
+    let P := tgtOrig.getArg! 1
+    let ssE := tgtOrig.getArg! 2
+    let Q := tgtOrig.getArg! 3
+    let E ← envOfPred (tgt.getArg! 1)
+    let sh? ← try some <$> parseEnvShape E catch _ => pure none
+    -- A shape whose tail base is neither `[]` nor a variable (e.g. a raw
+    -- `mkCallEnv …` entry environment) must be reduced first.
+    let sh? := match sh? with
+      | some sh => if isNilTail sh.tail || sh.tail.isFVar then some sh else none
+      | none => none
+    match sh? with
+    | some sh =>
+      let (stmts, tail) ← parseListLit ssE
+      unless isNilTail tail do
+        throwError "py_vcgen: statement list is not literal:{indentExpr ssE}"
+      let ssLit := mkStmtsLit stmts
+      let g ← g.change (mkApp4 (Lean.mkConst ``PyTriple) m P ssLit Q)
+      return { g, m, E, shape := sh, stmts, Q }
+    | none =>
+      let (E', prfE) ← captureRun ctx.pack E
+      let _ ← parseEnvShape E'   -- throw early if still unusable
+      let P' ← mkEqPred E'
+      let consT ← appOpt ``PyTriple.consequence
+        #[some m, some P', some P, some ssE, some Q, some Q, none, none, none]
+      let gs ← applyC ctx g consT
+      let (h, hpre, hpost) ← splitConsGoals gs
+      hpost.withContext do
+        let _ ← applyC ctx hpost (← mkAppM ``PyPost.Entails.rfl #[Q])
+      let (_, gp) ← hpre.intro `env
+      let (heqFv, gp) ← gp.intro `henv
+      gp.withContext do
+        let _ ← applyC ctx gp (← mkAppM ``Eq.trans #[mkFVar heqFv, prfE])
+      parseTripleGoal ctx h
+
+/-! ### Captured-run parsing -/
+
+/-- The decided outcome of a captured run (`env` fields carry the whole
+`FrameState`; `.exn` is state-aware since H1). -/
+inductive RunOut where
+  | next (env : Lean.Expr)
+  | ret (v env : Lean.Expr)
+  | brk (env : Lean.Expr)
+  | cont (env : Lean.Expr)
+  | exn (e env : Lean.Expr)
+
+/-- Parse a captured `Run FrameState RFlow` normal form. -/
+def parseRun (r : Lean.Expr) : MetaM (Option RunOut) := do
+  let r ← whnfR r
+  if r.isAppOfArity ``Run.ok 4 then
+    let env := r.getArg! 2
+    let flow ← whnfR (r.getArg! 3)
+    if flow.isConstOf ``RFlow.next then return some (.next env)
+    else if flow.isAppOfArity ``RFlow.ret 1 then
+      return some (.ret (flow.getArg! 0) env)
+    else if flow.isConstOf ``RFlow.brk then return some (.brk env)
+    else if flow.isConstOf ``RFlow.cont then return some (.cont env)
+    else return none
+  else if r.isAppOfArity ``Run.exn 4 then
+    return some (.exn (r.getArg! 3) (r.getArg! 2))
+  else return none
+
+/-- Close the arm goal of a decided run against the postcondition:
+`Eq.mpr (congrArg Q.holds prf)` reduces `Q.holds r` to the arm
+definitionally; the arm becomes a shaped/residual goal. -/
+def closeRun (ctx : VCCtx) (tags : PostTags) (g : MVarId) (Q r prf : Lean.Expr) :
+    MetaM Unit := do
+  g.withContext do
+    let some out ← parseRun r
+      | throwError "py_vcgen: symbolic execution got stuck (out-of-tier statement, or a hypothesis is missing):{indentExpr r}"
+    let (nx, rt, bk, ct, er) ← getPostArms Q
+    let (armTy, at_) := match out with
+      | .next env => (mkApp nx env, tags.next)
+      | .ret v env => (mkApp2 rt v env, tags.ret)
+      | .brk env => (mkApp bk env, tags.brk)
+      | .cont env => (mkApp ct env, tags.cont)
+      | .exn e env => (mkApp2 er e env, tags.err)
+    let armTy := armTy.headBeta
+    let gArm ← mkFreshExprMVar armTy .syntheticOpaque
+    let holdsFn := mkApp (Lean.mkConst ``PyPost.holds) Q
+    let heq ← mkCongrArg holdsFn prf
+    g.assign (← mkAppM ``Eq.mpr #[heq, gArm])
+    closeArm ctx gArm.mvarId! at_
+
+/-! ### Small dischargers -/
+
+/-- Close an equation side goal whose two sides are definitionally equal
+(literal-module guards: `argsOk`, arity, …). -/
+def closeRfl (g : MVarId) : MetaM Unit := do
+  g.withContext do
+    let t ← instantiateMVars (← g.getType)
+    let some (_, lhs, _) := t.eq?
+      | throwError "py_vcgen: expected an equation side goal:{indentExpr t}"
+    let closed ← try
+        let gs ← g.apply (← mkEqRefl lhs)
+        pure gs.isEmpty
+      catch _ => pure false
+    unless closed do
+      throwError "py_vcgen: side condition did not close by rfl (out-of-tier function, arity mismatch?):{indentExpr t}"
+
+/-- Run a tactic on a detached goal; `true` iff it closed the goal
+(state restored otherwise). -/
+def tryTacClose (g : MVarId) (tac : TSyntax `tactic) : TacticM Bool := do
+  let s ← saveState
+  try
+    let gs ← Lean.Elab.Tactic.run g (evalTactic tac)
+    if gs.isEmpty then return true
+    s.restore
+    return false
+  catch _ =>
+    s.restore
+    return false
+
+/-- Discharge a callee-spec side condition: `assumption`, then `omega`,
+else a residual tagged `side`. -/
+def trySide (ctx : VCCtx) (g : MVarId) : TacticM Unit := do
+  if ← g.isAssigned then return
+  let closed ← g.withContext do
+    match ← findLocalDeclWithType? (← instantiateMVars (← g.getType)) with
+    | some fv => g.assign (mkFVar fv); pure true
+    | none => pure false
+  if closed then return
+  if ← tryTacClose g (← `(tactic| omega)) then return
+  addResidual ctx g `side
+
+/-! ### Callee-spec lookup -/
+
+/-- Find a `CallsTo` fact for `fname` whose THAWED boundary arguments
+match the evaluated runtime argument values (`vsLit`, a `List RVal`
+literal): local hypotheses first (recursion IHs, destructured relational
+facts), then the `@[py_spec]` registry. Returns the fact, the spec's
+boundary argument array (`Array Val`), the result value, and any
+uninstantiated spec preconditions as side goals. -/
+def findCalleeFact (ctx : VCCtx) (fname : String) (vsLit : Lean.Expr) :
+    MetaM (Option (Lean.Expr × Lean.Expr × Lean.Expr × Array MVarId)) := do
+  let checkArgs (argsE : Lean.Expr) : MetaM Bool := do
+    -- the call site evaluated to the thaws of the spec's boundary args?
+    -- (`thawList` form: whnf-reducible, unlike `Array.map`)
+    let thawed ← mkAppM ``RVal.thawList #[← mkAppM ``Array.toList #[argsE]]
+    let st ← saveState
+    if ← isDefEq thawed vsLit then return true
+    st.restore
+    -- A marshalled LIST argument does not reduce definitionally: the
+    -- captured run holds `map (thaw ∘ toVal) l` while the spec's boundary
+    -- args thaw to `thawList (map toVal l)`, and bridging those is an
+    -- induction (`thawList_eq_map`), not an unfolding. Compare the normal
+    -- forms instead — without this, no fact about a list-taking callee
+    -- ever matches, which is every recursion over a boundary list.
+    let (r, _) ← Meta.simp thawed ctx.pack.exec ctx.pack.procs
+    isDefEq r.expr vsLit
+  -- One candidate: instantiate its ∀-telescope, unify the conclusion with
+  -- this call site, and keep the leftover Prop obligations as side goals.
+  -- Quantified LOCAL hypotheses go through this too, which is what makes a
+  -- recursion IH usable: the natural shape of one is `∀ b, f(…, b) ==> …`,
+  -- not a ground `CallsTo`, and a ground fact is just the empty telescope.
+  let tryFact (base ty : Lean.Expr) :
+      MetaM (Option (Lean.Expr × Lean.Expr × Lean.Expr × Array MVarId)) := do
+    try
+      let (ms, _, concl) ← forallMetaTelescope ty
+      let concl ← whnfR concl
+      unless concl.isAppOfArity ``CallsTo 4 do return none
+      unless (← isDefEq (concl.getArg! 0) ctx.mE)
+          && (← isDefEq (concl.getArg! 1) (mkStrLit fname))
+          && (← checkArgs (concl.getArg! 2)) do return none
+      let mut sides : Array MVarId := #[]
+      for mv in ms do
+        let mvId := mv.mvarId!
+        if ← mvId.isAssigned then continue
+        if ← isProp (← inferType mv) then sides := sides.push mvId
+        else return none
+      return some (mkAppN base ms, ← instantiateMVars (concl.getArg! 2),
+        ← instantiateMVars (concl.getArg! 3), sides)
+    catch _ => return none
+  -- local hypotheses, most recent first
+  for d in (← getLCtx).decls.toList.filterMap id |>.reverse do
+    if d.isImplementationDetail then continue
+    let s ← saveState
+    match ← tryFact d.toExpr (← instantiateMVars d.type) with
+    | some r => return some r
+    | none => s.restore
+  -- the @[py_spec] registry
+  for n in ← Lean.labelled `py_spec do
+    let s ← saveState
+    let lemE ← mkConstWithFreshMVarLevels n
+    match ← tryFact lemE (← inferType lemE) with
+    | some r => return some r
+    | none => s.restore
+  return none
+
+/-! ### Loop-artifact construction helpers -/
+
+/-- `∃ x₁ …, body`, abstracting the given fvars in order. -/
+def mkExistsNest (fvs : Array Lean.Expr) (body : Lean.Expr) :
+    MetaM Lean.Expr := do
+  let mut b := body
+  for fv in fvs.reverse do
+    let lam ← mkLambdaFVars #[fv] b
+    b ← mkAppM ``Exists #[lam]
+  return b
+
+/-- Name the function metavariable behind an introduced delayed clause
+(`fun x₁ … => ?m x₁ …`, the delayed-assigned twin `MVarId.introN` leaves
+when the end of the run introduces a clause goal's named binder telescope)
+after the clause (`inv1`, `dec1`, `exit1`, …), so residual goals display
+its occurrences as `?inv1 s n` rather than an anonymous `?m.123 s n`. The
+user-facing goal (the pending `Prop`/`Nat` metavariable) carries the same
+tag; only it appears in the goal list, so `case inv1` is unambiguous. -/
+def tagClauseFn (e : Lean.Expr) (nm : Name) : MetaM Unit := do
+  let mut b := e
+  while b.isLambda do
+    b := b.bindingBody!
+  if let .mvar id := b.getAppFn then
+    id.setTag nm
+
+/-- Strip an `∃`/`∧` precondition down to `fun env => env = E`, introducing
+existential witnesses with `introNames` (in order) and the pure part as a
+hypothesis named `hypName`. Applies the precondition-normalization rules
+(`exists_pre`/`exists_and_pre`/`and_assoc_pre`/`eq_and_pre`). -/
+def normalizePre (ctx : VCCtx) (introNames : Array Name) (hypName : Name)
+    (g : MVarId) : MetaM MVarId := do
+  let mut g := g
+  let mut ni := 0
+  for _ in [0:64] do
+    let tgt ← g.withContext do
+      Core.betaReduce (← instantiateMVars (← g.getType))
+    unless tgt.isAppOfArity ``PyTriple 4 do
+      throwError "py_vcgen: internal — normalizePre on a non-triple:{indentExpr tgt}"
+    let .lam _ _ body _ := tgt.getArg! 1
+      | throwError "py_vcgen: internal — precondition is not a lambda"
+    if body.isAppOfArity ``Eq 3 then
+      return g
+    else if body.isAppOfArity ``Exists 2 then
+      let [g'] ← applyC ctx g (← mkConstWithFreshMVarLevels ``PyTriple.exists_pre)
+        | throwError "py_vcgen: internal — exists_pre"
+      let nm := introNames[ni]? |>.getD (Name.mkSimple s!"x{ni}")
+      let (_, g'') ← g'.intro nm
+      g := g''
+      ni := ni + 1
+    else if body.isAppOfArity ``And 2 then
+      let lhs := body.getArg! 0
+      if lhs.isAppOfArity ``Exists 2 then
+        let [g'] ← applyC ctx g (← mkConstWithFreshMVarLevels ``PyTriple.exists_and_pre)
+          | throwError "py_vcgen: internal — exists_and_pre"
+        let nm := introNames[ni]? |>.getD (Name.mkSimple s!"x{ni}")
+        let (_, g'') ← g'.intro nm
+        g := g''
+        ni := ni + 1
+      else if lhs.isAppOfArity ``And 2 then
+        let [g'] ← applyC ctx g (← mkConstWithFreshMVarLevels ``PyTriple.and_assoc_pre)
+          | throwError "py_vcgen: internal — and_assoc_pre"
+        g := g'
+      else if lhs.isAppOfArity ``Eq 3 then
+        let [g'] ← applyC ctx g (← mkConstWithFreshMVarLevels ``PyTriple.eq_and_pre)
+          | throwError "py_vcgen: internal — eq_and_pre"
+        let (_, g'') ← g'.intro hypName
+        return g''
+      else
+        throwError "py_vcgen: internal — unexpected precondition:{indentExpr body}"
+    else
+      throwError "py_vcgen: internal — unexpected precondition:{indentExpr body}"
+  throwError "py_vcgen: internal — precondition normalization did not converge"
+
+/-- Destructure an invariant hypothesis `∃ x₁ … tail, env = shape ∧ core`
+(introducing the witnesses under `names` and the core under `hcore`), and
+substitute the goal's `env` by the shape. The environment equation is
+`subst`-eliminated — the same machinery the `init` path uses — rather than
+merely rewritten into the target, so neither `env` nor the `heqE` equation
+survives into residual goals' contexts. Used by the `htest`/`hexit`
+obligation dischargers. -/
+def destructInvHyp (g : MVarId) (hFv : FVarId) (names : Array Name) :
+    MetaM MVarId := do
+  let mut g := g
+  let mut fv := hFv
+  for n in names do
+    let (_, restFv, g') ← casesTwo g fv n `hrest
+    g := g'
+    fv := restFv
+  let (heqFv, _, g') ← casesTwo g fv `heqE `hcore
+  Meta.subst g' heqFv
+
+/-- Try to close an equation goal by `rfl` up to unfolding. -/
+def tryRflClose (g : MVarId) : MetaM Bool := do
+  g.withContext do
+    let t ← instantiateMVars (← g.getType)
+    let some (_, lhs, _) := t.eq? | return false
+    try
+      let gs ← g.apply (← mkEqRefl lhs)
+      pure gs.isEmpty
+    catch _ => pure false
+
+/-! ### The `while` obligation dischargers -/
+
+/-- Discharge `htest`: destructure the invariant, then verify by symbolic
+execution that the test evaluates to `tv` at the shape. -/
+def dischargeWhileTest (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  let [g] ← applyC ctx g
+      (← g.withContext (appOpt ``EvalsTo.of_eval #[none, some (mkNatLit fuelK), none, none, none, none]))
+    | throwError "py_vcgen: internal — of_eval"
+  let ctx' ← g.withContext do addFacts ctx.pack.exec (← currentFacts)
+  let r? ← try Prod.fst <$> Meta.simpGoal g ctx' ctx.pack.procs
+    catch _ => pure (some (#[], g))
+  match r? with
+  | none => return
+  | some (_, g) =>
+    unless ← tryRflClose g do
+      throwError "py_vcgen: could not verify the derived loop-test value (test outside the v1 recipe):{indentExpr (← g.withContext do instantiateMVars (← g.getType))}"
+
+/-- Discharge `htv` (the truthiness-decidedness obligation of the H1 while
+rule): destructure the invariant, then let symbolic execution decide the
+test value's truthiness (the witness bool is assigned by the closing
+`rfl`). -/
+def dischargeWhileTv (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  g.withContext do
+    let tgt := (← instantiateMVars (← g.getType)).headBeta
+    unless tgt.isAppOfArity ``Exists 2 do
+      throwError "py_vcgen: internal — htv goal:{indentExpr tgt}"
+    -- Read the equation's LEFT side out of the ∃-body and capture ITS
+    -- normal form — never simp the goal itself: the full set moves `!`
+    -- across the equation and destroys the witness pattern (the Miller
+    -- pitfall recorded in LoopTactic.lean).
+    let .lam _ _ body _ := tgt.getArg! 1
+      | throwError "py_vcgen: internal — htv body"
+    unless body.isAppOfArity ``Eq 3 && !(body.getArg! 1).hasLooseBVars do
+      throwError "py_vcgen: internal — htv equation:{indentExpr body}"
+    let lhs := body.getArg! 1
+    let (rT, prfT) ← captureRun ctx.pack lhs
+    let rT' ← whnfR rT
+    unless rT'.isAppOfArity ``Res.ok 2 do
+      throwError "py_vcgen: the loop test's truthiness did not decide (out-of-tier test value):{indentExpr rT}"
+    let bE := rT'.getArg! 1
+    let prf := mkApp4 (Lean.mkConst ``Exists.intro [.succ .zero])
+      (Lean.mkConst ``Bool) (tgt.getArg! 1) bE
+      (← mkExpectedTypeHint prfT ((tgt.getArg! 1).beta #[bE]))
+    g.assign prf
+
+/-- Discharge `hexit`: destructure the invariant, normalize the negated
+test, and re-establish the loop's exit condition by shape solving. -/
+def dischargeWhileExit (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  let (hxFv, g) ← g.intro `hx
+  let r? ← try Prod.fst <$> (Meta.simpGoal g ctx.pack.norm ctx.pack.procs
+      (simplifyTarget := false) (fvarIdsToSimp := #[hxFv]))
+    catch _ => pure (some (#[], g))
+  match r? with
+  | none => return
+  | some (_, g) => closeByShape ctx g `exit
+
+/-! ### The `for` obligation dischargers -/
+
+/-- Discharge the for rule's `hiter`: destructure the invariant, then verify
+by symbolic execution that the iterable evaluates — at the INVARIANT shape,
+not merely at the entry state — to the value list the walker read off it.
+An iterable that reads a variable the loop body assigns fails here (its
+value at the shape is symbolic), which is the intended refusal: the sequence
+is captured once, before the loop. -/
+def dischargeForIter (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  let [g] ← applyC ctx g
+      (← g.withContext (appOpt ``EvalsTo.of_eval #[none, some (mkNatLit fuelK), none, none, none, none]))
+    | throwError "py_vcgen: internal — of_eval"
+  let ctx' ← g.withContext do addFacts ctx.pack.exec (← currentFacts)
+  let r? ← try Prod.fst <$> Meta.simpGoal g ctx' ctx.pack.procs
+    catch _ => pure (some (#[], g))
+  match r? with
+  | none => return
+  | some (_, g) =>
+    unless ← tryRflClose g do
+      throwError "py_vcgen: the iterable did not evaluate to the same list at the loop invariant (does it read a variable the body assigns?):{indentExpr (← g.withContext do instantiateMVars (← g.getType))}"
+
+/-- Discharge the for rule's `hexit` (`∀ st, Inv [] st → Q.next st`):
+destructure the invariant at the EMPTY remainder and re-establish the
+loop's exit condition by shape solving. Unlike the while rule's `hexit`
+there is no negated test to normalize — a `for` exits because the elements
+ran out, which is already `Inv []`. -/
+def dischargeForExit (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  closeByShape ctx g `exit
+
+/-- Discharge the `if` rule's test hypothesis from the captured evaluation,
+the captured (`Res`-valued) truthiness decision, and the two normalized
+truthiness facts. -/
+def dischargeIfTest (ctx : VCCtx) (g : MVarId) (E V prfT bE prfTr : Lean.Expr)
+    (tDead : Bool) (tNF : Lean.Expr) (tPrf? : Option Lean.Expr)
+    (fDead : Bool) (fNF : Lean.Expr) (fPrf? : Option Lean.Expr) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (heqFv, g) ← g.intro `henv
+  let g ← Meta.subst g heqFv
+  g.withContext do
+    let tgt ← instantiateMVars (← g.getType)
+    unless tgt.isAppOfArity ``Exists 2 do
+      throwError "py_vcgen: internal — if-test goal:{indentExpr tgt}"
+    let [g] ← applyC ctx g (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
+        (Lean.mkConst ``RVal) (tgt.getArg! 1) V)
+      | throwError "py_vcgen: internal — if-test witness"
+    let tgt2 := (← instantiateMVars (← g.getType)).headBeta
+    unless tgt2.isAppOfArity ``Exists 2 do
+      throwError "py_vcgen: internal — if-test bool goal:{indentExpr tgt2}"
+    let [g] ← applyC ctx g (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
+        (Lean.mkConst ``Bool) (tgt2.getArg! 1) bE)
+      | throwError "py_vcgen: internal — if-test bool witness"
+    let hEval ← appOpt ``EvalsTo.of_eval
+      #[none, some (mkNatLit fuelK), none, none, none, some prfT]
+    let mkImp (isTrue dead : Bool) (nf : Lean.Expr) (prf? : Option Lean.Expr) :
+        MetaM Lean.Expr := do
+      let _ := nf
+      let hty := mkApp3 (Lean.mkConst ``Eq [.succ .zero]) (Lean.mkConst ``Bool)
+        bE (Lean.mkConst (if isTrue then ``Bool.true else ``Bool.false))
+      withLocalDeclD `h hty fun h => do
+        let hNorm ← match prf? with
+          | some pp => mkEqMP pp h
+          | none => pure h
+        let body ← if dead then pure hNorm
+          else mkAppM ``And.intro #[← mkEqRefl E, hNorm]
+        mkLambdaFVars #[h] body
+    let htImp ← mkImp true tDead tNF tPrf?
+    let hfImp ← mkImp false fDead fNF fPrf?
+    let gs ← applyC ctx g
+      (← mkAppM ``And.intro #[hEval, ← mkAppM ``And.intro
+        #[prfTr, ← mkAppM ``And.intro #[htImp, hfImp]]])
+    unless gs.isEmpty do
+      throwError "py_vcgen: internal — if-test assembly"
+
+/-- Residual tags of the top-level (whole-function) postcondition. -/
+def topTags : PostTags :=
+  { next := ⟨`ret, false⟩, ret := ⟨`ret, false⟩, brk := ⟨`ret, false⟩,
+    cont := ⟨`ret, false⟩, err := ⟨`err, false⟩ }
+
+/-! ### The walker -/
+
+mutual
+
+/-- Walk a `PyTriple` goal: chunk straight-line prefixes, dispatch the
+first control statement, recurse on the continuation. -/
+partial def walk (ctx : VCCtx) (tags : PostTags) (g : MVarId) : TacticM Unit := do
+  let tg ← parseTripleGoal ctx g
+  tg.g.withContext do
+    let mut kinds : Array StmtKind := #[]
+    for s in tg.stmts do
+      let k ← classify s
+      -- Builtin-callee downgrade: only MODULE-function call-assignments are
+      -- control points (`handleCall`); `x = len(…)` / `x = sorted(…)` are
+      -- straight-line (see `calleeInModule`).
+      let k ← if k == .ctrlCall || k == .ctrlRet then
+          (if ← calleeInModule ctx tg.m (← callExprOf s) then pure k
+           else pure (if k == .ctrlCall then StmtKind.plain else StmtKind.term))
+        else pure k
+      kinds := kinds.push k
+    let mut firstCtrl : Option Nat := none
+    for i in [0:tg.stmts.size] do
+      if kinds[i]! == .term then break
+      if kinds[i]! == .plain then continue
+      firstCtrl := some i
+      break
+    match firstCtrl with
+    | none => closeStraight ctx tags tg
+    | some 0 =>
+      match kinds[0]! with
+      | .ctrlWhile => handleWhile ctx tags tg
+      | .ctrlFor => handleFor ctx tags tg
+      | .ctrlIf => handleIf ctx tags tg
+      | .ctrlCall => handleCall ctx tags tg
+      | .ctrlRet => handleRet ctx tags tg
+      | _ => throwError "py_vcgen: internal — classification"
+    | some k => splitPrefix ctx tags tg k
+
+/-- Close a fully straight-line statement list by one captured run
+(`PyTriple.of_exec`). -/
+partial def closeStraight (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  let ssLit := mkStmtsLit tg.stmts
+  let gs ← applyC ctx tg.g
+    (← appOpt ``PyTriple.of_exec #[some tg.m, none, some ssLit, some tg.Q, none])
+  let [g] := gs | throwError "py_vcgen: internal — of_exec goals"
+  let (_, g) ← g.intro `env
+  let (heqFv, g) ← g.intro `henv
+  let g ← Meta.subst g heqFv
+  g.withContext do
+    let tgt ← instantiateMVars (← g.getType)
+    unless tgt.isAppOfArity ``Exists 2 do
+      throwError "py_vcgen: internal — exec goal:{indentExpr tgt}"
+    let [g] ← applyC ctx g (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
+        (Lean.mkConst ``Nat) (tgt.getArg! 1) (mkNatLit fuelK))
+      | throwError "py_vcgen: internal — fuel witness"
+    let ty := (← instantiateMVars (← g.getType)).headBeta
+    unless ty.isAppOfArity ``PyPost.holds 2 do
+      throwError "py_vcgen: internal — holds goal:{indentExpr ty}"
+    let (r, prf) ← captureRun ctx.pack (ty.getArg! 1)
+    closeRun ctx tags g tg.Q r prf
+
+/-- Discharge a straight-line prefix before a control point
+(`PyTriple.run_seq`), then recurse. -/
+partial def splitPrefix (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal)
+    (k : Nat) : TacticM Unit := do
+  tg.g.withContext do
+    let preLit := mkStmtsLit (tg.stmts.extract 0 k)
+    let restLit := mkStmtsLit (tg.stmts.extract k tg.stmts.size)
+    let (r, prf) ← captureRun ctx.pack
+      (mkApp4 (Lean.mkConst ``execStmts) tg.m (mkNatLit fuelK) tg.E preLit)
+    match ← parseRun r with
+    | some (.next _) =>
+      let term ← appOpt ``PyTriple.run_seq
+        #[none, none, none, none, none, some restLit, some tg.Q, some prf, none]
+      let [g2] ← applyC ctx tg.g term
+        | throwError "py_vcgen: internal — run_seq goals"
+      walk ctx tags g2
+    | some _ => closeStraight ctx tags tg   -- the prefix escaped (raise)
+    | none =>
+      throwError "py_vcgen: symbolic execution of a straight-line prefix got stuck:{indentExpr r}"
+
+/-- The shared front half of every call site: refuse a shadowed callee,
+evaluate the argument list, find the callee's `CallsTo` fact, and build the
+`EvalsTo.call` term for the whole call expression. Returns that fact, the
+THAWED result value the call produces, and the callee's undischarged spec
+side conditions.
+
+`handleCall` (a call as an assignment's right-hand side) and `handleRet`
+(a call in `return` position) differ only in what they do with those three
+things — which is the division `EvalsTo.call`'s own docstring predicted. -/
+partial def buildCallEvalsTo (ctx : VCCtx) (tg : TripleGoal) (rhs : Lean.Expr) :
+    TacticM (Lean.Expr × Lean.Expr × Array MVarId) := do
+  tg.g.withContext do
+    let fnE ← whnfR (rhs.getArg! 0)
+    let fnameE := fnE.getArg! 0
+    let .lit (.strVal fname) ← whnfR fnameE
+      | throwError "py_vcgen: callee name is not a literal"
+    -- A generator callee is refused before the spec lookup: it has no
+    -- `CallsTo` and never will, so "no `CallsTo` fact for callee" would
+    -- send the reader looking for a lemma that cannot be written.
+    if ← isGeneratorCall ctx tg.m rhs then throwError genCallRefusal fname
+    let spf := fnE.getArg! 1
+    let argsArr := rhs.getArg! 1
+    -- H6: keyword-argument calls are outside the py_vcgen tier — LOUD.
+    let (kwEs, _) ← parseListLit (← arrToList (rhs.getArg! 2))
+    unless kwEs.isEmpty do
+      throwError "py_vcgen: a call with keyword arguments is outside the v1 tier"
+    let spc := rhs.getArg! 4
+    let localsE := mkLocalsExpr tg.shape
+    let (rL, prfL) ← captureRun ctx.pack
+      (← mkAppM ``Env.lookup #[localsE, fnameE])
+    unless (← whnfR rL).isAppOfArity ``Option.none 1 do
+      throwError "py_vcgen: callee `{fname}` may be shadowed by a local binding"
+    let (rG, prfG) ← captureRun ctx.pack
+      (← mkAppM ``lookupG #[← mkAppM ``Prod.fst #[← mkAppM ``moduleGlobals #[tg.m]], fnameE])
+    unless (← whnfR rG).isAppOfArity ``Option.none 1 do
+      throwError "py_vcgen: callee `{fname}` is shadowed by a module-level (G1) binding"
+    let (rNt, prfNt) ← captureRun ctx.pack
+      (← mkAppM ``findNamedTuple #[tg.m, fnameE])
+    unless (← whnfR rNt).isAppOfArity ``Option.none 1 do
+      throwError "py_vcgen: callee `{fname}` is bound by a module-level namedtuple assignment"
+    let (argEs, argTail) ← parseListLit (← arrToList argsArr)
+    unless isNilTail argTail do
+      throwError "py_vcgen: call-argument list is not literal"
+    let exprTy := Lean.mkConst ``LeanModels.Python.Expr
+    let argsListLit := mkListLit' exprTy argEs
+      (mkApp (Lean.mkConst ``List.nil [Level.zero]) exprTy)
+    let (rA, _) ← captureRun ctx.pack
+      (mkApp4 (Lean.mkConst ``evalExprs) tg.m (mkNatLit fuelK) tg.E argsListLit)
+    let rA' ← whnfR rA
+    unless rA'.isAppOfArity ``Run.ok 4 do
+      throwError "py_vcgen: call arguments did not evaluate:{indentExpr rA}"
+    let vsLit := rA'.getArg! 3
+    let some (factE, argsValE, vE, sides) ← findCalleeFact ctx fname vsLit
+      | throwError "py_vcgen: no `CallsTo` fact for callee `{fname}` at these arguments — bring a hypothesis into scope (a recursion IH may be ∀-quantified; it is instantiated) or register a `@[py_spec]` lemma. The call evaluated its arguments to:{indentExpr vsLit}"
+    let (vr, _) ← Meta.simp vE ctx.pack.present ctx.pack.procs
+    let (vNF, factE') ← match vr.proof? with
+      | none => pure (vr.expr, factE)
+      | some vp => do
+        let factTy ← inferType factE
+        pure (vr.expr, ← mkEqMP (← mkCongrArg factTy.appFn! vp) factE)
+    -- the runtime value the call produces: the thaw of the result
+    let rvRaw ← mkAppM ``RVal.thaw #[vNF]
+    let (rvr, _) ← Meta.simp rvRaw ctx.pack.present ctx.pack.procs
+    let rvNF := rvr.expr
+    -- pinned-state casts: the captured runs are defeq to the rule's shapes
+    let thawedList ← mkAppM ``RVal.thawList #[← mkAppM ``Array.toList #[argsValE]]
+    let hargsTy ← mkEq
+      (mkApp4 (Lean.mkConst ``evalExprs) tg.m (mkNatLit fuelK) tg.E argsListLit)
+      (← mkAppM ``Run.ok #[tg.E, thawedList])
+    let hargs ← mkAppM ``EvalsToList.of_eval
+      #[← provePinned ctx.pack hargsTy]
+    let hworld ← mkExpectedTypeHint (← mkEqRefl tg.shape.world)
+      (← mkEq (← mkAppM ``FrameState.world #[tg.E]) tg.shape.world)
+    -- the frame-theorem side conditions: the module is heap-free, and the
+    -- callee's result is list-free (both compute by `rfl` at literal
+    -- modules and marshalled spec values — H2 pinned geometry)
+    let hHeapFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
+      (← mkEq (← mkAppM ``Module.heapFree #[tg.m]) (toExpr true))
+    let hListFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
+      (← mkEq (← mkAppM ``Val.listFree #[vNF]) (toExpr true))
+    let hStarTy ← mkAppM ``Ne #[fnameE, ← mkAppM ``starArgBuiltinName #[]]
+    let hStar ← Meta.mkDecideProof hStarTy
+    let hcall ← appOpt ``EvalsTo.call
+      #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
+        some vNF, some spf, some spc, some prfL, some hargs, some hworld,
+        some factE', some prfG, some prfNt, some hHeapFree, some hListFree,
+        some hStar]
+    return (hcall, rvNF, sides)
+
+/-- Handle a `return f(…)`: the call's `EvalsTo` fact spliced through the
+return rule (`PyStmtTriple.retExpr`, VC2.lean), leaving the postcondition's
+`ret` arm at the callee's result as the only residual. This is the case a
+RECURSIVE tail call needs — the IH is an ordinary local `CallsTo`
+hypothesis, found by the same lookup as any other callee fact. -/
+partial def handleRet (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    unless isNilTail tg.shape.tail && tg.shape.sets.isEmpty do
+      throwError "py_vcgen: a call under a symbolic environment tail (inside a loop body) is outside the v1 tier"
+    let s ← whnfR tg.stmts[0]!
+    let rhs ← whnfR ((← whnfR (s.getArg! 0)).getArg! 1)
+    let spR := s.getArg! 1
+    let (hcall, rvNF, sides) ← buildCallEvalsTo ctx tg rhs
+    -- `return` never falls through: the tail after it is dead
+    let deadPre ← withLocalDeclD `env stateTy fun env =>
+      mkLambdaFVars #[env] (Lean.mkConst ``False)
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some deadPre, some tg.Q, some tg.stmts[0]!,
+        some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let gsF ← applyC ctx g2 (← mkConstWithFreshMVarLevels ``PyTriple.of_false)
+    unless gsF.isEmpty do throwError "py_vcgen: internal — dead tail"
+    let retT ← appOpt ``PyStmtTriple.retExpr
+      #[some tg.m, some rhs, some spR, none, none, some rvNF, none, none]
+    let gsR ← applyC ctx g1 retT
+    let (some gev, some gq) := (gsR[0]?, gsR[1]?)
+      | throwError "py_vcgen: internal — retExpr goals"
+    -- `hev`: the call evaluates, at the pinned state
+    let (_, gev) ← gev.intro `env
+    let (heqFv, gev) ← gev.intro `henv
+    let gev ← Meta.subst gev heqFv
+    let gsE ← applyC ctx gev hcall
+    unless gsE.isEmpty do
+      for sg in gsE do trySide ctx sg
+    -- `hQ`: the postcondition's `ret` arm at the callee's result
+    let (_, gq) ← gq.intro `env
+    let (heqFv2, gq) ← gq.intro `henv
+    let gq ← Meta.subst gq heqFv2
+    closeArm ctx gq tags.ret
+    for sg in sides do
+      trySide ctx sg
+
+/-- Handle a call statement `x = f(…)` / `(a, b) = f(…)`: evaluate the
+arguments, find the callee's `CallsTo` fact, splice `EvalsTo.call` through
+the generic assignment rule, continue from the updated environment. -/
+partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    unless isNilTail tg.shape.tail && tg.shape.sets.isEmpty do
+      throwError "py_vcgen: a call under a symbolic environment tail (inside a loop body) is outside the v1 tier"
+    let s ← whnfR tg.stmts[0]!
+    let tgtArr := s.getArg! 0
+    let rhs ← whnfR (s.getArg! 1)
+    let spA := s.getArg! 2
+    let (tgts, _) ← parseListLit (← arrToList tgtArr)
+    let #[tgtE] := tgts
+      | throwError "py_vcgen: chained assignment is outside the v0 tier"
+    let localsE := mkLocalsExpr tg.shape
+    let (hcall, rvNF, sides) ← buildCallEvalsTo ctx tg rhs
+    let (rAs, prfAs) ← captureRun ctx.pack
+      (← mkAppM ``assignTo #[localsE, tgtE, rvNF])
+    let rAs' ← whnfR rAs
+    unless rAs'.isAppOfArity ``Res.ok 2 do
+      throwError "py_vcgen: call-result assignment did not reduce:{indentExpr rAs}"
+    let E'' := rAs'.getArg! 1
+    let newState := mkState tg.shape.world E''
+    let R ← mkEqPred newState
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some R, some tg.Q, some tg.stmts[0]!, some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let asnT ← appOpt ``PyStmtTriple.assign
+      #[some tg.m, none, none, some tgtE, some (s.getArg! 1), some spA, none]
+    let [gh] ← applyC ctx g1 asnT
+      | throwError "py_vcgen: internal — assign rule"
+    let (_, gh) ← gh.intro `env
+    let (heqFv, gh) ← gh.intro `henv
+    let gh ← Meta.subst gh heqFv
+    gh.withContext do
+      let t1 ← instantiateMVars (← gh.getType)
+      let [gh] ← applyC ctx gh (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
+          (Lean.mkConst ``RVal) (t1.getArg! 1) rvNF)
+        | throwError "py_vcgen: internal — call witness v"
+      let t2 := (← instantiateMVars (← gh.getType)).headBeta
+      unless t2.isAppOfArity ``Exists 2 do
+        throwError "py_vcgen: internal — call witness env goal:{indentExpr t2}"
+      let [gh] ← applyC ctx gh (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
+          envTy (t2.getArg! 1) E'')
+        | throwError "py_vcgen: internal — call witness env"
+      -- the EvalsTo conjunct wants the THAWED result; hcall's value slot is
+      -- `RVal.thaw vNF`, defeq to the normalized `rvNF` witness above
+      let gs' ← applyC ctx gh (← mkAppM ``And.intro
+        #[hcall, ← mkAppM ``And.intro #[prfAs, ← mkEqRefl newState]])
+      -- spec preconditions (side mvars inside the callee fact) resurface
+      -- here as goals; discharge or push them as `side` residuals
+      for sg in gs' do
+        trySide ctx sg
+    for sg in sides do
+      trySide ctx sg
+    walk ctx tags g2
+
+/-- Handle an `if` statement: derive branch facts from the captured test
+value, walk each live branch (straight-line, v1), fork the continuation on
+the joined fall-through states. -/
+partial def handleIf (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    let s ← whnfR tg.stmts[0]!
+    let testE := s.getArg! 0
+    let bArr := s.getArg! 1
+    let oArr := s.getArg! 2
+    let spE := s.getArg! 3
+    let (bStmts, _) ← parseListLit (← arrToList bArr)
+    let (oStmts, _) ← parseListLit (← arrToList oArr)
+    for br in #[bStmts, oStmts] do
+      for st in br do
+        match ← classify st with
+        | .plain | .term => pure ()
+        | _ => throwError "py_vcgen: `if` branches must be straight-line in v1 (no nested if/while/call)"
+    let (rT, _) ← captureRun ctx.pack
+      (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E testE)
+    let rT' ← whnfR rT
+    unless rT'.isAppOfArity ``Run.ok 4 do
+      closeStraight ctx tags tg   -- the test escaped (raise)
+      return
+    let V := rT'.getArg! 3
+    -- re-prove at the PINNED state (the captured out-state may have been
+    -- hypothesis-rewritten — see `provePinned`)
+    let prfT ← provePinned ctx.pack (← mkEq
+      (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E testE)
+      (← mkAppM ``Run.ok #[tg.E, V]))
+    let (rTr, prfTr) ← captureRun ctx.pack
+      (← mkAppM ``truthy #[V])
+    let rTr' ← whnfR rTr
+    unless rTr'.isAppOfArity ``Res.ok 2 do
+      throwError "py_vcgen: the `if` test's truthiness did not decide (out-of-tier value):{indentExpr rTr}"
+    let bE := rTr'.getArg! 1
+    let boolEq (b : Bool) : Lean.Expr :=
+      mkApp3 (Lean.mkConst ``Eq [.succ .zero]) (Lean.mkConst ``Bool) bE
+        (Lean.mkConst (if b then ``Bool.true else ``Bool.false))
+    let (tNF, tPrf?) ← normProp ctx.pack (boolEq true)
+    let (fNF, fPrf?) ← normProp ctx.pack (boolEq false)
+    let tDead := tNF.isConstOf ``False
+    let fDead := fNF.isConstOf ``False
+    let mkEnvEq (a b : Lean.Expr) : Lean.Expr :=
+      mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy a b
+    let mkBranchPre (dead : Bool) (nf : Lean.Expr) : MetaM Lean.Expr :=
+      withLocalDeclD `env stateTy fun env => do
+        if dead then
+          mkLambdaFVars #[env] (Lean.mkConst ``False)
+        else
+          mkLambdaFVars #[env] (mkAnd (mkEnvEq env tg.E) nf)
+    let Pt ← mkBranchPre tDead tNF
+    let Pf ← mkBranchPre fDead fNF
+    let branchEnd (dead : Bool) (nf : Lean.Expr) (stmts : Array Lean.Expr) :
+        TacticM (Option Lean.Expr) := do
+      if dead then return none
+      withLocalDeclD `hif nf fun _ => do
+        let (r, _) ← captureRun ctx.pack (mkApp4 (Lean.mkConst ``execStmts)
+          tg.m (mkNatLit fuelK) tg.E (mkStmtsLit stmts))
+        match ← parseRun r with
+        | some (.next Eb) => return some Eb
+        | some _ => return none
+        | none =>
+          throwError "py_vcgen: symbolic execution of an `if` branch got stuck:{indentExpr r}"
+    let tEnd ← branchEnd tDead tNF bStmts
+    let fEnd ← branchEnd fDead fNF oStmts
+    let join ← withLocalDeclD `env stateTy fun env => do
+      let mut parts : Array Lean.Expr := #[]
+      if let some Eb := tEnd then
+        parts := parts.push (mkAnd (mkEnvEq env Eb) tNF)
+      if let some Eb := fEnd then
+        parts := parts.push (mkAnd (mkEnvEq env Eb) fNF)
+      let body :=
+        if parts.size == 0 then Lean.mkConst ``False
+        else if parts.size == 1 then parts[0]!
+        else mkOr parts[0]! parts[1]!
+      mkLambdaFVars #[env] body
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some join, some tg.Q, some tg.stmts[0]!, some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let Q1 ← g1.withContext do
+      pure ((← instantiateMVars (← g1.getType)).getArg! 3)
+    let ifT ← appOpt ``PyStmtTriple.ifStmt
+      #[some tg.m, none, some Pt, some Pf, some Q1, some testE, some bArr,
+        some oArr, some spE, none, none, none]
+    let gsI ← applyC ctx g1 ifT
+    let mut htest : Option MVarId := none
+    let mut hb : Option MVarId := none
+    let mut ho : Option MVarId := none
+    for gg in gsI do
+      let t ← instantiateMVars (← gg.getType)
+      if t.isAppOf ``PyTriple then
+        if hb.isNone && t.getArg! 1 == Pt then hb := some gg
+        else ho := some gg
+      else htest := some gg
+    let (some gt, some gb, some go) := (htest, hb, ho)
+      | throwError "py_vcgen: internal — ifStmt goals"
+    dischargeIfTest ctx gt tg.E V prfT bE prfTr tDead tNF tPrf? fDead fNF fPrf?
+    let doBranch (g : MVarId) (dead : Bool) : TacticM Unit := do
+      if dead then
+        let gs ← applyC ctx g (← mkConstWithFreshMVarLevels ``PyTriple.false_pre)
+        unless gs.isEmpty do throwError "py_vcgen: internal — false_pre"
+      else
+        let g' ← normalizePre ctx #[] `hif g
+        walk ctx tags g'
+    doBranch gb tDead
+    doBranch go fDead
+    -- the continuation, forked on the join
+    let .lam _ _ joinBody _ := join
+      | throwError "py_vcgen: internal — join shape"
+    if joinBody.isConstOf ``False then
+      let gs ← applyC ctx g2 (← mkConstWithFreshMVarLevels ``PyTriple.false_pre)
+      unless gs.isEmpty do throwError "py_vcgen: internal — false_pre join"
+    else if joinBody.isAppOfArity ``Or 2 then
+      let gsO ← applyC ctx g2 (← mkConstWithFreshMVarLevels ``PyTriple.or_pre)
+      for gg in gsO do
+        let g' ← normalizePre ctx #[] `hif gg
+        walk ctx tags g'
+    else
+      let g' ← normalizePre ctx #[] `hif g2
+      walk ctx tags g'
+
+/-- Handle a `while` statement: build the invariant environment shape from
+the clause pair (or delayed mvars), apply the layer-2 while rule through
+`consequence`, discharge `htest`/`hexit`, walk the body per iteration, and
+continue after the loop from the primed exit state. -/
+partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    let s ← whnfR tg.stmts[0]!
+    let testE := s.getArg! 0
+    let bArr := s.getArg! 1
+    let oArr := s.getArg! 2
+    let spE := s.getArg! 3
+    let (oStmts, _) ← parseListLit (← arrToList oArr)
+    unless oStmts.isEmpty do
+      throwError "py_vcgen: `while … else:` is outside the v1 tier (layer-2 rule restriction)"
+    let (bStmts, _) ← parseListLit (← arrToList bArr)
+    let some li := ctx.loops.findIdx? (· == s)
+      | throwError "py_vcgen: internal — loop not in pre-scan"
+    let mut assigned : Array String := #[]
+    for b in bStmts do assigned := assigned ++ (← stmtAssignedNames b)
+    let allVars := tg.shape.entries ++ tg.shape.sets
+    let slotEntries := allVars.filter (fun p => assigned.contains p.1)
+    let slotNames := slotEntries.map (·.1)
+    -- names CALLED in the test or the body that the environment must be
+    -- searched for: their absence from the symbolic tail rides in the
+    -- invariant (`mkTailFreeFact`), or the captured runs wedge on the
+    -- interpreter's shadowing check
+    let entryNames := allVars.map (·.1)
+    let callNames := (calleeNames testE ++ (bStmts.map calleeNames).flatten).filter
+      (fun n => !assigned.contains n && !entryNames.contains n)
+    let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
+    let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
+    let intTy := Lean.mkConst ``Int
+    let clause? : Option (Term × Term) ← do
+      match ctx.invs[li]?, ctx.decs[← ctx.decIndex li]? with
+      | some i, some d => pure (some (i, d))
+      | none, _ => pure none
+      | some _, none =>
+        throwError "py_vcgen: `while` loop {li+1} has an `inv` clause but no `dec` (a `while` needs its measure; only a `for` goes without)"
+    let (invU, decU, binders) ← do
+      match clause? with
+      | some (invT, decT) => do
+        let invU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm invT none))
+        let decU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm decT none))
+        let bs := (lamBinderNames invU).map (·.toString)
+        if bs.isEmpty then
+          throwError "py_vcgen: `inv` must be an explicit lambda over the loop's Int variables"
+        unless (lamBinderNames decU).size == bs.size do
+          throwError "py_vcgen: `dec` must bind exactly the {bs.size} variables of `inv`"
+        for b in bs do
+          match slotEntries.find? (·.1 == b) with
+          | none =>
+            throwError "py_vcgen: invariant variable `{b}` is not an entry-environment variable assigned in this loop (assigned at entry: {slotNames})"
+          | some (_, v) =>
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: loop variable `{b}` is not `RVal.int`-valued at loop entry"
+        pure (invU, decU, bs.toList.toArray)
+      | none => do
+        match (← ctx.delayed.get).find? (·.1 == li) with
+        | some (_, i, d) => pure (i, d, slotNames)
+        | none => do
+          for (n, v) in slotEntries do
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: delayed clauses need Int-valued loop variables; `{n}` is not — give explicit clauses"
+          -- The clause metavariables stay plain function-typed mvars (what
+          -- the walker weaves through the proof — a flex application that
+          -- is safe to appear BARE in simp-generated congruence proofs,
+          -- `congrArg ?dec1 h`), but their pi binders CARRY THE PYTHON
+          -- NAMES: the end of the run (`runPyVcgen`) introduces this named
+          -- telescope into the user-facing goal (`total i : Int ⊢ Prop`),
+          -- so the clause is written as a bare proposition/measure over
+          -- the names and no positional lambda exists to cross-wire.
+          let mut invTy : Lean.Expr := mkSort .zero
+          let mut decTy : Lean.Expr := Lean.mkConst ``Nat
+          for n in slotNames.reverse do
+            invTy := .forallE (Name.mkSimple n) intTy invTy .default
+            decTy := .forallE (Name.mkSimple n) intTy decTy .default
+          let invM ← mkFreshExprMVar invTy .syntheticOpaque
+          let decM ← mkFreshExprMVar decTy .syntheticOpaque
+          invM.mvarId!.setTag (Name.mkSimple s!"inv{li+1}")
+          decM.mvarId!.setTag (Name.mkSimple s!"dec{li+1}")
+          ctx.clauseGoals.modify (fun a => (a.push invM.mvarId!).push decM.mvarId!)
+          ctx.delayed.modify (·.push (li, invM, decM))
+          pure (invM, decM, slotNames)
+    let exitInfo? : Option (Lean.Expr × Array String) ← do
+      match exitT? with
+      | some t => do
+        let u ← instantiateMVars (← Term.withSynthesize (Term.elabTerm t none))
+        let ebs := (lamBinderNames u).map (·.toString)
+        for b in ebs do
+          unless binders.contains b do
+            throwError "py_vcgen: `exit` variable `{b}` must be one of the loop's `inv` binders ({binders})"
+        pure (some (u, ebs))
+      | none =>
+        -- Delayed mode: a `break`-carrying loop needs its exit clause just
+        -- as it needs `inv`/`dec` — request it as a goal (`exit<i>`) over
+        -- the same binders instead of silently weakening the exit fact to
+        -- the bare invariant. Clause mode (an `inv`/`dec` pair given for
+        -- this loop, `exit` omitted) is unchanged.
+        if clause?.isSome || !hasBrk then
+          pure none
+        else
+          match (← ctx.delayedExits.get).find? (·.1 == li) with
+          | some (_, e) => pure (some (e, binders))
+          | none => do
+            -- Same named-binder pi shape as the delayed `inv`/`dec` goals
+            -- above (`case exit<i>`; the telescope is introduced at the
+            -- end of the run).
+            let mut exTy : Lean.Expr := mkSort .zero
+            for n in binders.reverse do
+              exTy := .forallE (Name.mkSimple n) intTy exTy .default
+            let exM ← mkFreshExprMVar exTy .syntheticOpaque
+            exM.mvarId!.setTag (Name.mkSimple s!"exit{li+1}")
+            ctx.clauseGoals.modify (·.push exM.mvarId!)
+            ctx.delayedExits.modify (·.push (li, exM))
+            pure (some (exM, binders))
+    let decls : Array (Name × (Array Lean.Expr → TacticM Lean.Expr)) :=
+      (slotEntries.map (fun p =>
+        (Name.mkSimple p.1,
+         fun (_ : Array Lean.Expr) => pure (α := Lean.Expr)
+           (if binders.contains p.1 then intTy else Lean.mkConst ``RVal))))
+      |>.push (`tl, fun _ => pure envTy)
+    let (invE, μE, tvE, rE) ← withLocalDeclsD decls fun fvs => do
+      let slotVars := fvs.extract 0 (fvs.size - 1)
+      let tailFv := fvs[fvs.size - 1]!
+      let slotVarOf (n : String) : Option Lean.Expr := do
+        let i ← slotNames.findIdx? (· == n)
+        slotVars[i]?
+      let slotVal (n : String) (v : Lean.Expr) : Lean.Expr :=
+        match slotVarOf n with
+        | some x =>
+          if binders.contains n then mkApp (Lean.mkConst ``RVal.int) x else x
+        | none => v
+      let entries' := tg.shape.entries.map (fun (n, v) => (n, slotVal n v))
+      let sets' := tg.shape.sets.map (fun (n, v) => (n, slotVal n v))
+      let shapeE := mkEnvExpr { world := tg.shape.world, entries := entries',
+                                sets := sets', tail := tailFv }
+      let clauseVars ← binders.mapM (fun b => do
+        let some x := slotVarOf b
+          | throwError "py_vcgen: internal — clause var `{b}`"
+        pure x)
+      let tailFacts := callNames.map (mkTailFreeFact tailFv)
+      let invAppRaw := (mkAppN invU clauseVars).headBeta
+      let invApp := appendConj invAppRaw tailFacts
+      let mkEnvEq (env : Lean.Expr) : Lean.Expr :=
+        mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env shapeE
+      let invE ← withLocalDeclD `env stateTy fun env => do
+        mkLambdaFVars #[env] (← mkExistsNest fvs (mkAnd (mkEnvEq env) invApp))
+      let μE ← withLocalDeclD `env stateTy fun env => do
+        let reads := binders.map fun b =>
+          mkApp2 (Lean.mkConst ``envInt) env (mkStrLit b)
+        mkLambdaFVars #[env] (mkAppN decU reads).headBeta
+      unless ← isDefEq (← inferType μE) (← mkArrow stateTy (Lean.mkConst ``Nat)) do
+        throwError "py_vcgen: `dec` must return a `Nat` (write `(…).toNat`)"
+      let (rV, _) ← captureRun ctx.pack
+        (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) shapeE testE)
+      let rV' ← whnfR rV
+      unless rV'.isAppOfArity ``Run.ok 4 do
+        throwError "py_vcgen: the loop test did not evaluate at the invariant shape:{indentExpr rV}"
+      let V := rV'.getArg! 3
+      if V.containsFVar tailFv.fvarId! then
+        throwError "py_vcgen: the loop test reads a variable first assigned inside the loop body — outside the v1 tier"
+      for i in [0:slotVars.size] do
+        unless binders.contains slotNames[i]! do
+          if V.containsFVar slotVars[i]!.fvarId! then
+            throwError "py_vcgen: the loop test reads assigned variable `{slotNames[i]!}` — add it to the `inv`/`dec` clause binders"
+      let tvE ← withLocalDeclD `env stateTy fun env => do
+        let mut body := V
+        for b in binders do
+          if let some x := slotVarOf b then
+            body := body.replaceFVar x
+              (mkApp2 (Lean.mkConst ``envInt) env (mkStrLit b))
+        mkLambdaFVars #[env] body
+      let (exitNF, _) ← normProp ctx.pack
+        (← mkAppM ``Eq #[← mkAppM ``truthy #[V],
+          ← mkAppM ``Res.ok #[Lean.mkConst ``Bool.false]])
+      let exitApp? ← exitInfo?.mapM fun (u, ebs) => do
+        let vars ← ebs.mapM fun b => do
+          let some x := slotVarOf b
+            | throwError "py_vcgen: internal — exit var `{b}`"
+          pure x
+        pure (mkAppN u vars).headBeta
+      let rE ← withLocalDeclD `env stateTy fun env => do
+        let core := match exitApp? with
+          | some ea => mkAnd invAppRaw ea
+          | none => if hasBrk then invAppRaw else mkAnd invAppRaw exitNF
+        mkLambdaFVars #[env]
+          (← mkExistsNest fvs (mkAnd (mkEnvEq env) (appendConj core tailFacts)))
+      pure (invE, μE, tvE, rE)
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some rE, some tg.Q, some tg.stmts[0]!, some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let Q1 ← g1.withContext do
+      pure ((← instantiateMVars (← g1.getType)).getArg! 3)
+    let consT ← appOpt ``PyStmtTriple.consequence
+      #[some tg.m, some invE, none, none, some Q1, some Q1, none, none, none]
+    let gsC ← applyC ctx g1 consT
+    let (h, hpre, hpost) ← splitConsGoals gsC
+    let gsE ← applyC ctx hpost (← mkAppM ``PyPost.Entails.rfl #[Q1])
+    unless gsE.isEmpty do throwError "py_vcgen: internal — Entails.rfl"
+    let (_, gp) ← hpre.intro `env
+    let (heqFv, gp) ← gp.intro `henv
+    let gp ← Meta.subst gp heqFv
+    closeByShape ctx gp `init
+    let wT ← appOpt ``PyStmtTriple.whileLoop
+      #[some tg.m, some testE, some bArr, some spE, some Q1, some invE,
+        some μE, some tvE, none, none, none, none]
+    let gsW ← applyC ctx h wT
+    let mut htest : Option MVarId := none
+    let mut htv : Option MVarId := none
+    let mut hexit : Option MVarId := none
+    let mut hbody : Option MVarId := none
+    for gg in gsW do
+      let cls ← gg.withContext do
+        forallTelescope (← instantiateMVars (← gg.getType)) fun _ b => do
+          let b ← instantiateMVars b
+          if b.isAppOf ``EvalsTo then pure 0
+          else if b.isAppOf ``PyTriple then pure 2
+          else if b.isAppOf ``Exists then pure 3
+          else pure 1
+      if cls == 0 then htest := some gg
+      else if cls == 2 then hbody := some gg
+      else if cls == 3 then htv := some gg
+      else hexit := some gg
+    let (some gt, some gtv, some gx, some gb) := (htest, htv, hexit, hbody)
+      | throwError "py_vcgen: internal — whileLoop goals"
+    dischargeWhileTest ctx gt slotNames
+    dischargeWhileTv ctx gtv slotNames
+    dischargeWhileExit ctx gx slotNames
+    -- the body, per iteration
+    let bodyTags : PostTags :=
+      { next := ⟨`preserve, true⟩, ret := tags.ret, brk := ⟨`exit, false⟩,
+        cont := ⟨`preserve, true⟩, err := tags.err }
+    let (_, gb) ← gb.intro `n
+    let gb ← normalizePre ctx ((slotNames.map Name.mkSimple).push `tl) `hAll gb
+    let hAllFv ← findHyp gb `hAll
+    let (hInvFv, _, gb) ← casesTwo gb hAllFv `hinv `hR
+    let gb ← splitAndHyp gb hInvFv "hinv"
+    let hRFv ← findHyp gb `hR
+    let (hcFv, hmuFv, gb) ← casesTwo gb hRFv `hcont `hmu
+    let r? ← try Prod.fst <$> (Meta.simpGoal gb ctx.pack.norm ctx.pack.procs
+        (simplifyTarget := false) (fvarIdsToSimp := #[hcFv, hmuFv]))
+      catch _ => pure (some (#[], gb))
+    let gb ← match r? with
+      | none => throwError "py_vcgen: internal — body hypotheses closed the goal"
+      | some (_, gb) => pure gb
+    let gb ← try
+        Meta.subst gb (← findHyp gb `hmu)
+      catch _ => pure gb
+    walk ctx bodyTags gb
+    -- after the loop, from the primed exit state
+    let primed := (slotNames.map (fun n => Name.mkSimple (n ++ "'"))).push `tl'
+    let g2 ← normalizePre ctx primed `hAll g2
+    let hAllFv2 ← findHyp g2 `hAll
+    let hasCont := exitInfo?.isSome || !hasBrk
+    let g2 ←
+      if hasCont then do
+        let (hInvFv2, _, g2) ← casesTwo g2 hAllFv2 `hinv `hcont
+        splitAndHyp g2 hInvFv2 "hinv"
+      else
+        splitAndHyp g2 hAllFv2 "hinv"
+    walk ctx tags g2
+
+/-- Handle a `for` statement (`PyStmtTriple.forLoop`, VC2.lean): capture the
+iterable's value at the entry state and read its ELEMENT LIST off it, build
+the remainder-indexed invariant from the `inv` clause (whose FIRST binder is
+the remaining-element list — a `for` takes no `dec`, its list is
+structurally decreasing), apply the rule through `consequence`, discharge
+`hv`/`hiter`/`hexit`, walk the body once per element, and continue after the
+loop from the primed exit state.
+
+The iterable must evaluate to a boundary/value LIST at the entry state:
+`for` over a heap list (H2's live index cursor), over a `str` or a `range`
+are outside this recipe and refuse loudly — the underlying rule covers the
+value-sequence arms, but the walker's v1 reads only the `.listV` one, whose
+elements are a `List.map` (a marshalled boundary list) or int literals.
+
+A GENERATOR is refused twice over, in both shapes it arrives in: a CALL in
+the iterable position is caught SYNTACTICALLY before the captured run below
+(which could not decide it — `callIn` is frozen), and a NAME already bound
+to the object is caught at the `.listV` check by reading the heap. Both name
+`PyStmtTriple.forGen`. -/
+partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    let s ← whnfR tg.stmts[0]!
+    let tgtE := s.getArg! 0
+    let iterE := s.getArg! 1
+    let bArr := s.getArg! 2
+    let oArr := s.getArg! 3
+    let spE := s.getArg! 4
+    let (oStmts, _) ← parseListLit (← arrToList oArr)
+    unless oStmts.isEmpty do
+      throwError "py_vcgen: `for … else:` is outside the tier (the interpreter refuses it loudly — there is no rule to apply)"
+    let (bStmts, _) ← parseListLit (← arrToList bArr)
+    let some li := ctx.loops.findIdx? (· == s)
+      | throwError "py_vcgen: internal — loop not in pre-scan"
+    -- A generator CALL is refused HERE, before anything is executed: the
+    -- captured run below cannot decide one (`callIn` is frozen), so without
+    -- this the walker stops on a stuck run with the whole module literal in
+    -- the message instead of naming the rule that applies.
+    if ← isGeneratorCall ctx tg.m iterE then throwError genForRefusal
+    -- The ELEMENT LIST, read off the iterable at the entry state. Doing this
+    -- first fixes the element type, which the invariant's leading binder
+    -- needs before the invariant shape can be built.
+    let (vE, _) ← captureRun ctx.pack
+      (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E iterE)
+    let vE' ← whnfR vE
+    unless vE'.isAppOfArity ``Run.ok 4 do
+      throwError "py_vcgen: the iterable did not evaluate at the loop's entry state:{indentExpr vE}"
+    let itV ← whnfR (vE'.getArg! 3)
+    unless itV.isAppOfArity ``RVal.listV 1 do
+      -- A `.ref` here is a heap OBJECT: a live list cursor, or a generator
+      -- already bound to a name (`g = upto(n)` … `for x in g`) — the shape
+      -- the syntactic check above cannot see, since the iterable is just a
+      -- name. Generators get their own refusal; it names their own rule.
+      if itV.isAppOfArity ``RVal.ref 1 then
+        let (rO, _) ← captureRun ctx.pack
+          (← mkAppM ``Heap.get? #[← mkAppM ``World.heap #[tg.shape.world], itV.getArg! 0])
+        let rO ← whnfR rO
+        if rO.isAppOfArity ``Option.some 2
+            && (← whnfR (rO.getArg! 1)).isAppOf ``Obj.generator then
+          throwError genForRefusal
+      throwError "py_vcgen: `for` over{indentExpr itV}\nis outside the v1 recipe — the walker reads a boundary/value LIST (`RVal.listV`); a heap list (H2's live cursor), a `str` or a `range` need `PyStmtTriple.forLoop` by hand (a GENERATOR has its own rule, `PyStmtTriple.forGen`)"
+    let arrE ← whnfR (itV.getArg! 0)
+    let innerL ←
+      if arrE.isAppOfArity ``List.toArray 2 then pure (← whnfR (arrE.getArg! 1))
+      else if arrE.isAppOfArity ``Array.mk 2 then pure (← whnfR (arrE.getArg! 1))
+      else throwError "py_vcgen: internal — iterable array shape:{indentExpr arrE}"
+    let intTy := Lean.mkConst ``Int
+    let (αE, eltE, asE) ←
+      if innerL.isAppOfArity ``List.map 4 then
+        -- a MARSHALLED boundary list (`scores.map (RVal.thaw ∘ ToVal.toVal)`):
+        -- the spec-side elements and their marshalling, exactly the rule's
+        -- `elt`/`as`
+        pure (innerL.getArg! 0, innerL.getArg! 2, innerL.getArg! 3)
+      else do
+        -- a literal element list: admit it when every element is an int
+        let (elems, tl) ← parseListLit innerL
+        unless isNilTail tl do
+          throwError "py_vcgen: the iterable's element list is neither a marshalled boundary list nor a literal:{indentExpr innerL}"
+        let mut ints := #[]
+        for e in elems do
+          let e ← whnfR e
+          unless e.isAppOfArity ``RVal.int 1 do
+            throwError "py_vcgen: the iterable's literal elements must be ints (the v1 recipe):{indentExpr e}"
+          ints := ints.push (e.getArg! 0)
+        pure (intTy, Lean.mkConst ``RVal.int,
+          mkListLit' intTy ints (mkApp (Lean.mkConst ``List.nil [Level.zero]) intTy))
+    let asTy := mkApp (Lean.mkConst ``List [Level.zero]) αE
+    -- assigned slots: the body's assignments plus the loop TARGET (bound
+    -- once per element). A target that does not exist at loop entry lives
+    -- behind the symbolic tail, like any body-created variable.
+    -- (`stmtAssignedNames` on the `for` itself covers both: target + body)
+    let assigned ← stmtAssignedNames s
+    let allVars := tg.shape.entries ++ tg.shape.sets
+    let slotEntries := allVars.filter (fun p => assigned.contains p.1)
+    let slotNames := slotEntries.map (·.1)
+    -- see `handleWhile`: the callee names whose absence from the symbolic
+    -- tail has to ride in the invariant (`mkTailFreeFact`)
+    let entryNames := allVars.map (·.1)
+    let callNames := (calleeNames iterE ++ (bStmts.map calleeNames).flatten).filter
+      (fun n => !assigned.contains n && !entryNames.contains n)
+    let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
+    let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
+    -- the `inv` clause: leading remainder binder, then the loop's Int slots
+    let (invU, binders) ← do
+      match ctx.invs[li]? with
+      | some invT => do
+        let invU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm invT none))
+        let bs := (lamBinderNames invU).map (·.toString)
+        if bs.isEmpty then
+          throwError "py_vcgen: a `for` loop's `inv` must be an explicit lambda whose FIRST binder is the remaining elements (`fun (rest : {asTy}) … => …`)"
+        for b in bs.toList.drop 1 do
+          match slotEntries.find? (·.1 == b) with
+          | none =>
+            throwError "py_vcgen: invariant variable `{b}` is not an entry-environment variable assigned in this loop (assigned at entry: {slotNames}; the FIRST binder is the remaining elements)"
+          | some (_, v) =>
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: loop variable `{b}` is not `RVal.int`-valued at loop entry"
+        pure (invU, bs.toList.drop 1 |>.toArray)
+      | none => do
+        match (← ctx.delayed.get).find? (·.1 == li) with
+        | some (_, i, _) => pure (i, slotNames)
+        | none => do
+          for (n, v) in slotEntries do
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: delayed clauses need Int-valued loop variables; `{n}` is not — give an explicit `inv` clause"
+          -- Same named-telescope shape as `handleWhile`'s delayed clause,
+          -- with the remaining-element list in FRONT (`rest`): the goal
+          -- reads `rest : List Int, best : Int ⊢ Prop`.
+          let mut invTy : Lean.Expr := mkSort .zero
+          for n in slotNames.reverse do
+            invTy := .forallE (Name.mkSimple n) intTy invTy .default
+          invTy := .forallE `rest asTy invTy .default
+          let invM ← mkFreshExprMVar invTy .syntheticOpaque
+          invM.mvarId!.setTag (Name.mkSimple s!"inv{li+1}")
+          ctx.clauseGoals.modify (·.push invM.mvarId!)
+          -- the `dec` slot is unused for a `for`; the pair keeps the ref shape
+          ctx.delayed.modify (·.push (li, invM, invM))
+          pure (invM, slotNames)
+    let exitInfo? : Option (Lean.Expr × Array String) ← do
+      match exitT? with
+      | some t => do
+        let u ← instantiateMVars (← Term.withSynthesize (Term.elabTerm t none))
+        let ebs := (lamBinderNames u).map (·.toString)
+        for b in ebs do
+          unless binders.contains b do
+            throwError "py_vcgen: `exit` variable `{b}` must be one of the loop's `inv` binders ({binders})"
+        pure (some (u, ebs))
+      | none =>
+        if !hasBrk then pure none
+        else if ctx.invs[li]?.isSome then
+          throwError "py_vcgen: `for` loop {li+1} carries a `break`, so it needs an `(exit{li+1} := …)` clause — the exit fact after a `break` is not the invariant at the empty remainder"
+        else
+          match (← ctx.delayedExits.get).find? (·.1 == li) with
+          | some (_, e) => pure (some (e, binders))
+          | none => do
+            let mut exTy : Lean.Expr := mkSort .zero
+            for n in binders.reverse do
+              exTy := .forallE (Name.mkSimple n) intTy exTy .default
+            let exM ← mkFreshExprMVar exTy .syntheticOpaque
+            exM.mvarId!.setTag (Name.mkSimple s!"exit{li+1}")
+            ctx.clauseGoals.modify (·.push exM.mvarId!)
+            ctx.delayedExits.modify (·.push (li, exM))
+            pure (some (exM, binders))
+    let decls : Array (Name × (Array Lean.Expr → TacticM Lean.Expr)) :=
+      (slotEntries.map (fun p =>
+        (Name.mkSimple p.1,
+         fun (_ : Array Lean.Expr) => pure (α := Lean.Expr)
+           (if binders.contains p.1 then intTy else Lean.mkConst ``RVal))))
+      |>.push (`tl, fun _ => pure envTy)
+    let (invE, rE) ← withLocalDeclsD decls fun fvs => do
+      let slotVars := fvs.extract 0 (fvs.size - 1)
+      let tailFv := fvs[fvs.size - 1]!
+      let slotVarOf (n : String) : Option Lean.Expr := do
+        let i ← slotNames.findIdx? (· == n)
+        slotVars[i]?
+      let slotVal (n : String) (v : Lean.Expr) : Lean.Expr :=
+        match slotVarOf n with
+        | some x =>
+          if binders.contains n then mkApp (Lean.mkConst ``RVal.int) x else x
+        | none => v
+      let entries' := tg.shape.entries.map (fun (n, v) => (n, slotVal n v))
+      let sets' := tg.shape.sets.map (fun (n, v) => (n, slotVal n v))
+      let shapeE := mkEnvExpr { world := tg.shape.world, entries := entries',
+                                sets := sets', tail := tailFv }
+      let clauseVars ← binders.mapM (fun b => do
+        let some x := slotVarOf b
+          | throwError "py_vcgen: internal — clause var `{b}`"
+        pure x)
+      let mkEnvEq (env : Lean.Expr) : Lean.Expr :=
+        mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env shapeE
+      let tailFacts := callNames.map (mkTailFreeFact tailFv)
+      let invE ← withLocalDeclD `ys asTy fun ys => do
+        withLocalDeclD `env stateTy fun env => do
+          let invApp :=
+            appendConj ((mkAppN invU (#[ys] ++ clauseVars)).headBeta) tailFacts
+          mkLambdaFVars #[ys, env]
+            (← mkExistsNest fvs (mkAnd (mkEnvEq env) invApp))
+      let exitApp? ← exitInfo?.mapM fun (u, ebs) => do
+        let vars ← ebs.mapM fun b => do
+          let some x := slotVarOf b
+            | throwError "py_vcgen: internal — exit var `{b}`"
+          pure x
+        pure (mkAppN u vars).headBeta
+      let nilE := mkApp (Lean.mkConst ``List.nil [Level.zero]) αE
+      let rE ← withLocalDeclD `env stateTy fun env => do
+        let core := match exitApp? with
+          | some ea => ea
+          | none => (mkAppN invU (#[nilE] ++ clauseVars)).headBeta
+        mkLambdaFVars #[env]
+          (← mkExistsNest fvs (mkAnd (mkEnvEq env) (appendConj core tailFacts)))
+      pure (invE, rE)
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some rE, some tg.Q, some tg.stmts[0]!, some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let Q1 ← g1.withContext do
+      pure ((← instantiateMVars (← g1.getType)).getArg! 3)
+    let preE := (mkApp invE asE).headBeta
+    let consT ← appOpt ``PyStmtTriple.consequence
+      #[some tg.m, some preE, none, none, some Q1, some Q1, none, none, none]
+    let gsC ← applyC ctx g1 consT
+    let (h, hpre, hpost) ← splitConsGoals gsC
+    let gsE ← applyC ctx hpost (← mkAppM ``PyPost.Entails.rfl #[Q1])
+    unless gsE.isEmpty do throwError "py_vcgen: internal — Entails.rfl"
+    let (_, gp) ← hpre.intro `env
+    let (heqFv, gp) ← gp.intro `henv
+    let gp ← Meta.subst gp heqFv
+    closeByShape ctx gp `init
+    let fT ← appOpt ``PyStmtTriple.forLoop
+      #[some tg.m, some αE, some tgtE, some iterE, some bArr, some spE, some Q1,
+        some eltE, some invE, some (itV), some asE, none, none, none, none]
+    let gsF ← applyC ctx h fT
+    let mut hv : Option MVarId := none
+    let mut hiter : Option MVarId := none
+    let mut hexit : Option MVarId := none
+    let mut hstep : Option MVarId := none
+    for gg in gsF do
+      let cls ← gg.withContext do
+        forallTelescope (← instantiateMVars (← gg.getType)) fun _ b => do
+          let b ← instantiateMVars b
+          if b.isAppOf ``IterVals then pure 0
+          else if b.isAppOf ``EvalsTo then pure 1
+          else if b.isAppOf ``Exists then pure 3
+          else pure 2
+      if cls == 0 then hv := some gg
+      else if cls == 1 then hiter := some gg
+      else if cls == 3 then hstep := some gg
+      else hexit := some gg
+    let (some gv, some gi, some gx, some gs') := (hv, hiter, hexit, hstep)
+      | throwError "py_vcgen: internal — forLoop goals"
+    -- `hv`: the iterable's value IS a value list (`IterVals.listV`), modulo
+    -- the `toArray`/`toList` round trip
+    unless ← tryTacClose gv (← `(tactic|
+        first
+          | exact LeanModels.Python.IterVals.listV _
+          | simpa using LeanModels.Python.IterVals.listV _)) do
+      throwError "py_vcgen: internal — could not identify the iterable's element list"
+    dischargeForIter ctx gi slotNames
+    dischargeForExit ctx gx slotNames
+    -- the body, once per element
+    let bodyTags : PostTags :=
+      { next := ⟨`preserve, false⟩, ret := tags.ret, brk := ⟨`exit, false⟩,
+        cont := ⟨`preserve, false⟩, err := tags.err }
+    -- `hstep` is `∀ a rest st, Inv (a :: rest) st → ∃ env₁, …` — an ordinary
+    -- implication, not a triple: destructure the invariant hypothesis the
+    -- same way the obligation dischargers do (the triple only appears
+    -- INSIDE the existential, and is walked from there).
+    let (_, gb) ← gs'.intro `a
+    let (_, gb) ← gb.intro `rest
+    let (_, gb) ← gb.intro `st
+    let (hFv, gb) ← gb.intro `hI
+    let gb ← destructInvHyp gb hFv ((slotNames.map Name.mkSimple).push `tl)
+    -- present the invariant under the `hinv`/`hinv1`/`hinv2` names the while
+    -- path uses (residual goals are read side by side)
+    let gb ← gb.rename (← findHyp gb `hcore) `hinv
+    let gb ← splitAndHyp gb (← findHyp gb `hinv) "hinv"
+    -- bind the loop target: solve `∃ env₁, assignToH … = .ok env₁ ∧ …`
+    let gb ← gb.withContext do
+      let tgtTy ← Core.betaReduce (← instantiateMVars (← gb.getType))
+      unless tgtTy.isAppOfArity ``Exists 2 do
+        throwError "py_vcgen: internal — for body goal:{indentExpr tgtTy}"
+      let p := tgtTy.getArg! 1
+      let w ← mkFreshExprMVar envTy
+      let bodyTy ← Core.betaReduce (p.beta #[w])
+      unless bodyTy.isAppOfArity ``And 2 do
+        throwError "py_vcgen: internal — for body conjunction:{indentExpr bodyTy}"
+      let eqTy := bodyTy.getArg! 0
+      unless eqTy.isAppOfArity ``Eq 3 do
+        throwError "py_vcgen: internal — for target equation:{indentExpr eqTy}"
+      let (nf, prf) ← captureRun ctx.pack (eqTy.getArg! 1)
+      let nf' ← whnfR nf
+      unless nf'.isAppOfArity ``Res.ok 2 do
+        throwError "py_vcgen: the loop target did not bind (out-of-tier `for` target):{indentExpr nf}"
+      let e1 := nf'.getArg! 1
+      unless ← isDefEq w e1 do
+        throwError "py_vcgen: internal — for target witness"
+      let eqTy' ← instantiateMVars eqTy
+      let tripleTy ← instantiateMVars (bodyTy.getArg! 1)
+      let prf' ← mkExpectedTypeHint prf eqTy'
+      let gBody ← mkFreshExprMVar tripleTy .syntheticOpaque
+      gb.assign (← mkAppOptM ``Exists.intro
+        #[some envTy, some p, some e1,
+          some (mkApp4 (Lean.mkConst ``And.intro) eqTy' tripleTy prf' gBody)])
+      pure gBody.mvarId!
+    walk ctx bodyTags gb
+    -- after the loop, from the primed exit state
+    let primed := (slotNames.map (fun n => Name.mkSimple (n ++ "'"))).push `tl'
+    let g2 ← normalizePre ctx primed `hinv g2
+    let hInvFv2 ← findHyp g2 `hinv
+    let g2 ← splitAndHyp g2 hInvFv2 "hinv"
+    walk ctx tags g2
+
+end
+
+/-! ### The elaborator -/
+
+/-- Run the walker on the main goal (see the module docstring). -/
+def runPyVcgen (progs : Array Ident) (invs decs : Array Term)
+    (exits : Array (Nat × Term)) : TacticM Unit := do
+  withMainContext do
+    let g ← getMainGoal
+    let g ← normalizePyHyps g
+    replaceMainGoal [g]
+  withMainContext do
+    let g ← getMainGoal
+    let progNames ← progs.mapM fun p => realizeGlobalConstNoOverloadWithInfo p
+    let pack ← mkPack progNames.toList
+    let residuals ← IO.mkRef (#[] : Array MVarId)
+    let clauseGoals ← IO.mkRef (#[] : Array MVarId)
+    let delayed ← IO.mkRef (#[] : Array (Nat × Lean.Expr × Lean.Expr))
+    let delayedExits ← IO.mkRef (#[] : Array (Nat × Lean.Expr))
+    let tgt := (← instantiateMVars (← g.getType)).cleanupAnnotations
+    if tgt.isAppOfArity ``CallsTo 4 then
+      let m := tgt.getArg! 0
+      let fnameE := tgt.getArg! 1
+      let args := tgt.getArg! 2
+      let v := tgt.getArg! 3
+      let ctx0 : VCCtx :=
+        { pack, mE := m, invs, decs, exits, loops := #[], residuals, clauseGoals,
+          delayed, delayedExits }
+      let (rF, prfF) ← captureRun pack
+        (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
+      let rF' ← whnfR rF
+      unless rF'.isAppOfArity ``Option.some 2 do
+        throwError "py_vcgen: could not resolve the callee in the module (`findFunction` reduced to{indentExpr rF})"
+      let fLit := rF'.getArg! 1
+      -- The general-arity bridge (F1): its `arityOk` side condition
+      -- computes at literal modules, so `closeRfl` closes it whether the
+      -- call supplies every argument or omits trailing defaulted ones.
+      let bridgeT ← appOpt ``PyTriple.callsTo_arityOk
+        #[some m, some fnameE, some fLit, some args, some v,
+          none, none, none, none, none, none]
+      let gs ← g.apply bridgeT
+      let mut h : Option MVarId := none
+      for gg in gs do
+        let t ← instantiateMVars (← gg.getType)
+        if t.isAppOf ``PyTriple then h := some gg
+        else if t.isAppOfArity ``Eq 3 && (t.getArg! 1).isAppOf ``findFunction then
+          let gs' ← gg.apply prfF
+          unless gs'.isEmpty do throwError "py_vcgen: internal — findFunction goal"
+        else
+          closeRfl gg
+      let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
+      let fLit' ← whnfR fLit
+      -- `FunctionDefn.mk` positional field 6 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal/isGenerator — keep in sync
+      -- with Ast.lean; H4 inserted `isGenerator` before `body`)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 6))
+      let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
+      walk ctx topTags hGoal
+    else if tgt.isAppOfArity ``PyTriple 4 then
+      let m := tgt.getArg! 0
+      let (ss, _) ← parseListLit (tgt.getArg! 2)
+      let ctx : VCCtx :=
+        { pack, mE := m, invs, decs, exits, loops := ← collectLoops ss, residuals,
+          clauseGoals, delayed, delayedExits }
+      walk ctx topTags g
+    else if tgt.isAppOfArity ``Exists 2 then
+      -- `∃ v, f(args) ==> v ∧ Φ v` — the relational bridge. TWO binder
+      -- shapes are accepted, because the surface notation and the raw form
+      -- elaborate the returned-value slot differently: a raw `Val`-typed
+      -- binder used literally (`∃ v, CallsTo m f args v ∧ Φ v` — bridged by
+      -- `PyTriple.exists_callsTo`), and a marshalled spec-typed binder —
+      -- `∃ v : PyInt, f(args) ==> v ∧ Φ v` puts `ToVal.toVal v`, NOT the
+      -- bare variable, in the result slot (bridged by
+      -- `PyTriple.exists_callsTo_toVal`). Matching the marshalling
+      -- syntactically here (rather than requiring a literal `.bvar 0`) is
+      -- what makes the advertised surface form actually walk.
+      let badShape :=
+        m!"py_vcgen: an existential goal must be `∃ v, f(args) ==> v ∧ Φ v` — one binder, the `==>`/`CallsTo` conjunct FIRST, and the returned-value slot exactly the bound variable (raw `Val`-typed, or marshalled through `ToVal.toVal` as the surface `∃ v : PyInt, f(args) ==> v ∧ Φ v`); the module, callee, and arguments may not mention the binder. Got:{indentExpr tgt}"
+      let .lam _ _ pBody _ := tgt.getArg! 1
+        | throwError badShape
+      unless pBody.isAppOfArity ``And 2 do
+        throwError badShape
+      let c := pBody.getArg! 0
+      unless c.isAppOfArity ``CallsTo 4 && !(c.getArg! 0).hasLooseBVars &&
+          !(c.getArg! 1).hasLooseBVars && !(c.getArg! 2).hasLooseBVars do
+        throwError badShape
+      let rSlot := c.getArg! 3
+      let marshalled ←
+        if rSlot == .bvar 0 then
+          pure false
+        else if rSlot.isAppOfArity ``ToVal.toVal 3 &&
+            rSlot.getArg! 2 == .bvar 0 then
+          pure true
+        else
+          throwError badShape
+      let m := c.getArg! 0
+      let fnameE := c.getArg! 1
+      let ctx0 : VCCtx :=
+        { pack, mE := m, invs, decs, exits, loops := #[], residuals, clauseGoals,
+          delayed, delayedExits }
+      let (rF, prfF) ← captureRun pack
+        (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
+      let rF' ← whnfR rF
+      unless rF'.isAppOfArity ``Option.some 2 do
+        throwError "py_vcgen: could not resolve the callee in the module (`findFunction` reduced to{indentExpr rF})"
+      let fLit := rF'.getArg! 1
+      let bridgeT ←
+        if marshalled then
+          appOpt ``PyTriple.exists_callsTo_toVal_arityOk
+            #[none, none, some m, some fnameE, some fLit]
+        else
+          appOpt ``PyTriple.exists_callsTo_arityOk
+            #[some m, some fnameE, some fLit]
+      let gs ← g.apply bridgeT
+      let mut h : Option MVarId := none
+      for gg in gs do
+        let t ← instantiateMVars (← gg.getType)
+        if t.isAppOf ``PyTriple then h := some gg
+        else if t.isAppOfArity ``Eq 3 && (t.getArg! 1).isAppOf ``findFunction then
+          let gs' ← gg.apply prfF
+          unless gs'.isEmpty do throwError "py_vcgen: internal — findFunction goal"
+        else
+          closeRfl gg
+      let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
+      let fLit' ← whnfR fLit
+      -- `FunctionDefn.mk` positional field 6 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal/isGenerator — keep in sync
+      -- with Ast.lean; H4 inserted `isGenerator` before `body`)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 6))
+      let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
+      walk ctx topTags hGoal
+    else
+      throwError "py_vcgen: the goal must be a `==>`/`⇓` (CallsTo) statement or a `PyTriple`:{indentExpr tgt}"
+    let cg ← clauseGoals.get
+    -- Present each delayed clause goal with its NAMED binder telescope
+    -- introduced into the goal context (`total i : Int ⊢ Prop`), read off
+    -- the pi binder names `handleWhile` stamped (the Python variable
+    -- names): the user writes a bare proposition/measure over those names,
+    -- so no positional lambda exists to cross-wire against the environment
+    -- order. The introduction happens only HERE, after the walk: the
+    -- function-typed clause metavariable itself is what the walk wove
+    -- through the proof term, where it may appear bare in simp-generated
+    -- congruence proofs (`congrArg ?dec1 h`) — introducing the telescope
+    -- at creation time (a delayed-assigned abstraction) leaves such bare
+    -- under-applied delayed metavariables unexpandable at final
+    -- instantiation, i.e. kernel-visible metavariables.
+    let mut cgOut : Array MVarId := #[]
+    for g in cg do
+      let tag ← g.getTag
+      let mut names : Array Name := #[]
+      let mut ty ← instantiateMVars (← g.getType)
+      while ty.isForall do
+        names := names.push ty.bindingName!
+        ty := ty.bindingBody!
+      if names.isEmpty then
+        cgOut := cgOut.push g
+      else
+        let (_, g') ← g.introN names.size names.toList
+        g'.setTag tag
+        tagClauseFn (← instantiateMVars (mkMVar g)) tag
+        cgOut := cgOut.push g'
+    let cg := cgOut
+    let rs ← residuals.get
+    -- Number duplicate residual tags: `case preserve => …` silently takes
+    -- only the FIRST of several same-tag goals, so a duplicated tag is a
+    -- trap. The first same-tag goal keeps the bare tag (existing `case
+    -- ret`/`case dec` uses and positional bullets stay valid); later ones
+    -- get numbered variants (`preserve2`, `preserve3`, …), skipping any
+    -- name already taken by a clause goal (a delayed `exit2`).
+    let mut taken : Array Name := #[]
+    for g in cg do taken := taken.push (← g.getTag)
+    let mut tags : Array Name := #[]
+    for g in rs do tags := tags.push (← g.getTag)
+    let mut seen : Array Name := #[]
+    for i in [0:rs.size] do
+      let t := tags[i]!
+      if seen.contains t then
+        let mut j := 2
+        let mut nm := Name.mkSimple s!"{t}{j}"
+        while taken.contains nm || tags.contains nm || seen.contains nm do
+          j := j + 1
+          nm := Name.mkSimple s!"{t}{j}"
+        rs[i]!.setTag nm
+        seen := seen.push nm
+      else
+        seen := seen.push t
+    replaceMainGoal (cg.toList ++ rs.toList)
+
+end PyVCGen
+
+open Lean Elab Tactic PyVCGen in
+/-- One `py_vcgen` loop clause: `(inv := …)` / `(dec := …)` (labels may
+carry indices: `inv1`, `dec2`, …). -/
+syntax pyVcgenClause := " (" ident " := " term ")"
+
+open Lean Elab Tactic PyVCGen in
+/-- `py_vcgen [prog] (inv := fun (x y : Int) => …) (dec := fun (x y : Int) => …) …`
+— the VC-generating walker (module docstring): bridge a `==>`/`⇓`
+(`CallsTo`), `PyTriple`, or relational `∃ v, f(args) ==> v ∧ Φ v` goal to
+the function-body triple and walk it, discharging every interpreter
+obligation; the i-th `inv`/`dec` clause pair instantiates the i-th `while`
+(source order; clause binders are matched to loop variables BY NAME, any
+order). With clauses omitted the invariants/measures are left as delayed
+goals `inv1`/`dec1`/… (mvcgen style), plus `exit<i>` for a
+`break`-carrying loop; a delayed goal presents the loop's variables as
+named context binders (`total i : Int ⊢ Prop`) and is closed with a bare
+proposition/measure over those names (`case inv1 => exact 0 ≤ i`) — no
+lambda. Residual goals are pure mathematics over named atoms, tagged
+`init`/`preserve`/`dec`/`exit`/`ret`/`err`/`side` (same-tag duplicates
+numbered: `preserve`, `preserve2`, …). -/
+elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic => do
+  let mut invs : Array Term := #[]
+  let mut decs : Array Term := #[]
+  let mut exits : Array (Nat × Term) := #[]
+  for c in cls do
+    match c with
+    | `(pyVcgenClause| ($id:ident := $t:term)) =>
+      let s := id.getId.toString
+      if s.startsWith "exit" then
+        let sfx := s.drop 4
+        let some idx := (if sfx.isEmpty then some 1 else sfx.toNat?)
+          | throwErrorAt id "py_vcgen: `exit` labels carry the loop number (`exit`, `exit2`, …)"
+        exits := exits.push (idx - 1, t)
+      else if s.startsWith "inv" then invs := invs.push t
+      else if s.startsWith "dec" then decs := decs.push t
+      else throwErrorAt id "py_vcgen: clause labels must start with `inv`, `dec` or `exit`"
+    | _ => throwUnsupportedSyntax
+  -- `inv` is per LOOP, `dec` per `while` (a `for` is structurally
+  -- decreasing), so the two counts agree only in a `for`-free function;
+  -- a surplus of `dec`s is always a mistake.
+  unless decs.size ≤ invs.size do
+    throwError "py_vcgen: {invs.size} `inv` clause(s) but {decs.size} `dec` clause(s) (every `dec` belongs to a `while`, which also takes an `inv`)"
+  runPyVcgen progs.getElems invs decs exits
+
+/-! ## Smoke tests
+
+The executable walker is exercised by `LeanModels/Python/VCTests.lean` and the
+examples gallery. Keeping those proofs out of this implementation module keeps
+importing `py_vcgen` lightweight for the README quickstart. -/
+
+
+end LeanModels.Python

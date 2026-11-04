@@ -1,0 +1,688 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "int_const_gen",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/int_const_gen/int_const_gen.sv",
+      "sha256": "246c1469ea2cb71711306586b96d90beec4fda59c017848a1a3313e4edc35edd"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 5,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "int_const_gen",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 22,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 17,
+                      "end_line": 6,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 25
+            },
+            "name": "neg",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "value": 5,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "gv",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "value": 5,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 22,
+              "end_line": 9,
+              "end_col": 24
+            },
+            "name": "gm",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 18
+                    },
+                    "value": 5,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "GenerateFor",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "label": "gl",
+            "genvar": "g",
+            "init": {
+              "kind": "Int",
+              "span": {
+                "line": 11,
+                "col": 19,
+                "end_line": 11,
+                "end_col": 20
+              },
+              "value": 1,
+              "resolved_width": 32
+            },
+            "bound": {
+              "kind": "Binary",
+              "span": {
+                "line": 11,
+                "col": 22,
+                "end_line": 11,
+                "end_col": 28
+              },
+              "width": 1,
+              "op": "s<=",
+              "left": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 11,
+                  "col": 22,
+                  "end_line": 11,
+                  "end_col": 23
+                },
+                "name": "g"
+              },
+              "right": {
+                "kind": "Int",
+                "span": {
+                  "line": 11,
+                  "col": 27,
+                  "end_line": 11,
+                  "end_col": 28
+                },
+                "value": 3,
+                "resolved_width": 32
+              }
+            },
+            "step": {
+              "kind": "Unary",
+              "span": {
+                "line": 11,
+                "col": 30,
+                "end_line": 11,
+                "end_col": 33
+              },
+              "width": null,
+              "op": "++",
+              "operand": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 11,
+                  "col": 30,
+                  "end_line": 11,
+                  "end_col": 31
+                },
+                "name": "g"
+              }
+            },
+            "resolved_count": 3,
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 12,
+                  "col": 12,
+                  "end_line": 12,
+                  "end_col": 38
+                },
+                "target": {
+                  "kind": "ArraySel",
+                  "span": {
+                    "line": 12,
+                    "col": 12,
+                    "end_line": 12,
+                    "end_col": 33
+                  },
+                  "width": 1,
+                  "name": "neg",
+                  "indices": [],
+                  "part": {
+                    "mode": "up",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 12,
+                        "col": 16,
+                        "end_line": 12,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "op": "/",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 12,
+                          "col": 17,
+                          "end_line": 12,
+                          "end_col": 24
+                        },
+                        "width": 32,
+                        "op": "*",
+                        "left": {
+                          "kind": "GenvarRef",
+                          "span": {
+                            "line": 12,
+                            "col": 17,
+                            "end_line": 12,
+                            "end_col": 18
+                          },
+                          "name": "g"
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 12,
+                            "col": 20,
+                            "end_line": 12,
+                            "end_col": 23
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "left": {
+                            "kind": "GenvarRef",
+                            "span": {
+                              "line": 12,
+                              "col": 20,
+                              "end_line": 12,
+                              "end_col": 21
+                            },
+                            "name": "g"
+                          },
+                          "right": {
+                            "kind": "Int",
+                            "span": {
+                              "line": 12,
+                              "col": 22,
+                              "end_line": 12,
+                              "end_col": 23
+                            },
+                            "value": 1,
+                            "resolved_width": 32
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 12,
+                          "col": 26,
+                          "end_line": 12,
+                          "end_col": 27
+                        },
+                        "value": 2,
+                        "resolved_width": 32
+                      }
+                    },
+                    "right": {
+                      "kind": "GenvarRef",
+                      "span": {
+                        "line": 12,
+                        "col": 31,
+                        "end_line": 12,
+                        "end_col": 32
+                      },
+                      "name": "g"
+                    }
+                  }
+                },
+                "value": {
+                  "kind": "Unary",
+                  "span": {
+                    "line": 12,
+                    "col": 36,
+                    "end_line": 12,
+                    "end_col": 38
+                  },
+                  "width": 32,
+                  "op": "-",
+                  "operand": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 37,
+                      "end_line": 12,
+                      "end_col": 38
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 13,
+                  "col": 12,
+                  "end_line": 13,
+                  "end_col": 40
+                },
+                "target": {
+                  "kind": "ArraySel",
+                  "span": {
+                    "line": 13,
+                    "col": 12,
+                    "end_line": 13,
+                    "end_col": 32
+                  },
+                  "width": 1,
+                  "name": "gv",
+                  "indices": [],
+                  "part": {
+                    "mode": "up",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 15,
+                        "end_line": 13,
+                        "end_col": 26
+                      },
+                      "width": 32,
+                      "op": "/",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 13,
+                          "col": 16,
+                          "end_line": 13,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "op": "*",
+                        "left": {
+                          "kind": "GenvarRef",
+                          "span": {
+                            "line": 13,
+                            "col": 16,
+                            "end_line": 13,
+                            "end_col": 17
+                          },
+                          "name": "g"
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 13,
+                            "col": 19,
+                            "end_line": 13,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "left": {
+                            "kind": "GenvarRef",
+                            "span": {
+                              "line": 13,
+                              "col": 19,
+                              "end_line": 13,
+                              "end_col": 20
+                            },
+                            "name": "g"
+                          },
+                          "right": {
+                            "kind": "Int",
+                            "span": {
+                              "line": 13,
+                              "col": 21,
+                              "end_line": 13,
+                              "end_col": 22
+                            },
+                            "value": 1,
+                            "resolved_width": 32
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 13,
+                          "col": 25,
+                          "end_line": 13,
+                          "end_col": 26
+                        },
+                        "value": 2,
+                        "resolved_width": 32
+                      }
+                    },
+                    "right": {
+                      "kind": "GenvarRef",
+                      "span": {
+                        "line": 13,
+                        "col": 30,
+                        "end_line": 13,
+                        "end_col": 31
+                      },
+                      "name": "g"
+                    }
+                  }
+                },
+                "value": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 13,
+                    "col": 35,
+                    "end_line": 13,
+                    "end_col": 40
+                  },
+                  "width": 32,
+                  "op": "+",
+                  "left": {
+                    "kind": "GenvarRef",
+                    "span": {
+                      "line": 13,
+                      "col": 35,
+                      "end_line": 13,
+                      "end_col": 36
+                    },
+                    "name": "g"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 39,
+                      "end_line": 13,
+                      "end_col": 40
+                    },
+                    "value": 4,
+                    "resolved_width": 32
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 14,
+                  "col": 12,
+                  "end_line": 14,
+                  "end_col": 37
+                },
+                "target": {
+                  "kind": "ArraySel",
+                  "span": {
+                    "line": 14,
+                    "col": 12,
+                    "end_line": 14,
+                    "end_col": 32
+                  },
+                  "width": 1,
+                  "name": "gm",
+                  "indices": [],
+                  "part": {
+                    "mode": "up",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 14,
+                        "col": 15,
+                        "end_line": 14,
+                        "end_col": 26
+                      },
+                      "width": 32,
+                      "op": "/",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 14,
+                          "col": 16,
+                          "end_line": 14,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "op": "*",
+                        "left": {
+                          "kind": "GenvarRef",
+                          "span": {
+                            "line": 14,
+                            "col": 16,
+                            "end_line": 14,
+                            "end_col": 17
+                          },
+                          "name": "g"
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 19,
+                            "end_line": 14,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "left": {
+                            "kind": "GenvarRef",
+                            "span": {
+                              "line": 14,
+                              "col": 19,
+                              "end_line": 14,
+                              "end_col": 20
+                            },
+                            "name": "g"
+                          },
+                          "right": {
+                            "kind": "Int",
+                            "span": {
+                              "line": 14,
+                              "col": 21,
+                              "end_line": 14,
+                              "end_col": 22
+                            },
+                            "value": 1,
+                            "resolved_width": 32
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 14,
+                          "col": 25,
+                          "end_line": 14,
+                          "end_col": 26
+                        },
+                        "value": 2,
+                        "resolved_width": 32
+                      }
+                    },
+                    "right": {
+                      "kind": "GenvarRef",
+                      "span": {
+                        "line": 14,
+                        "col": 30,
+                        "end_line": 14,
+                        "end_col": 31
+                      },
+                      "name": "g"
+                    }
+                  }
+                },
+                "value": {
+                  "kind": "Unary",
+                  "span": {
+                    "line": 14,
+                    "col": 35,
+                    "end_line": 14,
+                    "end_col": 37
+                  },
+                  "width": 32,
+                  "op": "-",
+                  "operand": {
+                    "kind": "GenvarRef",
+                    "span": {
+                      "line": 14,
+                      "col": 36,
+                      "end_line": 14,
+                      "end_col": 37
+                    },
+                    "name": "g"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

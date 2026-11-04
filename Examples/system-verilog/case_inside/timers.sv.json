@@ -1,0 +1,1148 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/case_inside/timers.sv",
+  "source_sha256": "d31b6889891075023ba6597c823cc63f4b7485f937e293c947a5b2ade1206e1e",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 32,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 33
+            },
+            "name": "selector",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 4,
+                "col": 26,
+                "end_line": 4,
+                "end_col": 33
+              },
+              "width": 4,
+              "bits": "x001"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 34
+            },
+            "name": "candidate",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 27,
+                "end_line": 5,
+                "end_col": 34
+              },
+              "width": 4,
+              "bits": "0001"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 15,
+              "end_line": 6,
+              "end_col": 29
+            },
+            "name": "mask",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 6,
+                "col": 22,
+                "end_line": 6,
+                "end_col": 29
+              },
+              "width": 4,
+              "bits": "z001"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 7,
+              "end_line": 7,
+              "end_col": 17
+            },
+            "name": "choice",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 7,
+                  "col": 16,
+                  "end_line": 7,
+                  "end_col": 17
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000000"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 7,
+              "end_line": 8,
+              "end_col": 16
+            },
+            "name": "value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 8,
+                  "col": 15,
+                  "end_line": 8,
+                  "end_col": 16
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000101"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 13
+            },
+            "name": "lo",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 9,
+                  "col": 12,
+                  "end_line": 9,
+                  "end_col": 13
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000001"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 7,
+              "end_line": 10,
+              "end_col": 13
+            },
+            "name": "hi",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 10,
+                  "col": 12,
+                  "end_line": 10,
+                  "end_col": 13
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000001001"
+              }
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 26,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 26,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 12
+                  },
+                  "case_lowered": true,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 7,
+                      "end_line": 13,
+                      "end_col": 16
+                    },
+                    "width": 1,
+                    "op": "==?",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 10,
+                        "end_line": 12,
+                        "end_col": 18
+                      },
+                      "width": 4,
+                      "name": "selector"
+                    },
+                    "right": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 7,
+                        "end_line": 13,
+                        "end_col": 16
+                      },
+                      "width": 4,
+                      "name": "candidate"
+                    }
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 13,
+                      "col": 18,
+                      "end_line": 13,
+                      "end_col": 27
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 18,
+                        "end_line": 13,
+                        "end_col": 24
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Squash2",
+                      "span": null,
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 25,
+                          "end_line": 13,
+                          "end_col": 26
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  },
+                  "else": {
+                    "kind": "If",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 16,
+                      "end_col": 12
+                    },
+                    "case_lowered": true,
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 14,
+                        "col": 7,
+                        "end_line": 14,
+                        "end_col": 11
+                      },
+                      "width": 1,
+                      "op": "==?",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 12,
+                          "col": 10,
+                          "end_line": 12,
+                          "end_col": 18
+                        },
+                        "width": 4,
+                        "name": "selector"
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 14,
+                          "col": 7,
+                          "end_line": 14,
+                          "end_col": 11
+                        },
+                        "width": 4,
+                        "name": "mask"
+                      }
+                    },
+                    "then": {
+                      "kind": "Block",
+                      "span": {
+                        "line": 14,
+                        "col": 13,
+                        "end_line": 14,
+                        "end_col": 36
+                      },
+                      "stmts": [
+                        {
+                          "kind": "Delay",
+                          "span": {
+                            "line": 14,
+                            "col": 19,
+                            "end_line": 14,
+                            "end_col": 22
+                          },
+                          "amount": 2,
+                          "body": {
+                            "kind": "Empty",
+                            "span": {
+                              "line": 14,
+                              "col": 21,
+                              "end_line": 14,
+                              "end_col": 22
+                            }
+                          }
+                        },
+                        {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 14,
+                            "col": 23,
+                            "end_line": 14,
+                            "end_col": 32
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 23,
+                              "end_line": 14,
+                              "end_col": 29
+                            },
+                            "width": 32,
+                            "name": "choice",
+                            "signed": true
+                          },
+                          "value": {
+                            "kind": "Squash2",
+                            "span": null,
+                            "width": 32,
+                            "operand": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 14,
+                                "col": 30,
+                                "end_line": 14,
+                                "end_col": 31
+                              },
+                              "width": 32,
+                              "bits": "00000000000000000000000000000010"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "else": {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 16,
+                        "end_line": 15,
+                        "end_col": 25
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 16,
+                          "end_line": 15,
+                          "end_col": 22
+                        },
+                        "width": 32,
+                        "name": "choice",
+                        "signed": true
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 23,
+                            "end_line": 15,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 54
+                  },
+                  "name": "$display",
+                  "format": "wildcard %0d live %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 17,
+                        "col": 37,
+                        "end_line": 17,
+                        "end_col": 43
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 17,
+                        "col": 44,
+                        "end_line": 17,
+                        "end_col": 52
+                      },
+                      "width": 4,
+                      "name": "selector"
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false
+                  ]
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 12
+                  },
+                  "case_lowered": true,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 19,
+                      "col": 7,
+                      "end_line": 19,
+                      "end_col": 14
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 19,
+                        "col": 7,
+                        "end_line": 19,
+                        "end_col": 14
+                      },
+                      "width": 1,
+                      "op": "s>=",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 18,
+                          "col": 10,
+                          "end_line": 18,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "value",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 8,
+                          "end_line": 19,
+                          "end_col": 10
+                        },
+                        "width": 32,
+                        "name": "lo",
+                        "signed": true
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 19,
+                        "col": 7,
+                        "end_line": 19,
+                        "end_col": 14
+                      },
+                      "width": 1,
+                      "op": "s<=",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 18,
+                          "col": 10,
+                          "end_line": 18,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "value",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 11,
+                          "end_line": 19,
+                          "end_col": 13
+                        },
+                        "width": 32,
+                        "name": "hi",
+                        "signed": true
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 19,
+                      "col": 16,
+                      "end_line": 19,
+                      "end_col": 39
+                    },
+                    "stmts": [
+                      {
+                        "kind": "Delay",
+                        "span": {
+                          "line": 19,
+                          "col": 22,
+                          "end_line": 19,
+                          "end_col": 25
+                        },
+                        "amount": 2,
+                        "body": {
+                          "kind": "Empty",
+                          "span": {
+                            "line": 19,
+                            "col": 24,
+                            "end_line": 19,
+                            "end_col": 25
+                          }
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 19,
+                          "col": 26,
+                          "end_line": 19,
+                          "end_col": 35
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 19,
+                            "col": 26,
+                            "end_line": 19,
+                            "end_col": 32
+                          },
+                          "width": 32,
+                          "name": "choice",
+                          "signed": true
+                        },
+                        "value": {
+                          "kind": "Squash2",
+                          "span": null,
+                          "width": 32,
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 19,
+                              "col": 33,
+                              "end_line": 19,
+                              "end_col": 34
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000100"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "else": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 20,
+                      "col": 16,
+                      "end_line": 20,
+                      "end_col": 25
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 20,
+                        "col": 16,
+                        "end_line": 20,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Squash2",
+                      "span": null,
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 20,
+                          "col": 23,
+                          "end_line": 20,
+                          "end_col": 24
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000101"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 63
+                  },
+                  "name": "$display",
+                  "format": "range %0d live %0d %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 22,
+                        "col": 43,
+                        "end_line": 22,
+                        "end_col": 49
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 22,
+                        "col": 50,
+                        "end_line": 22,
+                        "end_col": 55
+                      },
+                      "width": 32,
+                      "name": "value",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 22,
+                        "col": 56,
+                        "end_line": 22,
+                        "end_col": 58
+                      },
+                      "width": 32,
+                      "name": "lo",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 22,
+                        "col": 59,
+                        "end_line": 22,
+                        "end_col": 61
+                      },
+                      "width": 32,
+                      "name": "hi",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true,
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 69
+                  },
+                  "case_lowered": true,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 23,
+                      "col": 24,
+                      "end_line": 23,
+                      "end_col": 31
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 23,
+                        "col": 24,
+                        "end_line": 23,
+                        "end_col": 31
+                      },
+                      "width": 1,
+                      "op": "s>=",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 10,
+                          "end_line": 23,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "value",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 25,
+                          "end_line": 23,
+                          "end_col": 27
+                        },
+                        "width": 32,
+                        "name": "lo",
+                        "signed": true
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 23,
+                        "col": 24,
+                        "end_line": 23,
+                        "end_col": 31
+                      },
+                      "width": 1,
+                      "op": "s<=",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 10,
+                          "end_line": 23,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "value",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 28,
+                          "end_line": 23,
+                          "end_col": 30
+                        },
+                        "width": 32,
+                        "name": "hi",
+                        "signed": true
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 23,
+                      "col": 33,
+                      "end_line": 23,
+                      "end_col": 42
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 23,
+                        "col": 33,
+                        "end_line": 23,
+                        "end_col": 39
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Squash2",
+                      "span": null,
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 23,
+                          "col": 40,
+                          "end_line": 23,
+                          "end_col": 41
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000110"
+                      }
+                    }
+                  },
+                  "else": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 23,
+                      "col": 52,
+                      "end_line": 23,
+                      "end_col": 61
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 23,
+                        "col": 52,
+                        "end_line": 23,
+                        "end_col": 58
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Squash2",
+                      "span": null,
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 23,
+                          "col": 59,
+                          "end_line": 23,
+                          "end_col": 60
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000111"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "reentry %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 24,
+                        "col": 28,
+                        "end_line": 24,
+                        "end_col": 34
+                      },
+                      "width": 32,
+                      "name": "choice",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 25,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 27,
+              "col": 3,
+              "end_line": 31,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 27,
+                "col": 11,
+                "end_line": 31,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 25
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 28,
+                      "col": 8,
+                      "end_line": 28,
+                      "end_col": 25
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 28,
+                        "col": 8,
+                        "end_line": 28,
+                        "end_col": 16
+                      },
+                      "width": 4,
+                      "name": "selector"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 28,
+                        "col": 17,
+                        "end_line": 28,
+                        "end_col": 24
+                      },
+                      "width": 4,
+                      "bits": "1110"
+                    }
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 29,
+                    "col": 5,
+                    "end_line": 29,
+                    "end_col": 17
+                  },
+                  "amount": 2,
+                  "body": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 29,
+                      "col": 8,
+                      "end_line": 29,
+                      "end_col": 17
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 29,
+                        "col": 8,
+                        "end_line": 29,
+                        "end_col": 13
+                      },
+                      "width": 32,
+                      "name": "value",
+                      "signed": true
+                    },
+                    "value": {
+                      "kind": "Squash2",
+                      "span": null,
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 29,
+                          "col": 14,
+                          "end_line": 29,
+                          "end_col": 16
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000010100"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 30,
+                    "col": 5,
+                    "end_line": 30,
+                    "end_col": 11
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 30,
+                      "col": 5,
+                      "end_line": 30,
+                      "end_col": 7
+                    },
+                    "width": 32,
+                    "name": "lo",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 30,
+                        "col": 8,
+                        "end_line": 30,
+                        "end_col": 10
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000011110"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 30,
+                    "col": 12,
+                    "end_line": 30,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 30,
+                      "col": 12,
+                      "end_line": 30,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "name": "hi",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 30,
+                        "col": 15,
+                        "end_line": 30,
+                        "end_col": 17
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000101000"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

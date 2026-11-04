@@ -1,0 +1,332 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assignment_patterns/replicated.sv",
+  "source_sha256": "a1f14a900966afa0ed420c15d5e94a67ee12f2584827f161300f3bcd439b93cf",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 42
+            },
+            "name": "repeated",
+            "width": 8,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 3,
+                "col": 26,
+                "end_line": 3,
+                "end_col": 42
+              },
+              "width": 8,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 30,
+                    "end_line": 3,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 36,
+                    "end_line": 3,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 30,
+                    "end_line": 3,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 36,
+                    "end_line": 3,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 30,
+                    "end_line": 3,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 36,
+                    "end_line": 3,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 30,
+                    "end_line": 3,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 3,
+                    "col": 36,
+                    "end_line": 3,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "0"
+                }
+              ],
+              "assignment_pattern_lowered": true,
+              "source_pattern": "ReplicatedAssignmentPatternExpression"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 54
+            },
+            "name": "unknowns",
+            "width": 8,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 4,
+                "col": 26,
+                "end_line": 4,
+                "end_col": 54
+              },
+              "width": 8,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 30,
+                    "end_line": 4,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "x"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 36,
+                    "end_line": 4,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "z"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 42,
+                    "end_line": 4,
+                    "end_col": 46
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 48,
+                    "end_line": 4,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "1"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 30,
+                    "end_line": 4,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "bits": "x"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 36,
+                    "end_line": 4,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "bits": "z"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 42,
+                    "end_line": 4,
+                    "end_col": 46
+                  },
+                  "width": 1,
+                  "bits": "0"
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 48,
+                    "end_line": 4,
+                    "end_col": 52
+                  },
+                  "width": 1,
+                  "bits": "1"
+                }
+              ],
+              "assignment_pattern_lowered": true,
+              "source_pattern": "ReplicatedAssignmentPatternExpression"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 8,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 52
+                  },
+                  "name": "$display",
+                  "format": "repeated %b %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 32,
+                        "end_line": 6,
+                        "end_col": 40
+                      },
+                      "width": 8,
+                      "name": "repeated"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 42,
+                        "end_line": 6,
+                        "end_col": 50
+                      },
+                      "width": 8,
+                      "name": "unknowns"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

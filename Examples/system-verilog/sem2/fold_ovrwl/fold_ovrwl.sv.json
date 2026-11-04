@@ -1,0 +1,956 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "fold_ovrwl",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/fold_ovrwl/fold_ovrwl.sv",
+      "sha256": "f5d03c1ad03094a552b781c336302a45377a86c78d54ec3216fd0dd39c80c70d"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 13,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "fold_ovrwl",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 13,
+              "col": 35,
+              "end_line": 13,
+              "end_col": 40
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 35,
+                      "end_line": 13,
+                      "end_col": 40
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 35,
+                      "end_line": 13,
+                      "end_col": 40
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 13,
+                "col": 39,
+                "end_line": 13,
+                "end_col": 40
+              },
+              "value": 0,
+              "resolved_width": 32
+            },
+            "resolved": 0
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 14,
+              "col": 22,
+              "end_line": 14,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 17,
+                      "end_line": 14,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 19,
+                      "end_line": 14,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 23,
+              "end_line": 15,
+              "end_col": 25
+            },
+            "name": "o1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 20,
+                      "end_line": 15,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 27,
+              "end_line": 15,
+              "end_col": 29
+            },
+            "name": "o2",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 20,
+                      "end_line": 15,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 31,
+              "end_line": 15,
+              "end_col": 33
+            },
+            "name": "o3",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 20,
+                      "end_line": 15,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 16,
+              "col": 60,
+              "end_line": 16,
+              "end_col": 90
+            },
+            "name": "u1",
+            "module": "fold_ovrwl_c",
+            "path": [],
+            "params": [
+              {
+                "name": "W",
+                "expr": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 16,
+                    "col": 21,
+                    "end_line": 16,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "op": "+",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 16,
+                      "col": 21,
+                      "end_line": 16,
+                      "end_col": 22
+                    },
+                    "name": "N"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 25,
+                      "end_line": 16,
+                      "end_col": 27
+                    },
+                    "value": 40,
+                    "resolved_width": 32
+                  }
+                }
+              },
+              {
+                "name": "P",
+                "expr": {
+                  "kind": "SignedResize",
+                  "span": {
+                    "line": 16,
+                    "col": 33,
+                    "end_line": 16,
+                    "end_col": 34
+                  },
+                  "width": 40,
+                  "operand": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 16,
+                      "col": 33,
+                      "end_line": 16,
+                      "end_col": 34
+                    },
+                    "name": "N"
+                  }
+                }
+              },
+              {
+                "name": "Q",
+                "expr": {
+                  "kind": "SignedResize",
+                  "span": {
+                    "line": 16,
+                    "col": 40,
+                    "end_line": 16,
+                    "end_col": 46
+                  },
+                  "width": 40,
+                  "operand": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 16,
+                      "col": 40,
+                      "end_line": 16,
+                      "end_col": 46
+                    },
+                    "width": 40,
+                    "op": "<<",
+                    "left": {
+                      "kind": "SignedResize",
+                      "span": {
+                        "line": 16,
+                        "col": 40,
+                        "end_line": 16,
+                        "end_col": 41
+                      },
+                      "width": 40,
+                      "operand": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 16,
+                          "col": 40,
+                          "end_line": 16,
+                          "end_col": 41
+                        },
+                        "name": "N"
+                      }
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 16,
+                        "col": 45,
+                        "end_line": 16,
+                        "end_col": 46
+                      },
+                      "value": 3,
+                      "resolved_width": 32
+                    }
+                  }
+                }
+              },
+              {
+                "name": "R",
+                "expr": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 16,
+                    "col": 52,
+                    "end_line": 16,
+                    "end_col": 57
+                  },
+                  "width": 32,
+                  "op": "-",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 16,
+                      "col": 52,
+                      "end_line": 16,
+                      "end_col": 53
+                    },
+                    "name": "N"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 56,
+                      "end_line": 16,
+                      "end_col": 57
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 67,
+                  "end_line": 16,
+                  "end_col": 69
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 67,
+                    "end_line": 16,
+                    "end_col": 69
+                  },
+                  "width": 64,
+                  "name": "o1"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 76,
+                  "end_line": 16,
+                  "end_col": 78
+                },
+                "port": "oq",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 76,
+                    "end_line": 16,
+                    "end_col": 78
+                  },
+                  "width": 64,
+                  "name": "o2"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 86,
+                  "end_line": 16,
+                  "end_col": 88
+                },
+                "port": "orr",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 86,
+                    "end_line": 16,
+                    "end_col": 88
+                  },
+                  "width": 64,
+                  "name": "o3"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "fold_ovrwl_c",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 6,
+              "col": 37,
+              "end_line": 6,
+              "end_col": 43
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 37,
+                      "end_line": 6,
+                      "end_col": 43
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 37,
+                      "end_line": 6,
+                      "end_col": 43
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 6,
+                "col": 41,
+                "end_line": 6,
+                "end_col": 43
+              },
+              "value": 40,
+              "resolved_width": 32
+            },
+            "resolved": 40
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 6,
+              "col": 76,
+              "end_line": 6,
+              "end_col": 81
+            },
+            "name": "P",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 69,
+                      "end_line": 6,
+                      "end_col": 72
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 69,
+                        "end_line": 6,
+                        "end_col": 70
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 71,
+                        "end_line": 6,
+                        "end_col": 72
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 73,
+                      "end_line": 6,
+                      "end_col": 74
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 6,
+                "col": 80,
+                "end_line": 6,
+                "end_col": 81
+              },
+              "value": 0,
+              "resolved_width": 40
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 7,
+              "col": 53,
+              "end_line": 7,
+              "end_col": 58
+            },
+            "name": "Q",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 47,
+                      "end_line": 7,
+                      "end_col": 49
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 50,
+                      "end_line": 7,
+                      "end_col": 51
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 7,
+                "col": 57,
+                "end_line": 7,
+                "end_col": 58
+              },
+              "value": 0,
+              "resolved_width": 40
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 7,
+              "col": 74,
+              "end_line": 7,
+              "end_col": 79
+            },
+            "name": "R",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 74,
+                      "end_line": 7,
+                      "end_col": 79
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 74,
+                      "end_line": 7,
+                      "end_col": 79
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 7,
+                "col": 78,
+                "end_line": 7,
+                "end_col": 79
+              },
+              "value": 0,
+              "resolved_width": 32
+            },
+            "resolved": 0
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 23,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 20,
+                      "end_line": 8,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 26,
+              "end_line": 8,
+              "end_col": 28
+            },
+            "name": "oq",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 20,
+                      "end_line": 8,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 30,
+              "end_line": 8,
+              "end_col": 33
+            },
+            "name": "orr",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 20,
+                      "end_line": 8,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 10,
+                "end_line": 9,
+                "end_col": 11
+              },
+              "width": 64,
+              "name": "o"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 9,
+                "col": 14,
+                "end_line": 9,
+                "end_col": 15
+              },
+              "name": "P"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 10,
+              "col": 10,
+              "end_line": 10,
+              "end_col": 16
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 10,
+                "col": 10,
+                "end_line": 10,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "oq"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 10,
+                "col": 15,
+                "end_line": 10,
+                "end_col": 16
+              },
+              "name": "Q"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 13
+              },
+              "width": 64,
+              "name": "orr"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 11,
+                "col": 16,
+                "end_line": 11,
+                "end_col": 17
+              },
+              "name": "R"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

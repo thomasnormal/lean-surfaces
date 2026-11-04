@@ -1,0 +1,73 @@
+{
+  "schema_version": "spice-0.1",
+  "language": "spice",
+  "frontend": {
+    "name": "spice-extract",
+    "version": "0.1"
+  },
+  "source_file": "Examples/spice/robust_divider/robust_divider.cir",
+  "source_sha256": "66de62566c3a211ac0be880d86567423275645aa4722bd276f79415e3e284bf1",
+  "netlist": {
+    "kind": "Netlist",
+    "title": "Robust divider nominal topology",
+    "subckts": [],
+    "cards": [
+      {
+        "kind": "V",
+        "span": {
+          "line": 4,
+          "end_line": 4
+        },
+        "name": "v1",
+        "nodes": [
+          "in",
+          "0"
+        ],
+        "value": {
+          "num": 5,
+          "den": 1
+        }
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 5,
+          "end_line": 5
+        },
+        "name": "r1",
+        "nodes": [
+          "in",
+          "out"
+        ],
+        "value": {
+          "num": 1000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 6,
+          "end_line": 6
+        },
+        "name": "r2",
+        "nodes": [
+          "out",
+          "0"
+        ],
+        "value": {
+          "num": 2000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "Op",
+        "span": {
+          "line": 7,
+          "end_line": 7
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

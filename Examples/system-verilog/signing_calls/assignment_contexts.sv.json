@@ -1,0 +1,796 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "harness/sv/signing_calls/assignment_contexts.sv",
+  "source_sha256": "6a97e65d3dfe31dd1a5868eb50c59b4c7b860f5a4bdafb1b1e4a885bc764abe6",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 25,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 20
+            },
+            "name": "value",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 33
+            },
+            "name": "same_signed",
+            "width": 4,
+            "init": null,
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 28
+            },
+            "name": "same_unsigned",
+            "width": 4,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 26
+            },
+            "name": "wide_signed",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 28,
+              "end_line": 5,
+              "end_col": 41
+            },
+            "name": "wide_unsigned",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 24,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 24,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 10
+                    },
+                    "width": 4,
+                    "name": "value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 13,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "width": 4,
+                    "bits": "1001"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 34
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 16
+                    },
+                    "width": 4,
+                    "name": "same_signed",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 33
+                    },
+                    "width": 4,
+                    "name": "value",
+                    "signing_cast": "$signed",
+                    "signed": true
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 38
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 18
+                    },
+                    "width": 4,
+                    "name": "same_unsigned"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 21,
+                      "end_line": 10,
+                      "end_col": 37
+                    },
+                    "width": 4,
+                    "name": "value",
+                    "signing_cast": "$unsigned"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 34
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 16
+                    },
+                    "width": 8,
+                    "name": "wide_signed"
+                  },
+                  "value": {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 11,
+                      "col": 19,
+                      "end_line": 11,
+                      "end_col": 33
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 19,
+                        "end_line": 11,
+                        "end_col": 33
+                      },
+                      "width": 4,
+                      "name": "value",
+                      "signing_cast": "$signed",
+                      "signed": true
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 38
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 18
+                    },
+                    "width": 8,
+                    "name": "wide_unsigned"
+                  },
+                  "value": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 12,
+                      "col": 21,
+                      "end_line": 12,
+                      "end_col": 37
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 21,
+                        "end_line": 12,
+                        "end_col": 37
+                      },
+                      "width": 4,
+                      "name": "value",
+                      "signing_cast": "$unsigned"
+                    }
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 19,
+                      "end_col": 44
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 18,
+                        "end_col": 42
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 13,
+                          "col": 9,
+                          "end_line": 17,
+                          "end_col": 60
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 13,
+                            "col": 9,
+                            "end_line": 16,
+                            "end_col": 44
+                          },
+                          "width": 1,
+                          "op": "&&",
+                          "left": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 13,
+                              "col": 9,
+                              "end_line": 15,
+                              "end_col": 64
+                            },
+                            "width": 1,
+                            "op": "&&",
+                            "left": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 13,
+                                "col": 9,
+                                "end_line": 15,
+                                "end_col": 33
+                              },
+                              "width": 1,
+                              "op": "&&",
+                              "left": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 13,
+                                  "col": 9,
+                                  "end_line": 14,
+                                  "end_col": 61
+                                },
+                                "width": 1,
+                                "op": "&&",
+                                "left": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 13,
+                                    "col": 9,
+                                    "end_line": 14,
+                                    "end_col": 32
+                                  },
+                                  "width": 1,
+                                  "op": "&&",
+                                  "left": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 13,
+                                      "col": 9,
+                                      "end_line": 13,
+                                      "end_col": 61
+                                    },
+                                    "width": 1,
+                                    "op": "&&",
+                                    "left": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 13,
+                                        "col": 10,
+                                        "end_line": 13,
+                                        "end_col": 31
+                                      },
+                                      "width": 1,
+                                      "op": "===",
+                                      "left": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 13,
+                                          "col": 10,
+                                          "end_line": 13,
+                                          "end_col": 21
+                                        },
+                                        "width": 4,
+                                        "name": "same_signed",
+                                        "signed": true
+                                      },
+                                      "right": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 13,
+                                          "col": 26,
+                                          "end_line": 13,
+                                          "end_col": 31
+                                        },
+                                        "width": 4,
+                                        "name": "value"
+                                      }
+                                    },
+                                    "right": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 13,
+                                        "col": 37,
+                                        "end_line": 13,
+                                        "end_col": 60
+                                      },
+                                      "width": 1,
+                                      "op": "===",
+                                      "left": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 13,
+                                          "col": 37,
+                                          "end_line": 13,
+                                          "end_col": 50
+                                        },
+                                        "width": 4,
+                                        "name": "same_unsigned"
+                                      },
+                                      "right": {
+                                        "kind": "Ident",
+                                        "span": {
+                                          "line": 13,
+                                          "col": 55,
+                                          "end_line": 13,
+                                          "end_col": 60
+                                        },
+                                        "width": 4,
+                                        "name": "value"
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 14,
+                                      "col": 10,
+                                      "end_line": 14,
+                                      "end_col": 31
+                                    },
+                                    "width": 1,
+                                    "op": "===",
+                                    "left": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 14,
+                                        "col": 10,
+                                        "end_line": 14,
+                                        "end_col": 21
+                                      },
+                                      "width": 8,
+                                      "name": "wide_signed"
+                                    },
+                                    "right": {
+                                      "kind": "Literal",
+                                      "span": {
+                                        "line": 14,
+                                        "col": 26,
+                                        "end_line": 14,
+                                        "end_col": 31
+                                      },
+                                      "width": 8,
+                                      "bits": "11111001"
+                                    }
+                                  }
+                                },
+                                "right": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 14,
+                                    "col": 37,
+                                    "end_line": 14,
+                                    "end_col": 60
+                                  },
+                                  "width": 1,
+                                  "op": "===",
+                                  "left": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 14,
+                                      "col": 37,
+                                      "end_line": 14,
+                                      "end_col": 50
+                                    },
+                                    "width": 8,
+                                    "name": "wide_unsigned"
+                                  },
+                                  "right": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 14,
+                                      "col": 55,
+                                      "end_line": 14,
+                                      "end_col": 60
+                                    },
+                                    "width": 8,
+                                    "bits": "00001001"
+                                  }
+                                }
+                              },
+                              "right": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 15,
+                                  "col": 10,
+                                  "end_line": 15,
+                                  "end_col": 32
+                                },
+                                "width": 1,
+                                "op": "s<",
+                                "left": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 10,
+                                    "end_line": 15,
+                                    "end_col": 24
+                                  },
+                                  "width": 4,
+                                  "name": "value",
+                                  "signing_cast": "$signed",
+                                  "signed": true
+                                },
+                                "right": {
+                                  "kind": "Literal",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 27,
+                                    "end_line": 15,
+                                    "end_col": 32
+                                  },
+                                  "width": 4,
+                                  "bits": "0000"
+                                }
+                              }
+                            },
+                            "right": {
+                              "kind": "Unary",
+                              "span": {
+                                "line": 15,
+                                "col": 37,
+                                "end_line": 15,
+                                "end_col": 64
+                              },
+                              "width": 1,
+                              "op": "!",
+                              "operand": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 15,
+                                  "col": 39,
+                                  "end_line": 15,
+                                  "end_col": 63
+                                },
+                                "width": 1,
+                                "op": "<",
+                                "left": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 39,
+                                    "end_line": 15,
+                                    "end_col": 55
+                                  },
+                                  "width": 4,
+                                  "name": "value",
+                                  "signing_cast": "$unsigned"
+                                },
+                                "right": {
+                                  "kind": "Literal",
+                                  "span": {
+                                    "line": 15,
+                                    "col": 58,
+                                    "end_line": 15,
+                                    "end_col": 63
+                                  },
+                                  "width": 4,
+                                  "bits": "0000"
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 16,
+                              "col": 10,
+                              "end_line": 16,
+                              "end_col": 43
+                            },
+                            "width": 1,
+                            "op": "===",
+                            "left": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 16,
+                                "col": 10,
+                                "end_line": 16,
+                                "end_col": 24
+                              },
+                              "width": 4,
+                              "name": "value",
+                              "signing_cast": "$signed",
+                              "signed": true
+                            },
+                            "right": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 16,
+                                "col": 37,
+                                "end_line": 16,
+                                "end_col": 42
+                              },
+                              "width": 4,
+                              "name": "value"
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 17,
+                            "col": 10,
+                            "end_line": 17,
+                            "end_col": 59
+                          },
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 17,
+                              "col": 10,
+                              "end_line": 17,
+                              "end_col": 32
+                            },
+                            "width": 4,
+                            "name": "same_signed",
+                            "signing_cast": "$unsigned"
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 17,
+                              "col": 47,
+                              "end_line": 17,
+                              "end_col": 58
+                            },
+                            "width": 4,
+                            "name": "same_signed",
+                            "signed": true
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 18,
+                          "col": 10,
+                          "end_line": 18,
+                          "end_col": 41
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 18,
+                            "col": 10,
+                            "end_line": 18,
+                            "end_col": 31
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000100",
+                          "signed": true,
+                          "fixed_bits_query": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 18,
+                            "col": 36,
+                            "end_line": 18,
+                            "end_col": 41
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000100"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 19,
+                        "col": 10,
+                        "end_line": 19,
+                        "end_col": 43
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 10,
+                          "end_line": 19,
+                          "end_col": 33
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000100",
+                        "signed": true,
+                        "fixed_bits_query": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 38,
+                          "end_line": 19,
+                          "end_col": 43
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000100"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 20,
+                      "col": 7,
+                      "end_line": 20,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 22,
+                      "col": 7,
+                      "end_line": 22,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

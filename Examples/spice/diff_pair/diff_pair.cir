@@ -1,0 +1,36 @@
+matched NMOS differential pair with resistor loads and ideal tail source
+* Component ports are inp, inn (gates), outp, outn (drains), vdd (supply),
+* and ground. The shared source node "tail" is internal. Gate drivers and
+* the supply belong to the run environment (testbench-free component).
+* The tail current source is IDEAL: it holds exactly I_TAIL at any tail
+* voltage (no compliance limit). At LAMBDA=0 this makes common-mode
+* rejection an exact invariance theorem (infinite CMRR) — a provable
+* idealization that real amplifiers only approximate.
+*
+* Bias design for provability (exact rational arithmetic):
+*   VDD = 5, VTO = 1, KP = 400u (W/L = 1), so beta = 1/2500 A/V^2.
+*   I_TAIL = 400u A, so I_TAIL/beta = 1 V^2 — a perfect square BY DESIGN:
+*   the balanced overdrive is Vov0 = sqrt(I_TAIL/beta) = 1 V exactly.
+*   RD = 10k on both sides, so each drain drops RD*I_TAIL/2 = 2 V at
+*   balance: outp = outn = 3 V exactly, tail = Vcm - VTO - Vov0 = Vcm - 2.
+*   Small-signal differential gain at balance (differential coordinate d,
+*   inputs Vcm +- d/2, output vod = outp - outn):
+*     vod(d) = -RD*beta*d*sqrt(I_TAIL/beta - d^2/4) = -4*d*sqrt(1 - d^2/4),
+*     dvod/dd at 0 = -beta*Vov0*RD = -gm*RD = -4.
+*   Balanced saturation CM range: Vcm <= VDD - RD*I_TAIL/2 + VTO = 4.
+*   Large-signal probe designed on the 3-4-5 triangle: d = 6/5 gives
+*   sqrt(1 - d^2/4) = 4/5 exactly, so at cm = 1/4 (inputs 17/20, -7/20):
+*   outp = 27/25, outn = 123/25, tail = -31/20, vod = -96/25 exactly.
+* ngspice-46 .op validation (vdd=5):
+*   inp=2.5,  inn=2.5   -> outp=outn=3.0, tail=0.5    (balanced)
+*   inp=3.5,  inn=3.5   -> outp=outn=3.0, tail=1.5    (CM shift: outputs
+*                          unchanged, tail tracks — ideal-tail CMRR)
+*   inp=0.85, inn=-0.35 -> outp=1.08, outn=4.92, tail=-1.55 (probe)
+*   vdd#branch = -400uA in every case (the ideal tail enforces it).
+m1 outp inp tail 0 nmod
+m2 outn inn tail 0 nmod
+rdp vdd outp 10k
+rdn vdd outn 10k
+itail tail 0 dc 400u
+.model nmod nmos (level=1 vto=1 kp=400u lambda=0 is=0)
+.end

@@ -1,0 +1,21 @@
+{
+  "admitted": 1816,
+  "manifest_sha256": "b29c7da0b92cf5d46912ce0a1f7fd40d5311c91340325361b56d2c86ef2c3762",
+  "population_rule": [
+    "test/language/*.js, excluding _FIXTURE and module-code/import/export",
+    "parses as a Script",
+    "no module/async/CanBlock* frontmatter flag",
+    "not a negative: test",
+    "every node kind STATED or PARTIAL per harness/es_coverage.py",
+    "every free identifier defined by the prelude or bound as a value global"
+  ],
+  "rejected": {
+    "kind-outside-the-evaluator": 8505,
+    "needs-an-intrinsic": 3415,
+    "negative-test": 311,
+    "not-parsed": 4201,
+    "out-of-slice-flag": 4745
+  },
+  "schema": "es-scoreboard-corpus-1",
+  "test262": "3655e7464de3d52643ecddd4b5f9f4f3e7f62398 2026-08-10T12:21:58-07:00"
+}

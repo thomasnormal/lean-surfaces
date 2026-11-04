@@ -1,0 +1,272 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "named_generate_wrapper_loop",
+ "envelope": "named_generate_wrapper_loop.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/sem2/named_generate_wrapper_loop/named_generate_wrapper_loop.sv",
+   "sha256": "8d0111f841e1bc5414b4da569e41a32af518d48eb8eb3913f3bb0b9b2a5cf741"
+  }
+ ],
+ "probe_points": "N=3",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 3
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "named_generate_wrapper_loop",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "y",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "lane",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 3,
+      "body": [
+       {
+        "kind": "Instance",
+        "name": "u",
+        "module": "named_generate_wrapper_loop_child",
+        "path": [
+         {
+          "label": "lanes",
+          "genvar": null
+         },
+         {
+          "label": "lane",
+          "genvar": "i"
+         }
+        ],
+        "params": [],
+        "ports": [
+         {
+          "kind": "PortConn",
+          "port": "a",
+          "dir": "in",
+          "expr": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "a"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         },
+         {
+          "kind": "PortConn",
+          "port": "y",
+          "dir": "out",
+          "target": {
+           "kind": "BitSel",
+           "width": 1,
+           "value": {
+            "kind": "Ident",
+            "width": 3,
+            "name": "y"
+           },
+           "index": {
+            "kind": "GenvarRef",
+            "name": "i"
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": [
+    {
+     "module": "named_generate_wrapper_loop_child",
+     "overrides": [],
+     "design": {
+      "kind": "Module",
+      "name": "named_generate_wrapper_loop_child",
+      "imports": [],
+      "params": [],
+      "types": [],
+      "ports": [
+       {
+        "kind": "Port",
+        "name": "a",
+        "dir": "in",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       },
+       {
+        "kind": "Port",
+        "name": "y",
+        "dir": "out",
+        "width": {
+         "kind": "PackedType",
+         "packed": [],
+         "resolved": 1
+        }
+       }
+      ],
+      "decls": [],
+      "processes": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "y"
+        },
+        "value": {
+         "kind": "Ident",
+         "width": 1,
+         "name": "a"
+        }
+       }
+      ],
+      "generates": [],
+      "others": []
+     }
+    }
+   ]
+  }
+ ]
+}

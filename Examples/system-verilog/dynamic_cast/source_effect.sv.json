@@ -1,0 +1,272 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/dynamic_cast/source_effect.sv",
+  "source_sha256": "8104aca35b66cb89ce78f923baf3221c0233a3646108a72ff6dc1b595c4f50c2",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 6,
+              "end_line": 3,
+              "end_col": 7
+            },
+            "name": "e",
+            "width": 3,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 13,
+              "end_line": 3,
+              "end_col": 14
+            },
+            "name": "r",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 20,
+              "end_line": 3,
+              "end_col": 26
+            },
+            "name": "source",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 2,
+              "end_line": 4,
+              "end_col": 106
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 4,
+                "end_col": 106
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 16,
+                    "end_line": 4,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "width": 3,
+                    "name": "e"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "width": 3,
+                    "bits": "110"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 21,
+                    "end_line": 4,
+                    "end_col": 30
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 21,
+                      "end_line": 4,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "name": "source",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 4,
+                        "col": 28,
+                        "end_line": 4,
+                        "end_col": 29
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 31,
+                    "end_line": 4,
+                    "end_col": 51
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 31,
+                      "end_line": 4,
+                      "end_col": 32
+                    },
+                    "width": 32,
+                    "name": "r",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Unsupported",
+                      "span": {
+                        "line": 4,
+                        "col": 33,
+                        "end_line": 4,
+                        "end_col": 50
+                      },
+                      "sv_kind": "DynamicCast:type-or-effects",
+                      "text": "$cast(e,++source)"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 52,
+                    "end_line": 4,
+                    "end_col": 93
+                  },
+                  "name": "$display",
+                  "format": "effect %0d %b %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 81,
+                        "end_line": 4,
+                        "end_col": 82
+                      },
+                      "width": 32,
+                      "name": "r",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 83,
+                        "end_line": 4,
+                        "end_col": 84
+                      },
+                      "width": 3,
+                      "name": "e"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 4,
+                        "col": 85,
+                        "end_line": 4,
+                        "end_col": 91
+                      },
+                      "width": 32,
+                      "name": "source",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 94,
+                    "end_line": 4,
+                    "end_col": 102
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

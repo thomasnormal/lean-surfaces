@@ -1,0 +1,75 @@
+# CI for lean_models. Mirrors tools/ci.sh (the local entry point — keep in sync).
+# The SV differential harness runs against Xcelium (`xrun`) where it exists
+# (self-hosted) and otherwise against Icarus Verilog (`iverilog`, installed
+# below via apt); tools/ci.sh auto-skips it only when neither simulator is
+# present, so this workflow is safe on stock GitHub runners.
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (pinned toolchain comes from lean-toolchain)
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # The Python differential oracle is pinned to CPython 3.9
+      # (harness/diff_test.py re-execs under python3.9; the coverage page
+      # refuses any other oracle). Listing 3.12 last keeps it the default
+      # python3, as on a stock runner.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
+            3.12
+      - name: Cache lake build
+        uses: actions/cache@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
+      - name: Notebook and pinned SV frontend dependencies
+        run: |
+          python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
+          # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang.
+          python3.12 -m pip install --user 'pyslang>=11,<12' || python3 -m pip install --user 'pyslang>=11,<12'
+      - name: Native frontend and circuit simulator dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang iverilog ngspice
+      - name: Restore Mathlib build cache
+        run: lake exe cache get
+      - name: Full check
+        env:
+          # The hosted runner terminates the complete build with SIGTERM at
+          # the final Python targets when two Lean workers overlap.  Keep the
+          # full target set and all gates, but serialize Lean's elaboration so
+          # the peak stays below the runner's resource limit.
+          LEAN_NUM_THREADS: 1
+        run: ./check.sh
+
+  # The README quickstart, verbatim, on both platforms it promises. Nothing
+  # else: the full check above is Linux-only. A red macOS row here means the
+  # first command a newcomer types is broken there.
+  quickstart:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python-only proof dependencies
+        run: python3 tools/test_python_onboarding.py
+      - name: Install elan (README quickstart, step 1)
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Build the tri example (README quickstart, step 3)
+        run: MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tri.spec
+      - name: Run a whole Python file and compare with CPython (README, next steps)
+        run: |
+          lake build leanmodels-run
+          tools/leanpy --compare harness/scripts/gen_script.py

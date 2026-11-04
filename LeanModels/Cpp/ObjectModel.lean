@@ -1,0 +1,240 @@
+import LeanModels.Cpp.TypeEvidence
+
+namespace LeanModels.Cpp
+
+abbrev ObjectId := Nat
+
+inductive StorageDuration where
+  | static_
+  | thread
+  | automatic
+  | temporary
+  | extendedTemporary
+  | dynamic
+  deriving Repr, BEq, Inhabited
+
+inductive ObjectPhase where
+  | storageOnly
+  | aliveUninitialized
+  | aliveInitialized
+  | ended
+  | released
+  deriving Repr, BEq, Inhabited
+
+inductive ObjectError where
+  | missing (object : ObjectId)
+  | lifetimeNotStarted
+  | notInitialized
+  | alreadyStarted
+  | alreadyInitialized
+  | lifetimeEnded
+  | storageReleased
+  | dynamicStorageLive
+  | notDynamicStorage
+  | notScopeStorage
+  | notTemporaryStorage
+  | temporaryAlreadyExtended
+  | lifetimeNotEnded
+  deriving Repr, BEq, Inhabited
+
+structure CppObject where
+  duration : StorageDuration
+  type : CppTypeEvidence
+  phase : ObjectPhase
+  deriving Repr, BEq, Inhabited
+
+structure ObjectStore where
+  objects : List CppObject
+  deriving Repr, BEq, Inhabited
+
+namespace ObjectStore
+
+def empty : ObjectStore := ⟨[]⟩
+
+def object? (store : ObjectStore) (object : ObjectId) : Option CppObject :=
+  store.objects[object]?
+
+def allocate (store : ObjectStore) (duration : StorageDuration)
+    (type : CppTypeEvidence) : ObjectStore × ObjectId :=
+  (⟨store.objects ++ [{duration, type, phase := .storageOnly}]⟩, store.objects.length)
+
+private def update (store : ObjectStore) (object : ObjectId)
+    (change : CppObject → CppObject) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some _ => .ok {objects := store.objects.modify object change}
+
+def beginLifetime (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .storageOnly => update store object fun current =>
+          {current with phase := .aliveUninitialized}
+      | .aliveUninitialized | .aliveInitialized => .error .alreadyStarted
+      | .ended => .error .lifetimeEnded
+      | .released => .error .storageReleased
+
+/-- Rung-1 automatic declaration boundary: reserve automatic storage and start
+    the object's lifetime, leaving initialization as a separate operation. -/
+def declareAutomatic (store : ObjectStore) (type : CppTypeEvidence) :
+    ObjectStore × ObjectId :=
+  let (reserved, object) := store.allocate .automatic type
+  match reserved.beginLifetime object with
+  | .ok live => (live, object)
+  | .error _ => (reserved, object)
+
+/-- A materialized temporary starts its lifetime for the current
+    full-expression. Its destruction is driven by `endFullExpression`. -/
+def declareTemporary (store : ObjectStore) (type : CppTypeEvidence) :
+    ObjectStore × ObjectId :=
+  let (reserved, object) := store.allocate .temporary type
+  match reserved.beginLifetime object with
+  | .ok live => (live, object)
+  | .error _ => (reserved, object)
+
+/-- Extend a live materialized temporary to the surrounding lexical scope.
+    The storage identity is retained; only the destruction boundary changes. -/
+def extendTemporary (store : ObjectStore) (object : ObjectId) :
+    Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.duration, value.phase with
+      | .temporary, .storageOnly => .error .lifetimeNotStarted
+      | .temporary, .aliveUninitialized | .temporary, .aliveInitialized =>
+          update store object fun current => {current with duration := .extendedTemporary}
+      | .temporary, .ended => .error .lifetimeEnded
+      | .temporary, .released => .error .storageReleased
+      | .extendedTemporary, .storageOnly | .extendedTemporary, .aliveUninitialized |
+          .extendedTemporary, .aliveInitialized => .error .temporaryAlreadyExtended
+      | .extendedTemporary, .ended => .error .lifetimeEnded
+      | .extendedTemporary, .released => .error .storageReleased
+      | _, .storageOnly => .error .notTemporaryStorage
+      | _, .aliveUninitialized | _, .aliveInitialized => .error .notTemporaryStorage
+      | _, .ended => .error .notTemporaryStorage
+      | _, .released => .error .storageReleased
+
+def initializeObject (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .storageOnly => .error .lifetimeNotStarted
+      | .aliveUninitialized => update store object fun current =>
+          {current with phase := .aliveInitialized}
+      | .aliveInitialized => .error .alreadyInitialized
+      | .ended => .error .lifetimeEnded
+      | .released => .error .storageReleased
+
+def endLifetime (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .storageOnly => .error .lifetimeNotStarted
+      | .aliveUninitialized | .aliveInitialized => update store object fun current =>
+          {current with phase := .ended}
+      | .ended => .error .lifetimeEnded
+      | .released => .error .storageReleased
+
+/-- End objects owned by a lexical scope in reverse declaration order.
+    Automatic objects are destroyed at scope exit; static and dynamic storage
+    require their own explicitly modelled boundaries. -/
+def endScope (store : ObjectStore) : List ObjectId → Except ObjectError ObjectStore
+  | [] => .ok store
+  | object :: rest => do
+      let store ← endScope store rest
+      let some value := store.object? object
+        | throw (.missing object)
+      unless value.duration == .automatic || value.duration == .extendedTemporary do
+        throw .notScopeStorage
+      store.endLifetime object
+
+/-- End temporaries at the end of a full-expression, in reverse construction
+    order. Automatic, static, and dynamic objects are not full-expression
+    temporaries and refuse this boundary. -/
+def endFullExpression (store : ObjectStore) : List ObjectId → Except ObjectError ObjectStore
+  | [] => .ok store
+  | object :: rest => do
+      let store ← endFullExpression store rest
+      let some value := store.object? object
+        | throw (.missing object)
+      unless value.duration == .temporary do
+        throw .notTemporaryStorage
+      store.endLifetime object
+
+/-- Reuse an ended storage slot for a new object. The storage identity is
+    preserved, while the type is replaced and the new lifetime remains
+    storage-only until initialization. -/
+def reuseEnded (store : ObjectStore) (object : ObjectId)
+    (type : CppTypeEvidence) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .ended => .ok {objects := store.objects.modify object fun current =>
+          {current with type, phase := .storageOnly}}
+      | .storageOnly => .error .lifetimeNotStarted
+      | .aliveUninitialized | .aliveInitialized => .error .lifetimeNotEnded
+      | .released => .error .storageReleased
+
+def scopeExitLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, first) := declareAutomatic empty intType
+  let (store, second) := declareAutomatic store intType
+  match store.endScope [first, second] with
+  | .ok ended =>
+      match ended.object? first, ended.object? second with
+      | some firstObject, some secondObject =>
+          firstObject.phase == .ended && secondObject.phase == .ended
+      | _, _ => false
+  | .error _ => false
+
+def temporaryLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, temporary) := declareTemporary empty intType
+  match store.endFullExpression [temporary] with
+  | .ok ended => ended.object? temporary |>.map (·.phase == .ended) |>.getD false
+  | .error _ => false
+
+def extendedTemporaryLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, temporary) := declareTemporary empty intType
+  match store.extendTemporary temporary with
+  | .error _ => false
+  | .ok extended =>
+      (extended.endFullExpression [temporary] matches .error .notTemporaryStorage) &&
+      match extended.endScope [temporary] with
+      | .ok ended =>
+          match ended.object? temporary with
+          | some value => value.duration == .extendedTemporary && value.phase == .ended
+          | none => false
+      | .error _ => false
+
+def releaseStorage (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase, value.duration with
+      | .ended, .dynamic => update store object fun current =>
+          {current with phase := .released}
+      | .storageOnly, _ => .error .lifetimeNotStarted
+      | .aliveUninitialized, _ | .aliveInitialized, _ => .error .dynamicStorageLive
+      | .ended, _ => .error .notDynamicStorage
+      | .released, _ => .error .storageReleased
+
+def readType (store : ObjectStore) (object : ObjectId) : Except ObjectError CppTypeEvidence :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .aliveInitialized => .ok value.type
+      | .storageOnly => .error .lifetimeNotStarted
+      | .aliveUninitialized => .error .notInitialized
+      | .ended => .error .lifetimeEnded
+      | .released => .error .storageReleased
+
+end ObjectStore
+
+end LeanModels.Cpp

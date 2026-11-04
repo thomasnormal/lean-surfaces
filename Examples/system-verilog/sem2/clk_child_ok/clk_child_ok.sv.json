@@ -1,0 +1,283 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "clk_child_ok",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/clk_child_ok/clk_child_ok.sv",
+      "sha256": "a0286faf8d4d5d537752d2e9b14bfcc8c61bb4327182884628777b9a2db8d073"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 12,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "clk_child_ok",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 16,
+              "end_line": 13,
+              "end_col": 19
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 21,
+              "end_line": 13,
+              "end_col": 22
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 14,
+              "col": 16,
+              "end_line": 14,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 16,
+              "col": 14,
+              "end_line": 16,
+              "end_col": 40
+            },
+            "name": "u",
+            "module": "clk_co_reg",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 21,
+                  "end_line": 16,
+                  "end_col": 24
+                },
+                "port": "ck",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 21,
+                    "end_line": 16,
+                    "end_col": 24
+                  },
+                  "width": 1,
+                  "name": "clk"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 30,
+                  "end_line": 16,
+                  "end_col": 31
+                },
+                "port": "d",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 30,
+                    "end_line": 16,
+                    "end_col": 31
+                  },
+                  "width": 1,
+                  "name": "d"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 16,
+                  "col": 37,
+                  "end_line": 16,
+                  "end_col": 38
+                },
+                "port": "q",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 16,
+                    "col": 37,
+                    "end_line": 16,
+                    "end_col": 38
+                  },
+                  "width": 1,
+                  "name": "q"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 5,
+          "col": 1,
+          "end_line": 10,
+          "end_col": 10
+        },
+        "name": "clk_co_reg",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "name": "ck",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 20,
+              "end_line": 6,
+              "end_col": 21
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 9,
+              "col": 3,
+              "end_line": 9,
+              "end_col": 34
+            },
+            "style": "always_ff",
+            "clock": "ck",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 9,
+                "col": 27,
+                "end_line": 9,
+                "end_col": 34
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 9,
+                  "col": 27,
+                  "end_line": 9,
+                  "end_col": 28
+                },
+                "width": 1,
+                "name": "q"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 9,
+                  "col": 32,
+                  "end_line": 9,
+                  "end_col": 33
+                },
+                "width": 1,
+                "name": "d"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

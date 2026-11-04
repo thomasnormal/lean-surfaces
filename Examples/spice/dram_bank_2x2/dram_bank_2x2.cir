@@ -1,0 +1,59 @@
+transistor-level 2x2 DRAM bank with explicit peripherals
+* This is a component deck, not a testbench. All supplies, complementary
+* controls, address rails, and data input are boundary ports.
+.subckt inv input out vdd
+mp out input vdd vdd psense
+mn out input 0 0 nmod
+.ends inv
+.subckt and2 a b out vdd
+mpa nand a vdd vdd pmod
+mpb nand b vdd vdd pmod
+mna nand a nseries 0 nmod
+mnb nseries b 0 0 nmod
+mpinv out nand vdd vdd pmod
+mninv out nand 0 0 nmod
+.ends and2
+* Full-swing bidirectional switch. enableb is the complement of enable.
+.subckt tg left right enable enableb vdd
+mn left enable right 0 nmod
+mp left enableb right vdd pmod
+.ends tg
+.subckt dram_cell store word bit
+maccess store word bit 0 nmod
+cstore store 0 30f
+.ends dram_cell
+.subckt dram_bank vdd vpre activate row rowb col colb precharge write writeb restore restoreb din dout
+* Transistor-level one-to-two row decoder.
+xword0 activate rowb word0 vdd and2
+xword1 activate row word1 vdd and2
+* Four physical 1T1C cells with shared wordlines and bitlines.
+xcell00 store00 word0 bit0 dram_cell
+xcell01 store01 word0 bit1 dram_cell
+xcell10 store10 word1 bit0 dram_cell
+xcell11 store11 word1 bit1 dram_cell
+cbit0 bit0 0 300f
+cbit1 bit1 0 300f
+* Precharge both columns to the externally supplied reference rail.
+mpre0 bit0 precharge vpre 0 nmod
+mpre1 bit1 precharge vpre 0 nmod
+* Every activated column is sensed and restored in parallel. This is
+* required because row activation disturbs every cell on the selected row.
+xsense00 bit0 sensed0_n vdd inv
+xsense01 sensed0_n sensed0 vdd inv
+xsense10 bit1 sensed1_n vdd inv
+xsense11 sensed1_n sensed1 vdd inv
+xrestore0 sensed0 bit0 restore restoreb vdd tg
+xrestore1 sensed1 bit1 restore restoreb vdd tg
+* Column selection occurs after sensing, so it cannot suppress restoration.
+xreadmux0 sensed0 dout colb col vdd tg
+xreadmux1 sensed1 dout col colb vdd tg
+* Writes are separately phased and column-selected.
+xwrite din writebus write writeb vdd tg
+xwritemux0 writebus bit0 colb col vdd tg
+xwritemux1 writebus bit1 col colb vdd tg
+.ends dram_bank
+xbank vdd vpre activate row rowb col colb precharge write writeb restore restoreb din dout dram_bank
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.model pmod pmos (level=1 vto=-1 kp=50u lambda=0 is=0)
+.model psense pmos (level=1 vto=-1 kp=100u lambda=0 is=0)
+.end

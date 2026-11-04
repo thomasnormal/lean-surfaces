@@ -1,0 +1,316 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/packed_union_reshaped_member/packed_union_reshaped_member.sv",
+  "source_sha256": "bb2acce99228ef018105e8560320ba616c02405bf21eddced08da80348b971ae",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 22,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 11,
+              "col": 5,
+              "end_line": 11,
+              "end_col": 10
+            },
+            "name": "value",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 13,
+              "col": 3,
+              "end_line": 21,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 13,
+                "col": 11,
+                "end_line": 21,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "SelectTarget",
+                    "span": {
+                      "line": 14,
+                      "col": 5,
+                      "end_line": 14,
+                      "end_col": 14
+                    },
+                    "width": 8,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 10
+                      },
+                      "width": 8,
+                      "name": "value"
+                    },
+                    "index": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 14
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    },
+                    "index_signed": false,
+                    "descending": false,
+                    "two_state": false
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 17,
+                      "end_line": 14,
+                      "end_col": 22
+                    },
+                    "width": 8,
+                    "bits": "00000000"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 33
+                  },
+                  "target": {
+                    "kind": "SelectTarget",
+                    "span": {
+                      "line": 15,
+                      "col": 5,
+                      "end_line": 15,
+                      "end_col": 24
+                    },
+                    "width": 2,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 10
+                      },
+                      "width": 8,
+                      "name": "value"
+                    },
+                    "index": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 24
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    },
+                    "index_signed": false,
+                    "descending": false,
+                    "two_state": false
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 15,
+                      "col": 27,
+                      "end_line": 15,
+                      "end_col": 32
+                    },
+                    "width": 2,
+                    "bits": "z1"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 43
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 16,
+                      "col": 9,
+                      "end_line": 16,
+                      "end_col": 35
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "SelectRead",
+                      "span": {
+                        "line": 16,
+                        "col": 9,
+                        "end_line": 16,
+                        "end_col": 18
+                      },
+                      "width": 8,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 9,
+                          "end_line": 16,
+                          "end_col": 14
+                        },
+                        "width": 8,
+                        "name": "value"
+                      },
+                      "index": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 16,
+                          "col": 9,
+                          "end_line": 16,
+                          "end_col": 18
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      },
+                      "index_signed": false,
+                      "descending": false
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 16,
+                        "col": 23,
+                        "end_line": 16,
+                        "end_col": 35
+                      },
+                      "width": 8,
+                      "bits": "0z100000"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 17,
+                      "col": 7,
+                      "end_line": 17,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 19,
+                      "col": 7,
+                      "end_line": 19,
+                      "end_col": 43
+                    },
+                    "name": "$display",
+                    "format": "FAIL: raw=%b",
+                    "args": [
+                      {
+                        "kind": "SelectRead",
+                        "span": {
+                          "line": 19,
+                          "col": 32,
+                          "end_line": 19,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 19,
+                            "col": 32,
+                            "end_line": 19,
+                            "end_col": 37
+                          },
+                          "width": 8,
+                          "name": "value"
+                        },
+                        "index": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 19,
+                            "col": 32,
+                            "end_line": 19,
+                            "end_col": 41
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        },
+                        "index_signed": false,
+                        "descending": false
+                      }
+                    ],
+                    "arg_signed": [
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,103 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/sformatf_char/sformatf_char.sv",
+  "source_sha256": "5c30f6c4839ba206f4506ce73b3a57726db497dce3c20389846e3ebdcfb94204",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 11,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 11,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 44
+                  },
+                  "name": "$display",
+                  "format": "%s",
+                  "args": [
+                    {
+                      "kind": "SFormatF",
+                      "span": {
+                        "line": 9,
+                        "col": 20,
+                        "end_line": 9,
+                        "end_col": 42
+                      },
+                      "format": "%c",
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 9,
+                          "col": 36,
+                          "end_line": 9,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "bits": "01000001"
+                      },
+                      "signed": false
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,147 @@
+"""Whole copies of flattened integral unpacked structs."""
+
+import unittest
+
+from pyslang.ast import Compilation
+from pyslang.syntax import SyntaxTree
+
+import extract
+
+
+def lower(source):
+    tree = SyntaxTree.fromText(source)
+    compilation = Compilation()
+    compilation.addSyntaxTree(tree)
+    extract._SOURCE_BYTES = source.encode()
+    return extract.convert_design(tree.sourceManager, compilation)
+
+
+def nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from nodes(child)
+
+
+class UnpackedStructCopy(unittest.TestCase):
+    def test_integral_struct_copy_is_cellwise(self):
+        design = lower(
+            'typedef struct { int a; bit [3:0] b; } T; '
+            'module top; T x, y; initial y = x; endmodule')
+        self.assertTrue(any(node.get("unpacked_struct_copy_lowered")
+                            for node in nodes(design)))
+
+    def test_integral_struct_self_copy_is_a_noop(self):
+        design = lower(
+            'typedef struct { int a; bit [3:0] b; } T; '
+            'module top; T x; initial x = x; endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("unpacked_struct_self_copy_noop")
+                            for node in nodes(design)))
+
+    def test_nonblocking_integral_struct_self_copy_stays_loud(self):
+        design = lower(
+            'typedef struct { int a; bit [3:0] b; } T; '
+            'module top; T x; initial x <= x; endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_aggregate_struct_copy_stays_loud(self):
+        design = lower(
+            'typedef struct { int a; string b; } T; '
+            'module top; T x, y; initial y = x; endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_positional_struct_pattern_is_fieldwise(self):
+        design = lower(
+            "typedef struct { bit [3:0] a; logic [3:0] b; } T; "
+            "module top; T x; initial x = '{4'b1x01, 4'b0101}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["x.a", "x.b"])
+        self.assertEqual(stmts[0]["value"]["kind"], "Squash2")
+        self.assertEqual(stmts[0]["value"]["operand"]["bits"], "1x01")
+        self.assertEqual(stmts[1]["value"]["bits"], "0101")
+
+    def test_keyed_struct_pattern_uses_declaration_order(self):
+        design = lower(
+            "typedef struct { logic [7:0] r; bit [7:0] g; logic [7:0] b; } T; "
+            "module top; T x; initial x = '{b:8'h00, r:8'hFF, g:8'h80}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["x.r", "x.g", "x.b"])
+        self.assertEqual(stmts[0]["value"]["bits"], "11111111")
+        self.assertEqual(stmts[1]["value"]["kind"], "Squash2")
+        self.assertEqual(stmts[1]["value"]["operand"]["bits"], "10000000")
+        self.assertEqual(stmts[2]["value"]["bits"], "00000000")
+
+    def test_conditional_struct_assignment_is_fieldwise(self):
+        design = lower(
+            "typedef struct { int count; byte code; } T; "
+            "module top; T left, right, selected; logic choose; "
+            "initial selected = choose ? left : right; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_conditional_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["selected.count", "selected.code"])
+        self.assertTrue(all(stmt["value"].get("kind") in ("Ternary", "Squash2")
+                             for stmt in stmts))
+        self.assertTrue(any(stmt["value"].get("kind") == "Squash2"
+                             for stmt in stmts))
+
+    def test_conditional_struct_self_alias_is_fieldwise(self):
+        design = lower(
+            "typedef struct { int count; byte code; } T; "
+            "module top; T left, selected; logic choose; "
+            "initial selected = choose ? selected : left; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_conditional_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual([stmt["target"]["name"] for stmt in lowered[0]["stmts"]],
+                         ["selected.count", "selected.code"])
+        self.assertTrue(all(stmt["value"].get("kind") in ("Ternary", "Squash2")
+                            for stmt in lowered[0]["stmts"]))
+
+    def test_conditional_struct_self_alias_nonblocking_stays_loud(self):
+        design = lower(
+            "typedef struct { int count; byte code; } T; "
+            "module top; T left, selected; logic choose; "
+            "initial selected <= choose ? selected : left; endmodule")
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_nested_struct_pattern_flattens_recursively(self):
+        design = lower(
+            "typedef struct { int a; struct { int b; int c; } inner; } T; "
+            "module top; T value; initial value = '{a: 1, inner: '{b: 2, c: 3}}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual([stmt["target"]["name"] for stmt in lowered[0]["stmts"]],
+                         ["value.a", "value.inner.b", "value.inner.c"])
+
+    def test_nested_default_pattern_flattens_recursively(self):
+        design = lower(
+            "typedef struct { int a; struct { int b; int c; } inner; } T; "
+            "module top; T value; initial value = '{default: 7}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual(len(lowered[0]["stmts"]), 3)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,43 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/let_expressions/program.sv",
+  "source_sha256": "af52324ce6c3eac8b76f2e61a0cdec2f568c56490ee8e0c1cd7c0be8ced82911",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "name": "top",
+        "span": {
+          "line": 1,
+          "col": 9,
+          "end_line": 1,
+          "end_col": 9
+        },
+        "ports": [],
+        "decls": [],
+        "processes": [],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 1,
+              "col": 9,
+              "end_line": 1,
+              "end_col": 9
+            },
+            "sv_kind": "Hierarchy:module-kind",
+            "text": "program/interface scheduling requires its own runtime contract"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

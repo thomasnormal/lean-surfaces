@@ -1,0 +1,44 @@
+module top;
+ typedef enum logic [3:0] {A=4'd3,B=4'd7,C=4'd1} four_t;
+ typedef enum bit [3:0] {D=4'd3,E=4'd7,F=4'd1} two_t;
+ typedef enum logic [2:0] {KNOWN=3'b010,HAS_X=3'bx10,HAS_Z=3'bz01} mixed_t;
+ four_t v; two_t t; mixed_t m;
+ integer step;
+ typedef struct packed {four_t value; logic valid;} packet_t;
+ packet_t packet;
+ four_t cells[0:1];
+ typedef enum {GEN[3], TAIL=8} generated_t;
+ generated_t generated;
+ typedef enum logic signed [3:0] {NEG=-3, POS=2} signed_t;
+ signed_t signed_value;
+ logic signed [63:0] wide, large_step;
+ four_t proof_value, proof_result;
+ initial begin
+ v=A; $display("ends %h %h %0d",v.first(),v.last(),v.num());
+ $display("wrap %h %h %h %h",v.next(),v.prev(),v.next(5),v.prev(5));
+ v=four_t'(4'd5);$display("invalid4 %h %h %h %h",v.next(),v.prev(),v.next(0),v.prev(0));
+ t=two_t'(4'd5);$display("invalid2 %h %h %h %h",t.next(),t.prev(),t.next(0),t.prev(0));
+ v=four_t'(4'bxxxx);$display("unknown4 %h %h %h %h",v.next(),v.prev(),v.next(0),v.prev(0));
+ v=A;step=-1;$display("negative %h %h",v.next(step),v.prev(step));
+ step='x;$display("unknown_count %h %h",v.next(step),v.prev(step));
+ m=HAS_X;$display("named_x %b %b %b %b",m,m.next(),m.prev(),m.next(0));
+ m=HAS_Z;$display("named_z %b %b %b %b",m,m.next(),m.prev(),m.prev(0));
+ v=A; large_step=-1;
+ $display("wide_negative %h %h", v.next(large_step), v.prev(large_step));
+ large_step=64'h100000001;
+ $display("wide_truncate %h %h", v.next(large_step), v.prev(large_step));
+ $display("nested %h", v.next(v.num()));
+ packet.value=B; packet.valid=1'b1;
+ $display("field %h %h %0d %b", packet.value.next(), packet.value.prev(), packet.value.num(), packet.valid);
+ cells[0]=A; cells[1]=C;
+ $display("cells %h %h", cells[0].prev(), cells[1].next());
+ generated=GEN1;
+ $display("generated %0d %0d %0d %0d", generated.first(), generated.last(), generated.num(), generated.next());
+ signed_value=POS; wide=signed_value.first();
+ $display("signed %0d %h", wide, signed_value.prev());
+ proof_value=four_t'(5);
+ proof_result=proof_value.next();
+ $display("proof_default %h", proof_result);
+ $finish;
+ end
+endmodule

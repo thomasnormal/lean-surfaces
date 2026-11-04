@@ -1,0 +1,6 @@
+DRAM 1T1C cell with explicit loaded bitline
+maccess store word bit 0 nmod
+cstore store 0 30f
+cbit bit 0 300f
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.end

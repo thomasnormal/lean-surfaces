@@ -1,0 +1,104 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assignment_patterns/multidim.sv",
+  "source_sha256": "f01dc007a7c5525b90db078120eafdcd9dbbcb65f2bd594a7ebc6c49020d7645",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 20,
+              "end_line": 2,
+              "end_col": 41
+            },
+            "sv_kind": "VariableSymbol:range",
+            "text": "value = '{4'ha, 4'h5}"
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 61
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 3,
+                "end_col": 61
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 3,
+                    "col": 17,
+                    "end_line": 3,
+                    "end_col": 48
+                  },
+                  "name": "$display",
+                  "format": "multidim %h",
+                  "args": [
+                    {
+                      "kind": "Unsupported",
+                      "span": {
+                        "line": 3,
+                        "col": 41,
+                        "end_line": 3,
+                        "end_col": 46
+                      },
+                      "sv_kind": "NamedValueExpression:range",
+                      "text": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 3,
+                    "col": 49,
+                    "end_line": 3,
+                    "end_col": 57
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

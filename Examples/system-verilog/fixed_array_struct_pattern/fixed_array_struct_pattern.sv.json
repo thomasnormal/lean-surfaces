@@ -1,0 +1,526 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv",
+  "source_sha256": "1b31f50a8e4ae34f265b5eb9214caca49de7deaba50c130cafe9e8d3b5ad7381",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 22,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 8,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "abkey[1].a",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 8,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "abkey[1].b",
+            "width": 64,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 8,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "abkey[0].a",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 8,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "abkey[0].b",
+            "width": 64,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 21,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 21,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 46
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 14,
+                          "col": 5,
+                          "end_line": 14,
+                          "end_col": 10
+                        },
+                        "width": 32,
+                        "name": "abkey[1].a"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 14,
+                            "col": 19,
+                            "end_line": 14,
+                            "end_col": 20
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 14,
+                          "col": 5,
+                          "end_line": 14,
+                          "end_col": 10
+                        },
+                        "width": 64,
+                        "name": "abkey[1].b"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 14,
+                          "col": 24,
+                          "end_line": 14,
+                          "end_col": 25
+                        },
+                        "width": 64,
+                        "bits": "0000000000000000000000000000000000000000000000000000000000000010"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 14,
+                          "col": 5,
+                          "end_line": 14,
+                          "end_col": 10
+                        },
+                        "width": 32,
+                        "name": "abkey[0].a"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 14,
+                            "col": 34,
+                            "end_line": 14,
+                            "end_col": 35
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000101"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 14,
+                        "col": 5,
+                        "end_line": 14,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 14,
+                          "col": 5,
+                          "end_line": 14,
+                          "end_col": 10
+                        },
+                        "width": 64,
+                        "name": "abkey[0].b"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 14,
+                          "col": 42,
+                          "end_line": 14,
+                          "end_col": 44
+                        },
+                        "width": 64,
+                        "bits": "0000000000000000000000000000000000000000000000000000000001100011"
+                      }
+                    }
+                  ],
+                  "fixed_array_struct_pattern_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 64
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 15,
+                      "col": 9,
+                      "end_line": 15,
+                      "end_col": 78
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 15,
+                        "col": 9,
+                        "end_line": 15,
+                        "end_col": 59
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 15,
+                          "col": 9,
+                          "end_line": 15,
+                          "end_col": 41
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 15,
+                            "col": 9,
+                            "end_line": 15,
+                            "end_col": 23
+                          },
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 15,
+                              "col": 9,
+                              "end_line": 15,
+                              "end_col": 19
+                            },
+                            "width": 32,
+                            "name": "abkey[1].a",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 15,
+                              "col": 22,
+                              "end_line": 15,
+                              "end_col": 23
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 15,
+                            "col": 27,
+                            "end_line": 15,
+                            "end_col": 41
+                          },
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 15,
+                              "col": 27,
+                              "end_line": 15,
+                              "end_col": 37
+                            },
+                            "width": 64,
+                            "name": "abkey[1].b"
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 15,
+                              "col": 40,
+                              "end_line": 15,
+                              "end_col": 41
+                            },
+                            "width": 64,
+                            "bits": "0000000000000000000000000000000000000000000000000000000000000010"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 15,
+                          "col": 45,
+                          "end_line": 15,
+                          "end_col": 59
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 15,
+                            "col": 45,
+                            "end_line": 15,
+                            "end_col": 55
+                          },
+                          "width": 32,
+                          "name": "abkey[0].a",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 58,
+                            "end_line": 15,
+                            "end_col": 59
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000101"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 15,
+                        "col": 63,
+                        "end_line": 15,
+                        "end_col": 78
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 63,
+                          "end_line": 15,
+                          "end_col": 73
+                        },
+                        "width": 64,
+                        "name": "abkey[0].b"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 15,
+                          "col": 76,
+                          "end_line": 15,
+                          "end_col": 78
+                        },
+                        "width": 64,
+                        "bits": "0000000000000000000000000000000000000000000000000000000001100011"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 18,
+                      "col": 7,
+                      "end_line": 19,
+                      "end_col": 64
+                    },
+                    "name": "$display",
+                    "format": "FAIL: abkey[1]={a=%0d,b=%0d} abkey[0]={a=%0d,b=%0d}",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 16,
+                          "end_line": 19,
+                          "end_col": 26
+                        },
+                        "width": 32,
+                        "name": "abkey[1].a",
+                        "signed": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 28,
+                          "end_line": 19,
+                          "end_col": 38
+                        },
+                        "width": 64,
+                        "name": "abkey[1].b"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 40,
+                          "end_line": 19,
+                          "end_col": 50
+                        },
+                        "width": 32,
+                        "name": "abkey[0].a",
+                        "signed": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 52,
+                          "end_line": 19,
+                          "end_col": 62
+                        },
+                        "width": 64,
+                        "name": "abkey[0].b"
+                      }
+                    ],
+                    "arg_signed": [
+                      true,
+                      false,
+                      true,
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

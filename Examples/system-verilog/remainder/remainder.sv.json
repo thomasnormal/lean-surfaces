@@ -1,0 +1,122 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/remainder/remainder.sv",
+  "source_sha256": "26fceb4111c643b1d545d07304171774e0033c34157158d5cbf0022161072967",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "remainder",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 21,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "left",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 21,
+              "end_line": 3,
+              "end_col": 26
+            },
+            "name": "right",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 22,
+              "end_line": 4,
+              "end_col": 28
+            },
+            "name": "result",
+            "dir": "out",
+            "width": 8
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 6,
+              "col": 10,
+              "end_line": 6,
+              "end_col": 31
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 10,
+                "end_line": 6,
+                "end_col": 16
+              },
+              "width": 8,
+              "name": "result"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 6,
+                "col": 19,
+                "end_line": 6,
+                "end_col": 31
+              },
+              "width": 8,
+              "op": "u%",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 19,
+                  "end_line": 6,
+                  "end_col": 23
+                },
+                "width": 8,
+                "name": "left"
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 26,
+                  "end_line": 6,
+                  "end_col": 31
+                },
+                "width": 8,
+                "name": "right"
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,533 @@
+/-
+**The monadic rebuild's SCRIPT EXECUTOR** — running a whole PROGRAM.
+
+`docs/python-monadic-rebuild.md` §7 ranked this last, gated on the closed-function
+surface being mostly green. It is, so here it is.
+
+# THE ONE PIPELINE, and why the executor exists at all
+
+A module frame's locals ARE its globals. `runScript` therefore executes EVERY
+top-level statement from an EMPTY world and PUBLISHES the frame's locals into
+`World.globals` after each one — so a call made by a later statement reads exactly
+what an earlier one bound. Nothing is folded, so nothing can be skipped, rolled
+back, or read stale.
+
+That per-statement publish is the whole reason this is not just `execOpenList`:
+every compound statement needs a CONTROL SHELL that runs its body through the
+publishing loop rather than delegating the statement wholesale. The trunk records
+what happens without one — `scriptFlushCoherent`, the guard that refuses a
+compound whose bindings a function body might read stale — and it is kept here.
+
+# THE ADMISSION MACHINERY IS REUSED WHOLE
+
+Everything above the trunk's executor is PURE and is imported, not rebuilt:
+`classesCreationAdmissible`, `scriptForwardName`, `scriptCompoundDefsBoundBefore`,
+`scriptFlushCoherent`, `scriptView`,
+`publishScriptGlobals`, `scriptRebindMsg`, `benignImportBinds`,
+`benignImportNames`, `dunderShaped`. That is roughly 530 of the trunk's 893
+script lines. The rebuild owns the ~320 lines of CONTROL, exactly as it owns
+`evalOpen`'s control and none of `evalBinOp`'s arithmetic.
+
+# THE SHELLS RIDE A SECOND KNOT RECORD
+
+Every shell is fuel-recursive (a `while` re-tests, a cursor re-reads), so none of
+them can be a member of a structural block. `SKont` is the same
+recursion-knot-boundary device `Kont` already is, for the script layer: each
+shell is an ORDINARY non-recursive function of `S`, and every loop step goes
+through a field, i.e. one fuel level down — precisely the trunk's
+`execScriptStmts m fuel` recursion re-expressed.
+
+Zero `sorry`. Zero `native_decide`.
+-/
+import LeanModels.Python.Monadic.Eval
+import LeanModels.Python.Script
+
+open LeanModels LeanModels.Python
+
+namespace LeanModels.Python.Monadic
+
+/-- The script layer's knot record — `Kont` for control shells. -/
+structure SKont where
+  /-- Top-level statements, PUBLISHING after each. -/
+  stmts : List Stmt → SemF RFlow
+  /-- One top-level statement. -/
+  one : Stmt → SemF RFlow
+  /-- `for` over an immutable value sequence. -/
+  forSeq : Expr → List RVal → List Stmt → SemF RFlow
+  /-- `for` over a heap list — the LIVE index cursor. -/
+  forList : Expr → Addr → Nat → List Stmt → SemF RFlow
+  /-- `for k in d` — the LIVE dict cursor, carrying the size, starting key
+  order, and `shapeVersion` the loop started with (§3a). -/
+  forDict : Expr → Addr → Nat → Nat → Nat → List RVal → DictViewKind → List Stmt → SemF RFlow
+  /-- `for` over a generator — the LAZY cursor. -/
+  forGen : Expr → Addr → List Stmt → SemF RFlow
+  /-- `while … else`. -/
+  whileL : Expr → List Stmt → List Stmt → SemF RFlow
+
+/-- Fuel exhausted: every shell answers `.timeout`. -/
+def SKont.bottom : SKont where
+  stmts   := fun _ => exhausted
+  one     := fun _ => exhausted
+  forSeq  := fun _ _ _ => exhausted
+  forList := fun _ _ _ _ => exhausted
+  forDict := fun _ _ _ _ _ _ _ _ => exhausted
+  forGen  := fun _ _ _ => exhausted
+  whileL  := fun _ _ _ => exhausted
+
+/-- THE PUBLISH: a top-level binding IS a module global. A rebind the static
+tables already own is the loud refusal, never a silent shadow. -/
+def publishM (m : Module) : SemF Unit := do
+  let st ← get
+  match publishScriptGlobals m st with
+  | some st' => set st'
+  | Option.none => refuse scriptRebindMsg
+
+/-- Bind a loop target and publish it BEFORE the body runs — the loop variable
+is a module global too, and a function called from inside the body must see it. -/
+def bindAndPublish (m : Module) (target : Expr) (v : RVal) : SemF Unit := do
+  assignM target v
+  publishM m
+
+/-- Route a loop body's flow: `next`/`cont` continue, `brk` ends the loop
+normally, `ret` propagates. Shared by all four cursors. -/
+def loopFlow (again : SemF RFlow) : RFlow → SemF RFlow
+  | .next | .cont => again
+  | .brk => pure .next
+  | .ret v => pure (.ret v)
+
+/-- Run retained class-body statements in a fresh class namespace.  `inWorld`
+projects that namespace away while retaining the shared world effects, and
+`inFrame` restores the caller's module locals. -/
+def classBodyStmtsAt (K : Kont) (m : Module) : List Stmt → SemF RFlow
+  | [] => pure .next
+  | s :: rest => do
+      let flow ← execOpen K m s
+      match flow with
+      | .next => classBodyStmtsAt K m rest
+      | flow => pure flow
+
+/-! ## §1 THE SHELLS — ordinary functions of `S`, one fuel level per step -/
+
+/-- Top-level statements, flushing after each. `break`/`continue` escape to an
+enclosing shell; `return` is the top-level refusal. -/
+def scriptStmtsAt (S : SKont) (m : Module) : List Stmt → SemF RFlow
+  | [] => pure .next
+  | s :: rest => do
+      -- Direct top-level expression/assignment references are decided at
+      -- their source position.  The static function table may already know
+      -- a later definition, but CPython raises NameError until that def has
+      -- executed; preserve that runtime result instead of refusing the file.
+      let flow ←
+        match scriptForwardName m s with
+        | some n => raisePy (.nameError n)
+        | Option.none => S.one s
+      publishM m
+      match flow with
+      | .next => S.stmts rest
+      | .ret _ => refuse "'return' at module top level (CPython: SyntaxError at compile time)"
+      | flow => pure flow
+
+/-- The VALUE-sequence cursor (tuples, namedtuples, boundary lists, str code
+points, materialized ranges — the snapshot IS the live semantics for all of
+them, because every one of them is immutable). -/
+def scriptForAt (S : SKont) (m : Module) (target : Expr) (xs : List RVal)
+    (body : List Stmt) : SemF RFlow :=
+  match xs with
+  | [] => pure .next
+  | x :: rest => do
+      bindAndPublish m target x
+      loopFlow (S.forSeq target rest body) (← S.stmts body)
+
+/-- The LIVE INDEX CURSOR over a heap list — re-read each step, so in-place
+mutation, growth and `pop`-shrinkage during iteration are observed exactly as
+CPython's listiterator observes them. The referent dispatch and every one of its
+refusals are the interpreter's verbatim. -/
+def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
+    (body : List Stmt) : SemF RFlow := do
+  match Heap.get? (← frameHeap) a with
+  | some (.cell _) => refuse cellInternal
+  | some (.list xs) =>
+      if i < xs.size then do
+        bindAndPublish m target (xs.getD i .none)
+        loopFlow (S.forList target a (i + 1) body) (← S.stmts body)
+      else pure .next
+  | some (.dict es sv) => S.forDict target a 0 es.size sv (es.toList.map Prod.fst) .keys body
+  | some (.dictView da kind) =>
+      match Heap.get? (← frameHeap) da with
+      | some (.dict es sv) => S.forDict target da 0 es.size sv (es.toList.map Prod.fst) kind body
+      | _ => refuse danglingMsg
+  | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
+  | some (.generator ..) =>
+      if moduleGenFree m then
+        refuse "internal: a generator object in a module with no generator defs (heap well-formedness violation — report this)"
+      else S.forGen target a body
+  | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
+  | some (.pyset xs) => do
+      let ys ← liftRes (setIterOrder xs.toList)
+      S.forSeq target ys body
+  | Option.none => refuse "internal: a dangling heap address (report this)"
+
+/-- §3a/§3c-i-a THE LIVE DICT CURSOR at module scope — one cursor for the
+bare-key form and all three views. Same three regimes, same guards, same faithful
+`RuntimeError`; the only difference is that this one binds the KEY where
+`items` binds a `(key, value)` tuple (docs/memory-model.md §dict iteration). -/
+def scriptForDictAt (S : SKont) (m : Module) (target : Expr) (a i n sv : Nat)
+    (initialKeys : List RVal) (kind : DictViewKind) (body : List Stmt) : SemF RFlow := do
+  match ← dictStepM a i n sv initialKeys kind with
+  | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+  | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+  | some .rekeyedDone => pure .next
+  | some .rekeyedRuntime => raisePy (.runtimeError "dictionary keys changed during iteration")
+  | some (.yieldVal kv) => do
+      bindAndPublish m target kv
+      loopFlow (S.forDict target a (i + 1) n sv initialKeys kind body) (← S.stmts body)
+  | some .done => pure .next
+  | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
+
+/-- The LAZY generator cursor: one `stepIter` per element, so the generator's own
+body effects interleave exactly as they do under the interpreter's loop. -/
+def scriptForGenAt (S : SKont) (K : Kont) (m : Module) (target : Expr) (a : Addr)
+    (body : List Stmt) : SemF RFlow := do
+  match ← inFrame (K.stepIter a) with
+  | Option.none => pure .next
+  | some v => do
+      bindAndPublish m target v
+      loopFlow (S.forGen target a body) (← S.stmts body)
+
+/-- `while … else` over script statements. The `else` block runs on EXHAUSTION
+and is SKIPPED by `break`; a `break` inside the `orelse` belongs to an ENCLOSING
+loop and propagates. The tier is unchanged from the interpreter's `while` — only
+the publish granularity differs. -/
+def scriptWhileAt (S : SKont) (K : Kont) (m : Module) (test : Expr)
+    (body orelse : List Stmt) : SemF RFlow := do
+  let t ← evalOpen K m test
+  let b ← truthyM t
+  if b then loopFlow (S.whileL test body orelse) (← S.stmts body)
+  else S.stmts orelse
+
+/-- The admitted single-item synchronous context-manager shell. The context
+value remains in the frame while the body runs, but the body itself goes
+through the script publishing loop so module globals become visible to calls
+made from inside the `with` body. -/
+def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
+    (body : Array Stmt) (withUnsupported : Option String) (sp : Span) : SemF RFlow := do
+  match withUnsupported, items.toList with
+  | some reason, _ =>
+      refuse s!"with statement uses unsupported features ({reason}) — outside the tier"
+  | none, [item] =>
+      match item.context with
+      | .call (.name fname _) _args kwargs callUnsupported _ =>
+          let exitName := fname ++ ".__exit__"
+          let exitArgsFree :=
+            (findFunction m exitName).map FunctionDefn.withExitExceptionArgsFree == some true
+          let exitTypeTest :=
+            (findFunction m exitName).map FunctionDefn.withExitExceptionTypeTest == some true
+          if !exitArgsFree && !exitTypeTest then
+            refuse "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
+          else if !kwargs.isEmpty || callUnsupported.isSome then
+            refuse "with context calls with keywords or starred arguments are outside the tier"
+          else
+            match findContextClassM m fname with
+            | Option.none =>
+                refuse "with requires an admitted class with __enter__ and __exit__"
+            | some _ => do
+                let contextName := "<with-context>"
+                let contextExpr := Expr.name contextName sp
+                let enterExpr :=
+                  Expr.call (Expr.attribute contextExpr "__enter__" sp)
+                    #[] #[] Option.none sp
+                let noneExpr := Expr.constant .none sp
+                let exitExpr :=
+                  Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                    #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
+                let exceptionExitExpr :=
+                  if exitTypeTest then
+                    Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                      #[Expr.constant (.str "exception") sp, noneExpr, noneExpr]
+                      #[] Option.none sp
+                  else exitExpr
+                let old ← envGet contextName
+                let context ← evalOpen K m item.context
+                envSet contextName context
+                let entered ← evalOpen K m enterExpr
+                match item.target with
+                | some target => bindAndPublish m target entered
+                | none => pure ()
+                let flow ←
+                  tryCatch (do
+                    let flow ← S.stmts body.toList
+                    pure (Except.ok flow)) (fun e => do
+                      envSet contextName context
+                      match old with
+                      | some value => do
+                          withExitResult (evalOpen K m) exceptionExitExpr
+                            (envSet contextName value) e
+                      | none => do
+                          withExitResult (evalOpen K m) exceptionExitExpr
+                            (envRemove contextName) e)
+                match flow with
+                | Except.ok flow => do
+                    let _ ← evalOpen K m exitExpr
+                    match old with
+                    | some value => envSet contextName value
+                    | none => envRemove contextName
+                    pure flow
+                | Except.error _ => pure .next
+      | _ =>
+          refuse "with context must be a direct class constructor call"
+  | _, _ => refuse "multiple context-manager items are outside the tier"
+
+/-- ONE top-level statement. `if`, `while`, `try`, `with` and every admitted `for` run
+through control shells so the per-statement publish happens INSIDE them; a
+whitelisted `import` is skipped (it binds through the static view, and running
+one observes nothing); every LEAF statement is delegated to the interpreter, so
+the TIER is the interpreter's and not a second one. -/
+def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
+  | .whileLoop test body orelse _ => S.whileL test body.toList orelse.toList
+  | .ifStmt test body orelse _ => do
+      let t ← evalOpen K m test
+      let b ← truthyM t
+      if b then S.stmts body.toList else S.stmts orelse.toList
+  | .forStmt target iter body orelse _ =>
+      if orelse.isEmpty then do
+        -- §3c-i-a: ALL THREE VIEWS ride the ONE cursor. `.items()` used to
+        -- have a shell of its own (`scriptItemsAt`); two mechanisms for one
+        -- construct is the drift `dictStep` exists to prevent one level down,
+        -- so it is folded in here. `.items()`'s semantics are unchanged — same
+        -- live re-read, same faithful size `RuntimeError` — and it gains the
+        -- same-size key-set guard for free.
+        match dictViewCall iter with
+        | some (d, kind) => do
+            let dv ← evalOpen K m d
+            match dv with
+            | .ref a =>
+                match Heap.get? (← frameHeap) a with
+                | some (.dict es sv) => S.forDict target a 0 es.size sv (es.toList.map Prod.fst) kind body.toList
+                | _ => refuse viewRecvMsg
+            | _ => refuse viewRecvMsg
+        | Option.none => do
+          let it ← evalOpen K m iter
+          match it with
+          | .listV xs => S.forSeq target xs.toList body.toList
+          | .tuple xs => S.forSeq target xs.toList body.toList
+          | .ntuple _ _ xs => S.forSeq target xs.toList body.toList
+          | .str t => S.forSeq target (strCharVals t) body.toList
+          | .bytes values => S.forSeq target (bytesIntVals values) body.toList
+          | .rangeV lo hi step => do
+              let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
+              S.forSeq target xs body.toList
+          | .ref a => S.forList target a 0 body.toList
+          | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+      else refuse "'for … else' is outside the v0 tier"
+  | .tryStmt body excName handler tryUnsupported _ =>
+      -- The admission is the interpreter's verbatim; only the body and handler
+      -- statements move to the publishing loop.
+      match tryUnsupported with
+      | some reason =>
+          refuse s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
+      | Option.none => do
+        let st ← get
+        if excName.isEmpty then
+          tryCatch (S.stmts body.toList) (fun _ => S.stmts handler.toList)
+        else if excHandlerTuple excName then
+          let names := excHandlerNames excName
+          if names.any (fun name =>
+              (Env.lookup st.locals name).isSome
+                || (lookupG (moduleGlobals m).1 name).isSome
+                || (Env.lookup st.world.globals name).isSome
+                || (findFunction m name).isSome) then
+            refuse s!"'except {excName}:': a tuple handler name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+          else if names.any (fun name => !excHandlerAdmitted m name) then
+            refuse s!"'except {excName}:': every tuple handler name must be an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+          else
+            tryCatch (S.stmts body.toList) (fun e =>
+              if names.any (fun name => excHandlerMatches m name e) then
+                S.stmts handler.toList
+              else raisePy e)
+        else if (Env.lookup st.locals excName).isSome
+            || (lookupG (moduleGlobals m).1 excName).isSome
+            || (Env.lookup st.world.globals excName).isSome
+            || (findFunction m excName).isSome then
+          refuse s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+        else
+          match findClass m excName with
+          | Option.none =>
+              if (findNamedTuple m excName).isSome then
+                tryCatch (S.stmts body.toList) (fun _ =>
+                  raisePy (.typeError
+                    "catching classes that do not inherit from BaseException is not allowed"))
+              else if importErrorHandlerMatch excName then
+                tryCatch (S.stmts body.toList) (fun e =>
+                  match e with
+                  | .importError _ => S.stmts handler.toList
+                  | e => raisePy e)
+              else if admittedBuiltinExc.contains excName then
+                -- §except-builtin: a BUILTIN exception class. The whole
+                -- decision is `builtinExcCatches`, which lives in `Ast.lean`
+                -- as DATA: this matcher exists TWICE (function scope and
+                -- module scope) and a rule spelled twice is a rule that
+                -- drifts. Nothing is inferred from CPython's hierarchy --
+                -- every pair in that table is one the tier can exhibit.
+                tryCatch (S.stmts body.toList) (fun e => do
+                  -- The handler expression is evaluated after the
+                  -- protected body.  A module-level assignment can replace
+                  -- a builtin class with a scalar before that point; mirror
+                  -- CPython's faithful TypeError instead of matching the
+                  -- statically named builtin.
+                  let st' ← get
+                  if (Env.lookup st'.locals excName).isSome
+                      || (lookupG (moduleGlobals m).1 excName).isSome
+                      || (Env.lookup st'.world.globals excName).isSome
+                      || (findFunction m excName).isSome then
+                    raisePy (.typeError
+                      "catching classes that do not inherit from BaseException is not allowed")
+                  else if builtinExcCatches excName e || userExcCatches m excName e then
+                    S.stmts handler.toList
+                  else raisePy e)
+              else if refusedAncestorExc.contains excName then
+                refuse s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"
+              else
+                refuse s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass` or a measured direct builtin ancestor), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
+          | some (ci, c) =>
+              if !c.isExc then
+                refuse s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+              else
+                tryCatch (S.stmts body.toList) (fun e =>
+                  match e with
+                  | .user cid _ | .userMessage cid _ _ => if cid == ci then S.stmts handler.toList else raisePy e
+                  | e => raisePy e)
+  | .withStmt items body withUnsupported sp =>
+      scriptWithAt S K m items body withUnsupported sp
+  | .unsupported "ClassDef" name _ =>
+      match findClass m name with
+      | some (_, c) =>
+          if c.creationPure then pure .next
+          else if c.creationExecutable then
+            inFrame (inWorld [] (classBodyStmtsAt K m c.body.toList))
+          else refuse s!"class {name}: executable class creation is outside the tier"
+      | none => refuse s!"internal: class marker {name} has no class table entry"
+  | .unsupported "Import" text sp =>
+      if (benignImportBinds text).isSome then pure .next
+      else execOpen K m (.unsupported "Import" text sp)
+  | .unsupported "ImportFrom" text sp =>
+      if (benignImportBinds text).isSome then pure .next
+      else execOpen K m (.unsupported "ImportFrom" text sp)
+  | .delStmt names sp => do
+      -- THE MODULE-SCOPE `del`. The frame's locals ARE the module globals and
+      -- the one pipeline keeps them COMPLETE, so a locals HIT removes exactly
+      -- CPython's module global. A MISS is decided in CPython's own order of
+      -- authority, and the PARTIAL left-to-right effect is retained on the raise
+      -- (`del x, nosuch` really removes `x`). Deletion never consults builtins:
+      -- CPython's `del len` is the same `NameError`.
+      let st ← get
+      match delNames st.locals names.toList with
+      | (env, Option.none) => do envPut env; pure .next
+      | (env, some n) =>
+          if names.toList == [n] && n == "__name__" then
+            if (Env.lookup (← frameGlobals) (deletedModuleDunderMarker n)).isSome
+                || (Env.lookup (← get).locals (deletedModuleDunderMarker n)).isSome then
+              raisePy (.nameError n)
+            else
+              envPut (Env.set env (deletedModuleDunderMarker n) (.str "builtins"))
+              pure .next
+          else if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
+            envPut env
+            pure .next
+          else if dunderShaped n then
+            refuse s!"'del {n}': deleting this module dunder is outside the tier (only the runner-supplied `__name__` has the measured builtins fallback — docs/backlog.md §del RECONCILED)"
+          else if (benignImportNames m).contains n then
+            refuse s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
+          else if (findFunction m n).isSome || (findClass m n).isSome
+              || m.namedtuples.any (·.name == n) then
+            refuse s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING or unobserved del is admitted (docs/backlog.md §del RECONCILED)"
+          else do envPut env; raisePy (.nameError n)
+  | s => execOpen K m s
+
+/-! ## §2 THE FUELED KNOT for the script layer -/
+
+def skont (m : Module) : Nat → SKont
+  | 0 => SKont.bottom
+  | fuel + 1 =>
+    -- LAZY, for the reason `kont` documents at length: a strict `let` here makes
+    -- construction O(fuel), and script mode runs at fuel 1 000 000.
+    { stmts   := fun ss => scriptStmtsAt (skont m fuel) m ss
+      one     := fun s => scriptOneAt (skont m fuel) (kont m fuel) m s
+      forSeq  := fun t xs b => scriptForAt (skont m fuel) m t xs b
+      forList := fun t a i b => scriptForListAt (skont m fuel) m t a i b
+      forDict := fun t a i n sv ks k b => scriptForDictAt (skont m fuel) m t a i n sv ks k b
+      forGen  := fun t a b => scriptForGenAt (skont m fuel) (kont m fuel) m t a b
+      whileL  := fun t b o => scriptWhileAt (skont m fuel) (kont m fuel) m t b o }
+  termination_by structural fuel => fuel
+
+/-! ## §3 THE BOUNDARY — same type as the trunk's `runScriptClock` -/
+
+/-- Run a whole script under a SEEDED CLOCK TRACE: the three boundary admissions,
+then THE ONE PIPELINE — every top-level statement executed, in order, from an
+EMPTY world, against the `scriptView`. The decided outcome's world carries the
+accumulated stdout. -/
+def runScriptClockMono (m : Module) (clock : List Int) (fuel : Nat) :
+    Run World Unit :=
+  if !classesCreationAdmissible m then
+    .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
+  else if !scriptCompoundDefsBoundBefore m m.topLevel.toList then
+    .unsupported "a compound top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): its branch-sensitive test or iterable needs a control-shell admission before the model can decide the faithful runtime NameError"
+  else if !scriptFlushCoherent m then
+    .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
+  else
+    match toRun
+        (inWorld [] ((skont (scriptView m) fuel).stmts m.topLevel.toList))
+        { heap := #[], globals := [], stdout := [], clock := clock } with
+    | .ok w flow =>
+        match flow with
+        | .next => .ok w ()
+        | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
+        | .brk => .unsupported "'break' at module top level (CPython: SyntaxError at compile time)"
+        | .cont => .unsupported "'continue' at module top level (CPython: SyntaxError at compile time)"
+    | .exn w e => .exn w e
+    | .timeout => .timeout
+    | .unsupported msg => .unsupported msg
+
+/-- The empty trace: any reachable `time.time()` refuses with the loud
+fuel-independent underrun, never a fabricated reading. -/
+def runScriptMono (m : Module) (fuel : Nat) : Run World Unit :=
+  runScriptClockMono m [] fuel
+
+/-! ## §4 NON-VACUITY — the pipeline RUNS, and the kernel decides it -/
+
+private def spS : Span := ⟨0, 0, 0, 0⟩
+
+private def pipeProg : Module :=
+  { functions := #[], classes := #[], namedtuples := #[]
+    topLevel := #[
+      .assign #[.name "x" spS] (.constant (.int 1) spS) spS,
+      .assign #[.name "y" spS] (.binOp (.name "x" spS) .add (.constant (.int 2) spS) spS) spS,
+      .exprStmt (.call (.name "print" spS) #[.name "y" spS] #[] Option.none spS) spS ] }
+
+/- THE ONE PIPELINE, end to end: three top-level statements, the second READING
+what the first published, and `print` appending to the world's stdout. -/
+#guard (match runScriptMono pipeProg 4096 with
+        | .ok w _ => w.stdout == ["3"] && Env.lookup w.globals "y" == some (.int 3)
+        | _ => false)
+
+private def forProg : Module :=
+  { functions := #[], classes := #[], namedtuples := #[]
+    topLevel := #[
+      .assign #[.name "t" spS] (.constant (.int 0) spS) spS,
+      .forStmt (.name "i" spS)
+        (.tuple #[.constant (.int 1) spS, .constant (.int 2) spS,
+                  .constant (.int 3) spS] spS)
+        #[ .augAssign (.name "t" spS) .add (.name "i" spS) spS ] #[] spS ] }
+
+/- A top-level `for` runs through its CONTROL SHELL, so the loop variable is a
+module global on EVERY iteration — which is exactly what the per-statement
+publish granularity buys, and what delegating the statement wholesale would
+lose. -/
+#guard (match runScriptMono forProg 4096 with
+        | .ok w _ => Env.lookup w.globals "t" == some (.int 6)
+                     && Env.lookup w.globals "i" == some (.int 3)
+        | _ => false)
+
+#print axioms runScriptMono
+#print axioms skont
+
+end LeanModels.Python.Monadic

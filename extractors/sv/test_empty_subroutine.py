@@ -1,0 +1,97 @@
+"""Empty zero-argument subroutine calls are inert statement nodes."""
+
+import unittest
+
+from pyslang.ast import Compilation
+from pyslang.syntax import SyntaxTree
+
+import extract
+
+
+def lower(source):
+    tree = SyntaxTree.fromText(source)
+    compilation = Compilation()
+    compilation.addSyntaxTree(tree)
+    extract._SOURCE_BYTES = source.encode()
+    return extract.convert_design(tree.sourceManager, compilation)
+
+
+def nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from nodes(child)
+
+
+class EmptySubroutineCalls(unittest.TestCase):
+    def test_empty_task_and_function_call(self):
+        design = lower(
+            'module top; task automatic noop(); endtask '
+            'function void done(); endfunction '
+            'initial begin noop(); done(); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        self.assertEqual([], design["modules"][0]["others"])
+
+    def test_nonempty_subroutine_stays_loud(self):
+        design = lower(
+            'module top; task automatic noisy(); $display("NO"); endtask '
+            'initial noisy(); endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_empty_input_task_with_pure_argument_is_inert(self):
+        design = lower(
+            'module top; task automatic noop(input logic x); endtask '
+            'initial begin noop(1\'b0); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        self.assertEqual([], design["modules"][0]["others"])
+
+    def test_empty_input_task_with_pure_named_argument_is_inert(self):
+        design = lower(
+            'module top; logic x; task automatic noop(input logic y); endtask '
+            'initial begin noop(x); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_empty_input_task_with_effectful_argument_stays_loud(self):
+        design = lower(
+            'module top; logic x; task automatic noop(input logic y); endtask '
+            'initial begin noop($urandom()); end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_empty_task_with_output_formal_stays_loud(self):
+        design = lower(
+            'module top; task automatic noop(output logic y); endtask '
+            'initial begin logic x; noop(x); end endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_unreferenced_effectful_subroutine_is_inert(self):
+        design = lower(
+            'module top; task automatic never_called(); $display("NO"); endtask '
+            'function int also_unused(input int x); return x + 1; endfunction '
+            'initial $display("PASS"); endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "SubroutineSymbol:Subroutine"
+                             for node in nodes(design)))
+        self.assertEqual([], design["modules"][0]["others"])
+
+    def test_recursive_subroutine_remains_loud(self):
+        design = lower(
+            'module top; function void recurse(); recurse(); endfunction '
+            'initial $display("PASS"); endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+
+if __name__ == "__main__":
+    unittest.main()

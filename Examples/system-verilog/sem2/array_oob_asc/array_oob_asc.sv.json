@@ -1,0 +1,274 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "array_oob_asc",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/array_oob_asc/array_oob_asc.sv",
+      "sha256": "e618ffbb6f939fb0924e5922f9dcc1b87009d0aa16d55d6dfbc6adc3676af7bc"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 11,
+          "col": 1,
+          "end_line": 20,
+          "end_col": 10
+        },
+        "name": "array_oob_asc",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 22,
+              "end_line": 12,
+              "end_col": 25
+            },
+            "name": "src",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 17,
+                      "end_line": 12,
+                      "end_col": 18
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 19,
+                      "end_line": 12,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 22,
+              "end_line": 13,
+              "end_col": 29
+            },
+            "name": "asc_oob",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 15,
+              "col": 20,
+              "end_line": 15,
+              "end_col": 21
+            },
+            "name": "q",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 10,
+                      "end_line": 15,
+                      "end_col": 11
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 12,
+                      "end_line": 15,
+                      "end_col": 13
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  }
+                },
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 15,
+                      "end_line": 15,
+                      "end_col": 16
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 14,
+                "end_line": 16,
+                "end_col": 17
+              },
+              "width": 8,
+              "name": "src"
+            }
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 17,
+              "col": 3,
+              "end_line": 19,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 18,
+                "col": 5,
+                "end_line": 18,
+                "end_col": 23
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 18,
+                      "col": 5,
+                      "end_line": 18,
+                      "end_col": 12
+                    },
+                    "width": 1,
+                    "name": "asc_oob"
+                  },
+                  "value": {
+                    "kind": "ArraySel",
+                    "span": {
+                      "line": 18,
+                      "col": 15,
+                      "end_line": 18,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "name": "q",
+                    "indices": [
+                      {
+                        "kind": "Int",
+                        "span": {
+                          "line": 18,
+                          "col": 17,
+                          "end_line": 18,
+                          "end_col": 18
+                        },
+                        "value": 0,
+                        "resolved_width": 32
+                      },
+                      {
+                        "kind": "Int",
+                        "span": {
+                          "line": 18,
+                          "col": 20,
+                          "end_line": 18,
+                          "end_col": 21
+                        },
+                        "value": 4,
+                        "resolved_width": 32
+                      }
+                    ],
+                    "part": null
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

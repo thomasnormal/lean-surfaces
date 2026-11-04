@@ -1,0 +1,615 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv",
+  "source_sha256": "949bb7af6800471feb6c05a2743c208d849779263eaec25bf5818ba9dcd36b39",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 32,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 7,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "grid[0][0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 7,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "grid[0][1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 7,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "grid[1][0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 7,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "grid[1][1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 31,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 31,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 63
+                  },
+                  "target": {
+                    "kind": "ConcatTarget",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 16
+                    },
+                    "width": 128,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 10,
+                          "end_line": 11,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "grid[0][0]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 10,
+                          "end_line": 11,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "grid[0][1]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 10,
+                          "end_line": 11,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "grid[1][0]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 10,
+                          "end_line": 11,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "grid[1][1]",
+                        "two_state": true
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 11,
+                      "col": 19,
+                      "end_line": 11,
+                      "end_col": 63
+                    },
+                    "width": 128,
+                    "bits": "00000001000000100000001100000100000001010000011000000111000010000001000100010010000100110001010000010101000101100001011100011000"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 37
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "name": "grid[0][0]",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 13,
+                        "col": 24,
+                        "end_line": 13,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "bits": "00000001000000100000001100000100"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 13,
+                      "col": 39,
+                      "end_line": 16,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 14,
+                          "col": 7,
+                          "end_line": 14,
+                          "end_col": 52
+                        },
+                        "name": "$display",
+                        "format": "FAIL grid[0][0]=%08h",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 40,
+                              "end_line": 14,
+                              "end_col": 50
+                            },
+                            "width": 32,
+                            "name": "grid[0][0]",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 15,
+                          "col": 7,
+                          "end_line": 15,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 17,
+                      "col": 9,
+                      "end_line": 17,
+                      "end_col": 37
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 17,
+                        "col": 9,
+                        "end_line": 17,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "name": "grid[0][1]",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 17,
+                        "col": 24,
+                        "end_line": 17,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "bits": "00000101000001100000011100001000"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 17,
+                      "col": 39,
+                      "end_line": 20,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 18,
+                          "col": 7,
+                          "end_line": 18,
+                          "end_col": 52
+                        },
+                        "name": "$display",
+                        "format": "FAIL grid[0][1]=%08h",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 18,
+                              "col": 40,
+                              "end_line": 18,
+                              "end_col": 50
+                            },
+                            "width": 32,
+                            "name": "grid[0][1]",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 19,
+                          "col": 7,
+                          "end_line": 19,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 21,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 21,
+                      "col": 9,
+                      "end_line": 21,
+                      "end_col": 37
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 21,
+                        "col": 9,
+                        "end_line": 21,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "name": "grid[1][0]",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 21,
+                        "col": 24,
+                        "end_line": 21,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "bits": "00010001000100100001001100010100"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 21,
+                      "col": 39,
+                      "end_line": 24,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 22,
+                          "col": 7,
+                          "end_line": 22,
+                          "end_col": 52
+                        },
+                        "name": "$display",
+                        "format": "FAIL grid[1][0]=%08h",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 22,
+                              "col": 40,
+                              "end_line": 22,
+                              "end_col": 50
+                            },
+                            "width": 32,
+                            "name": "grid[1][0]",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 23,
+                          "col": 7,
+                          "end_line": 23,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 25,
+                      "col": 9,
+                      "end_line": 25,
+                      "end_col": 37
+                    },
+                    "width": 1,
+                    "op": "!==",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 25,
+                        "col": 9,
+                        "end_line": 25,
+                        "end_col": 19
+                      },
+                      "width": 32,
+                      "name": "grid[1][1]",
+                      "signed": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 25,
+                        "col": 24,
+                        "end_line": 25,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "bits": "00010101000101100001011100011000"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 25,
+                      "col": 39,
+                      "end_line": 28,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 26,
+                          "col": 7,
+                          "end_line": 26,
+                          "end_col": 52
+                        },
+                        "name": "$display",
+                        "format": "FAIL grid[1][1]=%08h",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 26,
+                              "col": 40,
+                              "end_line": 26,
+                              "end_col": 50
+                            },
+                            "width": 32,
+                            "name": "grid[1][1]",
+                            "signed": true
+                          }
+                        ],
+                        "arg_signed": [
+                          true
+                        ]
+                      },
+                      {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 27,
+                          "col": 7,
+                          "end_line": 27,
+                          "end_col": 15
+                        },
+                        "name": "$finish",
+                        "format": null,
+                        "args": [],
+                        "arg_signed": []
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 29,
+                    "col": 5,
+                    "end_line": 29,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 30,
+                    "col": 5,
+                    "end_line": 30,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

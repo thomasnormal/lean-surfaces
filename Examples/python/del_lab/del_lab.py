@@ -1,0 +1,151 @@
+"""del_lab -- the `del <name>` acceptance set (docs/memory-model.md
+paragraph "the del statement"; docs/backlog.md paragraph "del RECONCILED
+with the one pipeline").
+
+FUNCTION scope is the recorded slice: `del` of a bound local is a pure
+locals rewrite (`Env.remove` -- no World field moves), the effect is
+PARTIAL left to right, and the read-after-del hazard uses the function's
+static-local marker to produce CPython's UnboundLocalError. The marker is
+installed for every bare-name delete, so straight-line, branch, and loop
+reads all retain Python's whole-body local rule.
+
+Runtime misses now raise the faithful UnboundLocalError: `del` of a
+module-global NAME (CPython localises it), `del` of a never-bound name, and
+double `del`. Attribute deletion follows the measured single-target
+admission alongside item deletion: `del o.attr` is lowered at ingestion and
+mutates an admitted instance; unsupported receivers and missing attributes
+keep their loud or faithful boundaries.
+
+The closed-call battery below covers the three faithful miss cases.
+The proof and runner surfaces carry the same exception class.
+
+MODULE-scope `del` is the script surface's arm and is pinned by the
+script corpus rows (del_global_script / del_never_script /
+del_trailing_script / del_partial_script and the loud trio), not here:
+on the closed-function surface a top-level `del` refuses at module init
+(empty init locals) and poisons its targets -- `gnum` below exists so
+`del_global` has a real module global to fail on.
+"""
+
+gnum = 7
+
+
+class Box:
+    def __init__(self):
+        self.attr = 7
+        self.keep = 9
+
+
+def keep(n):
+    # in tier: del of a local never read after
+    x = n + 1
+    del x
+    return n * 2
+
+
+def del_param(n):
+    # in tier: a parameter is an ordinary local
+    del n
+    return 0
+
+
+def del_two(n):
+    # in tier: two unread locals, one statement, left to right
+    x = n
+    y = n
+    del x, y
+    return 7
+
+
+def cond_del(n):
+    # in tier: the del is conditional, and nothing reads x after it
+    x = n
+    if n > 0:
+        del x
+    return n
+
+
+def read_after(n):
+    # census clause 2: the read at `return x` refuses the function
+    # (CPython: UnboundLocalError at runtime)
+    x = n
+    del x
+    return x
+
+
+def rebind_after(n):
+    # the STATED over-refusal: CPython returns 99, the census refuses
+    # (the rebind does not clear the name-set intersection)
+    x = n
+    del x
+    x = 99
+    return x
+
+
+def loop_del(n):
+    # the loop del-then-rebind row: CPython answers 6 for n = 3, the
+    # census refuses (same recorded over-refusal)
+    t = 0
+    for i in range(n):
+        x = i
+        del x
+        x = i * 2
+        t = t + x
+    return t
+
+
+def del_global():
+    # runtime refusal: `del` LOCALISES gnum (whole-body rule), so
+    # CPython raises UnboundLocalError -- the model's locals miss is
+    # loud, never a guessed class
+    del gnum
+    return 0
+
+
+def del_never():
+    # runtime refusal: never-bound name
+    del nope
+    return 0
+
+
+def double_del(n):
+    # runtime refusal on the SECOND del (the first really removed x --
+    # the partial, threaded state)
+    x = n
+    del x
+    del x
+    return 0
+
+
+def del_sub():
+    # LANDED (§del): clause 4 now admits a single subscript target and
+    # ingestion rewrites it to `<dictdel>(d, k)`. This row was the shape
+    # refusal; it is now the shape's acceptance.
+    d = {1: 2}
+    del d[1]
+    return 0
+
+
+def del_attr(o):
+    # scalar receivers raise CPython's faithful AttributeError
+    del o.attr
+    return 0
+
+
+def del_attr_present():
+    b = Box()
+    del b.attr
+    return b.keep
+
+
+def del_attr_alias():
+    b = Box()
+    c = b
+    del c.attr
+    return b.keep
+
+
+def del_attr_missing():
+    b = Box()
+    del b.nope
+    return 0

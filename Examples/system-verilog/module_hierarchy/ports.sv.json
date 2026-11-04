@@ -1,0 +1,159 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/module_hierarchy/ports.sv",
+  "source_sha256": "2a3714921a7c2714392c5402a6c299262e6f2a16bed19a99cfe0762187745dad",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 17
+            },
+            "name": "source",
+            "width": 1,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 16,
+                "end_line": 5,
+                "end_col": 17
+              },
+              "width": 1,
+              "bits": "1"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 18,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "value",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 58
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 7,
+                "end_col": 58
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 7,
+                    "col": 17,
+                    "end_line": 7,
+                    "end_col": 20
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 20,
+                    "end_line": 7,
+                    "end_col": 47
+                  },
+                  "name": "$display",
+                  "format": "ports %b",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 40,
+                        "end_line": 7,
+                        "end_col": 45
+                      },
+                      "width": 1,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 47,
+                    "end_line": 7,
+                    "end_col": 55
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 6,
+              "col": 8,
+              "end_line": 6,
+              "end_col": 27
+            },
+            "sv_kind": "Hierarchy:ports",
+            "text": "child(source,value)"
+          }
+        ],
+        "hierarchy_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

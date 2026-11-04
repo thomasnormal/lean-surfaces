@@ -325,6 +325,7 @@ _SYM_LOOP_BINDINGS = []
 # This is a compile-time extraction environment, not a runtime call frame;
 # ordinary stateful functions never enter it.
 _SYM_CALL_BINDINGS = []
+_SYM_PROPERTIES = []
 _DIV_CONTEXT = 0
 _COMPOUND_READ = None
 _MIN_TYP_MAX = "typ"
@@ -32173,7 +32174,10 @@ def convert_members_sym(sm, scope):
             if isinstance(converted, list):
                 out.extend(converted)
             elif converted is not None:
-                out.append(converted)
+                if converted.get("kind") == "SvaProperty":
+                    _SYM_PROPERTIES.append(converted)
+                else:
+                    out.append(converted)
             i += 1
         except Exception as exc:
             out.append(internal_error(exc))
@@ -32220,6 +32224,9 @@ def _convert_member_sym(sm, m, k):
     if k == "Net":
         return convert_net_sym(sm, m)
     if k == "ProceduralBlock":
+        if type(getattr(m, "syntax", None)).__name__ == \
+                "ConcurrentAssertionMemberSyntax":
+            return _convert_concurrent_property(sm, m)
         return convert_procedural_block(sm, m)
     if k == "ContinuousAssign":
         return convert_continuous_assign(sm, m)
@@ -33329,6 +33336,8 @@ def _sym_package_params(sm):
 
 def convert_module_sym(sm, inst):
     """Top module -> symbolic Module node (schema sv-0.2)."""
+    global _SYM_PROPERTIES
+    _SYM_PROPERTIES = []
     body = inst.body
     _SYM.scope = body
     lower_proc.begin_module(sys.modules[__name__], body)      # WP-PROC L1: hoisted block-local declarations
@@ -33441,6 +33450,7 @@ def convert_module_sym(sm, inst):
     decls.extend(lower_proc.hoisted_decls())                  # WP-PROC L1
 
     package_params = _sym_package_params(sm)
+    properties.extend(_SYM_PROPERTIES)
     return {
         "kind": "Module",
         "span": span,

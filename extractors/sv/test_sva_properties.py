@@ -34,6 +34,23 @@ endmodule
         self.assertFalse(any(n.get("sv_kind") == "ProceduralBlockSymbol:NoEventControl"
                              for n in module["others"]))
 
+    def test_generate_scope_assertion_is_retained_at_module_level(self):
+        source = """module top(input logic clk, a);
+  if (1) begin : g
+    assert property (@(posedge clk) a);
+  end
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "generated.sv"
+            out = Path(directory) / "generated.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            module = json.loads(out.read_text())["design"]["modules"][0]
+        self.assertEqual(len(module["properties"]), 1)
+        self.assertEqual(module["properties"][0]["property_kind"], "assert")
+        self.assertEqual(module["generates"][0]["then"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -52,6 +52,11 @@ which remain in the measured census. Its three-cycle property stimulus passes
 through Verilator 5.052 with assertions enabled; Icarus remains unavailable
 for concurrent SVA syntax.
 
+Assertions nested in a constant generate scope are retained in the same module
+metadata list, with the structural generate body left empty for executable
+processes. Their generate path still needs to be carried into the property
+contract before hierarchy proofs consume them.
+
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded
 `##[m:n]`; `$past`, `$rose`, `$fell`, and `$stable`. Their meaning is a trace

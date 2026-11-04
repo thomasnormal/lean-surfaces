@@ -30,6 +30,10 @@ or scheduled as a procedural process. Its three-cycle assertion stimulus
 passes Verilator 5.052 with assertions enabled. Icarus's SVA parser remains
 unavailable for this fixture and is recorded as such.
 
+The same retention route handles an assertion in a constant generate scope;
+its executable generate body remains empty while the property metadata awaits
+an explicit hierarchy path contract.
+
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range

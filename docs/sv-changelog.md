@@ -26,6 +26,11 @@ keeps all three property members. Its three-cycle stimulus passes Verilator
 recorded as unavailable for this row. The E predicate guards cover the finite
 safety meaning.
 
+Assertions in constant generate scopes use the same retained metadata route;
+they no longer become `NoEventControl` process refusals. The source generate
+body stays structural and empty of executable processes until property paths
+are part of the hierarchy contract.
+
 ## Parameter-dependent unpacked arrays remain loud
 
 The `unpacked_generate_array` clean-room witness records the current boundary

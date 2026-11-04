@@ -49,7 +49,8 @@ gate-level generate design produces (the ripple adder of
   `width_resizeU`/`width_xVec`, `LVec.extract_insertAt_self`,
   `LVec.extract_insertAt_of_disjoint`, `LVec.insertAt_extract_self`,
   `LVec.insertAt_eq_self_of_extract`, `LVec.insertAt_comm`,
-  `LVec.insertAt_insertAt_of_width_le`, `LVec.extract_extract`,
+  `LVec.insertAt_zero_of_width_eq` (a full-width write at `0` replaces the
+  vector), `LVec.insertAt_insertAt_of_width_le`, `LVec.extract_extract`,
   `LVec.extract_eq_of_bits`, `LVec.eq_of_extract_one`, `LVec.ext_getD`
   (bit primitives `LVec.getD_extract`, `LVec.getD_insertAt`).
 * (b) `SvState` algebra: `SvState.lookup_set` (+ `_self`, `_ne`),
@@ -314,6 +315,12 @@ theorem insertAt_comm {v p q : LVec} {lo lo' : Nat}
   · by_cases h2 : lo' ≤ i ∧ i < lo' + q.width
     · simp only [h1, h2, ↓reduceIte]
     · simp only [h1, h2, ↓reduceIte]
+
+/-- A write of a full-width part at offset `0` replaces the vector. -/
+theorem insertAt_zero_of_width_eq {v p : LVec} (h : p.width = v.width) : v.insertAt 0 p = p :=
+  ext_getD (by rw [width_insertAt, h]) fun i hi => by
+    rw [width_insertAt] at hi
+    rw [getD_insertAt, if_pos ⟨Nat.zero_le _, by omega⟩, if_pos hi, Nat.sub_zero]
 
 /-- A second write to the same window with a part at least as wide overwrites
 the first. -/

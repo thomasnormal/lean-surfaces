@@ -252,8 +252,8 @@ theorem Stmt2.sem_rel : ∀ (s : Stmt2) (D D' : List String) (u u' : SvState), s
             simp only [if_true, he]
             by_cases hf : lo = 0 ∧ d.declWidth n = some w
             · obtain ⟨rfl, hdw⟩ := hf
-              rw [insertAt_full (by rw [width_resizeU, hI.2 _ _ hdw]),
-                insertAt_full (by rw [width_resizeU, hI'.2 _ _ hdw])]
+              rw [LVec.insertAt_zero_of_width_eq (by rw [width_resizeU, hI.2 _ _ hdw]),
+                LVec.insertAt_zero_of_width_eq (by rw [width_resizeU, hI'.2 _ _ hdw])]
             · rw [if_neg hf] at hx
               simp only [sig, hD _ hx]
           · simp only [hnx, if_false]

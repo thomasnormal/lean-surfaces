@@ -1,24 +1,27 @@
+import LeanModels.Sv.CombViewArith
 import LeanModels.Sv.Seq2Cycle
 import LeanModels.Sv.SeqFamily
 
 /-!
-# The FF-only profile, decided, and the schedule class (`LeanModels.Sv`, PLAN4 Gate 1)
+# The FF-only profile, decided, and the schedule class (`LeanModels.Sv`)
 
-**Status: a `run2` library module** (provisional over `run2`; never trusted). Imported by no
-existing module.
+**Status: a `run2` library module** (provisional over `run2`; never trusted).
 
-* `WellFormedClockStep d order`: the edge processes run in `order`, each exactly once (a permutation
-  of `d.edgeIndices`). With NBA-only bodies every right-hand side reads the same pre-state and the
-  queue is committed once (`cycleStep2`'s structure, `edgePass2_ffOnly`). `run2`'s schedules are
-  exactly this class (`wellFormed_choose`, from `ScheduleOracle.choose_perm`). `clockStep_wellFormed`:
-  every well-formed order gives the index-order step. `omitted_process`: an order that omits a
-  process is not well formed, and the step it gives differs (no conclusion without the class).
-* `Design2.ffOnlyProfileB`, decidable: every process an `always_ff` on one clock, NBA-only bodies with
-  static targets (`Lhs2.window?`), no process writing an input, distinct processes writing
-  pairwise-disjoint windows. Synchronous reset is an ordinary `if` in the body; `alwaysFFR` is out.
-* Soundness: `FFOnly.ofProfile`, and `ffUpd_disj`: the updates of distinct processes are disjoint on
-  every state (an update stays inside a window its body names: `upd_covered`). So
+* `WellFormedClockStep d order`: the edge processes run in `order`, each exactly once (a permutation of
+  `d.edgeIndices`). With NBA-only bodies every right-hand side reads the same pre-state and the queue is committed
+  once (`cycleStep2`'s structure, `edgePass2_ffOnly`). `run2`'s schedules are exactly this class
+  (`wellFormed_choose`, from `ScheduleOracle.choose_perm`). `clockStep_eq_of_wellFormed`: every well-formed order
+  gives the index-order step `clockStep`. `omitted_process`: an order that omits a process is not well formed, and
+  the step it gives differs (no conclusion without the class).
+* `Design2.ffOnlyProfileB`, decidable: every process an `always_ff` on one clock, NBA-only bodies with static
+  targets (`Stmt2.nbaStaticB`, through `Lhs2.window?`), no process writing an input, distinct processes writing
+  pairwise-disjoint windows (`Design2.ffDisjB`). Synchronous reset is an ordinary `if` in the body; `alwaysFFR` is
+  out.
+* Soundness: `FFOnly.ofProfile`, and `ffUpd_disj`: the updates of distinct processes are disjoint on every state
+  (an update stays inside a window its body names: `Covers`, `resolve_covered`, `upd_covered`, `covers_disj`). So
   `cycleStep2_profile` is `cycleStep2_ffOnly` with only the run hypothesis left.
+* For the proof of a family: `ffDisjB_of_pairwise` decides `ffDisjB` from pairwise disjointness in list order, and
+  `flatMap_ffUpd` is the edge pass of a design whose every process is an edge process.
 -/
 
 namespace LeanModels.Sv
@@ -30,6 +33,7 @@ set_option autoImplicit false
 /-- **A well-formed clock step**: the edge processes run in `order`, each exactly once. -/
 def WellFormedClockStep (d : Design2) (order : List Nat) : Prop := order.Perm d.edgeIndices
 
+/-- `run2`'s schedules are well formed: the oracle's order of the edge processes is a permutation of them. -/
 theorem wellFormed_choose (d : Design2) (σ : ScheduleOracle) (k : Nat) :
     WellFormedClockStep d (σ.choose k d.edgeIndices) := σ.choose_perm k _
 
@@ -37,26 +41,30 @@ theorem wellFormed_choose (d : Design2) (σ : ScheduleOracle) (k : Nat) :
 def clockStep (d : Design2) (fuel : Nat) (pre : SvState) (order : List Nat) : SvState :=
   commitNba2 pre (order.flatMap (d.ffUpd fuel pre))
 
-theorem clockStep_wellFormed {d : Design2} {fuel : Nat} {pre : SvState} {order : List Nat}
+/-- **Every well-formed order gives the index-order clock step**, when the processes' updates are pairwise
+disjoint and the state's names are distinct. -/
+theorem clockStep_eq_of_wellFormed {d : Design2} {fuel : Nat} {pre : SvState} {order : List Nat}
     (hwf : WellFormedClockStep d order)
     (hdisj : ∀ i j, i ≠ j → ∀ u ∈ d.ffUpd fuel pre i, ∀ u' ∈ d.ffUpd fuel pre j, NbaDisj u u')
     (hnd : (pre.map Prod.fst).Nodup) :
     clockStep d fuel pre order = clockStep d fuel pre d.edgeIndices :=
   commitNba2_perm hdisj hwf (hwf.nodup_iff.mpr (List.nodup_range.filter _)) hnd
 
-/-- One flop, `q <= 1`. -/
-def negFlop : Design2 where
-  name := "negFlop"
+/-- The counterexample of `omitted_process`: one flop, `q <= 1`. -/
+def OmittedProcess.flop : Design2 where
+  name := "flop"
   decls := #[{ name := "clk", width := 1, isInput := true }, { name := "q", width := 1, isOutput := true }]
   processes := #[.alwaysFF "clk" (.nbaAssign (.ident "q") (.lit (LVec.ofNat 1 1)))]
 
-def negPre : SvState := [("clk", LVec.ofNat 1 1), ("q", LVec.ofNat 1 0)]
+/-- The pre-edge state of `omitted_process`: `clk` high, `q` low. -/
+def OmittedProcess.pre : SvState := [("clk", LVec.ofNat 1 1), ("q", LVec.ofNat 1 0)]
 
 /-- **A schedule that omits a process gives no conclusion**: it is not well formed, and its step
 differs from the clock step. -/
-theorem omitted_process : ¬ WellFormedClockStep negFlop [] ∧
-    clockStep negFlop 4 negPre [] ≠ clockStep negFlop 4 negPre negFlop.edgeIndices := by
-  refine ⟨fun h => by simpa [negFlop, Design2.edgeIndices, Process2.isEdgePhase] using h.length_eq, ?_⟩
+theorem omitted_process : ¬ WellFormedClockStep OmittedProcess.flop [] ∧
+    clockStep OmittedProcess.flop 4 OmittedProcess.pre [] ≠
+      clockStep OmittedProcess.flop 4 OmittedProcess.pre OmittedProcess.flop.edgeIndices := by
+  refine ⟨fun h => by simpa [OmittedProcess.flop, Design2.edgeIndices, Process2.isEdgePhase] using h.length_eq, ?_⟩
   decide
 
 /-! ## The profile, decided -/
@@ -70,14 +78,17 @@ def Stmt2.nbaStaticB (d : Design2) : Stmt2 → Bool
   | .caseStmt _ items dflt _ _ => CaseItem2.listNbaStaticB d items.toList && Stmt2.optNbaStaticB d dflt
   | .block body => Stmt2.listNbaStaticB d body.toList
 termination_by structural s => s
+/-- `Stmt2.nbaStaticB` of an optional statement (`true` when absent). -/
 def Stmt2.optNbaStaticB (d : Design2) : Option Stmt2 → Bool
   | none => true
   | some s => s.nbaStaticB d
 termination_by structural o => o
+/-- `Stmt2.nbaStaticB` of every statement of a list. -/
 def Stmt2.listNbaStaticB (d : Design2) : List Stmt2 → Bool
   | [] => true
   | s :: ss => s.nbaStaticB d && Stmt2.listNbaStaticB d ss
 termination_by structural ss => ss
+/-- `Stmt2.nbaStaticB` of every body of a list of case items. -/
 def CaseItem2.listNbaStaticB (d : Design2) : List CaseItem2 → Bool
   | [] => true
   | .mk _ body :: rest => body.nbaStaticB d && CaseItem2.listNbaStaticB d rest
@@ -98,6 +109,7 @@ def Design2.ffOnlyProfileB (d : Design2) : Bool :=
         b.drvWins.all fun w => !d.inputNames.toList.contains w.1
     | _ => false) && d.ffDisjB
 
+/-- The decided profile gives the `FFOnly` hypothesis of `cycleStep2_ffOnly`. -/
 theorem FFOnly.ofProfile {d : Design2} (h : d.ffOnlyProfileB = true) : FFOnly d := by
   refine ⟨fun i p hp => ?_⟩
   simp only [Design2.ffOnlyProfileB, Bool.and_eq_true, List.all_eq_true] at h
@@ -114,7 +126,7 @@ theorem FFOnly.ofProfile {d : Design2} (h : d.ffOnlyProfileB = true) : FFOnly d 
 def Covers (w : DrvWin) (u : String × Nat × LVec) : Prop :=
   u.1 = w.1 ∧ ∀ l k, w.2 = some (l, k) → l ≤ u.2.1 ∧ u.2.1 + u.2.2.width ≤ l + k
 
-theorem indexWin?_some {idx : Expr2} {ew l k : Nat} (h : Lhs2.indexWin? idx ew = some (l, k)) :
+private theorem indexWin?_some {idx : Expr2} {ew l k : Nat} (h : Lhs2.indexWin? idx ew = some (l, k)) :
     ∃ c j, idx = .lit c ∧ c.toNat? = some j ∧ l = j * ew ∧ k = ew := by
   cases idx <;> simp only [Lhs2.indexWin?, reduceCtorEq] at h
   rename_i c
@@ -263,6 +275,7 @@ theorem upd_covered : ∀ fuel : Nat,
             · exact Or.inr ⟨a, by simp [Stmt2.drvWinsList, ha], hc⟩
           · exact Or.inr ⟨a, by simp [Stmt2.drvWinsList, ha], hc⟩
 
+/-- Updates covered by non-overlapping windows are disjoint. -/
 theorem covers_disj {a b : DrvWin} {u u' : String × Nat × LVec} (hab : a.overlaps b = false)
     (hu : Covers a u) (hu' : Covers b u') : NbaDisj u u' := by
   obtain ⟨n, wa⟩ := a
@@ -324,7 +337,7 @@ theorem cycleStep2_profile {d : Design2} (h : d.ffOnlyProfileB = true) (σ : Sch
       .ok (clockStep d fuel (applyInputs2 d inputs st) d.edgeIndices, k + 3) :=
   cycleStep2_ffOnly (FFOnly.ofProfile h) σ inputs st k hrun (ffUpd_disj h fuel _) hnd hf
 
-/-! ## Shared lemmas of the clock-step proofs (moved from the matmul G1 reference) -/
+/-! ## For the proof of a family: the profile's disjointness and the edge pass, in list order -/
 
 /-- Pairwise disjoint windows in list order decide `ffDisjB` (which is stated by index). -/
 theorem ffDisjB_of_pairwise {d : Design2} (h : d.processes.toList.Pairwise
@@ -339,7 +352,7 @@ theorem ffDisjB_of_pairwise {d : Design2} (h : d.processes.toList.Pairwise
   · exact Or.inl rfl
   · simp only [Array.getElem?_eq_getElem hi, Array.getElem?_eq_getElem hj, Option.map_some,
       Option.getD_some, Bool.not_eq_true']
-    exact Or.inr fun a ha b hb => by rw [overlaps_comm]; exact key j i hj hi hij b hb a ha
+    exact Or.inr fun a ha b hb => by rw [DrvWin.overlaps_comm]; exact key j i hj hi hij b hb a ha
 
 /-- With every process an edge process, the edge pass visits every process, in order. -/
 theorem flatMap_ffUpd {d : Design2} (F : Nat) (st : SvState)
@@ -351,7 +364,7 @@ theorem flatMap_ffUpd {d : Design2} (F : Nat) (st : SvState)
       rw [Array.getElem?_eq_getElem (List.mem_range.mp hi)]
       exact h _ (Array.getElem_mem_toList _)
   rw [he, ← Array.length_toList]
-  refine flatMap_range_eq _ _ _ fun i hi => ?_
+  refine CombView.flatMap_range_eq _ _ _ fun i hi => ?_
   have hi' : i < d.processes.size := by simpa using hi
   unfold Design2.ffUpd
   rw [Array.getElem?_eq_getElem hi', Array.getElem_toList]
@@ -360,7 +373,7 @@ theorem flatMap_ffUpd {d : Design2} (F : Nat) (st : SvState)
 
 #print axioms ffDisjB_of_pairwise
 #print axioms flatMap_ffUpd
-#print axioms clockStep_wellFormed
+#print axioms clockStep_eq_of_wellFormed
 #print axioms omitted_process
 #print axioms FFOnly.ofProfile
 #print axioms upd_covered

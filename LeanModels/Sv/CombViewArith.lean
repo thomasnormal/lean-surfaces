@@ -1,9 +1,9 @@
 /-!
 # `sv_structure`: the arithmetic library (no `LeanModels.Sv` imports)
 
-Facts the structural stage of `sv_comb` needs about row-major windows and lexicographic ranks. Nothing
-here mentions an SV design: this file imports nothing, so promoting it to a language-neutral `Core`
-module is a file move (`docs/sv-comb-design.md` §4).
+Facts the structural stage of `sv_comb` needs about row-major windows and lexicographic ranks, and two
+`List.flatMap` lemmas (`flatMap_congr'`, `flatMap_range_eq`). Nothing here mentions an SV design: this file
+imports nothing, so promoting it to a language-neutral `Core` module is a file move (`docs/sv-comb-design.md` §4).
 
 ## Row-major windows
 
@@ -165,7 +165,7 @@ theorem rmN_cell_le {W i j m1 : Int} (hi : i ≤ m1) (_hW : 0 ≤ W) (hj : j < W
   rw [Nat.add_mul] at h1
   omega
 
-/-! ## A list lemma -/
+/-! ## List lemmas -/
 
 /-- `flatMap` respects pointwise equality on the members. -/
 theorem flatMap_congr' {α β : Type} {l : List α} {f g : α → List β}
@@ -175,6 +175,15 @@ theorem flatMap_congr' {α β : Type} {l : List α} {f g : α → List β}
   | cons x xs ih =>
       simp only [List.flatMap_cons]
       rw [h x (List.mem_cons_self ..), ih (fun y hy => h y (List.mem_cons_of_mem _ hy))]
+
+/-- A `flatMap` over the indices of `l` (with `F i = g l[i]`) is the `flatMap` of `g` over `l`. -/
+theorem flatMap_range_eq {α β : Type} (g : α → List β) : ∀ (l : List α) (F : Nat → List β),
+    (∀ i (h : i < l.length), F i = g l[i]) → (List.range l.length).flatMap F = l.flatMap g
+  | [], _, _ => rfl
+  | a :: l, F, h => by
+    rw [List.length_cons, List.range_succ_eq_map, List.flatMap_cons, List.flatMap_map, List.flatMap_cons,
+      h 0 (by simp), flatMap_range_eq g l _ fun i hi => h (i + 1) (by simp; omega)]
+    rfl
 
 /-! ## Lexicographic keys -/
 

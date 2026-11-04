@@ -62,7 +62,7 @@ theorem Denotes.assignE {I : SvState → Prop} {n : String} {e : Expr2} (hs : si
   obtain ⟨f, rfl⟩ : ∃ f, fuel = f + 1 := ⟨fuel - 1, by omega⟩
   obtain ⟨old, hold⟩ := hn st hst
   simp [execStmt2, evalExpr2_eq_evalPure2 (show e.size < f by omega), evalPure2_valE hs (hb st hst),
-    resolveLhs2, hold, sig, insertAt_full]
+    resolveLhs2, hold, sig, LVec.insertAt_zero_of_width_eq]
 
 /-- **An `if`, with or without `else`**, on a simple condition (seam primitive). -/
 theorem Denotes.ite {I : SvState → Prop} {c : Expr2} {a : Stmt2} {b : Option Stmt2}

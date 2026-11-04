@@ -38,6 +38,10 @@ Design laws implemented (the point of the program):
   `LeanModels/Spice/RippleNetlist.lean`, generalized to source-extracted
   families).
 
+`LVec.ofInt w v`, the vector an integer becomes at a `w`-bit context, is the
+known vector `LVec.ofBitVec (BitVec.ofInt w v)` (`LVec.ofInt_eq_ofBitVec`, not
+`@[simp]`: instantiation proofs keep the literals folded).
+
 Representation deviations from the M0 `Ast.lean` conventions, both
 deliberate: (1) the parametric layer uses **`List`** (not `Array`) for
 every recursive field — nested-inductive structural recursion and the
@@ -173,6 +177,12 @@ def clog2 (n : Nat) : Nat := if n ≤ 1 then 0 else (n - 1).log2 + 1
 /-- Two's-complement embedding of an `Int` at width `w` (negative values
 wrap mod `2^w`, the SV rule for sized contexts). -/
 def LVec.ofInt (w : Nat) (v : Int) : LVec := .ofNat w (v.emod ((2 : Int) ^ w)).toNat
+
+/-- `LVec.ofInt w v` is the known vector of `BitVec.ofInt w v`. Not `@[simp]`: instantiation proofs keep
+`LVec.ofInt` literals folded. -/
+theorem LVec.ofInt_eq_ofBitVec (w : Nat) (v : Int) : LVec.ofInt w v = LVec.ofBitVec (BitVec.ofInt w v) := by
+  rw [LVec.ofInt, LVec.ofBitVec, BitVec.toNat_ofInt, Int.natCast_pow, Int.cast_ofNat_Int]
+  rfl
 
 #guard (LVec.ofInt 4 5).toBinString == "0101"
 #guard (LVec.ofInt 4 (-1)).toBinString == "1111"

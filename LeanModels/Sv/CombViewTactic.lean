@@ -3,6 +3,7 @@ import LeanModels.Sv.CombViewDiag
 import LeanModels.Sv.CombCoreSimp
 import LeanModels.Sv.CombViewPlain
 import LeanModels.Sv.CombViewGroup
+import LeanModels.Sv.CombShared
 
 /-!
 # `sv_structure` / `sv_structure?`: the structural stage of the `sv_comb` tactic (v0)
@@ -53,6 +54,11 @@ sites only, nesting kept) whose `rfl` hypothesis the kernel checks once, and han
 The goals that come out are the same ones, in the same order, and no simp list gained a name; if the listing fails for
 any reason, or the design has fewer than `groupMinSites` (four) sites, the original goal is normalized as before. `set_option sv_comb.profile true` logs the heartbeats each
 obligation's normalization costs (thousands), the diagnostic these figures came from.
+
+**The shared obligations (perf, 2026-11-04).** On the triple `CombDesign D ∧ Acyclic D ∧ SharedObl X.pdesign [N]`
+(`CombShared.lean`) the tactic proves the bundle and packages the `auto` and `inRange` obligations it normalized anyway, so
+that `sv_equations` can take them from the context instead of normalizing them a second time (`comb_acyclic_shared_view`,
+`comb_lex_shared_view`; the obligations returned are those of the bundle).
 -/
 
 open Lean Elab Tactic Meta
@@ -462,13 +468,20 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
     let ty ← instantiateMVars (← goal.getType)
     -- the bundle `CombDesign D ∧ Acyclic D` (WP-P): one application of `Summary.sound`, one round of
     -- obligations for both
-    let isBoth := ty.isAppOfArity ``And 2 &&
+    -- the triple `CombDesign D ∧ Acyclic D ∧ SharedObl X.pdesign args` (perf, CombShared.lean): the bundle, and the
+    -- `auto`/`inRange` obligations packaged for `sv_equations`
+    let isShared := ty.isAppOfArity ``And 2 &&
       ty.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombDesign &&
-      ty.appArg!.getAppFn.isConstOf ``LeanModels.Sv.Acyclic
+      ty.appArg!.isAppOfArity ``And 2 &&
+      ty.appArg!.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.Acyclic &&
+      ty.appArg!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombView.SharedObl
+    let isBoth := isShared || (ty.isAppOfArity ``And 2 &&
+      ty.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombDesign &&
+      ty.appArg!.getAppFn.isConstOf ``LeanModels.Sv.Acyclic)
     let isComb := ty.getAppFn.isConstOf ``LeanModels.Sv.CombDesign
     let isAcyc := ty.getAppFn.isConstOf ``LeanModels.Sv.Acyclic || isBoth
     unless isComb || isAcyc do
-      throwError "sv_structure: the goal must be `CombDesign (X.sem N)`, `Acyclic (X.sem N)` or their conjunction `CombDesign (X.sem N) ∧ Acyclic (X.sem N)`"
+      throwError "sv_structure: the goal must be `CombDesign (X.sem N)`, `Acyclic (X.sem N)`, their conjunction `CombDesign (X.sem N) ∧ Acyclic (X.sem N)`, or that conjunction with the shared obligations `∧ SharedObl X.pdesign [N]` (for `sv_equations`)"
     let dGoal := if isBoth then ty.appFn!.appArg!.appArg! else ty.appArg!
     let some (pd, args) ← findGD2 dGoal 8
       | if (← isHD2Family dGoal 8) then throwError (hierarchyRefusal "sv_structure")
@@ -560,8 +573,10 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
             | some r => pure r
             | none => throwError "unreachable"
           let rT : TSyntax `term := ⟨r⟩
+          let thm := mkIdent (if isShared then ``LeanModels.Sv.CombView.comb_lex_shared_view
+            else ``LeanModels.Sv.CombView.comb_lex_view)
           evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.comb_lex_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+            refine $thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
               (κ := $rT) (hrank := ?hrank)))
         else
@@ -569,8 +584,10 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
             | some r => pure r
             | none => throwError "unreachable"
           let rT : TSyntax `term := ⟨r⟩
+          let thm := mkIdent (if isShared then ``LeanModels.Sv.CombView.comb_acyclic_shared_view
+            else ``LeanModels.Sv.CombView.comb_acyclic_view)
           evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.comb_acyclic_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+            refine $thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
               (ρ := $rT) (hrank := ?hrank)))
       else if lexE?.isSome then

@@ -462,16 +462,6 @@ theorem canonCount_ge_dec {s B : Int} {n : Nat} (hn : s + 1 = B + n) (hB : InInt
     rw [canonCount_down (c := .ge) rfl (by decide) (by simp [Cmp.sign, Cmp.bound]; omega)
       (by rw [hc]; rw [show s + ((n + 1 : Nat) : Int) * -1 = B - 1 by omega]; exact hB), hc]
 
-/-- `(env.bindVal it v)` reads the bound value at `it`. -/
-@[simp] theorem vals_lookup_bindVal_self (env : IEnv) (it : String) (v : Int) :
-    (env.bindVal it v).vals.lookup it = some v := by
-  simp [IEnv.bindVal]
-
-/-- `(env.bindVal it v)` reads every other name as `env` does. -/
-theorem vals_lookup_bindVal_ne {env : IEnv} {it n : String} (v : Int) (h : n ≠ it) :
-    (env.bindVal it v).vals.lookup n = env.vals.lookup n := by
-  simp [IEnv.bindVal, List.lookup, beq_false_of_ne h]
-
 /-! ## The trip schema computed from a canonical header (fuel-free) -/
 
 /-- The comparison of a signed `int` condition operator. -/
@@ -816,19 +806,6 @@ theorem width_vrows {α : Type} {h : Nat → α → LVec → LVec} {r : α}
 @[simp] theorem width_resizeU (v : LVec) (w : Nat) : (v.resizeU w).width = w := by
   simp [LVec.resizeU, LVec.width]
 
-/-- A write of a full-width part at offset `0` replaces the vector. -/
-theorem insertAt_full {v q : LVec} (h : q.width = v.width) : v.insertAt 0 q = q := by
-  apply CombGuard.LVec.ext_bits
-  intro i
-  rw [CombGuard.bits_insertAt]
-  by_cases hi : i < v.width
-  · rw [if_pos hi, if_pos ⟨Nat.zero_le _, by omega⟩, Nat.sub_zero]
-    have : i < q.bits.size := by simp only [LVec.width] at h hi; omega
-    simp [Array.getElem?_eq_getElem this]
-  · rw [if_neg hi]
-    have : q.bits.size ≤ i := by simp only [LVec.width] at h hi; omega
-    simp [Array.getElem?_eq_none this]
-
 /-! ## Bridge S: one `always_comb` process (gate G-L3, generic)
 
 A design whose only process is one `always_comb` with a body that denotes an idempotent `f` on an
@@ -1068,13 +1045,13 @@ end Loop2
   Loop2.canonCount_sound Loop2.headerAgrees_canon Loop2.guard_canon Loop2.procStepDelta2_inc
   Loop2.procStepDelta2_dec Loop2.procStepDelta2_add Loop2.canonCount_up Loop2.canonCount_down
   Loop2.canonCount_none Loop2.ascCount_one Loop2.ascCount_one_add Loop2.canonCount_lt_one
-  Loop2.canonCount_le_one Loop2.canonCount_ge_dec Loop2.vals_lookup_bindVal_self
-  Loop2.vals_lookup_bindVal_ne Loop2.Cmp.ofOp?_eq Loop2.boundAt?_sound Loop2.headerSchema_agrees
+  Loop2.canonCount_le_one Loop2.canonCount_ge_dec vals_lookup_bindVal_self
+  vals_lookup_bindVal_ne Loop2.Cmp.ofOp?_eq Loop2.boundAt?_sound Loop2.headerSchema_agrees
   Loop2.TripSchema2.HeaderAgrees.unique Loop2.forValuesFuel2_go_arith Loop2.forValuesFuel2_of_agrees
   Loop2.Denotes.weaken Loop2.DenotesL.nil Loop2.DenotesL.cons Loop2.Denotes.block Loop2.Denotes.assignSlice
   Loop2.subAll_pos Loop2.readsViol_covered Loop2.mem_listMayW Loop2.GuardIn.assign Loop2.GuardIn.list Loop2.GuardIn.block
   Loop2.GuardIn.admits Loop2.set_set Loop2.set_self Loop2.width_vrows
-  Loop2.width_insertAt Loop2.width_resizeU Loop2.insertAt_full Loop2.SingleComb.combIndices
+  Loop2.width_insertAt Loop2.width_resizeU LVec.insertAt_zero_of_width_eq Loop2.SingleComb.combIndices
   Loop2.SingleComb.edgeIndices Loop2.SingleComb.resetIndices Loop2.SingleComb.pass
   Loop2.SingleComb.settle Loop2.SingleComb.cycle Loop2.SingleComb.snapshot
   Loop2.SingleComb.terminates Loop2.SingleComb.runs Loop2.mem_drvWinsList Loop2.WritesOnly.block

@@ -75,11 +75,21 @@ The equations are over `Bool` (`SvState.boolAt`), with the SV's gate structure p
 normalizes them is `simp only`: the shapes are never reshaped by the full simp set (it would turn
 `a ^^ b ^^ c` into `a != (b != c)`).
 
+**The shared obligations (perf, 2026-11-04).** `auto` and `inRange` are also hypotheses of the structure stage's
+theorems, and `sv_structure` normalizes them there. When the context has `hso : SharedObl X.pdesign [N]` for the design
+(the third conjunct of `CombDesign D ∧ Acyclic D ∧ SharedObl X.pdesign [N]`, which `sv_structure` proves on request,
+`CombShared.lean`), `sv_equations` closes the two from it (`SharedObl.auto`, `SharedObl.inRange`: a term, checked by
+`isDefEq` against the goal) and returns no `auto_k`/`inRange_k` goals; any mismatch (another design, other arguments) takes
+the usual routes. Measured on the references: the second normalization was 104 (fdivp), 139 (Newton), 78 (`mul_tree`),
+19 (`add_n`) thousand heartbeats.
+
 `sv_equations?` prints the equations and the obligations and changes nothing.
 
 `sv_cover` is the player's explicit helper for `cover` goals (it is not part of `sv_equations`):
 `omega`, a classical case split on each disjunct, and a bounded search for the witnesses of the
-existentials among the local variables and the row/column terms of the read. It closes every
+existentials among the local variables and the row/column terms of the read. A conjunction with a quantified part
+(the coverage of a site that writes a vector: a bit-level and a vector-level fact) is split first, each part an
+`sv_cover` call of its own. It closes every
 one-dimensional coverage goal and the simple two-dimensional ones; the nested two-dimensional goals
 of the array multiplier exceed its (deliberately small) search budget and are closed by hand in
 `Examples/system-verilog/mul_array/comb_proof.lean`.
@@ -349,6 +359,8 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
     let mut hsh? : Option Name := none
     let mut hc? : Option Name := none
     let mut ha? : Option Name := none
+    -- the shared obligations of the structure stage (`SharedObl`, CombShared.lean): every such hypothesis, tried in turn
+    let mut shared : Array Expr := #[]
     for d in ← getLCtx do
       if d.isImplementationDetail then continue
       let t ← instantiateMVars d.type
@@ -357,6 +369,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       else if f.isConstOf ``LeanModels.Sv.StateShape && hsh?.isNone then hsh? := some d.userName
       else if f.isConstOf ``LeanModels.Sv.CombDesign && hc?.isNone then hc? := some d.userName
       else if f.isConstOf ``LeanModels.Sv.Acyclic && ha?.isNone then ha? := some d.userName
+      else if f.isConstOf ``LeanModels.Sv.CombView.SharedObl then shared := shared.push d.toExpr
     let some (heqsN, heqsT) := heqs?
       | throwError "sv_equations: no hypothesis `CombEqs (X.sem N) st` in the context (the settled state: use `Models2.of_comb_pointwise` and `intro st heqs hsh …`)"
     let some hshN := hsh?
@@ -465,23 +478,46 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       -- goal by goal (`sv_cover_renorm`); a flat design with a parameter keeps the site form (its own route)
       let renormTac : TSyntax `tactic ←
         if s.lsites.any (fun ls => !ls.hdrs.isEmpty) then `(tactic| sv_cover_renorm) else `(tactic| skip)
-      if (← tryClosePlain s (← find `hauto) ``LeanModels.Sv.CombView.Summary.autoObl_of_plain
-          "an in-range fact of a flat netlist does not hold") then
-        decided := decided.push "auto"
+      -- the shared obligations (perf, CombShared.lean): `auto` and `inRange` from a `SharedObl` hypothesis of this design
+      -- (the third conjunct `sv_structure` proves on request), not normalized again; any mismatch takes the routes below
+      let mut sharedFrom? : Option Expr := none
+      for h in shared do
+        let st0 ← saveState
+        try
+          let hsV ← instantiateMVars (mkMVar (← find `hs))
+          let pa ← mkAppM ``LeanModels.Sv.CombView.SharedObl.auto #[h, hsV]
+          let pi ← mkAppM ``LeanModels.Sv.CombView.SharedObl.inRange #[h, hsV]
+          let gA ← find `hauto
+          let gI ← find `hin
+          unless (← isDefEq (← inferType pa) (← gA.getType)) do throwError "auto"
+          unless (← isDefEq (← inferType pi) (← gI.getType)) do throwError "inRange"
+          gA.assign pa
+          gI.assign pi
+          sharedFrom? := some h
+          break
+        catch _ =>
+          st0.restore
+      let mut sharedNote : Array String := #[]
+      if let some h := sharedFrom? then
+        sharedNote := sharedNote.push s!"  auto, inRange: from `{← ppExpr h}` (the shared obligations of the structure stage, `SharedObl`)"
       else
-        out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
-          (try simp only [$preL,*])
-          $normR:tactic
-          repeat' refine And.intro ?_ ?_
-          all_goals first | (intros; omega) | skip))).toArray
-      if (← tryClosePlain s (← find `hin) ``LeanModels.Sv.CombView.Summary.inRangeObl_of_plain
-          "the in-range obligation of a flat netlist does not hold") then
-        decided := decided.push "inRange"
-      else
-        out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
-          (try simp only [$preL,*])
-          $normR:tactic
-          repeat' refine And.intro ?_ ?_))).toArray
+        if (← tryClosePlain s (← find `hauto) ``LeanModels.Sv.CombView.Summary.autoObl_of_plain
+            "an in-range fact of a flat netlist does not hold") then
+          decided := decided.push "auto"
+        else
+          out := out ++ (← runOb `hauto "auto" (← `(tacticSeq|
+            (try simp only [$preL,*])
+            $normR:tactic
+            repeat' refine And.intro ?_ ?_
+            all_goals first | (intros; omega) | skip))).toArray
+        if (← tryClosePlain s (← find `hin) ``LeanModels.Sv.CombView.Summary.inRangeObl_of_plain
+            "the in-range obligation of a flat netlist does not hold") then
+          decided := decided.push "inRange"
+        else
+          out := out ++ (← runOb `hin "inRange" (← `(tacticSeq|
+            (try simp only [$preL,*])
+            $normR:tactic
+            repeat' refine And.intro ?_ ?_))).toArray
       if (← tryClosePlain s (← find `hwid) ``LeanModels.Sv.CombView.Summary.widthObl_of_plain
           "an operand of a flat netlist is not as wide as its target") then
         decided := decided.push "width"
@@ -569,6 +605,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
           return ls
         unless decided.isEmpty do
           lines := lines.push s!"  decided (flat netlist: every site plain, no parameter): {", ".intercalate decided.toList}"
+        lines := lines ++ sharedNote
         for g in out do
           lines := lines.push s!"  [{(← g.getTag)}] ⊢ {← g.withContext (do ppExpr (← instantiateMVars (← g.getType)))}"
       else
@@ -902,14 +939,40 @@ private partial def svCover (budget : IO.Ref Nat) : TacticM Unit := do
 /-- `sv_cover` closes a coverage goal (`A ∨ ∃ j, …` with linear constraints); see above. -/
 syntax (name := svCoverStx) "sv_cover" : tactic
 
-@[tactic svCoverStx] def evalSvCover : Tactic := fun _ => withDeepRec do
-  let budget ← IO.mkRef 250
+/-- The conjuncts of a right-nested conjunction (`A ∧ B ∧ C` gives `[A, B, C]`). -/
+private partial def andParts (e : Expr) : List Expr :=
+  if e.isAppOfArity ``And 2 then e.appFn!.appArg! :: andParts e.appArg! else [e]
+
+/-- One `sv_cover` call on the main goal. A CONJUNCTION with a quantified part (the coverage obligation of a site that
+writes a vector is a bit-level and a vector-level fact, `… ∧ ∀ k, k < w → …`) is split first and each part is a call of
+its own: its own `intros`, the 2-D rule, a fresh budget (perf, 2026-11-04). On such a conjunction as a whole the search
+could not succeed (it does not introduce the `∀` of the second part) and spent its budget first: fdivp's `cover_34`,
+`cover_35` and `cover_37` failed after 29 000, 29 000 and 11 700 thousand heartbeats, and the player's cascade closed
+them with its next alternative, `intros; refine ⟨?_, ?_⟩ <;> first | sv_cover | (intro k hk; sv_cover)`, in one or two
+thousand. Every other goal (a conjunction of quantifier-free reads included, whose repeated conjuncts the 2-D rule proves
+once) takes the route as before. -/
+private partial def svCoverMain : TacticM Unit := do
+  let g0 :: rest ← getGoals | throwError "sv_cover: no goals"
+  setGoals [g0]
   try evalTactic (← `(tactic| intros)) catch _ => pure ()
-  -- the 2-D rule first (`CombCover.lean`); a shape it does not read takes the search below
-  let st ← saveState
-  let done ← try LeanModels.Sv.CombCover.coverCells; pure true
-    catch e =>
-      if (← e.toMessageData.toString).startsWith LeanModels.Sv.CombCover.diagPrefix then throw e
-      st.restore
-      pure false
-  unless done do svCover budget
+  let ty ← whnfR (← instantiateMVars (← (← getMainGoal).getType))
+  if ty.isAppOfArity ``And 2 && (andParts ty).any (·.isForall) then
+    evalTactic (← `(tactic| refine And.intro ?_ ?_))
+    for p in ← getGoals do
+      setGoals [p]
+      svCoverMain
+      unless (← getGoals).isEmpty do throwError "sv_cover: a part of the conjunction is left open"
+    setGoals rest
+  else
+    let budget ← IO.mkRef 250
+    -- the 2-D rule first (`CombCover.lean`); a shape it does not read takes the search below
+    let st ← saveState
+    let done ← try LeanModels.Sv.CombCover.coverCells; pure true
+      catch e =>
+        if (← e.toMessageData.toString).startsWith LeanModels.Sv.CombCover.diagPrefix then throw e
+        st.restore
+        pure false
+    unless done do svCover budget
+    setGoals ((← getGoals) ++ rest)
+
+@[tactic svCoverStx] def evalSvCover : Tactic := fun _ => withDeepRec svCoverMain

@@ -1,5 +1,41 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## `Lib/Newton.lean` moves into the fdivp_newton reference
+
+`LeanModels/Sv/Lib/Newton.lean` leaves the library, and with it
+`Lib.correct_quot_of_rem_lt_three_mul` (`Lib/NatArith.lean`, the correction
+stage of the same core): both model the Newton-Raphson core of one svGolf
+reference, `fdivp_newton`, and nothing else uses them. They are now that
+reference's section `NwCore` (`svgolf/tasks/fdivp/reference/fdivp_newton.lean`,
+namespace `SvGolf.FdivParam`), statements and proofs unchanged, compiled in its
+solution stage like a golfer's own proof of their own core (decided 11/04:
+code the library prebuilds is time a golfer's equivalent code would not get,
+so the library keeps only results that any proof of a class of designs would
+use). All 21 declarations of `Newton.lean` lie on the proof paths of the three
+the reference cites (`nwR0_hw`, `newton_rest`, `nwNI_spec`), so none is
+deleted. `Lib.lean` drops the import; nothing else imported the module
+(`tools/check_sv_chain.sh --dependents` is empty for `Lib.lean`,
+`Lib/Newton.lean` and `Lib/NatArith.lean`).
+
+The audit of the rest of `Lib/` by the same rule moves nothing else.
+`two_mul_le_mul_self_add_mul_self` and `mod_add_sub_mod_of_eq_add` are now used
+by that section alone but are plain `Nat` facts; `BitVecArith`'s lemmas are used
+by `matmul_g1` alone but hold at every width; the scaled comparisons, powers
+and remainders of `NatArith`, the `XF.val` facts, `RowMajor` and `Restoring`
+(the model the shared math layer of every fdivp reference reads) serve two or
+more references.
+
+Measured (`check.py --no-score`, a fresh stage each, one run at a time,
+`LEAN_NUM_THREADS=2`, nice 19): the solution stage of `fdivp_newton` took
+46.9 s just before the move (load average 9.5) and 49.9, 48.6, 52.7 s after it
+(6.1, 9.9, 6.6; a fourth run, the load rising from 7.4 to 11.2: 58.1 s), of its
+120 s; elaborated single-threaded, the whole file goes
+from 1,627,676 to 1,677,866 thousand heartbeats, `NwCore` taking 49,233
+thousand. `fdivp`, whose file is unchanged, is accepted (69.7 s at load 9.1;
+one run took 114.5 s while the load rose from 6.5 to 9.6). `lake build
+LeanModels.Sv.Lib LeanModels.Sv.SeqFamily LeanModels.Sv.SeqProfile` and svGolf's
+`lake build SvGolf tasks svgolf-eval` are green.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and
@@ -144,6 +180,101 @@ at each parameter point instead of refusing the implicit width conversion
 (`ConversionExpression:width`). The new `signed_localparam_cast` fixture is
 covered at E = 4, 8, and 12; all three rows agree with Icarus, including the
 multi-point cross-check.
+
+## The shared proof library, made general: names, homes, docstrings
+
+The design-independent lemmas that the clocked svGolf references (matmul, sorter) moved into
+`SeqFamily.lean`/`SeqProfile.lean`, and the word-level `Lib/*` that the fdivp references use, are
+brought to one standard: every name says what the lemma states, every public declaration has a
+docstring, statements carry no task's widths or shapes, duplicates of core or of other
+`LeanModels.Sv` lemmas are gone, and each fact sits in the module whose concept it is. No statement
+of a trusted file changes.
+
+* **Core instead of copies.** `mullt` is `Nat.mul_lt_mul_of_pos_left`, `divmod_unique` is
+  `Nat.div_mod_unique`, `frac_split` is `Nat.mod_mul`, `kinc` is `BitVec.ofNat_add_ofNat`, `cast3`
+  is two `Int.natCast_mul`; `XF.val_low_in`, `XF.val_zext_eta`, `XF.val_ztr` are `val_of_testBit`,
+  `XF.val_zext`, `val_zext_trunc`; `insertAt_full` (SeqFamily's and `Loop2.insertAt_full`) is
+  `LVec.insertAt_zero_of_width_eq` (`Comb2Base`); `flatMap_congr'` is `CombView.flatMap_congr'`;
+  `mul_add_le` is `rowMajor_le` (`Hier2Gen`); `n_bound` is `evalInt_paramRef_of`/`isInt_paramRef_of`
+  with `vals_lookup_bindVal_ne`.
+* **General statements.** `keq`, `c32_nat`, `sh_step` had width 32 baked in, `win_le` a square
+  array, `n_bound` the parameter name `"N"`, `mul_pow2`/`mul_pow3` base 2, `mac` the accumulator
+  shape `AccW + W`, `val_shl1` the shift width 32: now `Lib.ofNat_eq_ofNat_sub_one_iff` (any width,
+  and any `N ≤ 2^w`, so a full-range counter too), `LVec.ofInt_eq_ofBitVec` (any width and value),
+  `LVec.shr_ofBitVec` plus core rewrites, `Lib.rowMajor_window_le` (`M×N`), `mul_pow_mul_pow` (any
+  base), `Lib.setWidth_add_mul_signExtend` (any wider width), `XF.val_shlBits_one` (any shift width
+  `wr ≥ 1`). Hypotheses implied by the others are gone: `mod_cases_of_lt_three_mul` (was `mod3`) drops
+  its unused `0 < Z`, `div_mod_two_eq_zero_iff_lt`, `mod_add_sub_mod_of_eq_add` and
+  `correct_quot_of_rem_lt_three_mul` their positivity hypotheses (`0 < H`, `0 < M`, `0 < mb`),
+  `foldl_range_ofBitVec_packBV` its `m ≤ N`; `nbaFold_flatMap`/`_eq_self` take any index type.
+  `XF.val_const` becomes `XF.val_constBit` (any constant width `W ≥ w`), with `val_constBit_one`
+  its instance at `1`. `sum_packed` becomes the public `packBV_eq_ofNat` (the packed vector is
+  `Σ_r (v r)·2^(r·W)`), so matmul's `product_eq` is one line.
+* **Homes.** `Lib/NatArith.lean` takes the row-major window arithmetic and its `Int` labels
+  (`mul_add_mem_window_iff`, `rowMajor_window_le`, `window_bounds_of_natCast`,
+  `min/max_add_sub_one_self`, `add_sub_one_sub_add_one`, `natAbs_sub_one_add_one`) and Newton's
+  generic steps (`two_mul_le_mul_self_add_mul_self`, which no longer clashes with Mathlib's
+  `two_mul_le_add_sq`, `mod_add_sub_mod_of_eq_add`, `correct_quot_of_rem_lt_three_mul`). The new
+  import-free `Lib/BitVecArith.lean` takes the datapath `BitVec` facts. `Known2.lean` takes
+  `knownBit` (the known 1-bit vector, was `bit`), `condTrue_knownBit`, `LVec.resizeU_one_l0/_l1`,
+  `LVec.ofBitVec_replicate_append_eq_signExtend` and `@[simp] LVec.shr_ofBitVec` (the `>>` of the
+  `sv2_known` set). `Gen2.lean` takes `Gen2.except_pure` and `vals_lookup_bindVal_self/_ne`
+  (from `Loop2`, now in the root namespace). `Hier2Gen.lean` takes `DrvWin.overlaps_comm`,
+  `NbaCommit.lean` takes `commitNba2_nil`, `nbaFold` with its lemmas and `width_foldl_insertAt`,
+  `Seq2Cycle.lean` takes `CycleModel` (from svGolf's `Seq.lean`: it is SV semantics),
+  `CombViewArith.lean` takes `flatMap_range_eq` (next to `flatMap_congr'`).
+* **Unused, deleted.** `insFold_eq_packBV`, `newton_NI`.
+* **Private.** `indexWin?_some`, Newton's `nw_pows`, `nw_err_sq`, `nw_first`, `nw_next`.
+
+Renames, for readers of the old names:
+
+| Old | New |
+|---|---|
+| `Lib.log2_mul_pow`, `mod_wrap`, `ydec_eq`, `mod3`, `bit_top` | `log2_mul_two_pow`, `add_two_pow_sub_mod_two_pow`, `add_sub_one_mod_of_lt`, `mod_cases_of_lt_three_mul`, `div_mod_two_eq_zero_iff_lt` |
+| `Lib.mul_pow2`, `mul_pow3` | `mul_pow_mul_pow`, `mul_pow_mul_pow_mul_pow` |
+| `Lib.two_mul_le_add_sq`, `mod_sub_of_lt`, `nw_correct` | `two_mul_le_mul_self_add_mul_self`, `mod_add_sub_mod_of_eq_add`, `correct_quot_of_rem_lt_three_mul` |
+| `Lib.rmN_cell` | `rmN_last_col` |
+| `XF.val_bits`, `val_win`, `val_win_in` | `val_of_testBit`, `val_window`, `val_window_of_testBit` |
+| `XF.any_eq`, `all_eq`, `eqv_val`, `bit_eq` | `any_eq_decide_val`, `all_eq_decide_val`, `eqv_eq_decide_val`, `bit_eq_of_val` |
+| `XF.val_const`, `val_constBit1`, `val_constBit0`, `constBit0_false` | `val_constBit`, `val_constBit_one`, `val_constBit_zero`, `constBit_zero` |
+| `XF.val_shl_var`, `val_shr_var`, `val_shl1`, `val_shl0` | `val_shlBits_zext`, `val_shrBits`, `val_shlBits_one`, `val_cons_false` |
+| `XF.top_bit`, `top_bit'` | `top_bit_iff`, `top_bit_succ_iff` |
+| `insFold`, `insFold_succ`, `getLsbD_insFold` | `bvInsertEntries`, `bvInsertEntries_succ`, `getLsbD_bvInsertEntries` |
+| `lfold`, `lfold_succ`, `width_lfold`, `lfold_ofBitVec`, `lfold_insertAt`, `lfold_last` | `LVec.insertEntries`, `_succ`, `LVec.width_insertEntries` (`@[simp]`), `LVec.insertEntries_ofBitVec`, `LVec.insertEntries_insertAt`, `LVec.foldl_range_insertAt_last` |
+| `packBV_upd`, `extract_packBV`, `packBV_family` | `bvInsertAt_packBV`, `extract_ofBitVec_packBV`, `foldl_range_ofBitVec_packBV` |
+| `mul_add_le`, `unit_win_iff`, `win_le`, `win_facts`, `win_min`, `win_max`, `win_wid`, `natAbs_pred` | `rowMajor_le` (`Hier2Gen`, existing), `Lib.mul_add_mem_window_iff`, `Lib.rowMajor_window_le`, `Lib.window_bounds_of_natCast`, `Lib.min_add_sub_one_self`, `Lib.max_add_sub_one_self`, `Lib.add_sub_one_sub_add_one`, `Lib.natAbs_sub_one_add_one` |
+| `setWidth_sext`, `mac`, `ext_shr`, `keq` | `Lib.setWidth_signExtend_of_le`, `Lib.setWidth_add_mul_signExtend`, `Lib.extractLsb'_ushiftRight`, `Lib.ofNat_eq_ofNat_sub_one_iff` |
+| `bit`, `cond_bit`, `l0_bit`, `l1_bit`, `sx_eq`, `shr_ofBitVec` | `knownBit`, `condTrue_knownBit`, `LVec.resizeU_one_l0`, `LVec.resizeU_one_l1`, `LVec.ofBitVec_replicate_append_eq_signExtend`, `LVec.shr_ofBitVec` |
+| `commit_nil`, `width_foldl`, `nbaFold_flatMap_id`, `overlaps_comm`, `except_pure` | `commitNba2_nil`, `width_foldl_insertAt`, `nbaFold_flatMap_eq_self`, `DrvWin.overlaps_comm`, `Gen2.except_pure` |
+| `clockStep_wellFormed`, `negFlop`, `negPre` | `clockStep_eq_of_wellFormed`, `OmittedProcess.flop`, `OmittedProcess.pre` |
+| `Loop2.vals_lookup_bindVal_self/_ne` | `vals_lookup_bindVal_self/_ne` (in `Gen2`) |
+| `flatMap_range_eq` (SeqFamily) | `CombView.flatMap_range_eq` (`CombViewArith`) |
+| svGolf `SvGolf.CycleModel`, `StreamTask.PhaseModel.pend` | `LeanModels.Sv.CycleModel`, `StreamTask.PhaseModel.out_eq_false_of_emitted` |
+
+Measured: one root `lake build` of 142 targets is green (217 jobs, 176 built): the `LeanModels.Sv`
+imports of `LeanModels.lean`, `SeqFamily`, `SeqProfile`, `Seq2Cycle`, `Loop2`, `Loop2E`, `Loop2Sem`, the
+103 chain modules `tools/check_sv_chain.sh --dependents` names for the changed files, and the Examples
+`seq_neg/check`, `loop_edges/schema`, `loop_nested_clmul/schema`, `mul2d/gen`, `partsel/gen`,
+`ripple_add/gen`, `ripple_fa/gen`, `shifts/proof` (the ones whose text uses `bindVal` lookups or `>>`,
+which meet the two global simp lemmas that changed module). svGolf's `lake build SvGolf tests` is green
+(102 jobs); `check.py --no-score` accepts `matmul_g1` (solution stage 28.5 s), `sorter_ins` (21.4 s),
+the seq_counter fixture (12.9 s), `fdivp` (73.2 s) and `fdivp_newton` (91.4 s), and
+`tests/fdivp/shared_sections.py` holds. Every `#print axioms` of `SeqFamily`, `SeqProfile`, `Seq2Cycle`
+and svGolf's `Seq.lean` shows at most `propext`, `Classical.choice`, `Quot.sound`; no `sorry`, `admit`,
+`native_decide` or `bv_decide`. The reducibility probe passes. Not rebuilt: the other SV Examples that
+import a changed module only for its old content (no `bindVal`/`>>` in their text). The fdivp timings
+are not stable on this host: at load average 9 to 12 the same trees measured 93.8, 116.3 and 120.4 s
+(`fdivp`, the last one over the 120 s limit) and 58.5, 191.6 and 91.4 s (`fdivp_newton`), with the
+kernel replay (`leanchecker`) steady, so the 120 s limit wants a quiet machine to judge.
+
+Review pass (one duplicate, hypotheses the others imply, two widths, every `PhaseModel` field documented,
+module docs listing what each file offers). Measured: one root `lake build` of 143 targets is green (212
+jobs, 166 built): the `LeanModels.Sv` imports of `LeanModels.lean`, the changed modules, `Lib`, `Seq2Cycle`,
+`Loop2`, `Loop2E`, `Loop2Sem`, the 104 chain modules `--dependents` names, and `seq_neg/check`; no new
+warning in a changed file. `lake build SvGolf tests` is green (102 jobs). `check.py --no-score` (limit 600 s)
+accepts `matmul_g1` (solution stage 8.5 s), `sorter_ins` (7.3 s), the seq_counter fixture (2.3 s), `fdivp`
+(55.4 s) and `fdivp_newton` (53.6 s), each with axioms `propext`, `Classical.choice`, `Quot.sound` only;
+`tests/fdivp/shared_sections.py` holds and the reducibility probe passes.
 
 ## Static local NBA targets inside `always_ff` remain loud
 

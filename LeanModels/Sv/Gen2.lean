@@ -46,13 +46,15 @@ Design laws:
 * **Symbolic parameters by `simp`.** `evalInt` on genvar/parameter
   arithmetic, `instLhs2`, `fitExpr2`, `instExpr2`, `instProcess2` all
   compute with a symbolic `N` and genvars bound to symbolic integers once
-  the `Except` monad steps (`Gen2.except_ok_bind`). Since 2026-10-28
+  the `Except` monad steps (`Gen2.except_ok_bind`, `Gen2.except_pure`). Since 2026-10-28
   `evalInt` is width-exact outside the INT class (`PExpr.isInt`: integers,
   genvars, `vals`-bound parameters under `+ - * / % ** << >>`), so the
   compositional `evalInt_*_of` lemmas, `evalInt_slt` and the
   `expand2_genFor_ascending*` family carry INT side conditions — `rfl` for
   genvars and integers, `isInt_paramRef_of` from the same `vals` lookup
-  that evaluates a parameter, `isInt_binary_of` above them; `simp` decides
+  that evaluates a parameter (`evalInt_paramRef_of`; under a genvar binding
+  `vals_lookup_bindVal_self`, `@[simp]`, and `vals_lookup_bindVal_ne` read
+  that lookup), `isInt_binary_of` above them; `simp` decides
   them itself (`PExpr.isInt` is a simp definition). Two interfaces: targeted
   conditional lemmas (`instExpr2_bitSel_ident`, `fitExpr2_bitSel_ident`,
   `instLhs2_bitSel`, `instProcess2_assignL`, …) and the documented recipe
@@ -103,6 +105,9 @@ theorem except_ok_bind {ε α β : Type} (a : α) (f : α → Except ε β) :
 /-- `Except.error` short-circuits bind (local simp, like `except_ok_bind`). -/
 theorem except_error_bind {ε α β : Type} (e : ε) (f : α → Except ε β) :
     (Except.error e >>= f) = Except.error e := rfl
+
+/-- `pure` in `Except` is `Except.ok` (local simp, like `except_ok_bind`). -/
+theorem except_pure {ε α : Type} (a : α) : (pure a : Except ε α) = .ok a := rfl
 
 /-- Associativity of `Res`'s bind (flattens nested `do` blocks — the
 `instantiate2` decomposition step). -/
@@ -681,6 +686,17 @@ variable {env : IEnv}
     (env.withDecls decls).nvals = env.nvals := rfl
 
 @[simp] theorem evalInt_int (v : Int) : evalInt env (.int v) = .ok v := rfl
+
+/-- `(env.bindVal it v)` reads the bound value at `it`. -/
+@[simp] theorem vals_lookup_bindVal_self (env : IEnv) (it : String) (v : Int) :
+    (env.bindVal it v).vals.lookup it = some v := by
+  simp [IEnv.bindVal]
+
+/-- `(env.bindVal it v)` reads every other name as `env` does (with `evalInt_paramRef_of`/`isInt_paramRef_of`:
+a parameter seen through a genvar binding). -/
+theorem vals_lookup_bindVal_ne {env : IEnv} {it n : String} (v : Int) (h : n ≠ it) :
+    (env.bindVal it v).vals.lookup n = env.vals.lookup n := by
+  simp [IEnv.bindVal, List.lookup, beq_false_of_ne h]
 
 theorem evalInt_paramRef_of {n : String} {v : Int} (h : env.vals.lookup n = some v) :
     evalInt env (.paramRef n none) = .ok v := by

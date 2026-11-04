@@ -36,6 +36,11 @@ then a proof about `BitVec`/`Bool` algebra — no bit-blasting, no
 * **Source order is preserved.** `{p₀, …, pₙ}` (first part = MSB) becomes
   the right-nested `x₀ ++ (x₁ ++ … ++ xₙ)` — core's `++` also puts its left
   operand in the high bits, so no reversal appears anywhere.
+  `LVec.ofBitVec_replicate_append_eq_signExtend` (not `@[simp]`) reads the
+  SV sign-extension idiom `{{m{y[top]}}, y[lo +: W]}` as `signExtend`.
+* **The known bit.** `knownBit b` (an `abbrev` for `ofBitVec (BitVec.ofBool b)`)
+  is a 1-bit register's known value; `condTrue_knownBit` (local simp) reads it
+  as a condition, `LVec.resizeU_one_l0`/`_l1` fold the literals `1'b0`/`1'b1`.
 * **Range side conditions are explicit.** A slice lemma fires only in range
   (`lo + k ≤ w`; the single-bit form `i < w`); out-of-range reads produce
   `x` bits in the interpreter and are not "known". Under `sv2_known` the
@@ -70,7 +75,7 @@ The `@[simp]` set it relies on (the "`sv2_known` set"):
   `getElem_bvInsertAt`;
 * operators: `LVec.and/or/xor/not_ofBitVec`, `LVec.add/sub/mul_ofBitVec`,
   `LVec.concat_ofBitVec`, `LVec.concatMany_nil/singleton/cons_cons`,
-  `LVec.replVec_ofBitVec`, `LVec.redOr/redAnd/redXor_ofBitVec`,
+  `LVec.replVec_ofBitVec`, `LVec.redOr/redAnd/redXor_ofBitVec`, `LVec.shr_ofBitVec`,
   `LVec.condTrue_ofBitVec`, `LVec.isKnownZero_ofBitVec`,
   `LVec.ternary_ofBitVec_ofBool` (priority high), `LVec.ternary_ofBitVec`,
   `LVec.lt/le/gt/ge_ofBitVec`, `LVec.eqLogical/neLogical/eqCase/neCase_ofBitVec`;
@@ -519,6 +524,25 @@ private theorem getElem?_flatten_replicate {α : Type} (l : List α) (n i : Nat)
     simp [hi, Nat.mod_lt i hw, Nat.pos_iff_ne_zero.mp hw]
   · simp [hi]
 
+/-- **A sign extension as SV writes it**: `{{m{y[lo+W-1]}}, y[lo +: W]}` (the entry's top bit replicated `m`
+times above it, `W ≥ 1`) is the entry sign-extended to `m + W` bits. Stated on known vectors: the `BitVec`
+widths `1 * m + W` and `m + W` differ syntactically. -/
+theorem ofBitVec_replicate_append_eq_signExtend {n p lo W : Nat} (hW : 1 ≤ W) (y : BitVec n) (m : Nat)
+    (hp : p = lo + W - 1) :
+    ofBitVec ((y.extractLsb' p 1).replicate m ++ y.extractLsb' lo W) =
+      ofBitVec ((y.extractLsb' lo W).signExtend (m + W)) := by
+  rw [eq_ofBitVec_iff]
+  refine ⟨by simp [Nat.add_comm], fun i hi => ?_⟩
+  rw [getElem?_ofBitVec, if_pos (by omega)]
+  congr 2
+  rw [BitVec.getLsbD_append, BitVec.getLsbD_signExtend]
+  by_cases h : i < W
+  · rw [if_pos h, if_pos h, decide_eq_true (by omega : i < m + W), Bool.true_and]
+  · rw [if_neg h, if_neg h, BitVec.getLsbD_replicate, BitVec.msb_eq_getLsbD_last, BitVec.getLsbD_extractLsb',
+      BitVec.getLsbD_extractLsb', Nat.mod_one, hp, show lo + W - 1 + 0 = lo + (W - 1) by omega]
+    simp only [show i - W < 1 * m by omega, show W - 1 < W by omega, show i < m + W by omega,
+      show (0 : Nat) < 1 by omega, decide_true, Bool.true_and]
+
 /-! ## Reductions -/
 
 private theorem foldl_map_ofBool (f : Logic → Logic → Logic) (g : Bool → Bool → Bool)
@@ -698,7 +722,38 @@ attribute [simp] add_ofBitVec mul_ofBitVec
     (ofBitVec x).neLogical (ofBitVec y) = Logic.ofBool (!decide (x = y)) := by
   simp [neLogical]
 
+/-! ## Shifts -/
+
+/-- `>>` of known vectors (a known shift amount) is `BitVec`'s logical right shift by the amount's value. -/
+@[simp] theorem shr_ofBitVec {w v : Nat} (x : BitVec w) (y : BitVec v) :
+    (ofBitVec x).shr (ofBitVec y) = ofBitVec (x >>> y.toNat) := by
+  rw [eq_ofBitVec_iff]
+  refine ⟨by simp [shr, shiftAmount?, width]; exact width_ofBitVec x, fun i hi => ?_⟩
+  simp only [shr, shiftAmount?, toNat?_ofBitVec, Array.getElem?_ofFn, width_ofBitVec, hi, dite_true,
+    BitVec.getLsbD_ushiftRight, getElem?_ofBitVec]
+  by_cases h : i + y.toNat < w
+  · simp [h, Nat.add_comm]
+  · simp only [h, Nat.add_comm, ↓reduceIte, Option.getD_none]
+    rw [BitVec.getLsbD_of_ge x _ (by omega)]; rfl
+
 end LVec
+
+/-! ## The known bit -/
+
+/-- **The known 1-bit vector** of a `Bool`: `knownBit false` is `1'b0`, `knownBit true` is `1'b1`. An `abbrev`,
+so the `@[simp]` set sees the `LVec.ofBitVec` it is. -/
+abbrev knownBit (b : Bool) : LVec := LVec.ofBitVec (BitVec.ofBool b)
+
+/-- The `if`-truthiness of a known bit is the bit. Not `@[simp]`: `LVec.condTrue_ofBitVec` already rewrites the
+left-hand side (to `decide (BitVec.ofBool b ≠ 0#1)`), so a proof that wants this form adds it locally. -/
+theorem condTrue_knownBit (b : Bool) : (knownBit b).condTrue = b := by
+  cases b <;> simp [LVec.condTrue_ofBitVec]
+
+/-- The one-bit literal `1'b0` (a single `l0`) resized to one bit is `knownBit false`. -/
+theorem LVec.resizeU_one_l0 : (⟨#[.l0]⟩ : LVec).resizeU 1 = knownBit false := by decide
+
+/-- The one-bit literal `1'b1` (a single `l1`) resized to one bit is `knownBit true`. -/
+theorem LVec.resizeU_one_l1 : (⟨#[.l1]⟩ : LVec).resizeU 1 = knownBit true := by decide
 
 /-! ## Operator dispatch (`evalBinOp`/`evalUnaryOp`/`evalRedOp` at a constructor) -/
 

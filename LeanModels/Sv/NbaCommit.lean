@@ -9,6 +9,9 @@ E-core-1's R-EDGE (`Kernel/Core1Edge.lean`) and by the FF-only cycle lemma (`Seq
 **Status: a `run2` library lemma** (about `commitNba2` only). Moved verbatim from
 `Kernel/Core1Edge.lean` (arch-x1 `e39d0871`): when the two meet, `Core1Edge` imports this module and
 drops its copy.
+
+Also here: `commitNba2_nil`/`_cons`/`_append`, and the commit restricted to one signal (`nbaFold`, with
+`nbaFold_append`, `nbaFold_flatMap`, `nbaFold_flatMap_eq_self`, `width_nbaFold`) and `width_foldl_insertAt`.
 -/
 
 namespace LeanModels.Sv
@@ -23,6 +26,10 @@ def nbaStep (st : SvState) (u : String × Nat × LVec) : SvState :=
   | some old => SvState.set st u.1 (old.insertAt u.2.1 u.2.2)
   | none => st
 
+/-- Committing the empty queue changes nothing. -/
+theorem commitNba2_nil (st : SvState) : commitNba2 st [] = st := rfl
+
+/-- Committing `u :: q` is `u`'s step, then the commit of `q`. -/
 theorem commitNba2_cons (st : SvState) (u : String × Nat × LVec) (q : NbaQueue2) :
     commitNba2 st (u :: q) = commitNba2 (nbaStep st u) q := rfl
 
@@ -131,6 +138,46 @@ theorem commitNba2_perm {B : Nat → NbaQueue2}
   | trans h₁ _ ih₁ ih₂ =>
       intro hnd st hk
       rw [ih₁ hnd hk, ih₂ (h₁.nodup_iff.mp hnd) hk]
+
+/-! ## Committing to one signal
+
+A state of separate registers commits register by register: `nbaFold n q x` is the commit of the queue `q`
+restricted to the signal `n`, applied to its old value `x`. -/
+
+/-- The writes of a queue to the signal `n`, in order, over `x`. -/
+def nbaFold (n : String) (q : NbaQueue2) (x : LVec) : LVec :=
+  q.foldl (fun acc u => if u.1 = n then acc.insertAt u.2.1 u.2.2 else acc) x
+
+/-- `nbaFold` of a concatenation: the first queue's writes, then the second's. -/
+theorem nbaFold_append (n : String) (a b : NbaQueue2) (x : LVec) :
+    nbaFold n (a ++ b) x = nbaFold n b (nbaFold n a x) :=
+  List.foldl_append ..
+
+/-- `nbaFold` of the queues of a family `f k`, `k ∈ l`, is the fold of each family member's `nbaFold`. -/
+theorem nbaFold_flatMap {α : Type} (n : String) (f : α → NbaQueue2) : ∀ (l : List α) (x : LVec),
+    nbaFold n (l.flatMap f) x = l.foldl (fun acc k => nbaFold n (f k) acc) x
+  | [], _ => rfl
+  | a :: l, x => by rw [List.flatMap_cons, nbaFold_append, nbaFold_flatMap n f l]; rfl
+
+/-- A family whose every member's queue leaves the signal `n` unchanged leaves it unchanged. -/
+theorem nbaFold_flatMap_eq_self {α : Type} {n : String} {f : α → NbaQueue2} (h : ∀ k x, nbaFold n (f k) x = x) :
+    ∀ (l : List α) (x : LVec), nbaFold n (l.flatMap f) x = x
+  | [], _ => rfl
+  | a :: l, x => by rw [List.flatMap_cons, nbaFold_append, h, nbaFold_flatMap_eq_self h l]
+
+/-- `nbaFold` keeps the width (every write is a select-write). -/
+@[simp] theorem width_nbaFold (n : String) : ∀ (q : NbaQueue2) (x : LVec), (nbaFold n q x).width = x.width
+  | [], _ => rfl
+  | u :: q, x => by
+    simp only [nbaFold, List.foldl_cons]
+    rw [← nbaFold, width_nbaFold n q]; split <;> simp
+
+/-- Applying every write of a queue to one vector (signal names ignored) keeps its width. -/
+theorem width_foldl_insertAt (q : NbaQueue2) (c : LVec) :
+    (q.foldl (fun acc u => acc.insertAt u.2.1 u.2.2) c).width = c.width := by
+  induction q generalizing c with
+  | nil => rfl
+  | cons u q ih => rw [List.foldl_cons, ih, LVec.width_insertAt]
 
 #print axioms nbaStep_comm
 #print axioms commitNba2_perm

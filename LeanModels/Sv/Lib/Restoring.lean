@@ -23,6 +23,8 @@ def restQuo (d x : Nat) : Nat → Nat
   | 0 => 0
   | i + 1 => 2 * restQuo d x i + (if d ≤ restRem d x i then 1 else 0)
 
+/-- The invariant of restoring division from `x < 2·d`: after `i` steps the partial remainder stays below `2·d`
+and `restRem + 2·d·restQuo = 2^i·x`. -/
 theorem restore_inv (d x : Nat) (hx : x < 2 * d) :
     ∀ i, restRem d x i < 2 * d ∧ restRem d x i + 2 * (d * restQuo d x i) = 2 ^ i * x
   | 0 => by simp [restRem, restQuo]; omega

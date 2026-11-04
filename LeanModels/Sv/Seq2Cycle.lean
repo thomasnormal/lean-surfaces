@@ -4,8 +4,7 @@ import LeanModels.Sv.Obs
 /-!
 # The clock cycle of an FF-only design, in closed form (`LeanModels.Sv`, S1 core)
 
-**Status: a `run2` library theorem** (provisional over `run2`; never trusted). Imported by no
-existing module.
+**Status: a `run2` library theorem** (provisional over `run2`; never trusted).
 
 For a design whose processes are all edge processes (no comb process, no asynchronous reset) and
 whose bodies, run on the cycle's pre state, issue only nonblocking updates and leave the state alone,
@@ -19,6 +18,9 @@ schedule: `cycleStep2_ffOnly` gives it in process-index order.
 * `Design2.ffUpd d fuel st i`: the updates process `i` issues on `st`.
 * `FFOnly d`: every process an `alwaysFF` with an NBA-only body (so no comb process and no
   `alwaysFFR`). The decidable profile and the schedule class are in `SeqProfile.lean`.
+* `CycleModel d`, `CycleModel.snapshot`: any design's clock step as a relation `Step e prev st` on a
+  `Shape` of states, and every snapshot of a run as one `Step` from the previous snapshot: what a
+  protocol-level proof of a clocked design consumes instead of fuel, schedules and traces.
 
 This is the generic half of the sequential `sv_equations` (`sv_seq_equations`): per design, what
 remains is evaluating `ffUpd` on an encoded state and committing it.
@@ -250,8 +252,43 @@ theorem cycleStep2_ffOnly {d : Design2} (h : FFOnly d) (σ : ScheduleOracle) {fu
     List.nil_append]
   rw [commitNba2_perm hdisj hperm (hperm.nodup_iff.mpr hnde) hnd]
 
+/-! ## The clock step as a relation (shared by the protocol reductions of a clocked task) -/
+
+/-- **The clock step of a design `d`**, abstracted: a `Shape` of states (widths; any values, `x` included) true
+initially and kept by every cycle, and a one-cycle relation `Step e prev st` (stimulus entry, previous snapshot,
+next snapshot) that every successful `cycleStep2` from a state of the shape satisfies, at any schedule and fuel.
+For an FF-only design `Step` is the evaluated clock step (`cycleStep2_profile` at one fuel, `cycleStep2_det` for
+the others). -/
+structure CycleModel (d : Design2) where
+  /-- The states the design can be in at a snapshot. -/
+  Shape : SvState → Prop
+  /-- One cycle: stimulus entry, previous snapshot, next snapshot. -/
+  Step : SvState → SvState → SvState → Prop
+  /-- The initial state has the shape. -/
+  init : Shape (initState2 d)
+  /-- Every successful cycle from a state of the shape is a `Step`. -/
+  cycle : ∀ σ F e prev k st k', Shape prev → cycleStep2 d σ F e prev k = .ok (st, k') →
+    Step e prev st
+  /-- A `Step` keeps the shape. -/
+  shape : ∀ e prev st, Shape prev → Step e prev st → Shape st
+
+/-- Every snapshot of a completed run is a `Step`, at its stimulus entry, from the previous
+snapshot (`initState2 d` at cycle 0), which has the shape. -/
+theorem CycleModel.snapshot {d : Design2} (M : CycleModel d) {σ : ScheduleOracle}
+    {stim tr : List SvState} (hr : Runs2 d σ stim tr) {c : Nat} {st : SvState}
+    (hc : tr[c]? = some st) : ∃ e prev, stim[c]? = some e ∧
+      (initState2 d :: tr)[c]? = some prev ∧ M.Shape prev ∧ M.Step e prev st := by
+  obtain ⟨F, e, prev, k, k', he, hp, hs⟩ := hr.snapshot_step hc
+  have hsh : M.Shape prev := by
+    cases c with
+    | zero => simp only [List.getElem?_cons_zero, Option.some.injEq] at hp; exact hp ▸ M.init
+    | succ c => exact hr.forall_of_step M.init (fun F e q k s k' hq hs =>
+        M.shape e q s hq (M.cycle σ F e q k s k' hq hs)) c prev (by simpa using hp)
+  exact ⟨e, prev, he, hp, hsh, M.cycle σ F e prev k st k' hsh hs⟩
+
 #print axioms execStmt2_nbaOnly
 #print axioms edgePass2_ffOnly
 #print axioms cycleStep2_ffOnly
+#print axioms CycleModel.snapshot
 
 end LeanModels.Sv

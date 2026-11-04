@@ -56,7 +56,8 @@ design `m`):
   `pairwise_flatMap_range` splits a generate family's windows into one
   cell's and two cells' (`j < k`), and `DrvWin.overlaps_some_eq_false`
   turns each pair into bit arithmetic for `omega` (row-major offsets
-  `i * K + c`: `rowMajor_le`). `ripple_add/gen.lean` and `mul2d/gen.lean`
+  `i * K + c`: `rowMajor_le`; `DrvWin.overlaps_comm` swaps a pair).
+  `ripple_add/gen.lean` and `mul2d/gen.lean`
   use this route; `ripple_fa/gen.lean` uses it for a hierarchical top.
 
 The structural acceptance (`ripple_fa`, a ripple-carry adder of
@@ -448,6 +449,11 @@ theorem DrvWin.overlaps_some_eq_false {n n' : String} {l₁ w₁ l₂ w₂ : Nat
       ne_eq, not_true_eq_false, false_or]
     omega
   · simp [h]
+
+/-- Overlap of driver windows is symmetric. -/
+theorem DrvWin.overlaps_comm (a b : DrvWin) : a.overlaps b = b.overlaps a := by
+  obtain ⟨n, _ | ⟨l, w⟩⟩ := a <;> obtain ⟨n', _ | ⟨l', w'⟩⟩ := b <;> simp only [DrvWin.overlaps] <;>
+    rw [Bool.beq_comm (a := n)] <;> simp only [Bool.and_comm]
 
 /-- A whole-signal window overlaps every window of its signal. -/
 @[simp] theorem DrvWin.overlaps_none_left (n : String) (b : DrvWin) :

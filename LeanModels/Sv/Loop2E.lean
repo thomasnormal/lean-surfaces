@@ -119,7 +119,7 @@ theorem DenotesE.assignE {E : Elab} (h4 : AllFour E) {I : SvState → Prop} {n :
   refine ⟨_, execBody_assign_run (staticWin_ident hW) (evalPure2_valE hs (hb _ hI)),
     hT.writeWin _ _ _, ?_⟩
   obtain ⟨h1, h2⟩ := view_writeWin_decl hT h4 hW 0 ((valE (E.view σ) e).resizeU W)
-  rw [h1, insertAt_full (by rw [width_resizeU, h2])]
+  rw [h1, LVec.insertAt_zero_of_width_eq (by rw [width_resizeU, h2])]
   simp only [h2]
 
 /-- **An `if`, with or without `else`**, over E (seam primitive 5). -/

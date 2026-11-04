@@ -1483,5 +1483,6 @@
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_positive", "args": [[true], [false]], "expect": "match", "note": "Boolean inputs retain CPython's integer result for nonnegative ndigits"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_one", "args": [[2.675], [1.25], [-1.25], [-0.04], [5e-324]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits one"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_two", "args": [[1.2345], [1.235], [2.675], [-0.005], [1.005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits two"},
-  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_three", "args": [[1.2345], [1.235], [2.675], [-0.005], [1.005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits three"}
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_three", "args": [[1.2345], [1.235], [2.675], [-0.005], [1.005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits three"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_four", "args": [[1.23456], [1.23455], [2.675], [-0.00005], [1.00005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits four"}
 ]

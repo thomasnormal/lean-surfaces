@@ -7,6 +7,14 @@ The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and
 with an arbitrary value leaves assertion results unchanged, pinning the
 Preponed-only sampling rule that the E property contract consumes.
 
+## F1: connect retained SVA properties to observation contracts
+
+`LeanModels.Sv.SvaContract` now carries a retained `PProperty` beside its
+structured `SvaCheck`, checks the source kind and clock, and evaluates the
+property through the backend-generic observation `Safe` judgment over trusted
+port samples. The original source text remains attached; unsupported source
+forms stay loud until a structured F1 parser rule exists.
+
 ## F1: retain SVA generate paths
 
 Retained concurrent assertions now carry their lexical generate labels in the

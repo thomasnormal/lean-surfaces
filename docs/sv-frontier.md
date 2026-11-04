@@ -90,6 +90,13 @@ an assertion result, because concurrent properties consume only the Preponed
 sample. This is the first refinement fact for exposing E's sampled cycle view
 to property contracts.
 
+`LeanModels.Sv.SvaContract` connects retained `PProperty` metadata to a
+structured `SvaCheck` and the observation model's `Safe` judgment. It checks
+the source assertion kind and clock, preserves the source text, and maps
+trusted pre/post port samples into the E slot view. The structured body is
+supplied explicitly at this boundary; forms outside the finite F1 vocabulary
+remain loud until their parser and contract rule are added.
+
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
 processes. Their lexical generate labels are now carried in each property's

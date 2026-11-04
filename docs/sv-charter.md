@@ -50,6 +50,14 @@ post-NBA `final` state (`clockSamples_final_irrel` and
 `evalRegion_final_irrel`): properties read only the Preponed sample named by
 the scheduler core.
 
+`LeanModels.Sv.SvaContract` now connects a retained `PProperty` to a structured
+`SvaCheck` and exposes its result through the observation model's `Safe`
+judgment. The bridge checks the retained assertion kind and clock, keeps the
+original source text, and maps trusted pre/post port samples to E slots. A
+caller still supplies the structured body; source forms outside the finite F1
+vocabulary remain an explicit elaboration refusal rather than receiving a
+fabricated meaning.
+
 The same retention route handles an assertion in a constant generate scope;
 its executable generate body remains empty while the property metadata carries
 the lexical generate labels in `path`; generated instance indices remain an

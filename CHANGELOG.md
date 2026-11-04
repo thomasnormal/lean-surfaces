@@ -3,6 +3,10 @@
 ## Unreleased
 
 - C++ callable-frame coverage now includes a negative-false while-inside-
+  `switch` shadow fallthrough assignment false-path witness, with a native
+  differential match and 1,528 total rows.
+
+- C++ callable-frame coverage now includes a negative-false while-inside-
   `switch` shadow assignment false-path witness, with a native differential
   match and 1,527 total rows.
 

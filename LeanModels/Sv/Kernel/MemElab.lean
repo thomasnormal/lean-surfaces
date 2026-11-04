@@ -46,6 +46,51 @@ where
 def PDesign.memStateAt (env : IEnv) (d : PDesign) : Except String MemState := do
   return MemState.ofShapes (← d.memShapesAt env)
 
+/-! ## Source-shaped array targets
+
+The flat `Lhs2` path cannot represent an unpacked cell: its slices address one
+packed vector.  Keep that distinction explicit here.  A one-rank
+`PLhs.arrayElem` is resolved against the declaration's source label range and
+then uses the native `MemState` cell operation.  Out-of-range labels are the
+LRM no-op/read-x behavior supplied by `MemBlock`; dynamic labels and partial
+array selects remain loud. -/
+
+def PDecl.memTarget? (env : IEnv) (pd : PDecl) (target : PLhs) :
+    Except String (Option (MemShape × Int)) := do
+  let some shape ← pd.memShape? env
+    | .error s!"decl '{pd.name}': target is not an unpacked memory"
+  match target with
+  | .arrayElem n [index] =>
+      if n != pd.name then
+        .error s!"array target '{n}' does not name declaration '{pd.name}'"
+      else
+        match evalInt env index with
+        | .ok i => .ok (some (shape, i))
+        | .error e => .error s!"array target '{n}' index: {e}"
+  | .arrayElem n _ =>
+      .error s!"array target '{n}' has rank outside E (UnpackedDecl:rank)"
+  | .arrayPart n _ _ _ _ =>
+      .error s!"array part target '{n}' is outside the one-cell E memory fragment"
+  | _ => .error s!"target '{pd.name}' is not an unpacked array element"
+
+def MemState.readTarget (env : IEnv) (pd : PDecl) (target : PLhs) (s : MemState) :
+    Except String (Option LVec) := do
+  match ← pd.memTarget? env target with
+  | none => .ok none
+  | some (shape, index) =>
+      match s.lookup shape.name with
+      | none => .error s!"memory '{shape.name}' is not present in E state"
+      | some _ => .ok (s.read shape.name index)
+
+def MemState.writeTarget (env : IEnv) (pd : PDecl) (target : PLhs)
+    (value : LVec) (s : MemState) : Except String (Option MemState) := do
+  match ← pd.memTarget? env target with
+  | none => .ok none
+  | some (shape, index) =>
+      match s.write shape.name index value with
+      | none => .error s!"memory '{shape.name}' is not present in E state"
+      | some s' => .ok (some s')
+
 private def memEnv : IEnv := { vals := [("S", 4)] }
 
 private def memDecl : PDecl :=
@@ -56,6 +101,23 @@ private def memDecl : PDecl :=
   some ({ name := "mem", elemWidth := 8, msb := 0, lsb := 3 } : MemShape)
 #guard (MemState.read (MemState.ofShapes
   [{ name := "mem", elemWidth := 8, msb := 0, lsb := 3 }]) "mem" 4).getD (LVec.ofNat 1 1) == LVec.xVec 8
+
+private def memTarget : PLhs := .arrayElem "mem" [.int 2]
+
+#guard match MemState.writeTarget memEnv memDecl memTarget (LVec.ofNat 8 165)
+    (MemState.ofShapes [{ name := "mem", elemWidth := 8, msb := 0, lsb := 3 }]) with
+  | .ok (some s) => (MemState.readTarget memEnv memDecl memTarget s).toOption ==
+      some (some (LVec.ofNat 8 165))
+  | _ => false
+#guard match MemState.readTarget memEnv memDecl (.arrayElem "mem" [.int 9])
+    (MemState.ofShapes [{ name := "mem", elemWidth := 8, msb := 0, lsb := 3 }]) with
+  | .ok (some v) => v == LVec.xVec 8
+  | _ => false
+#guard match MemState.writeTarget memEnv memDecl (.arrayPart "mem" [.int 1]
+    .range (.int 3) (.int 2)) (LVec.ofNat 2 3)
+    (MemState.ofShapes [{ name := "mem", elemWidth := 8, msb := 0, lsb := 3 }]) with
+  | .error _ => true
+  | _ => false
 
 end LeanModels.Sv
 

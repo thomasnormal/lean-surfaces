@@ -99,6 +99,11 @@ same-cell, other-cell, out-of-range, and unknown-name behavior.
 This is a trusted, fuel-free state primitive; process target wiring is still
 deliberately loud until the retained source node is connected to it.
 
+The same bridge now resolves a one-rank `PLhs.arrayElem` against the source
+label range and delegates reads and writes to `MemState`. Out-of-range labels
+retain all-x read and no-op write behavior; dynamic indices, partial array
+targets, and process scheduling remain named boundaries.
+
 ## Signed packed localparam width conversions — 2026-11-04
 
 Assignment-like implicit conversions around signed INT-class parameter and

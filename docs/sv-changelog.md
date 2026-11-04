@@ -116,6 +116,11 @@ unknown-memory laws without fuel or default-point expansion. Retained
 `Kernel/MemElab`, while nested ranks and process lowering remain loud until
 array targets are wired to this state.
 
+The memory bridge now also resolves one-rank `PLhs.arrayElem` targets by their
+source labels and delegates read/write behavior to `MemState`. Out-of-range
+accesses retain E's all-x/no-op behavior; dynamic and partial targets remain
+loud.
+
 ## Known constant replications
 
 Replications of known constant operands now evaluate in typed parameter and

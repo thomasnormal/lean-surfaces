@@ -69,6 +69,11 @@ constructs its native memory state; nested ranks remain a named refusal. The
 process evaluator still stops at `UnpackedDecl:memory` until array targets are
 wired into the edge evaluator.
 
+`MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
+and delegates their reads and writes to `MemState`, with guards for an updated
+cell and an out-of-range all-x/no-op access. Dynamic indices, partial array
+targets, and process scheduling remain explicit boundaries.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

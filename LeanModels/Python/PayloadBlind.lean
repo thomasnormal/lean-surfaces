@@ -5261,12 +5261,23 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                       | nil => exact PBF.exn invariant _
                                       | cons value rest =>
                                         cases rest with
-                                        | cons _ _ => exact PBF.unsupported
                                         | nil =>
                                           cases value <;> try exact PBF.unsupported
                                           case int _ => exact PBF.ok invariant _
                                           case bool _ => exact PBF.ok invariant _
                                           case float _ => exact PBF.liftRes invariant _
+                                        | cons digits tail =>
+                                          cases tail with
+                                          | nil =>
+                                            by_cases hd : roundDigitsZero digits = true
+                                            · simp only [hd, if_true]
+                                              cases value <;> try exact PBF.unsupported
+                                              case int _ => exact PBF.ok invariant _
+                                              case bool _ => exact PBF.ok invariant _
+                                              case float _ => exact PBF.liftRes invariant _
+                                            · simp only [hd, if_false]
+                                              exact PBF.unsupported
+                                          | cons _ _ => exact PBF.unsupported
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => PBF.liftRes hs1 _

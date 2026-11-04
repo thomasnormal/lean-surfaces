@@ -417,7 +417,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- `round(int)` returns the same mathematical integer, while
     -- `round(bool)` returns an `int`, not a `bool`. Float and `ndigits`
     -- One-argument floats use the exact binary64 ratio and ties-to-even;
-    -- ndigits remains loud.
+    -- the two-argument slice admits only ndigits == 0.
     match vs with
     | [] => raisePy (.typeError "round() missing required argument 'number' (pos 1)")
     | [v] =>
@@ -426,6 +426,14 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         | .bool b => pure (.int (if b then 1 else 0))
         | .float value => liftRes (roundFloatVal value)
         | _ => refuse "round() over this non-integral value is outside the tier"
+    | [v, digits] =>
+        if roundDigitsZero digits then
+          match v with
+          | .int n => pure (.int n)
+          | .bool b => pure (.int (if b then 1 else 0))
+          | .float value => liftRes (roundFloatZero value)
+          | _ => refuse "round() over this non-integral value is outside the tier"
+        else refuse "round() with ndigits other than zero is outside the tier"
     | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
     liftRes (intCastArgs vs)

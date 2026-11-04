@@ -8243,3 +8243,23 @@ both non-finite errors.
 DECIDED: admit only one-argument binary64 float rounding with exact
 ties-to-even and faithful non-finite exceptions; retain loud behavior for
 `ndigits` and unsupported value protocols.
+
+## 2026-11-04-pycomplete-286 — admit zero-digit `round()`
+
+The two-argument `round(number, ndigits)` slice now admits integral
+`ndigits == 0`. Integer and boolean inputs preserve CPython's integer result
+types, while finite binary64 floats use the exact ratio and ties-to-even
+rounding; negative zero and non-finite float behavior are retained. Other
+`ndigits` values and unsupported protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,003 rows: 3,989 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,003 rows: 3,874 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,003 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit only the exact `ndigits == 0` slice of two-argument
+`round()`, retaining loud behavior for all other digit counts and value
+protocols.

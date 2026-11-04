@@ -3007,7 +3007,19 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 | exact .okF h₁ _
                                 | exact .liftResF h₁ _
                                 | exact .unsupported
-                            | cons _ _ => exact .unsupported
+                            | cons digits tail =>
+                              cases tail with
+                              | nil =>
+                                by_cases hd : roundDigitsZero digits = true
+                                · simp only [hd, if_true]
+                                  cases v <;>
+                                    first
+                                    | exact .okF h₁ _
+                                    | exact .liftResF h₁ _
+                                    | exact .unsupported
+                                · simp only [hd, if_false]
+                                  exact .unsupported
+                              | cons _ _ => simp only; exact .unsupported
                         · exact .liftResF h₁ _
                         · cases vs with
                           | nil => exact .exn

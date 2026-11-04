@@ -324,6 +324,42 @@ theorem cycleStep2_profile {d : Design2} (h : d.ffOnlyProfileB = true) (σ : Sch
       .ok (clockStep d fuel (applyInputs2 d inputs st) d.edgeIndices, k + 3) :=
   cycleStep2_ffOnly (FFOnly.ofProfile h) σ inputs st k hrun (ffUpd_disj h fuel _) hnd hf
 
+/-! ## Shared lemmas of the clock-step proofs (moved from the matmul G1 reference) -/
+
+/-- Pairwise disjoint windows in list order decide `ffDisjB` (which is stated by index). -/
+theorem ffDisjB_of_pairwise {d : Design2} (h : d.processes.toList.Pairwise
+    fun p q => ∀ a ∈ p.procWins, ∀ b ∈ q.procWins, a.overlaps b = false) : d.ffDisjB = true := by
+  have key : ∀ i j (hi : i < d.processes.size) (hj : j < d.processes.size), i < j →
+      ∀ a ∈ d.processes[i].procWins, ∀ b ∈ d.processes[j].procWins, a.overlaps b = false :=
+    fun i j hi hj hij => List.pairwise_iff_getElem.mp h i j (by simpa using hi) (by simpa using hj) hij
+  simp only [Design2.ffDisjB, List.all_eq_true, List.mem_range, Bool.or_eq_true, beq_iff_eq]
+  intro i hi j hj
+  rcases Nat.lt_trichotomy i j with hij | rfl | hij
+  · exact Or.inr (by simpa [Array.getElem?_eq_getElem hi, Array.getElem?_eq_getElem hj] using key i j hi hj hij)
+  · exact Or.inl rfl
+  · simp only [Array.getElem?_eq_getElem hi, Array.getElem?_eq_getElem hj, Option.map_some,
+      Option.getD_some, Bool.not_eq_true']
+    exact Or.inr fun a ha b hb => by rw [overlaps_comm]; exact key j i hj hi hij b hb a ha
+
+/-- With every process an edge process, the edge pass visits every process, in order. -/
+theorem flatMap_ffUpd {d : Design2} (F : Nat) (st : SvState)
+    (h : ∀ p ∈ d.processes.toList, p.isEdgePhase = true) :
+    d.edgeIndices.flatMap (d.ffUpd F st) = d.processes.toList.flatMap fun p =>
+      match runEdgeProcess2 F st [] p with | .ok (_, q) => q | _ => [] := by
+  have he : d.edgeIndices = List.range d.processes.size :=
+    List.filter_eq_self.mpr fun i hi => by
+      rw [Array.getElem?_eq_getElem (List.mem_range.mp hi)]
+      exact h _ (Array.getElem_mem_toList _)
+  rw [he, ← Array.length_toList]
+  refine flatMap_range_eq _ _ _ fun i hi => ?_
+  have hi' : i < d.processes.size := by simpa using hi
+  unfold Design2.ffUpd
+  rw [Array.getElem?_eq_getElem hi', Array.getElem_toList]
+  dsimp only
+  cases runEdgeProcess2 F st [] d.processes[i] <;> rfl
+
+#print axioms ffDisjB_of_pairwise
+#print axioms flatMap_ffUpd
 #print axioms clockStep_wellFormed
 #print axioms omitted_process
 #print axioms FFOnly.ofProfile

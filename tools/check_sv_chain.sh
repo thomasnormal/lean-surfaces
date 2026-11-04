@@ -15,7 +15,12 @@
 #
 # WHAT IT BUILDS (two `lake build` invocations, so a failure says which half broke, and each is one slot acquisition):
 #   1. the LIBRARY group: every `LeanModels/Sv/Comb*.lean` module and `LeanModels.Sv.PinAxioms` (found by glob, so a new
-#      comb module is covered the day it lands);
+#      comb module is covered the day it lands), plus two roots whose modules nothing in `LeanModels` imports (their only
+#      importers are `svgolf/design` drafts): `LeanModels.Sv.ObsLib` (the observation lane: Observe*, CycleMachine,
+#      REdgeRun2, FlatMemRun2, Contract*) and `LeanModels.Sv.Kernel` (E: every `Kernel/*` module and `Comb2Fuel`),
+#      `LeanModels.Sv.XMono` (the width-parametric monotonicity theorems; imported by nothing), and
+#      `LeanModels.Sv.SeqFamily` and `LeanModels.Sv.SeqProfile` (the clocked-family lemmas; their only importers are svGolf's
+#      clocked references);
 #   2. the EXAMPLES group: every `Examples/system-verilog/**/*.lean` file that imports a `LeanModels.Sv.Comb*` module, or
 #      (to a fixpoint) imports such an Example (found by grep; `sem2/` is the semantic-agreement lane, built by its own
 #      gates, and is left out). Everything they import comes along as a dependency.
@@ -44,7 +49,7 @@ cd "$(dirname "$0")/.."
 
 # ---------------------------------------------------------------- the module lists
 lib_modules() {
-  { for f in LeanModels/Sv/Comb*.lean; do [ -e "$f" ] && basename "$f" .lean; done; echo PinAxioms; } |
+  { for f in LeanModels/Sv/Comb*.lean; do [ -e "$f" ] && basename "$f" .lean; done; echo PinAxioms; echo ObsLib; echo Kernel; echo XMono; echo SeqFamily; echo SeqProfile; } |
     sort -u | sed 's/^/LeanModels.Sv./'
 }
 

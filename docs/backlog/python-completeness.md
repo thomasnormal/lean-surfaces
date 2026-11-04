@@ -8351,3 +8351,22 @@ positive digit counts and all other unsupported digit protocols remain loud.
 
 DECIDED: admit positive float `ndigits == 4` in addition to the existing
 zero- through three-digit slices; retain loud behavior for richer rounding.
+
+## 2026-11-04-pycomplete-292 — admit five positive float digits
+
+The float `round(number, 5)` slice now computes from the exact binary64 ratio
+scaled by one hundred thousand, preserving ties-to-even and signed zero.
+Larger positive digit counts and all other unsupported digit protocols remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native focused differential | 5 rows: 5 matched, 0 failed |
+| Proof focused differential | 5 rows: 5 matched, 0 refused, 0 failed |
+| Full differential | 4,032 rows: runner 4,018 matched, 14 recorded refusals; proof 3,903 matched, 129 refused; 0 failed |
+| Root build | Managed `lake build LeanModels`: passed, 226 jobs |
+| Hygiene | Coverage, backlog index, docs check, and `git diff --check` passed |
+
+DECIDED: admit positive float `ndigits == 5` in addition to the existing
+zero- through four-digit slices; retain loud behavior for richer rounding.

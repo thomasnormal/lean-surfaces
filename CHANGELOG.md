@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Float `round(number, 5)` now uses an exact binary64 ratio scaled by one
+  hundred thousand, preserving ties-to-even and signed zero. Larger positive
+  digit counts and other digit protocols remain loud.
+
 - The `round(number, ndigits)` slice now admits integral `ndigits == 0`,
   preserving CPython's integer/bool result types and exact binary64 float
   ties-to-even behavior. Other `ndigits` values remain loud; the focused

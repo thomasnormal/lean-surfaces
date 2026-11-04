@@ -91,6 +91,7 @@ deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
 deriving instance Lean.ToExpr for PStmt
 deriving instance Lean.ToExpr for PProcess
+deriving instance Lean.ToExpr for PProperty
 deriving instance Lean.ToExpr for PPathSeg
 deriving instance Lean.ToExpr for PConn
 deriving instance Lean.ToExpr for PInst
@@ -603,6 +604,7 @@ def parseModule2 (j : Json) : Except String PDesign :=
     let mut processes : List PProcess := []
     let mut generates : List GenItem := []
     let mut others : List (String × String) := []
+    let mut properties : List PProperty := []
     let packageJson ← match getOptField j "package_params" with
       | none => pure #[]
       | some pj => pj.getArr? |>.mapError (fun _ => "field 'package_params' is not an array")
@@ -664,11 +666,20 @@ def parseModule2 (j : Json) : Except String PDesign :=
       processes := processes ++ [← parsePProcess pj]
     for gj in (← (← getField j "generates").getArr?) do
       generates := generates ++ [← parseGenItem gj]
+    let propertiesJson ← match getOptField j "properties" with
+      | none => pure #[]
+      | some qj => qj.getArr? |>.mapError (fun _ => "field 'properties' is not an array")
+    for qj in propertiesJson do
+      let qname ← getStrField qj "name"
+      let qkind ← getStrField qj "property_kind"
+      let qclock := getOptStr qj "clock"
+      let qtext := (getOptField qj "text").bind (·.getStr?.toOption) |>.getD ""
+      properties := properties ++ [{ name := qname, kind := qkind, clock := qclock, text := qtext }]
     for oj in (← (← getField j "others").getArr?) do
       match ← getKind oj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]
       | other => throw s!"unknown module member kind {other.quote}"
-    return { name, params, localParams, packageParams, enums, decls, processes, generates, others }
+    return { name, params, localParams, packageParams, enums, decls, processes, generates, others, properties }
 
 /-- An sv-0.2 envelope: parametric design + provenance metadata. -/
 structure Envelope2 where

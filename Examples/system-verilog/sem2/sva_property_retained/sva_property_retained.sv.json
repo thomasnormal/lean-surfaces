@@ -1,0 +1,281 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_property_retained",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv",
+      "sha256": "6fc0297b2031b06cf7a378f6d7982fff61bca2df897752e266cab2f0ebbc05e7"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 18,
+          "end_col": 10
+        },
+        "name": "sva_property_retained",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 17,
+              "end_line": 4,
+              "end_col": 20
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 17,
+              "end_line": 5,
+              "end_col": 22
+            },
+            "name": "rst_n",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 17,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 17,
+              "end_line": 7,
+              "end_col": 18
+            },
+            "name": "b",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 18,
+              "end_line": 8,
+              "end_col": 19
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "areset_n": "rst_n",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 5,
+                "end_line": 12,
+                "end_col": 17
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 17
+                  },
+                  "cond": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "op": "!",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 10,
+                        "end_line": 11,
+                        "end_col": 15
+                      },
+                      "width": 1,
+                      "name": "rst_n"
+                    }
+                  },
+                  "then": {
+                    "kind": "NonblockingAssign",
+                    "span": {
+                      "line": 11,
+                      "col": 17,
+                      "end_line": 11,
+                      "end_col": 27
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 17,
+                        "end_line": 11,
+                        "end_col": 18
+                      },
+                      "width": 1,
+                      "name": "q"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 11,
+                        "col": 22,
+                        "end_line": 11,
+                        "end_col": 26
+                      },
+                      "width": 1,
+                      "bits": "0"
+                    }
+                  },
+                  "else": {
+                    "kind": "NonblockingAssign",
+                    "span": {
+                      "line": 12,
+                      "col": 10,
+                      "end_line": 12,
+                      "end_col": 17
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 10,
+                        "end_line": 12,
+                        "end_col": 11
+                      },
+                      "width": 1,
+                      "name": "q"
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 15,
+                        "end_line": 12,
+                        "end_col": 16
+                      },
+                      "width": 1,
+                      "name": "a"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 15,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 65
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) disable iff (!rst_n) a |-> b);"
+          },
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 16,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 44
+            },
+            "name": "",
+            "property_kind": "assume",
+            "clock": "clk",
+            "text": "assume property (@(posedge clk) a |=> b);"
+          },
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 17,
+              "col": 3,
+              "end_line": 17,
+              "end_col": 43
+            },
+            "name": "",
+            "property_kind": "cover",
+            "clock": "clk",
+            "text": "cover property (@(posedge clk) a ##1 b);"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

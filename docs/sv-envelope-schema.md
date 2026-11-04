@@ -1245,7 +1245,7 @@ inputs, not `$unit` noise).
 ## Module (symbolic)
 
 Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
-`decls`, `processes`, `generates`, `others`. New lists:
+`decls`, `processes`, `generates`, `others`, optional `properties`. New lists:
 
 | list | contents |
 |---|---|
@@ -1254,6 +1254,7 @@ Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
 | `package_params` | optional `ParameterDecl` entries with an additional `package` name; untyped 32-bit integer and fixed-width integral entries are bound before module parameters |
 | `types` | `EnumType`, first-reference order; a package enum retains `from_package` and is bound before module parameter defaults |
 | `generates` | `GenerateFor` / `GenerateIf` / `Instance` (a module-level instance), source order |
+| `properties` | optional retained `SvaProperty` members, source order; concurrent assertions are metadata until the SVA predicate route consumes them |
 
 ## New node kinds
 
@@ -1265,6 +1266,7 @@ Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
 | `GenvarRef` | `kind`, `span`, `name` — reference to an enclosing generate-for's loop variable |
 | `GenerateFor` | `kind`, `span`, `label`, `genvar`, `init`, `bound`, `step` (symbolic exprs; `step` uses `Unary` op `"++"`/`"--"`; the assignment spellings of the same +/-1 step — `g = g + 1`, `g = 1 + g`, `g += 1`, `g = g - 1`, `g -= 1` with the plain signed integer literal 1 — lower to the same `Unary` node, WP-L1; any other assignment step is `Unsupported` `GenerateFor:step`), `resolved_count`, `body` (member list, source order) |
 | `GenerateIf` | `kind`, `span`, `label`, `else_label`, `cond` (symbolic), `then` (member list), `else` (member list \| `[GenerateIf]` for else-if chains \| `null`) |
+| `SvaProperty` | `kind`, `span`, `name` (empty for an anonymous assertion), `property_kind` (`"assert"` \| `"assume"` \| `"cover"`), `clock` (identifier or `null`), `text` (bounded source text) |
 | `EnumType` | `kind`, `span`, `name` (typedef name, or slang's deterministic `e$N` for anonymous enums), `from_package` (`null` for local), `base_width` (`PackedType`), `members` (`[{name, value}]`, `value` an int or an x/z bits string — metadata). Fixed package enum entries are qualified in Lean's table before module parameter defaults. |
 | `EnumRef` | `kind`, `span`, `type`, `member`, `from_package` — an enum member used in an expression |
 | `TypeRef` | `kind`, `name`, `from_package`, `resolved` — a declaration's type given by (enum) type name |

@@ -22,7 +22,7 @@ public `lowRISC/opentitan` repository at commit
 checked out on 2026-11-04. The repository and the selected files carry the
 Apache License 2.0 (`LICENSE`, with SPDX headers in each source file).
 
-| target | RTL and FPV sources | assertion set | first measured refusal census |
+| target | RTL and FPV sources | assertion set | first measured refusal census (before F1 retention) |
 |---|---|---:|---|
 | `prim_fifo_sync` | `hw/ip/prim/rtl/prim_fifo_sync.sv`; `hw/ip/prim/fpv/vip/prim_fifo_sync_assert_fpv.sv`; `hw/ip/prim/fpv/tb/prim_fifo_sync_bind_fpv.sv`; `hw/ip/prim/fpv/tb/prim_fifo_sync_tb.sv` | 27 `ASSERT`/`ASSERT_INIT` sites in the FPV VIP | 46 unsupported nodes: 9 `PortSymbol:type` (the `NumDuts` unpacked TB ports), 10 explicit conversions, 9 `ProceduralBlockSymbol:NoEventControl` (SVA), 6 `PortSymbol:net-z`, 4 calls, 3 uninstantiated definitions, 2 immediate symbolic assertions, 2 unresolved identifiers, and 1 delay. |
 | `prim_arbiter_ppc` | `hw/ip/prim/rtl/prim_arbiter_ppc.sv`; `hw/ip/prim/fpv/tb/prim_arbiter_ppc_tb.sv` | 15 `ASSERT`/`ASSERT_INIT` sites in the RTL | 26 unsupported nodes: 15 `ProceduralBlockSymbol:NoEventControl` (SVA), 3 `ForLoopStatement`, 2 `PortSymbol:type` (`data_i [N]`), 2 calls, and one each of `NamedValueExpression:type`, `ImmediateAssertion:symbolic`, `VariableSymbol:default-point-array`, and `AssignmentExpression:target`. |
@@ -41,11 +41,14 @@ envelope.
 
 ### F1 — SVA safety fragment in E (clause 16)
 
-**Started 2026-11-04:** `LeanModels.Sv.Sva` now provides the retained,
-fuel-free predicate over clocked Preponed samples for the finite safety core.
-The OpenTitan assertion source is still a loud extractor boundary at
-`ProceduralBlockSymbol:NoEventControl`; retaining that source shape and adding
-its simulator/formal differential rows is the next F1 packet.
+**Started 2026-11-04:** `LeanModels.Sv.Sva` provides the retained, fuel-free
+predicate over clocked Preponed samples for the finite safety core.
+Concurrent assertion members now stay in the symbolic envelope's `properties`
+metadata instead of becoming runnable `NoEventControl` processes. The clean
+`sva_property_retained` witness loads its async-reset process and retains one
+assert, one assume, and one cover property. OpenTitan's own files still have
+independent walls (unpacked ports, casts, arrays, and simulator SVA support),
+which remain in the measured census.
 
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded

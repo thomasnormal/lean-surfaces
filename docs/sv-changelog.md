@@ -14,6 +14,17 @@ Unbounded and liveness operators remain loud. The OpenTitan FPV source census
 still reaches `ProceduralBlockSymbol:NoEventControl` until the extractor and
 loader retain those source assertions; that is the next F1 integration step.
 
+## F1: concurrent assertion members retained in sv-0.2 envelopes
+
+Symbolic extraction now recognizes slang's `ConcurrentAssertionMemberSyntax`
+and records each assert, assume, or cover property under the module's retained
+`properties` metadata: its kind, clock spelling, source span, and source text.
+It is no longer emitted as a runnable `ProceduralBlockSymbol:NoEventControl`.
+The `sva_property_retained` witness loads its ordinary async-reset process and
+keeps all three property members. Icarus 12 cannot parse concurrent SVA, so a
+simulator trace row remains unavailable until an SVA-capable oracle is pinned;
+the E predicate guards already cover the finite safety meaning.
+
 ## Parameter-dependent unpacked arrays remain loud
 
 The `unpacked_generate_array` clean-room witness records the current boundary

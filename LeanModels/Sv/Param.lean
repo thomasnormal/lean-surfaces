@@ -524,6 +524,17 @@ inductive GenItem where
   | inst (i : PInst)
 deriving Repr, BEq, Inhabited
 
+/-- A retained concurrent assertion.  Properties are envelope metadata until
+the SVA fragment is lowered to a proof predicate; keeping the source text and
+clock here prevents the loader from treating an assertion as an executable
+procedural process. -/
+structure PProperty where
+  name : String
+  kind : String
+  clock : Option String := none
+  text : String := ""
+deriving Repr, BEq, Inhabited
+
 /-- A parametric design — the sv-0.2 module payload. `params` order is
 the **binder order** of the design family. `others` are out-of-tier
 module members (kept as loud unsupported processes at instantiation). -/
@@ -539,6 +550,8 @@ structure PDesign where
   processes : List PProcess
   generates : List GenItem
   others : List (String × String) := []
+  /-- Concurrent assertions retained from the source envelope. -/
+  properties : List PProperty := []
 deriving Repr, BEq, Inhabited
 
 /-! ## The instantiation environment -/

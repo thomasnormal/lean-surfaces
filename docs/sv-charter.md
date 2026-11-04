@@ -21,10 +21,14 @@ signals and four-state case equality, `|->` and `|=>`, finite `##n` and
 assert/assume/cover checks. It is a separate property envelope, so the frozen
 `Stmt2` AST gains no constructor and procedural code is not flattened.
 
-The OpenTitan FPV target census remains a loader boundary at
-`ProceduralBlockSymbol:NoEventControl`; unbounded and liveness SVA also remain
-loud. The next F1 step retains those source assertions and connects them to
-this E predicate, with differential simulator/formal rows.
+The OpenTitan FPV target census remains a loader boundary at other source
+shapes; unbounded and liveness SVA also remain loud. Concurrent assertion
+members are retained in the symbolic envelope's `properties` metadata.
+`sva_property_retained` demonstrates assert, assume, and cover members beside
+an ordinary asynchronous-reset process; no assertion is lowered into `Stmt2`
+or scheduled as a procedural process. Icarus's SVA parser is unavailable for
+this fixture, so the simulator differential remains a named follow-up rather
+than an invented match.
 
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 

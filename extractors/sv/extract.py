@@ -25839,6 +25839,32 @@ def _convert_syscall(sm, s, e):
 # Processes
 # ---------------------------------------------------------------------------
 
+def _convert_concurrent_property(sm, m):
+    """Retain a concurrent assertion as envelope metadata.
+
+    The property evaluator owns the meaning; the symbolic extractor only
+    records the declaration name, assertion kind, clock spelling, and bounded
+    source text.  Keeping it out of ``processes`` prevents the old
+    ``NoEventControl`` refusal from pretending that an assertion is a runnable
+    procedural process.
+    """
+    text = source_text(m)
+    head = text.split(":", 1)[0].strip() if ":" in text else ""
+    match = re.search(r"\b(assert|assume|cover)\s+property\b", text)
+    kind = match.group(1) if match else "assert"
+    clock_match = re.search(
+        r"@\s*\(\s*(?:(?:posedge|negedge|edge)\s+)?([A-Za-z_$][A-Za-z0-9_$]*)",
+        text)
+    clock = clock_match.group(1) if clock_match else None
+    return {
+        "kind": "SvaProperty",
+        "span": sym_span(sm, m),
+        "name": head,
+        "property_kind": kind,
+        "clock": clock,
+        "text": text,
+    }
+
 def convert_procedural_block(sm, m, module_level=False):
     pk = m.procedureKind
     span = sym_span(sm, m)
@@ -33320,6 +33346,7 @@ def convert_module_sym(sm, inst):
     processes = []
     generates = []
     others = []
+    properties = []
 
     members = list(body)
     i = 0
@@ -33350,7 +33377,11 @@ def convert_module_sym(sm, inst):
             elif k == "Parameter":
                 params.append(convert_param_sym(sm, m))
             elif k == "ProceduralBlock":
-                processes.append(convert_procedural_block(sm, m, module_level=True))
+                if type(getattr(m, "syntax", None)).__name__ == \
+                        "ConcurrentAssertionMemberSyntax":
+                    properties.append(_convert_concurrent_property(sm, m))
+                else:
+                    processes.append(convert_procedural_block(sm, m, module_level=True))
             elif k == "ContinuousAssign":
                 processes.append(convert_continuous_assign(sm, m))
             elif k == "GenerateBlockArray":
@@ -33423,6 +33454,7 @@ def convert_module_sym(sm, inst):
         "processes": processes,
         "generates": generates,
         "others": others,
+        **({"properties": properties} if properties else {}),
     }
 
 

@@ -78,6 +78,13 @@ until parametric aggregate layout and access semantics are defined. The
 recorded differential row checks the refusal itself; it does not claim a
 simulator value for the refused design.
 
+The first E-side memory state is `LeanModels.Sv.Kernel.CoreMem`. Its
+`MemShape` preserves the source labels and packed element width, while
+`MemBlock` and `MemState` provide functional reads and writes with proved
+same-cell, other-cell, out-of-range, and unknown-name behavior. This is a
+trusted, fuel-free state primitive; `UnpackedDecl` loader/process wiring is
+still deliberately loud until the retained source node is connected to it.
+
 ## Signed packed localparam width conversions — 2026-11-04
 
 Assignment-like implicit conversions around signed INT-class parameter and

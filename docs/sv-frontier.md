@@ -59,6 +59,14 @@ The first array packet retains parameter-dependent unpacked declarations as
 node with `UnpackedDecl:memory`; no default-point cells are fabricated. The
 array-valued memory state needed by F4 is the next packet for this boundary.
 
+The first E memory packet is now present in `LeanModels.Sv.Kernel.CoreMem`.
+`MemShape` retains the source labels and element width, `MemBlock` stores
+array-valued cells without expansion, and `MemState` names memory objects.
+Read and write laws cover same-cell updates, other-cell preservation,
+out-of-range reads and writes, and unknown memory names. The loader and
+process evaluator still stop at `UnpackedDecl:memory`; wiring those retained
+nodes into E is the following packet.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

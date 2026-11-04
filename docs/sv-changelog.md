@@ -90,6 +90,15 @@ current flat E store still refuses it with the named `UnpackedDecl:memory`
 boundary; no default-point cells are fabricated. This is the source-shape
 packet for the array-valued memory rung.
 
+## Native E memory state
+
+`LeanModels.Sv.Kernel.CoreMem` adds the first array-valued E primitive. It
+keeps source bounds and element width, supports named memory lookup and
+functional cell writes, and proves same-cell, other-cell, out-of-range, and
+unknown-memory laws without fuel or default-point expansion. Retained
+`UnpackedDecl` nodes remain a loud loader boundary until process lowering is
+wired to this state.
+
 ## Known constant replications
 
 Replications of known constant operands now evaluate in typed parameter and

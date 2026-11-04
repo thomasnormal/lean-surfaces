@@ -461,6 +461,9 @@ The symbolic extractor therefore emits one `UnpackedDecl` with the packed
 element `width` and an `unpacked` list of source `{msb, lsb}` bounds. The
 current flat E store refuses this node with `UnpackedDecl:memory`; it is
 retained for the array-valued E state planned by the memory rung.
+The first E memory primitive is `LeanModels.Sv.Kernel.CoreMem`; it retains
+the bounds as source labels and uses functional cell updates, with no finite
+array expansion. Process and loader wiring remain a separate boundary.
 
 An untagged plain packed integral typedef is also compile-time metadata in this
 symbolic cell path. The extractor erases the alias, recovers the canonical

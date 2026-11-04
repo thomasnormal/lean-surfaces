@@ -76,6 +76,11 @@ existing Xcelium golden `clk_arst` row covers the same reset phase in the
 simulator reference; Verilator's differing startup/unknown behavior remains
 outside this row's oracle.
 
+The E edge primitive also carries an explicit `ClockEdge` selector. Existing
+profiles default to `posedge`; the `negedge` selector uses the same four-state
+IEEE edge predicate and has kernel guards for firing and release non-firing.
+Loader admission and the source-shaped clocked-process path remain separate.
+
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range

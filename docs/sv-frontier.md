@@ -115,6 +115,12 @@ is retained in E with its polarity, while negative-edge clocks and `iff`
 guards remain named refusals rather than silently being read as positive-edge
 `alwaysFF`. No target census counts a silently reinterpreted process as loaded.
 
+The E edge primitive now carries a `ClockEdge` selector, defaulting to
+`posedge` and supporting the IEEE four-state `negedge` predicate with kernel
+guards. The source loader and clocked observation harness still keep negative
+edge process forms at their named boundary until their full source-shaped
+process path is wired.
+
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded
 `##[m:n]`; `$past`, `$rose`, `$fell`, and `$stable`. Their meaning is a trace

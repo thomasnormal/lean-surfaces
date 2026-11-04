@@ -231,11 +231,22 @@ set_option autoImplicit false
 
 /-! ## E-core-1, the edge fragment -/
 
+/-! A process clock may fire on either IEEE edge.  The source loader still
+keeps negative-edge process metadata at its loud boundary; this selector makes
+the E event rule ready for that retained form without changing today's default
+positive-edge profile. -/
+
+inductive ClockEdge where
+  | posedge
+  | negedge
+deriving Repr, BEq, DecidableEq, Inhabited
+
 /-- An edge process: `always_ff @(posedge clk)`, or `@(posedge clk or negedge rstn)`. -/
 structure FF where
   clk : String
   rstn : Option String
   body : Stmt2
+  edge : ClockEdge := .posedge
 
 /-- An elaborated design of edge processes. -/
 structure Elab1 where
@@ -303,7 +314,9 @@ def Elab1.next (E : Elab1) (s : Store) (p : ProcId) : Except String NbaQueue2 :=
 
 /-- `f` fires across a change: its clock rose, or its reset fell. -/
 def FF.fires (f : FF) (st st' : SvState) : Bool :=
-  isPosedge (st.bit0 f.clk) (st'.bit0 f.clk) ||
+  (match f.edge with
+   | .posedge => isPosedge (st.bit0 f.clk) (st'.bit0 f.clk)
+   | .negedge => isNegedge (st.bit0 f.clk) (st'.bit0 f.clk)) ||
     match f.rstn with
     | some r => isNegedge (st.bit0 r) (st'.bit0 r)
     | none => false
@@ -763,14 +776,21 @@ theorem rEdge {E : Elab1} (hP : EdgeProfile E) (ch : Choice) {s : Store} (hT : E
             have hclk : SvState.bit0 (E.base.view (E.commit s (u :: us))) f.clk =
                 SvState.bit0 (E.base.view s) f.clk := by
               simp only [SvState.bit0, hnot f.clk (Or.inl rfl)]
-            simp only [FF.fires, hclk, isPosedge_self, Bool.false_or]
-            cases hrn : f.rstn with
-            | none => simp
-            | some r =>
-                have hr' : SvState.bit0 (E.base.view (E.commit s (u :: us))) r =
-                    SvState.bit0 (E.base.view s) r := by
-                  simp only [SvState.bit0, hnot r (Or.inr hrn)]
-                simp [hr', isNegedge_self]
+            have hreset :
+                (match f.rstn with
+                 | some r => isNegedge (SvState.bit0 (E.base.view s) r)
+                     (SvState.bit0 (E.base.view (E.commit s (u :: us))) r)
+                 | none => false) = false := by
+              cases hrn : f.rstn with
+              | none => rfl
+              | some r =>
+                  have hr' : SvState.bit0 (E.base.view (E.commit s (u :: us))) r =
+                      SvState.bit0 (E.base.view s) r := by
+                    simp only [SvState.bit0, hnot r (Or.inr hrn)]
+                  simp [hr', isNegedge_self]
+            cases fe : f.edge with
+            | posedge => simp [FF.fires, fe, hclk, hreset, isPosedge_self]
+            | negedge => simp [FF.fires, fe, hclk, hreset, isNegedge_self]
       have hstep : step1 E ch c1 =
           .next { store := E.commit c1.store (u :: us), active := [], nba := [], k := c1.k + 1 } := by
         unfold step1
@@ -837,11 +857,11 @@ def refusal1 : ExecResult1 → Option String
 /-- An `always_ff` with a blocking assignment, and one with a `case`: both outside E-core-1. -/
 def ffBlocking : Elab1 where
   decls := cnt.decls
-  procs := #[⟨"clk", none, .blockingAssign (.ident "q") (.lit (.ofNat 4 0))⟩]
+  procs := #[⟨"clk", none, .blockingAssign (.ident "q") (.lit (.ofNat 4 0)), .posedge⟩]
 
 def ffCase : Elab1 where
   decls := cnt.decls
-  procs := #[⟨"clk", none, .caseStmt (.ident "q") #[] none .normal .none⟩]
+  procs := #[⟨"clk", none, .caseStmt (.ident "q") #[] none .normal .none, .posedge⟩]
 
 /-- A closed configuration at `clk = 0` with the given stores, then a slot with `entry`. -/
 def openSlot (E : Elab1) (init : List (String × LVec)) (entry : SvState) : Config1 :=
@@ -886,6 +906,13 @@ private def edgeState (clk rst : Logic) : SvState :=
     f.fires (edgeState .l0 .lx) (edgeState .l0 .l0)) == some true
 #guard cnt.procs[0]?.map (fun f =>
     f.fires (edgeState .l0 .l0) (edgeState .l1 .l0)) == some true
+
+private def negClock : FF :=
+  { clk := "clk", rstn := none, edge := .negedge,
+    body := .nbaAssign (.ident "q") (.lit (.ofNat 1 1)) }
+
+#guard negClock.fires (edgeState .l1 .l1) (edgeState .l0 .l1) == true
+#guard negClock.fires (edgeState .l0 .l1) (edgeState .l1 .l1) == false
 
 -- A 1→x reset edge runs the whole body, so the released data path is taken;
 -- release from x→1 is not itself a reset event.

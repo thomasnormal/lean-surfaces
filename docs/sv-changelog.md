@@ -40,6 +40,14 @@ case has since moved into the retained E process path above. The clean-room
 `loader_refuse_negedge` and `loader_refuse_iff` fixtures remain recorded
 refusals.
 
+## E edge selector for negative clocks
+
+The E-core edge primitive now carries an explicit `ClockEdge` selector. Existing
+edge profiles default to `posedge`; a retained negative-edge process uses the
+same four-state IEEE edge predicate, with kernel guards for falling-edge firing
+and release non-firing. Loader admission and source-shaped clocked-process
+wiring remain a separate boundary.
+
 ## F1: asynchronous-reset edge table in E
 
 The E-core-1 edge witness now checks the complete asynchronous active-low

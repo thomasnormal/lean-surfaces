@@ -40,3 +40,7 @@ def round_float_one(value):
 
 def round_float_two(value):
     return round(value, 2)
+
+
+def round_float_three(value):
+    return round(value, 3)

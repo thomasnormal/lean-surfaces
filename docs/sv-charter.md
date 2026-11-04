@@ -45,6 +45,11 @@ or scheduled as a procedural process. Its three-cycle assertion stimulus
 passes Verilator 5.052 with assertions enabled. Icarus's SVA parser remains
 unavailable for this fixture and is recorded as such.
 
+The E route proves that retained SVA evaluation is insensitive to each slot's
+post-NBA `final` state (`clockSamples_final_irrel` and
+`evalRegion_final_irrel`): properties read only the Preponed sample named by
+the scheduler core.
+
 The same retention route handles an assertion in a constant generate scope;
 its executable generate body remains empty while the property metadata carries
 the lexical generate labels in `path`; generated instance indices remain an

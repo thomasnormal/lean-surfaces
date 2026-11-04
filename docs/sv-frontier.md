@@ -69,6 +69,12 @@ which remain in the measured census. Its three-cycle property stimulus passes
 through Verilator 5.052 with assertions enabled; Icarus remains unavailable
 for concurrent SVA syntax.
 
+The E route proves `clockSamples_final_irrel` and
+`evalRegion_final_irrel`: changing a slot's post-NBA/final state cannot change
+an assertion result, because concurrent properties consume only the Preponed
+sample. This is the first refinement fact for exposing E's sampled cycle view
+to property contracts.
+
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
 processes. Their lexical generate labels are now carried in each property's

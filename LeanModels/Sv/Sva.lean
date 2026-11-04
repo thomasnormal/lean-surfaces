@@ -187,21 +187,37 @@ def SvaCheck.evalEdges (edges : List SvState) (check : SvaCheck) : Except String
   | .cover => anyAt edges 0 (fun index => SvaCheck.step edges check index) edges
   | .assert | .assume => allAt edges 0 (fun index => SvaCheck.step edges check index) edges
 
-/-- Select Preponed samples at the named positive clock edge. The first
-sample is compared with `x`, using the shared IEEE edge table in `Basic`. -/
-def clockSamples (clock : String) : RegionTrace → Except String (List SvState)
-  | trace => clockSamples.go clock .lx trace []
-where
-  go (clock : String) (previous : Logic) : RegionTrace →
-      List SvState → Except String (List SvState)
-    | [], selected => .ok selected.reverse
-    | slot :: rest, selected => do
-        let now := (← logicAt [slot.sampled] 0 clock).getD .lx
-        let selected' := if isPosedge previous now then slot.sampled :: selected else selected
-        go clock now rest selected'
+/-! Select Preponed samples at a named positive clock edge.  The worker is
+over sampled states directly, making final-state irrelevance explicit. -/
+def clockSamplesFrom (clock : String) (previous : Logic) :
+    List SvState → List SvState → Except String (List SvState)
+  | [], selected => .ok selected.reverse
+  | sampled :: rest, selected => do
+      let now := (← logicAt [sampled] 0 clock).getD .lx
+      let selected' := if isPosedge previous now then sampled :: selected else selected
+      clockSamplesFrom clock now rest selected'
+
+def clockSamples (clock : String) (trace : RegionTrace) : Except String (List SvState) :=
+  clockSamplesFrom clock .lx (trace.map (·.sampled)) []
 
 def SvaCheck.evalRegion (trace : RegionTrace) (check : SvaCheck) : Except String Bool := do
   check.evalEdges (← clockSamples check.clock trace)
+
+/-- Concurrent properties consume the Preponed sample only.  Replacing every
+slot's final state therefore cannot change the selected edge samples; this
+is the small refinement fact that lets an E contract expose only its sampled
+cycle view to SVA. -/
+theorem clockSamples_final_irrel (clock : String) (trace : RegionTrace) :
+    clockSamples clock trace =
+      clockSamples clock (trace.map fun slot => { slot with final := slot.sampled }) := by
+  simp only [clockSamples, List.map_map]
+  rfl
+
+theorem evalRegion_final_irrel (trace : RegionTrace) (check : SvaCheck) :
+    check.evalRegion trace =
+      check.evalRegion (trace.map fun slot => { slot with final := slot.sampled }) := by
+  unfold SvaCheck.evalRegion
+  rw [clockSamples_final_irrel]
 
 /-! ## Kernel-reducible witnesses for the F1 fragment -/
 
@@ -215,6 +231,9 @@ private def svaTrace : RegionTrace :=
   , { time := 3, sampled := svaState .l1 .l0 .l0, final := svaState .l1 .l0 .l0 }
   , { time := 4, sampled := svaState .l0 .l0 .l0, final := svaState .l0 .l0 .l0 }
   , { time := 5, sampled := svaState .l1 .l1 .l1, final := svaState .l1 .l1 .l1 } ]
+
+private def svaTraceFinalChanged : RegionTrace :=
+  svaTrace.map fun slot => { slot with final := [] }
 
 private def svaImplication : SvaCheck :=
   { kind := .assert, clock := "clk"
@@ -232,5 +251,7 @@ private def svaCover : SvaCheck :=
 #guard (SvaCheck.evalRegion svaTrace svaPast).toOption == some true
 #guard (SvaCheck.evalRegion svaTrace svaCover).toOption == some true
 #guard (SvaSeq.matches [svaState .l1 .l1 .l0] 0 (.delay 1 (.atom (.signal "a")))).toOption == some false
+#guard (SvaCheck.evalRegion svaTrace svaImplication).toOption ==
+  (SvaCheck.evalRegion svaTraceFinalChanged svaImplication).toOption
 
 end LeanModels.Sv

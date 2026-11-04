@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F1: prove the SVA sampling refinement
+
+The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and
+`evalRegion_final_irrel` facts. Replacing every slot's post-NBA/final state
+with an arbitrary value leaves assertion results unchanged, pinning the
+Preponed-only sampling rule that the E property contract consumes.
+
 ## F1: retain SVA generate paths
 
 Retained concurrent assertions now carry their lexical generate labels in the

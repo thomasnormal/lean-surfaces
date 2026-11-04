@@ -7446,7 +7446,7 @@
    {
     "id": "imports",
     "what": "checks the Lean file's imports against an allowlist",
-    "refuses": "any import outside Init, Std, Lean, LeanModels.Sv.*, SvGolf.*, tasks.*, spec.*, Submission.Design and the Mathlib packages (Mathlib, Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient), read from the header as Lean reads it (a comment between two imports separates them) and checked again against the imports Lean recorded in the compiled solution; a second file; `module` / `prelude` headers; a module no package has a source for (a stale name) is a rejection, a package or module missing from the machine (not built, not on the search path, a checkout not at the pinned revision) is an infrastructure error"
+    "refuses": "any import outside Init, Std, Lean, LeanModels.Sv.*, SvGolf.*, tasks.*, Submission.Design and the Mathlib packages (Mathlib, Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient), read from the header as Lean reads it (a comment between two imports separates them) and checked again against the imports Lean recorded in the compiled solution; a second file; `module` / `prelude` headers; a module no package has a source for (a stale name) is a rejection, a package or module missing from the machine (not built, not on the search path, a checkout not at the pinned revision) is an infrastructure error"
    },
    {
     "id": "source",
@@ -7540,7 +7540,7 @@
     "id": "g-banlist",
     "stage": "banlist",
     "title": "Stage `banlist`: the task's banned operators",
-    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and comparisons stay allowed. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `fdiv16` bans `/ % **`.",
+    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and comparisons stay allowed. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `fdivp` bans `/ % **`.",
     "write_ok": "for (genvar i = 0; i < N; i++) begin : g\n  assign s[i] = a[i] ^ b[i] ^ c[i];     // gates, not +\n  assign c[i+1] = (a[i] & b[i]) | (c[i] & (a[i] ^ b[i]));   // i+1 is constant arithmetic\nend",
     "refused_example": "assign s = a + b + cin;          // run-time + in a task that bans it\nassign y = a * b;                // run-time *\nassign n = $countones(a);        // Yosys builds it from $add cells\nassign p = arr.sum();            // array reduction = run-time +"
    },
@@ -8342,7 +8342,6 @@
      "_example/arith_and",
      "add/plus",
      "mul/mul_star",
-     "fdiv16/div_op",
      "fdivp/div_op",
      "clmul/kronecker_mul",
      "clmul/plus_xor"
@@ -9053,10 +9052,9 @@
      "add/no_cin",
      "add/wide_s",
      "mul/narrow_out",
-     "fdiv16/rm_pin",
      "fdivp/rm_pin",
      "fdivp/status_flag",
-     "fdiv16/inexact_flag",
+     "fdivp/wide_q",
      "aes_sbox/wrong_names",
      "clmul/wide_out"
     ]
@@ -9155,16 +9153,22 @@
      "add/cout_off",
      "mul/drop_carry",
      "mul/top_shift",
-     "fdiv16/const_nan",
      "fdivp/const_nan",
      "fdivp/dsh_wrap64",
      "fdivp/ew_narrow",
      "fdivp/inc_tie_odd",
      "fdivp/rr_sticky_dropped",
      "fdivp/zero_by_zero_inf",
-     "fdiv16/ftz",
-     "fdiv16/no_sticky",
-     "fdiv16/zero_by_zero_inf",
+     "fdivp/ftz",
+     "fdivp/ovf_late",
+     "fdivp/dsh_sticky_short",
+     "fdivp/newton_f_minus2",
+     "fdivp/newton_ge1_const",
+     "fdivp/newton_ni_minus1",
+     "fdivp/newton_no_ge2",
+     "fdivp/newton_r0_off",
+     "fdivp/newton_rnz_no2mb",
+     "fdivp/newton_rnz_nomb",
      "aes_sbox/no_constant",
      "aes_sbox/one_entry",
      "aes_sbox/reversed_bits",
@@ -9172,12 +9176,76 @@
      "clmul/drop_top",
      "clmul/or_accumulate",
      "clmul/reversed_p",
-     "clmul/top_shift",
-     "fdiv16/eoff_plus1",
-     "fdiv16/inc_tie_odd",
-     "fdiv16/ovf_late",
-     "fdiv16/rnz_dropped",
-     "fdiv16/sticky_short"
+     "clmul/top_shift"
+    ]
+   },
+   {
+    "id": "sg-tx-guar",
+    "tag": "a clocked transaction that misses the frozen TxTask guarantee: done not within lat cycles of the start edge, or done and the payload not held at result x until the next accepted start or reset",
+    "group": "g-statement",
+    "layers": [
+     "svgolf-statement"
+    ],
+    "trigger": "an off-by-one step counter; unsigned instead of signed products; a missing sign extension; done one cycle early; the accumulator not cleared on start; an accumulator truncated to 2W",
+    "why": "`TxTask.Statement` (txtask-v1, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, at every parameter point in range, and the proof must establish it; a design wrong at any point, or late by a cycle, fails at the solution stage. Each matmul attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different.",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "text": "def Guar"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "fn": "TxTask.Guar"
+     }
+    ],
+    "unverified": true,
+    "verified_by_run": false,
+    "attacks": [
+     "matmul/off_by_one_k",
+     "matmul/unsigned_product",
+     "matmul/missing_sign_ext",
+     "matmul/done_early",
+     "matmul/no_clear_on_start",
+     "matmul/acc_2w"
+    ]
+   },
+   {
+    "id": "sg-stream-guar",
+    "tag": "a clocked stream that misses the frozen StreamTask guarantee: out_valid unknown or raised before the first start, or a transaction's out_valid cycles not emitting exactly spec xs (the input sorted ascending, duplicates kept) within lat cycles of the start edge",
+    "group": "g-statement",
+    "layers": [
+     "svgolf-statement"
+    ],
+    "trigger": "the token shift reading the cell's own token (no value ever emitted); a missing else (two writes, the later wins); the neighbour push comparing the cell's own value; the valid token entering with the start (out_valid one cycle early, one value too many); a reset that leaves the cells; a top cell the drain does not clear; signed instead of unsigned order",
+    "why": "`StreamTask.Statement` (txtask-v1, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, at every parameter point in range, and the proof must establish it; a design wrong at any point, or one value early or late, fails at the solution stage. Each sorter attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different; designs that differ from the reference only in how they order EQUAL values (`>=` for `>`) are not attacks, since equal values are interchangeable in the emitted list.",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "text": "def Guar"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "fn": "StreamTask.Guar"
+     }
+    ],
+    "unverified": true,
+    "verified_by_run": false,
+    "attacks": [
+     "sorter/token_self",
+     "sorter/missing_else",
+     "sorter/push_own_value",
+     "sorter/early_valid",
+     "sorter/reset_keeps_cells",
+     "sorter/top_not_drained",
+     "sorter/signed_order"
     ]
    },
    {
@@ -9188,7 +9256,7 @@
      "svgolf-statement"
     ],
     "trigger": "a ripple adder at N = 16, carry-free elsewhere",
-    "why": "The statement quantifies over every N in the task's range (1 <= N), so a one-width proof does not typecheck; a fixed-size task (fdiv16) is StatementFixed.",
+    "why": "The statement quantifies over every N in the task's range (1 <= N), so a one-width proof does not typecheck; a fixed-size task (aes_sbox) is StatementFixed.",
     "category": "refused-now",
     "proposed": false,
     "match": [

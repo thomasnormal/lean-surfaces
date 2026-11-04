@@ -257,7 +257,7 @@ Considerations this raised, most of them new:
     (bridge lemmas for `getLsbD`, concatenation, the carry recurrence,
     `i * W + j` extraction), and `sv_comb?` prints the equation shape and
     the bridge lemmas needed before `omega`, `grind` or `bv_decide` apply.
-    The fdiv16 certificate bridge will hit this first.
+    The fdivp certificate bridge will hit this first.
 
 ## 4. Sharing across the lane family
 

@@ -1,7 +1,7 @@
 /-
 A parameter-dependent unpacked array changes its declaration layout at each
-point. The symbolic envelope retains the source shape but the loader refuses
-it loudly rather than flattening a default-point array.
+point. The symbolic envelope retains the source shape as `UnpackedDecl`, but
+the flat E store refuses it loudly rather than flattening a default-point array.
 -/
 import LeanModels.Sv.Ingest2
 

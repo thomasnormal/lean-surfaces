@@ -603,7 +603,9 @@ def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
   | _, _ => .error s!"declaration `{name}`: packed bounds are not affine in the parameters"
 
 def declOf? (pd : PDecl) : Except String DeclT :=
-  match pd.init with
+  if !pd.unpackedDims.isEmpty then
+    .error s!"declaration `{pd.name}`: unpacked array storage outside the v1 fragment (UnpackedDecl:memory)"
+  else match pd.init with
   | some _ => .error s!"declaration `{pd.name}` has an initializer"
   | none =>
       if pd.isSigned || pd.twoState then
@@ -1772,52 +1774,54 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
     subst hp
     exact ⟨rfl, hm, hl⟩
   unfold declOf? at h
-  cases hi : pd.init with
-  | some v => rw [hi] at h; simp at h
-  | none =>
-    rw [hi] at h
-    by_cases hst : (pd.isSigned || pd.twoState) = true
-    · rw [if_pos hst] at h; simp at h
-    rw [if_neg hst] at h
-    have hs : pd.isSigned = false ∧ pd.twoState = false := by simpa using hst
-    cases hty : pd.type with
-    | packed ds r =>
-      rw [hty] at h
-      match ds, h with
-      | [], h =>
-        simp only [Except.ok.injEq] at h
-        subst h
-        refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
-        intro p hp; simp at hp
-      | [d], h =>
-        rcases hp : dimOf? pd.name d with e | p
-        · simp [hp] at h
-        · simp only [hp, Except.ok.injEq] at h
+  split at h
+  · cases h
+  · cases hi : pd.init with
+    | some v => rw [hi] at h; simp at h
+    | none =>
+      rw [hi] at h
+      by_cases hst : (pd.isSigned || pd.twoState) = true
+      · rw [if_pos hst] at h; simp at h
+      rw [if_neg hst] at h
+      have hs : pd.isSigned = false ∧ pd.twoState = false := by simpa using hst
+      cases hty : pd.type with
+      | packed ds r =>
+        rw [hty] at h
+        match ds, h with
+        | [], h =>
+          simp only [Except.ok.injEq] at h
           subst h
-          obtain ⟨h1, h2, h3⟩ := hdim hp
-          refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
-          intro q hq
-          simp only [List.mem_singleton] at hq
-          subst hq
-          exact ⟨h2, h3⟩
-      | [d1, d2], h =>
-        rcases hp1 : dimOf? pd.name d1 with e | p1
-        · simp [hp1] at h
-        · rcases hp2 : dimOf? pd.name d2 with e | p2
-          · simp [hp1, hp2] at h
-          · simp only [hp1, hp2, Except.ok.injEq] at h
+          refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
+          intro p hp; simp at hp
+        | [d], h =>
+          rcases hp : dimOf? pd.name d with e | p
+          · simp [hp] at h
+          · simp only [hp, Except.ok.injEq] at h
             subst h
-            obtain ⟨h1, h2, h3⟩ := hdim hp1
-            obtain ⟨k1, k2, k3⟩ := hdim hp2
-            refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
+            obtain ⟨h1, h2, h3⟩ := hdim hp
+            refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
             intro q hq
-            simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
-            rcases hq with rfl | rfl
-            · exact ⟨h2, h3⟩
-            · exact ⟨k2, k3⟩
-      | _ :: _ :: _ :: _, h => simp at h
-    | typeRef n pkg r => rw [hty] at h; simp at h
-    | unrecoverable r => rw [hty] at h; simp at h
+            simp only [List.mem_singleton] at hq
+            subst hq
+            exact ⟨h2, h3⟩
+        | [d1, d2], h =>
+          rcases hp1 : dimOf? pd.name d1 with e | p1
+          · simp [hp1] at h
+          · rcases hp2 : dimOf? pd.name d2 with e | p2
+            · simp [hp1, hp2] at h
+            · simp only [hp1, hp2, Except.ok.injEq] at h
+              subst h
+              obtain ⟨h1, h2, h3⟩ := hdim hp1
+              obtain ⟨k1, k2, k3⟩ := hdim hp2
+              refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
+              intro q hq
+              simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
+              rcases hq with rfl | rfl
+              · exact ⟨h2, h3⟩
+              · exact ⟨k2, k3⟩
+        | _ :: _ :: _ :: _, h => simp at h
+      | typeRef n pkg r => rw [hty] at h; simp at h
+      | unrecoverable r => rw [hty] at h; simp at h
 
 theorem declsOf?_cons {pd : PDecl} {rest : List PDecl} {sd : List DeclT}
     (h : declsOf? (pd :: rest) = .ok sd) :
@@ -1921,8 +1925,14 @@ theorem buildDecls_summary {σ : String → Int} :
       have hrest := buildDecls_summary rest sd' hr
         { env with widths := (pd.name, dt.width σ) :: env.widths }
         (fun dt' hdt' n hn => hag dt' (by simp [hdt']) n hn)
+      have hun : pd.unpackedDims = [] := by
+        have hd' := hd
+        unfold declOf? at hd'
+        split at hd'
+        · simp at hd'
+        · simp_all
       have hdecl : instDecl env pd = .ok (dt.toDecl σ) := by
-        simp [instDecl, hw, hinit, DeclT.toDecl, hn, hi, ho, hsg, hts]
+        simp [instDecl, hw, hun, hinit, DeclT.toDecl, hn, hi, ho, hsg, hts]
       simp only [buildDecls, hdecl, Res.ok_bind]
       have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput } : Decl)
           = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho]

@@ -54,6 +54,11 @@ explicit casts, procedural loops, and unresolved primitive dependencies. They
 are the loader work that can unblock the next OpenTitan F1/F2 target; property
 members are no longer the first executable-process wall.
 
+The first array packet retains parameter-dependent unpacked declarations as
+`UnpackedDecl` with symbolic bounds. The current flat E store refuses this
+node with `UnpackedDecl:memory`; no default-point cells are fabricated. The
+array-valued memory state needed by F4 is the next packet for this boundary.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

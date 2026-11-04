@@ -71,8 +71,8 @@ outside this row's oracle.
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range
-depends on parameters as a source-shaped array, then refuses it at the loader
-with `VariableSymbol:default-point-array`. A default-point flattening would
+depends on parameters as a source-shaped `UnpackedDecl`, then refuses it at
+the loader with `UnpackedDecl:memory`. A default-point flattening would
 silently fix the layout for one parameter choice, so this boundary stays loud
 until parametric aggregate layout and access semantics are defined. The
 recorded differential row checks the refusal itself; it does not claim a

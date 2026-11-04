@@ -401,6 +401,11 @@ order. -/
 structure PDecl where
   name : String
   type : PType
+  /-- Source-shaped unpacked dimensions.  The current flat E store does not
+  yet allocate array-valued state, so nonempty dimensions remain a loud
+  memory boundary at instantiation rather than being flattened at the
+  default parameter point. -/
+  unpackedDims : List PDim := []
   /-- Declared signedness, retained for symbolic scalar/vector declarations. -/
   isSigned : Bool := false
   twoState : Bool := false
@@ -1909,7 +1914,9 @@ def instProcess (env : IEnv) : PProcess → Process
 `env` — `$bits`/`$high` may look back, never forward). A non-literal
 initializer is outside the M0 ingestion tier (loud). -/
 def instDecl (env : IEnv) (pd : PDecl) : Res Decl :=
-  match pd.type.width env with
+  if !pd.unpackedDims.isEmpty then
+    .unsupported s!"decl '{pd.name}': unpacked array storage outside E (UnpackedDecl:memory)"
+  else match pd.type.width env with
   | .error e => .unsupported s!"decl '{pd.name}': {e}"
   | .ok w =>
       match pd.init with
@@ -2713,10 +2720,14 @@ theorem instDecl_sig {env : IEnv} {pd : PDecl} {dc : Decl}
   split at h
   · exact absurd h (by simp)
   · split at h
-    · cases h; exact ⟨rfl, rfl, rfl⟩
+    · cases h
     · split at h
-      · cases h; exact ⟨rfl, rfl, rfl⟩
-      · exact absurd h (by simp)
+      · cases h
+        exact ⟨rfl, rfl, rfl⟩
+      · split at h
+        · cases h
+          exact ⟨rfl, rfl, rfl⟩
+        · cases h
 
 theorem buildDecls_sig {l : List PDecl} :
     ∀ {env : IEnv} {r : List Decl}, buildDecls env l = .ok r →

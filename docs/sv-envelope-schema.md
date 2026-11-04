@@ -455,6 +455,13 @@ read or write becomes an `Ident` naming that cell. Dynamic or out-of-range
 indices and nested-unpacked arrays stay `Unsupported`; the symbolic tier adds
 no aggregate store or dynamic index executor.
 
+When an unpacked dimension or its packed element type depends on a parameter
+or generate point, the source shape cannot use those default-point cells.
+The symbolic extractor therefore emits one `UnpackedDecl` with the packed
+element `width` and an `unpacked` list of source `{msb, lsb}` bounds. The
+current flat E store refuses this node with `UnpackedDecl:memory`; it is
+retained for the array-valued E state planned by the memory rung.
+
 An untagged plain packed integral typedef is also compile-time metadata in this
 symbolic cell path. The extractor erases the alias, recovers the canonical
 packed ranges for each emitted cell declaration, and keeps constant element

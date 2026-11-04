@@ -345,8 +345,15 @@ class SymbolicDefaultPoint(unittest.TestCase):
             " localparam int L = 2; typedef logic [N-1:0] w_t;"
             " logic [N-1:0] m1 [0:K-1]; w_t m2 [0:1]; logic [N-1:0] m3 [0:L-1];"
             " assign m3[0] = d; assign q = m3[0]; endmodule")
-        self.assertEqual(kinds(module), ["VariableSymbol:default-point-array"] * 2)
-        self.assertEqual(sorted(d["name"] for d in module["decls"] if d.get("kind") == "Var"),
+        self.assertEqual(kinds(module), [])
+        retained = [d for d in module["decls"] if d.get("kind") == "UnpackedDecl"]
+        self.assertEqual([d["name"] for d in retained], ["m1", "m2"])
+        self.assertEqual(retained[0]["unpacked"][0]["msb"],
+                         {"kind": "Int", "value": 0,
+                          "span": retained[0]["unpacked"][0]["msb"]["span"],
+                          "resolved_width": None})
+        self.assertEqual(retained[0]["unpacked"][0]["lsb"]["kind"], "Binary")
+        self.assertEqual([d["name"] for d in module["decls"] if d.get("kind") == "Var"],
                          ["m3[0]", "m3[1]"])
 
     def test_bits_of_a_dependent_aggregate_or_an_expression_is_a_query_refusal(self):

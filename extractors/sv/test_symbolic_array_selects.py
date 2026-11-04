@@ -158,14 +158,14 @@ class SymbolicArraySelects(unittest.TestCase):
         self.assertEqual(names, ["a[0]", "a[1]", "a[2]", "a[3]"])
         self.assertEqual(value["kind"], "Literal")
 
-    def test_parameter_fixed_unpacked_read_remains_loud(self):
+    def test_parameter_fixed_unpacked_read_retains_array_decl(self):
         module = self.extract(
             "module top #(parameter int K = 2) (input logic [1:0] index,"
             " output logic [7:0] y); logic [7:0] a [0:K-1];"
             " always_comb y = a[index]; endmodule")
-        self.assertEqual(module["decls"][0]["kind"], "Unsupported")
-        self.assertEqual(module["decls"][0]["sv_kind"],
-                         "VariableSymbol:default-point-array")
+        self.assertEqual(module["decls"][0]["kind"], "UnpackedDecl")
+        self.assertEqual(module["decls"][0]["unpacked"][0]["lsb"]["kind"],
+                         "Binary")
 
     def test_nested_dynamic_fixed_unpacked_read_expands_to_conditionals(self):
         module = self.extract(

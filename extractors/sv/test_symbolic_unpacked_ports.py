@@ -59,14 +59,15 @@ class SymbolicUnpackedPorts(unittest.TestCase):
         self.assertTrue(all(p.get("signed") is True
                             for p in module["ports"][:2]))
 
-    def test_parameter_dependent_nested_array_ports_stay_loud(self):
+    def test_parameter_dependent_nested_array_ports_retain_shape(self):
         module = self.extract(
             "module top #(parameter int N = 2) ("
             "input logic [3:0] grid [0:N-1][0:1], output logic y); "
             "assign y = grid[0][0][0]; endmodule")
-        kinds = [n["sv_kind"] for n in find(
-            module, lambda n: n.get("kind") == "Unsupported")]
-        self.assertIn("PortSymbol:type", kinds)
+        grid = next(p for p in module["ports"] if p["name"] == "grid")
+        self.assertEqual(grid["kind"], "UnpackedDecl")
+        self.assertEqual(len(grid["unpacked"]), 2)
+        self.assertEqual(grid["unpacked"][0]["lsb"]["kind"], "Binary")
 
     def test_partial_fixed_output_net_array_ports_flatten_with_z_cell(self):
         module = self.extract(

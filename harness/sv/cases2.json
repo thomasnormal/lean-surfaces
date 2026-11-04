@@ -14862,7 +14862,7 @@
       "name": "array_point",
       "example": "sem2/array_point",
       "top": "array_point",
-      "refusal": "VariableSymbol:default-point-array",
+      "refusal": "UnpackedDecl:memory",
       "signals": [
         "q0",
         "q1"
@@ -70103,13 +70103,13 @@
       "example": "sem2/unpacked_generate_array",
       "top": "unpacked_generate_array",
       "params": {"W": 8, "S": 2},
-      "refusal": "VariableSymbol:default-point-array",
+      "refusal": "UnpackedDecl:memory",
       "signals": ["x", "y"],
       "stimulus": [
         {"x": "00000000"},
         {"x": "10101010"}
       ],
-      "measured": "2026-11-04: parameter-dependent unpacked array layout remains a loud loader refusal; flattening the default-point cells would lose the source layout."
+      "measured": "2026-11-04: the envelope retains the parameter-dependent array as UnpackedDecl; the flat E store refuses UnpackedDecl:memory rather than flattening default-point cells."
     },
     {
       "name": "sva_property_retained",

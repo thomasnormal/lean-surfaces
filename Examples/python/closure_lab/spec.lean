@@ -82,7 +82,7 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match proofCallFunction closure_lab "escaped_cell_call" #[.int 5] 10000 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
+#guard (match proofCallFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "uses_nonlocal" #[.int 4] 10000 with
   | .unsupported _ => true | _ => false)

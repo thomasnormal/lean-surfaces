@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Synchronized the closure proof regression with the proof interpreter's
+  target-specific cell guard: `gen_cell_after_call` now checks
+  `proofCallFunction`, so the example cannot accept the stale snapshot result
+  from the legacy value interpreter.
+
 - Repaired the Python proof layer after dynamic exception-handler shadowing
   changed the interpreter guard: `PayloadBlind` now follows the semantics
   guard, and the VC tests expose the new helper reductions. `lake build

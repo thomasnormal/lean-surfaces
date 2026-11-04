@@ -8202,3 +8202,23 @@ explicitly, avoiding the stale snapshot result.
 DECIDED: refresh escaped late-bound cells for internal calls in the monadic
 definition; retain the callable boundary refusal and the explicit proof
 interpreter guard until the stateful closure proof bridge is rebuilt.
+
+## 2026-11-04-pycomplete-284 — synchronize the closure proof guard
+
+The closure example's generator-cell regression had retained the old direct
+`callFunction` guard after the proof interpreter gained its target-specific
+`proofCallFunction` projection.  That direct call now returns the legacy
+snapshot value, so the example could not build from the current envelope.  The
+guard now uses `proofCallFunction`, matching the proof differential and keeping
+the stateful cell shape explicitly loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.closure_lab.spec`: passed |
+| Proof cell checks | escaped and generator cell rows: both REFUSED by `proofCallFunction` |
+| Parser freshness | current envelope parses 30 top-level functions, including `escaped_cell_call` |
+| Hygiene | `git diff --check` passed |
+
+DECIDED: keep stateful escaped and generator-cell proof rows on the explicit
+`proofCallFunction` refusal path until the proof bridge is rebuilt; continue
+with the next measured gap.

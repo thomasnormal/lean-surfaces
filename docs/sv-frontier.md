@@ -74,6 +74,14 @@ metadata list, with the structural generate body left empty for executable
 processes. Their generate path still needs to be carried into the property
 contract before hierarchy proofs consume them.
 
+The E-core-1 async-reset edge packet is also in place for the first target
+shape: kernel guards cover reset assertion and release, the `1 -> x` and
+`x -> 0` reset edges, and a clock edge while reset is asserted. The six-cycle
+`clk_arst_reset_edges` witness matches Icarus over seven cycles; the existing Xcelium golden
+`clk_arst` row covers the same reset phase. This closes the edge-table proof
+wall while the target files still have independent array, cast, loop, and
+primitive-dependency refusals.
+
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded
 `##[m:n]`; `$past`, `$rose`, `$fell`, and `$stable`. Their meaning is a trace

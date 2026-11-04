@@ -1,4 +1,15 @@
-# [unreleased] — 2026-11-02 (an Sv landing builds the comb chain above it)
+# [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
+
+## F1: asynchronous-reset edge table in E
+
+The E-core-1 edge witness now checks the complete asynchronous active-low
+reset boundary used by the OpenTitan targets: assertion with the clock held
+low, release without a wakeup, `1 -> x` and `x -> 0` reset edges, and a clock
+edge while reset is asserted. The kernel-checked `Core1Smoke` guards exercise
+the shared IEEE 1800 §9.4.2 edge table and the whole-body execution rule. The
+`clk_arst_reset_edges` row matches Icarus over seven cycles; the existing
+`clk_arst` Xcelium golden row remains unchanged. Verilator's startup and
+unknown-value behavior is not treated as an oracle for this row.
 
 ## F1: retained SVA safety envelope over E samples
 

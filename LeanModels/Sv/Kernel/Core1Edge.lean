@@ -869,6 +869,33 @@ def openSlot (E : Elab1) (init : List (String × LVec)) (entry : SvState) : Conf
     (openSlot cnt [("clk", .ofNat 1 1), ("rst_n", .ofNat 1 1), ("q", .ofNat 4 7)] [("clk", .ofNat 1 0)]))
   == some ["0111"]
 
+/-! The async-reset edge table is observable in E, independently of the
+clocked body. A reset assertion wakes the process with the clock held low;
+release does not, and the IEEE unknown transitions `1→x` and `x→0` do. A
+clock edge still wakes the process while reset is asserted. -/
+private def edgeState (clk rst : Logic) : SvState :=
+  [("clk", LVec.ofLogic clk), ("rst_n", LVec.ofLogic rst)]
+
+#guard cnt.procs[0]?.map (fun f =>
+    f.fires (edgeState .l0 .l1) (edgeState .l0 .l0)) == some true
+#guard cnt.procs[0]?.map (fun f =>
+    f.fires (edgeState .l0 .l0) (edgeState .l0 .l1)) == some false
+#guard cnt.procs[0]?.map (fun f =>
+    f.fires (edgeState .l0 .l1) (edgeState .l0 .lx)) == some true
+#guard cnt.procs[0]?.map (fun f =>
+    f.fires (edgeState .l0 .lx) (edgeState .l0 .l0)) == some true
+#guard cnt.procs[0]?.map (fun f =>
+    f.fires (edgeState .l0 .l0) (edgeState .l1 .l0)) == some true
+
+-- A 1→x reset edge runs the whole body, so the released data path is taken;
+-- release from x→1 is not itself a reset event.
+#guard show1 cnt ["q"] (exec1 cnt σ_src 10
+    (openSlot cnt [("clk", .ofNat 1 0), ("rst_n", .ofNat 1 1), ("q", .ofNat 4 7)]
+      [("rst_n", .ofLogic .lx)])) == some ["1000"]
+#guard show1 cnt ["q"] (exec1 cnt σ_src 10
+    (openSlot cnt [("clk", .ofNat 1 0), ("rst_n", .ofLogic .lx), ("q", .ofNat 4 7)]
+      [("rst_n", .ofLogic .l1)])) == some ["0111"]
+
 -- Refusals are loud and cite their clause; they are not an exhausted budget.
 #guard (refusal1 (exec1 ffBlocking σ_src 10 (openSlot ffBlocking [("clk", .ofNat 1 0)]
     [("clk", .ofNat 1 1)]))).map (·.startsWith "9.2.2.4:") == some true

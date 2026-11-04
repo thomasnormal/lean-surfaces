@@ -30358,6 +30358,55 @@
       "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Asynchronous active-low reset (the pinned pin3 ledger): the reset acts the moment `rst_n` falls (cycles 0 and 4, before the edge); rst_n = x (cycle 8, a 1 -> x glitch) is a negedge event too and the register holds 0110 in all tools; en = x holds. `rst_n` is read as data inside the block (allowed); it is not a clock."
     },
     {
+      "name": "clk_arst_reset_edges",
+      "example": "sem2/clk_arst",
+      "top": "clk_arst",
+      "signals": [
+        "rst_n",
+        "en",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "rst_n": "1",
+          "en": "0",
+          "d": "0001"
+        },
+        {
+          "rst_n": "0",
+          "en": "0",
+          "d": "0010"
+        },
+        {
+          "rst_n": "1",
+          "en": "1",
+          "d": "0110"
+        },
+        {
+          "rst_n": "1",
+          "en": "0",
+          "d": "1111"
+        },
+        {
+          "rst_n": "x",
+          "en": "0",
+          "d": "0011"
+        },
+        {
+          "rst_n": "0",
+          "en": "0",
+          "d": "0011"
+        },
+        {
+          "rst_n": "1",
+          "en": "1",
+          "d": "0101"
+        }
+      ],
+      "measured": "E-core-1 async-reset edge table (2026-11-04): a reset assertion with the clock held low fires before the next edge; release does not fire; 1 -> x and x -> 0 are negedges while x -> 1 is not. The E kernel guards and Icarus trace agree on reset assertion, release, both unknown transitions, and post-release capture."
+    },
+    {
       "name": "clk_child_ok",
       "example": "sem2/clk_child_ok",
       "top": "clk_child_ok",

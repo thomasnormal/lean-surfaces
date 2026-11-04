@@ -34,6 +34,19 @@ The same retention route handles an assertion in a constant generate scope;
 its executable generate body remains empty while the property metadata awaits
 an explicit hierarchy path contract.
 
+## F1 asynchronous-reset edge table in E — 2026-11-04
+
+E-core-1 now has kernel-checked witnesses for the asynchronous active-low reset
+shape used by the pinned targets. A reset assertion wakes an edge process with
+the clock held low; reset release does not wake it; `1 -> x` and `x -> 0` are
+the IEEE §9.4.2 reset edges; and a clock edge still wakes the process while
+reset is asserted. The guards also run the whole body at a `1 -> x` reset edge,
+preserving the source process rather than inventing a reset-only branch.
+`clk_arst_reset_edges` differentially matches Icarus over seven cycles. The
+existing Xcelium golden `clk_arst` row covers the same reset phase in the
+simulator reference; Verilator's differing startup/unknown behavior remains
+outside this row's oracle.
+
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range

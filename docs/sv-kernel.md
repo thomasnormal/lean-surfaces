@@ -27,9 +27,10 @@ or contract used by automation carries a refinement theorem back to the exact se
     `LeanModels/Sv/Kernel/` (build root `LeanModels.Sv.Kernel`, imported by `LeanModels.lean`) since 2026-11-04.
   - E-core-1: `always_ff`, NBA, reset, and the clocking discipline as a rely.
   - E-core-2: hierarchy.
-  - The memory rung begins with `Kernel/CoreMem.lean`: source-shaped,
-    fuel-free array state and cell laws. Retained `UnpackedDecl` loader and
-    process wiring remains a separate step.
+  - The memory rung begins with `Kernel/CoreMem.lean` and
+    `Kernel/MemElab.lean`: source-shaped, fuel-free array state, cell laws,
+    and one-rank retained-declaration elaboration. Process target wiring
+    remains a separate step.
 - **Process-atomic execution** is a declared profile ruling on IEEE 1800-2023 §4.7: a process runs to its next suspension point
   without interleaving. Xcelium behaves this way (`docs/sv-oracle-disagreements.md`). The departure is a register row, see
   below.

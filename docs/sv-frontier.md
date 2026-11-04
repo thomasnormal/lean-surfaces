@@ -63,9 +63,11 @@ The first E memory packet is now present in `LeanModels.Sv.Kernel.CoreMem`.
 `MemShape` retains the source labels and element width, `MemBlock` stores
 array-valued cells without expansion, and `MemState` names memory objects.
 Read and write laws cover same-cell updates, other-cell preservation,
-out-of-range reads and writes, and unknown memory names. The loader and
-process evaluator still stop at `UnpackedDecl:memory`; wiring those retained
-nodes into E is the following packet.
+out-of-range reads and writes, and unknown memory names. `Kernel/MemElab`
+now evaluates a retained one-rank `UnpackedDecl` at a parameter point and
+constructs its native memory state; nested ranks remain a named refusal. The
+process evaluator still stops at `UnpackedDecl:memory` until array targets are
+wired into the edge evaluator.
 
 ## Ladder
 
@@ -87,6 +89,13 @@ The E route proves `clockSamples_final_irrel` and
 an assertion result, because concurrent properties consume only the Preponed
 sample. This is the first refinement fact for exposing E's sampled cycle view
 to property contracts.
+
+`LeanModels.Sv.SvaContract` connects retained `PProperty` metadata to a
+structured `SvaCheck` and the observation model's `Safe` judgment. It checks
+the source assertion kind and clock, preserves the source text, and maps
+trusted pre/post port samples into the E slot view. The structured body is
+supplied explicitly at this boundary; forms outside the finite F1 vocabulary
+remain loud until their parser and contract rule are added.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable

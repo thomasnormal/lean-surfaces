@@ -463,7 +463,8 @@ current flat E store refuses this node with `UnpackedDecl:memory`; it is
 retained for the array-valued E state planned by the memory rung.
 The first E memory primitive is `LeanModels.Sv.Kernel.CoreMem`; it retains
 the bounds as source labels and uses functional cell updates, with no finite
-array expansion. Process and loader wiring remain a separate boundary.
+array expansion. `Kernel/MemElab` evaluates one-rank retained declarations
+into this state. Process target wiring remains a separate boundary.
 
 An untagged plain packed integral typedef is also compile-time metadata in this
 symbolic cell path. The extractor erases the alias, recovers the canonical

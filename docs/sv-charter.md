@@ -50,6 +50,14 @@ post-NBA `final` state (`clockSamples_final_irrel` and
 `evalRegion_final_irrel`): properties read only the Preponed sample named by
 the scheduler core.
 
+`LeanModels.Sv.SvaContract` now connects a retained `PProperty` to a structured
+`SvaCheck` and exposes its result through the observation model's `Safe`
+judgment. The bridge checks the retained assertion kind and clock, keeps the
+original source text, and maps trusted pre/post port samples to E slots. A
+caller still supplies the structured body; source forms outside the finite F1
+vocabulary remain an explicit elaboration refusal rather than receiving a
+fabricated meaning.
+
 The same retention route handles an assertion in a constant generate scope;
 its executable generate body remains empty while the property metadata carries
 the lexical generate labels in `path`; generated instance indices remain an
@@ -81,9 +89,10 @@ simulator value for the refused design.
 The first E-side memory state is `LeanModels.Sv.Kernel.CoreMem`. Its
 `MemShape` preserves the source labels and packed element width, while
 `MemBlock` and `MemState` provide functional reads and writes with proved
-same-cell, other-cell, out-of-range, and unknown-name behavior. This is a
-trusted, fuel-free state primitive; `UnpackedDecl` loader/process wiring is
-still deliberately loud until the retained source node is connected to it.
+same-cell, other-cell, out-of-range, and unknown-name behavior.
+`Kernel/MemElab` maps one-rank retained declarations into this native state.
+This is a trusted, fuel-free state primitive; process target wiring is still
+deliberately loud until the retained source node is connected to it.
 
 ## Signed packed localparam width conversions — 2026-11-04
 

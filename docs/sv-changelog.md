@@ -7,6 +7,14 @@ The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and
 with an arbitrary value leaves assertion results unchanged, pinning the
 Preponed-only sampling rule that the E property contract consumes.
 
+## F1: connect retained SVA properties to observation contracts
+
+`LeanModels.Sv.SvaContract` now carries a retained `PProperty` beside its
+structured `SvaCheck`, checks the source kind and clock, and evaluates the
+property through the backend-generic observation `Safe` judgment over trusted
+port samples. The original source text remains attached; unsupported source
+forms stay loud until a structured F1 parser rule exists.
+
 ## F1: retain SVA generate paths
 
 Retained concurrent assertions now carry their lexical generate labels in the
@@ -96,8 +104,9 @@ packet for the array-valued memory rung.
 keeps source bounds and element width, supports named memory lookup and
 functional cell writes, and proves same-cell, other-cell, out-of-range, and
 unknown-memory laws without fuel or default-point expansion. Retained
-`UnpackedDecl` nodes remain a loud loader boundary until process lowering is
-wired to this state.
+`UnpackedDecl` nodes now have a one-rank elaboration bridge in
+`Kernel/MemElab`, while nested ranks and process lowering remain loud until
+array targets are wired to this state.
 
 ## Known constant replications
 

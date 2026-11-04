@@ -48,6 +48,11 @@ structure MemBlock where
   cell : Int → LVec
   cell_width : ∀ k, (cell k).width = shape.elemWidth
 
+/-- An uninitialized memory block: every declared element starts all-x. -/
+def MemBlock.xBlock (shape : MemShape) : MemBlock :=
+  { shape := shape, cell := fun _ => LVec.xVec shape.elemWidth,
+    cell_width := fun _ => by simp [LVec.xVec, LVec.replicate, LVec.width] }
+
 instance : Inhabited MemBlock where
   default :=
     let shape : MemShape := { name := "", elemWidth := 0, msb := 0, lsb := 0 }
@@ -119,6 +124,11 @@ def MemState.empty : MemState := default
 
 def MemState.set (s : MemState) (name : String) (m : MemBlock) : MemState :=
   { lookup := fun n => if n == name then some m else s.lookup n }
+
+def MemState.ofShapes : List MemShape → MemState
+  | [] => MemState.empty
+  | shape :: rest =>
+      MemState.set (MemState.ofShapes rest) shape.name (MemBlock.xBlock shape)
 
 def MemState.read (s : MemState) (name : String) (k : Int) : Option LVec :=
   (s.lookup name).map fun m => m.read k

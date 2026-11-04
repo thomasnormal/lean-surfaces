@@ -8334,3 +8334,20 @@ positive digit counts and all other unsupported digit protocols remain loud.
 
 DECIDED: admit positive float `ndigits == 3` in addition to the existing
 zero-, one-, and two-digit slices; retain loud behavior for richer rounding.
+
+## 2026-11-04-pycomplete-291 — admit four positive float digits
+
+The float `round(number, 4)` slice now computes from the exact binary64 ratio
+scaled by ten thousand, preserving ties-to-even and signed zero. Larger
+positive digit counts and all other unsupported digit protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 48 round rows: 48 matched, 0 failed |
+| Proof differential | 48 round rows: 48 matched, 0 refused, 0 failed |
+| Root build | Managed `lake build LeanModels`: passed, 225 jobs |
+| Hygiene | Coverage, backlog index, docs check, and `git diff --check` passed |
+
+DECIDED: admit positive float `ndigits == 4` in addition to the existing
+zero- through three-digit slices; retain loud behavior for richer rounding.

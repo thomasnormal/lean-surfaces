@@ -44,3 +44,7 @@ def round_float_two(value):
 
 def round_float_three(value):
     return round(value, 3)
+
+
+def round_float_four(value):
+    return round(value, 4)

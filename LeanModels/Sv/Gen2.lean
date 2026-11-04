@@ -1620,7 +1620,13 @@ macro (name := sv2InstSimpTactic) "sv2_inst_simp" "["
   `(tactic| set_option linter.unusedSimpArgs false in
       simp [instProcess2, instLhs2, instLhsLeaf2, fitExpr2, instExpr2, rigidExpr,
             selfWidth2, selfWidthSum2, elemOf, instParts2, evalInt, IEnv.bindVal,
-            PExpr.isInt, SymBinOp.intArith,
+            PExpr.isInt, SymBinOp.intArith, SymBinOp.constClass,
+            ctype, ctypeList, evalAt, evalAtList,
+            PExpr.readsSignal, PExpr.readsSignalList,
+            PExpr.readsSignalConst, PExpr.readsSignalConstList, PExpr.signalRoot?,
+            PExpr.pushedTarget, PExpr.ctxPropagates, PExpr.isSquash2,
+            PExpr.negGenvarAt, PExpr.mentionsAny, PExpr.mentionsAnyList,
+            paramSelectOk,
             arraySelWidth, arrayElemRead, arrayPartRead, arrayElemTarget,
             arrayPartTarget, arrayElemWindow, arrayPartGeom, arrayDims, evalDims,
             dynPartPlan, dynBaseRead, arrayFlatWidth, partOffsetsWild, concatLeafExact,
@@ -1631,6 +1637,31 @@ macro (name := sv2InstSimpTactic) "sv2_inst_simp" "["
 @[inherit_doc sv2InstSimpTactic]
 macro "sv2_inst_simp" loc:(Lean.Parser.Tactic.location)? : tactic =>
   `(tactic| sv2_inst_simp [] $(loc)?)
+
+/-! The default recipe must also close constant-context folds.  In particular,
+the sign-extension idiom used by parameterized arithmetic replicates a signal
+bit with a symbolic count.  The operand classifier must fire before that count
+is inspected; keeping its workers in the default set makes this guard stable
+for downstream proofs that use `sv2_inst_simp` without copying Param's
+implementation details. -/
+example (accW : Nat) :
+    evalAt
+      ({ nvals := [("W", (0, 8, false)), ("AccW", (0, accW, false))] } : IEnv)
+      (32, false)
+      (.binary .mul
+        (.concat [
+          .repl (.paramRef "AccW" none)
+            (.bitSel (.ident "a")
+              (.binary (.m0 .sub) (.paramRef "W" none) (.int 1))),
+          .ident "a"])
+        (.concat [
+          .repl (.paramRef "AccW" none)
+            (.bitSel (.ident "b")
+              (.binary (.m0 .sub) (.paramRef "W" none) (.int 1))),
+          .ident "b"])) =
+      .error "signal 'a' in a constant context" := by
+  sv2_inst_simp
+  rfl
 
 /-! ## Smoke: the probe shapes with a symbolic parameter and genvars
 

@@ -36,6 +36,14 @@ one run took 114.5 s while the load rose from 6.5 to 9.6). `lake build
 LeanModels.Sv.Lib LeanModels.Sv.SeqFamily LeanModels.Sv.SeqProfile` and svGolf's
 `lake build SvGolf tasks svgolf-eval` are green.
 
+## Stable symbolic replication simplification
+
+`sv2_inst_simp` now unfolds the constant-context classifier and its structural
+workers by default, including signal-operand detection, select roots, and
+constant operation classes. A guard covers the parameterized sign-extension
+replication shape used by downstream proofs, so a free replication count is
+classified as a signal-context refusal without requiring private helper names.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

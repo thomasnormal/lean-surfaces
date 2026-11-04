@@ -1032,8 +1032,8 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (w, false)
   | .repl count arg => do
-      let n ← evalAt env (← ctype env count) count
       let (wa, _) ← ctype env arg
+      let n ← evalAt env (← ctype env count) count
       if n < 0 then .error "negative replication count"
       else if n == 0 then .error "empty replication in a constant context"
       else .ok (n.toNat * wa, false)
@@ -1226,8 +1226,8 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (convertConst w ty.1 ty.2 v)
   | .repl count arg => do
-      let n ← evalAt env (← ctype env count) count
       let (wa, sa) ← ctype env arg
+      let n ← evalAt env (← ctype env count) count
       let v ← evalAt env (wa, sa) arg
       if n < 0 then .error "negative replication count"
       else if n == 0 then .error "empty replication in a constant context"
@@ -1242,6 +1242,19 @@ end
 even this non-concatenated literal ceases to reduce in proof-facing code. -/
 example : ctype ({} : IEnv) (.int 5) = .ok (32, true) := by rfl
 example : evalAt ({} : IEnv) (32, true) (.int 5) = .ok 5 := by rfl
+
+/- A symbolic replication count must not be inspected before its operand.
+   Otherwise a signal operand gets stuck on the parameter's undecidable
+   value, which breaks proofs that intentionally classify the replication as
+   non-constant. -/
+example (accW : Nat) :
+    ctype ({ nvals := [("AccW", (0, accW, false))] } : IEnv)
+      (.repl (.paramRef "AccW" none) (.ident "a")) =
+      .error "signal 'a' in a constant context" := by rfl
+example (accW : Nat) :
+    evalAt ({ nvals := [("AccW", (0, accW, false))] } : IEnv) (32, true)
+      (.repl (.paramRef "AccW" none) (.ident "a")) =
+      .error "signal 'a' in a constant context" := by rfl
 
 /-- **The outside target of a constant root, where its tree records one**
 (round 4 folds): `some w` for a conversion AT THE ROOT (`evalSized`

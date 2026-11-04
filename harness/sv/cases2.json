@@ -70002,6 +70002,19 @@
         {"x": "xxxxxxxxxxxx"}
       ],
       "measured": "2026-11-04: replication count at E=12; Lean and Icarus agree with the multi-point cross-check."
+    },
+    {
+      "name": "unpacked_generate_array_refuse",
+      "example": "sem2/unpacked_generate_array",
+      "top": "unpacked_generate_array",
+      "params": {"W": 8, "S": 2},
+      "refusal": "VariableSymbol:default-point-array",
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "00000000"},
+        {"x": "10101010"}
+      ],
+      "measured": "2026-11-04: parameter-dependent unpacked array layout remains a loud loader refusal; flattening the default-point cells would lose the source layout."
     }
 
   ]

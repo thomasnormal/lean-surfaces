@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Parameter-dependent unpacked arrays remain loud — 2026-11-04
+
+The `unpacked_generate_array` witness keeps a declaration whose unpacked range
+depends on parameters as a source-shaped array, then refuses it at the loader
+with `VariableSymbol:default-point-array`. A default-point flattening would
+silently fix the layout for one parameter choice, so this boundary stays loud
+until parametric aggregate layout and access semantics are defined. The
+recorded differential row checks the refusal itself; it does not claim a
+simulator value for the refused design.
+
 ## Signed packed localparam width conversions — 2026-11-04
 
 Assignment-like implicit conversions around signed INT-class parameter and

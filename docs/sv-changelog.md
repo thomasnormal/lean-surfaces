@@ -1,5 +1,15 @@
 # [unreleased] — 2026-11-02 (an Sv landing builds the comb chain above it)
 
+## Parameter-dependent unpacked arrays remain loud
+
+The `unpacked_generate_array` clean-room witness records the current boundary
+for a declaration such as `logic [W-1:0] stage [0:S-1]`: slang emits
+`VariableSymbol:default-point-array`, and `load_design_sv2` refuses the envelope
+by that named reason at every parameter point. The refusal preserves the
+source-shaped array declaration; flattening the cells from the default point
+would give parameter changes the wrong layout. No simulator result is claimed
+for this refusal row.
+
 ## Known constant replications
 
 Replications of known constant operands now evaluate in typed parameter and

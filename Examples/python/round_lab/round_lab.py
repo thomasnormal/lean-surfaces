@@ -52,3 +52,7 @@ def round_float_four(value):
 
 def round_float_five(value):
     return round(value, 5)
+
+
+def round_float_six(value):
+    return round(value, 6)

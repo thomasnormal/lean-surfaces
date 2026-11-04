@@ -18,3 +18,5 @@ set_option exponentiation.threshold 2048
   Val.float (Float64.ofBits 0x4000000000000000)
 #py_check round_lab.round_int_zero(7) = 7
 #py_check round_lab.round_bool_zero(true) = 1
+#py_check round_lab.round_int_positive(7) = 7
+#py_check round_lab.round_bool_positive(true) = 1

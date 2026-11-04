@@ -24,3 +24,11 @@ def round_int_zero(value):
 
 def round_bool_zero(value):
     return round(value, False)
+
+
+def round_int_positive(value):
+    return round(value, 2)
+
+
+def round_bool_positive(value):
+    return round(value, True)

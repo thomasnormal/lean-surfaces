@@ -3010,14 +3010,19 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             | cons digits tail =>
                               cases tail with
                               | nil =>
-                                by_cases hd : roundDigitsZero digits = true
-                                · simp only [hd, if_true]
-                                  cases v <;>
-                                    first
-                                    | exact .okF h₁ _
-                                    | exact .liftResF h₁ _
-                                    | exact .unsupported
-                                · simp only [hd, if_false]
+                                by_cases hn : roundDigitsNonnegative digits = true
+                                · simp only [hn, if_true]
+                                  cases v with
+                                  | int n => exact .okF h₁ _
+                                  | bool b => exact .okF h₁ _
+                                  | float value =>
+                                    by_cases hz : roundDigitsZero digits = true
+                                    · simp only [hz, if_true]
+                                      exact .liftResF h₁ _
+                                    · simp only [hz, if_false]
+                                      exact .unsupported
+                                  | _ => exact .unsupported
+                                · simp only [hn, if_false]
                                   exact .unsupported
                               | cons _ _ => simp only; exact .unsupported
                         · exact .liftResF h₁ _

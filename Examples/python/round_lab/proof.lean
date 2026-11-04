@@ -49,7 +49,7 @@ theorem round_float_zero :
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
-    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsZero, roundRatioInt, roundEvenNat,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsNonnegative, roundDigitsZero, roundRatioInt, roundEvenNat,
     round_float_zero_value, Float64.fromInt, Float64.ofBits, funsHeapFree,
     FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
     Expr.heapFree, hasUnboundLocal, unboundLocalMarker, moduleGenFree,
@@ -64,7 +64,7 @@ theorem round_int_zero :
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
-    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsZero, roundRatioInt, roundEvenNat,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsNonnegative, roundDigitsZero, roundRatioInt, roundEvenNat,
     Float64.fromInt, Float64.ofBits, funsHeapFree, FunctionDefn.heapFree,
     Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
     hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
@@ -79,13 +79,43 @@ theorem round_bool_zero :
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
-    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsZero, roundRatioInt, roundEvenNat,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsNonnegative, roundDigitsZero, roundRatioInt, roundEvenNat,
     Float64.fromInt, Float64.ofBits, funsHeapFree, FunctionDefn.heapFree,
     Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
     hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, isLoweredBuiltinName,
     isPyBuiltinName, flattenStarRun, flattenStarCallArgs, Run.bind,
     Run.liftRes, Run.toPublic, RVal.freezeB]
+  all_goals rfl
+
+theorem round_int_positive :
+    round_lab.round_int_positive(7) ==> Val.int 7 := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsNonnegative,
+    roundDigitsZero, roundRatioInt, roundEvenNat, Float64.fromInt, Float64.ofBits,
+    funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+    Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+    moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+    isLoweredBuiltinName, isPyBuiltinName, flattenStarRun, flattenStarCallArgs,
+    Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+  all_goals rfl
+
+theorem round_bool_positive :
+    round_lab.round_bool_positive(true) ==> Val.int 1 := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundDigitsNonnegative,
+    roundDigitsZero, roundRatioInt, roundEvenNat, Float64.fromInt, Float64.ofBits,
+    funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+    Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+    moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+    isLoweredBuiltinName, isPyBuiltinName, flattenStarRun, flattenStarCallArgs,
+    Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
   all_goals rfl
 
 end Examples.python.round_lab.proof

@@ -1478,5 +1478,7 @@
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_infinity", "args": [[]], "expect": "match"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_zero", "args": [[0.5], [1.5], [2.5], [-0.5], [-1.5], [-2.5], [1.25], [-1.25]], "expect": "match", "note": "two-argument float round with ndigits zero returns a binary64 float"},
   {"file": "Examples/python/round_lab/round_lab.py", "function": "round_int_zero", "args": [[7], [-7]], "expect": "match"},
-  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_zero", "args": [[true], [false]], "expect": "match"}
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_zero", "args": [[true], [false]], "expect": "match"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_int_positive", "args": [[7], [-7]], "expect": "match", "note": "integral inputs retain their integer result for nonnegative ndigits"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_bool_positive", "args": [[true], [false]], "expect": "match", "note": "Boolean inputs retain CPython's integer result for nonnegative ndigits"}
 ]

@@ -8263,3 +8263,22 @@ rounding; negative zero and non-finite float behavior are retained. Other
 DECIDED: admit only the exact `ndigits == 0` slice of two-argument
 `round()`, retaining loud behavior for all other digit counts and value
 protocols.
+
+## 2026-11-04-pycomplete-287 — admit nonnegative digits for integral `round()`
+
+Integral and Boolean inputs to `round(number, ndigits)` now accept any
+nonnegative integral `ndigits` and preserve CPython's integer result. The
+float slice remains limited to `ndigits == 0`; negative, non-integral, and
+positive-digit float calls remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,007 rows: 3,993 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,007 rows: 3,878 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,007 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit nonnegative integral `ndigits` for integer and Boolean inputs;
+retain loud behavior for negative or non-integral digits and positive-digit
+float calls.

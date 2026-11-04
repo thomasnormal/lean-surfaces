@@ -5269,13 +5269,19 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         | cons digits tail =>
                                           cases tail with
                                           | nil =>
-                                            by_cases hd : roundDigitsZero digits = true
-                                            · simp only [hd, if_true]
-                                              cases value <;> try exact PBF.unsupported
-                                              case int _ => exact PBF.ok invariant _
-                                              case bool _ => exact PBF.ok invariant _
-                                              case float _ => exact PBF.liftRes invariant _
-                                            · simp only [hd, if_false]
+                                            by_cases hn : roundDigitsNonnegative digits = true
+                                            · simp only [hn, if_true]
+                                              cases value with
+                                              | int _ => exact PBF.ok invariant _
+                                              | bool _ => exact PBF.ok invariant _
+                                              | float _ =>
+                                                by_cases hz : roundDigitsZero digits = true
+                                                · simp only [hz, if_true]
+                                                  exact PBF.liftRes invariant _
+                                                · simp only [hz, if_false]
+                                                  exact PBF.unsupported
+                                              | _ => exact PBF.unsupported
+                                            · simp only [hn, if_false]
                                               exact PBF.unsupported
                                           | cons _ _ => exact PBF.unsupported
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_

@@ -30186,6 +30186,36 @@ def _syntax_packed_dims(sm, type_syntax):
     return dims if dims else None
 
 
+def _syntax_unpacked_dims(sm, declarator):
+    """Recover source-shaped unpacked dimensions from a declarator.
+
+    Unlike packed dimensions these children live on ``DeclaratorSyntax``.
+    Keep their symbolic bounds verbatim so a parameter-dependent array is
+    retained instead of being replaced by slang's default-point cells.
+    """
+    dimensions = []
+    for c in getattr(declarator, "dimensions", []) or []:
+        if c.kind != SyntaxKind.VariableDimension:
+            return None
+        spec = None
+        for s in _syntax_children(c):
+            if s.kind == SyntaxKind.RangeDimensionSpecifier:
+                spec = s
+                break
+        if spec is None:
+            return None
+        sels = _syntax_children(spec)
+        if len(sels) != 1 or sels[0].kind != SyntaxKind.SimpleRangeSelect:
+            return None
+        lr = _syntax_children(sels[0])
+        if len(lr) != 2:
+            return None
+        with _SymPos():
+            dimensions.append({"msb": _syntax_expr(sm, lr[0]),
+                               "lsb": _syntax_expr(sm, lr[1])})
+    return dimensions if dimensions else None
+
+
 # --- symbolic declarations -------------------------------------------------
 
 def _dtype_sym(sm, t, type_syntax, allow_signed=False):
@@ -30332,6 +30362,9 @@ def convert_port_sym(sm, m):
         # still resolves, the Yosys 0.53 netlist keeps the constant,
         # Verilator 5.042 the input (rows `pi_in_*`). Loud.
         return unsupported(sm, m, "PortSymbol:initialized-input")
+    retained = _convert_unpacked_decl_sym(sm, m, direction, isym)
+    if retained is not None:
+        return retained
     array_ports = _convert_fixed_array_port_sym(sm, m, direction, isym)
     if array_ports is not None:
         return array_ports
@@ -31080,7 +31113,9 @@ def convert_var_sym(sm, m):
     if is_inert_2state_floating_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _sym_array_point_dependent(sm, m):
-        return unsupported(sm, m, "VariableSymbol:default-point-array")
+        retained = _convert_unpacked_decl_sym(sm, m)
+        return (retained if retained is not None else
+                unsupported(sm, m, "VariableSymbol:default-point-array"))
     array_decls = convert_fixed_array_vars_sym(sm, m)
     if array_decls is not None:
         return array_decls
@@ -31099,6 +31134,59 @@ def convert_var_sym(sm, m):
     if m.type.isSigned:
         result["signed"] = True
     return result
+
+
+def _convert_unpacked_decl_sym(sm, m, direction=None, isym=None):
+    """Retain a parameter-dependent unpacked declaration without cells.
+
+    The old symbolic path read slang's default-point array cells and then
+    rejected the declaration.  That shape is not stable across parameter
+    points.  Keep the packed leaf type and each source dimension in one
+    explicit node; the flat E store still refuses the node until its
+    array-valued state is implemented.
+    """
+    symbol = isym or m
+    try:
+        array_type = m.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        if not _sym_array_point_dependent(sm, symbol):
+            return None
+        shape = _fixed_array_dimensions(array_type, max_cells=None)
+        if shape is None:
+            return None
+        _dimensions, leaf_type = shape
+        syntax = _decl_type_syntax(symbol) or _decl_type_syntax(m)
+        dtype, reason = _dtype_sym(sm, leaf_type, syntax, allow_signed=True)
+        if dtype is None or reason is not None:
+            return None
+        unpacked = _syntax_unpacked_dims(sm, getattr(m, "syntax", None))
+        if unpacked is None:
+            unpacked = _syntax_unpacked_dims(sm, getattr(symbol, "syntax", None))
+        if not unpacked:
+            return None
+        result = {
+            "kind": "UnpackedDecl",
+            "span": sym_span(sm, m),
+            "name": m.name,
+            "width": dtype,
+            "unpacked": unpacked,
+        }
+        if direction is not None:
+            result["dir"] = direction
+        if direction is None and str(getattr(symbol, "kind", "")).split(".")[-1] == "Net":
+            result["net"] = True
+        if getattr(m.type, "isSigned", False):
+            result["signed"] = True
+        if not m.type.isFourState:
+            result["two_state"] = True
+        # An aggregate initializer has no source-shaped value slot here; keep
+        # it loud rather than silently dropping it.
+        if getattr(m, "initializer", None) is not None or getattr(symbol, "initializer", None) is not None:
+            return None
+        return result
+    except Exception:
+        return None
 
 
 def convert_fixed_array_vars_sym(sm, m):

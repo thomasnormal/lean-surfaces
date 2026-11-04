@@ -8243,3 +8243,77 @@ both non-finite errors.
 DECIDED: admit only one-argument binary64 float rounding with exact
 ties-to-even and faithful non-finite exceptions; retain loud behavior for
 `ndigits` and unsupported value protocols.
+
+## 2026-11-04-pycomplete-286 — admit zero-digit `round()`
+
+The two-argument `round(number, ndigits)` slice now admits integral
+`ndigits == 0`. Integer and boolean inputs preserve CPython's integer result
+types, while finite binary64 floats use the exact ratio and ties-to-even
+rounding; negative zero and non-finite float behavior are retained. Other
+`ndigits` values and unsupported protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,003 rows: 3,989 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,003 rows: 3,874 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,003 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit only the exact `ndigits == 0` slice of two-argument
+`round()`, retaining loud behavior for all other digit counts and value
+protocols.
+
+## 2026-11-04-pycomplete-287 — admit nonnegative digits for integral `round()`
+
+Integral and Boolean inputs to `round(number, ndigits)` now accept any
+nonnegative integral `ndigits` and preserve CPython's integer result. The
+float slice remains limited to `ndigits == 0`; negative, non-integral, and
+positive-digit float calls remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,007 rows: 3,993 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,007 rows: 3,878 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,007 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit nonnegative integral `ndigits` for integer and Boolean inputs;
+retain loud behavior for negative or non-integral digits and positive-digit
+float calls.
+
+## 2026-11-04-pycomplete-288 — admit one positive float digit
+
+The float `round(number, 1)` slice now computes from the exact binary64 ratio
+scaled by ten, preserving ties-to-even and signed zero. Larger positive digit
+counts, negative or non-integral digits, and unsupported value protocols remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 4,012 rows: 3,998 matched, 14 intentional refusals, 0 failed |
+| Proof differential | 4,012 rows: 3,883 matched, 129 recorded refusals, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,012 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit only positive float `ndigits == 1` in addition to the existing
+zero-digit slice; retain loud behavior for richer decimal rounding forms.
+
+## 2026-11-04-pycomplete-289 — admit two positive float digits
+
+The float `round(number, 2)` slice now computes from the exact binary64 ratio
+scaled by one hundred, preserving ties-to-even and signed zero. Larger
+positive digit counts and all other unsupported digit protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native focused differential | 38 round rows: 38 matched, 0 failed |
+| Proof focused differential | 38 round rows: 38 matched, 0 refused, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,012 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit positive float `ndigits == 2` in addition to the existing
+zero- and one-digit slices; retain loud behavior for richer decimal rounding.

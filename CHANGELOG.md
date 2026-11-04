@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- The `round(number, ndigits)` slice now admits integral `ndigits == 0`,
+  preserving CPython's integer/bool result types and exact binary64 float
+  ties-to-even behavior. Other `ndigits` values remain loud; the focused
+  example and differential battery cover the admitted forms.
+
+- Integral and Boolean `round(number, ndigits)` calls now preserve their
+  integer result for nonnegative integral `ndigits`. Float calls remain
+  limited to the exact `ndigits == 0` slice; negative and richer digit
+  protocols remain loud.
+
+- Float `round(number, 1)` now uses an exact binary64 ratio scaled by ten,
+  including signed-zero behavior. Larger positive digit counts and other
+  digit protocols remain loud.
+
+- Float `round(number, 2)` now uses an exact binary64 ratio scaled by one
+  hundred, preserving ties-to-even and signed zero. Larger positive digit
+  counts remain loud.
+
 - One-argument `round(float)` now uses the exact binary64 ratio with
   ties-to-even rounding, including CPython's `ValueError` for NaN and
   `OverflowError` for infinity. The `ndigits` form remains loud. A focused

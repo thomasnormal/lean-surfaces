@@ -9,7 +9,7 @@
   "top": "unpacked_generate_array",
   "source_files": [
     {
-      "path": "Examples/system-verilog/sem2/unpacked_generate_array/unpacked_generate_array.sv",
+      "path": "../../Examples/system-verilog/sem2/unpacked_generate_array/unpacked_generate_array.sv",
       "sha256": "06b34454d1691dd2e58b9e12428a7de03e0514b5286fa66d8d4170bb073dffad"
     }
   ],
@@ -262,15 +262,112 @@
         ],
         "decls": [
           {
-            "kind": "Unsupported",
+            "kind": "UnpackedDecl",
             "span": {
               "line": 8,
               "col": 19,
               "end_line": 8,
               "end_col": 32
             },
-            "sv_kind": "VariableSymbol:default-point-array",
-            "text": "stage [0:S-1]"
+            "name": "stage",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 12,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 8,
+                        "col": 12,
+                        "end_line": 8,
+                        "end_col": 13
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 8,
+                        "col": 14,
+                        "end_line": 8,
+                        "end_col": 15
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 16,
+                      "end_line": 8,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "unpacked": [
+              {
+                "msb": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 8,
+                    "col": 26,
+                    "end_line": 8,
+                    "end_col": 27
+                  },
+                  "value": 0,
+                  "resolved_width": null
+                },
+                "lsb": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 8,
+                    "col": 28,
+                    "end_line": 8,
+                    "end_col": 31
+                  },
+                  "width": null,
+                  "op": "-",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 8,
+                      "col": 28,
+                      "end_line": 8,
+                      "end_col": 29
+                    },
+                    "name": "S"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 30,
+                      "end_line": 8,
+                      "end_col": 31
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  }
+                }
+              }
+            ]
           }
         ],
         "processes": [

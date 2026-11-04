@@ -4,7 +4,7 @@
  "envelope": "unpacked_generate_array.sv.json",
  "source_files": [
   {
-   "path": "Examples/system-verilog/sem2/unpacked_generate_array/unpacked_generate_array.sv",
+   "path": "../../Examples/system-verilog/sem2/unpacked_generate_array/unpacked_generate_array.sv",
    "sha256": "06b34454d1691dd2e58b9e12428a7de03e0514b5286fa66d8d4170bb073dffad"
   }
  ],
@@ -153,9 +153,58 @@
     ],
     "decls": [
      {
-      "kind": "Unsupported",
-      "sv_kind": "VariableSymbol:default-point-array",
-      "text": "stage [0:S-1]"
+      "kind": "UnpackedDecl",
+      "name": "stage",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      },
+      "unpacked": [
+       {
+        "msb": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": null
+        },
+        "lsb": {
+         "kind": "Binary",
+         "width": null,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "S"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": null
+         }
+        }
+       }
+      ]
      }
     ],
     "processes": [
@@ -347,9 +396,58 @@
     ],
     "decls": [
      {
-      "kind": "Unsupported",
-      "sv_kind": "VariableSymbol:default-point-array",
-      "text": "stage [0:S-1]"
+      "kind": "UnpackedDecl",
+      "name": "stage",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      },
+      "unpacked": [
+       {
+        "msb": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": null
+        },
+        "lsb": {
+         "kind": "Binary",
+         "width": null,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "S"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": null
+         }
+        }
+       }
+      ]
      }
     ],
     "processes": [
@@ -541,9 +639,58 @@
     ],
     "decls": [
      {
-      "kind": "Unsupported",
-      "sv_kind": "VariableSymbol:default-point-array",
-      "text": "stage [0:S-1]"
+      "kind": "UnpackedDecl",
+      "name": "stage",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "unpacked": [
+       {
+        "msb": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": null
+        },
+        "lsb": {
+         "kind": "Binary",
+         "width": null,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "S"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": null
+         }
+        }
+       }
+      ]
      }
     ],
     "processes": [

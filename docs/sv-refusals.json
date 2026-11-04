@@ -4468,16 +4468,16 @@
   },
   {
    "id": "pa-aggregate-point",
-   "tag": "VariableSymbol:default-point-array | :default-point-aggregate",
+   "tag": "VariableSymbol:default-point-array | :default-point-aggregate | UnpackedDecl:memory",
    "group": "parameters",
    "layers": [
     "extractor"
    ],
    "trigger": "logic [7:0] mem [0:K-1] with parameter K; a packed struct whose member width names a parameter",
-   "why": "The layout is slang's default-point shape (one decl per default cell, fixed member offsets).",
+   "why": "The layout is slang's default-point shape (one decl per default cell, fixed member offsets). Parameter-dependent unpacked declarations are retained as UnpackedDecl, while the flat E store still refuses array-valued state.",
    "category": "later",
    "proposed": false,
-   "prerequisite": "none recorded; proposed prerequisite: parametric aggregate layout",
+   "prerequisite": "array-valued E state",
    "plan": "AGGR",
    "kinds": {
     "extractor": [
@@ -4494,7 +4494,11 @@
    "where": [
     {
      "file": "extractors/sv/extract.py",
-     "fn": "convert_var_sym"
+     "fn": "_convert_unpacked_decl_sym"
+    },
+    {
+     "file": "LeanModels/Sv/Param.lean",
+     "fn": "instDecl"
     }
    ],
    "evidence": "sem2/array_point, aggregate_point",

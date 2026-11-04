@@ -415,9 +415,9 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
   else if fname == "round" then
     -- The one-argument integer/Boolean slice: CPython's
     -- `round(int)` returns the same mathematical integer, while
-    -- `round(bool)` returns an `int`, not a `bool`. Float and `ndigits`
-    -- One-argument floats use the exact binary64 ratio and ties-to-even;
-    -- ndigits remains loud.
+    -- `round(bool)` returns an `int`, not a `bool`. One-argument floats use
+    -- the exact binary64 ratio and ties-to-even; integer/Boolean inputs also
+    -- admit nonnegative ndigits, while floats remain limited to ndigits == 0.
     match vs with
     | [] => raisePy (.typeError "round() missing required argument 'number' (pos 1)")
     | [v] =>
@@ -426,6 +426,18 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         | .bool b => pure (.int (if b then 1 else 0))
         | .float value => liftRes (roundFloatVal value)
         | _ => refuse "round() over this non-integral value is outside the tier"
+    | [v, digits] =>
+        if roundDigitsNonnegative digits then
+          match v with
+          | .int n => pure (.int n)
+          | .bool b => pure (.int (if b then 1 else 0))
+          | .float value =>
+            if roundDigitsZero digits then liftRes (roundFloatZero value)
+            else if roundDigitsOne digits then liftRes (roundFloatOne value)
+            else if roundDigitsTwo digits then liftRes (roundFloatTwo value)
+            else refuse "round() with positive ndigits for floats is outside the tier"
+          | _ => refuse "round() over this non-integral value is outside the tier"
+        else refuse "round() with negative or non-integral ndigits is outside the tier"
     | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
     liftRes (intCastArgs vs)

@@ -71,12 +71,19 @@ outside this row's oracle.
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range
-depends on parameters as a source-shaped array, then refuses it at the loader
-with `VariableSymbol:default-point-array`. A default-point flattening would
+depends on parameters as a source-shaped `UnpackedDecl`, then refuses it at
+the loader with `UnpackedDecl:memory`. A default-point flattening would
 silently fix the layout for one parameter choice, so this boundary stays loud
 until parametric aggregate layout and access semantics are defined. The
 recorded differential row checks the refusal itself; it does not claim a
 simulator value for the refused design.
+
+The first E-side memory state is `LeanModels.Sv.Kernel.CoreMem`. Its
+`MemShape` preserves the source labels and packed element width, while
+`MemBlock` and `MemState` provide functional reads and writes with proved
+same-cell, other-cell, out-of-range, and unknown-name behavior. This is a
+trusted, fuel-free state primitive; `UnpackedDecl` loader/process wiring is
+still deliberately loud until the retained source node is connected to it.
 
 ## Signed packed localparam width conversions — 2026-11-04
 

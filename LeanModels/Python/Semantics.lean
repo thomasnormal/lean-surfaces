@@ -165,6 +165,64 @@ def roundFloatVal (value : Float64) : Res RVal :=
     if value.isNaN then .exn (.valueError "cannot convert float NaN to integer")
     else .exn (.overflowError "cannot convert float infinity to integer")
 
+/-! The `ndigits == 0` form keeps the result a float for float inputs.  The
+non-finite values are returned unchanged by CPython, and a negative zero
+survives the integral rounding operation. -/
+def roundFloatZero (value : Float64) : Res RVal :=
+  match value.toRatio with
+  | Option.none => .ok (.float value)
+  | some (numerator, denominator) =>
+    let rounded := roundRatioInt numerator denominator
+    if rounded == 0 && value.sign then
+      .ok (.float (Float64.ofBits 0x8000000000000000))
+    else
+      match Float64.fromInt rounded with
+      | some result => .ok (.float result)
+      | none => .exn (.overflowError "rounded float is out of range")
+
+/-! The first positive decimal digit uses the same exact ratio route, with a
+    decimal scale of ten.  Keeping this as a separate bounded slice avoids
+    pretending that the full decimal `ndigits` algorithm is in tier. -/
+def roundFloatOne (value : Float64) : Res RVal :=
+  match value.toRatio with
+  | Option.none => .ok (.float value)
+  | some (numerator, denominator) =>
+    let rounded := roundRatioInt (numerator * 10) denominator
+    let negative := if rounded == 0 then value.sign else rounded < 0
+    match Float64.fromRatio negative rounded.natAbs 10 with
+    | some result => .ok (.float result)
+    | none => .exn (.overflowError "rounded float is out of range")
+
+def roundFloatTwo (value : Float64) : Res RVal :=
+  match value.toRatio with
+  | Option.none => .ok (.float value)
+  | some (numerator, denominator) =>
+    let rounded := roundRatioInt (numerator * 100) denominator
+    let negative := if rounded == 0 then value.sign else rounded < 0
+    match Float64.fromRatio negative rounded.natAbs 100 with
+    | some result => .ok (.float result)
+    | none => .exn (.overflowError "rounded float is out of range")
+
+def roundDigitsNonnegative : RVal → Bool
+  | .int 0 => true
+  | .int n => n > 0
+  | .bool _ => true
+  | _ => false
+
+def roundDigitsZero : RVal → Bool
+  | .int 0 => true
+  | .bool false => true
+  | _ => false
+
+def roundDigitsOne : RVal → Bool
+  | .int 1 => true
+  | .bool true => true
+  | _ => false
+
+def roundDigitsTwo : RVal → Bool
+  | .int 2 => true
+  | _ => false
+
 /-! ### Ranges (pass 3, docs/memory-model.md §module-init execution)
 
 A range is an IMMUTABLE, re-iterable sequence, carried as the immediate
@@ -9007,7 +9065,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- `round(int)` returns the same mathematical integer,
                     -- while `round(bool)` returns an `int`, not a `bool`.
                     -- One-argument floats use the exact binary64 ratio and
-                    -- CPython's ties-to-even rule; ndigits remains loud.
+                    -- CPython's ties-to-even rule.  The two-argument slice
+                    -- admits nonnegative integral ndigits for integer and
+                    -- Boolean inputs, and ndigits == 0 for floats.
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [] => .exn st (.typeError "round() missing required argument 'number' (pos 1)")
@@ -9018,6 +9078,18 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        | .float value => Run.liftRes st (roundFloatVal value)
                        | _ => .unsupported "round() over this non-integral value is outside the tier"
                       )
+                    | [v, digits] =>
+                      if roundDigitsNonnegative digits then
+                        match v with
+                        | .int n => .ok st (.int n)
+                        | .bool b => .ok st (.int (if b then 1 else 0))
+                        | .float value =>
+                          if roundDigitsZero digits then Run.liftRes st (roundFloatZero value)
+                          else if roundDigitsOne digits then Run.liftRes st (roundFloatOne value)
+                          else if roundDigitsTwo digits then Run.liftRes st (roundFloatTwo value)
+                          else .unsupported "round() with positive ndigits for floats is outside the tier"
+                        | _ => .unsupported "round() over this non-integral value is outside the tier"
+                      else .unsupported "round() with negative or non-integral ndigits is outside the tier"
                     | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>

@@ -3007,7 +3007,32 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 | exact .okF h₁ _
                                 | exact .liftResF h₁ _
                                 | exact .unsupported
-                            | cons _ _ => exact .unsupported
+                            | cons digits tail =>
+                              cases tail with
+                              | nil =>
+                                by_cases hn : roundDigitsNonnegative digits = true
+                                · simp only [hn, if_true]
+                                  cases v with
+                                  | int n => exact .okF h₁ _
+                                  | bool b => exact .okF h₁ _
+                                  | float value =>
+                                    by_cases hz : roundDigitsZero digits = true
+                                    · simp only [hz, if_true]
+                                      exact .liftResF h₁ _
+                                    · simp only [hz, if_false]
+                                      by_cases ho : roundDigitsOne digits = true
+                                      · simp only [ho, if_true]
+                                        exact .liftResF h₁ _
+                                      · simp only [ho, if_false]
+                                        by_cases ht : roundDigitsTwo digits = true
+                                        · simp only [ht, if_true]
+                                          exact .liftResF h₁ _
+                                        · simp only [ht, if_false]
+                                          exact .unsupported
+                                  | _ => exact .unsupported
+                                · simp only [hn, if_false]
+                                  exact .unsupported
+                              | cons _ _ => simp only; exact .unsupported
                         · exact .liftResF h₁ _
                         · cases vs with
                           | nil => exact .exn

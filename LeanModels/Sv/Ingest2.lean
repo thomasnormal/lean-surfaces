@@ -559,6 +559,11 @@ def parsePDecl (j : Json) : Except String PDecl := do
     let name ← getStrField j "name"
     withCtx name.quote do
       let ty ← parsePType (← getField j "width")
+      let unpacked ← match getOptField j "unpacked" with
+        | none => pure []
+        | some uj => do
+            let xs ← uj.getArr?
+            xs.toList.mapM parsePDim
       let isSigned := match getOptField j "signed" with
         | none => false
         | some value => value.getBool?.toOption.getD false
@@ -578,14 +583,22 @@ def parsePDecl (j : Json) : Except String PDecl := do
           match ← getStrField j "dir" with
           | "in" =>
               if init.isSome then throw "input port with an initializer (a port default) is outside the tier"
-              return { name, type := ty, isSigned, twoState, isInput := true }
-          | "out" => return { name, type := ty, isSigned, twoState, isOutput := true, init }
+              return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isInput := true }
+          | "out" => return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isOutput := true, init }
           | d => throw s!"unknown port dir {d.quote}"
+      | "UnpackedDecl" =>
+          let init ← match getOptField j "init" with
+            | none => pure none
+            | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
+          let dir? := getOptStr j "dir"
+          return PDecl.mk name ty unpacked isSigned twoState
+            (dir? == some "in") (dir? == some "out")
+            (((getOptField j "net").bind (·.getBool?.toOption)).getD false) init
       | "Var" | "Net" =>
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
-          return { name, type := ty, isSigned, twoState, isNet := kind == "Net", init }
+          return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isNet := kind == "Net", init }
       | other => throw s!"unknown declaration kind {other.quote}"
 
 /-- The optional `signed` field of a `ParameterDecl`/`LocalParam` (the

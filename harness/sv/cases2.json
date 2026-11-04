@@ -70015,6 +70015,19 @@
         {"x": "10101010"}
       ],
       "measured": "2026-11-04: parameter-dependent unpacked array layout remains a loud loader refusal; flattening the default-point cells would lose the source layout."
+    },
+    {
+      "name": "sva_property_retained",
+      "example": "sem2/sva_property_retained",
+      "top": "sva_property_retained",
+      "signals": ["a", "b", "q"],
+      "stimulus": [
+        {"rst_n": "0", "a": "0", "b": "0"},
+        {"rst_n": "1", "a": "1", "b": "1"},
+        {"rst_n": "1", "a": "0", "b": "1"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-04: retained SVA metadata fixture; Verilator is the available assertion-capable differential oracle, while Icarus cannot parse concurrent SVA."
     }
 
   ]

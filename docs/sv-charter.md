@@ -26,9 +26,9 @@ shapes; unbounded and liveness SVA also remain loud. Concurrent assertion
 members are retained in the symbolic envelope's `properties` metadata.
 `sva_property_retained` demonstrates assert, assume, and cover members beside
 an ordinary asynchronous-reset process; no assertion is lowered into `Stmt2`
-or scheduled as a procedural process. Icarus's SVA parser is unavailable for
-this fixture, so the simulator differential remains a named follow-up rather
-than an invented match.
+or scheduled as a procedural process. Its three-cycle assertion stimulus
+passes Verilator 5.052 with assertions enabled. Icarus's SVA parser remains
+unavailable for this fixture and is recorded as such.
 
 ## Parameter-dependent unpacked arrays remain loud — 2026-11-04
 

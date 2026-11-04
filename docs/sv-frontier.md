@@ -48,7 +48,9 @@ metadata instead of becoming runnable `NoEventControl` processes. The clean
 `sva_property_retained` witness loads its async-reset process and retains one
 assert, one assume, and one cover property. OpenTitan's own files still have
 independent walls (unpacked ports, casts, arrays, and simulator SVA support),
-which remain in the measured census.
+which remain in the measured census. Its three-cycle property stimulus passes
+through Verilator 5.052 with assertions enabled; Icarus remains unavailable
+for concurrent SVA syntax.
 
 Admit concurrent `assert`, `assume`, and `cover` properties with clocking and
 `disable iff`; the boolean layer; `|->` and `|=>`; `##n` and bounded

@@ -826,7 +826,7 @@ def render_svgolf(data):
     w("## How to read this document")
     w("")
     w("Every restriction has one of four states. A mark `†` means the classification is a proposal, not yet "
-      "confirmed by Thomas.")
+      "confirmed by the maintainers.")
     w("")
     w("| state | meaning |")
     w("|---|---|")

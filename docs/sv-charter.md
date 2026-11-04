@@ -46,8 +46,9 @@ passes Verilator 5.052 with assertions enabled. Icarus's SVA parser remains
 unavailable for this fixture and is recorded as such.
 
 The same retention route handles an assertion in a constant generate scope;
-its executable generate body remains empty while the property metadata awaits
-an explicit hierarchy path contract.
+its executable generate body remains empty while the property metadata carries
+the lexical generate labels in `path`; generated instance indices remain an
+explicit hierarchy-contract obligation.
 
 ## F1 asynchronous-reset edge table in E — 2026-11-04
 

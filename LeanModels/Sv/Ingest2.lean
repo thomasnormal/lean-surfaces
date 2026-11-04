@@ -685,7 +685,12 @@ def parseModule2 (j : Json) : Except String PDesign :=
       let qkind ← getStrField qj "property_kind"
       let qclock := getOptStr qj "clock"
       let qtext := (getOptField qj "text").bind (·.getStr?.toOption) |>.getD ""
-      properties := properties ++ [{ name := qname, kind := qkind, clock := qclock, text := qtext }]
+      let qpath ← match getOptField qj "path" with
+        | none => pure []
+        | some pj => (← pj.getArr?).toList.mapM (fun x =>
+            x.getStr?.mapError (fun _ => "property path entry is not a string"))
+      properties := properties ++
+        [{ name := qname, kind := qkind, clock := qclock, text := qtext, path := qpath }]
     for oj in (← (← getField j "others").getArr?) do
       match ← getKind oj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]

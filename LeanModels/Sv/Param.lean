@@ -533,6 +533,9 @@ structure PProperty where
   kind : String
   clock : Option String := none
   text : String := ""
+  /-- Lexical generate labels enclosing this property.  Generated instance
+  indices are left to the hierarchy contract; they are not flattened here. -/
+  path : List String := []
 deriving Repr, BEq, Inhabited
 
 /-- A parametric design — the sv-0.2 module payload. `params` order is

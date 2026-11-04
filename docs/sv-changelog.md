@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F1: retain SVA generate paths
+
+Retained concurrent assertions now carry their lexical generate labels in the
+symbolic envelope's `SvaProperty.path` field. Module-level assertions use an
+empty path; generated instance indices remain structural hierarchy metadata
+and are not flattened into the property. The property remains out of
+`Stmt2` and executable process lists.
+
 ## Active-high asynchronous reset now retained in E
 
 The retained `alwaysFFR` process now carries reset polarity through the

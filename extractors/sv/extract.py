@@ -25840,7 +25840,7 @@ def _convert_syscall(sm, s, e):
 # Processes
 # ---------------------------------------------------------------------------
 
-def _convert_concurrent_property(sm, m):
+def _convert_concurrent_property(sm, m, path=()):
     """Retain a concurrent assertion as envelope metadata.
 
     The property evaluator owns the meaning; the symbolic extractor only
@@ -25857,7 +25857,7 @@ def _convert_concurrent_property(sm, m):
         r"@\s*\(\s*(?:(?:posedge|negedge|edge)\s+)?([A-Za-z_$][A-Za-z0-9_$]*)",
         text)
     clock = clock_match.group(1) if clock_match else None
-    return {
+    result = {
         "kind": "SvaProperty",
         "span": sym_span(sm, m),
         "name": head,
@@ -25865,6 +25865,11 @@ def _convert_concurrent_property(sm, m):
         "clock": clock,
         "text": text,
     }
+    # Preserve the old module-level envelope byte-for-byte; an absent path
+    # is the same as the empty lexical path in the Lean default.
+    if path:
+        result["path"] = list(path)
+    return result
 
 def convert_procedural_block(sm, m, module_level=False):
     pk = m.procedureKind
@@ -31984,7 +31989,7 @@ def _genstep(sm, e, genvar=None):
     return convert_sym_expr(sm, e)
 
 
-def convert_generate_for(sm, m):
+def convert_generate_for(sm, m, path=()):
     """GenerateBlockArraySymbol -> ONE GenerateFor node: genvar + symbolic
     header expressions + body template (never unrolled). The template is
     entries[0]'s members — every entry is bound from the same syntax; the
@@ -32029,7 +32034,9 @@ def convert_generate_for(sm, m):
                 if live:
                     template = candidate
                     break
-            body = convert_members_sym(sm, template)
+            label = m.name or None
+            body_path = tuple(path) + ((label,) if label else ())
+            body = convert_members_sym(sm, template, body_path)
         else:
             # Zero instances under default parameters: no bound template
             # exists; the body is kept as raw source (honest limit).
@@ -32072,7 +32079,7 @@ def _ifgen_key(syn):
         return id(syn)
 
 
-def convert_generate_ifs(sm, members):
+def convert_generate_ifs(sm, members, path=()):
     """A run of GenerateBlockSymbols originating from one if-generate
     (including else-if chains) -> ONE nested GenerateIf node. `members` is
     the full consecutive run; branches pair up via their IfGenerate syntax."""
@@ -32105,11 +32112,15 @@ def convert_generate_ifs(sm, members):
         cond = None
         if holder is not None and holder.conditionExpression is not None:
             cond = convert_sym_expr(sm, holder.conditionExpression)
-        then_body = convert_members_sym(sm, tm) if tm is not None else []
+        then_label = (tm.name or None) if tm is not None else None
+        then_path = tuple(path) + ((then_label,) if then_label else ())
+        then_body = convert_members_sym(sm, tm, then_path) if tm is not None else []
         if "chain" in rec:
             els = [emit(rec["chain"])]
         elif em is not None:
-            els = convert_members_sym(sm, em)
+            else_label = em.name or None
+            else_path = tuple(path) + ((else_label,) if else_label else ())
+            els = convert_members_sym(sm, em, else_path)
         else:
             els = None
         return {
@@ -32128,7 +32139,7 @@ def convert_generate_ifs(sm, members):
 
 # --- symbolic member routing ----------------------------------------------
 
-def convert_members_sym(sm, scope):
+def convert_members_sym(sm, scope, path=()):
     """Members of a generate block (or nested scope) -> flat node list in
     source order. Genvar-local parameter shadows are skipped."""
     out = []
@@ -32151,7 +32162,7 @@ def convert_members_sym(sm, scope):
                     run.append(members[j])
                     j += 1
                 if run:
-                    out.extend(convert_generate_ifs(sm, run))
+                    out.extend(convert_generate_ifs(sm, run, path))
                     i = j
                     continue
                 # A named structural wrapper around generate/instance items
@@ -32160,7 +32171,8 @@ def convert_members_sym(sm, scope):
                 # instance paths still recover the wrapper label from slang's
                 # hierarchical path. Declarations/processes inside an
                 # unconditional wrapper remain loud.
-                body = convert_members_sym(sm, m)
+                wrapper_path = tuple(path) + ((m.name,) if m.name else ())
+                body = convert_members_sym(sm, m, wrapper_path)
                 if body and all(item.get("kind") in (
                         "GenerateFor", "GenerateIf", "Instance")
                         for item in body if isinstance(item, dict)):
@@ -32170,7 +32182,7 @@ def convert_members_sym(sm, scope):
                                            "GenerateBlockSymbol:unconditional"))
                 i += 1
                 continue
-            converted = _convert_member_sym(sm, m, k)
+            converted = _convert_member_sym(sm, m, k, path)
             if isinstance(converted, list):
                 out.extend(converted)
             elif converted is not None:
@@ -32185,7 +32197,7 @@ def convert_members_sym(sm, scope):
     return [d for d in out if d is not None]
 
 
-def _convert_member_sym(sm, m, k):
+def _convert_member_sym(sm, m, k, path=()):
     """One non-if-generate member -> node or None (silently skipped)."""
     if k == "Instance":
         return convert_instance_sym(sm, m)
@@ -32226,12 +32238,12 @@ def _convert_member_sym(sm, m, k):
     if k == "ProceduralBlock":
         if type(getattr(m, "syntax", None)).__name__ == \
                 "ConcurrentAssertionMemberSyntax":
-            return _convert_concurrent_property(sm, m)
+            return _convert_concurrent_property(sm, m, path)
         return convert_procedural_block(sm, m)
     if k == "ContinuousAssign":
         return convert_continuous_assign(sm, m)
     if k == "GenerateBlockArray":
-        return convert_generate_for(sm, m)
+        return convert_generate_for(sm, m, path)
     if k == "TypeAlias":
         try:
             if _sym_enum_width(m.declaredType.type) is not None:

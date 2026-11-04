@@ -49,6 +49,7 @@ endmodule
             module = json.loads(out.read_text())["design"]["modules"][0]
         self.assertEqual(len(module["properties"]), 1)
         self.assertEqual(module["properties"][0]["property_kind"], "assert")
+        self.assertEqual(module["properties"][0]["path"], ["g"])
         self.assertEqual(module["generates"][0]["then"], [])
 
 

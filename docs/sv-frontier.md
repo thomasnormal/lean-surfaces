@@ -71,8 +71,8 @@ for concurrent SVA syntax.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
-processes. Their generate path still needs to be carried into the property
-contract before hierarchy proofs consume them.
+processes. Their lexical generate labels are now carried in each property's
+`path`; generated instance indices remain a hierarchy-contract concern.
 
 The E-core-1 async-reset edge packet is also in place for the first target
 shape: kernel guards cover reset assertion and release, the `1 -> x` and

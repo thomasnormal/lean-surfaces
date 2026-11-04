@@ -20,6 +20,9 @@ private theorem round_float_zero_value :
 private theorem round_float_one_value :
     roundFloatOne (Float64.ofBits 0x4005666666666666) =
       .ok (.float (Float64.ofBits 0x400599999999999a)) := by rfl
+private theorem round_float_two_value :
+    roundFloatTwo (Float64.ofBits 0x3ff3c083126e978d) =
+      .ok (.float (Float64.ofBits 0x3ff3ae147ae147ae)) := by rfl
 
 theorem round_float_half :
     round_lab.round_float(Float64.ofBits 0x3fe0000000000000) ==> Val.int 0 := by
@@ -136,6 +139,24 @@ theorem round_float_one :
     moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
     isLoweredBuiltinName, isPyBuiltinName, flattenStarRun, flattenStarCallArgs,
     Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+  all_goals rfl
+
+theorem round_float_two :
+    round_lab.round_float_two(Float64.ofBits 0x3ff3c083126e978d) ==>
+      Val.float (Float64.ofBits 0x3ff3ae147ae147ae) := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundFloatOne,
+    roundFloatTwo, roundDigitsNonnegative, roundDigitsZero, roundDigitsOne,
+    roundDigitsTwo, roundRatioInt, roundEvenNat, round_float_two_value,
+    Float64.fromInt, Float64.ofBits, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, isLoweredBuiltinName,
+    isPyBuiltinName, flattenStarRun, flattenStarCallArgs, Run.bind,
+    Run.liftRes, Run.toPublic, RVal.freezeB]
   all_goals rfl
 
 end Examples.python.round_lab.proof

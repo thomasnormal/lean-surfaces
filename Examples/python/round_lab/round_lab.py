@@ -36,3 +36,7 @@ def round_bool_positive(value):
 
 def round_float_one(value):
     return round(value, 1)
+
+
+def round_float_two(value):
+    return round(value, 2)

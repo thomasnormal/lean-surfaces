@@ -8300,3 +8300,20 @@ loud.
 
 DECIDED: admit only positive float `ndigits == 1` in addition to the existing
 zero-digit slice; retain loud behavior for richer decimal rounding forms.
+
+## 2026-11-04-pycomplete-289 — admit two positive float digits
+
+The float `round(number, 2)` slice now computes from the exact binary64 ratio
+scaled by one hundred, preserving ties-to-even and signed zero. Larger
+positive digit counts and all other unsupported digit protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native focused differential | 38 round rows: 38 matched, 0 failed |
+| Proof focused differential | 38 round rows: 38 matched, 0 refused, 0 failed |
+| Coverage | Runner/theorem page regenerated: 4,012 total rows |
+| Hygiene | Backlog index, docs check, coverage check, and `git diff --check` passed |
+
+DECIDED: admit positive float `ndigits == 2` in addition to the existing
+zero- and one-digit slices; retain loud behavior for richer decimal rounding.

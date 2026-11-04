@@ -1470,5 +1470,10 @@
   {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "notimplemented_equal", "args": [[3], [0], [-7]], "expect": "match"},
   {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "notimplemented_rendering", "args": [[]], "expect": "match"},
   {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "notimplemented_keys", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/import_lab/import_lab.py", "function": "missing_from_uncaught", "args": [[]], "expect": "match", "note": "an absent from-import in function scope raises ModuleNotFoundError before binding"}
+  {"file": "Examples/python/import_lab/import_lab.py", "function": "missing_from_uncaught", "args": [[]], "expect": "match", "note": "an absent from-import in function scope raises ModuleNotFoundError before binding"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float", "args": [[0.5], [1.5], [2.5], [-0.5], [-1.5], [-2.5], [1.25], [-1.25]], "expect": "match", "note": "one-argument float round uses exact binary64 ties-to-even and returns an arbitrary-precision int"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_ties", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_large", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_nan", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_infinity", "args": [[]], "expect": "match"}
 ]

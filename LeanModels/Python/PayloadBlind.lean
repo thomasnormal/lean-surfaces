@@ -5266,6 +5266,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                           cases value <;> try exact PBF.unsupported
                                           case int _ => exact PBF.ok invariant _
                                           case bool _ => exact PBF.ok invariant _
+                                          case float _ => exact PBF.liftRes invariant _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => PBF.liftRes hs1 _

@@ -416,14 +416,16 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- The one-argument integer/Boolean slice: CPython's
     -- `round(int)` returns the same mathematical integer, while
     -- `round(bool)` returns an `int`, not a `bool`. Float and `ndigits`
-    -- protocols remain loud until their rounding oracle is modeled.
+    -- One-argument floats use the exact binary64 ratio and ties-to-even;
+    -- ndigits remains loud.
     match vs with
     | [] => raisePy (.typeError "round() missing required argument 'number' (pos 1)")
     | [v] =>
         match v with
         | .int n => pure (.int n)
         | .bool b => pure (.int (if b then 1 else 0))
-        | _ => refuse "round() over floats and non-integral values is outside the tier (the one-argument integer/Boolean slice is modeled)"
+        | .float value => liftRes (roundFloatVal value)
+        | _ => refuse "round() over this non-integral value is outside the tier"
     | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
     liftRes (intCastArgs vs)

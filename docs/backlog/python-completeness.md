@@ -8222,3 +8222,24 @@ the stateful cell shape explicitly loud.
 DECIDED: keep stateful escaped and generator-cell proof rows on the explicit
 `proofCallFunction` refusal path until the proof bridge is rebuilt; continue
 with the next measured gap.
+
+## 2026-11-04-pycomplete-285 — model one-argument `round(float)`
+
+One-argument `round()` now accepts finite binary64 floats and computes the
+exact integer result with ties-to-even from `Float64.toRatio`. NaN and
+infinity retain CPython's distinct `ValueError` and `OverflowError` messages;
+the `ndigits` form and other non-integral values remain loud. A focused
+rounding example supplies concrete proof checks for ties, a large float, and
+both non-finite errors.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | `lake build Examples.python.round_lab.spec`: passed |
+| Native differential | 12 rows: 12 matched, 0 failed |
+| Proof differential | 12 rows: 12 matched, 0 refused, 0 failed |
+| Proof-layer guard | `Obs.lean` now lifts the pure `round(float)` result without changing the world |
+| Hygiene | `git diff --check` passed |
+
+DECIDED: admit only one-argument binary64 float rounding with exact
+ties-to-even and faithful non-finite exceptions; retain loud behavior for
+`ndigits` and unsupported value protocols.

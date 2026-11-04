@@ -22,6 +22,7 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-04-pycomplete-284` |  | synchronize the closure proof guard | python-completeness |
+| `2026-11-04-pycomplete-285` |  | model one-argument `round(float)` | python-completeness |
 | `2026-11-04-pycomplete-283` |  | refresh escaped late-bound closure cells | python-completeness |
 | `2026-11-04-pycomplete-282` |  | admit generator cell rebinding in the monadic runner | python-completeness |
 | `2026-11-04-pycomplete-281` |  | admit absent from-imports in function scope | python-completeness |

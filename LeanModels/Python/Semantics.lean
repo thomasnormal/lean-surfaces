@@ -137,6 +137,34 @@ def RVal.isSeq : RVal → Bool
   | .ntuple _ _ _ => true
   | _ => false
 
+/-! ### One-argument `round(float)`
+
+CPython's one-argument float round returns an arbitrary-precision integer,
+with ties-to-even.  `Float64.toRatio` exposes the exact binary64 fraction, so
+the conversion can stay a small kernel-reducible worker rather than going
+through host floating-point operations.  Non-finite values retain CPython's
+distinct `ValueError`/`OverflowError` messages; `ndigits` remains outside the
+tier in the builtin dispatch below.
+-/
+
+def roundEvenNat (numerator denominator : Nat) : Nat :=
+  let quotient := numerator / denominator
+  let remainder := numerator % denominator
+  if 2 * remainder < denominator then quotient
+  else if 2 * remainder > denominator then quotient + 1
+  else if quotient % 2 == 0 then quotient else quotient + 1
+
+def roundRatioInt (numerator : Int) (denominator : Nat) : Int :=
+  let magnitude := roundEvenNat numerator.natAbs denominator
+  if numerator < 0 then -(magnitude : Int) else (magnitude : Int)
+
+def roundFloatVal (value : Float64) : Res RVal :=
+  match value.toRatio with
+  | some (numerator, denominator) => .ok (.int (roundRatioInt numerator denominator))
+  | Option.none =>
+    if value.isNaN then .exn (.valueError "cannot convert float NaN to integer")
+    else .exn (.overflowError "cannot convert float infinity to integer")
+
 /-! ### Ranges (pass 3, docs/memory-model.md §module-init execution)
 
 A range is an IMMUTABLE, re-iterable sequence, carried as the immediate
@@ -8978,8 +9006,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- The one-argument integer/Boolean slice: CPython's
                     -- `round(int)` returns the same mathematical integer,
                     -- while `round(bool)` returns an `int`, not a `bool`.
-                    -- Float and ndigits protocols remain loud until their
-                    -- rounding oracle is modeled.
+                    -- One-argument floats use the exact binary64 ratio and
+                    -- CPython's ties-to-even rule; ndigits remains loud.
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [] => .exn st (.typeError "round() missing required argument 'number' (pos 1)")
@@ -8987,7 +9015,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       (match v with
                        | .int n => .ok st (.int n)
                        | .bool b => .ok st (.int (if b then 1 else 0))
-                       | _ => .unsupported "round() over floats and non-integral values is outside the tier (the one-argument integer/Boolean slice is modeled)"
+                       | .float value => Run.liftRes st (roundFloatVal value)
+                       | _ => .unsupported "round() over this non-integral value is outside the tier"
                       )
                     | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then

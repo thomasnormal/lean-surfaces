@@ -1,0 +1,590 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.12.14"
+  },
+  "source_file": "Examples/python/round_lab/round_lab.py",
+  "source_sha256": "799d6e84f153a03bbf138950226ffd37503f940f47702aba3d9684639f248763",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 23
+        },
+        "name": "round_float",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 1,
+              "col_offset": 16,
+              "end_lineno": 1,
+              "end_col_offset": 21
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 17,
+                    "end_lineno": 2,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 84
+        },
+        "name": "round_float_ties",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 84
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 5,
+                "col_offset": 11,
+                "end_lineno": 5,
+                "end_col_offset": 84
+              },
+              "elts": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 11,
+                    "end_lineno": 5,
+                    "end_col_offset": 21
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 11,
+                      "end_lineno": 5,
+                      "end_col_offset": 16
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 17,
+                        "end_lineno": 5,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "float",
+                        "bits": "4602678819172646912"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 23,
+                    "end_lineno": 5,
+                    "end_col_offset": 33
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 23,
+                      "end_lineno": 5,
+                      "end_col_offset": 28
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 29,
+                        "end_lineno": 5,
+                        "end_col_offset": 32
+                      },
+                      "value": {
+                        "type": "float",
+                        "bits": "4609434218613702656"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 35,
+                    "end_lineno": 5,
+                    "end_col_offset": 45
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 35,
+                      "end_lineno": 5,
+                      "end_col_offset": 40
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 41,
+                        "end_lineno": 5,
+                        "end_col_offset": 44
+                      },
+                      "value": {
+                        "type": "float",
+                        "bits": "4612811918334230528"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 47,
+                    "end_lineno": 5,
+                    "end_col_offset": 58
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 47,
+                      "end_lineno": 5,
+                      "end_col_offset": 52
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "UnaryOp",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 53,
+                        "end_lineno": 5,
+                        "end_col_offset": 57
+                      },
+                      "op": "USub",
+                      "operand": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 5,
+                          "col_offset": 54,
+                          "end_lineno": 5,
+                          "end_col_offset": 57
+                        },
+                        "value": {
+                          "type": "float",
+                          "bits": "4602678819172646912"
+                        }
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 60,
+                    "end_lineno": 5,
+                    "end_col_offset": 71
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 60,
+                      "end_lineno": 5,
+                      "end_col_offset": 65
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "UnaryOp",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 66,
+                        "end_lineno": 5,
+                        "end_col_offset": 70
+                      },
+                      "op": "USub",
+                      "operand": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 5,
+                          "col_offset": 67,
+                          "end_lineno": 5,
+                          "end_col_offset": 70
+                        },
+                        "value": {
+                          "type": "float",
+                          "bits": "4609434218613702656"
+                        }
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 73,
+                    "end_lineno": 5,
+                    "end_col_offset": 84
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 73,
+                      "end_lineno": 5,
+                      "end_col_offset": 78
+                    },
+                    "id": "round"
+                  },
+                  "args": [
+                    {
+                      "kind": "UnaryOp",
+                      "span": {
+                        "lineno": 5,
+                        "col_offset": 79,
+                        "end_lineno": 5,
+                        "end_col_offset": 83
+                      },
+                      "op": "USub",
+                      "operand": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 5,
+                          "col_offset": 80,
+                          "end_lineno": 5,
+                          "end_col_offset": 83
+                        },
+                        "value": {
+                          "type": "float",
+                          "bits": "4612811918334230528"
+                        }
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 7,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 23
+        },
+        "name": "round_float_large",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 8,
+                "col_offset": 11,
+                "end_lineno": 8,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 8,
+                  "col_offset": 11,
+                  "end_lineno": 8,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 8,
+                    "col_offset": 17,
+                    "end_lineno": 8,
+                    "end_col_offset": 22
+                  },
+                  "value": {
+                    "type": "float",
+                    "bits": "9094988921128908188"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 10,
+          "col_offset": 0,
+          "end_lineno": 11,
+          "end_col_offset": 30
+        },
+        "name": "round_float_nan",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 11,
+              "col_offset": 4,
+              "end_lineno": 11,
+              "end_col_offset": 30
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 11,
+                "col_offset": 11,
+                "end_lineno": 11,
+                "end_col_offset": 30
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 11,
+                  "col_offset": 11,
+                  "end_lineno": 11,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 11,
+                    "col_offset": 17,
+                    "end_lineno": 11,
+                    "end_col_offset": 29
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 11,
+                      "col_offset": 17,
+                      "end_lineno": 11,
+                      "end_col_offset": 22
+                    },
+                    "id": "float"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 11,
+                        "col_offset": 23,
+                        "end_lineno": 11,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "nan"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 14,
+          "end_col_offset": 30
+        },
+        "name": "round_float_infinity",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 14,
+              "end_col_offset": 30
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 14,
+                "col_offset": 11,
+                "end_lineno": 14,
+                "end_col_offset": 30
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 11,
+                  "end_lineno": 14,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 17,
+                    "end_lineno": 14,
+                    "end_col_offset": 29
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 17,
+                      "end_lineno": 14,
+                      "end_col_offset": 22
+                    },
+                    "id": "float"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 23,
+                        "end_lineno": 14,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "inf"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

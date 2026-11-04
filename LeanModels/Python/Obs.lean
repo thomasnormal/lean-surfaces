@@ -3005,6 +3005,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                               cases v <;>
                                 first
                                 | exact .okF h₁ _
+                                | exact .liftResF h₁ _
                                 | exact .unsupported
                             | cons _ _ => exact .unsupported
                         · exact .liftResF h₁ _

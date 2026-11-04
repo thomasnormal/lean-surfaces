@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- One-argument `round(float)` now uses the exact binary64 ratio with
+  ties-to-even rounding, including CPython's `ValueError` for NaN and
+  `OverflowError` for infinity. The `ndigits` form remains loud. A focused
+  proof example and 12-row native/proof differential battery cover the new
+  behavior.
+
 - Synchronized the closure proof regression with the proof interpreter's
   target-specific cell guard: `gen_cell_after_call` now checks
   `proofCallFunction`, so the example cannot accept the stale snapshot result

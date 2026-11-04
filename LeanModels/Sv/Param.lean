@@ -775,6 +775,36 @@ def PExpr.mentionsAnyList (names : List String) : List PExpr → Bool
   | p :: ps => p.mentionsAny names || PExpr.mentionsAnyList names ps
 end
 
+/-! A constant-context replication must reject a signal operand before it
+evaluates the repetition count.  In particular, a select has a structural
+width, so `ctype` alone would otherwise accept it and get stuck on a symbolic
+count.  Keep this test local to `Param.lean`: `Param2` has a similar walker,
+but importing it here would create a cycle. -/
+mutual
+def PExpr.readsSignalConst : PExpr → Bool
+  | .ident _ | .arrayElem .. | .arrayPart .. => true
+  | .unary _ a | .resize _ a | .signedResize _ a | .squash2 _ a
+  | .sysCall _ a | .reduce _ a | .cast _ a => a.readsSignalConst
+  | .binary _ l r | .bitSel l r | .repl l r =>
+      l.readsSignalConst || r.readsSignalConst
+  | .partSel b m l | .ternary b m l =>
+      b.readsSignalConst || m.readsSignalConst || l.readsSignalConst
+  | .concat ps => PExpr.readsSignalConstList ps
+  | .lit _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
+  | .fill _ | .unsupported .. => false
+
+def PExpr.readsSignalConstList : List PExpr → Bool
+  | [] => false
+  | p :: ps => p.readsSignalConst || PExpr.readsSignalConstList ps
+end
+
+/-- The signal name for the select forms whose refusal can name their root. -/
+def PExpr.signalRoot? : PExpr → Option String
+  | .ident n => some n
+  | .bitSel b _ | .partSel b _ _ => b.signalRoot?
+  | .arrayElem n _ | .arrayPart n .. => some n
+  | _ => none
+
 /-- An order comparison spelled signed by the frontend (`s<` …). -/
 private def SymBinOp.signedOrder : SymBinOp → Bool
   | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge | .slt | .sle | .sgt | .sge => true
@@ -1036,12 +1066,17 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       let w := tys.foldl (fun total ty => total + ty.1) 0
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (w, false)
-  | .repl count arg => do
-      let (wa, _) ← ctype env arg
-      let n ← evalAt env (← ctype env count) count
-      if n < 0 then .error "negative replication count"
-      else if n == 0 then .error "empty replication in a constant context"
-      else .ok (n.toNat * wa, false)
+  | .repl count arg =>
+      if arg.readsSignalConst then
+        match arg.signalRoot? with
+        | some n => .error s!"signal '{n}' in a constant context"
+        | none => .error "signal operand in a constant context"
+      else do
+        let (wa, _) ← ctype env arg
+        let n ← evalAt env (← ctype env count) count
+        if n < 0 then .error "negative replication count"
+        else if n == 0 then .error "empty replication in a constant context"
+        else .ok (n.toNat * wa, false)
   | .reduce _ _ => .error "reduction in a constant context (width-dependent)"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
@@ -1230,13 +1265,18 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
         (total + pw, value * ((2 : Int) ^ pw) + pv.emod ((2 : Int) ^ pw))) (0, 0)
       if w == 0 then .error "empty concatenation in a constant context"
       else .ok (convertConst w ty.1 ty.2 v)
-  | .repl count arg => do
-      let (wa, sa) ← ctype env arg
-      let n ← evalAt env (← ctype env count) count
-      let v ← evalAt env (wa, sa) arg
-      if n < 0 then .error "negative replication count"
-      else if n == 0 then .error "empty replication in a constant context"
-      else .ok (convertConst (n.toNat * wa) ty.1 ty.2 (repeatConst n.toNat wa v))
+  | .repl count arg =>
+      if arg.readsSignalConst then
+        match arg.signalRoot? with
+        | some n => .error s!"signal '{n}' in a constant context"
+        | none => .error "signal operand in a constant context"
+      else do
+        let (wa, sa) ← ctype env arg
+        let n ← evalAt env (← ctype env count) count
+        let v ← evalAt env (wa, sa) arg
+        if n < 0 then .error "negative replication count"
+        else if n == 0 then .error "empty replication in a constant context"
+        else .ok (convertConst (n.toNat * wa) ty.1 ty.2 (repeatConst n.toNat wa v))
   | .reduce _ _ => .error "reduction in a constant context (width-dependent)"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
@@ -1259,6 +1299,26 @@ example (accW : Nat) :
 example (accW : Nat) :
     evalAt ({ nvals := [("AccW", (0, accW, false))] } : IEnv) (32, true)
       (.repl (.paramRef "AccW" none) (.ident "a")) =
+      .error "signal 'a' in a constant context" := by rfl
+
+example (accW : Nat) :
+    ctype ({ nvals := [("AccW", (0, accW, false))] } : IEnv)
+      (.repl (.paramRef "AccW" none) (.bitSel (.ident "a") (.int 0))) =
+      .error "signal 'a' in a constant context" := by rfl
+example (accW : Nat) :
+    evalAt ({ nvals := [("AccW", (0, accW, false))] } : IEnv) (32, true)
+      (.repl (.paramRef "AccW" none) (.bitSel (.ident "a") (.int 0))) =
+      .error "signal 'a' in a constant context" := by rfl
+
+example (accW : Nat) :
+    ctype ({ nvals := [("AccW", (0, accW, false))] } : IEnv)
+      (.repl (.paramRef "AccW" none)
+        (.partSel (.ident "a") (.int 7) (.int 0))) =
+      .error "signal 'a' in a constant context" := by rfl
+example (accW : Nat) :
+    evalAt ({ nvals := [("AccW", (0, accW, false))] } : IEnv) (32, true)
+      (.repl (.paramRef "AccW" none)
+        (.partSel (.ident "a") (.int 7) (.int 0))) =
       .error "signal 'a' in a constant context" := by rfl
 
 /-- **The outside target of a constant root, where its tree records one**

@@ -63,9 +63,11 @@ The first E memory packet is now present in `LeanModels.Sv.Kernel.CoreMem`.
 `MemShape` retains the source labels and element width, `MemBlock` stores
 array-valued cells without expansion, and `MemState` names memory objects.
 Read and write laws cover same-cell updates, other-cell preservation,
-out-of-range reads and writes, and unknown memory names. The loader and
-process evaluator still stop at `UnpackedDecl:memory`; wiring those retained
-nodes into E is the following packet.
+out-of-range reads and writes, and unknown memory names. `Kernel/MemElab`
+now evaluates a retained one-rank `UnpackedDecl` at a parameter point and
+constructs its native memory state; nested ranks remain a named refusal. The
+process evaluator still stops at `UnpackedDecl:memory` until array targets are
+wired into the edge evaluator.
 
 ## Ladder
 

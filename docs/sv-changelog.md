@@ -96,8 +96,9 @@ packet for the array-valued memory rung.
 keeps source bounds and element width, supports named memory lookup and
 functional cell writes, and proves same-cell, other-cell, out-of-range, and
 unknown-memory laws without fuel or default-point expansion. Retained
-`UnpackedDecl` nodes remain a loud loader boundary until process lowering is
-wired to this state.
+`UnpackedDecl` nodes now have a one-rank elaboration bridge in
+`Kernel/MemElab`, while nested ranks and process lowering remain loud until
+array targets are wired to this state.
 
 ## Known constant replications
 

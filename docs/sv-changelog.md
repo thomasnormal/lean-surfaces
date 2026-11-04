@@ -1,5 +1,16 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Loader loudness for discarded edge-control fields
+
+`Ingest2` now refuses `AlwaysPosedge` envelopes that carry an active-high
+`areset`, a negative-edge `edge`, or an `iff` guard. Those fields used to be
+ignored, silently changing the source into a plain positive-edge `alwaysFF`.
+The three clean-room fixtures `loader_refuse_areset`,
+`loader_refuse_negedge`, and `loader_refuse_iff` each produce a named refusal
+and are recorded in the phase-2 differential corpus. Active-low `areset_n`
+remains the existing retained shape; the other event forms stay loud until
+their E semantics are wired through the loader.
+
 ## F1: asynchronous-reset edge table in E
 
 The E-core-1 edge witness now checks the complete asynchronous active-low

@@ -28,6 +28,30 @@
       ]
     },
     {
+      "name": "loader_refuse_areset",
+      "example": "sem2/loader_refuse_areset",
+      "top": "loader_refuse_areset",
+      "refusal": "AlwaysPosedge:areset",
+      "signals": ["q"],
+      "stimulus": [{"rst": "0", "en": "0", "d": "0"}]
+    },
+    {
+      "name": "loader_refuse_negedge",
+      "example": "sem2/loader_refuse_negedge",
+      "top": "loader_refuse_negedge",
+      "refusal": "AlwaysPosedge:edge",
+      "signals": ["q"],
+      "stimulus": [{"en": "0", "d": "0"}]
+    },
+    {
+      "name": "loader_refuse_iff",
+      "example": "sem2/loader_refuse_iff",
+      "top": "loader_refuse_iff",
+      "refusal": "AlwaysPosedge:iff",
+      "signals": ["q"],
+      "stimulus": [{"en": "0", "d": "0"}]
+    },
+    {
       "name": "concat_assign",
       "example": "sem2/concat_assign",
       "top": "concat_assign",

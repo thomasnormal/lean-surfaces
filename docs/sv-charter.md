@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Loader loudness for edge-control metadata — 2026-11-04
+
+The symbolic loader never drops event-control fields. `AlwaysPosedge` entries
+with an active-high `areset`, a negative-edge `edge`, or an `iff` guard now
+refuse with their named `AlwaysPosedge:*` boundary instead of becoming a
+plain positive-edge `alwaysFF`. The clean fixtures
+`loader_refuse_areset`, `loader_refuse_negedge`, and `loader_refuse_iff` pin
+the three cases in the phase-2 corpus. The active-low `areset_n` form remains
+the retained process shape; the other forms await their E event semantics.
+
 ## F1 retained SVA safety envelope — 2026-11-04
 
 `LeanModels.Sv.Sva` gives the retained concurrent-assertion shape a fuel-free

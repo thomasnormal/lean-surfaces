@@ -1,0 +1,167 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "loader_refuse_areset",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/loader_refuse_areset/loader_refuse_areset.sv",
+      "sha256": "f91ab10da792b5624a72cbbd2afb706e26a8eba52d17688fd9139be35012a012"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "loader_refuse_areset",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 41,
+              "end_line": 2,
+              "end_col": 44
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 46,
+              "end_line": 2,
+              "end_col": 49
+            },
+            "name": "rst",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 51,
+              "end_line": 2,
+              "end_col": 53
+            },
+            "name": "en",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 55,
+              "end_line": 2,
+              "end_col": 56
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 71,
+              "end_line": 2,
+              "end_col": 72
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 50
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 3,
+                "col": 43,
+                "end_line": 3,
+                "end_col": 50
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 43,
+                  "end_line": 3,
+                  "end_col": 44
+                },
+                "width": 1,
+                "name": "q"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 48,
+                  "end_line": 3,
+                  "end_col": 49
+                },
+                "width": 1,
+                "name": "d"
+              }
+            },
+            "areset": "rst"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

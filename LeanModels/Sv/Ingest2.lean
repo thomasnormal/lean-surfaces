@@ -418,6 +418,16 @@ def parsePProcess (j : Json) : Except String PProcess := do
     | "AlwaysPosedge" =>
         let style ← getStrField j "style"
         let clock ← getStrField j "clock"
+        -- These event-control fields are semantically load-bearing.  The
+        -- semantic AST currently has only the positive-edge clock and the
+        -- active-low reset form, so never discard a frontend field and
+        -- silently turn a different process into plain `alwaysFF`.
+        if (getOptField j "edge").isSome then
+          throw "AlwaysPosedge:edge — edge-qualified clock requires its retained event semantics"
+        if (getOptField j "iff").isSome then
+          throw "AlwaysPosedge:iff — event-control iff guard requires its retained event semantics"
+        if (getOptField j "areset").isSome then
+          throw "AlwaysPosedge:areset — active-high asynchronous reset requires its retained event semantics"
         let body ← parsePStmt (← getField j "body")
         match getOptStr j "areset_n" with
         | some rn =>

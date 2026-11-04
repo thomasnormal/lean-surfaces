@@ -37,6 +37,23 @@ the next walls. A target becomes an F1 success only when its own assertions
 load as Lean propositions over E, not when the extractor merely emits an
 envelope.
 
+### F1 wall delta after source retention
+
+The same target file lists were rerun after the property metadata route landed.
+The change removes SVA process refusals without changing any other admission
+rule:
+
+| target | unsupported nodes before | retained properties | unsupported nodes after |
+|---|---:|---:|---:|
+| `prim_fifo_sync` | 46 | 9 | 37 |
+| `prim_arbiter_ppc` | 26 | 15 | 11 |
+| `prim_packer` | 32 | 12 | 20 |
+
+The remaining first causes are parameterized unpacked ports and arrays,
+explicit casts, procedural loops, and unresolved primitive dependencies. They
+are the loader work that can unblock the next OpenTitan F1/F2 target; property
+members are no longer the first executable-process wall.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

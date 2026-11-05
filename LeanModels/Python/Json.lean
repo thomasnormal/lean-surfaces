@@ -1129,6 +1129,27 @@ private def guardWith (sp : Span) : List Expr → Stmt → Stmt
 private def dedup (l : List String) : List String :=
   l.foldl (init := []) (fun acc n => if acc.contains n then acc else acc ++ [n])
 
+/-- Names bound by expression-position walruses.  The generator capture
+    census must include these stores even though they are not statements. -/
+private partial def exprAssigns : Expr → List String
+  | .namedExpr id v _ => id :: exprAssigns v
+  | .binOp l _ r _ => exprAssigns l ++ exprAssigns r
+  | .unaryOp _ v _ | .formattedValue v _ _ => exprAssigns v
+  | .formattedValueAscii v _ => exprAssigns v
+  | .boolOp _ vs _ => (vs.toList.map exprAssigns).flatten
+  | .compare l _ cs _ => exprAssigns l ++ (cs.toList.map exprAssigns).flatten
+  | .call f args kwargs _ _ => exprAssigns f ++ (args.toList.map exprAssigns).flatten ++
+      (kwargs.toList.map (fun p => exprAssigns p.2)).flatten
+  | .list es _ | .tuple es _ => (es.toList.map exprAssigns).flatten
+  | .subscript v i _ => exprAssigns v ++ exprAssigns i
+  | .dict ks vs _ => (ks.toList.map exprAssigns).flatten ++ (vs.toList.map exprAssigns).flatten
+  | .attribute v _ _ => exprAssigns v
+  | .ifExp t b o _ => exprAssigns t ++ exprAssigns b ++ exprAssigns o
+  | .slice v l u st _ => exprAssigns v ++ exprAssigns l ++ exprAssigns u ++ exprAssigns st
+  | .genExp e t it ifs wb _ => exprAssigns e ++ exprAssigns t ++ exprAssigns it ++
+      (ifs.toList.map exprAssigns).flatten ++ (wb.toList.map (fun p => exprAssigns p.2)).flatten
+  | .constant .. | .name .. | .unsupported .. => []
+
 /-- Names a function body assigns anywhere (CPython's static-locals
 rule), over-approximated: an unanalyzable target contributes nothing but
 also cannot hide a name that `targetBinds` would have found, so the
@@ -1136,8 +1157,9 @@ capture test stays conservative in the safe direction — an unnoticed
 rebinding is impossible for the shapes `targetBinds` analyses, and every
 other shape binds nothing. -/
 private partial def bodyAssigns : Stmt → List String
-  | .assign ts _ _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
-  | .augAssign t _ _ _ => (targetBinds t).getD []
+  | .assign ts v _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten ++ exprAssigns v
+  | .unpackAssign before star after v _ => before.toList ++ [star] ++ after.toList ++ exprAssigns v
+  | .augAssign t _ v _ => (targetBinds t).getD [] ++ exprAssigns v
   | .forStmt t _ b o _ =>
       (targetBinds t).getD [] ++ (b.toList.map bodyAssigns).flatten
         ++ (o.toList.map bodyAssigns).flatten
@@ -1155,6 +1177,18 @@ private partial def bodyAssigns : Stmt → List String
         | none => []
         | some target => (targetBinds target).getD []).flatten
         ++ (body.toList.map bodyAssigns).flatten
+  | .delStmt names _ | .globalDecl names _ | .nonlocalDecl names _ => names.toList
+  | _ => []
+
+private partial def bodyUnsafeAssigns : Stmt → List String
+  | .ret (some e) _ => exprAssigns e
+  | .unpackAssign before star after _ _ => before.toList ++ [star] ++ after.toList
+  | .delStmt names _ => names.toList
+  | .assign _ v _ | .augAssign _ _ v _ => exprAssigns v
+  | .forStmt _ _ b o _ | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map bodyUnsafeAssigns).flatten ++ (o.toList.map bodyUnsafeAssigns).flatten
+  | .tryStmt b _ h _ _ => (b.toList.map bodyUnsafeAssigns).flatten ++ (h.toList.map bodyUnsafeAssigns).flatten
+  | .withStmt _ b _ _ => (b.toList.map bodyUnsafeAssigns).flatten
   | _ => []
 
 /-- Every name a statement can OBSERVE or BIND — reads (`exprRefs` of
@@ -1233,6 +1267,8 @@ private structure LowerCtx where
   rule makes these local throughout, so a parameter listed here is
   REBINDABLE and cannot be captured by value). -/
   assigned : List String
+  /-- Binding forms whose capture census was previously incomplete. -/
+  unsafeNames : List String := []
   /-- Targets of ENCLOSING genexps whose elt we are lowering (pass 3 —
   sunfish's K_END nests a genexp inside a genexp's elt). Admissible as
   by-value captures ONLY in immediately-consumed position (`drainOk`):
@@ -1440,7 +1476,8 @@ mutual
         let assignedCaps := caps.filter (fun n => ctx.assigned.contains n)
         let cellNames := dedup (assignedCaps ++ leakNames)
         let cellCaps := cellNames.map (fun n => "<cell>" ++ n)
-        if caps.all (fun n =>
+        let unsafeCaps := caps.filter (fun n => ctx.unsafeNames.contains n)
+        if unsafeCaps.isEmpty && caps.all (fun n =>
             (ctx.params.contains n && !ctx.assigned.contains n)
               || cellNames.contains n
               || (drainOk && ctx.genTargets.contains n)
@@ -1655,6 +1692,7 @@ mutual
           { ctx with
             params := params.toList.map Param.arg ++ captures.toList
             assigned := (body.toList.map bodyAssigns).flatten
+            unsafeNames := (body.toList.map bodyUnsafeAssigns).flatten
             boundBefore := directBinds body.toList
             yfForbidden := (body.toList.map yfNames).flatten
             walrusForbidden := params.toList.map Param.arg ++ captures.toList
@@ -1689,6 +1727,7 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
         { outer
           params := f.params.toList.map Param.arg
           assigned := (f.body.toList.map bodyAssigns).flatten
+          unsafeNames := (f.body.toList.map bodyUnsafeAssigns).flatten
           boundBefore := directBinds f.body.toList
           yfForbidden := (f.body.toList.map yfNames).flatten
           walrusForbidden := f.params.toList.map Param.arg

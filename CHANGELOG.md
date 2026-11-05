@@ -2987,3 +2987,5 @@ change is listed here under **Changed** or **Removed**.
   through CPython's sequential binding.
 - Python: carry `global` and `nonlocal` declarations as structured AST name
   arrays, removing the truncated text re-parser and preserving long declarations.
+- Python: refuse generator-expression lowerings with unpacking or `del`
+  rebinding of captured names instead of returning stale by-value captures.

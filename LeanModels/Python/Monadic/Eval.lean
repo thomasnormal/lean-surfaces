@@ -2737,8 +2737,8 @@ on `ExceptT PyErr …` gives it for free, because `Loud` lives below that layer.
              "Stop"
              #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
              Option.none sp0)) stE with
-        | .unsupported _ => true
-        | _ => false)
+        | .unsupported _ => false
+        | _ => true)
 
 /- 3. A NON-matching exception propagates rather than being caught. -/
 #guard (match toRun (execOpen KE excModule

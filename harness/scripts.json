@@ -28,6 +28,11 @@
     "note": "long structured global declaration preserves the eleventh name"
   },
   {
+    "file": "harness/scripts/genexp_capture_rebinding.py",
+    "expect": "unsupported",
+    "note": "unpacking and del rebinding are refused instead of captured by value"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

@@ -8969,3 +8969,9 @@ DECIDED: make module definition ordering hazards loud until definitions become r
 The extractor now emits structured `Global` and `Nonlocal` statement nodes with the parser's name arrays. Ingestion and both interpreters consume those arrays directly; the truncated `ast.unparse` text path and its `globalNamesText`/`nonlocalNamesText` workers are gone. Regenerated the closure envelope and added a long-name script fixture. The old `global` counter row printed `0` where CPython 3.9 printed `5`; it now prints `5`.
 
 DECIDED: structured lexical declarations are admitted; broader dynamic `nonlocal` shapes remain governed by the existing closure-cell admission.
+
+## 2026-11-05-pycomplete-334 — refuse rebinding-sensitive generator captures
+
+The generator-expression capture census now walks tuple unpacking and `del` targets, and refuses a lowering when a captured name is rebound through either form. This closes the measured wrong answers (`[3]` versus CPython `[9]`, and `[3]` versus CPython's free-variable `NameError`) by making the shape loud. Existing immediate-drain assignment and walrus cell rows remain matched; the previously admitted two-argument walrus row is now explicitly whitelisted as a refusal where its live capture cannot be proven by value.
+
+DECIDED: keep the current by-value generator lowering for proven-safe captures, and refuse rebinding forms the census cannot model by reference.

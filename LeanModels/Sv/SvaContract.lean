@@ -57,7 +57,9 @@ private def simpleAtom (text : String) : Except String SvaBool :=
 private def simpleBool (text : String) : Except String SvaBool :=
   let n := text.trimAscii.toString
   if n.startsWith "$past(" && n.endsWith ")" then
-    let inner := ((n.drop 6).toString.dropEnd 1).toString
+    let inner := match n.splitOn "$past(" with
+      | ["", rest] => rest.dropEnd 1 |>.toString
+      | _ => ""
     (simpleAtom inner).map (fun b => .past 1 b)
   else simpleAtom n
 
@@ -118,7 +120,7 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
     throw s!"SVA: retained clock '{clock}' disagrees with source clock '{parsedClock}'"
   let some bodyText := afterEdge[1]?
     | throw "SVA: missing implication body"
-  let body := bodyText.trimAscii.toString
+  let body := (bodyText ++ (if bodyText.contains "$past(" then ")" else "")).trimAscii.toString
   let operator := if body.contains "|=>" then "|=>" else "|->"
   let implication := body.splitOn operator
   match implication with

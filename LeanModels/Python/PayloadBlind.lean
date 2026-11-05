@@ -4275,7 +4275,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                               | str msg =>
                                                 cases hbe : builtinExcWithMessage id msg with
                                                 | some e => simp [hbe]; exact PBF.exn hslot _
-                                                | none => simp [hbe]; split <;> exact PBF.unsupported
+                                                | none => simp [hbe]; split
                                               | _ => exact PBF.unsupported
                                             | _ => exact PBF.unsupported
                                       · simp [hfc, hnt, hpy]
@@ -5327,7 +5327,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                                         · simp only [htwelve, if_true]
                                                                           exact PBF.liftRes invariant _
                                                                         · simp only [htwelve, if_false]
-                                                                          exact PBF.unsupported
+                                                                          by_cases hthirteen : roundDigitsThirteen digits = true
+                                                                          · simp only [hthirteen, if_true]
+                                                                            exact PBF.liftRes invariant _
+                                                                          · simp only [hthirteen, if_false]
+                                                                            exact PBF.unsupported
                                               | _ => exact PBF.unsupported
                                             · simp only [hn, if_false]
                                               exact PBF.unsupported

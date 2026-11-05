@@ -357,6 +357,11 @@
     "note": "The exact __annotations__ = table = {} idiom updates the shared heap mapping after each module annotation"
   },
   {
+    "file": "harness/scripts/ann_nonsimple_order.py",
+    "expect": "match",
+    "note": "non-simple annotations store the value before module annotation evaluation and skip annotation evaluation in functions"
+  },
+  {
     "file": "harness/scripts/int_string_script.py",
     "expect": "match"
   },

@@ -2997,3 +2997,5 @@ change is listed here under **Changed** or **Removed**.
   in-place list semantics and public boundary list mutation remains loud.
 - Python: refuse dead expression-yield assignments targeting `global` or
   `nonlocal` names instead of dropping their resumed stores.
+- Python: preserve CPython's value-before-annotation order for non-simple
+  annotated targets and omit annotation evaluation in function bodies.

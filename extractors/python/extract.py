@@ -1900,25 +1900,25 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
             and not _ann_name_used(enclosing, node.target.id)):
         return {"kind": "Pass", "span": span(node)}
     if node.value is not None and not node.simple:
-        # Non-simple targets do not populate ``__annotations__``.  CPython
-        # still evaluates the annotation first, then performs the ordinary
-        # assignment (whose RHS/target order is already modeled), so lower
-        # the two observable operations separately instead of refusing the
-        # whole statement.
+        # Non-simple targets do not populate ``__annotations__``.  In a
+        # function body CPython does not evaluate the annotation at all;
+        # this is an ordinary assignment.  At module/class scope the value
+        # and target run first, then the annotation expression is evaluated
+        # (compiler_annassign/check_annotation in CPython 3.9).  Keep that
+        # order in the existing statement representation until AnnAssign has
+        # a direct semantic node.
+        assignment = {"kind": "Assign", "span": span(node),
+                      "targets": [convert_expr(node.target)],
+                      "value": convert_expr(node.value)}
+        if func_scope:
+            return assignment
         if (isinstance(node.annotation, ast.Name)
                 and node.annotation.id in _MODULE_SAFE_ANNOTATIONS):
-            return {"kind": "Assign", "span": span(node),
-                    "targets": [convert_expr(node.target)],
-                    "value": convert_expr(node.value)}
-        return [{
+            return assignment
+        return [assignment, {
             "kind": "Expr",
             "span": span(node.annotation),
             "value": convert_expr(node.annotation),
-        }, {
-            "kind": "Assign",
-            "span": span(node),
-            "targets": [convert_expr(node.target)],
-            "value": convert_expr(node.value),
         }]
     return unsupported(node, "AnnAssign:" + (
         ("module-no-value" if module_scope else "no-value")

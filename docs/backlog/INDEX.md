@@ -124,6 +124,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-06-ls-sv2-62` |  | compose normalized packet tags with ISA refinement | ls-sv2 |
 | `2026-11-06-ls-sv2-61` |  | derive global ROB tag order from refinement | ls-sv2 |
 | `2026-11-06-ls-sv2-60` |  | project generic ROB tags to architectural streams | ls-sv2 |
+| `2026-11-05-pycomplete-339` |  | preserve non-simple annotation order by scope | python-completeness |
 | `2026-11-05-pycomplete-338` |  | refuse dead yield stores through global or nonlocal names | python-completeness |
 | `2026-11-05-pycomplete-337` |  | remove boundary augmented-repeat rewrite | python-completeness |
 | `2026-11-05-pycomplete-336` |  | refuse list-comprehension builtin shadows | python-completeness |

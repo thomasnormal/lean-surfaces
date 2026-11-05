@@ -292,8 +292,13 @@
   },
   {
     "file": "harness/scripts/del_def_mid_script.py",
-    "expect": "match",
-    "note": "The static definition entry is safely erased because no later top-level or function-global read observes it."
+    "expect": "unsupported",
+    "note": "non-trailing deletion of a static definition stays loud because static tables cannot be tombstoned"
+  },
+  {
+    "file": "harness/scripts/del_def_call.py",
+    "expect": "unsupported",
+    "note": "a function body can reach a definition deleted at module scope; the static delete no-op is removed"
   },
   {
     "file": "harness/scripts/del_dunder_script.py",

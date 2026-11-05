@@ -57,6 +57,18 @@ def orderPrefix : Nat → Nat → List Nat
 @[simp] theorem orderPrefix_succ (start n : Nat) :
     orderPrefix start (n + 1) = start :: orderPrefix (start + 1) n := rfl
 
+/-- Split a consecutive order prefix at an arbitrary packet boundary. -/
+theorem orderPrefix_add (start m n : Nat) :
+    orderPrefix start (m + n) =
+      orderPrefix start m ++ orderPrefix (start + m) n := by
+  induction m generalizing start with
+  | zero => simp [orderPrefix]
+  | succ m ih =>
+      simp only [Nat.succ_add, orderPrefix, List.cons_append]
+      rw [ih (start := start + 1)]
+      congr 1
+      simp [Nat.add_comm, Nat.add_left_comm]
+
 /-- A packet's tags are exactly the consecutive sequence beginning at `start`.
 This is the logical ROB commit-order invariant; completion may occur in any
 other order inside the core state. -/
@@ -66,6 +78,16 @@ def InOrderTags (start : Nat) (packet : TaggedPacket) : Prop :=
 theorem inOrderTags_orders {start : Nat} {packet : TaggedPacket}
     (h : InOrderTags start packet) :
     packet.map TaggedCommit.order = orderPrefix start packet.length := h
+
+/-- Concatenate two locally consecutive packets while carrying their order
+boundary from the first packet's width into the second. -/
+theorem inOrderTags_append {start : Nat} {first second : TaggedPacket}
+    (hfirst : InOrderTags start first)
+    (hsecond : InOrderTags (start + first.length) second) :
+    InOrderTags start (first ++ second) := by
+  unfold InOrderTags at hfirst hsecond ⊢
+  rw [List.map_append, List.length_append, orderPrefix_add,
+    hfirst, hsecond]
 
 /-- A tagged packet refines the ISA when its tag certificate and its erased
 architectural packet both refine. -/
@@ -274,3 +296,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append
 #print axioms LeanModels.Refine.robTrace_length_eq_robInputs_length
+#print axioms LeanModels.Refine.orderPrefix_add
+#print axioms LeanModels.Refine.inOrderTags_append

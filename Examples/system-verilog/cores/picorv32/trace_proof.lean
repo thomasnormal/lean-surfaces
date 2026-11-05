@@ -365,6 +365,24 @@ theorem pinned_cycle_tags :
   exact normalizeRvfiRobTags pinnedCycleMachine pinnedCycleMachine.init
     cycleInputs pinned_cycle_observations_normalize
 
+theorem pinned_cycle_tags_windows_append :
+    rvfiRobTags pinnedCycleMachine pinnedCycleMachine.init
+        (cycleFirstInputs ++ cycleSecondInputs) =
+      rvfiRobTags pinnedCycleMachine pinnedCycleMachine.init cycleFirstInputs ++
+        rvfiRobTags pinnedCycleMachine
+          (rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init
+            cycleFirstInputs) cycleSecondInputs := by
+  exact rvfiRobTags_append pinnedCycleMachine pinnedCycleMachine.init
+    cycleFirstInputs cycleSecondInputs
+
+theorem pinned_cycle_tags_windows_in_order :
+    InOrderTags 0
+      (rvfiRobTags pinnedCycleMachine pinnedCycleMachine.init
+        (cycleFirstInputs ++ cycleSecondInputs)) := by
+  exact normalizeRvfiRobTags_append pinnedCycleMachine pinnedCycleMachine.init
+    cycleFirstInputs cycleSecondInputs
+    pinned_cycle_first_window_normalize pinned_cycle_second_window_normalize
+
 theorem pinned_rob_inputs :
     robInputs pinnedCycleMachine.toRobMachine
         pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapInputs := by
@@ -501,6 +519,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_rob_retirement_count
 #print axioms pinned_rob_order_offset
 #print axioms pinned_cycle_tags
+#print axioms pinned_cycle_tags_windows_append
+#print axioms pinned_cycle_tags_windows_in_order
 #print axioms pinned_packet_observations_normalize
 #print axioms pinned_packet_first_window_normalize
 #print axioms pinned_packet_second_window_normalize

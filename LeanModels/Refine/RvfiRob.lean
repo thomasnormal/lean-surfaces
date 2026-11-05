@@ -107,6 +107,43 @@ def rvfiRobTags {State : Type} (machine : RvfiCycleMachine State) :
           [{ order := observation.order, input := input, retirement := retirement }]) ++
         rvfiRobTags machine state' inputs
 
+/-- The tagged RVFI stream composes across adjacent windows by threading the
+packed machine state reached by the first window. -/
+theorem rvfiRobTags_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input) :
+    rvfiRobTags machine state (first ++ second) =
+      rvfiRobTags machine state first ++
+        rvfiRobTags machine (rvfiStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, rvfiRobTags, rvfiStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
+/-- The flattened tagged stream has one entry exactly for each decoded
+retirement in the packed observation stream. -/
+theorem rvfiRobTags_length {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input) :
+    (rvfiRobTags machine state inputs).length =
+      ((rvfiObservations machine state inputs).filterMap
+        RvfiObservation.toRetirement?).length := by
+  induction inputs generalizing state with
+  | nil => rfl
+  | cons input inputs ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          cases hret : observation.toRetirement? with
+          | none =>
+              simp [rvfiRobTags, rvfiObservations, hstep, hret]
+              exact ih state'
+          | some retirement =>
+              simp [rvfiRobTags, rvfiObservations, hstep, hret]
+              exact ih state'
+
 /-! ## Normalized order tags -/
 
 /-- A successful single-channel RVFI normalization certifies the flattened
@@ -166,6 +203,31 @@ theorem normalizeRvfiRobTags {State : Type}
                         rw [orderPrefix_succ]
                         exact congrArg (List.cons start) htailTags
               · simp [ho] at h
+
+/-- Local normalization certificates compose into one in-order certificate for
+the concatenated tagged RVFI stream. -/
+theorem normalizeRvfiRobTags_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    InOrderTags start (rvfiRobTags machine state (first ++ second)) := by
+  rw [rvfiRobTags_append]
+  have hfirstTags := normalizeRvfiRobTags machine state first hfirst
+  have hsecondTags := normalizeRvfiRobTags machine
+    (rvfiStateAfter machine state first) second hsecond
+  have hfirstLength :
+      (rvfiRobTags machine state first).length = firstRetirements.length := by
+    rw [rvfiRobTags_length]
+    rw [normalizeRvfiTrace?_filterMap hfirst]
+  apply inOrderTags_append hfirstTags
+  simpa [hfirstLength] using hsecondTags
 
 /-- Lift ROB state/order transport through the single-channel RVFI adapter.
 The final order counter advances by the inputs that actually retire, which is
@@ -297,7 +359,10 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_stateAfter
+#print axioms LeanModels.Refine.rvfiRobTags_append
+#print axioms LeanModels.Refine.rvfiRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiRobTags
+#print axioms LeanModels.Refine.normalizeRvfiRobTags_append
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append

@@ -1220,3 +1220,27 @@ introduced.
 **DECIDED:** keep tag certification as a normalization-side obligation over
 the flattened RVFI stream; the ROB adapter preserves the packed order and
 does not repair malformed observations.
+
+## 2026-11-05-ls-sv2-53 — compose single-channel RVFI tag streams
+
+Added `orderPrefix_add` and `inOrderTags_append` to
+`LeanModels/Refine/Rob.lean`, making consecutive tag certificates compositional
+at an explicit packet-width boundary.  `LeanModels/Refine/RvfiRob.lean` now
+adds `rvfiRobTags_append` for state-threaded tagged-stream composition,
+`rvfiRobTags_length` for the decoded-retirement cardinality, and
+`normalizeRvfiRobTags_append` for combining two local normalization
+certificates into one in-order certificate over the concatenated window.
+
+The PicoRV32 witness proves both the structural tag-stream split and the
+in-order certificate over its measured first and second cycle windows.
+
+**MEASURED:** `lake build LeanModels.Refine.Rob LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and
+the new theorems report only the existing `propext`/`Quot.sound` dependencies.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** carry tag-stream boundaries through the packed RVFI state and
+retirement count; local order certificates compose only after the first
+window's exact decoded width is established.

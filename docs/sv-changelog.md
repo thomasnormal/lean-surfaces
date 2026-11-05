@@ -11,6 +11,16 @@ and `plain_always_profile` differential row match Icarus over four cycles;
 blocking plain processes, asynchronous reset, mixed clocks, and overlapping
 windows remain loud boundaries.
 
+## Active-low asynchronous reset joins the sequential profile
+
+`Design2.ffResetProfileB` now recognizes retained `always_ff @(posedge clk or
+negedge rstn)` processes with a shared clock/reset pair, NBA-only bodies, and
+static targets. `resetPass2_ffResetOnly` records the reset-event bridge: the
+selected reset processes preserve state and append their source-shaped NBA
+updates. The `seq_async_reset` guards cover reset assertion and release, and
+the `async_reset_ff_profile` differential row matches Icarus over five cycles;
+other reset controls and blocking bodies remain loud.
+
 ## F1: audit retained SVA forms against downstream clean-room repros
 
 `SvaContract.parseSimple` now admits a finite `$past(signal, depth)` operand

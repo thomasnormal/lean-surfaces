@@ -38,6 +38,16 @@ plain `always`, mixed clocks, asynchronous-reset forms, and overlapping
 windows remain outside this profile. The clean `seq_plain` witness checks the
 profile and one cycle, and its four-cycle row matches Icarus.
 
+## Active-low asynchronous reset in the sequential profile — 2026-11-05
+
+The retained `Process2.alwaysFFR` shape now has a decided profile for a shared
+clock/reset pair and NBA-only static bodies. `resetPass2_ffResetOnly` proves
+that the selected reset-event processes preserve the pre-reset state and
+append exactly their source-shaped NBA updates; reset polarity remains in the
+process record. The `seq_async_reset` witness checks reset assertion and
+release, and its five-cycle row matches Icarus. Blocking bodies, mixed reset
+pairs, and multiple clocks remain outside this profile.
+
 ## F1 retained SVA safety envelope — 2026-11-04
 
 `LeanModels.Sv.Sva` gives the retained concurrent-assertion shape a fuel-free

@@ -145,6 +145,86 @@ theorem FFOnly.ofProfile {d : Design2} (h : d.ffOnlyProfileB = true) : FFOnly d 
         (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
       simp at hp'
 
+/-! ## The asynchronous-reset profile -/
+
+/-- A source-shaped profile for active-high or active-low `always_ff` reset
+processes.  The reset event remains in `Process2.alwaysFFR`; this class only
+records the NBA-only body and the single clock/reset pair shared by the
+processes. -/
+structure FFResetOnly (d : Design2) : Prop where
+  procs : ∀ (i : Nat) (p : Process2), d.processes[i]? = some p →
+    ∃ (c rn : String) (b : Stmt2) (high : Bool),
+      p = .alwaysFFR c rn b high ∧ b.nbaOnly = true
+
+def Design2.ffResetProfileB (d : Design2) : Bool :=
+  let key := match d.processes.toList.head? with
+    | some (.alwaysFFR c rn _ high) => (c, rn, high)
+    | _ => ("", "", false)
+  d.processes.toList.all (fun p => match p with
+    | .alwaysFFR c rn b high =>
+        c == key.1 && rn == key.2.1 && high == key.2.2 && b.nbaOnly &&
+          b.nbaStaticB d && b.drvWins.all fun w => !d.inputNames.toList.contains w.1
+    | _ => false) && d.ffDisjB
+
+theorem FFResetOnly.ofProfile {d : Design2} (h : d.ffResetProfileB = true) : FFResetOnly d := by
+  refine ⟨fun i p hp => ?_⟩
+  simp only [Design2.ffResetProfileB, Bool.and_eq_true, List.all_eq_true] at h
+  cases p with
+  | alwaysFFR c rn b high =>
+      have hp' := h.1 (.alwaysFFR c rn b high)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp only [Bool.and_eq_true] at hp'
+      have hb : b.nbaOnly = true := hp'.1.1.2
+      exact ⟨c, rn, b, high, rfl, hb⟩
+  | alwaysFF c b =>
+      have hp' := h.1 (.alwaysFF c b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | alwaysPlain c b =>
+      have hp' := h.1 (.alwaysPlain c b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | alwaysComb b =>
+      have hp' := h.1 (.alwaysComb b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | assign t e =>
+      have hp' := h.1 (.assign t e)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | unsupported k t =>
+      have hp' := h.1 (.unsupported k t)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+
+theorem FFResetOnly.combIndices {d : Design2} (h : FFResetOnly d) : d.combIndices = [] := by
+  simp only [Design2.combIndices, List.filter_eq_nil_iff, List.mem_range]
+  intro i hi
+  obtain ⟨c, rn, b, high, hp, -⟩ := h.procs i _ (Array.getElem?_eq_getElem hi)
+  simp [Array.getElem?_eq_getElem hi, hp, Process2.isCombPhase]
+
+/-- The reset-event pass preserves the pre-reset state and appends exactly the
+source-shaped NBA updates of the selected reset processes.  This is the
+cycle-level bridge missing from the FF-only profile. -/
+theorem resetPass2_ffResetOnly {d : Design2} (h : d.ffResetProfileB = true)
+    {fuel : Nat} {st : SvState}
+    (hrun : ∀ (i : Nat) (p : Process2), d.processes[i]? = some p →
+      ∀ nba, ∃ q, runResetProcess2 fuel st nba p = .ok (st, nba ++ q) ∧
+        d.ffUpd fuel st i = q) :
+    ∀ (l : List Nat) (nba : NbaQueue2),
+      resetPass2 d fuel st nba l = .ok (st, nba ++ l.flatMap (d.ffUpd fuel st))
+  | [], nba => by simp [resetPass2]
+  | i :: l, nba => by
+      cases hp : d.processes[i]? with
+      | none =>
+          simp only [resetPass2, hp, Res.pure_eq, Res.ok_bind]
+          rw [resetPass2_ffResetOnly h hrun l nba]
+          simp [Design2.ffUpd, hp]
+      | some p =>
+          obtain ⟨q, hq, hff⟩ := hrun i _ hp nba
+          simp only [resetPass2, hp, hq, Res.ok_bind, Res.pure_eq]
+          rw [resetPass2_ffResetOnly h hrun l (nba ++ q)]
+          simp [hff, List.append_assoc]
 /-! ## Soundness: updates stay inside the windows a body names -/
 
 /-- `w` covers the update `u`: same signal, and inside `w`'s bits when `w` is a window. -/

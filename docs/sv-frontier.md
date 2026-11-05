@@ -132,7 +132,7 @@ this order:
 | rank | source shape | measured boundary |
 |---:|---|---|
 | 1 | `always @(posedge clk)` | **Resolved in this packet:** `SeqProfile.ffOnlyProfileB` now admits a plain edge-triggered `always` when its body is NBA-only, while `Process2.alwaysPlain` preserves the source kind. The retained profile has a kernel guard and an Icarus differential row. |
-| 2 | `always_ff @(posedge clk or negedge rstn)` | `Process2.alwaysFFR` is retained, but the async-reset form is outside `cycleStep2` and has no cycle-model/refinement theorem yet. |
+| 2 | `always_ff @(posedge clk or negedge rstn)` | **Resolved in this packet:** `ffResetProfileB` admits the retained `Process2.alwaysFFR` shape, and `resetPass2_ffResetOnly` bridges selected reset events to source-shaped NBA updates. Kernel guards cover assertion and release; the differential row matches Icarus over five cycles. |
 | 3 | an unpacked memory written in `always_ff` | `sv_structure` reports out-of-tier module members; the E memory bridge and procedural NBA adapter do not yet reach the structure and cycle views. |
 | 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |
 | 5 | a user function in a combinational expression | the process evaluator refuses `CallExpression`; function-call evaluation remains outside this source-shaped path. |

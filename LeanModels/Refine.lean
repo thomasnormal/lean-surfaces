@@ -1,5 +1,6 @@
 import LeanModels.Refine.Commit
 import LeanModels.Refine.Cycle
+import LeanModels.Refine.Flush
 import LeanModels.Refine.Packet
 import LeanModels.Refine.Progress
 import LeanModels.Refine.Rob

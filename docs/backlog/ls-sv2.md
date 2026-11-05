@@ -1197,3 +1197,26 @@ SV-loader adaptation was introduced.
 **DECIDED:** make normalization the source of the order-count equality while
 retaining the generic ROB relation and state transport as independent proof
 obligations.
+
+## 2026-11-05-ls-sv2-52 — certify single-channel RVFI order tags
+
+Added the recursive `rvfiRobTags` projection and
+`normalizeRvfiRobTags` to `LeanModels/Refine/RvfiRob.lean`.  The projection
+retains each valid retirement's RVFI order, source input, and architectural
+retirement; successful normalization now proves that the flattened tagged
+stream is an in-order prefix, while bubbles and malformed rows contribute no
+ROB entry.  The theorem reports only the existing `propext`/`Quot.sound`
+dependencies.
+
+The PicoRV32 witness adds `pinned_cycle_tags`, certifying the order tags over
+the measured four-retirement cycle stream.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs).
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep tag certification as a normalization-side obligation over
+the flattened RVFI stream; the ROB adapter preserves the packed order and
+does not repair malformed observations.

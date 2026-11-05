@@ -90,6 +90,83 @@ theorem RvfiCycleMachine.toRobMachine_stateAfter {State : Type}
             RvfiCycleMachine.toRobMachine, hstep]
           exact ih state'
 
+/-! ## Flattened tagged single-channel streams -/
+
+/-- Flatten one RVFI channel into tagged ROB commits, retaining the source
+input and the packed observation's architectural order.  Bubbles and
+malformed rows contribute no tagged commit; successful normalization is the
+certificate that no valid row was silently discarded. -/
+def rvfiRobTags {State : Type} (machine : RvfiCycleMachine State) :
+    State → List Input → TaggedPacket
+  | _, [] => []
+  | state, input :: inputs =>
+      let (state', observation) := machine.step state input
+      (match observation.toRetirement? with
+      | none => []
+      | some retirement =>
+          [{ order := observation.order, input := input, retirement := retirement }]) ++
+        rvfiRobTags machine state' inputs
+
+/-! ## Normalized order tags -/
+
+/-- A successful single-channel RVFI normalization certifies the flattened
+tagged ROB stream: each decoded retirement carries the next order tag, while
+bubbles remain absent from the ROB packet. -/
+theorem normalizeRvfiRobTags {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    InOrderTags start (rvfiRobTags machine state inputs) := by
+  induction inputs generalizing state start retirements with
+  | nil =>
+      simp [rvfiRobTags] at h ⊢
+      cases h
+      rfl
+  | cons input inputs ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          have hobs : rvfiObservations machine state (input :: inputs) =
+              observation :: rvfiObservations machine state' inputs := by
+            simp [rvfiObservations, hstep]
+          rw [hobs] at h
+          cases hv : observation.valid with
+          | false =>
+              have htail : normalizeRvfiTrace? start
+                  (rvfiObservations machine state' inputs) = some retirements := by
+                simpa [normalizeRvfiTrace?, hv] using h
+              have htags := ih state' (start := start)
+                (retirements := retirements) htail
+              simp only [rvfiRobTags, hstep, hv, RvfiObservation.toRetirement?]
+              exact htags
+          | true =>
+              simp [normalizeRvfiTrace?, hv] at h
+              by_cases ho : observation.order = start
+              · simp [ho] at h
+                cases hret : observation.toRetirement? with
+                | none =>
+                    simp [hret] at h
+                | some retirement =>
+                    cases htail : normalizeRvfiTrace? (start + 1)
+                        (rvfiObservations machine state' inputs) with
+                    | none =>
+                        simp [hret, htail] at h
+                    | some retirements =>
+                        simp [hret, htail] at h
+                        have htailTags := ih state' (start := start + 1)
+                          (retirements := retirements) htail
+                        simp only [rvfiRobTags, hstep, hret, List.cons_append]
+                        change InOrderTags start
+                          ({ order := observation.order, input := input,
+                              retirement := retirement } ::
+                            rvfiRobTags machine state' inputs)
+                        rw [ho]
+                        unfold InOrderTags at htailTags ⊢
+                        simp only [List.map_cons, List.length_cons]
+                        rw [orderPrefix_succ]
+                        exact congrArg (List.cons start) htailTags
+              · simp [ho] at h
+
 /-- Lift ROB state/order transport through the single-channel RVFI adapter.
 The final order counter advances by the inputs that actually retire, which is
 the same stream exposed by the ordinary cycle projection. -/
@@ -220,6 +297,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_stateAfter
+#print axioms LeanModels.Refine.normalizeRvfiRobTags
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append

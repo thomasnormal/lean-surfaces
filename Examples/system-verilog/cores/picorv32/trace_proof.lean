@@ -359,6 +359,12 @@ theorem pinned_rob_order_offset :
       cycleInputs).length = nontrapExpected.length := by
   simpa using pinned_rob_retirement_count
 
+theorem pinned_cycle_tags :
+    InOrderTags 0
+      (rvfiRobTags pinnedCycleMachine pinnedCycleMachine.init cycleInputs) := by
+  exact normalizeRvfiRobTags pinnedCycleMachine pinnedCycleMachine.init
+    cycleInputs pinned_cycle_observations_normalize
+
 theorem pinned_rob_inputs :
     robInputs pinnedCycleMachine.toRobMachine
         pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapInputs := by
@@ -494,6 +500,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_rob_inputs
 #print axioms pinned_rob_retirement_count
 #print axioms pinned_rob_order_offset
+#print axioms pinned_cycle_tags
 #print axioms pinned_packet_observations_normalize
 #print axioms pinned_packet_first_window_normalize
 #print axioms pinned_packet_second_window_normalize

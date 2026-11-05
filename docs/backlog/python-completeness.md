@@ -8892,3 +8892,18 @@ The float `round(number, 39)` slice now computes from the exact binary64 ratio s
 | Root build | Pending |
 
 DECIDED: admit positive float `ndigits == 39`; richer protocols remain loud.
+
+
+## 2026-11-05-pycomplete-327 — admit forty positive float digits
+
+The float `round(number, 40)` slice now computes from the exact binary64 ratio scaled by ten duodecillion, preserving ties-to-even and signed zero.
+
+| Measurement | Result |
+|---|---|
+| Focused build | Pending |
+| Native differential | Pending |
+| Proof differential | Pending |
+| Runner build | Pending |
+| Root build | Pending |
+
+DECIDED: admit positive float `ndigits == 40`; richer protocols remain loud.

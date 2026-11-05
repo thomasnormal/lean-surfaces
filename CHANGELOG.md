@@ -22,6 +22,8 @@
 
 - Float `round(number, 39)` now uses an exact binary64 ratio scaled by one duodecillion, preserving ties-to-even and signed zero.
 
+- Float `round(number, 40)` now uses an exact binary64 ratio scaled by ten duodecillion, preserving ties-to-even and signed zero.
+
 
 - Float `round(number, 29)` now uses an exact binary64 ratio scaled by one hundred octillion, preserving ties-to-even and signed zero.
 

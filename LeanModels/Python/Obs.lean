@@ -3176,7 +3176,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                                                                                                   · simp only [hthirtynine, if_true]
                                                                                                                     exact .liftResF h₁ _
                                                                                                                   · simp only [hthirtynine, if_false]
-                                                                                                                    exact .unsupported
+                                                                                                                    by_cases hforty : roundDigitsForty digits = true
+                                                                                                                    · simp only [hforty, if_true]
+                                                                                                                      exact .liftResF h₁ _
+                                                                                                                    · simp only [hforty, if_false]
+                                                                                                                      exact .unsupported
                                   | _ => exact .unsupported
                                 · simp only [hn, if_false]
                                   exact .unsupported

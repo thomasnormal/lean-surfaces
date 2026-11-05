@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/round_lab/round_lab.py",
-  "source_sha256": "93b8be0a9c2cfa7ad131b09800ef98843e5be36ffa616ca2f13651b085115c79",
+  "source_sha256": "443ead090fae7aeba2056e1a094229e16b94be96513a15c2417161608cb50b9e",
   "module": {
     "kind": "Module",
     "body": [
@@ -4095,6 +4095,86 @@
                   "value": {
                     "type": "int",
                     "repr": "39"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 193,
+          "col_offset": 0,
+          "end_lineno": 194,
+          "end_col_offset": 27
+        },
+        "name": "round_float_forty",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 193,
+              "col_offset": 22,
+              "end_lineno": 193,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 194,
+              "col_offset": 4,
+              "end_lineno": 194,
+              "end_col_offset": 27
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 194,
+                "col_offset": 11,
+                "end_lineno": 194,
+                "end_col_offset": 27
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 194,
+                  "col_offset": 11,
+                  "end_lineno": 194,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 194,
+                    "col_offset": 17,
+                    "end_lineno": 194,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 194,
+                    "col_offset": 24,
+                    "end_lineno": 194,
+                    "end_col_offset": 26
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "40"
                   }
                 }
               ],

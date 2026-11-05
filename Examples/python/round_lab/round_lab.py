@@ -188,3 +188,7 @@ def round_float_thirty_eight(value):
 
 def round_float_thirty_nine(value):
     return round(value, 39)
+
+
+def round_float_forty(value):
+    return round(value, 40)

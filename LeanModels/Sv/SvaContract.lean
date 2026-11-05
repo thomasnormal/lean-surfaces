@@ -242,6 +242,12 @@ private def portTrace : List (CycleObs PortSample) :=
     | "cover", .cover => true
     | _, _ => false
   | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with kind := "assume", text := "assume property (@(posedge clk) a |-> b);" } with
+  | .ok C => match C.source.kind, C.check.kind with
+    | "assume", .assume => true
+    | _, _ => false
+  | .error _ => false
 #guard match SvaContract.ofCheck sourceProperty sourceCheck with
   | .ok C => match C.eval portTrace with
     | .ok true => true

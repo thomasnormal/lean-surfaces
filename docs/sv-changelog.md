@@ -76,6 +76,7 @@ Simple case equality (`a === b`) now maps to `SvaBool.caseEq`.
 Simple boolean negation (`!a`) now maps to `SvaBool.not`.
 The retained `cover property` spelling now has a direct parser guard, checking
 that the source kind and constructed E check are both `cover`.
+The corresponding `assume property` spelling is guarded as `.assume` as well.
 
 ## F1: prove the SVA sampling refinement
 

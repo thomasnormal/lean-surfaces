@@ -109,6 +109,18 @@ theorem toy_trace_windows :
   exact machineTrace_append toyMachine toyMachine.init
     [addiInput] [addiInput]
 
+theorem toy_state_after_window_refines :
+    toyRel
+      (machineStateAfter toyMachine toyMachine.init [addiInput])
+      (machineStateAfter rvMachine rvMachine.init [addiInput]) := by
+  apply machineStateAfter_refines toy_step_refines
+    toyMachine.init rvMachine.init [addiInput]
+    (by exact ⟨rfl, rfl, rfl⟩)
+  intro input hi
+  have heq : input = addiInput := (List.mem_singleton.mp hi)
+  subst input
+  simp [addiInput, toyAdmits, zeroMem]
+
 #guard (toyNext (ArchState.init 0)).pc == 4
 #guard (toyNext (ArchState.init 0)).readReg 1 == 1
 #guard (trace toyMachine toyMachine.init [addiInput]).length == 1
@@ -119,5 +131,6 @@ theorem toy_trace_windows :
 #print axioms toy_step_refines
 #print axioms toy_trace_refines
 #print axioms toy_trace_windows
+#print axioms toy_state_after_window_refines
 
 end Examples.«system-verilog».cores.toy_rv32i.proof

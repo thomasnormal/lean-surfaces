@@ -850,3 +850,24 @@ no `sorry`, new axiom, RTL edit, or SV-loader adaptation was introduced.
 
 **DECIDED:** keep memory threading explicit at the stateful adapter; split
 traces must carry the post-window memory into subsequent instruction inputs.
+
+## 2026-11-05-ls-sv2-36 — transport refinement relations across windows
+
+Added `machineStateAfter_refines` to `LeanModels/Refine/Commit.lean`.  A
+`StepRefines` certificate now proves the simulation relation at the exact
+post-state of every finite admitted input window, independently of the
+retirement trace projection.
+
+The toy in-order proof instantiates the theorem for its one-ADDI window,
+showing that a later window may start from the transported relation witness
+instead of rebuilding the invariant from the initial state.
+
+**MEASURED:** `lake build LeanModels.Refine.Commit
+Examples.«system-verilog».cores.toy_rv32i.proof` passed (27 jobs); the new
+theorem reports only `propext`/`Quot.sound` already present in the refinement
+layer.  `python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** treat post-window relation transport as a separate safety lemma;
+trace equality and progress remain independent obligations for a core proof.

@@ -197,7 +197,38 @@ theorem trace_refines {CoreState IsaState : Type}
       simp only [hC, hI] at hrel' hout
       rw [hout, ih c' a' hrel' hrest]
 
+/-- The same one-step contract transports the simulation relation to the
+post-state of every finite admitted input window.  This is the state witness
+needed when a core proof composes separately captured trace windows. -/
+theorem machineStateAfter_refines {CoreState IsaState : Type}
+    {core : Machine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Prop} {admit : Input → Prop}
+    (h : StepRefines core isa rel admit) :
+    ∀ (c : CoreState) (a : IsaState) (inputs : List Input),
+      rel c a → (∀ i ∈ inputs, admit i) →
+      rel (machineStateAfter core c inputs)
+        (machineStateAfter isa a inputs) := by
+  intro c a inputs hrel
+  induction inputs generalizing c a with
+  | nil =>
+      intro _
+      exact hrel
+  | cons input rest ih =>
+      intro hall
+      have hi : admit input := hall input (by simp)
+      have hrest : ∀ i ∈ rest, admit i := by
+        intro i hi'
+        exact hall i (by simp [hi'])
+      have hs := h.2 c a input hrel hi
+      rcases hC : core.step c input with ⟨c', co⟩
+      rcases hI : isa.step a input with ⟨a', io⟩
+      simp only [machineStateAfter, hC, hI]
+      rcases hs with ⟨hrel', hout⟩
+      simp only [hC, hI] at hrel'
+      exact ih c' a' hrel' hrest
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.machineStateAfter_append
 #print axioms LeanModels.Refine.machineTrace_append
+#print axioms LeanModels.Refine.machineStateAfter_refines

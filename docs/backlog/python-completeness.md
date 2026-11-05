@@ -8975,3 +8975,9 @@ DECIDED: structured lexical declarations are admitted; broader dynamic `nonlocal
 The generator-expression capture census now walks tuple unpacking and `del` targets, and refuses a lowering when a captured name is rebound through either form. This closes the measured wrong answers (`[3]` versus CPython `[9]`, and `[3]` versus CPython's free-variable `NameError`) by making the shape loud. Existing immediate-drain assignment and walrus cell rows remain matched; the previously admitted two-argument walrus row is now explicitly whitelisted as a refusal where its live capture cannot be proven by value.
 
 DECIDED: keep the current by-value generator lowering for proven-safe captures, and refuse rebinding forms the census cannot model by reference.
+
+## 2026-11-05-pycomplete-335 — perform genexp creation-time iteration
+
+Synthesized genexp calls now perform the outer `iter()` at object creation in the monadic runner. Scalar receivers raise the faithful `TypeError` before the first `next`; ordinary list, tuple, string, range, and dict genexp rows retain their existing cursor behavior. Added `genexp_iter_creation.py`; its former wrong answer was `1` while CPython raises.
+
+DECIDED: make creation-time iteration explicit for lowered generator expressions; user generator functions remain lazy and do not call `iter()` until resumed.

@@ -2989,3 +2989,5 @@ change is listed here under **Changed** or **Removed**.
   arrays, removing the truncated text re-parser and preserving long declarations.
 - Python: refuse generator-expression lowerings with unpacking or `del`
   rebinding of captured names instead of returning stale by-value captures.
+- Python: perform generator-expression outer iteration at creation, matching
+  CPython's `GET_ITER` timing and faithful non-iterable errors.

@@ -33,6 +33,11 @@
     "note": "unpacking and del rebinding are refused instead of captured by value"
   },
   {
+    "file": "harness/scripts/genexp_iter_creation.py",
+    "expect": "match",
+    "note": "genexp creation raises CPython's TypeError before the first next"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

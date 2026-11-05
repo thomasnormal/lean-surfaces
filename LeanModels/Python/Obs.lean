@@ -3,6 +3,8 @@
 import LeanModels.Core.Order
 import LeanModels.Python.Logic
 
+set_option maxHeartbeats 1000000
+
 /-!
 # Fuel monotonicity and cross-fuel determinism (`LeanModels.Python`)
 
@@ -3180,7 +3182,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                                                                                                     · simp only [hforty, if_true]
                                                                                                                       exact .liftResF h₁ _
                                                                                                                     · simp only [hforty, if_false]
-                                                                                                                      exact .unsupported
+                                                                                                                      by_cases hfortyone : roundDigitsFortyOne digits = true
+                                                                                                                      · simp only [hfortyone, if_true]
+                                                                                                                        exact .liftResF h₁ _
+                                                                                                                      · simp only [hfortyone, if_false]
+                                                                                                                        exact .unsupported
                                   | _ => exact .unsupported
                                 · simp only [hn, if_false]
                                   exact .unsupported

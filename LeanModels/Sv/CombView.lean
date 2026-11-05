@@ -1022,7 +1022,7 @@ def tgtOf? (ds : List DeclT) : PLhs → Except String Acc
   | .bitSel n i =>
       match affOf? i with
       | some a => bitAcc? ds n a
-      | none => .error s!"write to `{n}[…]` has a non-affine (dynamic) index: the driven window cannot be determined"
+      | none => .error s!"non-affine genvar-index obligation: write to `{n}[…]` has a dynamic or nonlinear index, so the driven window cannot be determined"
   | .arrayElem n is => elemAcc? ds n is
   | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
   | .partSel n msb lsb => partAcc? ds n [] .range msb lsb
@@ -1285,7 +1285,8 @@ def itemOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds :
               match sitesOfG so ds h.name 0 ps with
               | .error e => .error e
               | .ok sts => .ok (.loop ⟨h, rc, sts⟩)
-  | .genIf .. => .error "conditional generate inside a generate loop (outside the v1 fragment)"
+  | .genIf .. =>
+      .error "conditional generate inside a generate loop: GuardEval obligation (the selected arm depends on reached genvar values)"
   | .inst _ => .error "module instance inside a generate loop (outside the v1 fragment)"
   | .unsupported k _ => .error s!"unsupported generate item `{k}`"
 

@@ -1,5 +1,15 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Guarded generate and non-affine genvar obligations
+
+The comb recognizer now names the two Sklansky-shaped proof walls explicitly:
+a conditional generate inside a generate loop reports a `GuardEval` obligation
+for selecting the reached arm, and a dynamic or nonlinear genvar index reports
+a `non-affine genvar-index` obligation because its driven window is not known.
+The clean-room `sklansky_guards` fixture pins the conditional-generate message;
+the ripple-adder negative rows pin the index message. Neither shape is silently
+flattened or assigned a fabricated window.
+
 ## Straight-line automatic functions with local case
 
 Pure automatic input-only functions may now contain local declarations, a

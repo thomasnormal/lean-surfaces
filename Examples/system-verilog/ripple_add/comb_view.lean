@@ -148,7 +148,7 @@ def badDyn : PDesign :=
       (.unary .inc (.genvarRef "i")) (some 4) ([sumDyn, carryT].map GenItem.process)] }
 
 /--
-error: sv_structure: outside the supported fragment — site `g_bit#0`: write to `s[…]` has a non-affine (dynamic) index: the driven window cannot be determined
+error: sv_structure: outside the supported fragment — site `g_bit#0`: non-affine genvar-index obligation: write to `s[…]` has a dynamic or nonlinear index, so the driven window cannot be determined
 -/
 #guard_msgs (whitespace := lax) in
 theorem bad_dyn (N : Nat) (hN : 1 ≤ N) :

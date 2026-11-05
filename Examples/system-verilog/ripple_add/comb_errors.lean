@@ -41,7 +41,7 @@ example (N : Nat) (hN : 1 ≤ N) (st : SvState) (heqs : CombEqs (ripple_add.sem 
   trivial
 
 /--
-error: sv_equations: outside the supported fragment — site `g_bit#0`: write to `s[…]` has a non-affine (dynamic) index: the driven window cannot be determined
+error: sv_equations: outside the supported fragment — site `g_bit#0`: non-affine genvar-index obligation: write to `s[…]` has a dynamic or nonlinear index, so the driven window cannot be determined
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) (st : SvState)

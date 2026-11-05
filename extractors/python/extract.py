@@ -2248,6 +2248,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 and isinstance(node.targets[0], ast.Name)
                 and isinstance(node.value, ast.Yield)):
             target_name = node.targets[0].id
+            declared_global = any(
+                isinstance(n, (ast.Global, ast.Nonlocal)) and target_name in n.names
+                for n in _walk_scope(enclosing))
+            if declared_global:
+                return unsupported(node, "YieldAssign:global-or-nonlocal")
             target_load = any(
                 isinstance(n, ast.Name) and n.id == target_name
                 and isinstance(n.ctx, ast.Load)

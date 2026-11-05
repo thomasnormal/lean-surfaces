@@ -2995,3 +2995,5 @@ change is listed here under **Changed** or **Removed**.
   synthesized `list` call, avoiding a silent shadowing wrong answer.
 - Python: remove the shape-specific augmented-repeat rewrite so `*=` keeps its
   in-place list semantics and public boundary list mutation remains loud.
+- Python: refuse dead expression-yield assignments targeting `global` or
+  `nonlocal` names instead of dropping their resumed stores.

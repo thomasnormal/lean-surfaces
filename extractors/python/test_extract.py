@@ -847,6 +847,29 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(fn["body"][0]["kind"], "Assign")
         self.assertEqual(fn["body"][0]["value"]["kind"], "Unsupported")
 
+    def test_dead_yield_assignment_under_global_stays_unsupported(self):
+        env = self._envelope_of(
+            "value = 0\n"
+            "def f():\n"
+            "    global value\n"
+            "    value = yield 5\n")
+        fn = env["module"]["body"][1]
+        self.assertEqual(fn["body"][1]["kind"], "Unsupported")
+        self.assertEqual(fn["body"][1]["py_kind"],
+                         "YieldAssign:global-or-nonlocal")
+
+    def test_dead_yield_assignment_under_nonlocal_stays_unsupported(self):
+        env = self._envelope_of(
+            "def outer():\n"
+            "    value = 0\n"
+            "    def f():\n"
+            "        nonlocal value\n"
+            "        value = yield 5\n")
+        fn = env["module"]["body"][0]["body"][1]
+        self.assertEqual(fn["body"][1]["kind"], "Unsupported")
+        self.assertEqual(fn["body"][1]["py_kind"],
+                         "YieldAssign:global-or-nonlocal")
+
     def test_dead_async_definition_is_admitted_as_static_definition(self):
         env = self._envelope_of(
             "async def never_used():\n"

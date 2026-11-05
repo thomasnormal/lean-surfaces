@@ -1,6 +1,7 @@
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
 import LeanModels.Refine.Bus
 import LeanModels.Refine.MemoryMachine
+import LeanModels.Refine.RvfiPacket
 import LeanModels.Refine.RvfiRob
 
 /-!
@@ -76,6 +77,30 @@ def pinnedCycleMachine : RvfiCycleMachine (List RvfiObservation) where
     | [] => ([], bubbleObservation)
     | observation :: rest => (rest, observation)
 
+def packetRows : List (List RvfiPacketEntry) :=
+  [ [ { input := bubbleInput, observation := bubbleObservation }
+      , { input := { fetched := .word 0x00500093, memory := memZero },
+          observation := addi1 } ]
+  , [ { input := bubbleInput, observation := bubbleObservation }
+      , { input := { fetched := .word 0x10102023, memory := memZero },
+          observation := store1 } ]
+  , [ { input := bubbleInput, observation := bubbleObservation }
+      , { input := { fetched := .word 0x10002103, memory := memFive },
+          observation := load1 } ]
+  , [ { input := bubbleInput, observation := bubbleObservation }
+      , { input := { fetched := .word 0x00110193, memory := memFive },
+          observation := addi2 } ] ]
+
+def packetCycleInputs : List Input :=
+  [ bubbleInput, bubbleInput, bubbleInput, bubbleInput ]
+
+def pinnedPacketMachine : RvfiPacketMachine (List (List RvfiPacketEntry)) where
+  init := packetRows
+  step remaining _ :=
+    match remaining with
+    | [] => ([], [])
+    | packet :: rest => (rest, packet)
+
 theorem pinned_nontrap_rows_normalize :
     nontrapObservations.map RvfiObservation.toRetirement? =
       nontrapExpected.map some := by
@@ -121,6 +146,12 @@ theorem pinned_cycle_observations_normalize :
       some nontrapExpected := by
   decide
 
+theorem pinned_packet_observations_normalize :
+    normalizeRvfiTrace? 0
+        (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
+          packetCycleInputs) = some nontrapExpected := by
+  decide
+
 theorem pinned_cycle_trace :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapExpected := by
@@ -138,6 +169,19 @@ theorem pinned_rob_inputs :
         pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapInputs := by
   rw [RvfiCycleMachine.toRobMachine_inputs]
   exact pinned_cycle_retire_inputs
+
+theorem pinned_packet_trace :
+    packetTrace pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.toPacketMachine.init packetCycleInputs =
+      nontrapExpected := by
+  exact normalizeRvfiPacketTrace pinnedPacketMachine pinnedPacketMachine.init
+    packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_inputs :
+    packetInputs pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.toPacketMachine.init packetCycleInputs =
+      nontrapInputs := by
+  rfl
 
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
@@ -194,6 +238,9 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_inputs
+#print axioms pinned_packet_observations_normalize
+#print axioms pinned_packet_trace
+#print axioms pinned_packet_inputs
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_nontrap_observed_trace_refines_isa

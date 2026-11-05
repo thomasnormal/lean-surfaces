@@ -9,5 +9,6 @@ import LeanModels.Refine.Progress
 import LeanModels.Refine.Rob
 import LeanModels.Refine.Rvfi
 import LeanModels.Refine.RvfiRob
+import LeanModels.Refine.RvfiPacket
 
 /-! The core-level commit observation and reusable refinement theorems. -/

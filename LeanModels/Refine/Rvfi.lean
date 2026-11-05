@@ -250,6 +250,47 @@ theorem normalizeRvfiTrace?_append (start : Nat)
           | true => exact False.elim (hv hval)
         simp [normalizeRvfiTrace?, hv', ih]
 
+/-- A successful normalization contains exactly the decoded retirements in
+the observation stream.  This projection is useful for packet adapters,
+which first filter each channel's rows and then expose the resulting commit
+entries.  The order and validity checks still come from the normalization
+certificate; this theorem does not accept an unchecked `filterMap` as proof. -/
+theorem normalizeRvfiTrace?_filterMap {start : Nat}
+    {observations : List RvfiObservation} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start observations = some retirements) :
+    observations.filterMap RvfiObservation.toRetirement? = retirements := by
+  induction observations generalizing start retirements with
+  | nil =>
+      simp [normalizeRvfiTrace?] at h ⊢
+      cases h
+      rfl
+  | cons observation observations ih =>
+      by_cases hv : observation.valid = true
+      · simp [normalizeRvfiTrace?, hv] at h
+        by_cases ho : observation.order = start
+        · simp [ho] at h
+          cases hret : observation.toRetirement? with
+          | none => simp [hret] at h
+          | some retirement =>
+              cases htail : normalizeRvfiTrace? (start + 1) observations with
+              | none => simp [hret, htail] at h
+              | some retirements =>
+                  simp [hret, htail] at h
+                  cases h
+                  simp only [List.filterMap, hret]
+                  congr 1
+                  exact ih htail
+        · simp [ho] at h
+      · have hv' : observation.valid = false := by
+          cases hval : observation.valid with
+          | false => exact rfl
+          | true => exact False.elim (hv hval)
+        simp [normalizeRvfiTrace?, hv'] at h
+        have hnone : observation.toRetirement? = none := by
+          simp [RvfiObservation.toRetirement?, hv']
+        simp only [List.filterMap, hnone]
+        exact ih h
+
 /-! ## Feeding packed observations into the cycle bridge -/
 
 /-- A cycle-level core whose commit port is the packed RVFI shape. -/
@@ -542,4 +583,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
+#print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap
 #print axioms LeanModels.Refine.normalizeRvfiCycleTrace

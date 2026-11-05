@@ -322,3 +322,35 @@ future superscalar cores can replace the packet producer while retaining the
 same `TaggedPacketRefines`/`rob_trace_refines` contract.  PicoRV32 remains a
 finite observed witness, not symbolic whole-core admission, at the unchanged
 unpacked-memory and generate-member walls.
+
+## 2026-11-05-ls-sv2-14 — support packetized RVFI observations
+
+The one-entry RVFI-to-ROB adapter covers a single channel, while superscalar
+cores expose a finite packet of channel rows at one cycle boundary.  Added
+`RvfiPacketMachine`, `RvfiPacketEntry`, and `toPacketMachine` in
+`LeanModels/Refine/RvfiPacket.lean`.  The packet theorem flattens observations
+in the packet order supplied by the machine, filters only through
+`toRetirement?`, and uses the new `normalizeRvfiTrace?_filterMap` lemma to
+prove that a successful global order/decode certificate equals the generic
+`packetTrace`.  Inputs remain attached to each row, so no cycle input is
+silently reused for a different commit.
+
+The PicoRV32 witness groups its measured bubble/retirement rows into four
+two-entry packets (one bubble plus one valid row per packet).  It proves the
+flattened normalization, the packet retirement stream, and the filtered
+architectural inputs against the same four measured ISA instructions.  This is
+a packet-boundary exercise over measured rows, not a claim that PicoRV32 is
+superscalar.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), and
+the new theorem reports contain only `propext`/`Quot.sound`.  `python3
+tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff --check`
+pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep packet flattening and order validation separate from the
+core's scheduling or completion policy; a future superscalar proof can provide
+its packet entries and consume the same `PacketRefines` contract.  The
+PicoRV32 symbolic loader remains blocked at the unchanged memory/generate
+walls.

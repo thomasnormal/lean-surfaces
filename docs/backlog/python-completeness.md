@@ -8987,3 +8987,9 @@ DECIDED: make creation-time iteration explicit for lowered generator expressions
 The approved extractor now marks a list comprehension as shadowed when the enclosing module or function binds `list`. Its lowering no longer turns syntax with no name lookup into a call through a user binding; the admitted behavior is a loud refusal until list-comprehension semantics are represented directly. Added `listcomp_shadow.py`; CPython returns `[1, 2]` while the old runner returned a shadow result or a fabricated `TypeError`.
 
 DECIDED: keep ordinary list comprehensions live and refuse only the shadowed lowering boundary.
+
+## 2026-11-05-pycomplete-337 — remove boundary augmented-repeat rewrite
+
+Deleted the shape-specific `x *= n; return x` ingestion rewrite. Augmented assignment now reaches the existing in-place semantics: module-internal heap-list aliases mutate together, while public boundary list arguments remain an explicit loud frontier. The measured `repeat_aug` list rows are now whitelisted refusals; string and tuple augmented-repeat rows stay matched, and the former `None` error text is no longer rewritten from `*=` to `*`.
+
+DECIDED: preserve the AST `AugAssign` node and keep boundary-passed list mutation loud until the heap-threaded argument boundary is wired.

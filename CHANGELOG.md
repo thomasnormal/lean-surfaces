@@ -2993,3 +2993,5 @@ change is listed here under **Changed** or **Removed**.
   CPython's `GET_ITER` timing and faithful non-iterable errors.
 - Python: refuse list-comprehension lowerings when a user binding shadows the
   synthesized `list` call, avoiding a silent shadowing wrong answer.
+- Python: remove the shape-specific augmented-repeat rewrite so `*=` keeps its
+  in-place list semantics and public boundary list mutation remains loud.

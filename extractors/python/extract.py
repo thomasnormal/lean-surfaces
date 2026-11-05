@@ -840,6 +840,8 @@ def convert_expr(node):
         return unsupported(node, "SetComp")
 
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
+        if isinstance(node, ast.ListComp) and _MODULE_SHADOWS_DISPLAY:
+            return unsupported(node, "ListComp:shadowed")
         # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
         # compiles both into an implicit function taking the already-
         # evaluated outer iterator, differing only in what the function

@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-05-pycomplete-336` |  | refuse list-comprehension builtin shadows | python-completeness |
 | `2026-11-05-pycomplete-335` |  | perform genexp creation-time iteration | python-completeness |
 | `2026-11-05-pycomplete-334` |  | refuse rebinding-sensitive generator captures | python-completeness |
 | `2026-11-05-pycomplete-333` |  | carry global declarations as AST names | python-completeness |

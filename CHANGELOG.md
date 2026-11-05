@@ -2991,3 +2991,5 @@ change is listed here under **Changed** or **Removed**.
   rebinding of captured names instead of returning stale by-value captures.
 - Python: perform generator-expression outer iteration at creation, matching
   CPython's `GET_ITER` timing and faithful non-iterable errors.
+- Python: refuse list-comprehension lowerings when a user binding shadows the
+  synthesized `list` call, avoiding a silent shadowing wrong answer.

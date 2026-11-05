@@ -38,6 +38,11 @@
     "note": "genexp creation raises CPython's TypeError before the first next"
   },
   {
+    "file": "harness/scripts/listcomp_shadow.py",
+    "expect": "unsupported",
+    "note": "list-comprehension lowering refuses user list shadows rather than calling them"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

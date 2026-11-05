@@ -8981,3 +8981,9 @@ DECIDED: keep the current by-value generator lowering for proven-safe captures, 
 Synthesized genexp calls now perform the outer `iter()` at object creation in the monadic runner. Scalar receivers raise the faithful `TypeError` before the first `next`; ordinary list, tuple, string, range, and dict genexp rows retain their existing cursor behavior. Added `genexp_iter_creation.py`; its former wrong answer was `1` while CPython raises.
 
 DECIDED: make creation-time iteration explicit for lowered generator expressions; user generator functions remain lazy and do not call `iter()` until resumed.
+
+## 2026-11-05-pycomplete-336 — refuse list-comprehension builtin shadows
+
+The approved extractor now marks a list comprehension as shadowed when the enclosing module or function binds `list`. Its lowering no longer turns syntax with no name lookup into a call through a user binding; the admitted behavior is a loud refusal until list-comprehension semantics are represented directly. Added `listcomp_shadow.py`; CPython returns `[1, 2]` while the old runner returned a shadow result or a fabricated `TypeError`.
+
+DECIDED: keep ordinary list comprehensions live and refuse only the shadowed lowering boundary.

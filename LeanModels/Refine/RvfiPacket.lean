@@ -332,6 +332,27 @@ theorem normalizeRvfiPacketRobTrace {State : Type}
   rw [machine.toRobMachine_trace]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/-- The reusable R1-to-R3 conclusion: once a core-specific `RobStepRefines`
+proof supplies the ISA effect relation, a successful normalized RVFI packet
+stream is exactly the ISA trace over the packet's associated inputs. -/
+theorem normalizeRvfiPacketRobTrace_refines
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    retirements = trace isa isaState
+      (robInputs machine.toRobMachine state cycles) := by
+  calc
+    retirements = robTrace machine.toRobMachine state cycles :=
+      (normalizeRvfiPacketRobTrace machine state cycles hobs).symm
+    _ = trace isa isaState (robInputs machine.toRobMachine state cycles) :=
+      rob_trace_refines hrob state isaState start cycles hrel
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -341,3 +362,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

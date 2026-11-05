@@ -429,3 +429,29 @@ adaptation was introduced.
 certificate for `RobStepRefines`; leave completion scheduling and fairness to
 the core relation.  PicoRV32's symbolic loader remains blocked at the same
 memory/generate walls.
+
+## 2026-11-05-ls-sv2-18 — compose normalized RVFI packets with ROB refinement
+
+Added `normalizeRvfiPacketRobTrace_refines` to
+`LeanModels/Refine/RvfiPacket.lean`.  Given a core-specific
+`RobStepRefines` relation, its initial-state witness, and successful flattened
+RVFI normalization, the theorem directly concludes that the normalized packet
+retirements equal the ISA `trace` over the packet-associated inputs.  It is a
+single composition of `normalizeRvfiPacketRobTrace` and the existing generic
+`rob_trace_refines`; no new scheduling, fairness, or completion assumption is
+introduced.
+
+This is intentionally a generic theorem: the current PicoRV32 artifact has a
+finite measured stream but no symbolic RTL relation because its loader is
+still blocked.  Its packet trace and tag certificates remain the concrete
+inputs a future core proof will feed to this conclusion.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket` passed (13 jobs), and
+the new theorem reports only `propext`/`Quot.sound`.  `python3
+tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff --check`
+pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** make this composition the reusable finish line for a packetized
+RVFI/ROB core proof; leave the core relation and input admission to the
+future real-core artifact.  PicoRV32's exact loader walls are unchanged.

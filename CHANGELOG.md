@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ member-call coverage now retains enum `DeclRefExpr` argument and
+  parameter identity, with an explicit representation-value witness for
+  `owner.set(failed)`; casts and invocation remain refused.
+
 - C++ member-call coverage now includes a structured `int` literal argument
   and parameter binding witness for `owner.set(0)`; conversion and invocation
   remain outside the admitted boundary.

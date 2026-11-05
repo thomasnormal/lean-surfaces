@@ -150,6 +150,11 @@ source spelling, normalized `int` type, parameter handle, and ordinal binding;
 the native call remains a separate source check and does not turn this
 provenance witness into invocation semantics.
 
+The adjacent enum argument boundary is covered by an `owner.set(failed)`
+witness. It retains the argument's `DeclRefExpr` and enum declaration handle,
+joins it to the exact enum parameter, and checks the explicit representation
+value. Casts, spelling-only enum matches, and method execution remain loud.
+
 The census applies this witness to the real probe as a pricing check. All 12
 direct `int` literal arguments bind to a retained parameter (`Set` once at
 ordinal 2 and `SetError` eleven times at ordinal 1). The stricter canonical

@@ -649,6 +649,14 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- its generator arm drains unguarded.
     match vs with
     | [] => do let a ← heapPush (.pyset #[]); pure (.ref a)
+    | [.ref a] =>
+        match Heap.get? (← frameHeap) a with
+        | some (.pyset _) => refuse "set copy construction is outside the tier (the copied table's iteration order is not modeled)"
+        | _ => do
+            let xs ← iterValues K m "set" false (.ref a)
+            let es ← liftRes (setDedup (← frameHeap) K.fuel [] xs)
+            let a ← heapPush (.pyset es.toArray)
+            pure (.ref a)
     | [v] => do
         let xs ← iterValues K m "set" false v
         let es ← liftRes (setDedup (← frameHeap) K.fuel [] xs)

@@ -9036,3 +9036,17 @@ ASTs; approved ingestion cannot produce it.
 
 DECIDED: keep sequence materialization high level and refuse products beyond
 the model's allocation budget; no length-only shortcut is admitted.
+
+## 2026-11-05-pycomplete-341 — refuse unmodeled set table orders
+
+Set iteration now refuses negative integer elements because the signed CPython
+hash path is not represented by the bounded table reconstruction. Set
+intersection and copying are also loud: their table sizing, insertion, and
+resize paths can produce an order different from replaying the source's
+first-seen list. Updated the measured negative-order and dictionary-view
+intersection rows; the remaining nonnegative direct insertion rows retain
+their existing matches.
+
+DECIDED: retain the bounded integer-set table only for direct nonnegative
+insertions; refuse negative hashes, copies, and intersections until their
+CPython 3.9 table transitions are modeled.

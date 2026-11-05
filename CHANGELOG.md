@@ -3002,3 +3002,6 @@ change is listed here under **Changed** or **Removed**.
 - Python: remove `len(sequence * count)` length-only ingestion rewrites;
   oversized ordinary materialization now refuses instead of returning a
   length CPython cannot build.
+- Python: refuse negative-integer set iteration, set copies, and set
+  intersections until CPython's table construction and signed hashes are
+  modeled soundly.

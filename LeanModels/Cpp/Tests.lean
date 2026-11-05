@@ -32,6 +32,10 @@ import LeanModels.Cpp.CallableTests
 
 namespace LeanModels.Cpp.Tests
 
+#guard validateLp64PredefinedMacros "#define __LP64__ 1\n#define __SIZEOF_LONG__ 8\n#define __SIZEOF_POINTER__ 8\n" matches .ok ()
+#guard validateLp64PredefinedMacros "#define __LP64__ 1\n#define __SIZEOF_LONG__ 4\n#define __SIZEOF_POINTER__ 4\n" matches .error _
+#guard validateLp64PredefinedMacros "#define __LP64__ 1\n#define __SIZEOF_LONG__ 8\n#define __SIZEOF_POINTER__ 8\n#define __CHAR_UNSIGNED__ 1\n" matches .error _
+
 def probe : Artifact := {
   sourceFile := "/probe.cpp", sourceSha256 := String.ofList (List.replicate 64 'a')
   frontend := .object [], dependencies := []

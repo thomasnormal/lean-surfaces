@@ -25,6 +25,16 @@ def requireHash (value : String) : Except String Unit := do
       character.isDigit || ('a' ≤ character && character ≤ 'f')) do
     throw "expected a lowercase SHA-256 digest"
 
+def validateLp64PredefinedMacros (macros : String) : Except String Unit := do
+  unless macros.contains "__LP64__" do
+    throw "frontend target is outside the admitted LP64 profile"
+  unless macros.contains "__SIZEOF_LONG__ 8" do
+    throw "frontend long width is outside the admitted LP64 profile"
+  unless macros.contains "__SIZEOF_POINTER__ 8" do
+    throw "frontend pointer width is outside the admitted LP64 profile"
+  if macros.contains "__CHAR_UNSIGNED__" then
+    throw "frontend char signedness is outside the admitted signed-char profile"
+
 def parseDependency (json : Lean.Json) : Except String Dependency := do
   let path ← textField json "path"
   let sha256 ← textField json "sha256"
@@ -46,6 +56,7 @@ def validateFrontend (json : Lean.Json) : Except String Unit := do
   let environment ← (← json.getObjVal? "environment").getObj?
   for (_, value) in environment.toArray do
     let _ ← value.getStr?
+  validateLp64PredefinedMacros (← textField json "predefined_macros")
 
 def validateDependencies (dependencies : List Dependency) : Except String Unit := do
   let mut paths : List String := []

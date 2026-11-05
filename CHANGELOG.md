@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- C++ artifact admission now refuses target profiles outside the pinned LP64
+  signed-char profile, and extraction rejects unprofiled target/ABI overrides.
+
 - Corrected C++ coverage accounting: hand-built IR rows are reported as
   `WITNESS`, while `MATCH` is reserved for source-derived Lean admission;
   native source checks remain visible separately.

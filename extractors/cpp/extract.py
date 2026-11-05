@@ -16,11 +16,11 @@ SCHEMA_VERSION = "cpp-0.1"
 PROFILE_ID = "cpp23-clang-json-0.1"
 VALUE_FLAGS = {
     "-I", "-isystem", "-iquote", "-idirafter", "-include", "-imacros",
-    "-D", "-U", "-target", "--target", "-isysroot", "--sysroot", "-resource-dir",
+    "-D", "-U", "-isysroot", "--sysroot", "-resource-dir",
 }
 SWITCH_FLAGS = {
     "-pthread", "-nostdinc", "-nostdinc++", "-fexceptions", "-fno-exceptions",
-    "-frtti", "-fno-rtti", "-fsigned-char", "-funsigned-char", "-m32", "-m64",
+    "-frtti", "-fno-rtti", "-fsigned-char",
     "-Wall", "-Wextra", "-stdlib=libc++", "-stdlib=libstdc++",
 }
 ENVIRONMENT_KEYS = {
@@ -57,7 +57,7 @@ def validate_flags(flags):
         elif flag in SWITCH_FLAGS:
             continue
         elif any(flag.startswith(prefix) and len(flag) > len(prefix)
-                 for prefix in ("-I", "-D", "-U", "--target=", "--sysroot=", "-resource-dir=")):
+                 for prefix in ("-I", "-D", "-U", "--sysroot=", "-resource-dir=")):
             continue
         else:
             raise ExtractionError(f"flag outside {PROFILE_ID}: {flag!r}")

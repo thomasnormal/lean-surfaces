@@ -104,6 +104,12 @@ def declaration_occurrence_paths(ast):
 
 
 class ExtractorTests(unittest.TestCase):
+    def test_non_lp64_profile_overrides_are_refused(self):
+        for flags in (("-funsigned-char",), ("-m32",), ("--target", "i386-linux-gnu")):
+            with self.subTest(flags=flags):
+                with self.assertRaises(extractor.ExtractionError):
+                    extractor.validate_flags(flags)
+
     @classmethod
     def setUpClass(cls):
         requested = os.environ.get("LEANCPP_CLANG", "clang++")

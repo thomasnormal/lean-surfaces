@@ -1,4 +1,5 @@
 import LeanModels.Sv.Regions
+import LeanModels.Sv.Pure2
 
 /-!
 # F1 — the finite SVA safety fragment over E samples
@@ -28,6 +29,7 @@ state. -/
 inductive SvaBool where
   | lit (value : Bool)
   | signal (name : String)
+  | expr (value : Expr2)
   | not (arg : SvaBool)
   | and (left right : SvaBool)
   | or (left right : SvaBool)
@@ -36,7 +38,10 @@ inductive SvaBool where
   | rose (name : String)
   | fell (name : String)
   | stable (name : String)
-deriving Repr, BEq, DecidableEq, Inhabited
+  | roseExpr (value : Expr2)
+  | fellExpr (value : Expr2)
+  | stableExpr (value : Expr2)
+deriving Repr, Inhabited
 
 /-- A finite sequence expression. `delay n` is `##n`; `range lo hi` is
 `##[lo:hi]`. -/
@@ -44,7 +49,8 @@ inductive SvaSeq where
   | atom (test : SvaBool)
   | delay (cycles : Nat) (body : SvaSeq)
   | range (lo hi : Nat) (body : SvaSeq)
-deriving Repr, BEq, DecidableEq, Inhabited
+  | concat (left right : SvaSeq)
+deriving Repr, Inhabited
 
 /-- A safety property sampled once per clock edge. `implies` is `|->`, while
 `nonoverlap` is `|=>`. `disable` is the retained `disable iff` wrapper. -/
@@ -53,7 +59,7 @@ inductive SvaProp where
   | implies (antecedent consequent : SvaSeq)
   | nonoverlap (antecedent consequent : SvaSeq)
   | disable (guard : SvaBool) (body : SvaProp)
-deriving Repr, BEq, DecidableEq, Inhabited
+deriving Repr, Inhabited
 
 inductive SvaKind where
   | assert
@@ -65,9 +71,10 @@ deriving Repr, BEq, DecidableEq, Inhabited
 structure SvaCheck where
   kind : SvaKind
   clock : String
+  edge : String := "posedge"
   disable : Option SvaBool := none
   property : SvaProp
-deriving Repr, BEq, DecidableEq, Inhabited
+deriving Repr, Inhabited
 
 /-! ## Sampling -/
 
@@ -102,6 +109,24 @@ def edgeValue (rises : Logic → Logic → Bool) (trace : List SvState)
   | some old, some new => rises old new
   | _, _ => false
 
+def exprLogicAt (trace : List SvState) (index : Nat) (value : Expr2) :
+    Except String (Option Logic) :=
+  match trace[index]? with
+  | none => .ok none
+  | some state =>
+      match evalPure2 state value with
+      | .ok v => .ok (some (v.bits[0]?.getD .lx))
+      | .timeout => .error "SVA: expression evaluation timed out"
+      | .unsupported msg => .error s!"SVA: {msg}"
+
+def edgeExprValue (rises : Logic → Logic → Bool) (trace : List SvState)
+    (index : Nat) (value : Expr2) : Except String Bool := do
+  let previous ← if index == 0 then pure (some .lx) else exprLogicAt trace (index - 1) value
+  let current ← exprLogicAt trace index value
+  return match previous, current with
+  | some old, some new => rises old new
+  | _, _ => false
+
 /-- SVA sampled-value edges are value transitions to 1/0 (§16.9.3), rather
 than event-control edges: 0->x and 0->z are not `$rose`, and the first sample
 uses the default x value. -/
@@ -119,6 +144,10 @@ def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Excep
   | .caseEq _ _ => .error "SVA: case equality currently requires signal operands"
   | .lit value => .ok value
   | .signal name => boolValue <$> signalAt trace index name
+  | .expr value => do
+      match (← exprLogicAt trace index value) with
+      | some .l1 => .ok true
+      | some .l0 | some .lx | some .lz | none => .ok false
   | .not (.signal name) => do
       match (← logicAt trace index name) with
       | some .l0 => .ok true
@@ -131,6 +160,16 @@ def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Excep
       if cycles ≤ index then arg.evalChecked trace (index - cycles) else .ok false
   | .rose name => edgeValue svaRose trace index name
   | .fell name => edgeValue svaFell trace index name
+  | .roseExpr value => edgeExprValue svaRose trace index value
+  | .fellExpr value => edgeExprValue svaFell trace index value
+  | .stableExpr value =>
+      if index == 0 then .ok false
+      else do
+        let previous ← exprLogicAt trace (index - 1) value
+        let current ← exprLogicAt trace index value
+        return match previous, current with
+        | some old, some new => old == new && old.isKnown
+        | _, _ => false
   | .stable name =>
       if index == 0 then .ok false
       else do
@@ -143,6 +182,8 @@ def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Excep
 def SvaSeq.matches (trace : List SvState) (index : Nat) : SvaSeq → Except String Bool
   | .atom test => test.evalChecked trace index
   | .delay cycles body => body.matches trace (index + cycles)
+  | .concat left right => do
+      if ← left.matches trace index then right.matches trace (index + 1) else .ok false
   | .range lo hi body =>
       if hi < lo then
         .error "SVA: descending ## range"
@@ -197,19 +238,25 @@ def SvaCheck.evalEdges (edges : List SvState) (check : SvaCheck) : Except String
 
 /-! Select Preponed samples at a named positive clock edge.  The worker is
 over sampled states directly, making final-state irrelevance explicit. -/
-def clockSamplesFrom (clock : String) (previous : Logic) :
+def clockSamplesFrom (clock edge : String) (previous : Logic) :
     List SvState → List SvState → Except String (List SvState)
   | [], selected => .ok selected.reverse
   | sampled :: rest, selected => do
       let now := (← logicAt [sampled] 0 clock).getD .lx
-      let selected' := if isPosedge previous now then sampled :: selected else selected
-      clockSamplesFrom clock now rest selected'
+      let hit := if edge == "posedge" then isPosedge previous now
+        else if edge == "negedge" then isNegedge previous now
+        else true
+      let selected' := if hit then sampled :: selected else selected
+      clockSamplesFrom clock edge now rest selected'
 
 def clockSamples (clock : String) (trace : RegionTrace) : Except String (List SvState) :=
-  clockSamplesFrom clock .lx (trace.map (·.sampled)) []
+  clockSamplesFrom clock "posedge" .lx (trace.map (·.sampled)) []
+
+def clockSamplesEdge (clock edge : String) (trace : RegionTrace) : Except String (List SvState) :=
+  clockSamplesFrom clock edge .lx (trace.map (·.sampled)) []
 
 def SvaCheck.evalRegion (trace : RegionTrace) (check : SvaCheck) : Except String Bool := do
-  check.evalEdges (← clockSamples check.clock trace)
+  check.evalEdges (← clockSamplesEdge check.clock check.edge trace)
 
 /-- Concurrent properties consume the Preponed sample only.  Replacing every
 slot's final state therefore cannot change the selected edge samples; this
@@ -221,11 +268,17 @@ theorem clockSamples_final_irrel (clock : String) (trace : RegionTrace) :
   simp only [clockSamples, List.map_map]
   rfl
 
+theorem clockSamplesEdge_final_irrel (clock edge : String) (trace : RegionTrace) :
+    clockSamplesEdge clock edge trace =
+      clockSamplesEdge clock edge (trace.map fun slot => { slot with final := slot.sampled }) := by
+  simp only [clockSamplesEdge, List.map_map]
+  rfl
+
 theorem evalRegion_final_irrel (trace : RegionTrace) (check : SvaCheck) :
     check.evalRegion trace =
       check.evalRegion (trace.map fun slot => { slot with final := slot.sampled }) := by
   unfold SvaCheck.evalRegion
-  rw [clockSamples_final_irrel]
+  rw [clockSamplesEdge_final_irrel]
 
 /-! ## Kernel-reducible witnesses for the F1 fragment -/
 

@@ -39,157 +39,52 @@ def ofCheck (source : PProperty) (check : SvaCheck) : Except String SvaContract 
       else
         .ok { source, check }
 
-/-! ## Source parser: the first retained F1 production
+/-! ## Structured property-to-E conversion
 
-This parser deliberately admits one complete source form and refuses the rest:
-`<kind> property (@(posedge clk) a |-> b);`, where `a`, `b`, and `clk` are
-simple signal names.  Keeping the parser here makes the source-to-contract
-boundary explicit while the broader `Sv.Ast` property grammar is still being
-specified.
+The extractor has already parsed the Slang assertion tree.  This bridge only
+instantiates its `PExpr` leaves into `Expr2`; it never inspects source text.
 -/
 
-private def simpleAtom (text : String) : Except String SvaBool :=
-  let n := text.trimAscii.toString
-  if n.isEmpty || n.any (fun c => c == ' ' || c == '\n' || c == '\t' || c == '(' || c == ')') then
-    .error "SVA: simple implication operands must be signal names"
-  else .ok (.signal n)
+def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → Except String SvaBool
+  | .expr value => .ok (.expr (instExpr2 env elems none value))
+  | .past cycles value => .ok (.past cycles (.expr (instExpr2 env elems none value)))
+  | .rose value => .ok (.roseExpr (instExpr2 env elems none value))
+  | .fell value => .ok (.fellExpr (instExpr2 env elems none value))
+  | .stable value => .ok (.stableExpr (instExpr2 env elems none value))
 
-private def simpleBoolLeaf (text : String) : Except String SvaBool :=
-  let n := text.trimAscii.toString
-  if n.startsWith "!" then
-    (simpleAtom (n.drop 1).toString).map SvaBool.not
-  else if let [left, right] := n.splitOn "===" then
-    .caseEq <$> simpleAtom left <*> simpleAtom right
-  else if n.startsWith "$past(" && n.endsWith ")" then
-    let inner := match n.splitOn "$past(" with
-      | ["", rest] => rest.dropEnd 1 |>.toString
-      | _ => ""
-    match inner.splitOn "," with
-    | [signal] => (simpleAtom signal).map (fun b => .past 1 b)
-    | [signal, depth] =>
-        match depth.trimAscii.toString.toNat? with
-        | some n => (simpleAtom signal).map (fun b => .past n b)
-        | none => .error "SVA: $past depth must be a decimal cycle count"
-    | _ => .error "SVA: $past expects a signal and optional depth"
-  else if n.startsWith "$rose(" && n.endsWith ")" then
-    let inner := match n.splitOn "$rose(" with
-      | ["", rest] => rest.dropEnd 1 |>.toString
-      | _ => ""
-    (simpleAtom inner).map (fun b => match b with
-      | .signal name => .rose name
-      | _ => .lit false)
-  else if n.startsWith "$fell(" && n.endsWith ")" then
-    let inner := match n.splitOn "$fell(" with
-      | ["", rest] => rest.dropEnd 1 |>.toString
-      | _ => ""
-    (simpleAtom inner).map (fun b => match b with
-      | .signal name => .fell name
-      | _ => .lit false)
-  else if n.startsWith "$stable(" && n.endsWith ")" then
-    let inner := match n.splitOn "$stable(" with
-      | ["", rest] => rest.dropEnd 1 |>.toString
-      | _ => ""
-    (simpleAtom inner).map (fun b => match b with
-      | .signal name => .stable name
-      | _ => .lit false)
-  else simpleAtom n
+def instantiateSeq (env : IEnv) (elems : List (String × Nat)) : PSvaSeq → Except String SvaSeq
+  | .atom test => .atom <$> instantiateBool env elems test
+  | .delay cycles body => .delay cycles <$> instantiateSeq env elems body
+  | .range lo hi body => .range lo hi <$> instantiateSeq env elems body
+  | .concat left right => .concat <$> instantiateSeq env elems left <*> instantiateSeq env elems right
 
-private def simpleBool (text : String) : Except String SvaBool :=
-  let n := text.trimAscii.toString
-  if let [left, right] := n.splitOn "&&" then
-    .and <$> simpleBoolLeaf left <*> simpleBoolLeaf right
-  else if let [left, right] := n.splitOn "||" then
-    .or <$> simpleBoolLeaf left <*> simpleBoolLeaf right
-  else simpleBoolLeaf n
+def instantiateProp (env : IEnv) (elems : List (String × Nat)) : PSvaProp → Except String SvaProp
+  | .always body => .always <$> instantiateSeq env elems body
+  | .implies left right => .implies <$> instantiateSeq env elems left <*> instantiateSeq env elems right
+  | .nonoverlap left right => .nonoverlap <$> instantiateSeq env elems left <*> instantiateSeq env elems right
+  | .disable guard body => .disable <$> instantiateBool env elems guard <*> instantiateProp env elems body
 
-private def simpleSeq (text : String) : Except String SvaSeq :=
-  let n := text.trimAscii.toString
-  if n.startsWith "##" then
-    let rest := (n.drop 2).toString.trimAscii.toString
-    if rest.startsWith "[" then
-      match rest.splitOn "]" with
-      | [bounds, signal] =>
-          let inside := (bounds.drop 1).toString
-          match (inside.splitOn ":", signal.trimAscii.toString) with
-          | ([lo, hi], signal) =>
-              match lo.toNat?, hi.toNat? with
-              | some lower, some upper =>
-                  if lower ≤ upper then
-                    (simpleBool signal).map (fun b => .range lower upper (.atom b))
-                  else .error "SVA: bounded delay lower bound exceeds upper bound"
-              | _, _ => .error "SVA: bounded delay requires decimal bounds"
-          | _ => .error "SVA: bounded delay requires ##[m:n] and one signal"
-      | _ => .error "SVA: bounded delay requires ##[m:n] and one signal"
-    else
-      match rest.splitOn " " with
-      | [count, signal] =>
-          match count.toNat? with
-          | some cycles => (simpleBool signal).map (fun b => .delay cycles (.atom b))
-          | none => .error "SVA: exact delay requires a decimal cycle count"
-      | _ => .error "SVA: exact delay requires ##n followed by one signal"
-  else
-    .atom <$> simpleBool n
+private def instantiateKind : PSvaKind → SvaKind
+  | .assert => .assert
+  | .assume => .assume
+  | .cover => .cover
 
-private def simpleKind (kind : String) : Except String SvaKind :=
-  match kind with
-  | "assert" => .ok .assert
-  | "assume" => .ok .assume
-  | "cover" => .ok .cover
-  | _ => .error s!"SVA: unsupported property kind '{kind}'"
+private def instantiateEdge : PSvaEdge → String
+  | .posedge => "posedge"
+  | .negedge => "negedge"
+  | .any => "any"
 
-def parseSimple (source : PProperty) : Except String SvaContract := do
-  let text := source.text.trimAscii.toString
-  let kindName ←
-    if text.startsWith "assert property" then pure "assert"
-    else if text.startsWith "assume property" then pure "assume"
-    else if text.startsWith "cover property" then pure "cover"
-    else throw "SVA: expected assert/assume/cover property"
-  let kind ← simpleKind kindName
-  let some clockText := source.clock
-    | throw "SVA: simple property is missing its retained clock"
-  let clock := clockText.trimAscii.toString
-  if !text.contains "@(posedge " ||
-      (!text.contains "|->" && !text.contains "|=>") || !text.endsWith ");" then
-    throw "SVA: unsupported property syntax (expected posedge implication form)"
-  let edgeTail := (text.splitOn "@(posedge ").getLast!
-  let parsedClock := edgeTail.splitOn ")" |>.head!.trimAscii.toString
-  if parsedClock != clock then
-    throw s!"SVA: retained clock '{clock}' disagrees with source clock '{parsedClock}'"
-  let marker := "@(posedge " ++ parsedClock ++ ")"
-  let some bodySuffix := (text.splitOn marker)[1]?
-    | throw "SVA: missing event-control body"
-  let bodyText := (bodySuffix.dropEnd 2).toString.trimAscii.toString
-  let disableGuardAndBody ←
-    if bodyText.startsWith "disable iff (" then
-      let rest := (bodyText.drop 13).toString
-      -- The consequent may itself contain a closing parenthesis (for
-      -- example `$stable(data)`).  The `disable iff` close is followed by
-      -- the antecedent, so split at that delimiter rather than every `)`.
-      match rest.splitOn ") " with
-      | [guard, body] => do
-          let parsedGuard ← simpleBool guard
-          pure (some parsedGuard, body.trimAscii.toString)
-      | _ => throw "SVA: malformed disable iff guard"
-    else pure (none, bodyText)
-  let disableGuard := disableGuardAndBody.1
-  let body := disableGuardAndBody.2
-  let operator := if body.contains "|=>" then "|=>" else "|->"
-  let implication := body.splitOn operator
-  match implication with
-  | [antecedent, consequent] =>
-      let left ← simpleSeq antecedent
-      let right ← simpleSeq consequent
-      let baseProperty := if operator == "|=>"
-        then .nonoverlap left right
-        else .implies left right
-      let property := match disableGuard with
-        | some guard => .disable guard baseProperty
-        | none => baseProperty
-      let check : SvaCheck :=
-        { kind := kind, clock := clock,
-          property := property }
-      ofCheck source check
-  | _ => throw "SVA: expected exactly one implication"
+def ofProperty (env : IEnv) (elems : List (String × Nat))
+    (source : PProperty) : Except String SvaContract := do
+  let some ast := source.ast
+    | throw s!"SVA property '{source.name}': missing structured Slang AST"
+  let property ← instantiateProp env elems ast.property
+  let check : SvaCheck :=
+    { kind := instantiateKind ast.kind
+      clock := ast.clock
+      edge := instantiateEdge ast.edge
+      property := property }
+  ofCheck source check
 
 def portRegionAux : Nat → List (CycleObs PortSample) → RegionTrace
   | _, [] => []
@@ -222,15 +117,17 @@ theorem safe_of_included {M₁ M₂ : ObservationModel} {d₁ : M₁.Design} {d�
     (hinc : Included M₁ M₂ k d₁ d₂) (h : C.Safe k d₂) : C.Safe k d₁ :=
   Safe.of_included hinc h
 
-#guard (simpleBool "$rose(req)").toOption.isSome
-#guard (simpleBool "$past(ack, 1)").toOption.isSome
-#guard (simpleBool "$stable(data)").toOption.isSome
 
 end SvaContract
 
 private def sourceProperty : PProperty :=
   { name := "p_ab", kind := "assert", clock := some "clk",
-    text := "assert property (@(posedge clk) a |-> b);" }
+    text := "assert property (@(posedge clk) a |-> b);",
+    ast := some {
+      kind := .assert, edge := .posedge, clock := "clk",
+      property := .implies
+        (.atom (.expr (.ident "a")))
+        (.atom (.expr (.ident "b"))) } }
 
 private def sourceCheck : SvaCheck :=
   { kind := .assert, clock := "clk",
@@ -243,41 +140,14 @@ private def portTrace : List (CycleObs PortSample) :=
       post := { vals := [("clk", LVec.ofNat 1 1), ("a", LVec.ofNat 1 1), ("b", LVec.ofNat 1 1)] } } ]
 
 #guard (SvaContract.ofCheck sourceProperty sourceCheck).toOption.isSome
-#guard match SvaContract.parseSimple sourceProperty with
-  | .ok _ => true
+#guard match SvaContract.ofProperty ({} : IEnv) [] sourceProperty with
+  | .ok C => C.check.kind == .assert && C.check.edge == "posedge"
   | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "cover", text := "cover property (@(posedge clk) a |-> b);" } with
-  | .ok C => match C.source.kind, C.check.kind with
-    | "cover", .cover => true
-    | _, _ => false
+#guard match SvaContract.ofProperty ({} : IEnv) [] sourceProperty with
+  | .ok C => match C.check.property with
+    | .implies (.atom (.expr (.ident "a"))) (.atom (.expr (.ident "b"))) => true
+    | _ => false
   | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "assume", text := "assume property (@(posedge clk) a |-> b);" } with
-  | .ok C => match C.source.kind, C.check.kind with
-    | "assume", .assume => true
-    | _, _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "assert", text := "assert property (@(posedge clk) disable iff (rst) req |-> ##1 ack);" } with
-  | .ok C => C.check.kind == .assert
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "assume", text := "assume property (@(posedge clk) $rose(req) |=> $past(ack, 1));" } with
-  | .ok C => C.check.kind == .assume
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "assert", text := "assert property (@(posedge clk) req |-> ##[1:3] ack);" } with
-  | .ok C => C.check.kind == .assert
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "assume", text := "assume property (@(posedge clk) disable iff (!rst) valid |-> $stable(data));" } with
-  | .ok C => C.check.kind == .assume
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with kind := "cover", text := "cover property (@(posedge clk) req ##[1:3] ack);" } with
-  | .error _ => true
-  | .ok _ => false
 #guard match SvaContract.ofCheck sourceProperty sourceCheck with
   | .ok C => match C.eval portTrace with
     | .ok true => true
@@ -289,76 +159,6 @@ private def portTrace : List (CycleObs PortSample) :=
 #guard match SvaContract.ofCheck { sourceProperty with clock := none } sourceCheck with
   | .error _ => true
   | .ok _ => false
-#guard match SvaContract.parseSimple { sourceProperty with text := "assert property (@(posedge clk) a ##1 b);" } with
-  | .error _ => true
-  | .ok _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |=> b);" } with
-  | .ok C => match C.check.property with
-    | .nonoverlap _ _ => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> ##1 b);" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.delay 1 (.atom (.signal "b"))) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> ##[1:2] b);" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.range 1 2 (.atom (.signal "b"))) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> $past(b));" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.atom (.past 1 (.signal "b"))) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> $rose(b));" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.atom (.rose "b")) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> $fell(b));" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.atom (.fell "b")) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a |-> $stable(b));" } with
-  | .ok C => match C.check.property with
-    | .implies _ (.atom (.stable "b")) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) disable iff (rst) a |-> b);" } with
-  | .ok C => match C.check.property with
-    | .disable (.signal "rst") (.implies _ _) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a && b |-> c || d);" } with
-  | .ok C => match C.check.property with
-    | .implies (.atom (.and (.signal "a") (.signal "b")))
-        (.atom (.or (.signal "c") (.signal "d"))) => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) a === b |-> c);" } with
-  | .ok C => match C.check.property with
-    | .implies (.atom (.caseEq (.signal "a") (.signal "b"))) _ => true
-    | _ => false
-  | .error _ => false
-#guard match SvaContract.parseSimple
-    { sourceProperty with text := "assert property (@(posedge clk) !a |-> b);" } with
-  | .ok C => match C.check.property with
-    | .implies (.atom (.not (.signal "a"))) _ => true
-    | _ => false
-  | .error _ => false
 
 end LeanModels.Sv
 

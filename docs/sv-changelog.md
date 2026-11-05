@@ -6297,3 +6297,11 @@ parameter expression used as a compound step. The
 MATCH at `N = 5, S = 2`; zero, negative, effectful, and nonliteral amounts
 remain loud. The phase-2 corpus grows **799 → 800** rows; self-check coverage
 remains **638 rows / 615 agree / 0 disagree / 23 recorded refusals**.
+## Structured SVA AST retention
+
+Concurrent assertions now retain Slang's structured property syntax in each
+`SvaProperty.ast` envelope node. Ingestion parses the typed SVA tree and the E
+contract bridge instantiates ordinary boolean leaves as `Expr2`; source text is
+provenance only and is no longer reparsed by a Lean `splitOn` parser. Unsupported
+property forms remain named failures. The SVA evaluator also uses sampled-value
+edges and fails unknown assertion decisions conservatively.

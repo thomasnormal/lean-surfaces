@@ -91,6 +91,12 @@ deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
 deriving instance Lean.ToExpr for PStmt
 deriving instance Lean.ToExpr for PProcess
+deriving instance Lean.ToExpr for PSvaBool
+deriving instance Lean.ToExpr for PSvaSeq
+deriving instance Lean.ToExpr for PSvaProp
+deriving instance Lean.ToExpr for PSvaKind
+deriving instance Lean.ToExpr for PSvaEdge
+deriving instance Lean.ToExpr for PSvaCheck
 deriving instance Lean.ToExpr for PProperty
 deriving instance Lean.ToExpr for PPathSeg
 deriving instance Lean.ToExpr for PConn
@@ -293,6 +299,94 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let (svKind, text) ← parseUnsupportedFields j
         return .unsupported svKind text
     | other => throw s!"unknown expression kind {other.quote} (schema mismatch — see docs/sv-envelope-schema.md)"
+
+/-! ## Structured concurrent assertions -/
+
+partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
+  let kind ← getKind j
+  withCtx kind do
+    match kind with
+    | "SvaExpr" =>
+        let e ← parsePExpr (← getField j "expr")
+        return .expr e
+    | "SvaPast" =>
+        let cycles ← getNatField j "cycles"
+        let e ← parsePExpr (← getField j "expr")
+        return .past cycles e
+    | "SvaRose" =>
+        let e ← parsePExpr (← getField j "expr")
+        return .rose e
+    | "SvaFell" =>
+        let e ← parsePExpr (← getField j "expr")
+        return .fell e
+    | "SvaStable" =>
+        let e ← parsePExpr (← getField j "expr")
+        return .stable e
+    | other => throw s!"unknown SVA boolean kind {other.quote}"
+
+partial def parsePSvaSeq (j : Json) : Except String PSvaSeq := do
+  let kind ← getKind j
+  withCtx kind do
+    match kind with
+    | "SvaAtom" =>
+        let test ← parsePSvaBool (← getField j "test")
+        return .atom test
+    | "SvaDelay" =>
+        let cycles ← getNatField j "cycles"
+        let body ← parsePSvaSeq (← getField j "body")
+        return .delay cycles body
+    | "SvaRange" =>
+        let lo ← getNatField j "lo"
+        let hi ← getNatField j "hi"
+        let body ← parsePSvaSeq (← getField j "body")
+        return .range lo hi body
+    | "SvaConcat" =>
+        let left ← parsePSvaSeq (← getField j "left")
+        let right ← parsePSvaSeq (← getField j "right")
+        return .concat left right
+    | other => throw s!"unknown SVA sequence kind {other.quote}"
+
+partial def parsePSvaProp (j : Json) : Except String PSvaProp := do
+  let kind ← getKind j
+  withCtx kind do
+    match kind with
+    | "SvaAlways" =>
+        let body ← parsePSvaSeq (← getField j "body")
+        return .always body
+    | "SvaImplication" =>
+        let left ← parsePSvaSeq (← getField j "antecedent")
+        let right ← parsePSvaSeq (← getField j "consequent")
+        return .implies left right
+    | "SvaNonoverlap" =>
+        let left ← parsePSvaSeq (← getField j "antecedent")
+        let right ← parsePSvaSeq (← getField j "consequent")
+        return .nonoverlap left right
+    | "SvaDisable" =>
+        let guard ← parsePSvaBool (← getField j "guard")
+        let body ← parsePSvaProp (← getField j "body")
+        return .disable guard body
+    | other => throw s!"unknown SVA property kind {other.quote}"
+
+def parsePSvaKind : String → Except String PSvaKind
+  | "assert" => .ok .assert
+  | "assume" => .ok .assume
+  | "cover" => .ok .cover
+  | s => .error s!"unknown SVA assertion kind {s.quote}"
+
+def parsePSvaEdge : String → Except String PSvaEdge
+  | "posedge" => .ok .posedge
+  | "negedge" => .ok .negedge
+  | "any" => .ok .any
+  | s => .error s!"unknown SVA clock edge {s.quote}"
+
+def parsePSvaCheck (j : Json) : Except String PSvaCheck := do
+  let kind ← getKind j
+  if kind != "SvaCheck" then throw s!"expected SvaCheck, got {kind.quote}"
+  let pKind ← parsePSvaKind (← getStrField j "property_kind")
+  let edge ← parsePSvaEdge (← getStrField j "edge")
+  let clock ← getStrField j "clock"
+  let property ← parsePSvaProp (← getField j "property")
+  return { kind := pKind, edge, clock, property }
 
 /-! ## Types -/
 
@@ -698,12 +792,16 @@ def parseModule2 (j : Json) : Except String PDesign :=
       let qkind ← getStrField qj "property_kind"
       let qclock := getOptStr qj "clock"
       let qtext := (getOptField qj "text").bind (·.getStr?.toOption) |>.getD ""
+      let qast ← match getOptField qj "ast" with
+        | none => pure none
+        | some aj => some <$> parsePSvaCheck aj
       let qpath ← match getOptField qj "path" with
         | none => pure []
         | some pj => (← pj.getArr?).toList.mapM (fun x =>
             x.getStr?.mapError (fun _ => "property path entry is not a string"))
       properties := properties ++
-        [{ name := qname, kind := qkind, clock := qclock, text := qtext, path := qpath }]
+        [{ name := qname, kind := qkind, clock := qclock, text := qtext,
+           ast := qast, path := qpath }]
     for oj in (← (← getField j "others").getArr?) do
       match ← getKind oj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]

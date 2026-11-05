@@ -244,7 +244,50 @@
             "name": "",
             "property_kind": "assert",
             "clock": "clk",
-            "text": "assert property (@(posedge clk) disable iff (!rst_n) a |-> b);"
+            "text": "assert property (@(posedge clk) disable iff (!rst_n) a |-> b);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaDisable",
+                "guard": {
+                  "kind": "SvaExpr",
+                  "expr": {
+                    "kind": "Unary",
+                    "op": "!",
+                    "operand": {
+                      "kind": "Ident",
+                      "name": "rst_n"
+                    }
+                  }
+                },
+                "body": {
+                  "kind": "SvaImplication",
+                  "antecedent": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "a"
+                      }
+                    }
+                  },
+                  "consequent": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "b"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           {
             "kind": "SvaProperty",
@@ -257,7 +300,36 @@
             "name": "",
             "property_kind": "assume",
             "clock": "clk",
-            "text": "assume property (@(posedge clk) a |=> b);"
+            "text": "assume property (@(posedge clk) a |=> b);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assume",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaNonoverlap",
+                "antecedent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "a"
+                    }
+                  }
+                },
+                "consequent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "b"
+                    }
+                  }
+                }
+              }
+            }
           },
           {
             "kind": "SvaProperty",
@@ -270,7 +342,43 @@
             "name": "",
             "property_kind": "cover",
             "clock": "clk",
-            "text": "cover property (@(posedge clk) a ##1 b);"
+            "text": "cover property (@(posedge clk) a ##1 b);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "cover",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaConcat",
+                  "left": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "a"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "SvaDelay",
+                    "cycles": 1,
+                    "body": {
+                      "kind": "SvaAtom",
+                      "test": {
+                        "kind": "SvaExpr",
+                        "expr": {
+                          "kind": "Ident",
+                          "name": "b"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         ]
       }

@@ -539,15 +539,52 @@ inductive GenItem where
   | inst (i : PInst)
 deriving Repr, BEq, Inhabited
 
-/-- A retained concurrent assertion.  Properties are envelope metadata until
-the SVA fragment is lowered to a proof predicate; keeping the source text and
-clock here prevents the loader from treating an assertion as an executable
-procedural process. -/
+/-! Structured SVA syntax retained from Slang.  Ordinary boolean leaves are
+`PExpr`; the property layer adds only sampling, delays, implications and
+`disable iff`.  Source text remains provenance, never a second parser input. -/
+inductive PSvaBool where
+  | expr (value : PExpr)
+  | past (cycles : Nat) (value : PExpr)
+  | rose (value : PExpr)
+  | fell (value : PExpr)
+  | stable (value : PExpr)
+deriving Repr, BEq, Inhabited
+
+inductive PSvaSeq where
+  | atom (test : PSvaBool)
+  | delay (cycles : Nat) (body : PSvaSeq)
+  | range (lo hi : Nat) (body : PSvaSeq)
+  | concat (left right : PSvaSeq)
+deriving Repr, BEq, Inhabited
+
+inductive PSvaProp where
+  | always (body : PSvaSeq)
+  | implies (antecedent consequent : PSvaSeq)
+  | nonoverlap (antecedent consequent : PSvaSeq)
+  | disable (guard : PSvaBool) (body : PSvaProp)
+deriving Repr, BEq, Inhabited
+
+inductive PSvaKind where
+  | assert | assume | cover
+deriving Repr, BEq, Inhabited
+
+inductive PSvaEdge where
+  | posedge | negedge | any
+deriving Repr, BEq, Inhabited
+
+structure PSvaCheck where
+  kind : PSvaKind
+  edge : PSvaEdge
+  clock : String
+  property : PSvaProp
+deriving Repr, BEq, Inhabited
+
 structure PProperty where
   name : String
   kind : String
   clock : Option String := none
   text : String := ""
+  ast : Option PSvaCheck := none
   /-- Lexical generate labels enclosing this property.  Generated instance
   indices are left to the hierarchy contract; they are not flattened here. -/
   path : List String := []

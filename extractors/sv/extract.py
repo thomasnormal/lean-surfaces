@@ -25988,6 +25988,161 @@ def _convert_syscall(sm, s, e):
 # Processes
 # ---------------------------------------------------------------------------
 
+def _sva_unwrap(node):
+    """Strip Slang's syntax wrappers around an assertion expression."""
+    while isinstance(node, dict) and node.get("kind") in (
+            "SimplePropertyExpr", "SimpleSequenceExpr", "ParenthesizedExpression",
+            "PropertyExpr", "SequenceExpr"):
+        node = node.get("expr", node.get("expression"))
+    return node
+
+
+def _sva_integer(node):
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict) or node.get("kind") != "IntegerLiteralExpression":
+        return None
+    raw = node.get("literal", {}).get("text", "").replace("_", "")
+    try:
+        if "'" in raw:
+            # The structured SVA fragment deliberately keeps only ordinary
+            # decimal delay bounds. Sized/non-decimal bounds remain loud.
+            return int(raw, 10)
+        return int(raw, 0)
+    except (TypeError, ValueError):
+        return None
+
+
+def _sva_pexpr(node):
+    """Convert an ordinary SV expression in an assertion to PExpr JSON.
+
+    This is intentionally a small AST adapter, not a text parser.  Slang
+    has already resolved the grammar; unsupported expression classes remain
+    explicit Unsupported nodes and are rejected by structured ingestion.
+    """
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict):
+        return {"kind": "Unsupported", "sv_kind": "SvaExpression", "text": ""}
+    kind = node.get("kind")
+    if kind == "IdentifierName":
+        return {"kind": "Ident", "name": node.get("identifier", {}).get("text", "")}
+    if kind == "IntegerLiteralExpression":
+        value = _sva_integer(node)
+        if value is not None:
+            return {"kind": "Int", "value": value}
+        return {"kind": "Unsupported", "sv_kind": kind, "text": "integer literal"}
+    if kind in ("UnaryLogicalNotExpression", "UnaryBitwiseNotExpression",
+                "UnaryMinusExpression", "UnaryPlusExpression"):
+        op = {"UnaryLogicalNotExpression": "!", "UnaryBitwiseNotExpression": "~",
+              "UnaryMinusExpression": "-", "UnaryPlusExpression": "+"}[kind]
+        return {"kind": "Unary", "op": op,
+                "operand": _sva_pexpr(node.get("operand"))}
+    binary_ops = {
+        "LogicalAndExpression": "&&", "LogicalOrExpression": "||",
+        "EqualityExpression": "==", "InequalityExpression": "!=",
+        "CaseEqualityExpression": "===", "CaseInequalityExpression": "!==",
+        "LessThanExpression": "<", "LessThanEqualExpression": "<=",
+        "GreaterThanExpression": ">", "GreaterThanEqualExpression": ">=",
+        "BinaryAndExpression": "&", "BinaryOrExpression": "|",
+        "BinaryXorExpression": "^", "AddExpression": "+",
+        "SubtractExpression": "-", "MultiplyExpression": "*",
+        "DivideExpression": "/", "ModExpression": "%",
+    }
+    if kind in binary_ops:
+        return {"kind": "Binary", "op": binary_ops[kind],
+                "left": _sva_pexpr(node.get("left")),
+                "right": _sva_pexpr(node.get("right"))}
+    if kind == "ConditionalExpression":
+        return {"kind": "Ternary", "cond": _sva_pexpr(node.get("condition")),
+                "then": _sva_pexpr(node.get("left")),
+                "else": _sva_pexpr(node.get("right"))}
+    return {"kind": "Unsupported", "sv_kind": kind or "SvaExpression",
+            "text": kind or "SvaExpression"}
+
+
+def _sva_bool(node):
+    node = _sva_unwrap(node)
+    if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
+        left = node.get("left", {})
+        name = left.get("systemIdentifier", {}).get("text", "")
+        args = [p.get("expr") for p in node.get("arguments", {}).get("parameters", [])
+                if isinstance(p, dict) and p.get("kind") == "OrderedArgument"]
+        if name in ("$rose", "$fell", "$stable") and len(args) == 1:
+            return {"kind": {"$rose": "SvaRose", "$fell": "SvaFell",
+                              "$stable": "SvaStable"}[name],
+                    "expr": _sva_pexpr(args[0])}
+        if name == "$past" and len(args) == 1:
+            return {"kind": "SvaPast", "cycles": 1, "expr": _sva_pexpr(args[0])}
+        if name == "$past" and len(args) == 2:
+            cycles = _sva_integer(args[1])
+            if cycles is not None and cycles >= 0:
+                return {"kind": "SvaPast", "cycles": cycles,
+                        "expr": _sva_pexpr(args[0])}
+    return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
+
+
+def _sva_seq(node):
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict):
+        return {"kind": "SvaAtom", "test": _sva_bool(node)}
+    if node.get("kind") != "DelayedSequenceExpr":
+        return {"kind": "SvaAtom", "test": _sva_bool(node)}
+    first = node.get("first")
+    current = (_sva_seq(first) if first is not None else None)
+    for element in node.get("elements", []):
+        if element.get("kind") != "DelayedSequenceElement":
+            return {"kind": "SvaUnsupported", "sv_kind": element.get("kind", "sequence")}
+        delay = element.get("delayVal")
+        if delay is not None:
+            n = _sva_integer(delay)
+            if n is None or n < 0:
+                return {"kind": "SvaUnsupported", "sv_kind": "SvaDelay"}
+            body = {"kind": "SvaAtom", "test": _sva_bool(element.get("expr"))}
+            part = {"kind": "SvaDelay", "cycles": n, "body": body}
+        else:
+            rng = element.get("range", {})
+            lo, hi = _sva_integer(rng.get("left")), _sva_integer(rng.get("right"))
+            if lo is None or hi is None or lo < 0 or hi < lo:
+                return {"kind": "SvaUnsupported", "sv_kind": "SvaRange"}
+            part = {"kind": "SvaRange", "lo": lo, "hi": hi,
+                    "body": {"kind": "SvaAtom", "test": _sva_bool(element.get("expr"))}}
+        current = part if current is None else {"kind": "SvaConcat", "left": current, "right": part}
+    return current or {"kind": "SvaUnsupported", "sv_kind": "EmptySequence"}
+
+
+def _sva_property_ast(statement):
+    data = json.loads(statement.syntax.to_json())
+    spec = data.get("statement", {}).get("propertySpec", {})
+    clocking = spec.get("clocking", {})
+    event = clocking.get("expr", {}).get("expr", {})
+    edge_kind = event.get("edge", {}).get("kind", "")
+    edge = ("posedge" if edge_kind == "PosEdgeKeyword" else
+            "negedge" if edge_kind == "NegEdgeKeyword" else "any")
+    clock = event.get("expr", {}).get("identifier", {}).get("text")
+    if not clock:
+        return None
+    statement_kind = data.get("statement", {}).get("kind", "")
+    p_kind = ("assert" if statement_kind == "AssertPropertyStatement" else
+              "assume" if statement_kind == "AssumePropertyStatement" else
+              "cover" if statement_kind == "CoverPropertyStatement" else None)
+    if p_kind is None:
+        return None
+    root = spec.get("expr")
+    if isinstance(root, dict) and root.get("kind") == "ImplicationPropertyExpr":
+        op = root.get("op", {}).get("kind")
+        prop_kind = "SvaNonoverlap" if op == "OrEqualsArrow" else "SvaImplication"
+        prop = {"kind": prop_kind,
+                "antecedent": _sva_seq(root.get("left")),
+                "consequent": _sva_seq(root.get("right"))}
+    else:
+        prop = {"kind": "SvaAlways", "body": _sva_seq(root)}
+    disable = spec.get("disable")
+    if disable is not None:
+        prop = {"kind": "SvaDisable", "guard": _sva_bool(disable.get("expr")),
+                "body": prop}
+    return {"kind": "SvaCheck", "property_kind": p_kind, "edge": edge,
+            "clock": clock, "property": prop}
+
+
 def _convert_concurrent_property(sm, m, path=()):
     """Retain a concurrent assertion as envelope metadata.
 
@@ -26013,6 +26168,12 @@ def _convert_concurrent_property(sm, m, path=()):
         "clock": clock,
         "text": text,
     }
+    try:
+        structured = _sva_property_ast(m)
+    except Exception:
+        structured = None
+    if structured is not None:
+        result["ast"] = structured
     # Preserve the old module-level envelope byte-for-byte; an absent path
     # is the same as the empty lexical path in the Lean default.
     if path:

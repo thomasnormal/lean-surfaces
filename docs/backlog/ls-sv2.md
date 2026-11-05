@@ -830,3 +830,23 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** use the architectural machine append bridge as the base state
 threading law; cycle, packet, ROB, flush, and RVFI layers retain their
 boundary-specific observations while sharing the same window discipline.
+
+## 2026-11-05-ls-sv2-35 — compose stateful memory windows
+
+Added `rvMemoryStateAfter`, `threadRvInputs_append`, and
+`rvMemoryMachine_trace_append` to `LeanModels/Refine/MemoryMachine.lean`.
+The stateful adapter now composes windows while carrying both the architectural
+register state and the byte-addressed memory that precedes the next input.
+
+The PicoRV32 witness splits its four non-trapping instructions into two
+stateful-memory windows and applies the new bridge, so the second window reads
+the memory produced by the first rather than a stale snapshot.
+
+**MEASURED:** `lake build LeanModels.Refine.MemoryMachine
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs).
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  The new bridge reports only existing `propext`/`Quot.sound`;
+no `sorry`, new axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep memory threading explicit at the stateful adapter; split
+traces must carry the post-window memory into subsequent instruction inputs.

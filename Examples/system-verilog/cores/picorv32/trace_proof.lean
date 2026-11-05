@@ -55,6 +55,14 @@ def nontrapInputs : List Input :=
   , { fetched := .word 0x10002103, memory := memFive }
   , { fetched := .word 0x00110193, memory := memFive } ]
 
+def nontrapFirstInputs : List Input :=
+  [ { fetched := .word 0x00500093, memory := memZero }
+  , { fetched := .word 0x10102023, memory := memZero } ]
+
+def nontrapSecondInputs : List Input :=
+  [ { fetched := .word 0x10002103, memory := memFive }
+  , { fetched := .word 0x00110193, memory := memFive } ]
+
 def nontrapObservations : List RvfiObservation := observations.take 4
 
 def nontrapExpected : List Retirement := expected.take 4
@@ -346,6 +354,20 @@ theorem pinned_stateful_memory_trace :
         (threadRvInputs cv32e40pProfile rvMachine.init memZero nontrapInputs) := by
   exact rvMemoryMachine_trace cv32e40pProfile rvMachine.init memZero nontrapInputs
 
+theorem pinned_stateful_memory_windows :
+    trace (rvMemoryMachineWith cv32e40pProfile)
+        { arch := rvMachine.init, memory := memZero }
+        (nontrapFirstInputs ++ nontrapSecondInputs) =
+      trace (rvMemoryMachineWith cv32e40pProfile)
+        { arch := rvMachine.init, memory := memZero } nontrapFirstInputs ++
+        trace (rvMemoryMachineWith cv32e40pProfile)
+          (rvMemoryStateAfter cv32e40pProfile
+            { arch := rvMachine.init, memory := memZero } nontrapFirstInputs)
+          nontrapSecondInputs := by
+  exact rvMemoryMachine_trace_append cv32e40pProfile
+    { arch := rvMachine.init, memory := memZero }
+    nontrapFirstInputs nontrapSecondInputs
+
 /-- The measured packed stream and the ISA stream are connected by one
 trace-level equality, rather than by separate row and architectural checks. -/
 theorem pinned_nontrap_observed_trace_refines_isa :
@@ -360,6 +382,9 @@ theorem pinned_nontrap_observed_trace_refines_isa :
   (rvfiObservations pinnedCycleMachine pinnedCycleMachine.init
     (cycleFirstInputs ++ cycleSecondInputs)) ==
   some (nontrapFirstExpected ++ nontrapSecondExpected)
+#guard (trace (rvMemoryMachineWith cv32e40pProfile)
+  { arch := rvMachine.init, memory := memZero }
+  (nontrapFirstInputs ++ nontrapSecondInputs)).length == 4
 #guard normalizeRvfiTrace? 2 nontrapSecondObservations == some nontrapSecondExpected
 #guard normalizeRvfiTrace? 0
   (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
@@ -406,6 +431,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_inputs
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
+#print axioms pinned_stateful_memory_windows
 #print axioms pinned_nontrap_observed_trace_refines_isa
 
 end Examples.«system-verilog».cores.picorv32.trace_proof

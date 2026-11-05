@@ -68,3 +68,7 @@ def round_float_eight(value):
 
 def round_float_nine(value):
     return round(value, 9)
+
+
+def round_float_ten(value):
+    return round(value, 10)

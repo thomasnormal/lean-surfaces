@@ -1,5 +1,21 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F1: audit retained SVA forms against downstream clean-room repros
+
+`SvaContract.parseSimple` now admits a finite `$past(signal, depth)` operand
+and handles a nested closing parenthesis in a `disable iff` body without
+truncating the consequent. Kernel guards cover a finite assertion with
+`disable iff`, a bounded assertion, and an assumption using `$rose`, finite
+`$past`, and `disable iff (!rst)` with `$stable`.
+
+The clean-room audit records the current target walls in
+`docs/sv-frontier.md`: plain `always`, async-reset `always_ff`, sequential
+unpacked memories, hierarchy, user-function calls, and initial `$readmemh`
+remain named boundaries. Finite assertions, bounded ranges, and assumptions
+with `disable iff` retain metadata and connect to the E contract. A bare cover
+sequence remains loud because the current contract requires an implication;
+immediate assertions and unbounded `s_eventually` remain outside F1 by design.
+
 ## `Lib/Newton.lean` moves into the fdivp_newton reference
 
 `LeanModels/Sv/Lib/Newton.lean` leaves the library, and with it

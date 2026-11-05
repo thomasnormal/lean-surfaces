@@ -124,6 +124,32 @@ The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
 
+#### Downstream clean-room wall audit
+
+The first downstream clean-room repros put the remaining target blockers in
+this order:
+
+| rank | source shape | measured boundary |
+|---:|---|---|
+| 1 | `always @(posedge clk)` | `SeqProfile.ffOnlyProfileB` is false for a plain `always`; it is not admitted to the FF-only cycle profile. |
+| 2 | `always_ff @(posedge clk or negedge rstn)` | `Process2.alwaysFFR` is retained, but the async-reset form is outside `cycleStep2` and has no cycle-model/refinement theorem yet. |
+| 3 | an unpacked memory written in `always_ff` | `sv_structure` reports out-of-tier module members; the E memory bridge and procedural NBA adapter do not yet reach the structure and cycle views. |
+| 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |
+| 5 | a user function in a combinational expression | the process evaluator refuses `CallExpression`; function-call evaluation remains outside this source-shaped path. |
+| 6 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |
+
+The same audit exercises the F1 property forms. Finite concurrent assertions,
+bounded ranges, and assumptions with `disable iff` load with their retained
+metadata and connect to `SvaContract`; the finite assert and assumption forms
+also pass the source parser's kernel guards, including `$rose`, `$past` with a
+finite depth, and `$stable`. A bare cover sequence such as
+`cover property (@(posedge clk) req ##[1:3] ack);` remains loud with the parser
+reason `expected posedge implication form`: the current E contract vocabulary
+requires an implication around a sequence. Immediate assertions remain outside
+the finite concurrent-property envelope, and `s_eventually` remains an
+unbounded liveness operator outside F1 by design. These boundaries preserve a
+named refusal until their E meaning and refinement rule exist.
+
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
 processes. Their lexical generate labels are now carried in each property's

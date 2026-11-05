@@ -128,6 +128,24 @@ theorem normalizeRvfiRobTrace {State : Type}
   rw [machine.toRobMachine_trace]
   exact normalizeRvfiCycleTrace machine state inputs h
 
+/-- State-threaded normalization composition also gives the ROB-projected
+retirement stream for two adjacent single-channel RVFI windows. -/
+theorem normalizeRvfiRobTrace_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    robTrace machine.toRobMachine state (first ++ second) =
+      firstRetirements ++ secondRetirements := by
+  apply normalizeRvfiRobTrace machine state (first ++ second)
+  exact normalizeRvfiCycleTrace_append machine state first second hfirst hsecond
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
@@ -135,3 +153,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_stateAfter
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
+#print axioms LeanModels.Refine.normalizeRvfiRobTrace_append

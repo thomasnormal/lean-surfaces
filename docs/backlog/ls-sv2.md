@@ -1108,3 +1108,25 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep single-channel RVFI state/order transport as an adapter over
 the generic ROB certificate; packet contents remain observational while the
 retired-input projection determines architectural state and order advance.
+
+## 2026-11-05-ls-sv2-48 — compose normalized single-channel RVFI ROB windows
+
+Added `normalizeRvfiRobTrace_append` to `LeanModels/Refine/RvfiRob.lean`.
+Two adjacent single-channel RVFI windows can now be normalized at the carried
+RVFI order and projected through the ROB adapter as one concatenated retirement
+stream, with the first window's retained state feeding the second certificate.
+
+The PicoRV32 witness applies the theorem to `cycleFirstInputs` and
+`cycleSecondInputs`, proving the concatenated ROB stream equals the two measured
+retirement chunks.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and the
+new composition theorem reports only the existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep normalization composition above the ROB adapter: order
+certificates and retained state determine the concatenated stream, while the
+adapter only transports each validated retirement into tagged commits.

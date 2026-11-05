@@ -178,9 +178,45 @@ theorem cycle_trace_refines {CoreState IsaState : Type}
           rcases hs with ⟨hrel', hRetirement⟩
           rw [hRetirement, ih c' a' hrel' hrest]
 
+theorem cycleStateAfter_refines {CoreState IsaState : Type}
+    {core : CycleMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines core isa rel admit) :
+    ∀ (coreState : CoreState) (isaState : IsaState) (inputs : List Input),
+      rel coreState isaState →
+      (∀ i ∈ inputs, admit i) →
+      rel (cycleStateAfter core coreState inputs)
+        (machineStateAfter isa isaState
+          (retireInputs core coreState inputs)) := by
+  intro coreState isaState inputs hrel
+  induction inputs generalizing coreState isaState with
+  | nil =>
+      intro _
+      exact hrel
+  | cons input rest ih =>
+      intro hall
+      have hi : admit input := hall input (by simp)
+      have hrest : ∀ i ∈ rest, admit i := by
+        intro i hi'
+        exact hall i (by simp [hi'])
+      have hs := h.2 coreState isaState input hrel hi
+      rcases hC : core.step coreState input with ⟨coreState', observation⟩
+      simp only [cycleStateAfter, retireInputs, hC]
+      simp only [hC] at hs
+      cases observation with
+      | none =>
+          exact ih coreState' isaState hs hrest
+      | some coreRetirement =>
+          rcases hI : isa.step isaState input with ⟨isaState', isaRetirement⟩
+          simp only [machineStateAfter, hI]
+          simp only [hI] at hs
+          rcases hs with ⟨hrel', hRetirement⟩
+          exact ih coreState' isaState' hrel' hrest
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.cycle_trace_refines
+#print axioms LeanModels.Refine.cycleStateAfter_refines
 #print axioms LeanModels.Refine.cycleStateAfter_append
 #print axioms LeanModels.Refine.cycleTrace_append
 #print axioms LeanModels.Refine.retireInputs_append

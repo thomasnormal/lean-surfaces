@@ -937,3 +937,24 @@ was introduced.
 **DECIDED:** keep flush relation transport independent from trace equality;
 flushes advance the core state without consuming an ISA step, while retire
 packets use the shared packet state projection.
+
+## 2026-11-05-ls-sv2-40 — transport refinement across cycle windows
+
+Added `cycleStateAfter_refines` to `LeanModels/Refine/Cycle.lean`.  A
+`CycleStepRefines` certificate now transports the relation across a finite
+cycle window while filtering bubbles: stuttering cycles keep the ISA state,
+and retiring cycles advance it on exactly the retained retirement inputs.
+
+The toy two-cycle pipeline witness applies the theorem to a bubble/retirement
+pair and checks the resulting relation against the filtered input stream.
+
+**MEASURED:** `lake build LeanModels.Refine.Cycle
+Examples.«system-verilog».cores.toy_rv32i.cycle_proof` passed (28 jobs), and
+`cycleStateAfter_refines` reports only the existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep cycle relation transport aligned with the filtered input
+semantics; bubbles are architectural stutter and never become fabricated ISA
+steps.

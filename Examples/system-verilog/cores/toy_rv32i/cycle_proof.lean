@@ -115,6 +115,22 @@ theorem pipeline_trace_refines (n : Nat) :
         simp [pipelineInput, toyAdmits, addiInput, zeroMem])
   rw [h, hinputs]
 
+theorem pipeline_state_after_refines :
+    pipelineRel
+      (cycleStateAfter pipelineMachine pipelineMachine.init
+        [pipelineInput, pipelineInput])
+      (machineStateAfter rvMachine rvMachine.init
+        (retireInputs pipelineMachine pipelineMachine.init
+          [pipelineInput, pipelineInput])) := by
+  exact LeanModels.Refine.cycleStateAfter_refines pipeline_step_refines
+    pipelineMachine.init rvMachine.init [pipelineInput, pipelineInput]
+    (by exact ⟨rfl, rfl, rfl⟩)
+    (by
+      intro input hi
+      simp at hi
+      subst input
+      simp [pipelineInput, toyAdmits, addiInput, zeroMem])
+
 theorem pipeline_windows_state :
     cycleStateAfter pipelineMachine pipelineMachine.init
         ([pipelineInput] ++ [pipelineInput]) =
@@ -153,6 +169,7 @@ theorem pipeline_windows_inputs :
 
 #print axioms pipeline_step_refines
 #print axioms pipeline_trace_refines
+#print axioms pipeline_state_after_refines
 #print axioms pipeline_windows_state
 #print axioms pipeline_windows_trace
 #print axioms pipeline_windows_inputs

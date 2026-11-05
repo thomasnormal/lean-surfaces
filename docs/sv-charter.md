@@ -48,6 +48,15 @@ process record. The `seq_async_reset` witness checks reset assertion and
 release, and its five-cycle row matches Icarus. Blocking bodies, mixed reset
 pairs, and multiple clocks remain outside this profile.
 
+## Pure automatic function calls in expressions — 2026-11-05
+
+The source-shaped extractor admits a narrow function-call fragment: an
+automatic, input-only, side-effect-free function with a finite nonrecursive
+return body is inlined at its call site. The clean-room `step(a)` example
+becomes the existing `Expr2` addition tree, preserving exact source intent
+without adding a call constructor. Stateful, static, recursive, task,
+output/ref, and unsupported calls remain loud.
+
 ## F1 retained SVA safety envelope — 2026-11-04
 
 `LeanModels.Sv.Sva` gives the retained concurrent-assertion shape a fuel-free

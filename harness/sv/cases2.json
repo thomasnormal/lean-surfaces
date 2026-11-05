@@ -32,6 +32,19 @@
       "measured": "Active-low asynchronous reset is sampled and committed before the edge process; the reset assertion and release trace matches Icarus."
     },
     {
+      "name": "user_function_eval",
+      "example": "seq_function",
+      "top": "function_call_eval",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0001"},
+        {"a": "1010"},
+        {"a": "1111"}
+      ],
+      "measured": "A side-effect-free automatic function with input formals is inlined into the combinational expression; other calls remain loud."
+    },
+    {
       "name": "always_ff_loop",
       "example": "sem2/always_ff_loop",
       "top": "always_ff_loop",

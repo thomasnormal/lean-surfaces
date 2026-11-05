@@ -135,7 +135,7 @@ this order:
 | 2 | `always_ff @(posedge clk or negedge rstn)` | **Resolved in this packet:** `ffResetProfileB` admits the retained `Process2.alwaysFFR` shape, and `resetPass2_ffResetOnly` bridges selected reset events to source-shaped NBA updates. Kernel guards cover assertion and release; the differential row matches Icarus over five cycles. |
 | 3 | an unpacked memory written in `always_ff` | `sv_structure` reports out-of-tier module members; the E memory bridge and procedural NBA adapter do not yet reach the structure and cycle views. |
 | 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |
-| 5 | a user function in a combinational expression | the process evaluator refuses `CallExpression`; function-call evaluation remains outside this source-shaped path. |
+| 5 | a user function in a combinational expression | **Resolved in this packet:** the extractor's pure automatic input-only function path inlines the return expression, and run2 evaluates the resulting expression. Side effects, recursion, static functions, tasks, and unsupported bodies remain loud. |
 | 6 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |
 
 The same audit exercises the F1 property forms. Finite concurrent assertions,

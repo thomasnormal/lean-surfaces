@@ -21,6 +21,16 @@ updates. The `seq_async_reset` guards cover reset assertion and release, and
 the `async_reset_ff_profile` differential row matches Icarus over five cycles;
 other reset controls and blocking bodies remain loud.
 
+## Pure automatic function calls inline in combinational expressions
+
+The existing symbolic extractor path now has a clean-room receipt for a
+side-effect-free automatic function with input-only formals:
+`step(a)` is retained as the exact `a + 4'd1` expression, so run2 evaluates
+it without adding a call node or a new AST constructor. The
+`user_function_eval` differential row matches Icarus over four cycles.
+Recursive, static, task, output/ref, stateful, and otherwise unsupported calls
+remain loud at the named `CallExpression` boundary.
+
 ## F1: audit retained SVA forms against downstream clean-room repros
 
 `SvaContract.parseSimple` now admits a finite `$past(signal, depth)` operand

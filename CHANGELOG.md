@@ -2999,3 +2999,6 @@ change is listed here under **Changed** or **Removed**.
   `nonlocal` names instead of dropping their resumed stores.
 - Python: preserve CPython's value-before-annotation order for non-simple
   annotated targets and omit annotation evaluation in function bodies.
+- Python: remove `len(sequence * count)` length-only ingestion rewrites;
+  oversized ordinary materialization now refuses instead of returning a
+  length CPython cannot build.

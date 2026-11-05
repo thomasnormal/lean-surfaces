@@ -149,18 +149,11 @@ def withExitOnFlow (eval : Expr → SemF RVal) (exitExpr : Expr)
 def lenM (v : RVal) : SemF RVal := do
   liftRes (lenValH (← frameHeap) v)
 
-/-- `len(sequence * count)` can answer from immediate operands without
-materializing an over-budget repeated value. Heap-backed operands use the
-ordinary stateful multiplication worker, preserving list allocation and
-error ordering. -/
-def lenMultM (a b : RVal) : SemF RVal := do
-  match sequenceMultLength a b with
-  | some result => liftRes result
-  | Option.none =>
-      let h ← frameHeap
-      let (h', product) ← liftRes (evalBinOpH h .mult a b)
-      heapPut h'
-      liftRes (lenValH h' product)
+/- The old length-only synthetic builtin is retained as a loud compatibility
+boundary for hand-built ASTs. Approved ingestion now preserves the ordinary
+`len(sequence * count)` nodes, so this path is unreachable for source files. -/
+def lenMultM (_a _b : RVal) : SemF RVal :=
+  refuse "length-only sequence repetition is outside the tier; materialization must be modeled"
 
 /-- Store `env[target] := v` through the trunk's own target walker. -/
 def assignM (target : Expr) (v : RVal) : SemF Unit := do

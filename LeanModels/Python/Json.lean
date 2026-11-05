@@ -721,29 +721,6 @@ private def stmtBinds : Stmt → Option (List String) := stmtBindsWith false
 @[inherit_doc stmtBindsWith]
 private def aliasStmtBinds : Stmt → Option (List String) := stmtBindsWith true
 
-/- The active-exception payload is deliberately not part of `FrameState` yet.
-   Admit the one bare re-raise shape whose payload is statically known anyway:
-   a handler for `N` whose whole protected body is the class-identity raise
-   `raise N`.  In that shape CPython can only enter the handler with `N`, so
-   lowering its direct bare `raise` to `raise N` preserves the existing
-   retained-state path.  Broad handlers, tuple handlers, nested control flow,
-   and every other re-raise remain structured and loud. -/
-private def plainHandlerName (name : String) : Bool :=
-  !name.isEmpty && !(name.toList.any (· == '|'))
-
-private def exactBareReraiseSource (body : Array Stmt) (handler : String) : Bool :=
-  if !plainHandlerName handler then false
-  else
-    match body.toList with
-    | [.raiseStmt (some (.name raised _)) none _] => raised == handler
-    | _ => false
-
-private def lowerDirectBareReraise (body : Array Stmt) (handler : String) : Array Stmt :=
-  match body.toList with
-  | [.raiseStmt none none sp] =>
-      #[.raiseStmt (some (.name handler sp)) none sp]
-  | _ => body
-
 mutual
   /-- Every `Name` occurring in the expression (the reference scan). -/
   private partial def exprRefs : Expr → List String
@@ -1469,37 +1446,6 @@ mutual
     es.mapM (lowerExpr ctx)
 end
 
-/-- Fuse the exact local-generator shape whose lifetime is already bounded by
-an immediately consuming return:
-
-    g = (x for x in it if c)
-    return all(g)
-
-The assignment has no observation between creation and consumption, and the
-local cannot be read after the return. Replacing the name with the original
-genexp therefore preserves evaluation order while allowing `lowerExpr` to see
-the consumer's `drainOk` gate. This is deliberately limited to a single
-plain-name assignment, a direct return, no keywords, and the existing draining
-consumer inventory (plus one-argument `next`). -/
-private def fuseImmediateGenexpDrains (ss : Array Stmt) : Array Stmt :=
-  let isConsumer (name : String) (arity : Nat) : Bool :=
-    (name == "next" && arity == 1) || drainingBuiltins.contains name
-  let rec go : List Stmt → List Stmt
-    | .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp ::
-        .ret (some (.call (.name consumer csp) #[.name used usedsp]
-          #[] Option.none callsp)) retsp :: rest =>
-        if alias == used && isConsumer consumer 1 then
-          .ret (some (.call (.name consumer csp)
-            #[.genExp elt target iter ifs wb gsp] #[] Option.none callsp)) retsp
-            :: go rest
-        else
-          .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp
-            :: .ret (some (.call (.name consumer csp) #[.name used usedsp]
-              #[] Option.none callsp)) retsp :: go rest
-    | s :: rest => s :: go rest
-    | [] => []
-  (go ss.toList).toArray
-
 mutual
   /-- Rewrite every lowerable genexp in the statement. -/
   private partial def lowerStmt (ctx : LowerCtx) (s : Stmt) :
@@ -1594,10 +1540,6 @@ mutual
     | .tryStmt b en hnd tu sp =>
         let b' ← lowerStmts ctx b
         let h' ← lowerStmts ctx hnd
-        let h' :=
-          if tu.isNone && exactBareReraiseSource b' en then
-            lowerDirectBareReraise h' en
-          else h'
         return .tryStmt b' en h' tu sp
     | .withStmt items body tu sp =>
         let items ← items.mapM fun item => do
@@ -1652,80 +1594,13 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
           yfForbidden := (f.body.toList.map yfNames).flatten
           walrusForbidden := f.params.toList.map Param.arg
             ++ (f.body.toList.map stmtNamesXW).flatten }
-      let (body', st') := (lowerStmts ctx (fuseImmediateGenexpDrains f.body)).run st
+      let (body', st') := (lowerStmts ctx f.body).run st
       (acc.push { f with body := body' }, st')
   let topCtx : LowerCtx :=
     { outer, params := [], assigned := []
       walrusForbidden := (topLevel.toList.map stmtNamesXW).flatten }
   let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
   (step.1 ++ st''.2, topLevel')
-
-/-! ## Immediate local aliases of admitted builtins
-
-The runtime deliberately keeps a function-valued name loud: `RVal` has no
-callable immediate, and returning a builtin through the public boundary would
-lose its identity. There is one smaller Python shape whose semantics are fully
-static, however: a direct local alias followed immediately by a call, as in
-`f = bool; return f(x)`. CPython evaluates the builtin lookup at the
-assignment and the call later, but this exact two-statement shape has no
-intervening observation or rebinding. Lower it to the ordinary builtin call and
-keep all other first-class callable forms refused.
--/
-
-private def immediateBuiltinAlias (name : String) : Bool :=
-  name == "bool" || name == "divmod" || name == "repr" || name == "len"
-    || name == "sorted" || name == "max" || name == "min" || name == "abs"
-    || name == "int" || name == "float" || name == "all" || name == "any"
-    || name == "str" || name == "sum" || name == "tuple" || name == "list"
-    || name == "ord" || name == "chr" || name == "pow" || name == "round"
-    || name == "ascii" || name == "hex" || name == "oct" || name == "bin" || name == "format" || name == "range" || name == "next" || name == "print"
-
-private def rewriteImmediateBuiltinAlias (outer : List String)
-    (params : Array Param) (body : Array Stmt) : Array Stmt :=
-  match body.toList with
-  | [.assign #[.name alias _] (.name builtin _) _assignSp,
-      .ret (some (.call (.name callee calleeSp) args kws cu callSp)) retSp] =>
-      if alias == callee && immediateBuiltinAlias builtin && alias != builtin
-          && !outer.contains builtin && !params.toList.any (·.arg == builtin) then
-        #[.ret (some (.call (.name builtin calleeSp) args kws cu callSp)) retSp]
-      else body
-  | _ => body
-
-private def rewriteImmediateBuiltinAliases (outer : List String)
-    (functions : Array FunctionDefn) :
-    Array FunctionDefn :=
-  functions.map fun f =>
-    { f with body := rewriteImmediateBuiltinAlias outer f.params f.body }
-
-/-! A function/class lookup is pure, but the OBJECT itself is not a runtime
-value in the current tier.  The one useful boundary case is a dead local
-assignment whose value is never observed: `x = f; return n`.  Erase only this
-exact two-statement form when the source name is an admitted module function or
-creation-pure class; a live assignment still reaches the loud first-class-value
-arm. -/
-
-private def rewriteDeadValue (valueNames : List String)
-    (params : Array Param) (body : Array Stmt) : Array Stmt :=
-  match body.toList with
-  | [.assign #[.name target _] (.name exception _) _assignSp,
-      .ret (some value) retSp] =>
-      if valueNames.contains exception
-          && target != exception
-          && !params.toList.any (·.arg == exception)
-          && !(exprRefs value).contains target then
-        #[.ret (some value) retSp]
-      else body
-  | _ => body
-
-private def rewriteDeadFunctionValues (classes : Array ClassDefn)
-    (functions : Array FunctionDefn) : Array FunctionDefn :=
-  let classNames := classes.toList.filterMap fun c =>
-    if c.ok && c.creationPure then some c.name else none
-  let functionNames := functions.toList.filterMap fun f =>
-    if !f.name.toList.any (· == '.') then some f.name else none
-  let names := admittedBuiltinExc ++ classNames ++ functionNames
-  functions.map fun f =>
-    { f with body := rewriteDeadValue names f.params f.body }
 
 private def chainAttrTempName : String := "<leanpy-chain-attr-temp>"
 
@@ -2060,15 +1935,11 @@ def parseModule (j : Json) : Except String Module :=
         ++ namedtuples.toList.map NamedTupleDefn.name
         ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
     let (functions', topLevel'') := lowerGenExps outer functions topLevel'
-    let functions' := rewriteImmediateBuiltinAliases outer functions'
     -- module-level def aliasing, LAST (docs/memory-model.md §module-level
     -- def aliasing): the censuses above see the original assigns, and the
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.
     let (functions'', topLevel''', aliases) :=
       recognizeDefAliases functions' classes' namedtuples topLevel''
-    -- Dead-value erasure runs after alias recognition so the value-name
-    -- census includes admitted module-level aliases as well as definitions.
-    let functions'' := rewriteDeadFunctionValues classes' functions''
     -- del RECONCILED, after the alias pass (alias entries ARE functions
     -- entries, so `del bisect` of an admitted alias is covered by the
     -- same definition-name test).

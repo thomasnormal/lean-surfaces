@@ -3005,3 +3005,6 @@ change is listed here under **Changed** or **Removed**.
 - Python: refuse negative-integer set iteration, set copies, and set
   intersections until CPython's table construction and signed hashes are
   modeled soundly.
+- Python: remove shape-specific builtin-alias, dead-value, immediate-genexp,
+  and bare-reraise ingestion rewrites; those source shapes now retain their
+  AST and refuse through the existing first-class or active-exception limits.

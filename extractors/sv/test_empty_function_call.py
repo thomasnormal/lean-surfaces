@@ -392,6 +392,35 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_symbolic_local_qualified_cases_are_inlined_when_provably_safe(self):
+        for qualifier in ("unique", "unique0", "priority"):
+            with self.subTest(qualifier=qualifier):
+                design = self.symbolic(
+                    "module top(input logic [3:0] a, output logic [3:0] y); "
+                    "function automatic logic [3:0] step(input logic [3:0] x); "
+                    "logic [3:0] t; begin " + qualifier +
+                    " case (x) 4'h0: t = 4'h3; 4'h1: t = 4'h4; "
+                    "default: t = 4'hc; endcase return t; end endfunction "
+                    "assign y = step(a); endmodule")
+                values = [node for node in nodes(design)
+                          if node.get("user_function_inline")]
+                self.assertEqual(len(values), 1)
+                self.assertEqual(values[0]["kind"], "Ternary")
+                self.assertEqual(values[0]["user_function_case_check"],
+                                 qualifier)
+                self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                                     for node in nodes(design)))
+
+    def test_symbolic_local_qualified_case_with_duplicate_label_stays_loud(self):
+        design = self.symbolic(
+            "module top(input logic [3:0] a, output logic [3:0] y); "
+            "function automatic logic [3:0] step(input logic [3:0] x); "
+            "logic [3:0] t; begin unique case (x) 4'h0: t = 4'h3; "
+            "4'h0: t = 4'h4; default: t = 4'hc; endcase return t; "
+            "end endfunction assign y = step(a); endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_implicit_logic_return_is_materialized_at_call_site(self):
         design = lower(
             'module top; function f; f = 1\'b1; endfunction '

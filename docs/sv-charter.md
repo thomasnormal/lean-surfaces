@@ -19,8 +19,13 @@ blocking plain `case`, one assignment per arm (including `default`), and a
 return of the local temporary. Symbolic extraction substitutes input formals
 and emits nested case-equality ternaries in source order; no call-frame or new
 AST constructor is introduced. The `function_case_eval` witness and
-differential row match Icarus. Side effects, loops, recursion, static storage,
-tasks, qualified cases, and output/ref formals remain loud.
+differential row match Icarus. A qualified `unique`, `unique0`, or `priority`
+case is admitted only for distinct concrete integral labels with a `default`,
+so its claim is proved safe before the value expression is inlined;
+`function_unique_case_eval` pins that shape. Dynamic, overlapping, or
+incomplete qualified cases remain loud and are never silently treated as plain
+cases. Side effects, loops, recursion, static storage, tasks, and output/ref
+formals remain loud.
 
 ## Mixed combinational and asynchronous-reset cycles — 2026-11-05
 

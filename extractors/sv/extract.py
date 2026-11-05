@@ -11870,8 +11870,12 @@ def _sym_case_function_shape(subroutine):
     blocking `case` assignment to the final local and a return of that local.
     Each arm (including `default`) contains exactly one blocking assignment.
     The converter turns the case into nested case-equality ternaries, retaining
-    first-match source order.  Locals, loops, calls with effects, qualified
-    cases, and missing defaults stay outside this source-pure fragment.
+    first-match source order.  A qualified case is admitted only when its
+    claim is statically safe: it has a default and every item is a distinct
+    concrete integral literal.  That proves the qualifier can never be
+    violated, so erasing it in the value expression does not change the
+    result.  Dynamic, overlapping, or incomplete qualified cases stay loud
+    at the call boundary rather than silently becoming plain case semantics.
     """
     try:
         body = getattr(subroutine, "body", None)
@@ -11896,7 +11900,8 @@ def _sym_case_function_shape(subroutine):
             return None
         if str(getattr(case, "condition", "")).split(".")[-1] != "Normal":
             return None
-        if str(getattr(case, "check", "")).split(".")[-1] != "None_":
+        check = str(getattr(case, "check", "")).split(".")[-1]
+        if check not in CASE_CHECKS:
             return None
         ret = case_ret
         if type(ret).__name__ != "ReturnStatement":
@@ -11943,8 +11948,25 @@ def _sym_case_function_shape(subroutine):
         # shape: a later local read would require a scoped SSA environment.
         if any(getattr(d, "symbol", None) is not local for d in declarations):
             return None
+        if check != "None_":
+            # A default removes the no-match violation for all three
+            # qualifiers.  Distinct concrete case-equality literals remove
+            # the only remaining possible overlap violation (unique/unique0;
+            # priority's overlap is permitted).  Keep the proof deliberately
+            # narrower than the full case-coverage checker: unknowns,
+            # expressions, and duplicate labels remain a loud call boundary.
+            seen = set()
+            for patterns, _arm in arms:
+                for pattern in patterns:
+                    value = _constant_dimension_selector(pattern)
+                    if value is None:
+                        return None
+                    key = (int(pattern.type.bitWidth), int(value))
+                    if key in seen:
+                        return None
+                    seen.add(key)
         return (getattr(case, "expr", None), arms,
-                getattr(default_assignment, "right", None), local)
+                getattr(default_assignment, "right", None), local, check)
     except Exception:
         return None
 
@@ -13063,7 +13085,7 @@ def _sym_inline_function_call(sm, e):
             for expression in conditional_shape:
                 expression.visit(inspect)
         else:
-            case_expr, case_arms, case_default, _local = case_shape
+            case_expr, case_arms, case_default, _local, _case_check = case_shape
             case_expr.visit(inspect)
             case_default.visit(inspect)
             for patterns, arm in case_arms:
@@ -13159,9 +13181,10 @@ def _convert_sym_call_expr(sm, e):
     if inline is not None:
         bindings, payload = inline
         returned, conditional_shape, local_chain, case_shape = payload
+        case_check = None
         with _SymCallBinding(bindings):
             if case_shape is not None:
-                case_subject, case_arms, case_default, _local = case_shape
+                case_subject, case_arms, case_default, _local, case_check = case_shape
                 subject = convert_expr(sm, case_subject)
                 value = convert_expr(sm, case_default)
                 if subject is None or value is None:
@@ -13232,6 +13255,13 @@ def _convert_sym_call_expr(sm, e):
                      or value.get("kind") in ("ParamRef", "EnumRef"))):
             value = signed_metadata(value, e.type)
             value["user_function_inline"] = True
+            if case_shape is not None and case_check != "None_":
+                # The inliner only reaches this branch for a qualified case
+                # whose default and distinct concrete labels prove the claim
+                # cannot be violated.  Keep the qualifier as provenance in
+                # the envelope even though the value is represented by the
+                # existing ternary expression node.
+                value["user_function_case_check"] = CASE_CHECKS[case_check]
             value["span"] = node_span(sm, e)
             return value
     if (not getattr(e, "isSystemCall", False)

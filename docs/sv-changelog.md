@@ -16,8 +16,13 @@ Pure automatic input-only functions may now contain local declarations, a
 blocking plain `case` with a `default`, and a return of the local temporary.
 The symbolic extractor preserves the case as nested case-equality ternaries;
 the `function_case_eval` fixture and Icarus differential row cover the form.
-Stateful functions, loops, recursion, static storage, tasks, qualified cases,
-and output/ref formals remain loud.
+Stateful functions, loops, recursion, static storage, and output/ref formals
+remain loud. Qualified `unique`, `unique0`, and `priority` cases are admitted
+when labels are distinct concrete integral literals and a `default` arm is
+present, which proves that the claim cannot be violated for any input.
+Dynamic, overlapping, or incomplete qualified cases remain loud rather than
+falling through to plain-case behavior; `function_unique_case_eval` pins the
+admitted shape.
 
 ## Mixed combinational and asynchronous-reset cycles
 

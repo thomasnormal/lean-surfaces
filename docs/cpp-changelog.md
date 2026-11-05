@@ -5,6 +5,18 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.233] — 2026-11-05
+
+### Added
+
+- Added negative-false and false-negative callable-frame witnesses for
+  while- and do-while-inside-`switch` shadowed computed initialization,
+  fallthrough assignment, and control-transfer paths.
+
+### Measured
+
+- The checked-in corpus now contains **1572 differential rows**: **1555 MATCH**, **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**. Rung-4 statement rows increased to **1066**. Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.230] — 2026-11-04
 
 ### Added

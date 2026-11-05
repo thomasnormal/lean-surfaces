@@ -9413,11 +9413,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       .exn st (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
                     | _ => .exn st (.typeError s!"internal: {fstringFormatBuiltinName} expects two arguments")
                   else if fname == lenMultBuiltinName then
-                    -- Ingestion lowers `len(sequence * count)` to this
-                    -- synthetic call so the pure proof interpreter can
-                    -- answer the length without constructing an over-budget
-                    -- sequence.  Heap-backed operands still use the ordinary
-                    -- stateful multiplication path, exactly as the runner.
+                    -- Kept only for compatibility with hand-built ASTs. The
+                    -- approved ingestion path no longer creates this
+                    -- synthetic call; source `len(sequence * count)` stays
+                    -- as ordinary multiplication followed by `len`.
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [left, right] =>

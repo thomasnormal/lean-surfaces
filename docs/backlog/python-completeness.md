@@ -9020,3 +9020,19 @@ simple targets is unchanged.
 DECIDED: keep the current structured statement split with CPython's order until
 `AnnAssign` receives a direct semantic node; function annotation evaluation is
 omitted and module/class evaluation follows the value store.
+
+## 2026-11-05-pycomplete-340 — remove length-only repetition rewrites
+
+The ingestion pass no longer rewrites direct `len(sequence * count)` calls or
+the two-statement temporary-and-length shape into `<lenmult>`. Source now
+reaches ordinary multiplication followed by `len`, preserving the AST and its
+materialization behavior. Oversized string, tuple, and boundary-list products
+are explicitly loud until CPython's allocation and memory outcomes are
+modeled; the former runner returned a fabricated length for
+`len("ab" * 2**62)` while CPython 3.9 raises `OverflowError`.
+
+The legacy synthetic worker remains only as a compatibility path for hand-built
+ASTs; approved ingestion cannot produce it.
+
+DECIDED: keep sequence materialization high level and refuse products beyond
+the model's allocation budget; no length-only shortcut is admitted.

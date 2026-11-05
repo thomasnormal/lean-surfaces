@@ -362,6 +362,11 @@
     "note": "non-simple annotations store the value before module annotation evaluation and skip annotation evaluation in functions"
   },
   {
+    "file": "harness/scripts/len_repeat_oversize.py",
+    "expect": "unsupported",
+    "note": "len(sequence * count) now evaluates the ordinary multiplication and refuses oversized materialization instead of using a length-only rewrite"
+  },
+  {
     "file": "harness/scripts/int_string_script.py",
     "expect": "match"
   },

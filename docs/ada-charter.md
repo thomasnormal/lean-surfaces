@@ -1,5 +1,7 @@
 # The Ada tier: FOUNDING CHARTER
 
+> **Unvalidated (2026-11-05).** An audit against the engineering rules in [AGENTS.md](../AGENTS.md#engineering-rules-every-lane) found silent wrong answers in this lane ([issue #11](https://github.com/thomasnormal/lean-surfaces/issues/11)). Do not rely on its results until that issue is closed.
+
 **Status: the workstream's founding document**, written to Thomas's family
 directive (versioned, spec-mirrored surfaces). It does four things and no
 more: it MAPS the spec with an instrument that lands beside it, it CENSUSES

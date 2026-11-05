@@ -1,5 +1,7 @@
 # The Go tier: FOUNDING CHARTER
 
+> **Unvalidated (2026-11-05).** An audit against the engineering rules in [AGENTS.md](../AGENTS.md#engineering-rules-every-lane) found silent wrong answers in this lane ([issue #11](https://github.com/thomasnormal/lean-surfaces/issues/11)). Do not rely on its results until that issue is closed.
+
 **Status: the workstream's founding document.** Thomas chartered it on
 2026-08-22, and gave the reason in one line: *"I like Go — short spec,
 and it's a common language for concurrency, which is itself interesting

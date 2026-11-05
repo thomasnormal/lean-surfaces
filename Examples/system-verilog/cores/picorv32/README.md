@@ -135,3 +135,9 @@ the four bubbles disappear, the retained inputs are exactly the four measured
 instruction inputs, and the filtered cycle trace equals the same finite ISA
 trace.  This is a finite stuttering witness for the RVFI cycle boundary.
 
+The generic `RvMemoryState` adapter is exercised on the same input list: its
+state carries the byte memory across instructions, and
+`rvMemoryMachine_trace` proves equality with the stateless ISA trace after
+`threadRvInputs` supplies each preceding memory view.  The separate
+`directRun` certificate records the concrete write/read values.
+

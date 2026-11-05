@@ -1,5 +1,6 @@
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
 import LeanModels.Refine.Bus
+import LeanModels.Refine.MemoryMachine
 
 /-!
 # PicoRV32 finite RVFI-to-ISA trace witness
@@ -111,6 +112,13 @@ theorem pinned_cycle_trace_refines_isa :
           pinnedCycleMachine.toCycleMachine.init cycleInputs) := by
       rw [pinned_cycle_retire_inputs]
 
+theorem pinned_stateful_memory_trace :
+    trace (rvMemoryMachineWith cv32e40pProfile)
+        { arch := rvMachine.init, memory := memZero } nontrapInputs =
+      trace rvMachine rvMachine.init
+        (threadRvInputs cv32e40pProfile rvMachine.init memZero nontrapInputs) := by
+  exact rvMemoryMachine_trace cv32e40pProfile rvMachine.init memZero nontrapInputs
+
 /-- The measured packed stream and the ISA stream are connected by one
 trace-level equality, rather than by separate row and architectural checks. -/
 theorem pinned_nontrap_observed_trace_refines_isa :
@@ -133,6 +141,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_retire_inputs
 #print axioms pinned_cycle_trace
 #print axioms pinned_cycle_trace_refines_isa
+#print axioms pinned_stateful_memory_trace
 #print axioms pinned_nontrap_observed_trace_refines_isa
 
 end Examples.«system-verilog».cores.picorv32.trace_proof

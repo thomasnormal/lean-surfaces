@@ -215,3 +215,29 @@ adaptation was introduced.
 boundary and preserve the finite filtered-trace theorem for later cores.  The
 PicoRV32 symbolic proof still waits on the unchanged unpacked-memory and
 generate-member loader support.
+
+## 2026-11-05-ls-sv2-10 — add stateful RISC-V memory threading
+
+The inbox was reread before this item and had no new ls-sv2-specific request.
+The commit interface's `Input.memory` is an always-ready view, but a core
+refinement needs memory to persist across stores and later loads.  Added
+`RvMemoryState`, `rvMemoryMachineWith`, `threadRvInputs`, and the theorem
+`rvMemoryMachine_trace` in `LeanModels/Refine/MemoryMachine.lean`.  The
+stateful machine uses `isaStepWith` and `applyMemEffect`; the theorem proves
+its retirement trace equals the existing stateless `rvMachineWith` trace after
+each input is replaced by the memory state that precedes it.  The profile
+parameter is retained, so WFI resolution remains explicit.
+
+The PicoRV32 trace witness now instantiates this theorem over the measured
+four-instruction prefix, alongside the concrete `directRun` write/read
+certificate.  No memory contents are guessed from the core: the stateful
+adapter is the exact byte-addressed ISA contract.
+
+**MEASURED:** the focused stateful-memory and PicoRV32 trace build, docs check,
+backlog-index check, and `git diff --check` passed.  New theorem reports stay
+within the existing `propext`/`Quot.sound` ledger; no new axiom, RTL edit, or
+loader adaptation was introduced.
+
+**DECIDED:** use `RvMemoryState` as the memory-threading boundary for later
+in-order and out-of-order core proofs.  The symbolic PicoRV32 loader remains
+blocked at the unchanged unpacked-register-memory and generate-member routes.

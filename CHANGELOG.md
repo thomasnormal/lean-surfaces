@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ call metadata now retains resolved direct function/method identity for
+  ordinary `CallExpr` nodes, with a pinned differential witness alongside the
+  operator identity rows; lookup, conversion, and invocation remain refused.
+
 - Added a free-function overload identity witness for `CXXOperatorCallExpr`;
   the pinned differential corpus now has 1,583 rows, with both method and
   free-function declaration handles retained as WITNESS metadata.

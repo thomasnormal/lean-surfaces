@@ -2202,6 +2202,18 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-call-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

@@ -2195,6 +2195,20 @@ def resolvedFreeOperatorCallTranslationWitnessOk : Bool :=
   admitResolvedCXXOperatorCallExpression resolvedFreeOperatorCallTranslation [1] matches
     .ok {value := "0x11"}
 
+private def resolvedCallTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x21"), ("kind", .string "FunctionDecl"),
+        ("name", .string "g"), ("inner", .array [])],
+      .object [("id", .string "0x22"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [("id", .string "0x23"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [("id", .string "0x21"),
+              ("kind", .string "FunctionDecl")])]])]])]}
+
+def resolvedCallTranslationWitnessOk : Bool :=
+  admitResolvedCallExpression resolvedCallTranslation [1] matches .ok {value := "0x21"}
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 

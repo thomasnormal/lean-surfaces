@@ -631,7 +631,7 @@ def admitCXXMemberCallExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXOperatorCallExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXOperatorCallExpr" "operator-call-expression"
 
-private partial def operatorCalleeHandle : Raw → Except String FrontendHandle
+private partial def resolvedCalleeHandle : Raw → Except String FrontendHandle
   | .object fields =>
       match (Raw.object fields).text "kind" with
       | some "DeclRefExpr" =>
@@ -641,7 +641,7 @@ private partial def operatorCalleeHandle : Raw → Except String FrontendHandle
           | _ => .error "translation: operator declaration reference is absent"
       | some "ImplicitCastExpr" =>
           match (Raw.object fields).field "inner" with
-          | some (.array [child]) => operatorCalleeHandle child
+          | some (.array [child]) => resolvedCalleeHandle child
           | _ => .error "translation: operator callee cast must have one child"
       | some kind => .error s!"translation: operator callee has unexpected node {kind}"
       | none => .error "translation: operator callee has no kind"
@@ -656,11 +656,27 @@ def admitResolvedCXXOperatorCallExpression (artifact : Artifact) (path : List Na
   let raw := (rawAtInnerPath artifact.ast path).getD .null
   let some (.array (callee :: _)) := raw.field "inner"
     | throw "translation: operator-call expression has no callee child"
-  let handle ← operatorCalleeHandle callee
+  let handle ← resolvedCalleeHandle callee
   let some declaration := artifact.declarations.find? (·.id == handle.value)
     | throw "translation: selected operator declaration is absent from artifact"
   unless declaration.kind == "CXXMethodDecl" || declaration.kind == "FunctionDecl" do
     throw "translation: selected operator declaration is not callable"
+  pure handle
+
+/-- Retain the selected direct function/method identity for a `CallExpr`.
+    This is metadata only; lookup, conversion, and execution remain outside
+    the translation boundary. -/
+def admitResolvedCallExpression (artifact : Artifact) (path : List Nat) :
+    Except String FrontendHandle := do
+  let _ ← admitCallExpression artifact path
+  let raw := (rawAtInnerPath artifact.ast path).getD .null
+  let some (.array (callee :: _)) := raw.field "inner"
+    | throw "translation: call expression has no callee child"
+  let handle ← resolvedCalleeHandle callee
+  let some declaration := artifact.declarations.find? (·.id == handle.value)
+    | throw "translation: selected call declaration is absent from artifact"
+  unless declaration.kind == "FunctionDecl" || declaration.kind == "CXXMethodDecl" do
+    throw "translation: selected call declaration is not callable"
   pure handle
 
 def admitCompoundStatement (artifact : Artifact) (path : List Nat) :

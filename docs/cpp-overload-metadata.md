@@ -11,3 +11,7 @@ does not infer conversions, and does not execute the selected body. Missing or
 non-callable handles refuse. The existing kind-only metadata gate remains for
 grammar census rows; this handle-producing gate is the source-shaped identity
 boundary for later overload work.
+
+The same handle contract is available for ordinary `CallExpr` nodes through
+`admitResolvedCallExpression`; direct function and method references retain
+their Clang declaration identity while name lookup and invocation remain loud.

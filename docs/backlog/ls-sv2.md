@@ -1300,3 +1300,16 @@ checks the flattened certificate over the complete measured packet stream.
 
 **DECIDED:** keep packet boundaries available for packet-aware proofs, with a
 single explicit flattening bridge for generic ROB consumers.
+
+## 2026-11-05-ls-sv2-58 — expose flattened packet tags through the generic ROB view
+
+Added `robTags` and `robTags_append` to `LeanModels/Refine/Rob.lean` for the
+flattened tagged stream emitted over a finite ROB window.  The packetized RVFI
+adapter now proves that its generic ROB tag stream is exactly the flattening
+of `rvfiPacketTags`, and `normalizeRvfiPacketRobTags` lifts a successful
+packet normalization certificate to that generic stream.  The PicoRV32
+witness checks the resulting `InOrderTags` certificate on `toRobMachine`.
+
+**DECIDED:** expose one generic flattened ROB tag stream so packet-aware and
+generic ROB proofs share the same order certificate without changing packet
+contents or selecting a completion order.

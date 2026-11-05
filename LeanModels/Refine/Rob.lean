@@ -157,6 +157,31 @@ def robStateAfter {State : Type} (machine : RobMachine State) :
   | state, input :: inputs =>
       robStateAfter machine (machine.step state input).1 inputs
 
+/-- Flatten the tagged packets emitted over a finite ROB cycle window.  This
+stream retains each commit's order tag and source input while preserving the
+packet boundaries only through the recursive packet concatenation. -/
+def robTags {State : Type} (machine : RobMachine State) :
+    State → List Input → TaggedPacket
+  | _, [] => []
+  | state, input :: inputs =>
+      let (state', packet) := machine.step state input
+      packet ++ robTags machine state' inputs
+
+theorem robTags_append {State : Type}
+    (machine : RobMachine State) (state : State)
+    (first second : List Input) :
+    robTags machine state (first ++ second) =
+      robTags machine state first ++
+        robTags machine (robStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, robTags, robStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
 theorem robStateAfter_append {State : Type}
     (machine : RobMachine State) (state : State)
     (first second : List Input) :
@@ -292,6 +317,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rob_trace_refines
 #print axioms LeanModels.Refine.tagged_packet_refines_state
 #print axioms LeanModels.Refine.robStateAfter_refines
+#print axioms LeanModels.Refine.robTags_append
 #print axioms LeanModels.Refine.robStateAfter_append
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append

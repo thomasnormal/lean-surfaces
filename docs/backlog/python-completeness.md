@@ -8622,3 +8622,18 @@ The float `round(number, 21)` slice now computes from the exact binary64 ratio s
 | Root build | Managed `lake build LeanModels`: passed, 229 jobs |
 
 DECIDED: admit positive float `ndigits == 21`; richer protocols remain loud.
+
+
+## 2026-11-05-pycomplete-309 — admit twenty-two positive float digits
+
+The float `round(number, 22)` slice now computes from the exact binary64 ratio scaled by ten sextillion, preserving ties-to-even and signed zero.
+
+| Measurement | Result |
+|---|---|
+| Focused build | Managed `lake build Examples.python.round_lab.spec`: passed, 20 jobs |
+| Native differential | 4,104 rows: 4,090 matched, 14 refusals, 0 failed |
+| Proof differential | 4,104 rows: 3,975 matched, 129 refused, 0 failed |
+| Runner build | Managed `lake build leanmodels-run`: passed, 40 jobs |
+| Root build | Managed `lake build LeanModels`: passed, 230 jobs |
+
+DECIDED: admit positive float `ndigits == 22`; richer protocols remain loud.

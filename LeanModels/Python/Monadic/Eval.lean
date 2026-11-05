@@ -454,6 +454,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
             else if roundDigitsNineteen digits then liftRes (roundFloatNineteen value)
             else if roundDigitsTwenty digits then liftRes (roundFloatTwenty value)
             else if roundDigitsTwentyOne digits then liftRes (roundFloatTwentyOne value)
+            else if roundDigitsTwentyTwo digits then liftRes (roundFloatTwentyTwo value)
             else refuse "round() with positive ndigits for floats is outside the tier"
           | _ => refuse "round() over this non-integral value is outside the tier"
         else refuse "round() with negative or non-integral ndigits is outside the tier"

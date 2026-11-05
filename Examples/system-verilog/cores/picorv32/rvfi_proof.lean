@@ -36,7 +36,14 @@ def addi2 : RvfiObservation :=
     pcWdata := 16, rdAddr := 3, rdWdata := 6, rdWdataValid := true,
     mode := 3, ixl := 1 }
 
-def observations : List RvfiObservation := [addi1, store1, load1, addi2]
+def ebreak : RvfiObservation :=
+  { valid := true, order := 4, insn := 0x00100073, pcRdata := 16,
+    pcWdata := 16, trap := true, mode := 3, ixl := 1,
+    cause := some .breakpoint }
+
+def ebreakUnannotated : RvfiObservation := { ebreak with cause := none }
+
+def observations : List RvfiObservation := [addi1, store1, load1, addi2, ebreak]
 
 def expected : List Retirement :=
   [ { pc := 0, instr := 0x00500093, nextPc := 4,
@@ -47,20 +54,28 @@ def expected : List Retirement :=
   , { pc := 8, instr := 0x10002103, nextPc := 12,
       writes := [(2, 5)], memory := some (.read 0x100 .word 5) }
   , { pc := 12, instr := 0x00110193, nextPc := 16,
-      writes := [(3, 6)] } ]
+      writes := [(3, 6)] }
+  , { pc := 16, instr := 0x00100073, nextPc := 16,
+      writes := [], trap := some .breakpoint } ]
 
 theorem pinned_rows_normalize :
     observations.map RvfiObservation.toRetirement? = expected.map some := by
   decide
 
 theorem pinned_orders_are_consecutive :
-    observations.map RvfiObservation.order = [0, 1, 2, 3] := by
+    observations.map RvfiObservation.order = [0, 1, 2, 3, 4] := by
+  rfl
+
+theorem unannotated_trap_is_refused :
+    ebreakUnannotated.toRetirement? = none := by
   rfl
 
 #guard observations.map RvfiObservation.toRetirement? == expected.map some
-#guard observations.map RvfiObservation.order == [0, 1, 2, 3]
+#guard observations.map RvfiObservation.order == [0, 1, 2, 3, 4]
+#guard ebreakUnannotated.toRetirement? == none
 
 #print axioms pinned_rows_normalize
 #print axioms pinned_orders_are_consecutive
+#print axioms unannotated_trap_is_refused
 
 end Examples.«system-verilog».cores.picorv32.rvfi_proof

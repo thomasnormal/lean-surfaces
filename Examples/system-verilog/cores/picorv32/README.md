@@ -77,9 +77,10 @@ Icarus Verilog 13.0 and Verilator 5.052 produced the same five RVFI rows.  The
 first four are the non-trapping RV32I stream (orders 0 through 3); the fifth is
 the `ebreak` row with `trap=1`.  The rows include `sw`'s `wmask=f` and data 5,
 then `lw`'s `rmask=f`, address `0x100`, and data 5.  The Lean witness
-[`rvfi_proof.lean`](rvfi_proof.lean) normalizes the first four packed rows
-through `RvfiObservation.toRetirement?`, checks their consecutive orders, and
-contains no source-specific semantic shortcut.  This validates the RVFI
-observation boundary against two simulators; it does not bypass the loader's
+[`rvfi_proof.lean`](rvfi_proof.lean) normalizes all five rows through
+`RvfiObservation.toRetirement?` after explicitly annotating the trap with
+`Cause.breakpoint`; it also proves that the raw trap row without that
+proof-side annotation is refused.  This validates the RVFI observation
+boundary against two simulators; it does not bypass the loader's
 unpacked-memory/generate wall or claim a core refinement theorem.
 

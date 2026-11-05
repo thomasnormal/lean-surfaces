@@ -301,6 +301,33 @@ private partial def countAnd (e : Expr) : Nat :=
 private def eqName (ls : LSite) : String := s!"eq_{ls.site.tgt.name}_{ls.blk}_{ls.site.pos}"
 private def knownName (ls : LSite) : String := s!"known_{ls.site.tgt.name}_{ls.blk}_{ls.site.pos}"
 
+/-- Presentation-only cleanup for the equations report.  The summary keeps
+indices in the Int affine domain so its soundness proofs can use the same
+`Hdr.Rng`/`Aff` vocabulary.  That is the right internal representation, but
+it made a constant window print as `Int.toNat 1` and a Nat loop binder as
+`1 ≤ ↑i`.  Normalize those two harmless display forms at the boundary so a
+reader can paste the printed equation into a Nat-indexed goal.  This does not
+rewrite the hypotheses or change the theorem being proved. -/
+private def normalizeEquationText (text : String) : String := Id.run do
+  let mut out := text
+  let natFacing := text.contains "st.boolAt" && !text.contains "∀ (i : Int)"
+  for n in [0:257] do
+    let d := n.repr
+    out := out.replace s!"Int.toNat {d}" d
+    out := out.replace s!"Int.toNat (Int.ofNat {d})" d
+    out := out.replace s!"(Int.toNat {d})" d
+    out := out.replace s!"({d})" d
+    if natFacing then
+      out := out.replace s!"{d} ≤ ↑" s!"{d} ≤ "
+      out := out.replace s!"{d} < ↑" s!"{d} < "
+      out := out.replace s!"{d} ≥ ↑" s!"{d} ≥ "
+      out := out.replace s!"{d} > ↑" s!"{d} > "
+  return out
+
+private def ppEquation (e : Lean.Expr) : MetaM String := do
+  let f ← ppExpr e
+  return normalizeEquationText (toString f)
+
 /-- **Stable aliases** (WP-P, P2). The generated names `eq_<signal>_<block>_<position>` depend on the
 generate-block label and on the assign's position in its block, so an unrelated edit (a renamed label,
 an assign added above) renumbers them. The aliases name an equation by its TARGET signal and the
@@ -597,7 +624,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
             let n := d.userName.toString
             if aliasNames.contains n then continue
             if n.startsWith "eq_" || n.startsWith "known_" || n == "key" then
-              ls := ls.push s!"  {n} : {← ppExpr (← instantiateMVars d.type)}"
+            ls := ls.push s!"  {n} : {← ppEquation (← instantiateMVars d.type)}"
           if isAnd && eqNames.length ≤ nE && knNames.length ≤ nK then
             ls := ls.push "  stable aliases (copies of the above; same statements):"
             for (ae, oe, ak, ok) in stableAliases sites do
@@ -607,7 +634,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
           lines := lines.push s!"  decided (flat netlist: every site plain, no parameter): {", ".intercalate decided.toList}"
         lines := lines ++ sharedNote
         for g in out do
-          lines := lines.push s!"  [{(← g.getTag)}] ⊢ {← g.withContext (do ppExpr (← instantiateMVars (← g.getType)))}"
+          lines := lines.push s!"  [{(← g.getTag)}] ⊢ {← g.withContext (do ppEquation (← instantiateMVars (← g.getType)))}"
       else
         setGoals ((← getMainGoal) :: out.toList)
       return lines

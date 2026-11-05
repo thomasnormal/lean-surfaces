@@ -595,18 +595,18 @@ example (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (row_chain_lp.sem N)) (ha : Ac
 /--
 info: sv_equations: the netlist view and the obligations
   (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)
-  eq_r_plain_0 : ∀ (k : Nat), k < Int.toNat 3 → st.boolAt "r" k = st.boolAt "x" k
+  eq_r_plain_0 : ∀ (k : Nat), k < 3 → st.boolAt "r" k = st.boolAt "x" k
   eq_y_plain_1 : ∀ (k : Nat), k < Int.natAbs 2 + 1 → st.boolAt "y" k = st.boolAt "r" (rmN 3 3 0 + k)
   eq_r_g_0 : ∀ (i : Nat),
-  ↑i < 3 → ∀ (k : Nat), k < Int.toNat 3 → st.boolAt "r" (rmN 3 (↑i + 1) 0 + k) = !st.boolAt "r" (rmN 3 (↑i) 0 + k)
+  ↑i < 3 → ∀ (k : Nat), k < 3 → st.boolAt "r" (rmN 3 (↑i + 1) 0 + k) = !st.boolAt "r" (rmN 3 (↑i) 0 + k)
   known_r_plain_0 : ∀ (k : Nat),
-  k < Int.toNat 3 →
+  k < 3 →
     (∃ v, st.lookup "r" = some v ∧ v.width = (Int.natAbs 3 + 1) * (Int.natAbs 2 + 1)) ∧ KnownBit st "r" k
   known_y_plain_1 : ∀ (k : Nat), k < Int.natAbs 2 + 1 → (∃ v, st.lookup "y" = some v ∧ v.width = Int.natAbs 2 + 1) ∧ KnownBit st "y" k
   known_r_g_0 : ∀ (i : Nat),
   ↑i < 3 →
     ∀ (k : Nat),
-      k < Int.toNat 3 →
+      k < 3 →
         (∃ v, st.lookup "r" = some v ∧ v.width = (Int.natAbs 3 + 1) * (Int.natAbs 2 + 1)) ∧
           KnownBit st "r" (rmN 3 (↑i + 1) 0 + k)
   stable aliases (copies of the above; same statements):
@@ -639,15 +639,15 @@ info: sv_equations: the netlist view and the obligations
   eq_r_plain_0 : ∀ (k : Nat),
   k < Int.natAbs 15 + 1 →
     st.boolAt "r" k =
-      if k < (15 - 9 + 1).toNat then st.boolAt "x" (Int.toNat 9 + k) else st.boolAt "x" (k - (15 - 9 + 1).toNat)
-  eq_sw_plain_1 : ∀ (k : Nat), k < Int.toNat 8 → st.boolAt "sw" k = st.boolAt "x" (Int.toNat 8 + k)
-  eq_sw_plain_2 : ∀ (k : Nat), k < (15 - 8 + 1).toNat → st.boolAt "sw" (Int.toNat 8 + k) = st.boolAt "x" k
-  eq_e_plain_3 : ∀ (k : Nat), k < Int.natAbs 4 + 1 → st.boolAt "e" k = st.boolAt "x" (Int.toNat 10 + k)
+      if k < (15 - 9 + 1).toNat then st.boolAt "x" (9 + k) else st.boolAt "x" (k - (15 - 9 + 1).toNat)
+  eq_sw_plain_1 : ∀ (k : Nat), k < 8 → st.boolAt "sw" k = st.boolAt "x" (8 + k)
+  eq_sw_plain_2 : ∀ (k : Nat), k < (15 - 8 + 1).toNat → st.boolAt "sw" (8 + k) = st.boolAt "x" k
+  eq_e_plain_3 : ∀ (k : Nat), k < Int.natAbs 4 + 1 → st.boolAt "e" k = st.boolAt "x" (10 + k)
   known_r_plain_0 : ∀ (k : Nat), k < Int.natAbs 15 + 1 → (∃ v, st.lookup "r" = some v ∧ v.width = Int.natAbs 15 + 1) ∧ KnownBit st "r" k
-  known_sw_plain_1 : ∀ (k : Nat), k < Int.toNat 8 → (∃ v, st.lookup "sw" = some v ∧ v.width = Int.natAbs 15 + 1) ∧ KnownBit st "sw" k
+  known_sw_plain_1 : ∀ (k : Nat), k < 8 → (∃ v, st.lookup "sw" = some v ∧ v.width = Int.natAbs 15 + 1) ∧ KnownBit st "sw" k
   known_sw_plain_2 : ∀ (k : Nat),
   k < (15 - 8 + 1).toNat →
-    (∃ v, st.lookup "sw" = some v ∧ v.width = Int.natAbs 15 + 1) ∧ KnownBit st "sw" (Int.toNat 8 + k)
+    (∃ v, st.lookup "sw" = some v ∧ v.width = Int.natAbs 15 + 1) ∧ KnownBit st "sw" (8 + k)
   known_e_plain_3 : ∀ (k : Nat), k < Int.natAbs 4 + 1 → (∃ v, st.lookup "e" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "e" k
   stable aliases (copies of the above; same statements):
     eq_r_1 := eq_r_plain_0    known_r_1 := known_r_plain_0
@@ -783,15 +783,15 @@ example (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (repl_mask.sem N)) (ha : Acycl
 /--
 info: sv_equations: the netlist view and the obligations
   (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)
-  eq_y_plain_0 : ∀ (k : Nat), k < Int.natAbs 7 + 1 → st.boolAt "y" k = st.boolAt "x" (k % Int.toNat 2)
+  eq_y_plain_0 : ∀ (k : Nat), k < Int.natAbs 7 + 1 → st.boolAt "y" k = st.boolAt "x" (k % 2)
   eq_z_plain_1 : ∀ (k : Nat),
   k < Int.natAbs 10 + 1 →
     st.boolAt "z" k =
-      if k < Int.toNat 4 * { bits := #[Logic.l0, Logic.l1] }.width + (3 - 2 + 1).toNat then
-        if k < (3 - 2 + 1).toNat then st.boolAt "x" (Int.toNat 2 + k)
+      if k < 4 * { bits := #[Logic.l0, Logic.l1] }.width + (3 - 2 + 1).toNat then
+        if k < (3 - 2 + 1).toNat then st.boolAt "x" (2 + k)
         else
           { bits := #[Logic.l0, Logic.l1] }.boolAt ((k - (3 - 2 + 1).toNat) % { bits := #[Logic.l0, Logic.l1] }.width)
-      else st.boolAt "x" (k - (Int.toNat 4 * { bits := #[Logic.l0, Logic.l1] }.width + (3 - 2 + 1).toNat))
+      else st.boolAt "x" (k - (4 * { bits := #[Logic.l0, Logic.l1] }.width + (3 - 2 + 1).toNat))
   known_y_plain_0 : ∀ (k : Nat), k < Int.natAbs 7 + 1 → (∃ v, st.lookup "y" = some v ∧ v.width = Int.natAbs 7 + 1) ∧ KnownBit st "y" k
   known_z_plain_1 : ∀ (k : Nat), k < Int.natAbs 10 + 1 → (∃ v, st.lookup "z" = some v ∧ v.width = Int.natAbs 10 + 1) ∧ KnownBit st "z" k
   stable aliases (copies of the above; same statements):

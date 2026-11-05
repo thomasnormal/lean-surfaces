@@ -6305,3 +6305,10 @@ contract bridge instantiates ordinary boolean leaves as `Expr2`; source text is
 provenance only and is no longer reparsed by a Lean `splitOn` parser. Unsupported
 property forms remain named failures. The SVA evaluator also uses sampled-value
 edges and fails unknown assertion decisions conservatively.
+
+## `sv_equations` Nat-facing report forms
+
+The `sv_equations?` report now prints constant bit indices as numerals and
+generate-loop bounds over the Nat binder (`1 ≤ i → i < N`). The summary keeps
+its Int affine representation internally; only the diagnostic presentation is
+normalized, so existing proof terms and soundness checks are unchanged.

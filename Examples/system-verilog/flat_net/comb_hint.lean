@@ -29,34 +29,34 @@ info: sv_equations: the netlist view and the obligations
   (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)
   eq_c_plain_0 : st.boolAt "c" 0 = st.boolAt "cin" 0
   eq_s_plain_1 : st.boolAt "s" 0 = (st.boolAt "a" 0 ^^ st.boolAt "b" 0 ^^ st.boolAt "c" 0)
-  eq_c_plain_2 : st.boolAt "c" (Int.toNat 1) =
+  eq_c_plain_2 : st.boolAt "c" 1 =
   (st.boolAt "a" 0 && st.boolAt "b" 0 || st.boolAt "c" 0 && (st.boolAt "a" 0 ^^ st.boolAt "b" 0))
-  eq_s_plain_3 : st.boolAt "s" (Int.toNat 1) =
-  (st.boolAt "a" (Int.toNat 1) ^^ st.boolAt "b" (Int.toNat 1) ^^ st.boolAt "c" (Int.toNat 1))
-  eq_c_plain_4 : st.boolAt "c" (Int.toNat 2) =
-  (st.boolAt "a" (Int.toNat 1) && st.boolAt "b" (Int.toNat 1) ||
-    st.boolAt "c" (Int.toNat 1) && (st.boolAt "a" (Int.toNat 1) ^^ st.boolAt "b" (Int.toNat 1)))
-  eq_s_plain_5 : st.boolAt "s" (Int.toNat 2) =
-  (st.boolAt "a" (Int.toNat 2) ^^ st.boolAt "b" (Int.toNat 2) ^^ st.boolAt "c" (Int.toNat 2))
-  eq_c_plain_6 : st.boolAt "c" (Int.toNat 3) =
-  (st.boolAt "a" (Int.toNat 2) && st.boolAt "b" (Int.toNat 2) ||
-    st.boolAt "c" (Int.toNat 2) && (st.boolAt "a" (Int.toNat 2) ^^ st.boolAt "b" (Int.toNat 2)))
-  eq_c_plain_7 : st.boolAt "c" (Int.toNat 4) =
-  (st.boolAt "a" (Int.toNat 3) && st.boolAt "b" (Int.toNat 3) ||
-    st.boolAt "c" (Int.toNat 3) && (st.boolAt "a" (Int.toNat 3) ^^ st.boolAt "b" (Int.toNat 3)))
-  eq_cout_plain_8 : st.boolAt "cout" 0 = st.boolAt "c" (Int.toNat 4)
-  eq_s_plain_9 : st.boolAt "s" (Int.toNat 3) =
-  (st.boolAt "a" (Int.toNat 3) ^^ st.boolAt "b" (Int.toNat 3) ^^ st.boolAt "c" (Int.toNat 3))
+  eq_s_plain_3 : st.boolAt "s" 1 =
+  (st.boolAt "a" 1 ^^ st.boolAt "b" 1 ^^ st.boolAt "c" 1)
+  eq_c_plain_4 : st.boolAt "c" 2 =
+  (st.boolAt "a" 1 && st.boolAt "b" 1 ||
+    st.boolAt "c" 1 && (st.boolAt "a" 1 ^^ st.boolAt "b" 1))
+  eq_s_plain_5 : st.boolAt "s" 2 =
+  (st.boolAt "a" 2 ^^ st.boolAt "b" 2 ^^ st.boolAt "c" 2)
+  eq_c_plain_6 : st.boolAt "c" 3 =
+  (st.boolAt "a" 2 && st.boolAt "b" 2 ||
+    st.boolAt "c" 2 && (st.boolAt "a" 2 ^^ st.boolAt "b" 2))
+  eq_c_plain_7 : st.boolAt "c" 4 =
+  (st.boolAt "a" 3 && st.boolAt "b" 3 ||
+    st.boolAt "c" 3 && (st.boolAt "a" 3 ^^ st.boolAt "b" 3))
+  eq_cout_plain_8 : st.boolAt "cout" 0 = st.boolAt "c" 4
+  eq_s_plain_9 : st.boolAt "s" 3 =
+  (st.boolAt "a" 3 ^^ st.boolAt "b" 3 ^^ st.boolAt "c" 3)
   known_c_plain_0 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" 0
   known_s_plain_1 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" 0
-  known_c_plain_2 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" (Int.toNat 1)
-  known_s_plain_3 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" (Int.toNat 1)
-  known_c_plain_4 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" (Int.toNat 2)
-  known_s_plain_5 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" (Int.toNat 2)
-  known_c_plain_6 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" (Int.toNat 3)
-  known_c_plain_7 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" (Int.toNat 4)
+  known_c_plain_2 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" 1
+  known_s_plain_3 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" 1
+  known_c_plain_4 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" 2
+  known_s_plain_5 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" 2
+  known_c_plain_6 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" 3
+  known_c_plain_7 : (∃ v, st.lookup "c" = some v ∧ v.width = Int.natAbs 4 + 1) ∧ KnownBit st "c" 4
   known_cout_plain_8 : (∃ v, st.lookup "cout" = some v ∧ v.width = 1) ∧ KnownBit st "cout" 0
-  known_s_plain_9 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" (Int.toNat 3)
+  known_s_plain_9 : (∃ v, st.lookup "s" = some v ∧ v.width = Int.natAbs 3 + 1) ∧ KnownBit st "s" 3
   stable aliases (copies of the above; same statements):
     eq_c_1 := eq_c_plain_0    known_c_1 := known_c_plain_0
     eq_s_1 := eq_s_plain_1    known_s_1 := known_s_plain_1

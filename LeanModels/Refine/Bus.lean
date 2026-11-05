@@ -62,6 +62,13 @@ def completed {α : Type} : List (Option α) → List α
   | none :: rest => completed rest
   | some value :: rest => value :: completed rest
 
+@[simp] theorem completed_append {α : Type} (first second : List (Option α)) :
+    completed (first ++ second) = completed first ++ completed second := by
+  induction first with
+  | nil => rfl
+  | cons entry first ih =>
+      cases entry <;> simp [completed, ih]
+
 @[simp] theorem completed_delay (delay : Nat) (value : α)
     (rest : List (Option α)) :
     completed (List.replicate delay none ++ some value :: rest) =
@@ -113,6 +120,40 @@ theorem runBus_projection (memory : Memory) (scheduled : List TimedRequest) :
         exact congrArg (fun effects => (serviceBusRequest memory request).2 :: effects)
           hEffects
 
+/-! ## Adjacent timed windows -/
+
+/-- A timed run composes by threading the final memory from its first window
+into the second.  The response list retains the two windows' cycle order. -/
+theorem runBus_append (memory : Memory) (first second : List TimedRequest) :
+    (runBus memory (first ++ second)).1 =
+        (runBus (runBus memory first).1 second).1 ∧
+      (runBus memory (first ++ second)).2 =
+        (runBus memory first).2 ++
+          (runBus (runBus memory first).1 second).2 := by
+  induction first generalizing memory with
+  | nil => simp [runBus]
+  | cons pair first ih =>
+      rcases pair with ⟨request, delay⟩
+      simp only [runBus, List.cons_append]
+      let serviced := serviceBusRequest memory request
+      have htail := ih (memory := serviced.1)
+      simp only [serviced] at htail ⊢
+      rcases htail with ⟨hMemory, hCycles⟩
+      constructor
+      · exact hMemory
+      · rw [List.append_assoc]
+        exact congrArg (fun cycles => List.replicate delay none ++
+            some (serviceBusRequest memory request).2 :: cycles) hCycles
+
+theorem completed_runBus_append (memory : Memory)
+    (first second : List TimedRequest) :
+    completed (runBus memory (first ++ second)).2 =
+      completed (runBus memory first).2 ++
+        completed (runBus (runBus memory first).1 second).2 := by
+  have hrun := runBus_append memory first second
+  rw [hrun.2]
+  simp only [completed_append]
+
 /-! ## A function-valued latency oracle -/
 
 /-- Timing is supplied by the environment.  Every `Nat → Nat` is an allowed
@@ -147,4 +188,7 @@ theorem runBus_oracle_projection (memory : Memory) (latency : LatencyOracle)
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.runBus_projection
+#print axioms LeanModels.Refine.completed_append
+#print axioms LeanModels.Refine.runBus_append
+#print axioms LeanModels.Refine.completed_runBus_append
 #print axioms LeanModels.Refine.runBus_oracle_projection

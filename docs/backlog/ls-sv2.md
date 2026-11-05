@@ -626,3 +626,26 @@ new axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep the measured RVFI memory packet explicit at the core
 boundary; its tags, effects, and requests are independently checked before
 the generic latency theorem is applied.
+
+## 2026-11-05-ls-sv2-26 — compose adjacent timed bus windows
+
+Added `completed_append`, `runBus_append`, and `completed_runBus_append` to
+`LeanModels/Refine/Bus.lean`.  These theorems thread the first window's final
+memory into the second and preserve the two windows' response order after
+timing bubbles are removed.  They make stream capture compositional without
+assuming a fixed latency or reordering requests.
+
+The toy bus witness now splits its mixed store/load request stream into two
+windows, proves the timed schedule split, and applies the generic completed
+window theorem in `timed_bus_windows_refine`.
+
+**MEASURED:** `lake build LeanModels.Refine.Bus
+Examples.«system-verilog».cores.toy_rv32i.bus_proof` passed (16 jobs), and the
+new theorem reports only existing `propext`/`Quot.sound` entries.  `python3
+tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff --check`
+pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep bus-window composition at the generic timed boundary;
+later core proofs can validate long traces in finite windows while preserving
+the explicit memory state and latency oracle.

@@ -36,6 +36,21 @@ theorem timed_bus_refines_direct :
         (directRun zeroMemory requests).2 := by
   exact runBus_oracle_projection zeroMemory latency requests
 
+theorem timed_bus_windows_refine :
+    completed (runBus zeroMemory
+      (scheduleWith latency (requests.take 2 ++ requests.drop 2))).2 =
+      completed (runBus zeroMemory (scheduleWith latency (requests.take 2))).2 ++
+        completed (runBus
+          (runBus zeroMemory (scheduleWith latency (requests.take 2))).1
+          (scheduleWith (fun index => latency (index + 2))
+            (requests.drop 2))).2 := by
+  rw [show requests.take 2 ++ requests.drop 2 = requests by decide]
+  rw [show scheduleWith latency requests =
+      scheduleWith latency (requests.take 2) ++
+        scheduleWith (fun index => latency (index + 2)) (requests.drop 2) by
+    decide]
+  exact completed_runBus_append zeroMemory _ _
+
 #guard (directRun zeroMemory requests).2 ==
   [ .write 0x100 .word 0xDEADBEEF
   , .read 0x100 .word 0xDEADBEEF
@@ -44,7 +59,10 @@ theorem timed_bus_refines_direct :
 
 #guard (completed (runBus zeroMemory (scheduleWith latency requests)).2).length ==
   requests.length
+#guard (completed (runBus zeroMemory
+    (scheduleWith latency (requests.take 2))).2).length == 2
 
 #print axioms timed_bus_refines_direct
+#print axioms timed_bus_windows_refine
 
 end Examples.«system-verilog».cores.toy_rv32i.bus_proof

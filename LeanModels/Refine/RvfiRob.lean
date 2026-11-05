@@ -74,6 +74,48 @@ theorem RvfiCycleMachine.toRobMachine_inputs {State : Type}
               simp
               exact ih state'
 
+/-- The tagged ROB adapter retains exactly the packed RVFI state after a
+finite window.  Packet contents are observational only for this projection;
+the underlying core state is threaded unchanged. -/
+theorem RvfiCycleMachine.toRobMachine_stateAfter {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input) :
+    robStateAfter machine.toRobMachine state inputs =
+      rvfiStateAfter machine state inputs := by
+  induction inputs generalizing state with
+  | nil => rfl
+  | cons input inputs ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          simp only [robStateAfter, rvfiStateAfter,
+            RvfiCycleMachine.toRobMachine, hstep]
+          exact ih state'
+
+/-- Lift ROB state/order transport through the single-channel RVFI adapter.
+The final order counter advances by the inputs that actually retire, which is
+the same stream exposed by the ordinary cycle projection. -/
+theorem rvfiRobStateAfter_refines
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (start : Nat)
+    (h : RobStepRefines machine.toRobMachine isa rel start admit) :
+    ∀ (state : State) (isaState : IsaState) (order : Nat)
+      (inputs : List Input),
+      rel state isaState order →
+      ∃ finalOrder,
+        rel (rvfiStateAfter machine state inputs)
+          (machineStateAfter isa isaState
+            (retireInputs machine.toCycleMachine state inputs)) finalOrder ∧
+        finalOrder = order +
+          (retireInputs machine.toCycleMachine state inputs).length := by
+  intro state isaState order inputs hrel
+  rcases robStateAfter_refines h state isaState order inputs hrel with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, ?_, ?_⟩
+  · rw [← RvfiCycleMachine.toRobMachine_stateAfter]
+    simpa only [RvfiCycleMachine.toRobMachine_inputs] using hfinal
+  · simpa only [RvfiCycleMachine.toRobMachine_inputs] using horder
+
 /-- Successful RVFI normalization therefore also supplies the ROB-projected
 trace.  The `order` tags are checked by `normalizeRvfiTrace?` before this
 corollary is used; the adapter only transports them into `TaggedCommit`. -/
@@ -90,4 +132,6 @@ end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_inputs
+#print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_stateAfter
+#print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace

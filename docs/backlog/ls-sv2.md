@@ -1086,3 +1086,25 @@ was introduced.
 **DECIDED:** keep untimed direct-run composition as the memory baseline; the
 timed bus theorem can erase latency only after this state/effect split is
 established.
+
+## 2026-11-05-ls-sv2-47 — transport single-channel RVFI state through the ROB
+
+Added `RvfiCycleMachine.toRobMachine_stateAfter` and
+`rvfiRobStateAfter_refines` to `LeanModels/Refine/RvfiRob.lean`.  The
+single-channel RVFI-to-ROB adapter now exposes the exact retained core state
+after a cycle window, while the lifted ROB theorem carries the final commit
+order counter and relates it to `retireInputs` from the ordinary cycle view.
+
+The PicoRV32 witness checks this retained-state bridge over the measured
+`pinnedCycleMachine` stream and `cycleInputs`.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and the
+new state/order theorem reports only the existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep single-channel RVFI state/order transport as an adapter over
+the generic ROB certificate; packet contents remain observational while the
+retired-input projection determines architectural state and order advance.

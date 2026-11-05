@@ -36,7 +36,7 @@ def CE.showP : Nat → CE → String
   | p, .mul a b => let t := s!"{a.showP 1} * {b.showP 2}"; if p ≥ 2 then s!"({t})" else t
   | p, .divK a k => let t := s!"{a.showP 1} / {k}"; if p ≥ 2 then s!"({t})" else t
   | p, .modK a k => let t := s!"{a.showP 1} % {k}"; if p ≥ 2 then s!"({t})" else t
-  | _, .clog2 a => s!"$clog2({a.showP 0})"
+  | _, .clog2 a | _, .clog2S a => s!"$clog2({a.showP 0})"
 
 def CE.show (c : CE) : String := c.showP 0
 

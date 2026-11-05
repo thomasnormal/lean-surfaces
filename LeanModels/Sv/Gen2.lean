@@ -155,7 +155,7 @@ variable {env : IEnv} {elems : List (String × Nat)} {F : Nat}
 
 /-- A generate-if whose condition evaluates nonzero expands its then-branch. -/
 theorem GenItem.expand2_genIf_of_ne {cond : PExpr} {thenB elseB : List GenItem} {v : Int}
-    (hc : evalInt env cond = .ok v) (hv : v ≠ 0) :
+    (hc : evalGenGuard env cond = .ok v) (hv : v ≠ 0) :
     (GenItem.genIf cond thenB elseB).expand2 env elems F = expandList2 env elems F thenB := by
   rw [GenItem.expand2, hc]
   simp [hv]
@@ -163,14 +163,14 @@ theorem GenItem.expand2_genIf_of_ne {cond : PExpr} {thenB elseB : List GenItem} 
 /-- A generate-if whose condition evaluates to zero expands its else-branch
 (`[]` when the source has no `else`). -/
 theorem GenItem.expand2_genIf_of_eq {cond : PExpr} {thenB elseB : List GenItem}
-    (hc : evalInt env cond = .ok 0) :
+    (hc : evalGenGuard env cond = .ok 0) :
     (GenItem.genIf cond thenB elseB).expand2 env elems F = expandList2 env elems F elseB := by
   rw [GenItem.expand2, hc]
   simp
 
 /-- A generate-if whose condition is not a constant is loud. -/
 theorem GenItem.expand2_genIf_of_error {cond : PExpr} {thenB elseB : List GenItem} {e : String}
-    (hc : evalInt env cond = .error e) :
+    (hc : evalGenGuard env cond = .error e) :
     (GenItem.genIf cond thenB elseB).expand2 env elems F =
       .unsupported s!"generate if: {e}" := by
   rw [GenItem.expand2, hc]

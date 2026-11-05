@@ -1365,6 +1365,8 @@ inductive CE where
   | modK (a : CE) (k : Int)
   /-- `$clog2 (a)`. -/
   | clog2 (a : CE)
+  /-- `$clog2 (a)` through a 32-bit signed `int` localparam target. -/
+  | clog2S (a : CE)
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- The value of a definition, with `evalInt`'s own operations (`/` and `%` truncate toward zero; `$clog2` is
@@ -1378,6 +1380,7 @@ def CE.eval (σ : String → Int) : CE → Int
   | .divK a k => (a.eval σ).tdiv k
   | .modK a k => (a.eval σ).tmod k
   | .clog2 a => (LeanModels.Sv.clog2 (a.eval σ).toNat : Int)
+  | .clog2S a => canonInt 32 true (LeanModels.Sv.clog2 (a.eval σ).toNat : Int)
 
 /-- `$clog2 n ≤ n`: what the generate-fuel obligation (`auto_k`) of a loop bounded by a `$clog2` localparam needs. -/
 theorem clog2_le (n : Nat) : LeanModels.Sv.clog2 n ≤ n := by
@@ -1406,7 +1409,7 @@ def CE.isLit : CE → Bool
 
 /-- A `$clog2` occurs in the definition (for the refusal message of a 2-state `int` localparam). -/
 def CE.hasClog2 : CE → Bool
-  | .clog2 _ => true
+  | .clog2 _ | .clog2S _ => true
   | .add a b | .sub a b | .mul a b => a.hasClog2 || b.hasClog2
   | .divK a _ | .modK a _ => a.hasClog2
   | _ => false
@@ -1451,7 +1454,13 @@ def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
       | .error e => .error e
       | .ok c =>
           if c.hasClog2 then
-            .error s!"localparam `{nm}`: `$clog2` is outside the v1 fragment in a 2-state `int` localparam (the elaborated design squashes it to 2 states, and `paramEnv2` does not evaluate that at a symbolic parameter); declare it `localparam integer {nm} = …;`"
+            -- `$clog2` is an integer constant function.  `int` and
+            -- `integer` are both 32-bit signed in the summary, so retain
+            -- the same opaque `CE.clog2` atom; the defaults gate separately
+            -- checks the exact 32-bit elaboration point.
+            match c with
+            | .clog2 a => .ok (.clog2S a)
+            | _ => .ok c
           else
             .error s!"localparam `{nm}`: a 2-state `int` localparam initialised by `/` or `%` is squashed to 2 states and wraps at 2^31 in the elaborated design (its closed arithmetic form would be false for huge parameters); declare it `localparam integer {nm} = …;` (outside the v1 fragment)"
   | .sysCall .clog2 a =>
@@ -1985,6 +1994,15 @@ theorem dimTable_summary {σ : String → Int} :
       · have h1 : (n == pd.name) = false := beq_eq_false_iff_ne.2 hnm
         have h2 : (dt.name == n) = false := by rw [hn]; exact beq_eq_false_iff_ne.2 (Ne.symm hnm)
         simp [h1, h2, hrest]
+
+/-! `$clog2` has the same symbolic constant-expression class in a 32-bit
+signed `int` localparam as in `integer`. -/
+private def guardInt32Ty : PType := .packed [⟨.int 31, .int 0⟩] (some 32)
+private def guardIntClog2 : PLocalParam :=
+  { name := "L", expr := .squash2 32 (.sysCall .clog2 (.paramRef "N" none)), type? := some guardInt32Ty }
+#guard (match lpOf? ["N"] guardIntClog2 with
+  | .ok (.clog2S (.ref "N")) => true
+  | _ => false)
 
 end CombView
 end LeanModels.Sv

@@ -1431,7 +1431,7 @@ def GenItem.expand2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat)
   | .inst i => .ok [.unsupported "Instance"
       s!"module instance '{i.name}' of '{i.module}': flat instantiation (hierarchical designs instantiate through `PDesign.instantiateH`, Hier2.lean)"]
   | .genIf cond thenB elseB =>
-      match evalInt env cond with
+      match evalGenGuard env cond with
       | .error e => .unsupported s!"generate if: {e}"
       | .ok v =>
           if v != 0 then expandList2 env elems iterFuel thenB

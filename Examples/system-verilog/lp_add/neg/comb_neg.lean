@@ -10,10 +10,6 @@ where it is read. Each refusal is a message of the tactic naming the localparam 
 Lean elaboration error (the cases `lp_intdiv` and `lp_logic` are checker-legal designs, only outside
 what the tactics read):
 
-* `lp_clog2`  `localparam int L = $clog2(N + 1);` — a 2-STATE `int` initialised by `$clog2` (the Sklansky and
-  Kogge-Stone baselines): the elaborated design squashes it (`Squash2`) and `paramEnv2` cannot evaluate it at a
-  symbolic `N`; `localparam integer L = $clog2(N + 1);` is read (a `$clog2` localparam is an opaque atom of the
-  obligations, `comb_word/sq_chain.sv`);
 * `lp_divvar` `localparam integer H = N / N;` — a division by a non-literal;
 * `lp_intdiv` `localparam int H = (N + 1) / 2;` — a 2-STATE `int` initialised by `/`: the elaborated
   design squashes it (`Squash2`) and wraps it at 2^31, which is false for the huge `N` a `∀ N` theorem
@@ -27,19 +23,11 @@ open LeanModels.Sv LeanModels.Sv.CombView
 
 namespace Examples.«system-verilog».lp_add.neg
 
-load_design_sv2 lp_clog2 from "Examples/system-verilog/lp_add/neg/lp_clog2.sv.json"
 load_design_sv2 lp_divvar from "Examples/system-verilog/lp_add/neg/lp_divvar.sv.json"
 load_design_sv2 lp_intdiv from "Examples/system-verilog/lp_add/neg/lp_intdiv.sv.json"
 load_design_sv2 lp_mulvar from "Examples/system-verilog/lp_add/neg/lp_mulvar.sv.json"
 load_design_sv2 lp_shift from "Examples/system-verilog/lp_add/neg/lp_shift.sv.json"
 load_design_sv2 lp_logic from "Examples/system-verilog/lp_add/neg/lp_logic.sv.json"
-
-/--
-error: sv_structure: outside the supported fragment — localparam `L`: `$clog2` is outside the v1 fragment in a 2-state `int` localparam (the elaborated design squashes it to 2 states, and `paramEnv2` does not evaluate that at a symbolic parameter); declare it `localparam integer L = …;`
--/
-#guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_clog2.sem N) := by
-  sv_structure?
 
 /--
 error: sv_structure: outside the supported fragment — localparam `H`: `/` by a non-literal is outside the v1 fragment (a localparam may divide by an integer literal)

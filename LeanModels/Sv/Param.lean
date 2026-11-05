@@ -1581,6 +1581,57 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
+/-- Evaluate the integer constant subset used by generate guards.  Generate
+conditions are elaboration-time arithmetic over parameters and genvars; the
+vector-shift operators therefore use their integer arithmetic meaning here,
+rather than `evalInt`'s width-dependent vector path. -/
+def evalGenGuard (env : IEnv) : PExpr → Except String Int
+  | .int v => .ok v
+  | .paramRef n none =>
+      match env.vals.lookup n with
+      | some v => .ok v
+      | none => .error s!"unbound parameter '{n}'"
+  | .genvarRef n =>
+      match env.vals.lookup n with
+      | some v => .ok v
+      | none => .error s!"genvar '{n}' outside its loop"
+  | .paramRef n (some p) =>
+      match env.packageVal p n with
+      | some v => .ok v
+      | none => .error s!"package-scoped parameter '{p}::{n}'"
+  | .unary op a => do
+      let v ← evalGenGuard env a
+      match op with
+      | .m0 .neg => .ok (-v)
+      | .m0 .pos | .plus => .ok v
+      | .m0 .lnot => .ok (b2i (v == 0))
+      | _ => evalInt env (.unary op a)
+  | .binary op l r => do
+      let a ← evalGenGuard env l
+      let b ← evalGenGuard env r
+      match op with
+      | .m0 .add => .ok (a + b)
+      | .m0 .sub => .ok (a - b)
+      | .m0 .mul | .mul => .ok (a * b)
+      | .m0 .and => .ok (Int.ofNat (a.toNat &&& b.toNat))
+      | .m0 .or => .ok (Int.ofNat (a.toNat ||| b.toNat))
+      | .m0 .xor => .ok (Int.ofNat (a.toNat ^^^ b.toNat))
+      | .m0 .eq => .ok (b2i (a == b))
+      | .m0 .ne => .ok (b2i (a != b))
+      | .m0 .lt | .m0 .slt | .slt => .ok (b2i (a < b))
+      | .m0 .le | .m0 .sle | .sle => .ok (b2i (a ≤ b))
+      | .m0 .gt | .m0 .sgt | .sgt => .ok (b2i (a > b))
+      | .m0 .ge | .m0 .sge | .sge => .ok (b2i (a ≥ b))
+      | .m0 .land | .land => .ok (b2i (a != 0 && b != 0))
+      | .m0 .lor | .lor => .ok (b2i (a != 0 || b != 0))
+      | .m0 (.shl _) | .shl =>
+          if b < 0 then .error "negative shift in generate guard" else .ok (a * (2 : Int) ^ b.toNat)
+      | .m0 (.shr _) | .shr =>
+          if b < 0 then .error "negative shift in generate guard" else .ok (a.tdiv ((2 : Int) ^ b.toNat))
+      | _ => evalInt env (.binary op l r)
+  | e => evalInt env e
+
+
 /-! ## Package constants -/
 
 private def packageDimsWidth (env : IEnv) : List PDim → Except String Nat
@@ -2497,7 +2548,7 @@ def GenItem.expand (env : IEnv) (iterFuel : Nat) : GenItem → Res (List Process
   | .inst i => .ok [.unsupported "Instance"
       s!"module instance '{i.name}' of '{i.module}' outside the M0 tier"]
   | .genIf cond thenB elseB =>
-      match evalInt env cond with
+      match evalGenGuard env cond with
       | .error e => .unsupported s!"generate if: {e}"
       | .ok v =>
           if v != 0 then expandList env iterFuel thenB
@@ -3426,6 +3477,18 @@ private def lpSqD : PLocalParam :=
 -- The squash2-free twin is unchanged (0 at the 16-bit context, as before).
 #guard (match bindLocal u15 { lpSqD with expr := .resize 16 sqDiv } with
   | .ok e => e.nvals.lookup "H1" == some (0, 16, true)
+  | .error _ => false)
+
+/-! Generate guards use integer arithmetic even for vector-shift syntax. -/
+private def guardEnv : IEnv := { vals := [("i", 3), ("l", 1)] }
+private def guardShift : PExpr :=
+  .binary (.m0 .eq)
+    (.binary (.m0 .and)
+      (.binary (.m0 (.shr false)) (.genvarRef "i") (.genvarRef "l"))
+      (.int 1)) (.int 1)
+#guard (match evalGenGuard guardEnv guardShift with | .ok v => v == 1 | .error _ => false)
+#guard (match evalGenGuard guardEnv (.binary (.m0 (.shl false)) (.int 1) (.genvarRef "l")) with
+  | .ok v => v == 2
   | .error _ => false)
 
 end LeanModels.Sv

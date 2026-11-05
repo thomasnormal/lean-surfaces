@@ -18,7 +18,15 @@ Build: `lake build Examples.«system-verilog».lp_add.comb_view`.
 open LeanModels.Sv LeanModels.Sv.CombView
 open Examples.«system-verilog».lp_add.gen
 
+load_design_sv2 lp_clog2 from "Examples/system-verilog/lp_add/neg/lp_clog2.sv.json"
+
 namespace Examples.«system-verilog».lp_add.comb_view
+
+/- `$clog2` in a 32-bit signed `int` localparam follows the same summary
+route as the `integer` spelling. -/
+theorem lp_clog2_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_clog2.sem N) := by
+  sv_structure
+  all_goals (intros; omega)
 
 theorem lp_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_add.sem N) := by
   sv_structure

@@ -145,6 +145,18 @@ Why `~~>` is the only admissible partial-correctness form: the naive "if it retu
 - **`py_simp` freezes recursion points**: `callFunction`/`execWhile` are not in its simp set; unfold one step with `rw [callFunction.eq_2]` / `rw [execWhile.eq_2]`, pass them explicitly only when full unfolding is safe. Program literals must be passed explicitly (`py_simp [tri]`).
 - **Kernel-reducibility is a tier constraint** (the mergeSort trap): any function the interpreter's helpers compute with must be STRUCTURAL recursion — core's `List.mergeSort` is well-founded recursion, the kernel does not reduce it, and `#py_check`/`py_check` (kernel `rfl`) and `py_vcgen`'s captured runs would all break. That is why `sorted` is `sortInts` (insertion sort) with the Mathlib `insertionSort` bridge living proof-side (`sortInts_eq`, bench_statistics). `sortInts`/`insertLe` also stay OUT of `py_simp`/`interpUnfolds` so symbolic goals keep the compact `sortInts data` handle.
 
+## SystemVerilog lane: engineering rules
+
+These bind anyone working in the SV lane (item 8). They are Thomas's rulings (2026-11-02 to 2026-11-05) and apply to every construct, not only the one that prompted them.
+
+- **Slang is the parser.** `extractors/sv/` converts Slang's syntax and semantic trees into structured envelope nodes. Never re-parse SystemVerilog source text, in Python or in Lean: no regexes, `splitOn` or hand-written grammars over `source_text`. A construct that is not converted yet is a loud refusal, not a string kept for later parsing. The counterexample (2026-11-05): concurrent assertions were kept as source text and re-parsed in Lean with `splitOn "&&"`. They become structured nodes from Slang's assertion tree.
+- **One semantics per concept.** A new construct reuses what exists. Expressions inside assertions, or in any other new context, are E expressions under the exact 4-state semantics, never a parallel mini-language: a two-valued boolean layer silently turns `!x` into true. The new layer adds only what is specific to the construct.
+- **Exact LRM semantics, clause by clause.** Cite the clause, and do not borrow a neighbouring definition: `$rose` is "the LSB changed to 1" (§16.9.3), not the event-control posedge of §9.4.2, where 0→x counts. The exact semantics is the definition; cycle models and contracts are derived from it, each with a refinement theorem.
+- **Nondeterminism is quantified, like C's undefined behaviour.** Wherever the LRM leaves a choice open (x/z at a decision, schedule or event order, timing, several clocks), the semantics allows every resolution and a proof must hold for all of them. Never pick one convenient resolution. "Every decision reads a known value" is a cheap sufficient condition.
+- **Differential against a simulator that implements the construct.** Use Xcelium for SVA and anything Icarus lacks. Rows drive x/z into every operand and cover the first cycle and default values. Without an oracle, say "no oracle result is claimed".
+- **Make the tool robust, never the design.** When the loader or a tactic refuses a real design, fix the tool; rewriting the design around a tactic is not admissible. Keep loops, generates and parameters high level; never unroll a parametric structure.
+- **Quality is the deliverable.** Report what a commit changed: semantics, ingestion or tests. Extending a parser is not semantic progress. Prefer deleting a wrong layer to extending it.
+
 ## Never
 
 - Never `sorry` or `admit` — anywhere, ever.

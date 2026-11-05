@@ -172,3 +172,7 @@ def round_float_thirty_four(value):
 
 def round_float_thirty_five(value):
     return round(value, 35)
+
+
+def round_float_thirty_six(value):
+    return round(value, 36)

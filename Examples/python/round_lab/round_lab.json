@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/round_lab/round_lab.py",
-  "source_sha256": "129562c33e2fc722fd80980530c0fedfa91db74991d87b43203cdd01535877bc",
+  "source_sha256": "72446e23a3b6db1bf5bef1d579ba8b277b49db426b3e5beb6c8355a56781963a",
   "module": {
     "kind": "Module",
     "body": [
@@ -3775,6 +3775,86 @@
                   "value": {
                     "type": "int",
                     "repr": "35"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 177,
+          "col_offset": 0,
+          "end_lineno": 178,
+          "end_col_offset": 27
+        },
+        "name": "round_float_thirty_six",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 177,
+              "col_offset": 27,
+              "end_lineno": 177,
+              "end_col_offset": 32
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 178,
+              "col_offset": 4,
+              "end_lineno": 178,
+              "end_col_offset": 27
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 178,
+                "col_offset": 11,
+                "end_lineno": 178,
+                "end_col_offset": 27
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 178,
+                  "col_offset": 11,
+                  "end_lineno": 178,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 178,
+                    "col_offset": 17,
+                    "end_lineno": 178,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 178,
+                    "col_offset": 24,
+                    "end_lineno": 178,
+                    "end_col_offset": 26
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "36"
                   }
                 }
               ],

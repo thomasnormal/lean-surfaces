@@ -165,6 +165,36 @@ def scheduleWith (latency : LatencyOracle) : List BusRequest → List TimedReque
   | request :: rest =>
       (request, latency 0) :: scheduleWith (fun index => latency (index + 1)) rest
 
+/-- Shift a latency oracle to the index immediately after a finite window. -/
+def latencyShift (latency : LatencyOracle) (offset : Nat) : LatencyOracle :=
+  fun index => latency (index + offset)
+
+/-- Scheduling commutes with splitting a request stream.  The second window
+uses the same oracle at indices after the first window; no concrete delay
+pattern is selected. -/
+theorem scheduleWith_append (latency : LatencyOracle)
+    (first second : List BusRequest) :
+    scheduleWith latency (first ++ second) =
+      scheduleWith latency first ++
+        scheduleWith (latencyShift latency first.length) second := by
+  induction first generalizing latency with
+  | nil =>
+      have hshift : latencyShift latency 0 = latency := by
+        funext index
+        simp [latencyShift]
+      simp only [List.nil_append, List.length_nil]
+      rw [hshift]
+      simp [scheduleWith]
+  | cons request first ih =>
+      simp only [List.cons_append, scheduleWith]
+      rw [ih (latency := fun index => latency (index + 1))]
+      have hshift :
+          latencyShift (fun index => latency (index + 1)) first.length =
+            latencyShift latency (List.length (request :: first)) := by
+        funext index
+        simp [latencyShift, List.length_cons, Nat.add_assoc]
+      rw [hshift]
+
 @[simp] theorem scheduleWith_requests (latency : LatencyOracle)
     (requests : List BusRequest) :
     (scheduleWith latency requests).map Prod.fst = requests := by
@@ -191,4 +221,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.completed_append
 #print axioms LeanModels.Refine.runBus_append
 #print axioms LeanModels.Refine.completed_runBus_append
+#print axioms LeanModels.Refine.scheduleWith_append
 #print axioms LeanModels.Refine.runBus_oracle_projection

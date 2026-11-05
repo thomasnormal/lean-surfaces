@@ -649,3 +649,26 @@ introduced.
 **DECIDED:** keep bus-window composition at the generic timed boundary;
 later core proofs can validate long traces in finite windows while preserving
 the explicit memory state and latency oracle.
+
+## 2026-11-05-ls-sv2-27 — split latency schedules over arbitrary windows
+
+Added `latencyShift` and the generic theorem `scheduleWith_append` to
+`LeanModels/Refine/Bus.lean`.  The theorem decomposes the timed request stream
+for any first and second windows while shifting the latency oracle by the
+first window's length.  It preserves the explicit oracle parameter and makes
+no fixed-delay or scheduling choice.
+
+The toy bus witness now invokes this theorem directly for its store/load
+split, so the concrete proof depends only on the measured window boundary and
+the generic timed-bus composition theorem.
+
+**MEASURED:** `lake build LeanModels.Refine.Bus
+Examples.«system-verilog».cores.toy_rv32i.bus_proof` passed (16 jobs), and the
+new schedule theorem reports only existing `propext`/`Quot.sound` entries.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep latency-index shifting in the generic bus scheduler;
+windowed core traces must provide their own oracle, while bus composition
+remains independent of any concrete latency pattern.

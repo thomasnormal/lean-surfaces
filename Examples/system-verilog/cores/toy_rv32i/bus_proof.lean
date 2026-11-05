@@ -44,11 +44,7 @@ theorem timed_bus_windows_refine :
           (runBus zeroMemory (scheduleWith latency (requests.take 2))).1
           (scheduleWith (fun index => latency (index + 2))
             (requests.drop 2))).2 := by
-  rw [show requests.take 2 ++ requests.drop 2 = requests by decide]
-  rw [show scheduleWith latency requests =
-      scheduleWith latency (requests.take 2) ++
-        scheduleWith (fun index => latency (index + 2)) (requests.drop 2) by
-    decide]
+  rw [scheduleWith_append latency (requests.take 2) (requests.drop 2)]
   exact completed_runBus_append zeroMemory _ _
 
 #guard (directRun zeroMemory requests).2 ==

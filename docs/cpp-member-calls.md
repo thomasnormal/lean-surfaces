@@ -155,6 +155,11 @@ witness. It retains the argument's `DeclRefExpr` and enum declaration handle,
 joins it to the exact enum parameter, and checks the explicit representation
 value. Casts, spelling-only enum matches, and method execution remain loud.
 
+The setter profile witness joins the same call to its structured method and
+field evidence: canonical method handle, `_errorID` field handle and spelling,
+`XMLError` field type, and `Owner *` receiver type. This is a precondition for
+object-state execution; it does not infer a field offset or mutate an object.
+
 The census applies this witness to the real probe as a pricing check. All 12
 direct `int` literal arguments bind to a retained parameter (`Set` once at
 ordinal 2 and `SetError` eleven times at ordinal 1). The stricter canonical

@@ -1179,6 +1179,13 @@ def enumArgumentEvidenceWitness : Bool :=
 
 #guard enumArgumentEvidenceWitness
 
+def enumSetterEvidenceWitness : Bool :=
+  enumSetterAccepted && enumSetterCallAccess.field == fieldHandle &&
+    enumSetterCallAccess.fieldType == "XMLError" &&
+    enumSetterCallAccess.receiverType == "Owner *"
+
+#guard enumSetterEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

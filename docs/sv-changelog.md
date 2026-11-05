@@ -53,6 +53,13 @@ existing expression evaluator; direct memory-cell reads are explicit, while
 compound memory expressions remain loud until their source-shaped evaluator is
 defined.
 
+## F1: parse the first retained SVA implication form
+
+`SvaContract.parseSimple` now turns retained source text of the form
+`assert/assume/cover property (@(posedge clk) a |-> b);` into a checked E
+contract. Signal names, the retained clock, and assertion kind are validated;
+delays, expressions, reset guards, and other SVA forms remain loud.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

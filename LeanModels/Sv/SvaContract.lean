@@ -39,6 +39,61 @@ def ofCheck (source : PProperty) (check : SvaCheck) : Except String SvaContract 
       else
         .ok { source, check }
 
+/-! ## Source parser: the first retained F1 production
+
+This parser deliberately admits one complete source form and refuses the rest:
+`<kind> property (@(posedge clk) a |-> b);`, where `a`, `b`, and `clk` are
+simple signal names.  Keeping the parser here makes the source-to-contract
+boundary explicit while the broader `Sv.Ast` property grammar is still being
+specified.
+-/
+
+private def simpleAtom (text : String) : Except String SvaBool :=
+  let n := text.trimAscii.toString
+  if n.isEmpty || n.any (fun c => c == ' ' || c == '\n' || c == '\t' || c == '(' || c == ')') then
+    .error "SVA: simple implication operands must be signal names"
+  else .ok (.signal n)
+
+private def simpleKind (kind : String) : Except String SvaKind :=
+  match kind with
+  | "assert" => .ok .assert
+  | "assume" => .ok .assume
+  | "cover" => .ok .cover
+  | _ => .error s!"SVA: unsupported property kind '{kind}'"
+
+def parseSimple (source : PProperty) : Except String SvaContract := do
+  let text := source.text.trimAscii.toString
+  let kindName ←
+    if text.startsWith "assert property" then pure "assert"
+    else if text.startsWith "assume property" then pure "assume"
+    else if text.startsWith "cover property" then pure "cover"
+    else throw "SVA: expected assert/assume/cover property"
+  let kind ← simpleKind kindName
+  let some clockText := source.clock
+    | throw "SVA: simple property is missing its retained clock"
+  let clock := clockText.trimAscii.toString
+  if !text.contains "@(posedge " || !text.contains "|->" || !text.endsWith ");" then
+    throw "SVA: unsupported property syntax (expected posedge |-> form)"
+  let edgeParts := text.splitOn "@(posedge "
+  let edgeTail := edgeParts.getLast!
+  let afterEdge := edgeTail.splitOn ")"
+  let parsedClock := afterEdge.head!.trimAscii.toString
+  if parsedClock != clock then
+    throw s!"SVA: retained clock '{clock}' disagrees with source clock '{parsedClock}'"
+  let some bodyText := afterEdge[1]?
+    | throw "SVA: missing implication body"
+  let body := bodyText.trimAscii.toString
+  let implication := body.splitOn "|->"
+  match implication with
+  | [antecedent, consequent] =>
+      let left ← simpleAtom antecedent
+      let right ← simpleAtom consequent
+      let check : SvaCheck :=
+        { kind := kind, clock := clock,
+          property := .implies (.atom left) (.atom right) }
+      ofCheck source check
+  | _ => throw "SVA: expected exactly one |-> implication"
+
 def portRegionAux : Nat → List (CycleObs PortSample) → RegionTrace
   | _, [] => []
   | n, o :: os =>
@@ -87,6 +142,9 @@ private def portTrace : List (CycleObs PortSample) :=
       post := { vals := [("clk", LVec.ofNat 1 1), ("a", LVec.ofNat 1 1), ("b", LVec.ofNat 1 1)] } } ]
 
 #guard (SvaContract.ofCheck sourceProperty sourceCheck).toOption.isSome
+#guard match SvaContract.parseSimple sourceProperty with
+  | .ok _ => true
+  | .error _ => false
 #guard match SvaContract.ofCheck sourceProperty sourceCheck with
   | .ok C => match C.eval portTrace with
     | .ok true => true
@@ -96,6 +154,9 @@ private def portTrace : List (CycleObs PortSample) :=
   | .error _ => true
   | .ok _ => false
 #guard match SvaContract.ofCheck { sourceProperty with clock := none } sourceCheck with
+  | .error _ => true
+  | .ok _ => false
+#guard match SvaContract.parseSimple { sourceProperty with text := "assert property (@(posedge clk) a ##1 b);" } with
   | .error _ => true
   | .ok _ => false
 

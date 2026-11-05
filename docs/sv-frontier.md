@@ -105,6 +105,11 @@ trusted pre/post port samples into the E slot view. The structured body is
 supplied explicitly at this boundary; forms outside the finite F1 vocabulary
 remain loud until their parser and contract rule are added.
 
+`SvaContract.parseSimple` now supplies the first source parser rule for
+`assert/assume/cover property (@(posedge clk) a |-> b);`. It checks the retained
+kind and clock and admits only simple signal operands; delays, reset guards, and
+richer expressions remain explicit parser refusals.
+
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
 processes. Their lexical generate labels are now carried in each property's

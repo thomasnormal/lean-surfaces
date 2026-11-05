@@ -1495,4 +1495,5 @@
   ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_twelve", "args": [[1.2345678945555], [1.2345678945505], [2.675], [-0.0000000000005], [1.0000000000005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits twelve"}
   ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_fourteen", "args": [[1.234567894555555], [1.2345678945555556], [2.675], [-0.000000000000005], [1.000000000000005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits fourteen"}
   ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_fifteen", "args": [[1.2345678945555556], [2.675], [-0.0000000000000005], [1.0000000000000005]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits fifteen"}
+  ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_sixteen", "args": [[-0.22173066870266211], [-0.44738276650787157], [-0.09905340782688654], [2.675]], "expect": "match", "note": "exact binary64 ratio rounding for positive ndigits sixteen"}
 ]

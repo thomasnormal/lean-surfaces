@@ -45,6 +45,9 @@ def ebreakUnannotated : RvfiObservation := { ebreak with cause := none }
 
 def observations : List RvfiObservation := [addi1, store1, load1, addi2, ebreak]
 
+def outOfOrder : List RvfiObservation :=
+  [addi1, { store1 with order := 3 }]
+
 def expected : List Retirement :=
   [ { pc := 0, instr := 0x00500093, nextPc := 4,
       writes := [(1, 5)] }
@@ -62,12 +65,20 @@ theorem pinned_rows_normalize :
     observations.map RvfiObservation.toRetirement? = expected.map some := by
   decide
 
+theorem pinned_trace_certificate :
+    normalizeRvfiTrace? 0 observations = some expected := by
+  decide
+
 theorem pinned_orders_are_consecutive :
     observations.map RvfiObservation.order = [0, 1, 2, 3, 4] := by
   rfl
 
 theorem unannotated_trap_is_refused :
     ebreakUnannotated.toRetirement? = none := by
+  rfl
+
+theorem out_of_order_trace_is_refused :
+    normalizeRvfiTrace? 0 outOfOrder = none := by
   rfl
 
 theorem pinned_instruction_words_decode :
@@ -84,13 +95,17 @@ theorem pinned_instruction_words_decode :
   decide
 
 #guard observations.map RvfiObservation.toRetirement? == expected.map some
+#guard normalizeRvfiTrace? 0 observations == some expected
 #guard observations.map RvfiObservation.order == [0, 1, 2, 3, 4]
 #guard ebreakUnannotated.toRetirement? == none
+#guard normalizeRvfiTrace? 0 outOfOrder == none
 #guard decode 0x00100073 == some (.system .ebreak)
 
 #print axioms pinned_rows_normalize
+#print axioms pinned_trace_certificate
 #print axioms pinned_orders_are_consecutive
 #print axioms unannotated_trap_is_refused
+#print axioms out_of_order_trace_is_refused
 #print axioms pinned_instruction_words_decode
 
 end Examples.«system-verilog».cores.picorv32.rvfi_proof

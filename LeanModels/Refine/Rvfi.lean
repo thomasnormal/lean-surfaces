@@ -129,6 +129,84 @@ theorem RvfiObservation.toRetirement?_eq_some (o : RvfiObservation)
   simp [RvfiObservation.toRetirement?, hvalid]
   exact hwell
 
+/-! ## Finite RVFI traces and retirement order -/
+
+/-- A finite packed trace certificate.  Invalid RVFI cycles are bubbles and do
+not advance the retirement order.  A valid cycle must carry the next order
+number and must normalize to a semantic retirement; a malformed valid record
+therefore cannot be silently dropped.  The start parameter permits a caller
+to continue a trace whose order began before the finite window. -/
+inductive RvfiTraceRefines : Nat → List RvfiObservation → List Retirement → Prop where
+  | nil (start : Nat) : RvfiTraceRefines start [] []
+  | bubble {start : Nat} {observation : RvfiObservation}
+      {observations : List RvfiObservation} {retirements : List Retirement}
+      (hvalid : observation.valid = false)
+      (htail : RvfiTraceRefines start observations retirements) :
+      RvfiTraceRefines start (observation :: observations) retirements
+  | retire {start : Nat} {observation : RvfiObservation}
+      {observations : List RvfiObservation} {retirement : Retirement}
+      {retirements : List Retirement}
+      (hvalid : observation.valid = true)
+      (horder : observation.order = start)
+      (hretirement : observation.toRetirement? = some retirement)
+      (htail : RvfiTraceRefines (start + 1) observations retirements) :
+      RvfiTraceRefines start (observation :: observations)
+        (retirement :: retirements)
+
+/-- Check a packed finite trace while retaining its architectural order. -/
+def normalizeRvfiTrace? (start : Nat) : List RvfiObservation → Option (List Retirement)
+  | [] => some []
+  | observation :: observations =>
+      if observation.valid then
+        if observation.order == start then
+          match observation.toRetirement?, normalizeRvfiTrace? (start + 1) observations with
+          | some retirement, some retirements => some (retirement :: retirements)
+          | _, _ => none
+        else none
+      else normalizeRvfiTrace? start observations
+
+/-- The executable trace checker and the proof-facing certificate agree. -/
+theorem normalizeRvfiTrace?_iff {start : Nat} {observations : List RvfiObservation}
+    {retirements : List Retirement} :
+    normalizeRvfiTrace? start observations = some retirements ↔
+      RvfiTraceRefines start observations retirements := by
+  constructor
+  · intro h
+    induction observations generalizing start retirements with
+    | nil =>
+        simp [normalizeRvfiTrace?] at h
+        subst retirements
+        exact .nil _
+    | cons observation observations ih =>
+        by_cases hv : observation.valid = true
+        · simp [normalizeRvfiTrace?, hv] at h
+          by_cases ho : observation.order = start
+          · simp [ho] at h
+            cases hret : observation.toRetirement? with
+            | none => simp [hret] at h
+            | some retirement =>
+                cases htail : normalizeRvfiTrace? (start + 1) observations with
+                | none => simp [hret, htail] at h
+                | some retirements =>
+                    simp [hret, htail] at h
+                    cases h
+                    refine .retire hv ho hret ?_
+                    exact ih htail
+          · simp [ho] at h
+        · have hv' : observation.valid = false := by
+            cases hval : observation.valid with
+            | false => exact rfl
+            | true => exact False.elim (hv hval)
+          simp [normalizeRvfiTrace?, hv'] at h
+          exact .bubble hv' (ih h)
+  · intro h
+    induction h with
+    | nil start => rfl
+    | bubble hvalid htail ih =>
+        simp [normalizeRvfiTrace?, hvalid, ih]
+    | retire hvalid horder hretirement htail ih =>
+        simp [normalizeRvfiTrace?, hvalid, horder, hretirement, ih]
+
 /-! ## Feeding packed observations into the cycle bridge -/
 
 /-- A cycle-level core whose commit port is the packed RVFI shape. -/
@@ -349,3 +427,4 @@ end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
+#print axioms LeanModels.Refine.normalizeRvfiTrace?_iff

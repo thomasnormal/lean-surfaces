@@ -40,14 +40,20 @@ theorem pinned_nontrap_rows_normalize :
       nontrapExpected.map some := by
   decide
 
+theorem pinned_nontrap_trace_certificate :
+    normalizeRvfiTrace? 0 nontrapObservations = some nontrapExpected := by
+  decide
+
 /-- The measured non-trapping PicoRV32 stream has exactly the ISA effects. -/
 theorem pinned_nontrap_trace_refines_isa :
     trace rvMachine rvMachine.init nontrapInputs = nontrapExpected := by
   decide
 
 #guard trace rvMachine rvMachine.init nontrapInputs == nontrapExpected
+#guard normalizeRvfiTrace? 0 nontrapObservations == some nontrapExpected
 
 #print axioms pinned_nontrap_rows_normalize
+#print axioms pinned_nontrap_trace_certificate
 #print axioms pinned_nontrap_trace_refines_isa
 
 end Examples.«system-verilog».cores.picorv32.trace_proof

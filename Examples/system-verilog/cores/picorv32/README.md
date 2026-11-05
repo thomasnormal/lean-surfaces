@@ -100,6 +100,13 @@ unpacked-memory/generate wall or claim a core refinement theorem.  The same
 Lean witness also checks that all five observed instruction words decode to
 the expected RV32I/system constructors in `LeanModels.Rv`.
 
+The witness also feeds the complete list to `normalizeRvfiTrace? 0`.  This
+order-aware checker treats `valid = false` rows as bubbles, requires each valid
+row to carry the next consecutive `order`, and refuses a valid row that does
+not normalize to a semantic retirement.  The pinned five-row list produces
+`some expected`; a two-row list with the second order changed to 3 produces
+`none`, so the boundary never sorts or silently drops an out-of-order commit.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

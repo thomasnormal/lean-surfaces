@@ -123,3 +123,33 @@ loader's unpacked-memory/generate wall is unchanged.
 **DECIDED:** retain the four-row bridge as the first real-core use of the R1
 ISA trace contract, and keep the trap-PC mismatch explicit until a core-wide
 RVFI trap convention is specified and proved.
+
+## 2026-11-05-ls-sv2-6 — certify finite RVFI order and normalization
+
+The inbox was reread before this item.  The packed RVFI adapter converted rows
+independently, so a caller could accidentally discard `valid` cycles or compare
+rows without proving that their `order` fields were the architectural commit
+sequence.  Added `RvfiTraceRefines` and `normalizeRvfiTrace?` to
+`LeanModels/Refine/Rvfi.lean`.  Invalid cycles are explicit bubbles; valid
+cycles must have the next consecutive order and a successful
+`toRetirement?`, and `normalizeRvfiTrace?_iff` proves the executable checker is
+equivalent to the inductive certificate.  The `start` parameter supports a
+finite window cut from a longer RVFI run without assuming that its first order
+is zero.
+
+The PicoRV32 witness now certifies all five measured rows, including the
+proof-side breakpoint annotation, and has a negative row whose order is
+changed from 1 to 3; the checker returns `none` rather than sorting it.  The
+four-row non-trapping ISA trace witness consumes the same certificate shape.
+
+**MEASURED:** `lake build LeanModels.Refine.Rvfi
+Examples.«system-verilog».cores.picorv32.rvfi_proof
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (18 jobs).  New
+theorem axiom reports contain only the repository's standard `propext`,
+`Classical.choice`, and `Quot.sound`; no `sorryAx`, `axiom`, or RTL change was
+introduced.  The next validation is the normal docs/backlog checks followed by
+the required commit and push.
+
+**DECIDED:** keep order checking in the generic RVFI boundary.  A core-specific
+proof must establish the observed order tags, while the adapter never chooses a
+completion order or repairs a malformed valid row.

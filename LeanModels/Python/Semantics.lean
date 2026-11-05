@@ -593,6 +593,16 @@ def roundFloatFortyOne (value : Float64) : Res RVal :=
     | some result => .ok (.float result)
     | none => .exn (.overflowError "rounded float is out of range")
 
+def roundFloatFortyTwo (value : Float64) : Res RVal :=
+  match value.toRatio with
+  | Option.none => .ok (.float value)
+  | some (numerator, denominator) =>
+    let rounded := roundRatioInt (numerator * 1000000000000000000000000000000000000000000) denominator
+    let negative := if rounded == 0 then value.sign else rounded < 0
+    match Float64.fromRatio negative rounded.natAbs 1000000000000000000000000000000000000000000 with
+    | some result => .ok (.float result)
+    | none => .exn (.overflowError "rounded float is out of range")
+
 def roundDigitsNonnegative : RVal → Bool
   | .int 0 => true
   | .int n => n > 0
@@ -767,6 +777,10 @@ def roundDigitsForty : RVal → Bool
 
 def roundDigitsFortyOne : RVal → Bool
   | .int 41 => true
+  | _ => false
+
+def roundDigitsFortyTwo : RVal → Bool
+  | .int 42 => true
   | _ => false
 
 /-! ### Ranges (pass 3, docs/memory-model.md §module-init execution)
@@ -9672,6 +9686,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                           else if roundDigitsThirtyNine digits then Run.liftRes st (roundFloatThirtyNine value)
                           else if roundDigitsForty digits then Run.liftRes st (roundFloatForty value)
                           else if roundDigitsFortyOne digits then Run.liftRes st (roundFloatFortyOne value)
+                          else if roundDigitsFortyTwo digits then Run.liftRes st (roundFloatFortyTwo value)
                           else .unsupported "round() with positive ndigits for floats is outside the tier"
                         | _ => .unsupported "round() over this non-integral value is outside the tier"
                       else .unsupported "round() with negative or non-integral ndigits is outside the tier"

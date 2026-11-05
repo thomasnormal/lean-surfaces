@@ -28,6 +28,7 @@ class ModuleProbeTests(unittest.TestCase):
         node = {"kind": "ImportDecl", "id": "0x1"}
         self.assertFalse(any(key in node for key in
                             ("name", "module", "importedModule", "referencedDecl")))
+        self.assertEqual(sorted(node), ["id", "kind"])
 
 
 if __name__ == "__main__":

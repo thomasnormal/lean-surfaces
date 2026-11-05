@@ -106,6 +106,7 @@ def measure():
                 "execution": "module-and-import-compiled", "root": ast.get("kind"),
                 "module_node": "ModuleDecl" in observed,
                 "import_node": bool(import_nodes),
+                "import_fields": sorted(import_nodes[0].keys()) if import_nodes else [],
                 "import_identity": all(
                     any(key in node for key in ("name", "module", "importedModule", "referencedDecl"))
                     for node in import_nodes),

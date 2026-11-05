@@ -333,6 +333,19 @@ def rvfiStateAfter {State : Type} (machine : RvfiCycleMachine State) :
   | state, input :: inputs =>
       rvfiStateAfter machine (machine.step state input).1 inputs
 
+theorem RvfiCycleMachine.toCycleMachine_stateAfter {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input) :
+    cycleStateAfter machine.toCycleMachine state inputs =
+      rvfiStateAfter machine state inputs := by
+  induction inputs generalizing state with
+  | nil => rfl
+  | cons input inputs ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          simp only [cycleStateAfter, rvfiStateAfter,
+            RvfiCycleMachine.toCycleMachine, hstep]
+          exact ih state'
+
 theorem rvfiStateAfter_append {State : Type}
     (machine : RvfiCycleMachine State) (state : State)
     (first second : List Input) :
@@ -436,6 +449,22 @@ theorem normalizeRvfiCycleTrace {State : Type}
             simp [RvfiObservation.toRetirement?, hv']
           rw [hnone]
           exact ih state' (start := start) (retirements := retirements) h
+
+theorem rvfiStateAfter_refines
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Prop) (admit : Input → Prop)
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit) :
+    ∀ (state : State) (isaState : IsaState) (inputs : List Input),
+      rel state isaState →
+      (∀ i ∈ inputs, admit i) →
+      rel (rvfiStateAfter machine state inputs)
+        (machineStateAfter isa isaState
+          (retireInputs machine.toCycleMachine state inputs)) := by
+  intro state isaState inputs hrel hall
+  have hstate := cycleStateAfter_refines h state isaState inputs hrel hall
+  rw [RvfiCycleMachine.toCycleMachine_stateAfter] at hstate
+  exact hstate
 
 /-! ## Encoding an existing semantic retirement -/
 
@@ -639,6 +668,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap
+#print axioms LeanModels.Refine.RvfiCycleMachine.toCycleMachine_stateAfter
+#print axioms LeanModels.Refine.rvfiStateAfter_refines
 #print axioms LeanModels.Refine.rvfiStateAfter_append
 #print axioms LeanModels.Refine.rvfiObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiCycleTrace_append

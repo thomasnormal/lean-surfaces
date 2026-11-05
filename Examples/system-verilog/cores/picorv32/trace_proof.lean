@@ -235,6 +235,13 @@ theorem pinned_cycle_windows_append :
     pinnedCycleMachine.init cycleFirstInputs cycleSecondInputs
     pinned_cycle_first_window_normalize pinned_cycle_second_window_normalize
 
+theorem pinned_cycle_state_after_bridge :
+    rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init cycleInputs =
+      cycleStateAfter pinnedCycleMachine.toCycleMachine
+        pinnedCycleMachine.toCycleMachine.init cycleInputs := by
+  exact (RvfiCycleMachine.toCycleMachine_stateAfter pinnedCycleMachine
+    pinnedCycleMachine.init cycleInputs).symm
+
 theorem pinned_packet_observations_normalize :
     normalizeRvfiTrace? 0
         (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
@@ -424,6 +431,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_first_window_normalize
 #print axioms pinned_cycle_second_window_normalize
 #print axioms pinned_cycle_windows_append
+#print axioms pinned_cycle_state_after_bridge
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_inputs

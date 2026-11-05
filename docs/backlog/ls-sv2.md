@@ -1022,3 +1022,26 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep packetized RVFI state transport as an adapter over the ROB
 certificate; normalization validates observations and tags, while ROB
 refinement supplies architectural state and order accounting.
+
+## 2026-11-05-ls-sv2-44 — transport single-channel RVFI state
+
+Added `RvfiCycleMachine.toCycleMachine_stateAfter` and
+`rvfiStateAfter_refines` to `LeanModels/Refine/Rvfi.lean`.  The single-channel
+RVFI adapter now lifts cycle relation transport to its retained packed-port
+state, while bubbles continue to advance no ISA state.  The explicit adapter
+equality avoids relying on definitional equality between the packed and
+optional-retirement views.
+
+The PicoRV32 witness checks the retained-state bridge over its measured RVFI
+cycle stream alongside the existing normalization certificate.
+
+**MEASURED:** `lake build LeanModels.Refine.Rvfi
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and
+the new state bridge reports no axioms while the lifted theorem reports only
+existing `propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep single-channel RVFI state transport layered over the cycle
+bridge; normalization remains the separate proof that packed rows are valid
+architectural observations.

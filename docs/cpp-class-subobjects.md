@@ -17,11 +17,16 @@ The canonical probe must retain each complete class's abstractness and ordered
 direct base specifiers through Clang getters: structured canonical type,
 virtualness, effective/written access and source type spelling. Lean validates
 these against the complete retained class source, context/redeclaration chains,
-field census and all recursively reached class definitions. No base edge is
-reconstructed by parsing a printed class name. A closed finite hierarchy has
+field census and all recursively reached class definitions. Base identity and
+the diagnostic name come from the structured record declaration handle; the
+printed spelling is checked only as retained source evidence. A closed finite hierarchy has
 unique class descriptions, coherent field ownership and no cycle or unused
 description. Abstract descriptions are permitted internally, but a complete
 root must be concrete.
+
+For a class-type friend, the probe retains a `FriendDecl`-to-`CXXRecordDecl`
+handle association. A missing association refuses; the `FriendDecl`'s printed
+`qualType` is never used to choose among same-spelled records.
 
 Every base occurrence has an index path from the complete root. Expanding the
 nonvirtual graph retains repeated occurrences in diamonds. Caller state supplies

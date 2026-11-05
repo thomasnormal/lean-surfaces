@@ -297,6 +297,23 @@ template<class T> struct Dependent : T {};
         self.assertIsNone(rows["Dependent"]["record_bases"][0]["type"])
         self.assertEqual(rows["Other"]["record_bases"], [])
 
+    def test_class_friend_retains_declaration_handle(self):
+        self.source.write_text("""namespace left { struct Target {}; }
+namespace right { struct Target {}; struct Owner { friend struct left::Target; }; }
+""", encoding="utf-8")
+        probe = self.probe()
+        targets = [row for row in probe["metadata"]["declarations"]
+                   if row["kind"] == "CXXRecordDecl" and row.get("name") == "Target"
+                   and row.get("record_complete")]
+        owner = next(row for row in probe["metadata"]["declarations"]
+                     if row["kind"] == "CXXRecordDecl" and row.get("name") == "Owner")
+        friends = [row for row in probe["metadata"]["declarations"]
+                   if row["kind"] == "FriendDecl"]
+        self.assertEqual(len(friends), 1)
+        self.assertIn(friends[0]["friend_record"],
+                      {target["canonical"] for target in targets})
+        self.assertNotEqual(friends[0]["friend_record"], owner["canonical"])
+
     def test_method_receiver_and_signature_getters_keep_qualified_methods(self):
         self.source.write_text("""struct Receiver {
   int read(int &value) const { return value; }

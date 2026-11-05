@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ class and enum admission now uses retained declaration handles and
+  structured type evidence for identity. Qualified spelling-only paths refuse;
+  class friend records require an explicit probe handle, and base diagnostic
+  names come from their structured declarations.
+
 - C++ callable admission now refuses source switch bodies and `ExprWithCleanups`
   until their Clang AST nodes are preserved directly; hand-built evaluator
   tests remain available without claiming source admission.

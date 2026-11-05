@@ -603,7 +603,11 @@ private def parameterRaws (raw : Raw) :
   | _ => throw .malformedMethodSignature
 
 private def spellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+  /- A qualType spelling is retained for diagnostics only.  This helper is
+     used where no structured type row is available at the boundary, so a
+     qualified spelling is refused instead of being treated as identity by a
+     suffix match. -/
+  spelling == name || spelling == "enum " ++ name
 
 /-- Admit one direct enum `DeclRefExpr` under the caller's representation
 oracle. Casts, literals, and other argument forms remain outside this witness.
@@ -633,6 +637,39 @@ def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
     | _ => throw .missingReferencedDeclaration
   pure {occurrence := occurrence, sourceType := sourceType, type := .enumeration representation.profile.enum, declaration := referenced}
 
+/-- Admit a direct enum argument with the probe's structured type evidence.
+The legacy spelling-only entry point above remains deliberately conservative
+for callers that do not have a probe; source identity in the executable path
+comes from the referenced declaration's `CppTypeEvidence` handle. -/
+def admitWithProbe (probe : DeclarationProbe) (raw : Raw)
+    (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumArgumentError IntegralMemberEnumArgument := do
+  unless raw.text "kind" == some "DeclRefExpr" do throw .notDeclRef
+  let occurrence ← match raw.field "id" with
+    | some (.string value) =>
+        (parseFrontendHandle value).mapError (fun _ => .missingOccurrence)
+    | _ => throw .missingOccurrence
+  let sourceType ← match raw.field "type" with
+    | some type =>
+        match type.text "qualType" with
+        | some value => if !value.isEmpty then pure value else throw .malformedType
+        | none => throw .malformedType
+    | none => throw .malformedType
+  let referenced ← match raw.field "referencedDecl" with
+    | some (.object fields) =>
+        match (Raw.object fields).field "id" with
+        | some (.string value) =>
+            (parseFrontendHandle value).mapError (fun _ => .missingReferencedDeclaration)
+        | _ => throw .missingReferencedDeclaration
+    | some (.string value) =>
+        (parseFrontendHandle value).mapError (fun _ => .missingReferencedDeclaration)
+    | _ => throw .missingReferencedDeclaration
+  let rows ← parseValidatedTypeEvidence probe |>.mapError (fun _ => .unsupportedType)
+  let some (.enumeration enum) := typeEvidenceFor rows referenced
+    | throw .unsupportedType
+  unless enum == representation.profile.enum do throw .unsupportedType
+  pure {occurrence, sourceType, type := .enumeration enum, declaration := referenced}
+
 def bindTo (argument : IntegralMemberEnumArgument) (parameter : FrontendHandle)
     (parameterType : CppTypeEvidence) :
     Except IntegralMemberEnumArgumentError IntegralMemberBoundEnumArgument := do
@@ -644,7 +681,7 @@ retained `ParmVarDecl`. The method and ordinal are evidence, not a lookup by
 name; a missing, repeated, reordered, or differently typed declaration
 refuses. -/
 def parameter (probe : DeclarationProbe) (method : FrontendHandle) (ordinal : Nat)
-    (enum : FrontendHandle) (enumName : String) :
+    (enum : FrontendHandle) (_enumName : String) :
     Except IntegralMemberEnumArgumentError IntegralMemberEnumParameterEvidence := do
   let rows := probe.declarations.filter (fun row =>
     row.id == method && row.kind == "CXXMethodDecl" && row.canonical == method)
@@ -678,8 +715,6 @@ def parameter (probe : DeclarationProbe) (method : FrontendHandle) (ordinal : Na
         | some value => if value.isEmpty then throw .malformedMethodSignature else pure value
         | none => throw .malformedMethodSignature
     | none => throw .malformedMethodSignature
-  unless spellingMatches sourceType enumName do
-    throw .parameterTypeMismatch
   pure ⟨method, parameter, ordinal, parameterRaw.text "name", sourceType, parameterType⟩
 
 def bindToEvidence (argument : IntegralMemberEnumArgument)
@@ -784,8 +819,8 @@ def evaluate (argument : IntegralMemberEnumArgument)
     Except IntegralMemberEnumValueError IntegralMemberEnumValue := do
   unless argument.type == .enumeration representation.profile.enum do
     throw .argumentMismatch
-  unless spellingMatches argument.sourceType representation.profile.name do
-    throw .argumentMismatch
+  /- The enum declaration handle in `argument.type` is the identity witness;
+     source spelling is retained only for diagnostics. -/
   let format ← match profile.format representation.underlying with
     | .ok format => pure format
     | .error .invalidProfile => throw .invalidProfile
@@ -1037,8 +1072,10 @@ private def receiverType (projection : ClassReceiverProjection) (isArrow : Bool)
   pure (shape.name ++ if isArrow then " *" else "")
 
 private def resultMatches (profile : IntegralMemberEnumProfile) (spelling : String) : Bool :=
-  spelling == profile.name || spelling == "enum " ++ profile.name ||
-    spelling.endsWith ("::" ++ profile.name)
+  /- CallSyntax currently retains only the source spelling for the result, so
+     qualified spellings remain outside this boundary until expression type
+     evidence is threaded through it. -/
+  spelling == profile.name || spelling == "enum " ++ profile.name
 
 /-- Bind an already selected enum-valued call to an existing receiver. No
 overload lookup, enum conversion, object construction, or layout is inferred.
@@ -1188,12 +1225,12 @@ private def handle (raw : Raw) (name : String) :
   | some value => (evidenceHandle value "id").mapError (fun _ => .fieldMismatch)
   | none => throw .fieldMismatch
 
-private def spellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
-
 private def rawId (raw : Raw) : Option String := do
   let (.string value) ← raw.field "id" | none
   pure value
+
+private def spellingMatches (spelling name : String) : Bool :=
+  spelling == name || spelling == "enum " ++ name
 
 private def rawTypeSpelling (raw : Raw) : Except IntegralMemberEnumSetterError String := do
   let some type := raw.field "type" | throw .parameterTypeMismatch

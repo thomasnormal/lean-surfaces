@@ -475,7 +475,7 @@ private def setup : Option
   let profile ← (IntegralMemberEnumProfile.admit probe access).toOption
   let representation ← (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption
   let setter ← (IntegralMemberEnumSetter.admit probe methodRow.canonical representation).toOption
-  let argument ← (IntegralMemberEnumArgument.admit argumentRaw representation).toOption
+  let argument ← (IntegralMemberEnumArgument.admitWithProbe probe argumentRaw representation).toOption
   let parameter ← (IntegralMemberEnumArgument.parameter probe methodRow.canonical 0
     representation.profile.enum representation.profile.name).toOption
   let bound ← (IntegralMemberEnumArgument.bindToEvidence argument parameter).toOption

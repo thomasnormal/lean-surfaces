@@ -526,6 +526,13 @@ public:
     }
     if (const auto *function = llvm::dyn_cast<clang::FunctionDecl>(declaration))
       declarationOrigin(function, astContext->getSourceManager(), record);
+    if (const auto *friendDecl = llvm::dyn_cast<clang::FriendDecl>(declaration)) {
+      if (const auto *target = friendDecl->getFriendDecl()) {
+        if (const auto *recordTarget =
+                llvm::dyn_cast<clang::CXXRecordDecl>(target->getCanonicalDecl()))
+          record["friend_record"] = declarationId(recordTarget);
+      }
+    }
     records.push_back(std::move(record));
     if (declarationType(declaration))
       typedDeclarations.push_back(declaration);

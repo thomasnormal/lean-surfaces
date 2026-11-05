@@ -693,6 +693,15 @@ private def enumArgumentWrongType : Bool :=
       | _ => false
   | none => false
 
+private def enumArgumentQualifiedSpellingRefused : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit
+          (rawEnumArgument "0x20" "Other::XMLError" "0x21") representation with
+      | .error .unsupportedType => true
+      | _ => false
+  | none => false
+
 private def enumArgumentCastRefused : Bool :=
   match enumSetterRepresentation with
   | some representation =>
@@ -949,6 +958,7 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumSetterWriteWrongField
 #guard enumArgumentAccepted
 #guard enumArgumentWrongType
+#guard enumArgumentQualifiedSpellingRefused
 #guard enumArgumentCastRefused
 #guard enumArgumentLiteralRefused
 #guard enumArgumentBindAccepted

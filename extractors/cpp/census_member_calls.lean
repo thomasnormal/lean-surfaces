@@ -190,7 +190,7 @@ private def rawQualTypeText (raw : Raw) : Option String := do
 
 private def enumSpellingMatchesAny (probe : DeclarationProbe) (spelling : String) : Bool :=
   (enumNames probe.ast).any fun name =>
-    spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+    spelling == name || spelling == "enum " ++ name
 
 private def enumArgumentParameterMetadataRefusal (probe : DeclarationProbe)
     (argument : Raw) (reason : String) : Option String := do
@@ -310,7 +310,7 @@ private def rawQualType? (raw : Raw) : Option String := do
   type.text "qualType"
 
 private def enumSpellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+  spelling == name || spelling == "enum " ++ name
 
 private def enumArgumentShape (argument : Raw) (enumName : String) : Except String String :=
   match argument.text "kind" with
@@ -534,8 +534,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
             let spelling := rawResultSpelling raw |>.getD "<missing>"
             match enumResultName probe enum, rawResultSpelling raw with
             | .ok name, some spelling =>
-                if spelling == name || spelling == "enum " ++ name ||
-                    spelling.endsWith ("::" ++ name) then
+                if spelling == name || spelling == "enum " ++ name then
                   enumResultCalls := (s!"{name}:{spelling}") :: enumResultCalls
                 else enumResultRefusals := "result-spelling-mismatch" :: enumResultRefusals
             | .error error, _ => enumResultRefusals := error :: enumResultRefusals

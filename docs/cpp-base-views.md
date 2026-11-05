@@ -24,8 +24,8 @@ and a private edge only in its declaring class. This is the narrow source-backed
 context rule; friend lookup, access through unrelated contexts and full
 source-level cast lookup remain loud. The written label remains provenance data.
 
-Hierarchy admission also retains the unqualified class name for each class and
-each direct base spelling. `ClassBaseCastSyntax.resolve` consumes those names
+Hierarchy admission also retains the declaration-backed class name for each
+class and each direct base. `ClassBaseCastSyntax.resolve` consumes those names
 after syntax admission: starting at the caller-supplied source subobject, it
 follows exactly one retained direct edge for every AST path element, checks the
 source and target pointer spellings against the retained class names, and

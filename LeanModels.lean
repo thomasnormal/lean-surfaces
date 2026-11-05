@@ -108,6 +108,8 @@ import LeanModels.Sv.CombExhaustiveTactic
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).
 import LeanModels.Rv.Step
+-- R1: the core-independent commit observation and trace-refinement theorem.
+import LeanModels.Refine
 -- SoftFloat: the family's shared IEEE 754 component (docs/family-architecture.md
 -- §3.5, docs/softfloat-charter.md). Layer 2 — the spec algebra over a general
 -- `Float.Model.Format`. Depends on NO package: core's float model and nothing

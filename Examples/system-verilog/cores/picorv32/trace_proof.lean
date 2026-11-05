@@ -49,11 +49,21 @@ theorem pinned_nontrap_trace_refines_isa :
     trace rvMachine rvMachine.init nontrapInputs = nontrapExpected := by
   decide
 
+/-- The measured packed stream and the ISA stream are connected by one
+trace-level equality, rather than by separate row and architectural checks. -/
+theorem pinned_nontrap_observed_trace_refines_isa :
+    normalizeRvfiTrace? 0 nontrapObservations =
+      some (trace rvMachine rvMachine.init nontrapInputs) := by
+  rw [pinned_nontrap_trace_certificate, pinned_nontrap_trace_refines_isa]
+
 #guard trace rvMachine rvMachine.init nontrapInputs == nontrapExpected
 #guard normalizeRvfiTrace? 0 nontrapObservations == some nontrapExpected
+#guard normalizeRvfiTrace? 0 nontrapObservations ==
+  some (trace rvMachine rvMachine.init nontrapInputs)
 
 #print axioms pinned_nontrap_rows_normalize
 #print axioms pinned_nontrap_trace_certificate
 #print axioms pinned_nontrap_trace_refines_isa
+#print axioms pinned_nontrap_observed_trace_refines_isa
 
 end Examples.«system-verilog».cores.picorv32.trace_proof

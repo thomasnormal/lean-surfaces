@@ -119,3 +119,8 @@ equality: the measured core reports `pcWdata = 16` on the trap, while the
 architectural model enters `mtvec = 0`.  This is a visible RVFI/ISA contract
 boundary, not a guessed correction or a whole-core refinement claim.
 
+`pinned_nontrap_observed_trace_refines_isa` composes the order-aware RVFI
+certificate with that ISA calculation.  Its left side is the normalized
+measured stream and its right side is the finite architectural trace, so this
+is the direct observation-to-ISA bridge for the four-row witness.
+

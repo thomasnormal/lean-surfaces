@@ -153,3 +153,24 @@ the required commit and push.
 **DECIDED:** keep order checking in the generic RVFI boundary.  A core-specific
 proof must establish the observed order tags, while the adapter never chooses a
 completion order or repairs a malformed valid row.
+
+## 2026-11-05-ls-sv2-7 — compose the PicoRV32 observation and ISA traces
+
+The inbox was reread before this item and had no new ls-sv2-specific request.
+The preceding item proved an order-aware certificate for the packed RVFI rows
+and separately proved that the finite ISA machine produced the expected
+retirements.  Added `pinned_nontrap_observed_trace_refines_isa`, which rewrites
+those two facts into one equality between the normalized measured RVFI stream
+and `trace rvMachine ... nontrapInputs`.  The witness still ends before the
+measured trap row because PicoRV32's `pcWdata = 16` differs from the ISA
+model's `mtvec = 0` entry, as already documented.
+
+**MEASURED:** the focused PicoRV32 trace build, docs check, backlog-index check,
+and `git diff --check` passed.  The new theorem uses only the existing
+`propext`/`Quot.sound` proof boundary; it adds no axiom and does not change the
+RTL or the SV loader.
+
+**DECIDED:** expose the composed equality as the core-specific R1 bridge while
+keeping the generic order certificate reusable for later cores.  The next item
+is another generic refinement obligation or a re-probe after an owner-lane
+loader change.

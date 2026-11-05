@@ -455,3 +455,25 @@ introduced.
 **DECIDED:** make this composition the reusable finish line for a packetized
 RVFI/ROB core proof; leave the core relation and input admission to the
 future real-core artifact.  PicoRV32's exact loader walls are unchanged.
+
+## 2026-11-05-ls-sv2-19 — quantify PicoRV32 bus effects over latency
+
+Added `pinned_nontrap_bus_effects` to
+`Examples/system-verilog/cores/picorv32/trace_proof.lean`.  The theorem lifts
+the measured PicoRV32 store/load certificate through
+`runBus_oracle_projection`, so the completed effect stream is equal to the
+same direct architectural effects for every `LatencyOracle`.  Timing is
+therefore an explicit environment parameter; the proof does not choose a
+fixed delay or infer an ordering beyond the FIFO bus contract.
+
+**MEASURED:** `lake build
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), and
+the new theorem's axiom report contains only the existing `propext` and
+`Quot.sound` entries.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`,
+new axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep latency erasure in the generic bus layer and expose only
+the completed architectural effects to the PicoRV32 trace witness.  The
+symbolic loader remains blocked at the unchanged unpacked-register-memory and
+generate-member routes.

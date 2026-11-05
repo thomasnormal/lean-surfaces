@@ -135,6 +135,16 @@ theorem pinned_nontrap_memory_effects :
     (directRun memZero nontrapMemoryRequests).2 = nontrapMemoryEffects := by
   decide
 
+theorem pinned_nontrap_bus_effects (latency : LatencyOracle) :
+    completed
+        (runBus memZero (scheduleWith latency nontrapMemoryRequests)).2 =
+      nontrapMemoryEffects := by
+  have hdirect :
+      (directRun memZero nontrapMemoryRequests).2 = nontrapMemoryEffects := by
+    exact pinned_nontrap_memory_effects
+  exact (runBus_oracle_projection memZero latency nontrapMemoryRequests).2.trans
+    hdirect
+
 theorem pinned_cycle_retire_inputs :
     retireInputs pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapInputs := by
@@ -260,6 +270,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_nontrap_trace_append
 #print axioms pinned_nontrap_trace_refines_isa
 #print axioms pinned_nontrap_memory_effects
+#print axioms pinned_nontrap_bus_effects
 #print axioms pinned_cycle_retire_inputs
 #print axioms pinned_cycle_observations_normalize
 #print axioms pinned_cycle_trace

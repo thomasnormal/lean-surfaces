@@ -74,6 +74,8 @@ The first boolean conjunction/disjunction forms (`a && b`, `a || b`) now map
 to `SvaBool.and` and `SvaBool.or`.
 Simple case equality (`a === b`) now maps to `SvaBool.caseEq`.
 Simple boolean negation (`!a`) now maps to `SvaBool.not`.
+The retained `cover property` spelling now has a direct parser guard, checking
+that the source kind and constructed E check are both `cover`.
 
 ## F1: prove the SVA sampling refinement
 

@@ -120,6 +120,8 @@ Simple boolean conjunctions and disjunctions map to `SvaBool.and` and
 `SvaBool.or`.
 Simple case equality (`a === b`) maps to `SvaBool.caseEq`.
 Simple boolean negation (`!a`) maps to `SvaBool.not`.
+The retained `cover property` spelling is directly guarded through the same
+source-to-contract parser.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable

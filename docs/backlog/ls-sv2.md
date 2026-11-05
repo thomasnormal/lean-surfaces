@@ -809,3 +809,24 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep RVFI order advancement at the normalization boundary;
 windowed captures must provide the carried state and local certificates, and
 invalid rows remain explicit bubbles rather than being repaired.
+
+## 2026-11-05-ls-sv2-34 — compose architectural machine windows
+
+Added `machineStateAfter`, `machineStateAfter_append`, and
+`machineTrace_append` to `LeanModels/Refine/Commit.lean`.  The generic
+architectural machine bridge now carries the exact post-window state and
+splits a retirement trace over arbitrary adjacent input windows without any
+core-specific assumptions.
+
+The toy in-order witness applies `machineTrace_append` to two ADDI inputs,
+checking the concrete architectural stream at the new generic boundary.
+
+**MEASURED:** `lake build LeanModels.Refine.Commit
+Examples.«system-verilog».cores.toy_rv32i.proof` passed (27 jobs), and both
+generic append theorems report no axioms.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** use the architectural machine append bridge as the base state
+threading law; cycle, packet, ROB, flush, and RVFI layers retain their
+boundary-specific observations while sharing the same window discipline.

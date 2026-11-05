@@ -68,6 +68,42 @@ def trace {State : Type} (m : Machine State) : State → List Input → List Ret
       let (s', o) := m.step s i
       o :: trace m s' is
 
+/-! ## State-threaded architectural windows -/
+
+/-- The architectural machine state after a finite input window. -/
+def machineStateAfter {State : Type} (m : Machine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      machineStateAfter m (m.step state input).1 inputs
+
+theorem machineStateAfter_append {State : Type}
+    (m : Machine State) (state : State)
+    (first second : List Input) :
+    machineStateAfter m state (first ++ second) =
+      machineStateAfter m (machineStateAfter m state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : m.step state input with
+      | mk state' retirement =>
+          simp only [List.cons_append, machineStateAfter, hstep]
+          exact ih state'
+
+theorem machineTrace_append {State : Type}
+    (m : Machine State) (state : State)
+    (first second : List Input) :
+    trace m state (first ++ second) =
+      trace m state first ++
+        trace m (machineStateAfter m state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : m.step state input with
+      | mk state' retirement =>
+          simp only [List.cons_append, trace, machineStateAfter, hstep]
+          rw [ih state']
+
 /-! ## RISC-V adapter -/
 
 /-- The raw parcel bits used in the commit observation.  A compressed parcel
@@ -162,3 +198,6 @@ theorem trace_refines {CoreState IsaState : Type}
       rw [hout, ih c' a' hrel' hrest]
 
 end LeanModels.Refine
+
+#print axioms LeanModels.Refine.machineStateAfter_append
+#print axioms LeanModels.Refine.machineTrace_append

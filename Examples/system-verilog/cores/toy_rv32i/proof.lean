@@ -100,12 +100,24 @@ theorem toy_trace_refines (n : Nat) :
     subst input
     simp [addiInput, toyAdmits, zeroMem]
 
+theorem toy_trace_windows :
+    trace toyMachine toyMachine.init ([addiInput] ++ [addiInput]) =
+      trace toyMachine toyMachine.init [addiInput] ++
+        trace toyMachine
+          (machineStateAfter toyMachine toyMachine.init [addiInput])
+          [addiInput] := by
+  exact machineTrace_append toyMachine toyMachine.init
+    [addiInput] [addiInput]
+
 #guard (toyNext (ArchState.init 0)).pc == 4
 #guard (toyNext (ArchState.init 0)).readReg 1 == 1
 #guard (trace toyMachine toyMachine.init [addiInput]).length == 1
 #guard (trace rvMachine rvMachine.init [addiInput]).length == 1
+#guard (trace toyMachine toyMachine.init
+  ([addiInput] ++ [addiInput])).length == 2
 
 #print axioms toy_step_refines
 #print axioms toy_trace_refines
+#print axioms toy_trace_windows
 
 end Examples.«system-verilog».cores.toy_rv32i.proof

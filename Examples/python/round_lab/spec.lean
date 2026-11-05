@@ -57,3 +57,5 @@ set_option exponentiation.threshold 2048
   Val.float (Float64.ofBits 0x3f4b6113d600001c)
 #py_check round_lab.round_float_eighteen(Float64.ofBits 0x3f296619b1800000) =
   Val.float (Float64.ofBits 0x3f296619b17ffff2)
+#py_check round_lab.round_float_nineteen(Float64.ofBits 0x1bcbc5db28669ce4) =
+  Val.float (Float64.ofBits 0x0000000000000000)

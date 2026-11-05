@@ -1259,3 +1259,18 @@ cycle windows, with the adapter's exact state threading at the boundary.
 **DECIDED:** keep the composition theorem above the adapter-specific
 normalization law; ISA refinement consumes the complete concatenated ROB input
 projection after each local window has been checked.
+
+## 2026-11-05-ls-sv2-55 — compose packetized RVFI windows through ISA refinement
+
+Added `normalizeRvfiPacketRobTrace_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Adjacent packetized RVFI windows now
+compose through the packet-to-ROB adapter and a `RobStepRefines` certificate,
+with the concatenated normalized retirements equal to the ISA trace over the
+concatenated ROB input stream.
+
+The PicoRV32 witness exposes the same result for its measured packet windows,
+leaving the core-specific relation and admission predicate explicit for the
+eventual hardware proof.
+
+**DECIDED:** keep packet-window state threading in the adapter theorem and
+reuse the generic ROB trace refinement for the final ISA equality.

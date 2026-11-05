@@ -451,6 +451,37 @@ theorem normalizeRvfiPacketRobTrace_append {State : Type}
   apply normalizeRvfiPacketRobTrace machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/- A pair of local packetized-RVFI certificates composes through the ROB
+   refinement boundary, with the first packet window's exact state feeding the
+   second and the concatenated packet inputs driving the ISA trace. -/
+theorem normalizeRvfiPacketRobTrace_refines_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (robInputs machine.toRobMachine state (first ++ second)) := by
+  calc
+    firstRetirements ++ secondRetirements =
+        robTrace machine.toRobMachine state (first ++ second) :=
+      (normalizeRvfiPacketRobTrace_append machine state first second
+        hfirst hsecond).symm
+    _ = trace isa isaState
+        (robInputs machine.toRobMachine state (first ++ second)) :=
+      rob_trace_refines hrob state isaState start (first ++ second) hrel
+
 /-- The reusable R1-to-R3 conclusion: once a core-specific `RobStepRefines`
 proof supplies the ISA effect relation, a successful normalized RVFI packet
 stream is exactly the ISA trace over the packet's associated inputs. -/
@@ -484,6 +515,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

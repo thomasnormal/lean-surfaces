@@ -129,3 +129,9 @@ followed by `LW` at `0x100`) and proves their effects with the generic
 byte-addressed `directRun` memory contract.  The resulting write of 5 and load
 of 5 are checked independently of the packed RVFI row conversion.
 
+It also places the four valid rows into an eight-cycle `RvfiCycleMachine` with
+an invalid observation before each retirement.  The cycle bridge proves that
+the four bubbles disappear, the retained inputs are exactly the four measured
+instruction inputs, and the filtered cycle trace equals the same finite ISA
+trace.  This is a finite stuttering witness for the RVFI cycle boundary.
+

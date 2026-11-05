@@ -58,6 +58,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-05-pycomplete-297` |  | admit ten positive float digits | python-completeness |
 | `2026-11-05-pycomplete-296` |  | admit nine positive float digits | python-completeness |
 | `2026-11-05-pycomplete-295` |  | admit eight positive float digits | python-completeness |
+| `2026-11-05-ls-sv2-9` |  | exercise the RVFI cycle bridge with measured bubbles | ls-sv2 |
 | `2026-11-05-ls-sv2-8` |  | certify PicoRV32's measured byte-memory effects | ls-sv2 |
 | `2026-11-05-ls-sv2-7` |  | compose the PicoRV32 observation and ISA traces | ls-sv2 |
 | `2026-11-05-ls-sv2-6` |  | certify finite RVFI order and normalization | ls-sv2 |

@@ -194,3 +194,24 @@ ledger; no new axiom, RTL edit, or loader adaptation was introduced.
 bridge.  It is a finite measured-memory witness, not a claim that the blocked
 PicoRV32 RTL has been symbolically loaded; the unpacked-register-memory and
 generate-member walls remain the next core-admission dependency.
+
+## 2026-11-05-ls-sv2-9 — exercise the RVFI cycle bridge with measured bubbles
+
+The inbox was reread before this item and had no new ls-sv2-specific request.
+Added an eight-cycle `RvfiCycleMachine` witness around the measured PicoRV32
+prefix: each of the four valid rows is preceded by an invalid RVFI bubble.  The
+proof establishes that `retireInputs` retains exactly the four instruction
+inputs, that `cycleTrace` produces exactly the four normalized retirements, and
+that the filtered cycle trace equals the finite `rvMachine` trace.  The
+machine emits only the already measured observation data; it does not model or
+rewrite the pinned RTL.
+
+**MEASURED:** the focused cycle/trace build, docs check, backlog-index check,
+and `git diff --check` passed.  The new theorem reports remain within the
+existing `propext`/`Quot.sound` ledger; no axiom, RTL edit, or loader
+adaptation was introduced.
+
+**DECIDED:** keep invalid RVFI cycles as explicit stutter at the generic cycle
+boundary and preserve the finite filtered-trace theorem for later cores.  The
+PicoRV32 symbolic proof still waits on the unchanged unpacked-memory and
+generate-member loader support.

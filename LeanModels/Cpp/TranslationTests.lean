@@ -2176,6 +2176,9 @@ def cxxOperatorCallExpressionTranslationWitness : Except String Unit :=
 def resolvedCxxOperatorCallTranslationWitness : Except String FrontendHandle :=
   admitResolvedCXXOperatorCallExpression resolvedCxxOperatorCallTranslation [1]
 
+def resolvedCxxOperatorCallTranslationWitnessOk : Bool :=
+  resolvedCxxOperatorCallTranslationWitness matches .ok _
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 

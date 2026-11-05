@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ differential coverage now includes a source-shaped resolved-operator
+  identity witness; the corpus measures 1,582 rows with the new operator
+  metadata path recorded as a WITNESS.
+
 - C++ operator-call metadata now has a source-shaped resolved-identity gate:
   `CXXOperatorCallExpr` callee casts are followed to the retained Clang
   `FunctionDecl`/`CXXMethodDecl` handle, while overload selection, conversions,

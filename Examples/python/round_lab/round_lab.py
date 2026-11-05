@@ -60,3 +60,7 @@ def round_float_six(value):
 
 def round_float_seven(value):
     return round(value, 7)
+
+
+def round_float_eight(value):
+    return round(value, 8)

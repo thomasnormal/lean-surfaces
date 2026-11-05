@@ -8406,3 +8406,20 @@ digit counts and all other unsupported digit protocols remain loud.
 
 DECIDED: admit positive float `ndigits == 7` in addition to the existing
 zero- through six-digit slices; retain loud behavior for richer rounding.
+
+## 2026-11-05-pycomplete-295 — admit eight positive float digits
+
+The float `round(number, 8)` slice now computes from the exact binary64 ratio
+scaled by one hundred million, preserving ties-to-even and signed zero. Larger
+positive digit counts and all other unsupported digit protocols remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | Managed `lake build Examples.python.round_lab.spec`: passed, 20 jobs |
+| Native full differential | 4,047 rows: 4,033 matched, 14 recorded refusals, 0 failed |
+| Proof full differential | 4,047 rows: 3,918 matched, 129 refusals, 0 failed |
+| Root build | Managed `lake build LeanModels`: passed, 228 jobs |
+| Hygiene | Coverage, backlog index, docs check, and `git diff --check` passed |
+
+DECIDED: admit positive float `ndigits == 8` in addition to the existing
+zero- through seven-digit slices; retain loud behavior for richer rounding.

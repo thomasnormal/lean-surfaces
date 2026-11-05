@@ -20,6 +20,12 @@ structure RvfiPacketEntry where
   input : Input
   observation : RvfiObservation
 
+/-- Decode one packet row into a tagged architectural commit when it carries a
+retirement. -/
+def RvfiPacketEntry.toTaggedCommit? (entry : RvfiPacketEntry) : Option TaggedCommit :=
+  entry.observation.toRetirement?.map (fun retirement =>
+    { order := entry.observation.order, input := entry.input, retirement := retirement })
+
 /-- A cycle machine that may expose a finite RVFI packet at each boundary. -/
 structure RvfiPacketMachine (State : Type) where
   init : State
@@ -43,11 +49,7 @@ def RvfiPacketMachine.toRobMachine {State : Type}
   init := machine.init
   step state cycleInput :=
     let (state', entries) := machine.step state cycleInput
-    let packet := entries.filterMap fun entry =>
-      entry.observation.toRetirement?.map (fun retirement =>
-        { order := entry.observation.order
-          input := entry.input
-          retirement := retirement })
+    let packet := entries.filterMap RvfiPacketEntry.toTaggedCommit?
     (state', packet)
 
 @[simp] theorem RvfiPacketMachine.toPacketMachine_init {State : Type}
@@ -82,26 +84,18 @@ private theorem packetEntries_snd (entries : List RvfiPacketEntry) :
       | some retirement => simp [hret, ih]
 
 private theorem packetEntries_tagged_snd (entries : List RvfiPacketEntry) :
-    (entries.filterMap (fun entry =>
-      entry.observation.toRetirement?.map (fun retirement =>
-        { order := entry.observation.order
-          input := entry.input
-          retirement := retirement }))).map TaggedCommit.retirement =
+    (entries.filterMap RvfiPacketEntry.toTaggedCommit?).map TaggedCommit.retirement =
       (entries.map RvfiPacketEntry.observation).filterMap
         RvfiObservation.toRetirement? := by
   induction entries with
   | nil => rfl
   | cons entry entries ih =>
       cases hret : entry.observation.toRetirement? with
-      | none => simp [hret, ih]
-      | some retirement => simp [hret, ih]
+      | none => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
+      | some retirement => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
 
 private theorem packetEntries_tagged_fst (entries : List RvfiPacketEntry) :
-    (entries.filterMap (fun entry =>
-      entry.observation.toRetirement?.map (fun retirement =>
-        { order := entry.observation.order
-          input := entry.input
-          retirement := retirement }))).map TaggedCommit.input =
+    (entries.filterMap RvfiPacketEntry.toTaggedCommit?).map TaggedCommit.input =
       (entries.filterMap (fun entry =>
         entry.observation.toRetirement?.map (fun retirement =>
           (entry.input, retirement)))).map Prod.fst := by
@@ -109,8 +103,8 @@ private theorem packetEntries_tagged_fst (entries : List RvfiPacketEntry) :
   | nil => rfl
   | cons entry entries ih =>
       cases hret : entry.observation.toRetirement? with
-      | none => simp [hret, ih]
-      | some retirement => simp [hret, ih]
+      | none => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
+      | some retirement => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
 
 /-- The packet projection emits exactly the filtered flattened observations. -/
 theorem RvfiPacketMachine.toPacketMachine_trace {State : Type}
@@ -153,11 +147,8 @@ theorem RvfiPacketMachine.toRobMachine_trace {State : Type}
       | mk state' entries =>
           simp only [robTrace, packetTrace, RvfiPacketMachine.toRobMachine,
             RvfiPacketMachine.toPacketMachine, hstep]
-          change (entries.filterMap (fun entry =>
-            entry.observation.toRetirement?.map (fun retirement =>
-              { order := entry.observation.order
-                input := entry.input
-                retirement := retirement }))).map TaggedCommit.retirement ++
+          change (entries.filterMap RvfiPacketEntry.toTaggedCommit?).map
+              TaggedCommit.retirement ++
               robTrace machine.toRobMachine state' cycles =
             (entries.filterMap (fun entry =>
               entry.observation.toRetirement?.map (fun retirement =>
@@ -181,11 +172,8 @@ theorem RvfiPacketMachine.toRobMachine_inputs {State : Type}
       | mk state' entries =>
           simp only [robInputs, packetInputs, RvfiPacketMachine.toRobMachine,
             RvfiPacketMachine.toPacketMachine, hstep]
-          change (entries.filterMap (fun entry =>
-            entry.observation.toRetirement?.map (fun retirement =>
-              { order := entry.observation.order
-                input := entry.input
-                retirement := retirement }))).map TaggedCommit.input ++
+          change (entries.filterMap RvfiPacketEntry.toTaggedCommit?).map
+              TaggedCommit.input ++
               robInputs machine.toRobMachine state' cycles =
             (entries.filterMap (fun entry =>
               entry.observation.toRetirement?.map (fun retirement =>
@@ -207,6 +195,56 @@ theorem normalizeRvfiPacketTrace {State : Type}
   rw [machine.toPacketMachine_trace]
   exact normalizeRvfiTrace?_filterMap h
 
+/-- A normalized packet's decoded commit tags are the consecutive prefix at
+the supplied starting order.  Bubbles do not enter the packet, while a
+retirement row contributes exactly the tag checked by normalization. -/
+theorem normalizeRvfiPacketTags {start : Nat}
+    {entries : List RvfiPacketEntry} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (entries.map RvfiPacketEntry.observation) = some retirements) :
+    InOrderTags start (entries.filterMap RvfiPacketEntry.toTaggedCommit?) := by
+  induction entries generalizing start retirements with
+  | nil =>
+      simp [normalizeRvfiTrace?] at h ⊢
+      cases h
+      rfl
+  | cons entry entries ih =>
+      by_cases hv : entry.observation.valid = true
+      · simp [normalizeRvfiTrace?, hv] at h
+        by_cases ho : entry.observation.order = start
+        · simp [ho] at h
+          cases hret : entry.observation.toRetirement? with
+          | none => simp [hret] at h
+          | some retirement =>
+              cases htail : normalizeRvfiTrace? (start + 1)
+                  (entries.map RvfiPacketEntry.observation) with
+              | none => simp [hret, htail] at h
+              | some retirements =>
+                  simp [hret, htail] at h
+                  have htailTags := ih (start := start + 1)
+                    (retirements := retirements) htail
+                  simp only [List.filterMap, RvfiPacketEntry.toTaggedCommit?,
+                    hret, Option.map]
+                  change InOrderTags start
+                    ({ order := entry.observation.order, input := entry.input,
+                        retirement := retirement } ::
+                      entries.filterMap RvfiPacketEntry.toTaggedCommit?)
+                  rw [ho]
+                  unfold InOrderTags at htailTags ⊢
+                  simp only [List.map_cons, List.length_cons]
+                  rw [orderPrefix_succ]
+                  exact congrArg (List.cons start) htailTags
+        · simp [ho] at h
+      · have hv' : entry.observation.valid = false := by
+          cases hval : entry.observation.valid with
+          | false => exact rfl
+          | true => exact False.elim (hv hval)
+        simp [normalizeRvfiTrace?, hv'] at h
+        have hnone : entry.observation.toRetirement? = none := by
+          simp [RvfiObservation.toRetirement?, hv']
+        simp only [List.filterMap, RvfiPacketEntry.toTaggedCommit?, hnone]
+        exact ih h
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -224,4 +262,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

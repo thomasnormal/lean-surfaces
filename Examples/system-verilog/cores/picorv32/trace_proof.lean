@@ -152,6 +152,12 @@ theorem pinned_packet_observations_normalize :
           packetCycleInputs) = some nontrapExpected := by
   decide
 
+theorem pinned_packet_first_tags :
+    InOrderTags 0
+        ((packetRows[0]!).filterMap RvfiPacketEntry.toTaggedCommit?) := by
+  apply normalizeRvfiPacketTags (retirements := expected.take 1)
+  decide
+
 theorem pinned_cycle_trace :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapExpected := by
@@ -253,6 +259,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_inputs
 #print axioms pinned_packet_observations_normalize
+#print axioms pinned_packet_first_tags
 #print axioms pinned_packet_trace
 #print axioms pinned_packet_inputs
 #print axioms pinned_packet_rob_trace

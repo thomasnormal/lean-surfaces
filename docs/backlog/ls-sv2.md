@@ -380,3 +380,27 @@ adaptation was introduced.
 same observations so a core proof can state its commit-order certificate once.
 The symbolic PicoRV32 loader remains blocked at the unchanged memory/generate
 walls.
+
+## 2026-11-05-ls-sv2-16 — certify packet tags from RVFI normalization
+
+The packet-to-ROB projection preserved RVFI tags, but it did not yet expose
+the local `InOrderTags` fact needed by `RobStepRefines`.  Added
+`normalizeRvfiPacketTags`: from normalization of one packet at a supplied
+starting order, its decoded `TaggedCommit` list is proved to equal the
+consecutive `orderPrefix`; bubbles contribute no tag, and each valid row uses
+the order equality already checked by the inductive certificate.
+
+The PicoRV32 witness applies this theorem to the first measured two-entry
+packet and proves its tag list starts at order zero.  The packet's retirement
+and ROB trace proofs continue to use the same global normalization certificate.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), and
+`normalizeRvfiPacketTags` reports only `propext`/`Quot.sound`.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** retain tag certification as a proof obligation derived from the
+packed stream; no sorting or completion-order choice is added.  The remaining
+PicoRV32 symbolic admission walls are unchanged.

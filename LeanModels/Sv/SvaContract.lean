@@ -72,8 +72,9 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   let some clockText := source.clock
     | throw "SVA: simple property is missing its retained clock"
   let clock := clockText.trimAscii.toString
-  if !text.contains "@(posedge " || !text.contains "|->" || !text.endsWith ");" then
-    throw "SVA: unsupported property syntax (expected posedge |-> form)"
+  if !text.contains "@(posedge " ||
+      (!text.contains "|->" && !text.contains "|=>") || !text.endsWith ");" then
+    throw "SVA: unsupported property syntax (expected posedge implication form)"
   let edgeParts := text.splitOn "@(posedge "
   let edgeTail := edgeParts.getLast!
   let afterEdge := edgeTail.splitOn ")"
@@ -83,16 +84,19 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   let some bodyText := afterEdge[1]?
     | throw "SVA: missing implication body"
   let body := bodyText.trimAscii.toString
-  let implication := body.splitOn "|->"
+  let operator := if body.contains "|=>" then "|=>" else "|->"
+  let implication := body.splitOn operator
   match implication with
   | [antecedent, consequent] =>
       let left ← simpleAtom antecedent
       let right ← simpleAtom consequent
       let check : SvaCheck :=
         { kind := kind, clock := clock,
-          property := .implies (.atom left) (.atom right) }
+          property := if operator == "|=>"
+            then .nonoverlap (.atom left) (.atom right)
+            else .implies (.atom left) (.atom right) }
       ofCheck source check
-  | _ => throw "SVA: expected exactly one |-> implication"
+  | _ => throw "SVA: expected exactly one implication"
 
 def portRegionAux : Nat → List (CycleObs PortSample) → RegionTrace
   | _, [] => []
@@ -159,6 +163,12 @@ private def portTrace : List (CycleObs PortSample) :=
 #guard match SvaContract.parseSimple { sourceProperty with text := "assert property (@(posedge clk) a ##1 b);" } with
   | .error _ => true
   | .ok _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a |=> b);" } with
+  | .ok C => match C.check.property with
+    | .nonoverlap _ _ => true
+    | _ => false
+  | .error _ => false
 
 end LeanModels.Sv
 

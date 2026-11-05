@@ -58,7 +58,8 @@ defined.
 `SvaContract.parseSimple` now turns retained source text of the form
 `assert/assume/cover property (@(posedge clk) a |-> b);` into a checked E
 contract. Signal names, the retained clock, and assertion kind are validated;
-delays, expressions, reset guards, and other SVA forms remain loud.
+the non-overlapped `|=>` form is covered as well. Delays, expressions, reset
+guards, and other SVA forms remain loud.
 
 ## F1: prove the SVA sampling refinement
 

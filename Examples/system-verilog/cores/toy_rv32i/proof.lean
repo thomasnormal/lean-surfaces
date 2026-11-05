@@ -54,7 +54,7 @@ theorem isa_addi_step (s : ArchState) (m : Memory)
       Fetched.decode (.word addiWord) =
         some (.alu .add (1 : Reg) (.reg 0) (.imm (1 : BitVec 32))) := by
     decide
-  simp only [isaStep]
+  simp only [isaStep, isaStepWith]
   rw [hirq, hdecode]
   have hx0 : s.regs 0 = 0 := by
     simpa [ArchState.WF] using hWF

@@ -15,7 +15,7 @@ over inputs, so a later core can state its RV32I subset without changing the
 observation type.  `trace_refines` is the reusable induction that turns the
 one-step contract into equality of retired-instruction streams.
 
-The RISC-V adapter below uses `LeanModels.Rv.isaStep` as the architectural
+The RISC-V adapter below uses `LeanModels.Rv.isaStepWith` as the architectural
 step.  Its memory input is a total byte function (`Rv.Mem`), so there is no
 wait-state or cache nondeterminism in this first memory model.  A later core
 can refine that input protocol while retaining the same `Retirement` and
@@ -102,7 +102,15 @@ def Retirement.ofRvStep (before : Rv.ArchState) (input : Input)
     memory := memEffect input.memory input.fetched effects.mem
     trap := effects.trap }
 
-/-- The official model exposed through the generic machine interface. -/
+/-- The official model exposed through the generic machine interface under an
+explicit platform profile. -/
+def rvMachineWith (profile : Rv.PlatformProfile) : Machine Rv.ArchState where
+  init := Rv.ArchState.init 0
+  step s input :=
+    let (s', e) := Rv.isaStepWith profile s input.memory input.fetched input.irq
+    (s', Retirement.ofRvStep s input s' e)
+
+/-- The CV32E40P-profile adapter retained under the original name. -/
 def rvMachine : Machine Rv.ArchState where
   init := Rv.ArchState.init 0
   step s input :=

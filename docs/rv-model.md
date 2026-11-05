@@ -17,7 +17,7 @@ re-derived in this tree's idiom.
 | `LeanModels/Rv/Exec.lean` | `aluSem`, width-generic `divRem`, `mulDivSem`, `branchSem`, byte-addressed little-endian memory, `Effects`, the non-privileged step `execInstr` |
 | `LeanModels/Rv/Csr.lean` | `CsrBehavior` rows with WARL legalization as data (`legalize_<csr>` shape), `csrTable` for {mstatus, mie, mtvec, mscratch, mepc, mcause} |
 | `LeanModels/Rv/Priv.lean` | `Cause`, `trapEnter`/`mret` (the mstatus stack dance, defined once), `trapVector`, `pendingSet`/`irqPriority`/`selectIrq`/`takeInterrupt?` |
-| `LeanModels/Rv/Step.lean` | `Fetched` parcels, CSR read-modify-write, WFI wake, the full architectural step `isaStep` and its projection index |
+| `LeanModels/Rv/Step.lean` | `Fetched` parcels, CSR read-modify-write, profile-selected WFI wake, the full architectural step `isaStepWith` (with the CV32E40P wrapper `isaStep`) and its projection index |
 
 The projection table (which def feeds which gallery spec) lives in
 `Step.lean`'s module docstring.
@@ -99,12 +99,13 @@ CV32E40P-specific behavior is pinned by `#guard`s in the model files:
    not exist in the model (CV32E40P's fault inputs are asserted away), so
    all accesses stay inside sail's RAM and stores wrapping the 2^32 edge
    are `#guard`-covered instead (`Exec.lean`).
-6. **WFI-first rule**: with `mstatus.MIE = 1` and a pending interrupt, the
-   model retires a fresh WFI first and takes the interrupt at the next
-   step with mepc past the WFI (the CV32E40P/v1.11 "resume after WFI"
-   reading); sail traps on the WFI itself. Both v1.11-legal; the harness
-   compares the MIE = 0 wake case (identical on both sides) and the
-   WFI-first behavior is `#guard`-pinned in `Step.lean`.
+6. **WFI ordering**: with `mstatus.MIE = 1` and a pending interrupt, v1.11
+   permits both fresh-WFI resolutions. `PlatformProfile.wfiResolution`
+   carries that choice; `cv32e40pProfile` selects WFI-first, so the model
+   retires the WFI and takes the interrupt at the next step with `mepc` past
+   it, while the explicit `interruptFirst` profile traps at the WFI pc. Sail
+   traps on the WFI itself. The stalled-WFI and MIE = 0 wake cases remain
+   shared, and both profile branches are `#guard`-pinned in `Step.lean`.
 
 `tools/ci.sh` runs the harness as the `rv-harness` step, gated on the
 oracle binary's presence (SKIP when absent, like the other lab-host-only

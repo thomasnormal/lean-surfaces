@@ -3,7 +3,7 @@ import LeanModels.Rv.Priv
 /-!
 # The full architectural step: fetch parcel → decode → dispatch → execute
 
-`isaStep` is the top of the model: one architectural step of the RV32IMC +
+`isaStepWith` is the top of the model: one architectural step of the RV32IMC +
 machine-mode hart, composing interrupt dispatch (`Priv.lean`), decode
 (`Decode.lean`), CSR read-modify-write (`Csr.lean`), trap entry/return
 (`Priv.lean`) and the non-privileged execution core (`Exec.lean`). The
@@ -16,12 +16,11 @@ core-level refinement will consume.
 Step order (each step handles at most one of these, top priority first):
 
 1. **Interrupt dispatch** — before the fetched instruction executes
-   (`mepc` = its pc), *except* when that instruction is a WFI: a WFI with a
-   pending locally-enabled interrupt retires first and the interrupt is
-   taken at the next step with `mepc` past the WFI — v1.11 §3.3's "resumes
-   at the instruction following the WFI". Both behaviors are v1.11-legal
-   for a *freshly reached* WFI; the rule makes the *stalled*-WFI case (the
-   one v1.11 constrains) right.
+   (`mepc` = its pc), except for a freshly reached WFI with a pending
+   globally-enabled interrupt. `PlatformProfile.wfiResolution` explicitly
+   chooses the two v1.11 §3.3-legal orders; the CV32E40P profile retires the
+   WFI first, so the next dispatch saves `mepc` past it. The stalled-WFI case
+   (no globally-enabled interrupt) is shared by both profiles.
 2. **Illegal instruction** — decode failure (or, later, an unimplemented
    CSR address) traps with cause 2.
 3. **System transfers** — ECALL (cause 11), EBREAK (cause 3), MRET, WFI,
@@ -33,8 +32,8 @@ WFI is wait-until-interrupt: with no locally-enabled pending interrupt
 (`pendingSet = 0`, the RTL's `irq_wu_ctrl_o` — **independent of
 `mstatus.MIE`**, per v1.11 and per `cv32e40p_int_controller.sv` line 76) the
 step is an architectural no-op at the same pc; once one pends, the WFI
-retires to `pc + ilen`. CV32E40P's sleep unit is a timing refinement of
-exactly this.
+resolves according to the profile (CV32E40P retires to `pc + ilen`).
+CV32E40P's sleep unit is a timing refinement of exactly this.
 
 ## Projection index (the spec-surface artifacts, all named defs)
 
@@ -49,8 +48,10 @@ The four tables + transfer fragments consumed by `docs/cv32e40p-spec-surface.md`
 | trap-entry tuple | `trapEnter`/`mstatusOnTrap`/`mret` (`Priv.lean`) | entry 8 `csr_trap_entry_atomic`; entry 10 `controller_irq_boundary` |
 | irq priority | `irqPriority`/`selectIrq` (`Priv.lean`) | entry 10 (`cv32e40p_int_controller` encoder) |
 
-`isaStep` itself is the golden model for the eventual core-level `⊑`
-refinement (spec-surface section B's closing argument).
+`isaStepWith` itself is the golden model for the eventual core-level `⊑`
+refinement (spec-surface section B's closing argument).  `isaStep` is the
+CV32E40P-profile compatibility wrapper; profile-parametric contracts should
+use `isaStepWith` and quantify over `PlatformProfile`.
 -/
 
 namespace LeanModels.Rv
@@ -127,21 +128,32 @@ def wfiWake (f : CsrFile) (irq : BitVec 32) : Bool :=
 
 /-! ## The step -/
 
+/-- Resolve a pending interrupt that coincides with a freshly reached WFI.
+Both branches are privileged-spec-legal (§3.3); the profile chooses which
+architectural resolution this platform exposes. -/
+def wfiPendingStep (resolution : WfiResolution) (s : ArchState)
+    (f : Fetched) (id : Fin 32) : ArchState × StepEffects :=
+  match resolution with
+  | .retireFirst =>
+      let next := s.pc + f.size
+      ({ s with pc := next }, { pcTarget := next, sys := some .wfi })
+  | .interruptFirst =>
+      let s' := trapEnter s (.interrupt id)
+      (s', { pcTarget := s'.pc, trap := some (.interrupt id) })
+
 /-- One architectural step: dispatch a pending interrupt or execute the
 fetched parcel (see the module docstring for the priority order and the
-WFI-first rule). `mem` is the data-memory view (loads read it; the produced
+ profile-selected WFI rule). `mem` is the data-memory view (loads read it; the produced
 store is reported in `StepEffects.mem`, not applied — `isaStepMem` applies
 it). `irq` is the level of the 32 interrupt lines during this step. -/
-def isaStep (s : ArchState) (mem : Mem) (f : Fetched) (irq : BitVec 32 := 0) :
+def isaStepWith (profile : PlatformProfile) (s : ArchState) (mem : Mem)
+    (f : Fetched) (irq : BitVec 32 := 0) :
     ArchState × StepEffects :=
   let decoded := f.decode
   match takeInterrupt? s.csrs irq with
   | some id =>
     if decoded = some (.system .wfi) then
-      -- WFI-first: retire the WFI now; the interrupt is taken at the next
-      -- step, so the handler resumes *after* the WFI (v1.11 §3.3).
-      let next := s.pc + f.size
-      ({ s with pc := next }, { pcTarget := next, sys := some .wfi })
+      wfiPendingStep profile.wfiResolution s f id
     else
       let s' := trapEnter s (.interrupt id)
       (s', { pcTarget := s'.pc, trap := some (.interrupt id) })
@@ -183,12 +195,34 @@ def isaStep (s : ArchState) (mem : Mem) (f : Fetched) (irq : BitVec 32 := 0) :
       let (s', e) := execInstr i s mem f.size
       (s', { toEffects := e })
 
-/-- Convenience driver: step state *and* memory together (stores land,
-reads don't disturb) — the `execStep` of the full model. -/
+/-- The CV32E40P-profile architectural step retained under the historic name.
+Profile-parametric theorems should use `isaStepWith` instead. -/
+def isaStep (s : ArchState) (mem : Mem) (f : Fetched) (irq : BitVec 32 := 0) :
+    ArchState × StepEffects :=
+  isaStepWith cv32e40pProfile s mem f irq
+
+/-- The exact pending-WFI dispatcher equation, quantified over every legal
+profile resolution.  This is the contract a core-specific proof can reuse
+without committing the ISA theorem to CV32E40P's choice. -/
+theorem isaStepWith_wfiPending (profile : PlatformProfile) (s : ArchState)
+    (mem : Mem) (f : Fetched) (irq : BitVec 32) (id : Fin 32)
+    (hirq : takeInterrupt? s.csrs irq = some id)
+    (hwfi : f.decode = some (.system .wfi)) :
+    isaStepWith profile s mem f irq =
+      wfiPendingStep profile.wfiResolution s f id := by
+  simp only [isaStepWith, hirq, hwfi, if_true]
+
+/-- Convenience driver: step state *and* memory together under an explicit
+profile (stores land, reads don't disturb). -/
+def isaStepMemWith (profile : PlatformProfile) (s : ArchState) (m : Mem)
+    (f : Fetched) (irq : BitVec 32 := 0) : ArchState × Mem :=
+  let (s', e) := isaStepWith profile s m f irq
+  (s', applyMemEffect m e.mem)
+
+/-- CV32E40P-profile memory-threading wrapper under the historic name. -/
 def isaStepMem (s : ArchState) (m : Mem) (f : Fetched) (irq : BitVec 32 := 0) :
     ArchState × Mem :=
-  let (s', e) := isaStep s m f irq
-  (s', applyMemEffect m e.mem)
+  isaStepMemWith cv32e40pProfile s m f irq
 
 /-! ## `#guard` battery -/
 
@@ -300,6 +334,16 @@ private def sC2 : ArchState :=
         let (s2, e2) := isaStep s1 mZ (.word 0x00500093) (irq := 0x00010000)
         (s2.pc, s2.csrs.mepc, e2.trap))
         = (0x00008040#32, 0x1004#32, some (Cause.interrupt 16))
+-- The other v1.11-legal fresh-WFI resolution is explicit and traps at the
+-- WFI pc.  The profile-parametric dispatcher theorem above covers both.
+private def interruptFirstProfile : PlatformProfile :=
+  { wfiResolution := .interruptFirst }
+#guard (isaStepWith interruptFirstProfile sG mZ (.word 0x10500073)
+          (irq := 0x00010000)).1.pc = 0x00008040
+#guard (isaStepWith interruptFirstProfile sG mZ (.word 0x10500073)
+          (irq := 0x00010000)).1.csrs.mepc = 0x1000
+#guard (isaStepWith interruptFirstProfile sG mZ (.word 0x10500073)
+          (irq := 0x00010000)).2.trap = some (Cause.interrupt 16)
 
 /-! ### Compressed parcels: pc + 2 retirement and pc + 2 links -/
 

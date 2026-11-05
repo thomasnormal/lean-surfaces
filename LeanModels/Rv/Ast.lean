@@ -210,6 +210,32 @@ structure CsrFile where
   mscratch : BitVec 32 := 0
   deriving DecidableEq, Repr, Inhabited
 
+/-! ## Platform resolutions -/
+
+/-- The two privileged-spec-legal resolutions when a freshly reached WFI has
+an interrupt that is both pending and globally enabled.  The stalled-WFI
+case (no such interrupt) is the same under both resolutions.  Keeping this
+choice in data lets ISA-level contracts quantify over every legal resolution
+while the CV32E40P wrapper below retains the RTL's choice. -/
+inductive WfiResolution where
+  | retireFirst
+  | interruptFirst
+  deriving DecidableEq, Repr
+
+/-- Platform choices that affect the architectural step.  The current
+CV32E40P profile exposes the one v1.11-permitted fresh-WFI ordering choice;
+the CSR reset/WARL values remain the separately documented CV32E40P CSR
+table.  More platform choices belong here when the scoped model grows them. -/
+structure PlatformProfile where
+  wfiResolution : WfiResolution
+  deriving DecidableEq, Repr
+
+/-- CV32E40P's sleep-unit choice: retire a freshly reached WFI before taking
+a pending globally-enabled interrupt, so the next dispatch saves the pc
+after the WFI. -/
+def cv32e40pProfile : PlatformProfile :=
+  { wfiResolution := .retireFirst }
+
 /-- The architectural state of the non-privileged fragment: the integer
 register file and the pc (plus the CSR-file placeholder). Data memory is *not*
 state — `execInstr` consumes a memory view and reports accesses as `Effects`,

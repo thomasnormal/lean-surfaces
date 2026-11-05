@@ -55,6 +55,14 @@ private theorem scalar_decimal (value : PyInt)
   change (if value.natAbs < 10 ^ 4300 then some (toString value) else none) = _
   exact if_pos valueBound
 
+private theorem late_names_ret (e : Expr) (sp : Span) :
+    hasLateRaiseNamesCore [Stmt.ret (some e) sp] = false := by
+  rfl
+
+private theorem handler_names_ret (e : Expr) (sp : Span) :
+    lateHandlerNames [Stmt.ret (some e) sp] = [] := by
+  rfl
+
 private theorem scalar_call (value : PyInt) (text : String)
     (scalarOk : intDecimal value = some text) :
     CallsTo decimal_render "scalar_str" #[.int value] (.str text) := by
@@ -75,7 +83,7 @@ private theorem scalar_call (value : PyInt) (text : String)
       execStmts, execStmt, evalExpr, evalExprs, mkCallEnv, arityOk,
       defaultBindings, Env.lookup, lookupG, hasUnboundLocal, unboundLocalMarker,
       markUnboundLocals, hasTypeErrorHandlerMarker, stmtHasTypeErrorTarget,
-      stmtHasTypeErrorTargetList, hasLateRaiseNames, lateRaiseNames, stmtUnboundLocalNames,
+      stmtHasTypeErrorTargetList, hasLateRaiseNames, late_names_ret, handler_names_ret, lateRaiseNames, stmtUnboundLocalNames,
       stmtUnboundLocalNamesList, directRaiseName, directAssignName, hasDirectAssignAfter,
       markUnboundLocals_noop, stmtHasUnboundLocal, stmtHasUnboundLocalList,
       isBuiltinName, isPyBuiltinName, isLoweredBuiltinName,

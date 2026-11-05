@@ -1138,6 +1138,10 @@ def admitCallableFunctionWithExpressionTypes (probe : DeclarationProbe)
     | .declaration => throw "callable: prototype has no callable body"
     | .deleted => throw "callable: deleted function has no callable body"
     | .functionTry _ => throw "callable: function-try body is outside the body profile"
+  unless !rawHasKind body "SwitchStmt" do
+    throw "callable: switch admission is refused until CaseStmt/DefaultStmt nodes remain source-shaped"
+  unless !rawHasKind body "ExprWithCleanups" do
+    throw "callable: ExprWithCleanups admission is refused until cleanup nodes remain source-shaped"
   let functionRow ← callableTypeRow typeRows {value := admitted.occurrence.id}
   let declarationRow ← localFunctionRow probe admitted.occurrence.id
   unless functionRow.canonical == declarationRow.canonical do

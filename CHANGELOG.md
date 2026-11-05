@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ callable admission now refuses source switch bodies and `ExprWithCleanups`
+  until their Clang AST nodes are preserved directly; hand-built evaluator
+  tests remain available without claiming source admission.
+
 - C++ artifact admission now refuses target profiles outside the pinned LP64
   signed-char profile, and extraction rejects unprofiled target/ABI overrides.
 

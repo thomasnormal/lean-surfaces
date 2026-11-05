@@ -587,7 +587,7 @@ def switchEvidence : List CppBinaryExpressionEvidence := [
 def admitSwitch : Except String CallableFunction :=
   admitCallableFunction switchProbe switchTypes switchEvidence TargetProfile.lp64 [0]
 
-#guard admitSwitch.isOk
+#guard admitSwitch matches .error _
 
 private def parseSwitchClauses (clauses : List Raw) : Except String CallableStatement :=
   parseCallableStatement TargetProfile.lp64

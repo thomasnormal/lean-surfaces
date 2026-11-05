@@ -596,6 +596,28 @@ private def parseSwitchClauses (clauses : List Raw) : Except String CallableStat
       ("inner", .array [implicitCast "0xe2" (declRefNode "0xe3" "0x10" "value"),
         fields switchBody [("inner", .array clauses)]])])
 
+/-- Hand-built evaluator witness for switch semantics. Source callable
+    admission refuses `SwitchStmt`; this direct AST-shaped battery remains
+    available for the evaluator without claiming source admission. -/
+def switchFunction : Option CallableFunction := do
+  let parameter : TypedCallableExpression := {
+    expression := .parameter {value := "0x10"}, sourceType := intType, type := intType}
+  let literal (value : Nat) : TypedCallableExpression := {
+    expression := .integer value, sourceType := intType, type := intType}
+  let statement := .switch_ parameter [
+    {label := some 0, body := .return_ (literal 4)},
+    {label := some 1, body := .compoundAssign "+=" {value := "0x10"} (literal 2)},
+    {label := some 2, body := .break_},
+    {label := none, body := .compoundAssign "+=" {value := "0x10"} (literal 3)}]
+  pure {
+    occurrence := default,
+    signature := {result := intType, parameters := [intType], variadic := false},
+    parameters := [{declaration := {value := "0x10"}, name := some "value", type := intType}],
+    body := .block (.sequence statement (.return_ {
+      expression := .parameter {value := "0x10"}, sourceType := intType, type := intType}))}
+
+#guard switchFunction.isSome
+
 private def switchRefuses (clauses : List Raw) (message : String) : Bool :=
   match parseSwitchClauses clauses with
   | .error reason => reason == message

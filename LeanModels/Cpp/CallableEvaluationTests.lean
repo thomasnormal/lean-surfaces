@@ -185,33 +185,33 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
-#guard match admitSwitch with
-  | .ok function =>
+#guard match switchFunction with
+  | some function =>
       match evaluateCallable 64 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 4
       | _ => false
-  | .error _ => false
+  | none => false
 
-#guard match admitSwitch with
-  | .ok function =>
+#guard match switchFunction with
+  | some function =>
       match evaluateCallable 64 .lp64 function [signed 1] with
       | .ok (.ok value) => value == signed 3
       | _ => false
-  | .error _ => false
+  | none => false
 
-#guard match admitSwitch with
-  | .ok function =>
+#guard match switchFunction with
+  | some function =>
       match evaluateCallable 64 .lp64 function [signed 2] with
       | .ok (.ok value) => value == signed 2
       | _ => false
-  | .error _ => false
+  | none => false
 
-#guard match admitSwitch with
-  | .ok function =>
+#guard match switchFunction with
+  | some function =>
       match evaluateCallable 64 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed 10
       | _ => false
-  | .error _ => false
+  | none => false
 
 #guard match admitIdentity with
   | .ok function =>

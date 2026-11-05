@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ switch evaluator witnesses now use an explicit hand-built
+  `CallableFunction`, keeping the evaluator battery executable while source
+  `SwitchStmt` admission remains a loud refusal until source-shaped cases are
+  preserved.
+
 - C++ object-frame evaluation now reports a dedicated `unsupportedCall` for
   nested callable expressions. The object-frame and value-only evaluators stay
   distinct because only the former retains caller-owned storage and failure

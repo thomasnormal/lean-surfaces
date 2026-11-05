@@ -88,11 +88,76 @@ theorem rob_one_cycle :
       (by exact ⟨rfl, rfl, rfl, rfl⟩)
   simpa [robMachine, robTrace, robInputs] using h
 
+def robSchedule : Nat → Input := fun _ => addiInput
+
+def robTargetPackets : Nat → List Input := fun _ => [addiInput, addiInput]
+
+theorem replicate_append (a : Input) : ∀ n m : Nat,
+    List.replicate n a ++ List.replicate m a = List.replicate (n + m) a := by
+  intro n
+  induction n with
+  | zero => intro m; simp
+  | succ n ih =>
+      intro m
+      simp only [List.replicate_succ, List.cons_append, Nat.succ_add]
+      rw [ih]
+
+theorem rob_schedule_prefix (n : Nat) :
+    schedulePrefix robSchedule n = List.replicate n addiInput := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      simp only [schedulePrefix, robSchedule, List.replicate_succ]
+      rw [ih]
+
+theorem rob_packet_schedule_prefix (n : Nat) :
+    packetSchedulePrefix robTargetPackets n =
+      List.replicate (2 * n) addiInput := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      simp only [packetSchedulePrefix, robTargetPackets]
+      rw [ih]
+      simpa [Nat.mul_succ, Nat.add_comm] using
+        (replicate_append addiInput (2 * n) 2)
+
+theorem rob_inputs_prefix (s : RobState) (n : Nat) :
+    robInputs robMachine s (schedulePrefix robSchedule n) =
+      List.replicate (2 * n) addiInput := by
+  induction n generalizing s with
+  | zero => rfl
+  | succ n ih =>
+      simp only [schedulePrefix, robSchedule, robInputs]
+      have hinputs :
+          (robMachine.step s addiInput).2.map TaggedCommit.input =
+            [addiInput, addiInput] := by
+        rfl
+      rw [hinputs, ih]
+      simpa [Nat.mul_succ, Nat.add_comm] using
+        (replicate_append addiInput 2 (2 * n))
+
+theorem rob_progress :
+    RobRetiresTarget robMachine robMachine.init robSchedule robTargetPackets := by
+  intro k
+  refine ⟨k, ?_⟩
+  rw [rob_inputs_prefix, rob_packet_schedule_prefix]
+
+theorem rob_progress_trace_prefix :
+    ∀ k : Nat, ∃ n : Nat,
+      robTrace robMachine robMachine.init (schedulePrefix robSchedule n) =
+        trace rvMachine rvMachine.init (packetSchedulePrefix robTargetPackets k) := by
+  exact rob_progress_trace_refines rob_step_refines rob_progress
+
 #guard (robMachine.init.completed == ([] : List Nat))
 #guard ((robMachine.step robMachine.init addiInput).1.completed == [1, 0])
 #guard (robTrace robMachine robMachine.init [addiInput]).length == 2
+#guard (packetSchedulePrefix robTargetPackets 3).length == 6
+#guard (robInputs robMachine robMachine.init
+    (schedulePrefix robSchedule 3)).length == 6
 
 #print axioms rob_step_refines
 #print axioms rob_one_cycle
+#print axioms rob_progress
+#print axioms rob_progress_trace_prefix
 
 end Examples.«system-verilog».cores.toy_rv32i.rob_proof

@@ -503,3 +503,29 @@ adaptation was introduced.
 arbitrary timed bus completion and architectural commit effects; later ROB
 proofs can reuse it without adding a timing assumption.  The PicoRV32 loader
 walls remain unchanged.
+
+## 2026-11-05-ls-sv2-21 — add packet-boundary ROB progress
+
+Added `packetSchedulePrefix`, `RobRetiresTarget`, and
+`rob_progress_trace_refines` to `LeanModels/Refine/Progress.lean`.  The
+existing progress contract is input-at-a-time; a tagged ROB may retire a
+multi-instruction packet, so this contract makes target packet widths
+explicit and proves the ISA trace equality at each witnessed packet boundary.
+It introduces no fairness or scheduler choice: the witness remains a
+quantified finite-prefix certificate.
+
+The toy ROB witness now supplies a two-ADDI packet target, proves the emitted
+input prefixes, and invokes `rob_progress_trace_refines` in
+`Examples/system-verilog/cores/toy_rv32i/rob_proof.lean`.
+
+**MEASURED:** `lake build LeanModels.Refine.Progress
+Examples.«system-verilog».cores.toy_rv32i.rob_proof` passed (29 jobs), and
+`rob_progress_trace_refines` plus the witness report only the existing
+`propext`/`Quot.sound` entries.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`,
+new axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep packet-width-aware progress separate from the one-input
+`RetiresTarget` contract; later superscalar proofs can state liveness at the
+ROB's actual commit boundaries without pretending that a partial packet was
+observed.

@@ -1,4 +1,5 @@
 import LeanModels.Refine.Packet
+import LeanModels.Refine.Rob
 
 /-!
 # Explicit progress for finite prefixes
@@ -62,6 +63,44 @@ theorem progress_trace_refines {CoreState IsaState : Type}
       (schedulePrefix schedule n) h.1
   rw [htrace, hn]
 
+/-! ## Progress at a tagged ROB packet boundary -/
+
+/-- Concatenate the first `n` target packets in chronological order.  A ROB
+may retire several instructions at one boundary, so its progress target is a
+packet schedule rather than a one-input-at-a-time stream. -/
+def packetSchedulePrefix {α : Type} (schedule : Nat → List α) : Nat → List α
+  | 0 => []
+  | n + 1 => packetSchedulePrefix schedule n ++ schedule n
+
+/-- Every finite target packet prefix is emitted at some finite ROB cycle
+boundary.  The target packet widths are explicit and need not be uniform. -/
+def RobRetiresTarget {State : Type}
+    (core : RobMachine State) (initial : State)
+    (schedule : Nat → Input) (targetPackets : Nat → List Input) : Prop :=
+  ∀ k : Nat, ∃ n : Nat,
+    robInputs core initial (schedulePrefix schedule n) =
+      packetSchedulePrefix targetPackets k
+
+/-- A ROB refinement plus an explicit packet-boundary progress certificate gives
+the matching ISA trace for every finite target packet prefix. -/
+theorem rob_progress_trace_refines {CoreState IsaState : Type}
+    {core : RobMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Nat → Prop} {start : Nat}
+    {admit : Input → Prop}
+    (h : RobStepRefines core isa rel start admit)
+    {schedule : Nat → Input} {targetPackets : Nat → List Input}
+    (progress : RobRetiresTarget core core.init schedule targetPackets) :
+    ∀ k : Nat, ∃ n : Nat,
+      robTrace core core.init (schedulePrefix schedule n) =
+        trace isa isa.init (packetSchedulePrefix targetPackets k) := by
+  intro k
+  rcases progress k with ⟨n, hn⟩
+  refine ⟨n, ?_⟩
+  have htrace := rob_trace_refines h core.init isa.init start
+      (schedulePrefix schedule n) h.1
+  rw [htrace, hn]
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.progress_trace_refines
+#print axioms LeanModels.Refine.rob_progress_trace_refines

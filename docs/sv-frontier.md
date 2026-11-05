@@ -118,6 +118,7 @@ remain explicit refusals. Simple `$past(signal)` maps to the sampled
 Simple `disable iff (reset)` guards map to `SvaProp.disable`.
 Simple boolean conjunctions and disjunctions map to `SvaBool.and` and
 `SvaBool.or`.
+Simple case equality (`a === b`) maps to `SvaBool.caseEq`.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable

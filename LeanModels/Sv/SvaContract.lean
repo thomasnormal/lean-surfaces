@@ -56,7 +56,9 @@ private def simpleAtom (text : String) : Except String SvaBool :=
 
 private def simpleBoolLeaf (text : String) : Except String SvaBool :=
   let n := text.trimAscii.toString
-  if n.startsWith "$past(" && n.endsWith ")" then
+  if let [left, right] := n.splitOn "===" then
+    .caseEq <$> simpleAtom left <*> simpleAtom right
+  else if n.startsWith "$past(" && n.endsWith ")" then
     let inner := match n.splitOn "$past(" with
       | ["", rest] => rest.dropEnd 1 |>.toString
       | _ => ""
@@ -299,6 +301,12 @@ private def portTrace : List (CycleObs PortSample) :=
   | .ok C => match C.check.property with
     | .implies (.atom (.and (.signal "a") (.signal "b")))
         (.atom (.or (.signal "c") (.signal "d"))) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a === b |-> c);" } with
+  | .ok C => match C.check.property with
+    | .implies (.atom (.caseEq (.signal "a") (.signal "b"))) _ => true
     | _ => false
   | .error _ => false
 

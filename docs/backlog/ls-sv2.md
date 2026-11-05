@@ -999,3 +999,26 @@ was introduced.
 
 **DECIDED:** keep packet-machine relation transport above individual packet
 certificates; the emitted input stream remains the sole driver of ISA state.
+
+## 2026-11-05-ls-sv2-43 — transport packetized RVFI state and order
+
+Added `rvfiPacketStateAfter_refines` to `LeanModels/Refine/RvfiPacket.lean`.
+It lifts the generic ROB state/order transport through the packetized RVFI
+adapter, proving the final order counter against the packet machine's emitted
+input stream.  The adapter also now has an explicit
+`toRobMachine_stateAfter` bridge, so its retained state is not assumed
+definitionally equal across projections.
+
+The PicoRV32 witness checks this state bridge over its two packet windows,
+alongside the existing normalization and ROB trace certificates.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and
+the new generic state/order theorem reports only existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep packetized RVFI state transport as an adapter over the ROB
+certificate; normalization validates observations and tags, while ROB
+refinement supplies architectural state and order accounting.

@@ -259,6 +259,42 @@ theorem RvfiPacketMachine.toRobMachine_inputs {State : Type}
             packetInputs machine.toPacketMachine state' cycles at htail
           rw [packetEntries_tagged_fst, htail]
 
+theorem RvfiPacketMachine.toRobMachine_stateAfter {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input) :
+    robStateAfter machine.toRobMachine state cycles =
+      rvfiPacketStateAfter machine state cycles := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' entries =>
+          simp only [robStateAfter, rvfiPacketStateAfter,
+            RvfiPacketMachine.toRobMachine, hstep]
+          exact ih state'
+
+theorem rvfiPacketStateAfter_refines
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (start : Nat)
+    (h : RobStepRefines machine.toRobMachine isa rel start admit) :
+    ∀ (state : State) (isaState : IsaState) (order : Nat)
+      (cycles : List Input),
+      rel state isaState order →
+      ∃ finalOrder,
+        rel (rvfiPacketStateAfter machine state cycles)
+          (machineStateAfter isa isaState
+            (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+        finalOrder = order +
+          (packetInputs machine.toPacketMachine state cycles).length := by
+  intro state isaState order cycles hrel
+  rcases robStateAfter_refines h state isaState order cycles hrel with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, ?_, ?_⟩
+  · rw [← RvfiPacketMachine.toRobMachine_stateAfter]
+    simpa only [RvfiPacketMachine.toRobMachine_inputs] using hfinal
+  · simpa only [RvfiPacketMachine.toRobMachine_inputs] using horder
+
 /-- A successful flattened RVFI certificate is the packet machine's exact
 retirement stream. -/
 theorem normalizeRvfiPacketTrace {State : Type}
@@ -441,6 +477,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_stateAfter
+#print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace

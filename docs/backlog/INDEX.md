@@ -64,6 +64,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-05-pycomplete-297` |  | admit ten positive float digits | python-completeness |
 | `2026-11-05-pycomplete-296` |  | admit nine positive float digits | python-completeness |
 | `2026-11-05-pycomplete-295` |  | admit eight positive float digits | python-completeness |
+| `2026-11-05-ls-sv2-43` |  | transport packetized RVFI state and order | ls-sv2 |
 | `2026-11-05-ls-sv2-42` |  | transport packet-machine relations across windows | ls-sv2 |
 | `2026-11-05-ls-sv2-41` |  | transport ROB relations and order across windows | ls-sv2 |
 | `2026-11-05-ls-sv2-40` |  | transport refinement across cycle windows | ls-sv2 |

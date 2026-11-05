@@ -1,0 +1,89 @@
+import LeanModels.Refine.Bus
+import LeanModels.Refine.Rob
+
+/-!
+# Tagged memory commits
+
+An out-of-order core may complete data requests in any order, but its
+architectural memory effects are exposed at the reorder buffer's commit
+boundary.  `TaggedMemoryCommit` is the memory-only analogue of `TaggedCommit`:
+the tag and packet order are explicit evidence, while the supplied
+`MemoryEffect` must be checked against the exact byte-addressed memory at the
+architectural commit point.
+
+`MemoryPacketRefines` is an inductive certificate rather than a sorting
+function.  It consumes the packet in the order the core presents it and
+requires every effect to equal `serviceBusRequest`; no completion order is
+chosen or reconstructed here.  A core relation may keep an arbitrary
+completion buffer and prove separately that its in-order packet has this
+certificate (and that its tags are consecutive).
+-/
+
+namespace LeanModels.Refine
+
+/-! ## Tagged packets and the memory certificate -/
+
+structure TaggedMemoryCommit where
+  order : Nat
+  request : BusRequest
+  effect : MemoryEffect
+  deriving DecidableEq, Repr
+
+abbrev TaggedMemoryPacket := List TaggedMemoryCommit
+
+def memoryOrderTags (start : Nat) (packet : TaggedMemoryPacket) : Prop :=
+  packet.map TaggedMemoryCommit.order = orderPrefix start packet.length
+
+@[simp] theorem memoryOrderTags_nil (start : Nat) :
+    memoryOrderTags start [] := rfl
+
+/-- A completion-order certificate may name any permutation of the committed
+tags.  The refinement theorem below never inspects this list: its purpose is
+to make the proof obligation for an implementation's arbitrary completion
+order explicit at the boundary. -/
+def CompletionOrder (completed : List Nat) (packet : TaggedMemoryPacket) : Prop :=
+  List.Perm completed (packet.map TaggedMemoryCommit.order)
+
+inductive MemoryPacketRefines : Memory → TaggedMemoryPacket → Memory → Prop where
+  | nil (memory : Memory) : MemoryPacketRefines memory [] memory
+  | cons {memory finalMemory : Memory}
+      {entry : TaggedMemoryCommit} {rest : TaggedMemoryPacket}
+      (hEffect : entry.effect = (serviceBusRequest memory entry.request).2)
+      (hTail : MemoryPacketRefines
+        (serviceBusRequest memory entry.request).1 rest finalMemory) :
+      MemoryPacketRefines memory (entry :: rest) finalMemory
+
+def TaggedMemoryPacketRefines (start : Nat) (memory : Memory)
+    (packet : TaggedMemoryPacket) (finalMemory : Memory) : Prop :=
+  memoryOrderTags start packet ∧ MemoryPacketRefines memory packet finalMemory
+
+/-! ## Exact projection to the direct memory run -/
+
+theorem memoryPacket_refines_direct
+    {memory finalMemory : Memory} {packet : TaggedMemoryPacket}
+    (h : MemoryPacketRefines memory packet finalMemory) :
+    finalMemory = (directRun memory (packet.map TaggedMemoryCommit.request)).1 ∧
+      packet.map TaggedMemoryCommit.effect =
+        (directRun memory (packet.map TaggedMemoryCommit.request)).2 := by
+  induction h with
+  | nil memory =>
+      simp [directRun]
+  | @cons memory finalMemory entry rest hEffect hTail ih =>
+      simp only [List.map_cons, directRun]
+      constructor
+      · exact ih.1
+      · rw [hEffect, ih.2]
+
+theorem taggedMemoryPacket_refines_direct
+    {start : Nat} {memory finalMemory : Memory}
+    {packet : TaggedMemoryPacket}
+    (h : TaggedMemoryPacketRefines start memory packet finalMemory) :
+    finalMemory = (directRun memory (packet.map TaggedMemoryCommit.request)).1 ∧
+      packet.map TaggedMemoryCommit.effect =
+        (directRun memory (packet.map TaggedMemoryCommit.request)).2 :=
+  memoryPacket_refines_direct h.2
+
+end LeanModels.Refine
+
+#print axioms LeanModels.Refine.memoryPacket_refines_direct
+#print axioms LeanModels.Refine.taggedMemoryPacket_refines_direct

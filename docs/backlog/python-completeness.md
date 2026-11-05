@@ -9064,3 +9064,14 @@ payload that CPython observes.
 DECIDED: preserve source statement structure and refuse first-class callable,
 active-exception, and unmodeled generator protocol shapes until those runtime
 states are modeled directly.
+
+## 2026-11-05-pycomplete-343 — remove static definition deletion no-op
+
+The script deletion predicate no longer erases `del` of a module function,
+class, or namedtuple name. Static tables cannot be tombstoned, and a function
+body can reach the deleted definition even when the old top-level census saw no
+read. Added `del_def_call.py`; the old runner printed `1` while CPython 3.9
+raises `NameError`. Benign-import deletion keeps its existing narrow no-op path.
+
+DECIDED: definition deletion is loud until definitions become runtime bindings;
+the separate benign-import behavior remains unchanged.

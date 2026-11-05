@@ -522,10 +522,13 @@ def scriptStaticDeleteNoop (m : Module) (s : Stmt) (name : String) : Bool :=
   let laterRead := m.topLevel.toList.any fun t =>
     (scriptStmtSpan t).endLineno > endLine && (Stmt.allNames t).contains name
   let calledLater := (moduleGlobalReads m).contains name
-  let staticName := (findFunction m name).isSome || (findClass m name).isSome
+  let isDefinition := (findFunction m name).isSome || (findClass m name).isSome
       || m.namedtuples.any (·.name == name)
-      || (benignImportNames m).contains name
-  staticName && !laterRead && !calledLater
+  -- Static definition tables cannot be tombstoned soundly. Benign imports
+  -- retain the existing narrow no-op path until imports become runtime
+  -- bindings; the definition arm is deliberately never erased.
+  let staticName := isDefinition || (benignImportNames m).contains name
+  staticName && !isDefinition && !laterRead && !calledLater
 
 /-- THE SCRIPT VIEW: the module frames resolve names against while a
 PROGRAM runs. Its top level carries no program statement, so

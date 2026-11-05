@@ -3008,3 +3008,6 @@ change is listed here under **Changed** or **Removed**.
 - Python: remove shape-specific builtin-alias, dead-value, immediate-genexp,
   and bare-reraise ingestion rewrites; those source shapes now retain their
   AST and refuse through the existing first-class or active-exception limits.
+- Python: remove the module-level definition `del` no-op census; deleting a
+  static function/class binding is now loud even when a later function body
+  reaches that name.

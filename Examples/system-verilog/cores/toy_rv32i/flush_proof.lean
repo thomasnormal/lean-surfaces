@@ -63,10 +63,55 @@ theorem flush_trace_one :
       (by exact ⟨rfl, rfl, rfl⟩)
   simpa [flushMachine, flushTrace, flushInputs] using h
 
+def flushSchedule : Nat → Input := fun _ => addiInput
+
+theorem flush_inputs_phase_one (a : ArchState) (n : Nat) :
+    flushInputs flushMachine { arch := a, phase := 1 }
+        (schedulePrefix flushSchedule n) =
+      List.replicate n addiInput := by
+  induction n generalizing a with
+  | zero => rfl
+  | succ n ih =>
+      simp [schedulePrefix, flushSchedule, flushInputs, flushMachine]
+      change addiInput ::
+        flushInputs flushMachine { arch := toyNext a, phase := 1 }
+          (schedulePrefix flushSchedule n) = _
+      rw [ih]
+      rw [List.replicate_succ]
+
+theorem flush_inputs_prefix (n : Nat) :
+    flushInputs flushMachine flushMachine.init
+        (schedulePrefix flushSchedule (n + 1)) =
+      List.replicate n addiInput := by
+  simp [schedulePrefix, flushSchedule, flushInputs, flushMachine]
+  exact flush_inputs_phase_one _ n
+
+theorem flush_progress :
+    FlushRetiresTarget flushMachine flushMachine.init flushSchedule flushSchedule := by
+  intro k
+  refine ⟨k + 1, ?_⟩
+  rw [flush_inputs_prefix]
+  exact (by
+    induction k with
+    | zero => rfl
+    | succ k ih =>
+        simp only [schedulePrefix, flushSchedule, List.replicate_succ]
+        rw [ih])
+
+theorem flush_progress_trace_prefix :
+    ∀ k : Nat, ∃ n : Nat,
+      flushTrace flushMachine flushMachine.init (schedulePrefix flushSchedule n) =
+        trace rvMachine rvMachine.init (schedulePrefix flushSchedule k) := by
+  exact flush_progress_trace_refines flush_step_refines flush_progress
+
 #guard (flushTrace flushMachine flushMachine.init [addiInput, addiInput]).length == 1
 #guard (flushInputs flushMachine flushMachine.init [addiInput, addiInput]).length == 1
+#guard (flushInputs flushMachine flushMachine.init
+    (schedulePrefix flushSchedule 4)).length == 3
 
 #print axioms flush_step_refines
 #print axioms flush_trace_one
+#print axioms flush_progress
+#print axioms flush_progress_trace_prefix
 
 end Examples.«system-verilog».cores.toy_rv32i.flush_proof

@@ -1,5 +1,6 @@
 import LeanModels.Refine.Packet
 import LeanModels.Refine.Rob
+import LeanModels.Refine.Flush
 
 /-!
 # Explicit progress for finite prefixes
@@ -100,7 +101,38 @@ theorem rob_progress_trace_refines {CoreState IsaState : Type}
       (schedulePrefix schedule n) h.1
   rw [htrace, hn]
 
+/-! ## Progress across speculative flushes -/
+
+/-- Every finite target prefix is emitted at some finite boundary even when
+the core may spend cycles flushing speculative work.  The target stream is
+the filtered architectural input stream returned by `flushInputs`. -/
+def FlushRetiresTarget {State : Type}
+    (core : FlushMachine State) (initial : State)
+    (schedule target : Nat → Input) : Prop :=
+  ∀ k : Nat, ∃ n : Nat,
+    flushInputs core initial (schedulePrefix schedule n) =
+      schedulePrefix target k
+
+/-- A flush-aware refinement plus an explicit finite-prefix progress witness
+gives the matching ISA trace at the witness boundary. -/
+theorem flush_progress_trace_refines {CoreState IsaState : Type}
+    {core : FlushMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Prop} {admit : Input → Prop}
+    (h : FlushStepRefines core isa rel admit)
+    {schedule target : Nat → Input}
+    (progress : FlushRetiresTarget core core.init schedule target) :
+    ∀ k : Nat, ∃ n : Nat,
+      flushTrace core core.init (schedulePrefix schedule n) =
+        trace isa isa.init (schedulePrefix target k) := by
+  intro k
+  rcases progress k with ⟨n, hn⟩
+  refine ⟨n, ?_⟩
+  have htrace := flush_trace_refines h core.init isa.init
+      (schedulePrefix schedule n) h.1
+  rw [htrace, hn]
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.progress_trace_refines
 #print axioms LeanModels.Refine.rob_progress_trace_refines
+#print axioms LeanModels.Refine.flush_progress_trace_refines

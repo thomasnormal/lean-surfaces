@@ -529,3 +529,26 @@ new axiom, RTL edit, or SV-loader adaptation was introduced.
 `RetiresTarget` contract; later superscalar proofs can state liveness at the
 ROB's actual commit boundaries without pretending that a partial packet was
 observed.
+
+## 2026-11-05-ls-sv2-22 — add flush-aware finite-prefix progress
+
+Added `FlushRetiresTarget` and `flush_progress_trace_refines` to
+`LeanModels/Refine/Progress.lean`.  This composes the existing
+`FlushStepRefines` safety theorem with an explicit finite-prefix witness: a
+flush may change core state without advancing the ISA, while every witnessed
+retirement prefix still equals the corresponding ISA trace.
+
+The toy flush witness now runs an initial speculative flush followed by a
+repeated ADDI schedule, proves the filtered input prefix, and invokes the new
+theorem in `Examples/system-verilog/cores/toy_rv32i/flush_proof.lean`.
+
+**MEASURED:** `lake build LeanModels.Refine.Progress
+Examples.«system-verilog».cores.toy_rv32i.flush_proof` passed (29 jobs), and
+the new theorem and witness report only the existing `propext`/`Quot.sound`
+entries.  `python3 tools/docs_check.py`, `tools/backlog-index.sh --check`,
+and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** keep flush progress as a filtered finite-prefix contract; flush
+cycles are explicit stutter in the architectural stream, and no fairness or
+flush resolution is selected by the generic bridge.

@@ -591,7 +591,7 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
   | .resize _ operand | .signedResize _ operand => divOperandWidth2 env elems operand
   | .lit value => some value.width
   | .ident name => env.widths.lookup name
-  | .paramRef name none => some ((env.pwidths.lookup name).getD (paramNWidth env name))
+  | .paramRef _ none => some 32
   | .paramRef name (some pkg) => (env.packageConstType pkg name).map Prod.fst
   | .genvarRef _ | .int _ | .sysCall .. => some 32
   | .enumRef name _ pkg => env.enumWidth name pkg
@@ -626,6 +626,13 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
   | .arrayElem n is => arraySelWidth env (.arrayElem n is)
   | .arrayPart n is mode a b => arraySelWidth env (.arrayPart n is mode a b)
   | .unsupported .. => none
+
+/-- Width used for a shift amount. Bare parameter/localparam amounts in the
+word fragment are int-class constants and therefore 32-bit; other amounts
+retain their ordinary operand width. -/
+def shiftAmtWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Nat
+  | .paramRef _ none => some 32
+  | e => divOperandWidth2 env elems e
 
 def divOperandWidthSum2 (env : IEnv) (elems : List (String × Nat)) : List PExpr → Option Nat
   | [] => some 0
@@ -685,6 +692,9 @@ def fitDivOperand2 (signed : Bool) (context sourceWidth : Option Nat) (operand :
 
 private def intLit2 (ctx : Option Nat) (v : Int) : Expr2 :=
   .lit (LVec.ofInt (ctx.getD 32) v)
+
+theorem intLit2_eq (ctx : Option Nat) (v : Int) :
+    intLit2 ctx v = .lit (LVec.ofInt (ctx.getD 32) v) := rfl
 
 /-- Expressions whose instantiated width is INTRINSIC (context-independent):
 declared signals, sized literals, selects, concats, replications,
@@ -848,7 +858,7 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
       | .m0 operator@(.ashl signedLeft) | .m0 operator@(.ashr signedLeft) =>
           let leftContext := maxW2 ctx (divOperandWidth2 env elems l)
           ctxTrunc2 ctx leftContext <| .binary operator (instDivOperand2 env elems signedLeft leftContext l)
-            (instDivOperand2 env elems false (divOperandWidth2 env elems r) r)
+            (instDivOperand2 env elems false (shiftAmtWidth2 env elems r) r)
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           let octx := maxW2 ctx
             (maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r))
@@ -1070,7 +1080,7 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
       let shifted := match operator with | .ashr _ => .ashr signed | _ => operator
       .binary shifted
         (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems left)) left)
-        (instDivOperand2 env elems false (divOperandWidth2 env elems right) right)
+        (instDivOperand2 env elems false (shiftAmtWidth2 env elems right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
       let comparison := match operator with

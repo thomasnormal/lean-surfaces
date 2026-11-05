@@ -1244,13 +1244,13 @@ operand at the context extended to its own width, the amount at its own width). 
 theorem ie_shl_form (s : Bool) (ctx : Option Nat) (l r : PExpr) :
     ∃ lc, instExpr2 env elems ctx (.binary (.m0 (.shl s)) l r) =
       ctxTrunc2 ctx lc (.binary (.shl s) (instDivOperand2 env elems s lc l)
-        (instDivOperand2 env elems false (divOperandWidth2 env elems r) r)) := by
+        (instDivOperand2 env elems false (shiftAmtWidth2 env elems r) r)) := by
   unfold instExpr2; exact ⟨_, rfl⟩
 
 theorem ie_shr_form (ctx : Option Nat) (l r : PExpr) :
     ∃ lc, instExpr2 env elems ctx (.binary (.m0 (.shr false)) l r) =
       ctxTrunc2 ctx lc (.binary (.shr false) (instDivOperand2 env elems false lc l)
-        (instDivOperand2 env elems false (divOperandWidth2 env elems r) r)) := by
+        (instDivOperand2 env elems false (shiftAmtWidth2 env elems r) r)) := by
   unfold instExpr2; exact ⟨_, rfl⟩
 
 /-- The default arm of `instDivOperand2` (an operand that is a signal access, a literal or an unsized constant). -/
@@ -1651,10 +1651,15 @@ theorem rd_shOpd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
 
 /-- The amount of a shift is a bare genvar (a constant of the instance) or a shift operand. -/
 theorem shAmtRd?_cases {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
-    (∃ g, e = .genvarRef g ∧ rs = []) ∨ shOpdRd? ds e = .ok rs := by
+    (∃ g, e = .genvarRef g ∧ rs = []) ∨
+    (∃ n, e = .paramRef n none ∧ rs = []) ∨ shOpdRd? ds e = .ok rs := by
   cases e with
   | genvarRef g => left; exact ⟨g, rfl, by simpa [shAmtRd?] using h.symm⟩
-  | _ => right; simpa [shAmtRd?] using h
+  | paramRef n pkg =>
+      cases pkg with
+      | none => right; left; exact ⟨n, rfl, by simpa [shAmtRd?] using h⟩
+      | some p => right; right; simpa [shAmtRd?] using h
+  | _ => right; right; simpa [shAmtRd?] using h
 
 theorem cnames_binary_l {op : SymBinOp} {l r : PExpr} {n : String} (h : n ∈ l.cnames) :
     n ∈ (PExpr.binary op l r).cnames := by simp [PExpr.cnames, h]
@@ -1676,6 +1681,12 @@ theorem cnames_ternary_e {c t e : PExpr} {n : String} (h : n ∈ e.cnames) : n �
 theorem cnames_amount {op : SymBinOp} {l r : PExpr} (hb : shOpW op = true) {g : String} (hg : r = .genvarRef g) :
     g ∈ (PExpr.binary op l r).cnames := by
   subst hg
+  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl <;> simp [PExpr.cnames]
+
+theorem cnames_amount_param {op : SymBinOp} {l r : PExpr} (hb : shOpW op = true)
+    {n : String} (hn : r = .paramRef n none) :
+    n ∈ (PExpr.binary op l r).cnames := by
+  subst r
   rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl <;> simp [PExpr.cnames]
 
 theorem rcounts_binary_l {op : SymBinOp} {l r : PExpr} {c : Aff} (h : c ∈ l.rcounts) :
@@ -1858,13 +1869,21 @@ theorem inst_partsW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
 its value at the amount's own width). -/
 theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} {rs : List Acc}
     (h : shAmtRd? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a)
-    (hg : ∀ g, e = .genvarRef g → g ∈ ns) (c : Option Nat) :
+    (hg : ∀ g, e = .genvarRef g → g ∈ ns)
+    (hp : ∀ n, e = .paramRef n none → n ∈ ns) (c : Option Nat) :
     RdOK σ rs (instDivOperand2 E elems false c e) := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
   · have hb : E.vals.lookup g = some (σ g) := C.agree g (hg g rfl)
     have e1 : instDivOperand2 E elems false c (.genvarRef g) =
         fitDivOperand2 false c (some 32) (.lit (LVec.ofInt 32 (σ g))) := by
       simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
+    rw [e1]
+    refine RdOK.fitDiv ?_ false _ _
+    simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+  · have hb : E.vals.lookup n = some (σ n) := C.agree n (hp n rfl)
+    have e1 : instDivOperand2 E elems false c (.paramRef n none) =
+        fitDivOperand2 false c (some 32) (.lit (LVec.ofInt 32 (σ n))) := by
+      simp [instDivOperand2, instExpr2, intLit2_eq, hb, divOperandWidth2]
     rw [e1]
     refine RdOK.fitDiv ?_ false _ _
     simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
@@ -1931,6 +1950,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
       · -- a run-time shift (WP-B2 gate 3)
         have hR := rd_shAmt C hr' (fun a ha => hacc a (List.mem_append_right _ ha))
           (fun g hgr => hcn.1 g (cnames_amount hb hgr))
+          (fun n hnr => hcn.1 n (cnames_amount_param hb hnr))
         rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl
         · have hL : ∀ c, RdOK σ ra (instDivOperand2 E elems s c l) :=
             rd_shLeft C hl (fun a ha => hacc a (List.mem_append_left _ ha))

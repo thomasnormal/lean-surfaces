@@ -609,21 +609,21 @@ theorem ie_shl_some (s : Bool) (tw wl : Nat) (l r : PExpr) (hl : divOperandWidth
     instExpr2 E elems (some tw) (.binary (.m0 (.shl s)) l r) =
       ctxTrunc2 (some tw) (some (max tw wl)) (.binary (.shl s)
         (instDivOperand2 E elems s (some (max tw wl)) l)
-        (instDivOperand2 E elems false (divOperandWidth2 E elems r) r)) := by
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r)) := by
   simp [instExpr2, hl]
 
 theorem ie_shr_some (tw wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = some wl) :
     instExpr2 E elems (some tw) (.binary (.m0 (.shr false)) l r) =
       ctxTrunc2 (some tw) (some (max tw wl)) (.binary (.shr false)
         (instDivOperand2 E elems false (some (max tw wl)) l)
-        (instDivOperand2 E elems false (divOperandWidth2 E elems r) r)) := by
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r)) := by
   simp [instExpr2, hl]
 
 /-- … at no context (a self-determined position): no truncation, the left operand at its own width. -/
 theorem ie_shl_none (s : Bool) (wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = some wl) :
     instExpr2 E elems none (.binary (.m0 (.shl s)) l r) =
       .binary (.shl s) (instDivOperand2 E elems s (some wl) l)
-        (instDivOperand2 E elems false (divOperandWidth2 E elems r) r) := by
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r) := by
   unfold instExpr2
   simp only [hl]
   rfl
@@ -631,7 +631,7 @@ theorem ie_shl_none (s : Bool) (wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E
 theorem ie_shr_none (wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = some wl) :
     instExpr2 E elems none (.binary (.m0 (.shr false)) l r) =
       .binary (.shr false) (instDivOperand2 E elems false (some wl) l)
-        (instDivOperand2 E elems false (divOperandWidth2 E elems r) r) := by
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r) := by
   unfold instExpr2
   simp only [hl]
   rfl
@@ -689,11 +689,12 @@ instance (`Sk.cref`) lowered at its own width, 32 bits. -/
 theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {x : PExpr} {rs : List Acc}
     (h : shAmtRd? ds x = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a)
-    (hg : ∀ g, x = .genvarRef g → g ∈ ns) (s : Bool) (c : Option Nat) :
-    divOperandWidth2 E elems x = some ((skT x rs).width σ dw) ∧
+    (hg : ∀ g, x = .genvarRef g → g ∈ ns)
+    (hp : ∀ n, x = .paramRef n none → n ∈ ns) (s : Bool) (c : Option Nat) :
+    shiftAmtWidth2 E elems x = some ((skT x rs).width σ dw) ∧
     instDivOperand2 E elems s c x =
       fitDivOperand2 s c (some ((skT x rs).width σ dw)) ((skT x rs).low σ dw ((skT x rs).width σ dw)) := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
   · have hb : E.vals.lookup g = some (σ g) := C.agree g (hg g rfl)
     have e1 : instDivOperand2 E elems s c (.genvarRef g) =
         fitDivOperand2 s c (some 32) (.lit (LVec.ofInt 32 (σ g))) := by
@@ -701,9 +702,21 @@ theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     have e2 : (skT (.genvarRef g) ([] : List Acc)).width σ dw = 32 := by simp [skT, Sk.width]
     have e3 : (skT (.genvarRef g) ([] : List Acc)).low σ dw 32 = .lit (LVec.ofInt 32 (σ g)) := by
       simp [skT, Sk.low, Aff.eval_var]
-    refine ⟨by simp [divOperandWidth2, e2], ?_⟩
+    refine ⟨by simp [shiftAmtWidth2, divOperandWidth2, e2], ?_⟩
     rw [e1, e2, e3]
-  · exact shOpd_shape C hdw h' hacc s c
+  · have hb : E.vals.lookup n = some (σ n) := C.agree n (hp n rfl)
+    · have e1 : instDivOperand2 E elems s c (.paramRef n none) =
+          fitDivOperand2 s c (some 32) (.lit (LVec.ofInt 32 (σ n))) := by
+          simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
+      have e2 : (skT (.paramRef n none) ([] : List Acc)).width σ dw = 32 := by simp [skT, Sk.width]
+      have e3 : (skT (.paramRef n none) ([] : List Acc)).low σ dw 32 = .lit (LVec.ofInt 32 (σ n)) := by
+        simp [skT, Sk.low, Aff.eval_var]
+      refine ⟨by simp [shiftAmtWidth2, divOperandWidth2, e2], ?_⟩
+      rw [e1, e2, e3]
+  · have hx : shiftAmtWidth2 E elems x = divOperandWidth2 E elems x := by
+      cases x <;> simp_all [shiftAmtWidth2, shOpdRd?]
+    rw [hx]
+    exact shOpd_shape C hdw h' hacc s c
 
 /-- **The shape of a context-determined expression of the word-level fragment.** -/
 theorem skT_shapeC (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
@@ -867,7 +880,8 @@ theorem skT_shapeC (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         have hacr : ∀ a ∈ rb, AccOK σ DW DG EW ns a := fun a ha => hacc a (List.mem_append_right _ ha)
         rw [hsk] at hw ⊢
         have hL := shOpd_shape C hdw hxo hacl sg
-        have hR := shAmt_shape C hdw hr hacr (fun g hgr => hcn.1 g (cnames_amount hb hgr)) false
+        have hR := shAmt_shape C hdw hr hacr (fun g hgr => hcn.1 g (cnames_amount hb hgr))
+          (fun n hnr => hcn.1 n (cnames_amount_param hb hnr)) false
         have hlsw : divOperandWidth2 E elems l = some ((skT x ra).width σ dw) := by
           rcases hxl with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩
           · exact (hL none).1
@@ -881,7 +895,7 @@ theorem skT_shapeC (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           · exact (hL _).2
           · rw [instDiv_resize false (some c) m x (shOpdKind hxo)]; exact (hL _).2
           · rw [instDiv_sresize true (some c) m x]; exact (hL _).2
-        have hRexp : instDivOperand2 E elems false (divOperandWidth2 E elems r) r =
+        have hRexp : instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r =
             (skT r rb).low σ dw ((skT r rb).width σ dw) := by
           rw [(hR none).1]
           rw [(hR _).2]

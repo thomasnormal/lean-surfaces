@@ -551,7 +551,7 @@ theorem idxFree_shOpd (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   rw [instDiv_default s c e (shOpdKind h)]
   refine idxFree_fitDiv ?_ s _ _
   rcases shOpdRd?_cases h with ⟨v, rfl, rfl⟩ | ⟨k, rfl, rfl⟩ | ⟨a, hl, rfl⟩
-  · simp [instExpr2, Expr2.idxFree]
+  · simp [instDivOperand2, divOperandWidth2, instExpr2, intLit2_eq, fitDivOperand2, Expr2.idxFree]
   · simp [instExpr2, Expr2.idxFree]
   · exact inst_leaf_idxFree C hdw hl (hacc a (by simp)) _
 
@@ -560,13 +560,20 @@ theorem idxFree_shAmt (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {e : PExpr} {rs : List Acc}
     (h : shAmtRd? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s : Bool) (c : Option Nat) :
     (instDivOperand2 E elems s c e).idxFree = true := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
   · have e1 : instDivOperand2 E elems s c (.genvarRef g) = fitDivOperand2 s c (some 32)
         (instExpr2 E elems (some 32) (.genvarRef g)) := by
       simp [instDivOperand2, divOperandWidth2]
     rw [e1]
     refine idxFree_fitDiv ?_ s _ _
     cases hb : E.vals.lookup g <;> simp [instExpr2, hb, Expr2.idxFree] <;> first | done | rfl
+  · unfold instDivOperand2
+    cases hc : c <;>
+      cases hv : E.vals.lookup n <;>
+      cases hn : E.nvals.lookup n <;>
+      by_cases hs : n ∈ E.stale <;>
+      simp [hc, hv, hn, hs, divOperandWidth2, instExpr2, intLit2_eq, fitDivOperand2,
+        Expr2.idxFree] <;> cases s <;> split <;> simp [Expr2.idxFree, *]
   · exact idxFree_shOpd C hdw h' hacc s c
 
 theorem idxFree_shLeft (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}

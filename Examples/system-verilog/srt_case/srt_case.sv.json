@@ -1,0 +1,645 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "srt_case",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/srt_case/srt_case.sv",
+      "sha256": "4ab9e5287992e9dbdb2283c7ed8384ee3523c8f036dc6397165ead4d50997714"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "srt_case",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 1,
+              "col": 33,
+              "end_line": 1,
+              "end_col": 38
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 33,
+                      "end_line": 1,
+                      "end_col": 38
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 33,
+                      "end_line": 1,
+                      "end_col": 38
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 1,
+                "col": 37,
+                "end_line": 1,
+                "end_col": 38
+              },
+              "value": 1,
+              "resolved_width": 32
+            },
+            "resolved": 1
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 58,
+              "end_line": 1,
+              "end_col": 60
+            },
+            "name": "da",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 53,
+                      "end_line": 1,
+                      "end_col": 54
+                    },
+                    "value": 2,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 55,
+                      "end_line": 1,
+                      "end_col": 56
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 82,
+              "end_line": 1,
+              "end_col": 87
+            },
+            "name": "dummy",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 1,
+                      "col": 75,
+                      "end_line": 1,
+                      "end_col": 78
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 1,
+                        "col": 75,
+                        "end_line": 1,
+                        "end_col": 76
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 1,
+                        "col": 77,
+                        "end_line": 1,
+                        "end_col": 78
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 79,
+                      "end_line": 1,
+                      "end_col": 80
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 108,
+              "end_line": 1,
+              "end_col": 110
+            },
+            "name": "t2",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 103,
+                      "end_line": 1,
+                      "end_col": 104
+                    },
+                    "value": 6,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 105,
+                      "end_line": 1,
+                      "end_col": 106
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 7
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 2,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 5,
+                "end_line": 12,
+                "end_col": 12
+              },
+              "stmts": [
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 3,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 12
+                  },
+                  "check": "none",
+                  "match": "normal",
+                  "subject": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 3,
+                      "col": 11,
+                      "end_line": 3,
+                      "end_col": 13
+                    },
+                    "width": 3,
+                    "name": "da"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 4,
+                            "col": 7,
+                            "end_line": 4,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "000"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 4,
+                          "col": 13,
+                          "end_line": 4,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 4,
+                            "col": 13,
+                            "end_line": 4,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 4,
+                            "col": 18,
+                            "end_line": 4,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0001100"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 5,
+                            "col": 7,
+                            "end_line": 5,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "001"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 5,
+                          "col": 13,
+                          "end_line": 5,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 5,
+                            "col": 13,
+                            "end_line": 5,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 5,
+                            "col": 18,
+                            "end_line": 5,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0001101"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 6,
+                            "col": 7,
+                            "end_line": 6,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "010"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 6,
+                          "col": 13,
+                          "end_line": 6,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 6,
+                            "col": 13,
+                            "end_line": 6,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 6,
+                            "col": 18,
+                            "end_line": 6,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0001110"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 7,
+                            "col": 7,
+                            "end_line": 7,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "011"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 7,
+                          "col": 13,
+                          "end_line": 7,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 7,
+                            "col": 13,
+                            "end_line": 7,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 7,
+                            "col": 18,
+                            "end_line": 7,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0001111"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 8,
+                            "col": 7,
+                            "end_line": 8,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "100"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 8,
+                          "col": 13,
+                          "end_line": 8,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 8,
+                            "col": 13,
+                            "end_line": 8,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 8,
+                            "col": 18,
+                            "end_line": 8,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0010000"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 7,
+                            "end_line": 9,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "101"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 9,
+                          "col": 13,
+                          "end_line": 9,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 9,
+                            "col": 13,
+                            "end_line": 9,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 9,
+                            "col": 18,
+                            "end_line": 9,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0010001"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 7,
+                            "end_line": 10,
+                            "end_col": 11
+                          },
+                          "width": 3,
+                          "bits": "110"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 13,
+                          "end_line": 10,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 13,
+                            "end_line": 10,
+                            "end_col": 15
+                          },
+                          "width": 7,
+                          "name": "t2"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 18,
+                            "end_line": 10,
+                            "end_col": 23
+                          },
+                          "width": 7,
+                          "bits": "0010010"
+                        }
+                      }
+                    }
+                  ],
+                  "default": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 11,
+                      "col": 16,
+                      "end_line": 11,
+                      "end_col": 27
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 16,
+                        "end_line": 11,
+                        "end_col": 18
+                      },
+                      "width": 7,
+                      "name": "t2"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 11,
+                        "col": 21,
+                        "end_line": 11,
+                        "end_col": 26
+                      },
+                      "width": 7,
+                      "bits": "0010011"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

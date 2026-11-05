@@ -362,6 +362,8 @@ def _root_.LeanModels.Sv.PExpr.cnames : PExpr → List String
       (match op, r with
        | .m0 (.shl _), .genvarRef g => [g]
        | .m0 (.shr false), .genvarRef g => [g]
+       | .m0 (.shl _), .paramRef n none => [n]
+       | .m0 (.shr false), .paramRef n none => [n]
        | _, _ => []) ++ l.cnames ++ r.cnames
   | .unary _ a => a.cnames
   | .reduce _ a => a.cnames
@@ -392,6 +394,8 @@ def _root_.LeanModels.Sv.PExpr.consts : PExpr → List String × List Aff
       ((match op, r with
         | .m0 (.shl _), .genvarRef g => [g]
         | .m0 (.shr false), .genvarRef g => [g]
+        | .m0 (.shl _), .paramRef n none => [n]
+        | .m0 (.shr false), .paramRef n none => [n]
         | _, _ => []) ++ a.1 ++ b.1, a.2 ++ b.2)
   | .unary _ a => a.consts
   | .reduce _ a => a.consts
@@ -923,6 +927,7 @@ the literal of its value. (A genvar under a conversion marker has its own loweri
 not read.) -/
 def shAmtRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .genvarRef _ => .ok []
+  | .paramRef _ none => .ok []
   | e => shOpdRd? ds e
 
 /-- The operand of a width conversion: ONE signal access (a sized literal is read before this is called). -/
@@ -1037,6 +1042,8 @@ def noConst : PExpr → Bool
       (match op, r with
        | .m0 (.shl _), .genvarRef _ => false
        | .m0 (.shr false), .genvarRef _ => false
+       | .m0 (.shl _), .paramRef _ none => false
+       | .m0 (.shr false), .paramRef _ none => false
        | _, _ => true) && noConst l && noConst r
   | .unary _ a => noConst a
   | .reduce _ a => noConst a

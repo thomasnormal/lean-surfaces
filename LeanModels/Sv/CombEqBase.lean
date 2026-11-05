@@ -143,6 +143,7 @@ def cnt : PExpr → Nat
   | .reduce _ a => cnt a
   | .ternary c t e => cnt c + cnt t + cnt e
   | .int _ => 0
+  | .paramRef _ _ => 0
   | .genvarRef _ => 0
   | .repl _ (.concat [.lit _]) => 0
   | .concat ps => pcnt ps
@@ -216,6 +217,7 @@ def skT : PExpr → List Acc → Sk
         (skT e ((as.drop (cnt c)).drop (cnt t)))
   | .int v, _ => .const v
   | .genvarRef g, _ => .cref (Aff.var g)
+  | .paramRef n none, _ => .cref (Aff.var n)
   | .repl c (.concat [.lit v]), _ => .rep (.replit (repAff c) v)
   | .repl c _, as => .rep (.reprd (repAff c) (as.headD (.whole "")))
   | .concat ps, as => .cat (partsT ps as)
@@ -1434,7 +1436,8 @@ theorem shOpd_len {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd? ds
 /-- The amount of a shift: a genvar (a constant, no access) or a shift operand. -/
 theorem shAmt_len {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
     rs.length = cnt e := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  · simp [cnt]
   · simp [cnt]
   · exact shOpd_len h'
 
@@ -1502,7 +1505,8 @@ theorem shOpd_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd?
 
 theorem shAmt_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
     (skT e rs).leaves = rs := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  · simp [skT, Sk.leaves]
   · simp [skT, Sk.leaves]
   · exact shOpd_leaves h'
 

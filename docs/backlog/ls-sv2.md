@@ -1066,3 +1066,23 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep stateful memory projection explicit: memory threading
 determines the stateless ISA input view, while the architectural component
 remains the state observed by refinement proofs.
+
+## 2026-11-05-ls-sv2-46 — compose direct memory runs across windows
+
+Added `directRun_append` to `LeanModels/Refine/Bus.lean`.  The untimed
+byte-memory executor now composes adjacent request windows while threading the
+first window's final memory and concatenating its exact effects.
+
+The toy bus proof applies the law to a store/read request split, complementing
+the existing arbitrary-latency `runBus` window theorem.
+
+**MEASURED:** `lake build LeanModels.Refine.Bus
+Examples.«system-verilog».cores.toy_rv32i.bus_proof` passed (16 jobs), and
+`directRun_append` reports only existing `propext`/`Quot.sound` dependencies.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git
+diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation
+was introduced.
+
+**DECIDED:** keep untimed direct-run composition as the memory baseline; the
+timed bus theorem can erase latency only after this state/effect split is
+established.

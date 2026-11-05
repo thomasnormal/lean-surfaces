@@ -87,6 +87,25 @@ def directRun (memory : Memory) : List BusRequest →
       let (finalMemory, effects) := directRun memory' rest
       (finalMemory, effect :: effects)
 
+theorem directRun_append (memory : Memory)
+    (first second : List BusRequest) :
+    (directRun memory (first ++ second)).1 =
+        (directRun (directRun memory first).1 second).1 ∧
+      (directRun memory (first ++ second)).2 =
+        (directRun memory first).2 ++
+          (directRun (directRun memory first).1 second).2 := by
+  induction first generalizing memory with
+  | nil => simp [directRun]
+  | cons request first ih =>
+      simp only [directRun, List.cons_append]
+      let serviced := serviceBusRequest memory request
+      have htail := ih (memory := serviced.1)
+      simp only [serviced] at htail ⊢
+      rcases htail with ⟨hMemory, hEffects⟩
+      constructor
+      · exact hMemory
+      · rw [hEffects]
+
 /-- Execute a timed, FIFO bus.  A request is serviced when its response is
 emitted; the recursive call then accepts the next request. -/
 def runBus (memory : Memory) : List TimedRequest →
@@ -218,6 +237,7 @@ theorem runBus_oracle_projection (memory : Memory) (latency : LatencyOracle)
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.runBus_projection
+#print axioms LeanModels.Refine.directRun_append
 #print axioms LeanModels.Refine.completed_append
 #print axioms LeanModels.Refine.runBus_append
 #print axioms LeanModels.Refine.completed_runBus_append

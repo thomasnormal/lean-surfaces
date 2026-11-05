@@ -47,6 +47,16 @@ theorem timed_bus_windows_refine :
   rw [scheduleWith_append latency (requests.take 2) (requests.drop 2)]
   exact completed_runBus_append zeroMemory _ _
 
+theorem direct_bus_windows_refine :
+    (directRun zeroMemory (requests.take 2 ++ requests.drop 2)).1 =
+        (directRun (directRun zeroMemory (requests.take 2)).1
+          (requests.drop 2)).1 ∧
+      (directRun zeroMemory (requests.take 2 ++ requests.drop 2)).2 =
+        (directRun zeroMemory (requests.take 2)).2 ++
+          (directRun (directRun zeroMemory (requests.take 2)).1
+            (requests.drop 2)).2 := by
+  exact directRun_append zeroMemory (requests.take 2) (requests.drop 2)
+
 #guard (directRun zeroMemory requests).2 ==
   [ .write 0x100 .word 0xDEADBEEF
   , .read 0x100 .word 0xDEADBEEF
@@ -60,5 +70,6 @@ theorem timed_bus_windows_refine :
 
 #print axioms timed_bus_refines_direct
 #print axioms timed_bus_windows_refine
+#print axioms direct_bus_windows_refine
 
 end Examples.«system-verilog».cores.toy_rv32i.bus_proof

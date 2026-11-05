@@ -13,10 +13,12 @@ import LeanModels.Sv.SeqFamily
   (`wellFormed_choose`, from `ScheduleOracle.choose_perm`). `clockStep_eq_of_wellFormed`: every well-formed order
   gives the index-order step `clockStep`. `omitted_process`: an order that omits a process is not well formed, and
   the step it gives differs (no conclusion without the class).
-* `Design2.ffOnlyProfileB`, decidable: every process an `always_ff` on one clock, NBA-only bodies with static
-  targets (`Stmt2.nbaStaticB`, through `Lhs2.window?`), no process writing an input, distinct processes writing
-  pairwise-disjoint windows (`Design2.ffDisjB`). Synchronous reset is an ordinary `if` in the body; `alwaysFFR` is
-  out.
+* `Design2.ffOnlyProfileB`, decidable: every process is an `always_ff` or a
+  plain edge-triggered `always` on one clock, with NBA-only bodies and static
+  targets (`Stmt2.nbaStaticB`, through `Lhs2.window?`), no process writing an
+  input, and distinct processes writing pairwise-disjoint windows
+  (`Design2.ffDisjB`). The source style remains in `Process2`; synchronous
+  reset is an ordinary `if` in the body, and `alwaysFFR` is out.
 * Soundness: `FFOnly.ofProfile`, and `ffUpd_disj`: the updates of distinct processes are disjoint on every state
   (an update stays inside a window its body names: `Covers`, `resolve_covered`, `upd_covered`, `covers_disj`). So
   `cycleStep2_profile` is `cycleStep2_ffOnly` with only the run hypothesis left.
@@ -103,9 +105,11 @@ def Design2.ffDisjB (d : Design2) : Bool :=
 
 /-- **The FF-only profile**, decided. -/
 def Design2.ffOnlyProfileB (d : Design2) : Bool :=
-  let clk := match d.processes.toList.head? with | some (.alwaysFF c _) => c | _ => ""
+  let clk := match d.processes.toList.head? with
+    | some (.alwaysFF c _) | some (.alwaysPlain c _) => c
+    | _ => ""
   d.processes.toList.all (fun p => match p with
-    | .alwaysFF c b => c == clk && b.nbaOnly && b.nbaStaticB d &&
+    | .alwaysFF c b | .alwaysPlain c b => c == clk && b.nbaOnly && b.nbaStaticB d &&
         b.drvWins.all fun w => !d.inputNames.toList.contains w.1
     | _ => false) && d.ffDisjB
 
@@ -113,12 +117,33 @@ def Design2.ffOnlyProfileB (d : Design2) : Bool :=
 theorem FFOnly.ofProfile {d : Design2} (h : d.ffOnlyProfileB = true) : FFOnly d := by
   refine ⟨fun i p hp => ?_⟩
   simp only [Design2.ffOnlyProfileB, Bool.and_eq_true, List.all_eq_true] at h
-  have := h.1 p (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-  split at this
-  · rename_i c b
-    simp only [Bool.and_eq_true] at this
-    exact ⟨c, b, rfl, this.1.1.2⟩
-  · cases this
+  cases p with
+  | alwaysFF c b =>
+      have hp' := h.1 (.alwaysFF c b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp only [Bool.and_eq_true] at hp'
+      exact ⟨c, b, ⟨Or.inl rfl, hp'.1.1.2⟩⟩
+  | alwaysPlain c b =>
+      have hp' := h.1 (.alwaysPlain c b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp only [Bool.and_eq_true] at hp'
+      exact ⟨c, b, ⟨Or.inr rfl, hp'.1.1.2⟩⟩
+  | alwaysComb b =>
+      have hp' := h.1 (.alwaysComb b)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | assign t e =>
+      have hp' := h.1 (.assign t e)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | alwaysFFR c r b high =>
+      have hp' := h.1 (.alwaysFFR c r b high)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
+  | unsupported k t =>
+      have hp' := h.1 (.unsupported k t)
+        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+      simp at hp'
 
 /-! ## Soundness: updates stay inside the windows a body names -/
 
@@ -310,11 +335,19 @@ theorem ffUpd_disj {d : Design2} (h : d.ffOnlyProfileB = true) (fuel : Nat) (st 
     split at hx
     · rename_i p hp
       split at hx
-      · rename_i q hq
-        obtain ⟨c, b, rfl, -⟩ := (FFOnly.ofProfile h).procs r _ hp
-        rcases (upd_covered fuel).1 st b [] _ q hq x hx with hx | hx
+      · rename_i st' q hq
+        obtain ⟨c, b, hpb, -⟩ := (FFOnly.ofProfile h).procs r _ hp
+        have hq' : execStmt2 fuel st [] b = .ok (st', q) := by
+          rcases hpb with hpb | hpb
+          · simpa [runEdgeProcess2, hpb] using hq
+          · simpa [runEdgeProcess2, hpb] using hq
+        rcases (upd_covered fuel).1 st b [] _ q hq' x hx with hx | hx
         · cases hx
-        · exact ⟨_, hp, hx⟩
+        · rcases hpb with hpb | hpb
+          · subst p
+            exact ⟨_, hp, by simpa [Process2.procWins] using hx⟩
+          · subst p
+            exact ⟨_, hp, by simpa [Process2.procWins] using hx⟩
       · cases hx
     · cases hx
   obtain ⟨p, hp, a, ha, hca⟩ := cov i u hu

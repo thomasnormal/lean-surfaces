@@ -1,5 +1,16 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Plain edge-triggered `always` joins the NBA cycle profile
+
+`Design2.ffOnlyProfileB` and its kernel-checked cycle theorem now accept a
+plain `always @(posedge clk)` when its body satisfies the same NBA-only,
+static-target, single-clock conditions as the existing `always_ff` profile.
+The retained `Process2.alwaysPlain` constructor is preserved, so this is a
+profile admission rather than a source-kind rewrite. The `seq_plain` witness
+and `plain_always_profile` differential row match Icarus over four cycles;
+blocking plain processes, asynchronous reset, mixed clocks, and overlapping
+windows remain loud boundaries.
+
 ## F1: audit retained SVA forms against downstream clean-room repros
 
 `SvaContract.parseSimple` now admits a finite `$past(signal, depth)` operand

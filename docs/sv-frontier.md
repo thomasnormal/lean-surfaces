@@ -131,7 +131,7 @@ this order:
 
 | rank | source shape | measured boundary |
 |---:|---|---|
-| 1 | `always @(posedge clk)` | `SeqProfile.ffOnlyProfileB` is false for a plain `always`; it is not admitted to the FF-only cycle profile. |
+| 1 | `always @(posedge clk)` | **Resolved in this packet:** `SeqProfile.ffOnlyProfileB` now admits a plain edge-triggered `always` when its body is NBA-only, while `Process2.alwaysPlain` preserves the source kind. The retained profile has a kernel guard and an Icarus differential row. |
 | 2 | `always_ff @(posedge clk or negedge rstn)` | `Process2.alwaysFFR` is retained, but the async-reset form is outside `cycleStep2` and has no cycle-model/refinement theorem yet. |
 | 3 | an unpacked memory written in `always_ff` | `sv_structure` reports out-of-tier module members; the E memory bridge and procedural NBA adapter do not yet reach the structure and cycle views. |
 | 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |

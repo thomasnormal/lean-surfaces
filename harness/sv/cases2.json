@@ -3,6 +3,20 @@
   "fuel": 2000,
   "cases": [
     {
+      "name": "plain_always_profile",
+      "example": "seq_plain",
+      "top": "posedge_always_profile",
+      "clock": "clk",
+      "signals": ["d", "q"],
+      "stimulus": [
+        {"d": "0"},
+        {"d": "1"},
+        {"d": "0"},
+        {"d": "1"}
+      ],
+      "measured": "A plain always @(posedge clk) retains its source kind and matches the NBA edge profile."
+    },
+    {
       "name": "always_ff_loop",
       "example": "sem2/always_ff_loop",
       "top": "always_ff_loop",

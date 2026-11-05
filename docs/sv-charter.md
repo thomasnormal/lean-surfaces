@@ -27,6 +27,17 @@ and `iff` entries refuse with named `AlwaysPosedge:*` boundaries instead of
 becoming plain positive-edge `alwaysFF`; active-high `areset` is now retained
 by the E process path above. The active-low `areset_n` form remains retained.
 
+## Plain edge-triggered `always` in the NBA cycle profile — 2026-11-05
+
+The sequential profile now admits `always @(posedge clk)` alongside
+`always_ff @(posedge clk)` when every body update is nonblocking, statically
+targeted, and clocked by the same input. `Process2.alwaysPlain` remains the
+retained source constructor; the profile shares only the proven edge/NBA
+execution theorem and does not relabel the source as `always_ff`. Blocking
+plain `always`, mixed clocks, asynchronous-reset forms, and overlapping
+windows remain outside this profile. The clean `seq_plain` witness checks the
+profile and one cycle, and its four-cycle row matches Icarus.
+
 ## F1 retained SVA safety envelope — 2026-11-04
 
 `LeanModels.Sv.Sva` gives the retained concurrent-assertion shape a fuel-free

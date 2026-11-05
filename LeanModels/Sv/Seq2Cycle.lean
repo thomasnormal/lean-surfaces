@@ -16,8 +16,11 @@ schedule: `cycleStep2_ffOnly` gives it in process-index order.
   `execStmt2_nbaOnly`: such a body leaves the state alone and its updates do not depend on the queue
   it is handed (`liftQ`).
 * `Design2.ffUpd d fuel st i`: the updates process `i` issues on `st`.
-* `FFOnly d`: every process an `alwaysFF` with an NBA-only body (so no comb process and no
-  `alwaysFFR`). The decidable profile and the schedule class are in `SeqProfile.lean`.
+* `FFOnly d`: every process is an `always_ff` or a plain edge-triggered
+  `always` with an NBA-only body (so no comb process and no `alwaysFFR`). The
+  source style remains in `Process2`; this profile states the shared edge/NBA
+  execution contract. The decidable profile and schedule class are in
+  `SeqProfile.lean`.
 * `CycleModel d`, `CycleModel.snapshot`: any design's clock step as a relation `Step e prev st` on a
   `Shape` of states, and every snapshot of a run as one `Step` from the previous snapshot: what a
   protocol-level proof of a clocked design consumes instead of fuel, schedules and traces.
@@ -185,32 +188,44 @@ def Design2.ffUpd (d : Design2) (fuel : Nat) (st : SvState) (i : Nat) : NbaQueue
 
 /-- `run2`'s edge-phase process run, with the queue it is handed prepended. -/
 theorem runEdgeProcess2_shift {fuel : Nat} {st : SvState} {p : Process2}
-    (hp : ∀ (c : String) (b : Stmt2), p = .alwaysFF c b → b.nbaOnly = true)
-    (hff : ∃ (c : String) (b : Stmt2), p = .alwaysFF c b) (nba : NbaQueue2) :
+    (hp : ∀ (c : String) (b : Stmt2),
+      (p = .alwaysFF c b ∨ p = .alwaysPlain c b) → b.nbaOnly = true)
+    (hff : ∃ (c : String) (b : Stmt2),
+      p = .alwaysFF c b ∨ p = .alwaysPlain c b) (nba : NbaQueue2) :
     runEdgeProcess2 fuel st nba p = liftQ st nba (match runEdgeProcess2 fuel st [] p with
       | .ok (_, q) => .ok q | .timeout => .timeout | .unsupported m => .unsupported m) := by
-  obtain ⟨c, b, rfl⟩ := hff
-  obtain ⟨r, hr⟩ := (execStmt2_nbaOnly fuel st).1 b (hp c b rfl)
-  simp only [runEdgeProcess2, hr]
-  cases r <;> simp [liftQ]
+  obtain ⟨c, b, hpb⟩ := hff
+  have hb : b.nbaOnly = true := hp c b hpb
+  rcases hpb with hpb | hpb
+  · subst p
+    obtain ⟨r, hr⟩ := (execStmt2_nbaOnly fuel st).1 b hb
+    simp only [runEdgeProcess2, hr]
+    cases r <;> simp [liftQ]
+  · subst p
+    obtain ⟨r, hr⟩ := (execStmt2_nbaOnly fuel st).1 b hb
+    simp only [runEdgeProcess2, hr]
+    cases r <;> simp [liftQ]
 
-/-- The design profile: every process an `alwaysFF` whose body is NBA-only. -/
+/-! The design profile: every process is an `alwaysFF` or plain edge-triggered
+`always` whose body is NBA-only. -/
 structure FFOnly (d : Design2) : Prop where
   procs : ∀ (i : Nat) (p : Process2), d.processes[i]? = some p →
-    ∃ (c : String) (b : Stmt2), p = .alwaysFF c b ∧ b.nbaOnly = true
+    ∃ (c : String) (b : Stmt2),
+      (p = .alwaysFF c b ∨ p = .alwaysPlain c b) ∧ b.nbaOnly = true
 
 theorem FFOnly.combIndices {d : Design2} (h : FFOnly d) : d.combIndices = [] := by
   simp only [Design2.combIndices, List.filter_eq_nil_iff, List.mem_range]
   intro i hi
   obtain ⟨c, b, hp, -⟩ := h.procs i _ (Array.getElem?_eq_getElem hi)
-  simp [Array.getElem?_eq_getElem hi, hp, Process2.isCombPhase]
+  rcases hp with hp | hp <;>
+    simp [Array.getElem?_eq_getElem hi, hp, Process2.isCombPhase]
 
 theorem FFOnly.resetIndices {d : Design2} (h : FFOnly d) (a b : SvState) :
     d.resetIndices a b = [] := by
   simp only [Design2.resetIndices, List.filter_eq_nil_iff, List.mem_range]
   intro i hi
   obtain ⟨c, bd, hp, -⟩ := h.procs i _ (Array.getElem?_eq_getElem hi)
-  simp [Array.getElem?_eq_getElem hi, hp]
+  rcases hp with hp | hp <;> simp [Array.getElem?_eq_getElem hi, hp]
 
 /-- **The edge pass of an FF-only design**: every listed process issues its updates on `st`. -/
 theorem edgePass2_ffOnly {d : Design2} (h : FFOnly d) {fuel : Nat} {st : SvState}
@@ -224,10 +239,26 @@ theorem edgePass2_ffOnly {d : Design2} (h : FFOnly d) {fuel : Nat} {st : SvState
           rw [edgePass2_ffOnly h hrun l nba]
           simp [Design2.ffUpd, hp]
       | some p =>
-          obtain ⟨c, b, rfl, hb⟩ := h.procs i _ hp
+          obtain ⟨c, b, hpb, hb⟩ := h.procs i _ hp
           obtain ⟨q, hq⟩ := hrun i _ hp
+          have hbody : ∀ (c' : String) (b' : Stmt2),
+              (p = .alwaysFF c' b' ∨ p = .alwaysPlain c' b') → b'.nbaOnly = true := by
+            intro c' b' he
+            rcases hpb with hpb | hpb
+            · rcases he with he | he
+              · have heq : Process2.alwaysFF c b = Process2.alwaysFF c' b' := hpb.symm.trans he
+                cases heq
+                exact hb
+              · have heq : Process2.alwaysFF c b = Process2.alwaysPlain c' b' := hpb.symm.trans he
+                cases heq
+            · rcases he with he | he
+              · have heq : Process2.alwaysPlain c b = Process2.alwaysFF c' b' := hpb.symm.trans he
+                cases heq
+              · have heq : Process2.alwaysPlain c b = Process2.alwaysPlain c' b' := hpb.symm.trans he
+                cases heq
+                exact hb
           simp only [edgePass2, List.flatMap_cons, hp]
-          rw [runEdgeProcess2_shift (fun c' b' he => by cases he; exact hb) ⟨c, b, rfl⟩ nba, hq]
+          rw [runEdgeProcess2_shift hbody ⟨c, b, hpb⟩ nba, hq]
           simp only [liftQ, Res.ok_bind]
           rw [edgePass2_ffOnly h hrun l (nba ++ q)]
           simp [Design2.ffUpd, hp, hq, List.append_assoc]

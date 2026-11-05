@@ -27,8 +27,10 @@ a conditional generate inside a generate loop reports a `GuardEval` obligation
 for selecting the reached arm, and a dynamic or nonlinear genvar index reports
 a `non-affine genvar-index` obligation because its driven window is not known.
 The clean-room `sklansky_guards` fixture pins the conditional-generate message;
-the ripple-adder negative rows pin the index message. Neither shape is silently
-flattened or assigned a fabricated window.
+the ripple-adder negative rows pin the index message. The clean-room
+`sklansky_guards/nonaffine` fixture now pins the same named obligation for a
+non-affine read. Neither shape is silently flattened or assigned a fabricated
+window.
 
 ## Straight-line automatic functions with local case
 

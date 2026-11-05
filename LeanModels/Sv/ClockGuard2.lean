@@ -377,6 +377,35 @@ def Design2.clockViolation (d : Design2) : Option (String × String) :=
 /-- `none` when the design passes the clock discipline. -/
 def Design2.clockReport (d : Design2) : Option (String × String) := d.clockViolation
 
+/-- A conservative admission shape for the exact instant-list route: exactly
+two distinct one-bit input clocks, no asynchronous-reset process, and no
+third edge clock hidden in an unsupported node. Bodies are checked by the
+multi-clock runner itself; a non-NBA body remains a loud run result. -/
+def Design2.twoClockCandidate (d : Design2) : Bool :=
+  d.clockNames.length == 2 &&
+    d.clockNames.all (d.clockPortOk ·) &&
+    d.processes.toList.all (fun p => match p with
+      | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysComb _ | .assign _ _ => true
+      | .alwaysFFR _ _ _ _ | .unsupported _ _ => false)
+
+/-- The loader-facing clock report for the exact multi-clock cycle model.
+The historical report remains available to single-clock callers and continues
+to name `Clock:multiple`; the instant-list semantics below gives that one
+shape a real meaning, so it is the only legacy report intentionally filtered
+here. All source/reset/data-read and instance-clock violations remain loud. -/
+def Design2.multiClockReport (d : Design2) : Option (String × String) :=
+  if d.twoClockCandidate then
+    d.clockViolation.filter fun (k, _) => k != "Clock:multiple"
+  else d.clockViolation
+
+def PDesign.multiClockReport (d : PDesign) (lib : List PDesign) (args : List Int) :
+    Option (String × String) :=
+  let F := PDesign.surfaceFuel args
+  match (if lib.isEmpty || GenItem.listInstFree d.generates then d.instantiateG2 args F
+          else d.instantiateH lib args F) with
+  | .ok m => m.multiClockReport
+  | _ => none
+
 /-- The design passes the clock discipline. -/
 def Design2.clockAdmits (d : Design2) : Bool := d.clockViolation.isNone
 

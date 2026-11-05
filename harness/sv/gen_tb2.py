@@ -209,3 +209,71 @@ def generate_tb2(mod_name, ports, case):
     lines.append("  end")
     lines.append("endmodule")
     return "\n".join(lines) + "\n"
+
+
+def generate_multi_tb2(mod_name, ports, case):
+    """Generate a testbench for an instant-list multi-clock row.
+
+    All clocks start low.  An instant raises exactly the listed clocks at one
+    timestamp, lowers them together, then prints after NBA and combinational
+    settling.  Inputs are changed before the instant, and a clock's own input
+    is never supplied by the row.
+    """
+    port_width = {p[0]: p[2] for p in ports}
+    in_names = {p[0] for p in ports if p[1] == "in"}
+    clock_names = {p[0] for p in ports if p[1] == "in" and p[0] in
+                   {r for instant in case["instants"] for r in instant["rises"]}}
+    if not clock_names:
+        raise TbError("multi-clock row has no rising clock")
+    signals = case["signals"]
+    for k, instant in enumerate(case["instants"]):
+        rises = set(instant["rises"])
+        if not rises.issubset(clock_names):
+            raise TbError("instant %d names a non-clock rise" % k)
+        inputs = instant.get("inputs", {})
+        for name, bits in inputs.items():
+            if name not in in_names or name in clock_names:
+                raise TbError("instant %d has invalid input '%s'" % (k, name))
+            if len(bits) != port_width[name] or any(c not in "01xz" for c in bits):
+                raise TbError("instant %d input '%s' has wrong bits" % (k, name))
+    lines = ["// Auto-generated multi-clock instant-list testbench.", "module tb;"]
+    for name in sorted(clock_names):
+        lines.append("  logic %s = 1'b0;" % name)
+    decl_lines, array_groups = _decl_port_groups(
+        [p for p in ports if p[0] not in clock_names])
+    lines.extend(decl_lines)
+    params = case.get("params", {}) or {}
+    if params:
+        ovr = ", ".join(".%s(%d)" % (k, v) for k, v in params.items())
+        head = "  %s #(%s) dut (" % (mod_name, ovr)
+    else:
+        head = "  %s dut (" % mod_name
+    emitted = set()
+    conns = []
+    for port in ports:
+        name = port[0]
+        parsed = _array_name(name)
+        if parsed is not None and parsed[0] in array_groups:
+            if parsed[0] in emitted:
+                continue
+            emitted.add(parsed[0])
+            conns.append(".%s(%s)" % (parsed[0], parsed[0]))
+        else:
+            conns.append(".%s(%s)" % (name, name))
+    lines.append(head + ", ".join(conns) + ");")
+    lines.append("  initial begin")
+    for k, instant in enumerate(case["instants"]):
+        for name, bits in instant.get("inputs", {}).items():
+            lines.append("    %s = %d'b%s;" % (name, len(bits), bits))
+        lines.append("    #1;")
+        for name in sorted(set(instant["rises"])):
+            lines.append("    %s = 1'b1;" % name)
+        lines.append("    #1;")
+        for name in sorted(set(instant["rises"])):
+            lines.append("    %s = 1'b0;" % name)
+        lines.append("    #1;")
+        fmt = "CYCLE %d " % k + " ".join("%s=%%b" % n for n in signals)
+        args = ", ".join("dut.%s" % n for n in signals)
+        lines.append('    $display("%s", %s);' % (fmt, args))
+    lines.extend(["    $finish;", "  end", "endmodule"])
+    return "\n".join(lines) + "\n"

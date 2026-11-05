@@ -143,6 +143,12 @@ this order:
 | 6 | `assign n = d` beside an async-reset `always_ff` | **Resolved in this packet:** `ffResetProfileB` admits comb processes before/after the retained reset process, while `ffMixedProfileB` covers the corresponding no-reset profile. `cycleStep2_mixedProfile` settles comb logic before reset, edge/NBA, and final settle under an explicit acyclic-comb settle contract. The `async_reset_comb_profile` witness matches Icarus over five cycles. |
 | 7 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |
 
+The F4 clock rung now has an exact E instant route. `ClockInstant.rises` is a
+set of simultaneous input-clock edges and `runMulti` commits all selected
+edge-process NBAs together, so a coincident edge observes old values. The
+legacy one-clock harness transport still records `Clock:multiple` until its
+stimulus schema carries instant lists.
+
 The same audit exercises the F1 property forms. Finite concurrent assertions,
 bounded ranges, and assumptions with `disable iff` load with their retained
 metadata and connect to `SvaContract`; the finite assert and assumption forms

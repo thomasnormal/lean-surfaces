@@ -17,6 +17,7 @@ import LeanModels.Sv.ToggleExample
 -- (`load_design_sv2`) — the CV32E40P phase-2 pipeline.
 import LeanModels.Sv.Param
 import LeanModels.Sv.Ingest2
+import LeanModels.Sv.MultiClock
 -- The Design2 proof layer over the sv-0.2 semantics: the fuel-free evaluator
 -- (Pure2), the spec judgment `⊨₂` (Spec2), the known-value BitVec calculus and
 -- `sv2_known` (Known2), the generate-loop expansion lemmas (Gen2), the

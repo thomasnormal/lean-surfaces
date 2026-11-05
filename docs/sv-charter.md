@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Exact multi-clock instants — 2026-11-05
+
+`MultiClock.lean` adds `ClockInstant` and `runMulti` over the existing E
+pieces. An instant supplies the clocks that rise together and the input
+values; all selected edge bodies read the same pre-instant state, their NBAs
+commit together, and combinational logic settles before and after the edge.
+This is the IEEE old-value rule for coincident edges, with every clock
+interleaving represented by the instant list. E does not model metastability
+or a z-resolution oracle. The ordinary one-clock differential transport still
+reports `Clock:multiple` until its stimulus schema is extended.
+
 ## Straight-line automatic functions with local case — 2026-11-05
 
 The pure automatic function fragment now admits declarations followed by a

@@ -1,5 +1,17 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Exact multi-clock E instants
+
+The E semantics now has a source-shaped `ClockInstant`/`runMulti` route for
+designs with several input clocks. Each instant names the rising clocks and
+its settled inputs; selected edge processes evaluate against the common
+pre-instant state and commit NBAs together, so coincident edges sample old
+values. Clock ratios, drift, stopped clocks, and coincident edges are supplied
+by the instant list, while the schedule oracle still covers active-process
+order. No metastability or resolution approximation is part of E. The legacy
+one-clock `runner2` transport remains loud for `Clock:multiple` until it gains
+an instant-list stimulus encoding.
+
 ## Guarded generate and non-affine genvar obligations
 
 The comb recognizer now names the two Sklansky-shaped proof walls explicitly:

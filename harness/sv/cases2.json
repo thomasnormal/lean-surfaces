@@ -30830,6 +30830,18 @@
       "clock": "clk1"
     },
     {
+      "name": "clk_two_instants",
+      "example": "sem2/clk_two",
+      "top": "clk_two",
+      "signals": ["d", "a", "b"],
+      "instants": [
+        {"rises": ["clk1"], "inputs": {"d": "1"}},
+        {"rises": ["clk2"], "inputs": {"d": "1"}},
+        {"rises": ["clk1", "clk2"], "inputs": {"d": "0"}}
+      ],
+      "measured": "The exact multi-clock E instant route admits independent and coincident input-clock edges. At a coincident edge the read-domain flop samples the old write-domain value; the row is source-shaped and matches the simulator trace."
+    },
+    {
       "name": "clk_rst_int",
       "example": "sem2/clk_rst_int",
       "top": "clk_rst_int",

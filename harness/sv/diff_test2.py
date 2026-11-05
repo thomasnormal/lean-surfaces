@@ -576,7 +576,9 @@ def main():
             unavailable_case = False
             for sim in case_sims:
                 wd = os.path.join(base, name, sim)
-                tb = gen_tb2.generate_tb2(top, ports, case)
+                tb = (gen_tb2.generate_multi_tb2(top, ports, case)
+                      if case.get("instants") is not None
+                      else gen_tb2.generate_tb2(top, ports, case))
                 try:
                     runner = {"xrun": run_xcelium,
                               "iverilog": run_iverilog,
@@ -684,7 +686,9 @@ def main():
             else:
                 failures += 1
             if xref is not None:
-                tb_golden = gen_tb2.generate_tb2(top, ports, case)
+                tb_golden = (gen_tb2.generate_multi_tb2(top, ports, case)
+                             if case.get("instants") is not None
+                             else gen_tb2.generate_tb2(top, ports, case))
                 declaration = None
                 if (case.get("oracle_disagreement") or {}).get("sim") == "xcelium":
                     declaration = xcelium_declaration(case, dut_sv, envelope, tb_golden, lean)

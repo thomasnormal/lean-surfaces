@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ callable-frame coverage now includes a false-negative while-switch
+  shadow computed-initialization assignment return witness, with a native
+  differential match and 1,573 total rows.
+
 - C++ tier release v0.1.233 records 1,572 differential rows with 1,555
   native matches and 1,066 rung-4 statement rows.
 

@@ -61,6 +61,13 @@ private def simpleBool (text : String) : Except String SvaBool :=
       | ["", rest] => rest.dropEnd 1 |>.toString
       | _ => ""
     (simpleAtom inner).map (fun b => .past 1 b)
+  else if n.startsWith "$rose(" && n.endsWith ")" then
+    let inner := match n.splitOn "$rose(" with
+      | ["", rest] => rest.dropEnd 1 |>.toString
+      | _ => ""
+    (simpleAtom inner).map (fun b => match b with
+      | .signal name => .rose name
+      | _ => .lit false)
   else simpleAtom n
 
 private def simpleSeq (text : String) : Except String SvaSeq :=
@@ -120,7 +127,8 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
     throw s!"SVA: retained clock '{clock}' disagrees with source clock '{parsedClock}'"
   let some bodyText := afterEdge[1]?
     | throw "SVA: missing implication body"
-  let body := (bodyText ++ (if bodyText.contains "$past(" then ")" else "")).trimAscii.toString
+  let body := (bodyText ++
+    (if bodyText.contains "$past(" || bodyText.contains "$rose(" then ")" else "")).trimAscii.toString
   let operator := if body.contains "|=>" then "|=>" else "|->"
   let implication := body.splitOn operator
   match implication with
@@ -222,6 +230,12 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) a |-> $past(b));" } with
   | .ok C => match C.check.property with
     | .implies _ (.atom (.past 1 (.signal "b"))) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a |-> $rose(b));" } with
+  | .ok C => match C.check.property with
+    | .implies _ (.atom (.rose "b")) => true
     | _ => false
   | .error _ => false
 

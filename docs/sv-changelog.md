@@ -65,7 +65,7 @@ The same parser now admits an exact `##n` delay in either implication arm,
 mapping it to the finite `SvaSeq.delay` evaluator. Bounded ranges and dynamic
 delays are now distinguished: finite `##[m:n]` maps to `SvaSeq.range`, while
 dynamic delays remain loud. Simple `$past(signal)` operands now map to the
-sampled `SvaBool.past` form.
+sampled `SvaBool.past` form, and `$rose(signal)` maps to `SvaBool.rose`.
 
 ## F1: prove the SVA sampling refinement
 

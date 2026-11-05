@@ -115,10 +115,46 @@ theorem pipeline_trace_refines (n : Nat) :
         simp [pipelineInput, toyAdmits, addiInput, zeroMem])
   rw [h, hinputs]
 
+theorem pipeline_windows_state :
+    cycleStateAfter pipelineMachine pipelineMachine.init
+        ([pipelineInput] ++ [pipelineInput]) =
+      cycleStateAfter pipelineMachine
+        (cycleStateAfter pipelineMachine pipelineMachine.init [pipelineInput])
+        [pipelineInput] := by
+  exact cycleStateAfter_append pipelineMachine pipelineMachine.init
+    [pipelineInput] [pipelineInput]
+
+theorem pipeline_windows_trace :
+    cycleTrace pipelineMachine pipelineMachine.init
+        ([pipelineInput] ++ [pipelineInput]) =
+      cycleTrace pipelineMachine pipelineMachine.init [pipelineInput] ++
+        cycleTrace pipelineMachine
+          (cycleStateAfter pipelineMachine pipelineMachine.init [pipelineInput])
+          [pipelineInput] := by
+  exact cycleTrace_append pipelineMachine pipelineMachine.init
+    [pipelineInput] [pipelineInput]
+
+theorem pipeline_windows_inputs :
+    retireInputs pipelineMachine pipelineMachine.init
+        ([pipelineInput] ++ [pipelineInput]) =
+      retireInputs pipelineMachine pipelineMachine.init [pipelineInput] ++
+        retireInputs pipelineMachine
+          (cycleStateAfter pipelineMachine pipelineMachine.init [pipelineInput])
+          [pipelineInput] := by
+  exact retireInputs_append pipelineMachine pipelineMachine.init
+    [pipelineInput] [pipelineInput]
+
 #guard (cycleTrace pipelineMachine pipelineMachine.init
     [pipelineInput, pipelineInput]).length == 1
+#guard (cycleTrace pipelineMachine pipelineMachine.init
+  ([pipelineInput] ++ [pipelineInput])).length == 1
+#guard (retireInputs pipelineMachine pipelineMachine.init
+  ([pipelineInput] ++ [pipelineInput])).length == 1
 
 #print axioms pipeline_step_refines
 #print axioms pipeline_trace_refines
+#print axioms pipeline_windows_state
+#print axioms pipeline_windows_trace
+#print axioms pipeline_windows_inputs
 
 end Examples.«system-verilog».cores.toy_rv32i.cycle_proof

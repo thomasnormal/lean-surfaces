@@ -46,6 +46,80 @@ def retireInputs {State : Type} (m : CycleMachine State) : State → List Input 
       | none => retireInputs m s' inputs
       | some _ => input :: retireInputs m s' inputs
 
+/-! ## State-threaded cycle windows -/
+
+/-- The cycle-machine state after a finite window, including stuttering
+cycles.  The observation stream is discarded so an adjacent window can be
+continued from the exact state reached by the first one. -/
+def cycleStateAfter {State : Type} (m : CycleMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      cycleStateAfter m (m.step state input).1 inputs
+
+theorem cycleStateAfter_append {State : Type}
+    (m : CycleMachine State) (state : State)
+    (first second : List Input) :
+    cycleStateAfter m state (first ++ second) =
+      cycleStateAfter m (cycleStateAfter m state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : m.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, cycleStateAfter, hstep]
+          exact ih state'
+
+theorem cycleTrace_append {State : Type}
+    (m : CycleMachine State) (state : State)
+    (first second : List Input) :
+    cycleTrace m state (first ++ second) =
+      cycleTrace m state first ++
+        cycleTrace m (cycleStateAfter m state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : m.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, cycleTrace, cycleStateAfter, hstep]
+          cases observation with
+          | none =>
+              change cycleTrace m state' (first ++ second) =
+                cycleTrace m state' first ++
+                  cycleTrace m (cycleStateAfter m state' first) second
+              exact ih state'
+          | some retirement =>
+              change retirement :: cycleTrace m state' (first ++ second) =
+                (retirement :: cycleTrace m state' first) ++
+                  cycleTrace m (cycleStateAfter m state' first) second
+              rw [ih state']
+              simp only [List.cons_append]
+
+theorem retireInputs_append {State : Type}
+    (m : CycleMachine State) (state : State)
+    (first second : List Input) :
+    retireInputs m state (first ++ second) =
+      retireInputs m state first ++
+        retireInputs m (cycleStateAfter m state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : m.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, retireInputs, cycleStateAfter, hstep]
+          cases observation with
+          | none =>
+              change retireInputs m state' (first ++ second) =
+                retireInputs m state' first ++
+                  retireInputs m (cycleStateAfter m state' first) second
+              exact ih state'
+          | some retirement =>
+              change input :: retireInputs m state' (first ++ second) =
+                (input :: retireInputs m state' first) ++
+                  retireInputs m (cycleStateAfter m state' first) second
+              rw [ih state']
+              simp only [List.cons_append]
+
 @[simp] theorem cycleTrace_nil {State : Type} (m : CycleMachine State) (s : State) :
     cycleTrace m s [] = [] := rfl
 
@@ -107,3 +181,6 @@ theorem cycle_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.cycle_trace_refines
+#print axioms LeanModels.Refine.cycleStateAfter_append
+#print axioms LeanModels.Refine.cycleTrace_append
+#print axioms LeanModels.Refine.retireInputs_append

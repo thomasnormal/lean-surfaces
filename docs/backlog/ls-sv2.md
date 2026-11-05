@@ -740,3 +740,26 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep ROB-window state threading separate from the order
 certificate; window composition carries state and stream order, while each
 packet still proves its own consecutive tags.
+
+## 2026-11-05-ls-sv2-31 — compose stuttering cycle windows
+
+Added `cycleStateAfter`, `cycleStateAfter_append`, `cycleTrace_append`, and
+`retireInputs_append` to `LeanModels/Refine/Cycle.lean`.  The theorems thread
+the exact state across adjacent cycle windows while preserving bubbles and
+retirement-input filtering, so a stuttering window cannot replay or lose an
+architectural retirement at its boundary.
+
+The toy two-cycle pipeline witness applies all three append theorems to its
+bubble/retire pair and checks the resulting one-retirement trace and input
+stream.
+
+**MEASURED:** `lake build LeanModels.Refine.Cycle
+Examples.«system-verilog».cores.toy_rv32i.cycle_proof` passed (28 jobs).  The
+state theorem has no axioms; trace/input composition reports only existing
+`propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep cycle-window composition below packetization; stutter
+behavior is retained in the cycle layer, while packet and ROB layers consume
+the explicitly threaded post-window state.

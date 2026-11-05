@@ -156,6 +156,19 @@ theorem inOrderPacketStream_append {start : Nat}
       · apply ih hpackets
         simpa [packetStreamLength, Nat.add_assoc] using hsecond
 
+/-- Flattening a locally in-order packet stream preserves the global tag
+certificate expected by the generic ROB interface. -/
+theorem inOrderPacketStream_flatten {start : Nat}
+    {packets : List TaggedPacket}
+    (h : InOrderPacketStream start packets) :
+    InOrderTags start packets.flatten := by
+  induction packets generalizing start with
+  | nil => rfl
+  | cons packet packets ih =>
+      rcases h with ⟨hpacket, hpackets⟩
+      have htail := ih (start := start + packet.length) hpackets
+      simpa [InOrderTags] using inOrderTags_append hpacket htail
+
 theorem rvfiPacketTags_append {State : Type}
     (machine : RvfiPacketMachine State) (state : State)
     (first second : List Input) :
@@ -502,6 +515,17 @@ theorem normalizeRvfiPacketTags_stream_append {State : Type}
   apply inOrderPacketStream_append hfirstTags
   simpa [hfirstLength] using hsecondTags
 
+/-- A normalized packet stream therefore also supplies the flattened ROB tag
+certificate, retaining the same decoded order prefix. -/
+theorem normalizeRvfiPacketTags_flat {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    InOrderTags start (rvfiPacketTags machine state cycles).flatten := by
+  exact inOrderPacketStream_flatten
+    (normalizeRvfiPacketTags_stream machine state cycles h)
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -599,5 +623,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_flat
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

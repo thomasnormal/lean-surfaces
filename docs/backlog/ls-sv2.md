@@ -1289,3 +1289,14 @@ its measured first and second packet-cycle windows.
 
 **DECIDED:** retain packet boundaries for local ROB certificates while using
 the flattened normalization count to connect packet widths to RVFI order.
+
+## 2026-11-05-ls-sv2-57 — flatten packetized RVFI order certificates
+
+Added `inOrderPacketStream_flatten` and
+`normalizeRvfiPacketTags_flat` to `LeanModels/Refine/RvfiPacket.lean`.
+Packet-boundary order certificates now lift directly to the flattened tagged
+ROB stream, preserving the same global order prefix.  The PicoRV32 witness
+checks the flattened certificate over the complete measured packet stream.
+
+**DECIDED:** keep packet boundaries available for packet-aware proofs, with a
+single explicit flattening bridge for generic ROB consumers.

@@ -8993,3 +8993,16 @@ DECIDED: keep ordinary list comprehensions live and refuse only the shadowed low
 Deleted the shape-specific `x *= n; return x` ingestion rewrite. Augmented assignment now reaches the existing in-place semantics: module-internal heap-list aliases mutate together, while public boundary list arguments remain an explicit loud frontier. The measured `repeat_aug` list rows are now whitelisted refusals; string and tuple augmented-repeat rows stay matched, and the former `None` error text is no longer rewritten from `*=` to `*`.
 
 DECIDED: preserve the AST `AugAssign` node and keep boundary-passed list mutation loud until the heap-threaded argument boundary is wired.
+
+## 2026-11-05-pycomplete-338 — refuse dead yield stores through global or nonlocal names
+
+The narrow first-step lowering for an otherwise unread `x = yield value` now
+checks the enclosing function's structured `global` and `nonlocal` declarations.
+Those stores resume after the first `next()` and can update an observable cell;
+dropping them would answer a value instead of CPython's resumed send behavior.
+The extractor therefore keeps both declaration forms loud while retaining the
+admitted local dead-target shape. Added script and extractor regression rows;
+the former global fixture printed `1` while CPython 3.9 printed `None`.
+
+DECIDED: retain the first-step local dead-yield admission, and refuse global or
+nonlocal targets until expression-yield send semantics has an explicit channel.

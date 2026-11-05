@@ -1,0 +1,293 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/scripts/yield_global_target.py",
+  "source_sha256": "8af02a1d341fe10d37c37aa3e6fd3decb8a5c905390aef68057e02ae30d5cfa8",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 68
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 68
+          },
+          "value": {
+            "type": "str",
+            "value": "Expression-yield stores under global declarations remain loud."
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 9
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 4,
+              "col_offset": 0,
+              "end_lineno": 4,
+              "end_col_offset": 5
+            },
+            "id": "value"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 4,
+            "col_offset": 8,
+            "end_lineno": 4,
+            "end_col_offset": 9
+          },
+          "value": {
+            "type": "int",
+            "repr": "0"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 7,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 19
+        },
+        "name": "producer",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Global",
+            "names": [
+              "value"
+            ],
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 16
+            }
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 19
+            },
+            "py_kind": "YieldAssign:global-or-nonlocal",
+            "text": "value = (yield 5)"
+          }
+        ],
+        "has_global": true,
+        "is_generator": true
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 14
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 12,
+              "col_offset": 0,
+              "end_lineno": 12,
+              "end_col_offset": 1
+            },
+            "id": "g"
+          }
+        ],
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 12,
+            "col_offset": 4,
+            "end_lineno": 12,
+            "end_col_offset": 14
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 12,
+              "col_offset": 4,
+              "end_lineno": 12,
+              "end_col_offset": 12
+            },
+            "id": "producer"
+          },
+          "args": [],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 7
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 13,
+            "col_offset": 0,
+            "end_lineno": 13,
+            "end_col_offset": 7
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 13,
+              "col_offset": 0,
+              "end_lineno": 13,
+              "end_col_offset": 4
+            },
+            "id": "next"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 13,
+                "col_offset": 5,
+                "end_lineno": 13,
+                "end_col_offset": 6
+              },
+              "id": "g"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 14,
+          "col_offset": 0,
+          "end_lineno": 14,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 14,
+            "col_offset": 0,
+            "end_lineno": 14,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 14,
+              "col_offset": 0,
+              "end_lineno": 14,
+              "end_col_offset": 4
+            },
+            "id": "next"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 14,
+                "col_offset": 5,
+                "end_lineno": 14,
+                "end_col_offset": 6
+              },
+              "id": "g"
+            },
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 14,
+                "col_offset": 8,
+                "end_lineno": 14,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "none"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 15,
+          "col_offset": 0,
+          "end_lineno": 15,
+          "end_col_offset": 12
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 15,
+            "col_offset": 0,
+            "end_lineno": 15,
+            "end_col_offset": 12
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 15,
+              "col_offset": 0,
+              "end_lineno": 15,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 15,
+                "col_offset": 6,
+                "end_lineno": 15,
+                "end_col_offset": 11
+              },
+              "id": "value"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

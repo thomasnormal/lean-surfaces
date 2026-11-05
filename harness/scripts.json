@@ -43,6 +43,11 @@
     "note": "list-comprehension lowering refuses user list shadows rather than calling them"
   },
   {
+    "file": "harness/scripts/yield_global_target.py",
+    "expect": "unsupported",
+    "note": "expression-yield assignment under global declaration is not dropped silently"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

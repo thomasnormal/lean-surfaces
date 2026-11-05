@@ -112,7 +112,16 @@ mutual
 
   def TypedCallableExpression.hasEffects : TypedCallableExpression → Bool
     | ⟨expression, _, _⟩ => expression.hasEffects
+
 end
+
+private def hasEffectfulArgument : List TypedCallableExpression → Bool
+  | [] => false
+  | argument :: rest => argument.hasEffects || hasEffectfulArgument rest
+
+private def hasIndeterminatelySequencedArgumentEffects
+    (arguments : List TypedCallableExpression) : Bool :=
+  arguments.length > 1 && hasEffectfulArgument arguments
 
 structure CallableFunction where
   occurrence : Declaration
@@ -672,6 +681,8 @@ def parseCallableDirectCallExpression (profile : TargetProfile)
     throw "callable: direct call argument count disagrees with selected callee"
   let arguments ← argumentRaws.mapM (fun argument =>
     parseCallableExpressionTyped profile parameters expressionRows expressionTypes argument none none)
+  unless !hasIndeterminatelySequencedArgumentEffects arguments do
+    throw "callable: indeterminately sequenced effectful call arguments are outside the body profile"
   unless arguments.all (fun argument => callableBuiltin argument.type) do
     throw "callable: direct call arguments require builtin integral values"
   let resultType := typeExpected.getD target.callee.signature.result

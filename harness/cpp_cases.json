@@ -18739,5 +18739,18 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-effectful-argument-order-refusal",
+    "kind": "statement",
+    "corpus": "callable safety regression",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEffectfulArgumentOrderRefusalWitness",
+    "render": "unit",
+    "cpp_source": "int helper_effectful_arguments(int first, int second) { return first * 10 + second; } bool callable_witness() { int value = 1; int result = helper_effectful_arguments(value++, value); return result == 12 || result == 21; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
   }
 ]

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed a C++ soundness gap by refusing multi-argument calls with effectful
+  arguments whose initialization order is indeterminate; added a differential
+  recorded-refusal row.
+
 - C++ callable-frame coverage now includes a negative-false while-switch
   default-shadow computed-initialization assignment `continue` witness, with
   a native differential match and 1,580 total rows.

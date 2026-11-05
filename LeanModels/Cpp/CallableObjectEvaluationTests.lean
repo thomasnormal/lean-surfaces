@@ -12,6 +12,40 @@ private def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 private def unsignedLongType : CppTypeEvidence := .builtin .unsignedLong
 private def shortType : CppTypeEvidence := .builtin .short
 
+private def effectfulArgumentDeclRef (node declaration kind name : String) : Raw := .object [
+  ("id", .string node), ("kind", .string "DeclRefExpr"),
+  ("referencedDecl", .object [
+    ("id", .string declaration), ("kind", .string kind),
+    ("name", .string name)])]
+
+private def effectfulArgumentIncrement : Raw := .object [
+  ("id", .string "0x91"), ("kind", .string "UnaryOperator"),
+  ("opcode", .string "++"), ("isPostfix", .bool true),
+  ("inner", .array [effectfulArgumentDeclRef "0x92" "0x10"
+    "ParmVarDecl" "value"])]
+
+private def effectfulArgumentCall : Raw := .object [
+  ("id", .string "0x90"), ("kind", .string "CallExpr"),
+  ("inner", .array [
+    effectfulArgumentDeclRef "0x93" "0x20" "FunctionDecl" "helper",
+    effectfulArgumentIncrement,
+    effectfulArgumentDeclRef "0x94" "0x10" "ParmVarDecl" "value"])]
+
+private def effectfulArgumentCallee : CallableCallee := {
+  signature := {result := intType, parameters := [intType, intType], variadic := false}
+  parameters := [
+    {declaration := handle "0x21", name := some "first", type := intType},
+    {declaration := handle "0x22", name := some "second", type := intType}]
+  body := .skip}
+
+def callableEffectfulArgumentOrderRefusalWitness : Except String Unit :=
+  parseCallableDirectCallExpression .lp64 [{
+      declaration := handle "0x10", name := some "value", type := intType}] [] none [
+      {declaration := handle "0x20", callee := effectfulArgumentCallee}]
+      effectfulArgumentCall (some intType) |>.map (fun _ => ())
+
+#guard callableEffectfulArgumentOrderRefusalWitness matches .error _
+
 private def functionDeclaration : Declaration := {
   id := "0x2", kind := "FunctionDecl", path := [0], name := some "local_read",
   lexicalParents := [], semanticParent := none, previousDecl := none,

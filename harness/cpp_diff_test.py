@@ -139,13 +139,14 @@ def render_lean(cases):
         "  | false => \"refuse\"",
         "def cppRenderUnit : Except String Unit → String",
         "  | .ok _ => \"ok\"",
-        "  | .error message => \"refuse \" ++ message",
+        "  | .error _ => \"refuse\"",
         "def cppEmptyArtifact : Artifact := { sourceFile := \"witness.cpp\", sourceSha256 := \"fixture\", frontend := .null, dependencies := [], ast := .object [(\"kind\", .string \"TranslationUnitDecl\"), (\"inner\", .array [])] }",
     ]
     lines += ["open %s" % namespace for namespace in namespaces]
     for row in cases:
         expression = row["lean_expression"]
-        render = ("cppRenderUnit" if row.get("kind") == "translation" and row.get("render") != "bool" else
+        render = ("cppRenderUnit" if row.get("render") == "unit" or
+                  (row.get("kind") == "translation" and row.get("render") != "bool") else
                   "cppRenderBool" if row.get("render") == "bool" else
                   "cppRenderBool" if row.get("kind") in ("lifetime", "scalar", "expression", "statement") else "cppRender")
         lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %

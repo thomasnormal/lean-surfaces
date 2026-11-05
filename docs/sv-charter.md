@@ -12,6 +12,16 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Straight-line automatic functions with local case — 2026-11-05
+
+The pure automatic function fragment now admits declarations followed by a
+blocking plain `case`, one assignment per arm (including `default`), and a
+return of the local temporary. Symbolic extraction substitutes input formals
+and emits nested case-equality ternaries in source order; no call-frame or new
+AST constructor is introduced. The `function_case_eval` witness and
+differential row match Icarus. Side effects, loops, recursion, static storage,
+tasks, qualified cases, and output/ref formals remain loud.
+
 ## Mixed combinational and asynchronous-reset cycles — 2026-11-05
 
 `Design2.ffResetProfileB` now admits continuous assignments and `always_comb`

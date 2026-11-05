@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Straight-line automatic functions with local case
+
+Pure automatic input-only functions may now contain local declarations, a
+blocking plain `case` with a `default`, and a return of the local temporary.
+The symbolic extractor preserves the case as nested case-equality ternaries;
+the `function_case_eval` fixture and Icarus differential row cover the form.
+Stateful functions, loops, recursion, static storage, tasks, qualified cases,
+and output/ref formals remain loud.
+
 ## Mixed combinational and asynchronous-reset cycles
 
 The sequential reset profile now admits continuous assignments and comb

@@ -11574,7 +11574,7 @@ def _sym_local_chain_shape(subroutine):
         if type(body).__name__ != "StatementList":
             return None
         statements = list(getattr(body, "list", ()))
-        if len(statements) < 3:
+        if len(statements) < 2:
             return None
         declarations = statements[:-1]
         if len(declarations) < 2:
@@ -11859,6 +11859,92 @@ def _sym_conditional_function_shape(subroutine):
                 or not _literal_function_return(else_expr)):
             return None
         return condition, then_expr, else_expr
+    except Exception:
+        return None
+
+
+def _sym_case_function_shape(subroutine):
+    """Recognize a straight-line automatic function ending in one plain case.
+
+    The admitted form has declarations followed by a block containing a
+    blocking `case` assignment to the final local and a return of that local.
+    Each arm (including `default`) contains exactly one blocking assignment.
+    The converter turns the case into nested case-equality ternaries, retaining
+    first-match source order.  Locals, loops, calls with effects, qualified
+    cases, and missing defaults stay outside this source-pure fragment.
+    """
+    try:
+        body = getattr(subroutine, "body", None)
+        if type(body).__name__ != "StatementList":
+            return None
+        statements = list(getattr(body, "list", ()))
+        if len(statements) < 2:
+            return None
+        declarations = []
+        while statements and type(statements[0]).__name__ == "VariableDeclStatement":
+            declarations.append(statements.pop(0))
+        if not declarations or len(statements) != 1:
+            return None
+        block = statements[0]
+        if type(block).__name__ != "BlockStatement":
+            return None
+        block_list = getattr(getattr(block, "body", None), "list", None)
+        if block_list is None or len(block_list) != 2:
+            return None
+        case, case_ret = block_list
+        if type(case).__name__ != "CaseStatement":
+            return None
+        if str(getattr(case, "condition", "")).split(".")[-1] != "Normal":
+            return None
+        if str(getattr(case, "check", "")).split(".")[-1] != "None_":
+            return None
+        ret = case_ret
+        if type(ret).__name__ != "ReturnStatement":
+            return None
+        returned = getattr(ret, "expr", None)
+        if type(returned).__name__ != "NamedValueExpression":
+            return None
+        local = getattr(returned, "symbol", None)
+        if local is None or all(getattr(d, "symbol", None) is not local
+                                for d in declarations):
+            return None
+        arms = []
+        for item in list(getattr(case, "items", ())):
+            stmt = getattr(item, "stmt", None)
+            if (type(stmt).__name__ != "ExpressionStatement"
+                    or type(getattr(stmt, "expr", None)).__name__ != "AssignmentExpression"):
+                return None
+            assignment = stmt.expr
+            left = getattr(assignment, "left", None)
+            if (getattr(assignment, "op", None) is not None
+                    or getattr(assignment, "timingControl", None) is not None
+                    or getattr(assignment, "isNonBlocking", False)
+                    or type(left).__name__ != "NamedValueExpression"
+                    or getattr(left, "symbol", None) is not local):
+                return None
+            patterns = list(getattr(item, "expressions", ()))
+            if not patterns:
+                return None
+            arms.append((patterns, getattr(assignment, "right", None)))
+        default_stmt = getattr(case, "defaultCase", None)
+        if (default_stmt is None
+                or type(default_stmt).__name__ != "ExpressionStatement"
+                or type(getattr(default_stmt, "expr", None)).__name__ != "AssignmentExpression"):
+            return None
+        default_assignment = default_stmt.expr
+        default_left = getattr(default_assignment, "left", None)
+        if (getattr(default_assignment, "op", None) is not None
+                or getattr(default_assignment, "timingControl", None) is not None
+                or getattr(default_assignment, "isNonBlocking", False)
+                or type(default_left).__name__ != "NamedValueExpression"
+                or getattr(default_left, "symbol", None) is not local):
+            return None
+        # Every declaration except the selected local must be absent from the
+        # shape: a later local read would require a scoped SSA environment.
+        if any(getattr(d, "symbol", None) is not local for d in declarations):
+            return None
+        return (getattr(case, "expr", None), arms,
+                getattr(default_assignment, "right", None), local)
     except Exception:
         return None
 
@@ -12929,6 +13015,7 @@ def _sym_inline_function_call(sm, e):
     try:
         subroutine = getattr(e, "subroutine", None)
         conditional_shape = _sym_conditional_function_shape(subroutine)
+        case_shape = _sym_case_function_shape(subroutine)
         local_chain = _sym_local_chain_shape(subroutine)
         if local_chain is None:
             local_chain = _sym_local_assignment_chain_shape(subroutine)
@@ -12938,7 +13025,7 @@ def _sym_inline_function_call(sm, e):
             subroutine, allow_implicit=True, allow_automatic=True)
         if (getattr(e, "isSystemCall", False)
                 or (not literal_symbol and conditional_shape is None
-                    and local_chain is None)):
+                    and case_shape is None and local_chain is None)):
             return None
         formals = list(getattr(subroutine, "arguments", []))
         actuals = list(e.arguments)
@@ -12954,11 +13041,11 @@ def _sym_inline_function_call(sm, e):
                 return None
             converted.append(node)
         returned = _literal_function_result(subroutine)
-        if returned is None and local_chain is None:
+        if returned is None and local_chain is None and case_shape is None:
             returned = _sym_local_return_expression(subroutine)
         if returned is None and local_chain is not None:
             returned = local_chain[1]
-        if returned is None and conditional_shape is None:
+        if returned is None and conditional_shape is None and case_shape is None:
             return None
         formal_set = set(formals)
         mentions_formal = False
@@ -12967,20 +13054,28 @@ def _sym_inline_function_call(sm, e):
             if (type(node).__name__ == "NamedValueExpression"
                     and getattr(node, "symbol", None) in formal_set):
                 mentions_formal = True
-        if conditional_shape is None:
+        if conditional_shape is None and case_shape is None:
             returned.visit(inspect)
             if local_chain is not None:
                 for _local, initializer in local_chain[0]:
                     initializer.visit(inspect)
-        else:
+        elif conditional_shape is not None:
             for expression in conditional_shape:
                 expression.visit(inspect)
+        else:
+            case_expr, case_arms, case_default, _local = case_shape
+            case_expr.visit(inspect)
+            case_default.visit(inspect)
+            for patterns, arm in case_arms:
+                arm.visit(inspect)
+                for pattern in patterns:
+                    pattern.visit(inspect)
         if not mentions_formal:
             # A literal/parameter-only return is handled by the stricter
             # fast path, which intentionally rejects a dynamic unused actual.
             return None
         return list(zip(formals, converted)), (returned, conditional_shape,
-                                               local_chain)
+                                               local_chain, case_shape)
     except Exception:
         return None
 
@@ -13063,9 +13158,37 @@ def _convert_sym_call_expr(sm, e):
     inline = None if getattr(e, "isSystemCall", False) else _sym_inline_function_call(sm, e)
     if inline is not None:
         bindings, payload = inline
-        returned, conditional_shape, local_chain = payload
+        returned, conditional_shape, local_chain, case_shape = payload
         with _SymCallBinding(bindings):
-            if conditional_shape is None:
+            if case_shape is not None:
+                case_subject, case_arms, case_default, _local = case_shape
+                subject = convert_expr(sm, case_subject)
+                value = convert_expr(sm, case_default)
+                if subject is None or value is None:
+                    value = None
+                else:
+                    for patterns, arm in reversed(case_arms):
+                        arm_value = convert_expr(sm, arm)
+                        condition = None
+                        for pattern in patterns:
+                            pattern_value = convert_expr(sm, pattern)
+                            if pattern_value is None:
+                                condition = None
+                                break
+                            hit = {"kind": "Binary", "span": node_span(sm, pattern),
+                                   "width": 1, "op": "===", "left": dict(subject),
+                                   "right": pattern_value}
+                            condition = hit if condition is None else {
+                                "kind": "Binary", "span": node_span(sm, pattern),
+                                "width": 1, "op": "||", "left": condition,
+                                "right": hit}
+                        if arm_value is None or condition is None:
+                            value = None
+                            break
+                        value = {"kind": "Ternary", "span": node_span(sm, e),
+                                 "width": e.type.bitWidth, "cond": condition,
+                                 "then": arm_value, "else": value}
+            elif conditional_shape is None:
                 local_bindings = []
                 if local_chain is not None:
                     for local, initializer in local_chain[0]:
@@ -32352,6 +32475,7 @@ def _convert_member_sym(sm, m, k, path=()):
         if (_literal_function_symbol(m, allow_implicit=True,
                                      allow_automatic=True)
                 or _sym_conditional_function_shape(m) is not None
+                or _sym_case_function_shape(m) is not None
                 or _sym_local_chain_shape(m) is not None
                 or _sym_local_assignment_chain_shape(m) is not None
                 or _sym_local_mixed_chain_shape(m) is not None):

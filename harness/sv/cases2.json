@@ -60,6 +60,19 @@
       "measured": "A side-effect-free automatic function with input formals is inlined into the combinational expression; other calls remain loud."
     },
     {
+      "name": "function_case_eval",
+      "example": "seq_function_case",
+      "top": "function_case_eval",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0001"},
+        {"a": "1100"},
+        {"a": "xxxx"}
+      ],
+      "measured": "A straight-line automatic function with a local temporary and a plain case is inlined as source-shaped case-equality ternaries; effects, loops, recursion, static storage, and tasks remain loud."
+    },
+    {
       "name": "async_mem_fifo",
       "example": "seq_mem",
       "top": "async_mem_fifo",

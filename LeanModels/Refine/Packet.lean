@@ -46,6 +46,61 @@ def packetInputs {State : Type} (machine : PacketMachine State) :
       let (state', packet) := machine.step state input
       packet.map Prod.fst ++ packetInputs machine state' inputs
 
+/-! ## State-threaded packet windows -/
+
+/-- The packet-machine state after a finite cycle window.  Packet contents are
+discarded here; the state is retained so an adjacent window can continue the
+same core run. -/
+def packetStateAfter {State : Type} (machine : PacketMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      packetStateAfter machine (machine.step state input).1 inputs
+
+theorem packetStateAfter_append {State : Type}
+    (machine : PacketMachine State) (state : State)
+    (first second : List Input) :
+    packetStateAfter machine state (first ++ second) =
+      packetStateAfter machine
+        (packetStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, packetStateAfter, hstep]
+          exact ih state'
+
+theorem packetTrace_append {State : Type}
+    (machine : PacketMachine State) (state : State)
+    (first second : List Input) :
+    packetTrace machine state (first ++ second) =
+      packetTrace machine state first ++
+        packetTrace machine (packetStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, packetTrace, packetStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
+theorem packetInputs_append {State : Type}
+    (machine : PacketMachine State) (state : State)
+    (first second : List Input) :
+    packetInputs machine state (first ++ second) =
+      packetInputs machine state first ++
+        packetInputs machine (packetStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, packetInputs, packetStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
 /-! ## One packet against the ISA -/
 
 /-- Every packet entry is one ISA step, and the final ISA state is threaded
@@ -122,3 +177,6 @@ theorem packet_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.packet_trace_refines
+#print axioms LeanModels.Refine.packetStateAfter_append
+#print axioms LeanModels.Refine.packetTrace_append
+#print axioms LeanModels.Refine.packetInputs_append

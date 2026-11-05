@@ -696,3 +696,25 @@ introduced.
 **DECIDED:** keep packet-window memory composition in the generic refinement
 layer; core proofs provide explicit packet certificates and retain arbitrary
 latency and completion-order witnesses at the boundary.
+
+## 2026-11-05-ls-sv2-29 — compose state-threaded packet windows
+
+Added `packetStateAfter`, `packetStateAfter_append`, `packetTrace_append`, and
+`packetInputs_append` to `LeanModels/Refine/Packet.lean`.  These bridges carry
+the packet machine's exact post-window state and compose both committed
+retirements and their architectural inputs across adjacent cycle windows.
+
+The toy wide-packet witness now applies all three append theorems to two
+single-cycle windows, preserving the two-retirement packet emitted at each
+boundary without replaying or dropping state.
+
+**MEASURED:** `lake build LeanModels.Refine.Packet
+Examples.«system-verilog».cores.toy_rv32i.packet_proof` passed (28 jobs).  The
+state theorem has no axioms; trace/input composition reports only existing
+`propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep packet-window state threading in the generic packet layer;
+later ROB and RVFI proofs must carry the post-window core state explicitly
+when composing finite observations.

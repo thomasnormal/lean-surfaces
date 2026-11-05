@@ -121,12 +121,48 @@ theorem wide_packet_one_cycle :
       (by exact ⟨rfl, rfl, rfl⟩)
   simpa [widePacketMachine, packetTrace, packetInputs] using h
 
+theorem wide_packet_windows_state :
+    packetStateAfter widePacketMachine widePacketMachine.init
+        ([addiInput] ++ [addiInput]) =
+      packetStateAfter widePacketMachine
+        (packetStateAfter widePacketMachine widePacketMachine.init [addiInput])
+        [addiInput] := by
+  exact packetStateAfter_append widePacketMachine widePacketMachine.init
+    [addiInput] [addiInput]
+
+theorem wide_packet_windows_trace :
+    packetTrace widePacketMachine widePacketMachine.init
+        ([addiInput] ++ [addiInput]) =
+      packetTrace widePacketMachine widePacketMachine.init [addiInput] ++
+        packetTrace widePacketMachine
+          (packetStateAfter widePacketMachine widePacketMachine.init [addiInput])
+          [addiInput] := by
+  exact packetTrace_append widePacketMachine widePacketMachine.init
+    [addiInput] [addiInput]
+
+theorem wide_packet_windows_inputs :
+    packetInputs widePacketMachine widePacketMachine.init
+        ([addiInput] ++ [addiInput]) =
+      packetInputs widePacketMachine widePacketMachine.init [addiInput] ++
+        packetInputs widePacketMachine
+          (packetStateAfter widePacketMachine widePacketMachine.init [addiInput])
+          [addiInput] := by
+  exact packetInputs_append widePacketMachine widePacketMachine.init
+    [addiInput] [addiInput]
+
 #guard (packetTrace packetMachine packetMachine.init [addiInput]).length == 1
 #guard (packetTrace widePacketMachine widePacketMachine.init [addiInput]).length == 2
+#guard (packetTrace widePacketMachine widePacketMachine.init
+  ([addiInput] ++ [addiInput])).length == 4
+#guard (packetInputs widePacketMachine widePacketMachine.init
+  ([addiInput] ++ [addiInput])).length == 4
 
 #print axioms packet_step_refines
 #print axioms packet_one_cycle
 #print axioms wide_packet_step_refines
 #print axioms wide_packet_one_cycle
+#print axioms wide_packet_windows_state
+#print axioms wide_packet_windows_trace
+#print axioms wide_packet_windows_inputs
 
 end Examples.«system-verilog».cores.toy_rv32i.packet_proof

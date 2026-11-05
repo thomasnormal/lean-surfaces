@@ -171,6 +171,7 @@ end
 mutual
   /-- Every `Name` occurring in the statement. -/
   def Stmt.allNames : Stmt → List String
+    | .globalDecl names _ | .nonlocalDecl names _ => names.toList
     | .ret Option.none _ => []
     | .ret (some e) _ => e.allNames
     | .assign tgts v _ => Expr.allNamesList tgts.toList ++ v.allNames
@@ -274,7 +275,7 @@ def scriptStmtSpan : Stmt → Span
   | .ret _ sp | .assign _ _ sp | .unpackAssign _ _ _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
-  | .pass sp | .brk sp | .cont sp
+  | .pass sp | .brk sp | .cont sp | .globalDecl _ sp | .nonlocalDecl _ sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp

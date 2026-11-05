@@ -8963,3 +8963,9 @@ DECIDED: model the default recursion limit; changing `sys.setrecursionlimit` rem
 The script admission now inspects module function bodies before execution. A body that reaches a later module definition, or a module that redefines a function name, is refused because the static function table cannot reproduce CPython's sequential binding. Added forward-reference and redefinition fixtures; their old answers were respectively an incorrect value and two values instead of CPython's `NameError` and `1`/`2` sequence. Recursive self-calls and existing list-comprehension scripts remain admitted.
 
 DECIDED: make module definition ordering hazards loud until definitions become runtime-bound AST nodes. Class and namedtuple table ordering remains a later audit item.
+
+## 2026-11-05-pycomplete-333 — carry global declarations as AST names
+
+The extractor now emits structured `Global` and `Nonlocal` statement nodes with the parser's name arrays. Ingestion and both interpreters consume those arrays directly; the truncated `ast.unparse` text path and its `globalNamesText`/`nonlocalNamesText` workers are gone. Regenerated the closure envelope and added a long-name script fixture. The old `global` counter row printed `0` where CPython 3.9 printed `5`; it now prints `5`.
+
+DECIDED: structured lexical declarations are admitted; broader dynamic `nonlocal` shapes remain governed by the existing closure-cell admission.

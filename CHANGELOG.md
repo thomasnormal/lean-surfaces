@@ -2985,3 +2985,5 @@ change is listed here under **Changed** or **Removed**.
 - Python: refuse script modules whose function bodies reach later definitions or
   redefine a function name; static function tables no longer silently answer
   through CPython's sequential binding.
+- Python: carry `global` and `nonlocal` declarations as structured AST name
+  arrays, removing the truncated text re-parser and preserving long declarations.

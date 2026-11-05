@@ -386,6 +386,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         -- else as `Unsupported`), so the field is a plain string array.
         let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
         return .delStmt names span
+    | "Global" =>
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        return .globalDecl names span
+    | "Nonlocal" =>
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        return .nonlocalDecl names span
     | "DeleteSubscript" =>
         -- THE REWRITE (docs/backlog/python-completeness.md §pycomplete-15/16):
         -- `del d[k]` ⇢ `<dictdel>(d, k)` as an `exprStmt`. `del` is a
@@ -685,6 +691,7 @@ star included, contributes NO binds, because in Pass 0 it RAISES before
 binding anything — the model's own semantics; the guarded present-module
 divergence is the standing §2.5 accelerator-equivalence obligation. -/
 private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
+  | .globalDecl names _ | .nonlocalDecl names _ => some names.toList
   | .assign tgts _ _ => do
     let bss ← tgts.toList.mapM targetBinds
     return bss.flatten
@@ -795,6 +802,7 @@ mutual
 
   /-- Every `Name` occurring in the statement. -/
   private partial def stmtRefs : Stmt → List String
+    | .globalDecl names _ | .nonlocalDecl names _ => names.toList
     | .ret Option.none _ => []
     | .ret (some e) _ => exprRefs e
     | .assign tgts v _ => (tgts.toList.map exprRefs).flatten ++ exprRefs v
@@ -834,7 +842,7 @@ private def stmtSpanOf : Stmt → Span
   | .ret _ sp | .assign _ _ sp | .unpackAssign _ _ _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
-  | .pass sp | .brk sp | .cont sp
+  | .pass sp | .brk sp | .cont sp | .globalDecl _ sp | .nonlocalDecl _ sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp
@@ -1160,6 +1168,7 @@ yield-from subtrees, and skipping them ALL lets two yield-froms share
 a target soundly (the second loop's rebinding is as unobservable as
 the first's binding). -/
 private partial def yfNames : Stmt → List String
+  | .globalDecl names _ | .nonlocalDecl names _ => names.toList
   | .yieldFromStmt (.genExp ..) _ => []
   | .yieldFromStmt v _ => exprRefs v
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
@@ -1290,6 +1299,7 @@ private partial def exprNamesXW : Expr → List String
 /-- The statement-level walk for `exprNamesXW` (binds included via the
 target expressions themselves — a target `Name` IS a name). -/
 private partial def stmtNamesXW : Stmt → List String
+  | .globalDecl names _ | .nonlocalDecl names _ => names.toList
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
   | .ret (some e) _ => exprNamesXW e
   | .assign ts v _ => (ts.toList.map exprNamesXW).flatten ++ exprNamesXW v
@@ -1538,7 +1548,7 @@ mutual
       StateM (Nat × Array FunctionDefn) Stmt := do
     match s with
     -- Pass 0: `importFrom` carries no expression, nothing to lower
-    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .importFrom ..
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .globalDecl .. | .nonlocalDecl .. | .importFrom ..
     | .unsupported .. => return s
     | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
     | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp

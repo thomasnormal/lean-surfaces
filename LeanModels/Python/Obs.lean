@@ -1404,6 +1404,8 @@ theorem fuelMono (fuel : Nat) :
       | succ k =>
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         cases s with
+        | globalDecl names _ | nonlocalDecl names _ =>
+          simp only [execStmt]; exact Run.le_refl _
         | defStmt name params ao lo hg ig body caps _ =>
           simp only [execStmt]; exact Run.le_refl _
         | unpackAssign before star after value _ =>
@@ -3410,6 +3412,15 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     -- execStmt
     · intro st s hfree
       cases s with
+      | globalDecl names _ =>
+        simp only [execStmt]
+        exact .okF rfl _
+      | nonlocalDecl names _ =>
+        by_cases h : names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome)
+        · simp [execStmt, h]
+          exact .okF rfl _
+        · simp [execStmt, h]
+          exact .unsupported
       | defStmt name params ao lo hg ig body caps _ =>
         simp [Stmt.heapFree] at hfree
       | unpackAssign before star after value _ =>

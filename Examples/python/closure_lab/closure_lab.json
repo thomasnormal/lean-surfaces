@@ -4212,15 +4212,16 @@
             "locals_unsupported": null,
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Nonlocal",
+                "names": [
+                  "c"
+                ],
                 "span": {
                   "lineno": 200,
                   "col_offset": 8,
                   "end_lineno": 200,
                   "end_col_offset": 18
-                },
-                "py_kind": "Nonlocal",
-                "text": "nonlocal c"
+                }
               },
               {
                 "kind": "Assign",

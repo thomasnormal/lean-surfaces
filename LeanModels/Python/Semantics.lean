@@ -976,6 +976,8 @@ def Stmt.kindName : Stmt → String
   | .withStmt .. => "With"
   | .importFrom .. => "ImportFrom"
   | .delStmt .. => "Delete"
+  | .globalDecl .. => "Global"
+  | .nonlocalDecl .. => "Nonlocal"
   | .pass _ => "Pass"
   | .brk _ => "Break"
   | .cont _ => "Continue"
@@ -7390,6 +7392,7 @@ mutual
     -- and handler can bind (an over-approximation, the poisoning
     -- direction — either may have run partially)
     | .raiseStmt .. => some []
+    | .globalDecl names _ | .nonlocalDecl names _ => some names.toList
     -- the tail batch: `assert` binds nothing (it tests and may raise)
     | .assertStmt .. => some []
     -- the tail batch, MEASURED (docs/backlog.md §del RECONCILED): `del`
@@ -7934,17 +7937,9 @@ theorem markUnboundLocals_noop {body : List Stmt} {env : Env}
 /-- Extract names from the extractor's retained `Unsupported Global` text.
 The declaration has no runtime action; its names are the compile-time scope
 fact consumed by the call frame. -/
-def globalNamesText (text : String) : List String :=
-  ((String.ofList (text.toList.drop 6)).splitOn ",").map String.trim
-    |>.filter (· != "")
-
-def nonlocalNamesText (text : String) : List String :=
-  ((String.ofList (text.toList.drop 8)).splitOn ",").map String.trim
-    |>.filter (· != "")
-
 def globalNamesBody (body : Array Stmt) : List String :=
   (body.toList.filterMap fun s => match s with
-    | .unsupported "Global" text _ => some (globalNamesText text)
+    | .globalDecl names _ => some names.toList
     | _ => none).flatten
 
 def globalMarkedEnv (body : Array Stmt) : Env :=
@@ -7974,7 +7969,7 @@ that shape stays loud until it has one, while direct scalar reads/writes are
 fully stateful. -/
 def globalSimpleBody : Array Stmt → Bool :=
   (·.toList.all fun s => match s with
-    | .unsupported "Global" _ _ => true
+    | .globalDecl _ _ => true
     | .assign #[.name _ _] _ _ => true
     | .augAssign (.name _ _) _ _ _ => true
     | .ret .. | .exprStmt .. | .pass _ => true
@@ -8606,6 +8601,7 @@ end
 mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
+    | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
     | .unpackAssign .. => false
     | .ret Option.none _ => true
@@ -8790,6 +8786,7 @@ mutual
     | .exprStmt e _ => e.genAllocFree
     | .yieldStmt e _ => e.genAllocFree
     | .yieldFromStmt v _ => v.genAllocFree
+    | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt _ _ _ _ _ isGen body _ _ =>
       !isGen && Stmt.genAllocFreeList body.toList
     | .raiseStmt exc cause _ =>
@@ -11211,6 +11208,14 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
           .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
       | Option.none => .unsupported "unsupported statement 'AnnAssign:no-value'"
     | .unsupported "TypeErrorHandler" _ _ => .ok st .next
+    | .globalDecl names _ =>
+      let locals := names.toList.foldl (fun env id =>
+        Env.set env (globalMarker id) RVal.none) st.locals
+      .ok { st with locals := locals } .next
+    | .nonlocalDecl names _ =>
+      if names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome) then
+        .ok st .next
+      else .unsupported "unsupported statement 'Nonlocal'"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported statement '{pyKind}'"
   termination_by structural fuel
 
@@ -12021,7 +12026,7 @@ mutual
         hnd.toList.any (proofCellDrainStmt genName)
     | .withStmt items body _ _ => items.toList.any (fun i => proofCellDrainExpr genName i.context ||
         (i.target.map (proofCellDrainExpr genName)).getD false) || body.toList.any (proofCellDrainStmt genName)
-    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .delStmt .. | .unsupported .. => false
+    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .delStmt .. | .globalDecl .. | .nonlocalDecl .. | .unsupported .. => false
 
 end
 

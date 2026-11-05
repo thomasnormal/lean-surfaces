@@ -257,6 +257,11 @@ inductive Stmt where
   refuse loudly (docs/backlog.md §del RECONCILED); a TRAILING `del` of
   definition names is rewritten away at ingestion. -/
   | delStmt (names : Array String) (span : Span)
+  /-- Structured lexical declarations from the approved AST.  The names are
+  carried directly from `ast.Global`/`ast.Nonlocal`; they are not recovered
+  from source text at runtime. -/
+  | globalDecl (names : Array String) (span : Span)
+  | nonlocalDecl (names : Array String) (span : Span)
   /-- `from module import names` / `from module import *` (schema
   `ImportFrom`, Pass 0 — docs/memory-model.md §import forms (Pass 0)).
   Structured by the EXTRACTOR for exactly the admitted shape (top-level,
@@ -445,6 +450,8 @@ mutual
     | .delStmt names' _ => stringListMentionsAny names names'.toList
     | .importFrom module imported _ _ =>
         names.contains module || stringListMentionsAny names imported.toList
+    | .globalDecl names' _ | .nonlocalDecl names' _ =>
+        stringListMentionsAny names names'.toList
     | .pass _ | .brk _ | .cont _ | .unsupported .. => false
 
   private def stmtListMentionsAny (names : List String) : List Stmt → Bool

@@ -1934,6 +1934,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
     # nested if/loop bodies -- a nested statement is not in guard
     # position, because the guard argument is "the raise is caught by
     # construction", which only the direct body gives).
+    if isinstance(node, ast.Global):
+        return {"kind": "Global", "names": list(node.names), "span": span(node)}
+    if isinstance(node, ast.Nonlocal):
+        return {"kind": "Nonlocal", "names": list(node.names), "span": span(node)}
     # pass 3: a module-scope single-target `name = lambda …` assign (top
     # level, or directly in a top-level for/while/if body) is the
     # NestedDef shape with ZERO captures (module-scope flavor above)

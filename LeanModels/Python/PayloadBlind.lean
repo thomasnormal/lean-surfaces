@@ -3894,6 +3894,19 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   obtain ⟨ihE, ihEs, -, -, -, ihSs, ihWhile, ihCall, ihFor, -, ihForList, -⟩ := ih
   intro m st s hslot
   cases s with
+  | globalDecl names sp =>
+      simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
+        World.swapAt_heap]
+      refine ⟨fun st' v' h => ?_, fun st' e' h => ?_⟩
+      · injection h with hst hv
+        subst hst; subst hv
+        exact ⟨hslot, rfl⟩
+      · exact absurd h (by simp)
+  | nonlocalDecl names sp =>
+      simp only [execStmt]
+      by_cases h : names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome)
+      · simp [h]; exact PBF.ok hslot _
+      · simp [h]; exact PBF.unsupported
   | ret v sp =>
       cases v with
       | none => simp only [execStmt]; exact PBF.ok hslot _

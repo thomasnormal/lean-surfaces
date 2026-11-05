@@ -1518,12 +1518,14 @@ def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
 
 end
 
-def execGlobal (text : String) : SemF RFlow := do
+def execGlobal (names : Array String) : SemF RFlow := do
   let st ← get
-  if (globalNamesText text).any (globalDeclared st.locals) then
+  if names.toList.any (globalDeclared st.locals) then
     pure .next
   else
-    refuse "unsupported statement 'Global'"
+    let locals := names.toList.foldl (fun env id => Env.set env (globalMarker id) RVal.none) st.locals
+    set { st with locals := locals }
+    pure .next
 
 /-! ## §2 THE FUEL-FREE STATEMENT HALF — structural on `Stmt` -/
 
@@ -1728,15 +1730,15 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           | _ =>
               refuse "with context must be a direct class constructor call"
       | _, _ => refuse "multiple context-manager items are outside the tier"
-  | .unsupported pyKind text _ =>
-      if pyKind == "Global" then execGlobal text
-      else if pyKind == "Nonlocal" then do
+  | .globalDecl names _ => execGlobal names
+  | .nonlocalDecl names _ => do
         let st ← get
-        if (nonlocalNamesText text).all (fun id => (Env.lookup st.locals (cellKey id)).isSome) then
+        if names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome) then
           pure .next
         else
           refuse "unsupported statement 'Nonlocal'"
-      else if pyKind == "AnnAssign:no-value" then pure .next
+  | .unsupported pyKind _ _ =>
+      if pyKind == "AnnAssign:no-value" then pure .next
       else if pyKind == "TypeErrorHandler" then pure .next
       else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
@@ -2731,7 +2733,7 @@ property that keeps a MODEL gap from masquerading as PYTHON behaviour: an
 `except` clause must never be able to swallow "I do not model this". `tryCatch`
 on `ExceptT PyErr …` gives it for free, because `Loud` lives below that layer. -/
 #guard (match toRun (execOpen KE excModule
-          (.tryStmt #[ .unsupported "Global" "global x" sp0 ]
+          (.tryStmt #[ .globalDecl #["x"] sp0 ]
              "Stop"
              #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
              Option.none sp0)) stE with

@@ -23,6 +23,11 @@
     "note": "admission refuses a module-level function redefinition"
   },
   {
+    "file": "harness/scripts/global_structured_script.py",
+    "expect": "match",
+    "note": "long structured global declaration preserves the eleventh name"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

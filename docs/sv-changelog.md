@@ -73,6 +73,7 @@ simple signal guards.
 The first boolean conjunction/disjunction forms (`a && b`, `a || b`) now map
 to `SvaBool.and` and `SvaBool.or`.
 Simple case equality (`a === b`) now maps to `SvaBool.caseEq`.
+Simple boolean negation (`!a`) now maps to `SvaBool.not`.
 
 ## F1: prove the SVA sampling refinement
 

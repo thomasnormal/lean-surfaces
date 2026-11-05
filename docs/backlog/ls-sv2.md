@@ -1313,3 +1313,16 @@ witness checks the resulting `InOrderTags` certificate on `toRobMachine`.
 **DECIDED:** expose one generic flattened ROB tag stream so packet-aware and
 generic ROB proofs share the same order certificate without changing packet
 contents or selecting a completion order.
+
+## 2026-11-05-ls-sv2-59 — compose packet tags through the generic ROB stream
+
+Added `robTags_length_eq_robInputs_length` to the generic ROB layer and
+`normalizeRvfiPacketRobTags_append` to the packetized RVFI adapter.  Adjacent
+packet windows now compose their generic flattened `InOrderTags` certificate
+using the first window's normalized retirement width as the second window's
+order boundary.  The PicoRV32 witness checks the composed certificate over
+the measured first and second packet windows.
+
+**DECIDED:** derive generic ROB tag-window composition from normalized
+retirement cardinality; packet boundaries remain available to packet-aware
+proofs, while the generic stream sees the same in-order prefix.

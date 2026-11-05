@@ -241,6 +241,22 @@ theorem robTrace_length_eq_robInputs_length {State : Type}
             List.length_map]
           exact congrArg (fun n => packet.length + n) (ih state')
 
+/-- The flattened tagged ROB stream and its retained input stream have the
+same finite cardinality: each emitted packet contributes one entry per
+architectural input. -/
+theorem robTags_length_eq_robInputs_length {State : Type}
+    (machine : RobMachine State) (state : State) (cycles : List Input) :
+    (robTags machine state cycles).length =
+      (robInputs machine state cycles).length := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' packet =>
+          simp only [robTags, robInputs, hstep, List.length_append,
+            List.length_map]
+          exact congrArg (fun n => packet.length + n) (ih state')
+
 /-- A one-cycle ROB refinement relation.  `order'` is explicit so the core
 proof cannot forget to advance the commit sequence after a packet. -/
 def RobStepRefines {CoreState IsaState : Type}
@@ -322,5 +338,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append
 #print axioms LeanModels.Refine.robTrace_length_eq_robInputs_length
+#print axioms LeanModels.Refine.robTags_length_eq_robInputs_length
 #print axioms LeanModels.Refine.orderPrefix_add
 #print axioms LeanModels.Refine.inOrderTags_append

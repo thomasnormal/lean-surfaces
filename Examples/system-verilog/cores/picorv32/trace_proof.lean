@@ -352,6 +352,14 @@ theorem pinned_packet_rob_tags :
     pinnedPacketMachine.init packetCycleInputs
     pinned_packet_observations_normalize
 
+theorem pinned_packet_rob_tags_windows_in_order :
+    InOrderTags 0
+      (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)) := by
+  exact normalizeRvfiPacketRobTags_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
 theorem pinned_packet_state_after_bridge :
     rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
         (packetFirstCycles ++ packetSecondCycles) =
@@ -589,6 +597,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_tags_windows_in_order
 #print axioms pinned_packet_tags_flat_in_order
 #print axioms pinned_packet_rob_tags
+#print axioms pinned_packet_rob_tags_windows_in_order
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

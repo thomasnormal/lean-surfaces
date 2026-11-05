@@ -553,6 +553,45 @@ theorem normalizeRvfiPacketRobTags {State : Type}
   rw [machine.toRobMachine_tags]
   exact normalizeRvfiPacketTags_flat machine state cycles h
 
+/-- Local packetized-RVFI tag certificates compose through the generic ROB
+tag stream, carrying the exact normalized retirement width to the next
+window. -/
+theorem normalizeRvfiPacketRobTags_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    InOrderTags start
+      (robTags machine.toRobMachine state (first ++ second)) := by
+  rw [robTags_append]
+  have hfirstTags := normalizeRvfiPacketRobTags machine state first hfirst
+  have hsecondTags := normalizeRvfiPacketRobTags machine
+    (rvfiPacketStateAfter machine state first) second hsecond
+  have hfirstLength :
+      (robTags machine.toRobMachine state first).length =
+        firstRetirements.length := by
+    have htrace :
+        robTrace machine.toRobMachine state first = firstRetirements := by
+      rw [machine.toRobMachine_trace]
+      exact normalizeRvfiPacketTrace machine state first hfirst
+    have hlength := congrArg List.length htrace
+    rw [robTrace_length_eq_robInputs_length] at hlength
+    calc
+      (robTags machine.toRobMachine state first).length =
+          (robInputs machine.toRobMachine state first).length :=
+        robTags_length_eq_robInputs_length machine.toRobMachine state first
+      _ = firstRetirements.length := hlength
+  apply inOrderTags_append hfirstTags
+  have hstate := RvfiPacketMachine.toRobMachine_stateAfter
+    machine state first
+  simpa [hfirstLength, hstate] using hsecondTags
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -653,5 +692,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_flat
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ operator-call metadata now has a source-shaped resolved-identity gate:
+  `CXXOperatorCallExpr` callee casts are followed to the retained Clang
+  `FunctionDecl`/`CXXMethodDecl` handle, while overload selection, conversions,
+  and execution remain loud refusals.
+
 - Added a pinned C++ module frontend probe and boundary document. Clang 21.1.8
   produces an `ImportDecl` for a valid importer but retains no `ModuleDecl`,
   module name, or imported-module handle, so the module rung remains a loud

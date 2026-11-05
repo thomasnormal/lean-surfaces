@@ -1431,6 +1431,20 @@ private def cxxOperatorCallExpressionTranslation : Artifact := {emptyTranslation
       .object [("id", .string "o"), ("kind", .string "CXXOperatorCallExpr"),
         ("name", .string "operator+"), ("inner", .array [])]])]}
 
+private def resolvedCxxOperatorCallTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x1"), ("kind", .string "CXXMethodDecl"),
+        ("name", .string "operator+"), ("inner", .array [])],
+      .object [("id", .string "0x2"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [("id", .string "cast"), ("kind", .string "ImplicitCastExpr"),
+            ("inner", .array [
+              .object [("id", .string "0x3"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [("id", .string "0x1"),
+                  ("kind", .string "CXXMethodDecl")])]])]])]])]}
+
 private def compoundStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2159,6 +2173,9 @@ def cxxMemberCallExpressionTranslationWitness : Except String Unit :=
 def cxxOperatorCallExpressionTranslationWitness : Except String Unit :=
   admitCXXOperatorCallExpression cxxOperatorCallExpressionTranslation [0]
 
+def resolvedCxxOperatorCallTranslationWitness : Except String FrontendHandle :=
+  admitResolvedCXXOperatorCallExpression resolvedCxxOperatorCallTranslation [1]
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 
@@ -2840,6 +2857,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard admitCXXMemberCallExpression cxxMemberCallExpressionTranslation [] matches .error _
 #guard admitCXXMemberCallExpression functionTranslation [0] matches .error _
 #guard cxxOperatorCallExpressionTranslationWitness matches .ok ()
+#guard resolvedCxxOperatorCallTranslationWitness matches .ok {value := "0x1"}
 #guard admitCXXOperatorCallExpression cxxOperatorCallExpressionTranslation [] matches .error _
 #guard admitCXXOperatorCallExpression functionTranslation [0] matches .error _
 #guard compoundStatementTranslationWitness matches .ok ()

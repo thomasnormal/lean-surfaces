@@ -1,4 +1,5 @@
 import LeanModels.Cpp.Ast
+import LeanModels.Cpp.Evidence
 
 namespace LeanModels.Cpp
 
@@ -629,6 +630,38 @@ def admitCXXMemberCallExpression (artifact : Artifact) (path : List Nat) :
 
 def admitCXXOperatorCallExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXOperatorCallExpr" "operator-call-expression"
+
+private partial def operatorCalleeHandle : Raw → Except String FrontendHandle
+  | .object fields =>
+      match (Raw.object fields).text "kind" with
+      | some "DeclRefExpr" =>
+          match (Raw.object fields).field "referencedDecl" with
+          | some (.object reference) => evidenceHandle (.object reference) "id"
+          | some (.string value) => parseFrontendHandle value
+          | _ => .error "translation: operator declaration reference is absent"
+      | some "ImplicitCastExpr" =>
+          match (Raw.object fields).field "inner" with
+          | some (.array [child]) => operatorCalleeHandle child
+          | _ => .error "translation: operator callee cast must have one child"
+      | some kind => .error s!"translation: operator callee has unexpected node {kind}"
+      | none => .error "translation: operator callee has no kind"
+  | _ => .error "translation: operator callee is malformed"
+
+/-- Retain Clang's selected overloaded-operator declaration handle. This is
+    metadata only: no name lookup, overload resolution, conversion, or body
+    execution is performed here. -/
+def admitResolvedCXXOperatorCallExpression (artifact : Artifact) (path : List Nat) :
+    Except String FrontendHandle := do
+  let _ ← admitCXXOperatorCallExpression artifact path
+  let raw := (rawAtInnerPath artifact.ast path).getD .null
+  let some (.array (callee :: _)) := raw.field "inner"
+    | throw "translation: operator-call expression has no callee child"
+  let handle ← operatorCalleeHandle callee
+  let some declaration := artifact.declarations.find? (·.id == handle.value)
+    | throw "translation: selected operator declaration is absent from artifact"
+  unless declaration.kind == "CXXMethodDecl" || declaration.kind == "FunctionDecl" do
+    throw "translation: selected operator declaration is not callable"
+  pure handle
 
 def admitCompoundStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CompoundStmt" "compound-statement"

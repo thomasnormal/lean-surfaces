@@ -116,6 +116,21 @@ inductive PacketRefines {IsaState : Type} (isa : Machine IsaState)
       (htail : PacketRefines isa admit state₁ rest state₂) :
       PacketRefines isa admit state ((input, coreRetirement) :: rest) state₂
 
+/-- A packet certificate records the exact ISA state reached after its
+associated inputs, in addition to checking each retirement observation. -/
+theorem packet_refines_state {IsaState : Type}
+    {isa : Machine IsaState} {admit : Input → Prop}
+    {state state' : IsaState} {packet : CommitPacket}
+    (h : PacketRefines isa admit state packet state') :
+    state' = machineStateAfter isa state (packet.map Prod.fst) := by
+  induction h with
+  | nil state => rfl
+  | @cons state state₁ state₂ input coreRetirement isaRetirement rest hi
+      hstep hretirement htail ih =>
+      simp only [List.map_cons, machineStateAfter]
+      rw [hstep]
+      exact ih
+
 theorem packet_refines_trace_append {IsaState : Type}
     {isa : Machine IsaState} {admit : Input → Prop}
     {state state' : IsaState} {packet : CommitPacket} :
@@ -177,6 +192,7 @@ theorem packet_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.packet_trace_refines
+#print axioms LeanModels.Refine.packet_refines_state
 #print axioms LeanModels.Refine.packetStateAfter_append
 #print axioms LeanModels.Refine.packetTrace_append
 #print axioms LeanModels.Refine.packetInputs_append

@@ -871,3 +871,25 @@ adaptation was introduced.
 
 **DECIDED:** treat post-window relation transport as a separate safety lemma;
 trace equality and progress remain independent obligations for a core proof.
+
+## 2026-11-05-ls-sv2-37 — project packet certificates to final ISA state
+
+Added `packet_refines_state` to `LeanModels/Refine/Packet.lean`.  Every
+`PacketRefines` certificate now projects its final ISA state to
+`machineStateAfter` over the packet's committed input sequence, so packet
+proofs expose both retirement equality and the exact architectural state
+needed by a following window.
+
+The toy wide-packet witness applies the projection to its two-entry ADDI
+certificate, connecting the packet final state directly to the ISA state after
+the two packet inputs.
+
+**MEASURED:** `lake build
+Examples.«system-verilog».cores.toy_rv32i.packet_proof` passed (28 jobs), and
+`packet_refines_state` reports no axioms.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep packet final-state projection in the generic packet layer;
+packet certificates remain the source of both committed observations and the
+state boundary consumed by later windows.

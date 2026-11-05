@@ -121,6 +121,20 @@ theorem wide_packet_one_cycle :
       (by exact ⟨rfl, rfl, rfl⟩)
   simpa [widePacketMachine, packetTrace, packetInputs] using h
 
+theorem wide_packet_state_projection :
+    let first := toyNext rvMachine.init
+    let second := toyNext first
+    second = machineStateAfter rvMachine rvMachine.init
+      [addiInput, addiInput] := by
+  let first := toyNext rvMachine.init
+  let second := toyNext first
+  have hw := wide_packet_step widePacketMachine.init rvMachine.init
+      (by exact ⟨rfl, rfl, rfl⟩) addiInput
+  simp only [widePacketMachine] at hw
+  rcases hw with ⟨a', hrel, hp⟩
+  have hstate := packet_refines_state hp
+  exact hrel.1.trans hstate
+
 theorem wide_packet_windows_state :
     packetStateAfter widePacketMachine widePacketMachine.init
         ([addiInput] ++ [addiInput]) =

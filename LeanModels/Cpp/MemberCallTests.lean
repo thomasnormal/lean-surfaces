@@ -1166,6 +1166,14 @@ def nestedMemberCallRefusal : Bool :=
 
 #guard !nestedMemberCallRefusal
 
+def integerArgumentEvidenceWitness : Bool :=
+  boundWitnessedIntegerArgument.map (fun bound =>
+    (bound.parameter, bound.parameterType, bound.argument.occurrence,
+      bound.argument.sourceType, bound.argument.value)) ==
+    some (h "0x10", .builtin .int, h "0xf", "int", 0)
+
+#guard integerArgumentEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

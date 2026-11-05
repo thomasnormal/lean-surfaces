@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ member-call coverage now includes a structured `int` literal argument
+  and parameter binding witness for `owner.set(0)`; conversion and invocation
+  remain outside the admitted boundary.
+
 - The C++ differential corpus now pins nested member-call receivers as a
   recorded refusal until typed result-object, lifetime, and effect sequencing
   evidence is available.

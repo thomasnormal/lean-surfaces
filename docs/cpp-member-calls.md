@@ -144,6 +144,12 @@ parameter handle, ordinal, name, source spelling, and normalized type.
 misordered, or non-`int` parameter witnesses refuse; no parameter is inferred
 from a method name or from the argument's position alone.
 
+The differential corpus now exercises this boundary with a source-shaped
+`owner.set(0)` witness. Its Lean side checks the retained literal occurrence,
+source spelling, normalized `int` type, parameter handle, and ordinal binding;
+the native call remains a separate source check and does not turn this
+provenance witness into invocation semantics.
+
 The census applies this witness to the real probe as a pricing check. All 12
 direct `int` literal arguments bind to a retained parameter (`Set` once at
 ordinal 2 and `SetError` eleven times at ordinal 1). The stricter canonical

@@ -139,7 +139,18 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   let parsedClock := afterEdge.head!.trimAscii.toString
   if parsedClock != clock then
     throw s!"SVA: retained clock '{clock}' disagrees with source clock '{parsedClock}'"
-  let some bodyText := afterEdge[1]?
+  let bodyParts := afterEdge.drop 1
+  let disableGuard ←
+    if text.contains "disable iff (" then
+      match bodyParts with
+      | guardText :: _ =>
+          let raw := guardText.trimAscii.toString
+          let guardName := (raw.drop 13).toString.trimAscii.toString
+          some <$> simpleBool guardName
+      | _ => throw "SVA: missing disable iff guard"
+    else pure none
+  let bodyIndex := if disableGuard.isSome then 1 else 0
+  let some bodyText := bodyParts[bodyIndex]?
     | throw "SVA: missing implication body"
   let body := (bodyText ++
     (if bodyText.contains "$past(" || bodyText.contains "$rose(" ||
@@ -150,11 +161,15 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   | [antecedent, consequent] =>
       let left ← simpleSeq antecedent
       let right ← simpleSeq consequent
+      let baseProperty := if operator == "|=>"
+        then .nonoverlap left right
+        else .implies left right
+      let property := match disableGuard with
+        | some guard => .disable guard baseProperty
+        | none => baseProperty
       let check : SvaCheck :=
         { kind := kind, clock := clock,
-          property := if operator == "|=>"
-            then .nonoverlap left right
-            else .implies left right }
+          property := property }
       ofCheck source check
   | _ => throw "SVA: expected exactly one implication"
 
@@ -263,6 +278,12 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) a |-> $stable(b));" } with
   | .ok C => match C.check.property with
     | .implies _ (.atom (.stable "b")) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) disable iff (rst) a |-> b);" } with
+  | .ok C => match C.check.property with
+    | .disable (.signal "rst") (.implies _ _) => true
     | _ => false
   | .error _ => false
 

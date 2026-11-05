@@ -68,6 +68,8 @@ dynamic delays remain loud. Simple `$past(signal)` operands now map to the
 sampled `SvaBool.past` form, and `$rose(signal)` maps to `SvaBool.rose`.
 `$fell(signal)` now maps to `SvaBool.fell` as well.
 `$stable(signal)` now maps to `SvaBool.stable`.
+The retained `disable iff (reset)` wrapper now maps to `SvaProp.disable` for
+simple signal guards.
 
 ## F1: prove the SVA sampling refinement
 

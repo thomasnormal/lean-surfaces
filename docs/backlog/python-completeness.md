@@ -8457,3 +8457,18 @@ digit counts and all other unsupported digit protocols remain loud.
 
 DECIDED: admit positive float `ndigits == 10` in addition to the existing
 zero- through nine-digit slices; retain loud behavior for richer rounding.
+
+
+## 2026-11-05-pycomplete-298 — admit eleven positive float digits
+
+The float `round(number, 11)` slice now computes from the exact binary64 ratio scaled by one hundred billion, preserving ties-to-even and signed zero.
+
+| Measurement | Result |
+|---|---|
+| Focused example build | Managed build passed, 20 jobs |
+| Native full differential | 4,062 rows: 4,048 matched, 14 refusals, 0 failed |
+| Proof full differential | 4,062 rows: 3,933 matched, 129 refused, 0 failed |
+| Runner build | Managed `lake build leanmodels-run`: passed, 40 jobs |
+| Root build | Pending |
+
+DECIDED: admit positive float `ndigits == 11`; richer digit protocols remain loud.

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ differential checks now classify a completed native assertion failure
+  (exit 3) as `DIVERGE`, print the pinned Clang oracle line, and require an
+  available oracle by default under CI; unavailable compilation/runtime inputs
+  remain `ORACLE`.
+
 - C++ class and enum admission now uses retained declaration handles and
   structured type evidence for identity. Qualified spelling-only paths refuse;
   class friend records require an explicit probe handle, and base diagnostic

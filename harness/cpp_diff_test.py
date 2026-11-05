@@ -20,7 +20,7 @@ Usage::
 
 The process has no implicit corpus download.  Set ``LEANCPP_CLANG`` and
 ``LEANCPP_TINYXML2_DIR`` to run the native rows.  Every Lean invocation is
-under the lane's 16 GiB address-space cap and one worker.
+under the lane's 24 GiB cgroup cap and one worker.
 """
 
 from __future__ import print_function
@@ -40,7 +40,7 @@ CASES = ROOT / "harness" / "cpp_cases.json"
 GRAMMAR = ROOT / "harness" / "cpp_grammar.json"
 COVERAGE_PAGE = ROOT / "docs" / "cpp-coverage.md"
 RUNG_PAGE = ROOT / "docs" / "cpp-rung-status.md"
-ADDRESS_CAP = "17179869184"
+MEMORY_CAP = "24G"
 PINNED_CLANG = "21.1.8"
 
 
@@ -100,10 +100,12 @@ def run(command, cwd=ROOT, timeout=180):
 
 
 def capped(command, cwd=ROOT, timeout=180):
-    """Run one Lean process under the mandatory 16 GiB cap."""
-    prlimit = shutil.which("prlimit")
-    if prlimit:
-        command = [prlimit, "--as=" + ADDRESS_CAP, "--"] + list(command)
+    """Run one Lean process under the mandatory cgroup cap."""
+    launcher = shutil.which("systemd-run")
+    if not launcher:
+        raise RuntimeError("systemd-run is required for the C++ Lean memory cap")
+    command = [launcher, "--user", "--scope", "-p", "MemoryMax=" + MEMORY_CAP,
+               "-p", "MemorySwapMax=0", "env", "LEAN_NUM_THREADS=1"] + list(command)
     return run(command, cwd=cwd, timeout=timeout)
 
 
@@ -188,6 +190,25 @@ def clang_info():
     return executable, version.splitlines()[0] if version else PINNED_CLANG
 
 
+def classify_check_execution(returncode, stdout, stderr):
+    """Classify one generated assertion wrapper after it has run.
+
+    Exit 3 is the wrapper's assertion result: Clang ran the unchanged source
+    and disagreed with the expected check, so it is a differential divergence.
+    Compile, protocol, and other runtime failures leave the oracle unavailable
+    and remain ORACLE.  This distinction is made before model comparison.
+    """
+    if returncode == 3:
+        return "DIVERGE", "native assertion failed (exit 3)"
+    if returncode == 0 and stdout.strip() == "ok":
+        return "NATIVE", "ok"
+    if returncode == 0:
+        return "ORACLE", "check witness protocol failed: expected 'ok'"
+    detail = (stdout + stderr).strip().splitlines()
+    suffix = detail[-1] if detail else "no diagnostic"
+    return "ORACLE", "check witness exited %d: %s" % (returncode, suffix[-500:])
+
+
 def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
@@ -222,10 +243,8 @@ def native_rows(cases, clang):
                 except subprocess.TimeoutExpired:
                     result[row["id"]] = ("TIMEOUT", "check witness exceeded 30 seconds")
                     continue
-                if execute.returncode == 0 and execute.stdout.strip() == "ok":
-                    result[row["id"]] = ("NATIVE", "ok")
-                else:
-                    result[row["id"]] = ("ORACLE", "check witness did not complete")
+                result[row["id"]] = classify_check_execution(
+                    execute.returncode, execute.stdout, execute.stderr)
     if not callable_cases:
         return result
     corpus = os.environ.get("LEANCPP_TINYXML2_DIR")
@@ -303,6 +322,8 @@ def differential(cases, model, native):
                     verdict, detail = "WITNESS", "hand-built Lean IR witness; native source check is separate"
             else:
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
+        elif native_status == "DIVERGE":
+            verdict, detail = "DIVERGE", native_value
         else:
             verdict, detail = "DIVERGE", "unknown native status %s" % native_status
         rows.append({"id": row["id"], "corpus": row["corpus"], "kind": row.get("kind", "callable"), "rung": row["rung"],
@@ -478,7 +499,9 @@ def main(argv=None):
     parser.add_argument("--grammar", default=str(GRAMMAR))
     parser.add_argument("--json", dest="json_path")
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--require-oracle", action="store_true")
+    parser.add_argument("--require-oracle", action="store_true",
+                        default=bool(os.environ.get("CI")),
+                        help="fail when the pinned Clang oracle is unavailable (default in CI)")
     args = parser.parse_args(argv)
     os.chdir(ROOT)
     cases = load_json(pathlib.Path(args.cases))
@@ -493,6 +516,7 @@ def main(argv=None):
         raise SystemExit("cpp_diff_test: grammar ids must be nonempty and unique")
     model = model_rows(cases)
     clang, clang_version = clang_info()
+    print("cpp_diff_test: oracle: %s" % clang_version)
     native = native_rows(cases, clang)
     diff_rows = differential(cases, model, native)
     grammar_result = grammar_rows(grammar, clang)

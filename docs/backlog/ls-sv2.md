@@ -1130,3 +1130,25 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep normalization composition above the ROB adapter: order
 certificates and retained state determine the concatenated stream, while the
 adapter only transports each validated retirement into tagged commits.
+
+## 2026-11-05-ls-sv2-49 — connect normalized single-channel ROB traces to ISA
+
+Added `normalizeRvfiRobTrace_refines` to `LeanModels/Refine/RvfiRob.lean`.
+Given a core-specific `RobStepRefines` certificate, successful normalization of
+a packed single-channel RVFI window now concludes that its retirement stream
+equals the ISA trace over the ROB-projected inputs.
+
+The PicoRV32 witness checks the corresponding ROB-to-ISA trace equality for
+the measured four-instruction stream, using the existing normalization and
+input projections.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and the
+new reusable theorem reports only the existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep the normalized RVFI certificate and the ROB refinement
+certificate as separate obligations; their composition is the reusable R1 to
+R3 boundary and does not reinterpret or repair packed observations.

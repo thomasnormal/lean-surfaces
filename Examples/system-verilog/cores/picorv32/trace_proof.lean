@@ -328,6 +328,26 @@ theorem pinned_rob_trace :
   exact normalizeRvfiRobTrace pinnedCycleMachine pinnedCycleMachine.init cycleInputs
     pinned_cycle_observations_normalize
 
+theorem pinned_rob_trace_refines_isa :
+    robTrace pinnedCycleMachine.toRobMachine
+        pinnedCycleMachine.toRobMachine.init cycleInputs =
+      trace rvMachine rvMachine.init
+        (robInputs pinnedCycleMachine.toRobMachine
+          pinnedCycleMachine.toRobMachine.init cycleInputs) := by
+  calc
+    robTrace pinnedCycleMachine.toRobMachine
+        pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapExpected :=
+      pinned_rob_trace
+    _ = trace rvMachine rvMachine.init nontrapInputs :=
+      pinned_nontrap_trace_refines_isa
+    _ = trace rvMachine rvMachine.init
+        (robInputs pinnedCycleMachine.toRobMachine
+          pinnedCycleMachine.toRobMachine.init cycleInputs) := by
+      rw [RvfiCycleMachine.toRobMachine_init]
+      rw [RvfiCycleMachine.toRobMachine_inputs]
+      exact congrArg (trace rvMachine rvMachine.init)
+        pinned_cycle_retire_inputs
+
 theorem pinned_rob_inputs :
     robInputs pinnedCycleMachine.toRobMachine
         pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapInputs := by
@@ -459,6 +479,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_windows_rob_append
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
+#print axioms pinned_rob_trace_refines_isa
 #print axioms pinned_rob_inputs
 #print axioms pinned_packet_observations_normalize
 #print axioms pinned_packet_first_window_normalize

@@ -146,6 +146,27 @@ theorem normalizeRvfiRobTrace_append {State : Type}
   apply normalizeRvfiRobTrace machine state (first ++ second)
   exact normalizeRvfiCycleTrace_append machine state first second hfirst hsecond
 
+/-- The reusable R1-to-R3 conclusion for a single RVFI channel: a successful
+normalization certificate and a core-specific ROB refinement certificate give
+the same retirement stream as the ISA run over the ROB's associated inputs. -/
+theorem normalizeRvfiRobTrace_refines
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (inputs : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    retirements = trace isa isaState
+      (robInputs machine.toRobMachine state inputs) := by
+  calc
+    retirements = robTrace machine.toRobMachine state inputs :=
+      (normalizeRvfiRobTrace machine state inputs hobs).symm
+    _ = trace isa isaState (robInputs machine.toRobMachine state inputs) :=
+      rob_trace_refines hrob state isaState start inputs hrel
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
@@ -154,3 +175,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiRobTrace_refines

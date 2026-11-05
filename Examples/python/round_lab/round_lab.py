@@ -88,3 +88,7 @@ def round_float_thirteen(value):
 
 def round_float_fourteen(value):
     return round(value, 14)
+
+
+def round_float_fifteen(value):
+    return round(value, 15)

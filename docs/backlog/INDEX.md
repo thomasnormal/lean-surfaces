@@ -61,6 +61,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-05-pycomplete-297` |  | admit ten positive float digits | python-completeness |
 | `2026-11-05-pycomplete-296` |  | admit nine positive float digits | python-completeness |
 | `2026-11-05-pycomplete-295` |  | admit eight positive float digits | python-completeness |
+| `2026-11-05-ls-sv2-28` |  | compose tagged memory packets over timed windows | ls-sv2 |
 | `2026-11-05-ls-sv2-27` |  | split latency schedules over arbitrary windows | ls-sv2 |
 | `2026-11-05-ls-sv2-26` |  | compose adjacent timed bus windows | ls-sv2 |
 | `2026-11-05-ls-sv2-25` |  | certify PicoRV32's tagged memory packet | ls-sv2 |

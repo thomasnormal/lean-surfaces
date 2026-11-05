@@ -672,3 +672,27 @@ introduced.
 **DECIDED:** keep latency-index shifting in the generic bus scheduler;
 windowed core traces must provide their own oracle, while bus composition
 remains independent of any concrete latency pattern.
+
+## 2026-11-05-ls-sv2-28 — compose tagged memory packets over timed windows
+
+Added `taggedMemoryPacket_refines_bus_append` to
+`LeanModels/Refine/Memory.lean`.  The theorem composes two independently
+certified tagged memory packets, threads the first packet's final memory into
+the second, and shifts the latency oracle by the first packet length.  It
+proves the combined final memory and completed effect stream for every oracle
+without choosing a completion order or a concrete delay pattern.
+
+The toy memory witness now splits its four-entry store/load packet into two
+windows and invokes the generic theorem, checking the packet tags and the
+timed completed stream at the combined boundary.
+
+**MEASURED:** `lake build LeanModels.Refine.Memory
+Examples.«system-verilog».cores.toy_rv32i.memory_proof` passed (20 jobs), and
+the new theorem reports only existing `propext`/`Quot.sound` entries.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep packet-window memory composition in the generic refinement
+layer; core proofs provide explicit packet certificates and retain arbitrary
+latency and completion-order witnesses at the boundary.

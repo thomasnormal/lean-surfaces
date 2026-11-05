@@ -39,6 +39,18 @@ def latency : LatencyOracle
   | 2 => 7
   | _ => 1
 
+def firstPacket : TaggedMemoryPacket :=
+  [ { order := 0, request := .write 0x100 .word 0xDEADBEEF,
+      effect := .write 0x100 .word 0xDEADBEEF }
+  , { order := 1, request := .read 0x100 .word false,
+      effect := .read 0x100 .word 0xDEADBEEF } ]
+
+def secondPacket : TaggedMemoryPacket :=
+  [ { order := 2, request := .read 0x101 .half false,
+      effect := .read 0x101 .half 0x0000ADBE }
+  , { order := 3, request := .read 0x103 .byte true,
+      effect := .read 0x103 .byte 0xFFFFFFDE } ]
+
 theorem completion_order_is_a_permutation :
     CompletionOrder completionOrder packet := by
   change List.Perm [3, 1, 0, 2] [0, 1, 2, 3]
@@ -78,13 +90,46 @@ theorem packet_projects_to_timed_bus :
   simpa [requests, packet] using
     (taggedMemoryPacket_refines_bus packet_certificate latency)
 
+theorem packet_windows_projects_to_timed_bus :
+    (directRun zeroMemory
+        ((firstPacket ++ secondPacket).map TaggedMemoryCommit.request)).1 =
+        (runBus zeroMemory (scheduleWith latency
+          ((firstPacket ++ secondPacket).map TaggedMemoryCommit.request))).1 ∧
+      (firstPacket ++ secondPacket).map TaggedMemoryCommit.effect =
+        completed (runBus zeroMemory (scheduleWith latency
+          ((firstPacket ++ secondPacket).map TaggedMemoryCommit.request))).2 := by
+  refine taggedMemoryPacket_refines_bus_append
+    (start := 0) (memory := zeroMemory)
+    (middle := (directRun zeroMemory
+      (firstPacket.map TaggedMemoryCommit.request)).1)
+    (finalMemory := (directRun zeroMemory
+      ((firstPacket ++ secondPacket).map TaggedMemoryCommit.request)).1)
+    (first := firstPacket) (second := secondPacket) (latency := latency)
+    ?_ ?_
+  · constructor
+    · rfl
+    · refine MemoryPacketRefines.cons (by decide) ?_
+      refine MemoryPacketRefines.cons (by decide) ?_
+      exact MemoryPacketRefines.nil _
+  · constructor
+    · rfl
+    · refine MemoryPacketRefines.cons (by decide) ?_
+      refine MemoryPacketRefines.cons (by decide) ?_
+      exact MemoryPacketRefines.nil _
+
 #guard completionOrder == [3, 1, 0, 2]
 #guard packet.map TaggedMemoryCommit.order == [0, 1, 2, 3]
 #guard (completed (runBus zeroMemory (scheduleWith latency requests)).2).length ==
   packet.length
+#guard (firstPacket ++ secondPacket).map TaggedMemoryCommit.order == [0, 1, 2, 3]
+#guard (completed (runBus zeroMemory
+    (scheduleWith latency ((firstPacket ++ secondPacket).map
+      TaggedMemoryCommit.request))).2).length ==
+  (firstPacket ++ secondPacket).length
 
 #print axioms packet_certificate
 #print axioms packet_projects_to_direct
 #print axioms packet_projects_to_timed_bus
+#print axioms packet_windows_projects_to_timed_bus
 
 end Examples.«system-verilog».cores.toy_rv32i.memory_proof

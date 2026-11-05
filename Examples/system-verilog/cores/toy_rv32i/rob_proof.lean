@@ -88,6 +88,35 @@ theorem rob_one_cycle :
       (by exact ⟨rfl, rfl, rfl, rfl⟩)
   simpa [robMachine, robTrace, robInputs] using h
 
+theorem rob_windows_state :
+    robStateAfter robMachine robMachine.init
+        ([addiInput] ++ [addiInput]) =
+      robStateAfter robMachine
+        (robStateAfter robMachine robMachine.init [addiInput])
+        [addiInput] := by
+  exact robStateAfter_append robMachine robMachine.init
+    [addiInput] [addiInput]
+
+theorem rob_windows_trace :
+    robTrace robMachine robMachine.init
+        ([addiInput] ++ [addiInput]) =
+      robTrace robMachine robMachine.init [addiInput] ++
+        robTrace robMachine
+          (robStateAfter robMachine robMachine.init [addiInput])
+          [addiInput] := by
+  exact robTrace_append robMachine robMachine.init
+    [addiInput] [addiInput]
+
+theorem rob_windows_inputs :
+    robInputs robMachine robMachine.init
+        ([addiInput] ++ [addiInput]) =
+      robInputs robMachine robMachine.init [addiInput] ++
+        robInputs robMachine
+          (robStateAfter robMachine robMachine.init [addiInput])
+          [addiInput] := by
+  exact robInputs_append robMachine robMachine.init
+    [addiInput] [addiInput]
+
 def robSchedule : Nat → Input := fun _ => addiInput
 
 def robTargetPackets : Nat → List Input := fun _ => [addiInput, addiInput]
@@ -151,12 +180,19 @@ theorem rob_progress_trace_prefix :
 #guard (robMachine.init.completed == ([] : List Nat))
 #guard ((robMachine.step robMachine.init addiInput).1.completed == [1, 0])
 #guard (robTrace robMachine robMachine.init [addiInput]).length == 2
+#guard (robTrace robMachine robMachine.init
+  ([addiInput] ++ [addiInput])).length == 4
+#guard (robInputs robMachine robMachine.init
+  ([addiInput] ++ [addiInput])).length == 4
 #guard (packetSchedulePrefix robTargetPackets 3).length == 6
 #guard (robInputs robMachine robMachine.init
     (schedulePrefix robSchedule 3)).length == 6
 
 #print axioms rob_step_refines
 #print axioms rob_one_cycle
+#print axioms rob_windows_state
+#print axioms rob_windows_trace
+#print axioms rob_windows_inputs
 #print axioms rob_progress
 #print axioms rob_progress_trace_prefix
 

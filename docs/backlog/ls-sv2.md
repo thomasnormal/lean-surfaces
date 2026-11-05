@@ -718,3 +718,25 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep packet-window state threading in the generic packet layer;
 later ROB and RVFI proofs must carry the post-window core state explicitly
 when composing finite observations.
+
+## 2026-11-05-ls-sv2-30 — compose state-threaded ROB windows
+
+Added `robStateAfter`, `robStateAfter_append`, `robTrace_append`, and
+`robInputs_append` to `LeanModels/Refine/Rob.lean`.  These theorems preserve
+the exact ROB state and committed packet/input order when two finite cycle
+windows are joined, while leaving completion order inside the core relation.
+
+The toy ROB witness applies all three append theorems to two cycles, checking
+that each window's two-entry packet contributes four architectural inputs and
+retirements in total.
+
+**MEASURED:** `lake build LeanModels.Refine.Rob
+Examples.«system-verilog».cores.toy_rv32i.rob_proof` passed (29 jobs).  The
+state theorem has no axioms; trace/input composition reports only existing
+`propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep ROB-window state threading separate from the order
+certificate; window composition carries state and stream order, while each
+packet still proves its own consecutive tags.

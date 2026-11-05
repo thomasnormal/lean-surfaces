@@ -113,6 +113,60 @@ def robInputs {State : Type} (machine : RobMachine State) :
       let (state', packet) := machine.step state input
       packet.map TaggedCommit.input ++ robInputs machine state' inputs
 
+/-! ## State-threaded ROB windows -/
+
+/-- The ROB state after a finite cycle window.  The packet contents are
+discarded, while the exact post-window state is retained for composition. -/
+def robStateAfter {State : Type} (machine : RobMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      robStateAfter machine (machine.step state input).1 inputs
+
+theorem robStateAfter_append {State : Type}
+    (machine : RobMachine State) (state : State)
+    (first second : List Input) :
+    robStateAfter machine state (first ++ second) =
+      robStateAfter machine
+        (robStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, robStateAfter, hstep]
+          exact ih state'
+
+theorem robTrace_append {State : Type}
+    (machine : RobMachine State) (state : State)
+    (first second : List Input) :
+    robTrace machine state (first ++ second) =
+      robTrace machine state first ++
+        robTrace machine (robStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, robTrace, robStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
+theorem robInputs_append {State : Type}
+    (machine : RobMachine State) (state : State)
+    (first second : List Input) :
+    robInputs machine state (first ++ second) =
+      robInputs machine state first ++
+        robInputs machine (robStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' packet =>
+          simp only [List.cons_append, robInputs, robStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
 /-- A one-cycle ROB refinement relation.  `order'` is explicit so the core
 proof cannot forget to advance the commit sequence after a packet. -/
 def RobStepRefines {CoreState IsaState : Type}
@@ -155,3 +209,6 @@ theorem rob_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rob_trace_refines
+#print axioms LeanModels.Refine.robStateAfter_append
+#print axioms LeanModels.Refine.robTrace_append
+#print axioms LeanModels.Refine.robInputs_append

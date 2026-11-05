@@ -5674,9 +5674,14 @@ def setIntHashMod : Int := 2305843009213693951
 def setHashNat : RVal → Option Nat
   | .bool b => some (if b then 1 else 0)
   | .int n =>
-      let reduced := Int.emod n setIntHashMod
-      let h := if reduced == -1 then (-2 : Int) else reduced
-      some (Int.emod h (Int.ofNat setHashMod)).toNat
+      -- Signed CPython integer hashes for negative values are not represented
+      -- by the bounded reconstruction yet. Refuse their iteration rather than
+      -- replaying a confident but wrong slot order.
+      if n < 0 then Option.none
+      else
+        let reduced := Int.emod n setIntHashMod
+        let h := if reduced == -1 then (-2 : Int) else reduced
+        some (Int.emod h (Int.ofNat setHashMod)).toNat
   | _ => Option.none
 
 def setProbeCount (size i : Nat) : Nat :=
@@ -6277,15 +6282,7 @@ def evalBinOpMultH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
 
 def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
   if op == .bitAnd && setLikeRefH h a && setLikeRefH h b then
-    let left := setLikeElemsH h a
-    let right := setLikeElemsH h b
-    match left, right with
-    | .ok xs, .ok ys =>
-      let h' := h.push (.pyset (setIntersectionKeys xs ys).toArray)
-      .ok (h', .ref h.size)
-    | .unsupported msg, _ | _, .unsupported msg => .unsupported msg
-    | .timeout, _ | _, .timeout => .timeout
-    | .exn e, _ | _, .exn e => .exn e
+    .unsupported "set intersection iteration order is outside the tier (CPython table construction is not modeled)"
   else if op == .mult then evalBinOpMultH h op a b
   else
     match evalBinOp op a b with
@@ -9597,11 +9594,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok { st with world :=
                                      { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                                (.ref st.world.heap.size)
-                           | some (.pyset xs) =>
-                             -- set(s): a fresh copy (already deduplicated)
-                             .ok { st with world :=
-                                     { st.world with heap := st.world.heap.push (.pyset xs) } }
-                               (.ref st.world.heap.size)
+                           | some (.pyset _) =>
+                             .unsupported "set copy construction is outside the tier (the copied table's iteration order is not modeled)"
                            | some (.generator ..) =>
                              Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
                              Run.liftRes st (setDedup st.world.heap fuel [] vals) ⤳ fun st es =>

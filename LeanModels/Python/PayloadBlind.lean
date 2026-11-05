@@ -2294,11 +2294,7 @@ theorem evalBinOpH_slot (hslot : Heap.get? h pa = some o₀)
   by_cases hop : op == .bitAnd
   · simp only [evalBinOpH, hop] at hw
     split at hw
-    · cases hleft : setLikeElemsH h a <;> cases hright : setLikeElemsH h b <;>
-        simp only [hleft, hright, Res.mapOk] at hw
-      · cases hw
-        exact Heap.get?_push_of_get? _ hslot
-      all_goals cases hw
+    · cases hw
     · have hnm : (op == .mult) = false := by
         cases op <;> try rfl
         have hf := hop
@@ -5228,7 +5224,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                             refine PBF.bind (PBF.liftRes hs1 _)
                                                               fun s2 es _ hs2 => ?_
                                                             exact PBF.pushRef hs2 _
-                                                        | pyset xs => exact PBF.pushRef hs1 _
+                                                        | pyset _ => exact PBF.unsupported
                                                         | generator qn l cnt stt =>
                                                             refine PBF.bind (PBW.withLocals
                                                               (ihDrain m s1.world b hs1))

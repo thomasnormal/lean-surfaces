@@ -174,3 +174,23 @@ RTL or the SV loader.
 keeping the generic order certificate reusable for later cores.  The next item
 is another generic refinement obligation or a re-probe after an owner-lane
 loader change.
+
+## 2026-11-05-ls-sv2-8 — certify PicoRV32's measured byte-memory effects
+
+The inbox was reread before this item and had no new ls-sv2-specific request.
+The composed RVFI-to-ISA equality already compared the `SW` and `LW` rows as
+retirement fields.  Added `nontrapMemoryRequests`, `nontrapMemoryEffects`, and
+`pinned_nontrap_memory_effects` to the PicoRV32 trace witness.  The theorem
+checks the exact `directRun` contract: a word write of 5 at `0x100` followed by
+a word read at `0x100` returns the two measured effects, including load data 5.
+It uses the same byte-addressed `storeVal`/`loadVal` semantics as the ISA
+adapter, and leaves the real core's memory port unchanged.
+
+**MEASURED:** the focused trace build, docs check, backlog-index check, and
+`git diff --check` passed.  The theorem has only the existing standard axiom
+ledger; no new axiom, RTL edit, or loader adaptation was introduced.
+
+**DECIDED:** retain this memory certificate beside the observation-to-ISA
+bridge.  It is a finite measured-memory witness, not a claim that the blocked
+PicoRV32 RTL has been symbolically loaded; the unpacked-register-memory and
+generate-member walls remain the next core-admission dependency.

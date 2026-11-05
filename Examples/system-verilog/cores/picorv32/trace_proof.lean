@@ -1,4 +1,5 @@
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
+import LeanModels.Refine.Bus
 
 /-!
 # PicoRV32 finite RVFI-to-ISA trace witness
@@ -23,6 +24,14 @@ def memZero : Memory := fun _ => 0
 
 /-- The explicit load response after the measured store to address `0x100`. -/
 def memFive : Memory := fun a => if a == 0x100 then 5 else 0
+
+def nontrapMemoryRequests : List BusRequest :=
+  [ .write 0x100 .word 5
+  , .read 0x100 .word false ]
+
+def nontrapMemoryEffects : List MemoryEffect :=
+  [ .write 0x100 .word 5
+  , .read 0x100 .word 5 ]
 
 /-- The four non-trapping instruction parcels emitted by the pinned witness. -/
 def nontrapInputs : List Input :=
@@ -49,6 +58,10 @@ theorem pinned_nontrap_trace_refines_isa :
     trace rvMachine rvMachine.init nontrapInputs = nontrapExpected := by
   decide
 
+theorem pinned_nontrap_memory_effects :
+    (directRun memZero nontrapMemoryRequests).2 = nontrapMemoryEffects := by
+  decide
+
 /-- The measured packed stream and the ISA stream are connected by one
 trace-level equality, rather than by separate row and architectural checks. -/
 theorem pinned_nontrap_observed_trace_refines_isa :
@@ -57,6 +70,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
   rw [pinned_nontrap_trace_certificate, pinned_nontrap_trace_refines_isa]
 
 #guard trace rvMachine rvMachine.init nontrapInputs == nontrapExpected
+#guard (directRun memZero nontrapMemoryRequests).2 == nontrapMemoryEffects
 #guard normalizeRvfiTrace? 0 nontrapObservations == some nontrapExpected
 #guard normalizeRvfiTrace? 0 nontrapObservations ==
   some (trace rvMachine rvMachine.init nontrapInputs)
@@ -64,6 +78,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_nontrap_rows_normalize
 #print axioms pinned_nontrap_trace_certificate
 #print axioms pinned_nontrap_trace_refines_isa
+#print axioms pinned_nontrap_memory_effects
 #print axioms pinned_nontrap_observed_trace_refines_isa
 
 end Examples.«system-verilog».cores.picorv32.trace_proof

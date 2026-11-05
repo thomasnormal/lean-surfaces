@@ -124,3 +124,8 @@ certificate with that ISA calculation.  Its left side is the normalized
 measured stream and its right side is the finite architectural trace, so this
 is the direct observation-to-ISA bridge for the four-row witness.
 
+The same proof file defines the two measured data requests (`SW` at `0x100`
+followed by `LW` at `0x100`) and proves their effects with the generic
+byte-addressed `directRun` memory contract.  The resulting write of 5 and load
+of 5 are checked independently of the packed RVFI row conversion.
+

@@ -893,3 +893,25 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep packet final-state projection in the generic packet layer;
 packet certificates remain the source of both committed observations and the
 state boundary consumed by later windows.
+
+## 2026-11-05-ls-sv2-38 — project tagged ROB packets to final ISA state
+
+Added `tagged_packet_refines_state` to `LeanModels/Refine/Rob.lean`.  A tagged
+ROB packet now projects its final ISA state through the packet's input tags to
+`machineStateAfter`, reusing the untagged packet certificate without changing
+the explicit consecutive-order condition.
+
+The toy ROB witness applies the theorem to its two-entry in-order commit
+packet, connecting the ROB certificate's final state to the ISA state after
+the two committed ADDIs.
+
+**MEASURED:** `lake build LeanModels.Refine.Rob
+Examples.«system-verilog».cores.toy_rv32i.rob_proof` passed (29 jobs), and
+`tagged_packet_refines_state` reports only the existing `propext` dependency.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git
+diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation
+was introduced.
+
+**DECIDED:** keep the ROB state projection layered over `PacketRefines`; tag
+validation constrains commit order while the shared packet certificate owns
+the architectural state transition.

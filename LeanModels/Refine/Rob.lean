@@ -93,6 +93,18 @@ theorem tagged_packet_refines_trace {IsaState : Type}
       trace isa state ((packet.map TaggedCommit.payload).map Prod.fst) := by
   exact packet_refines_trace h.2
 
+theorem tagged_packet_refines_state {IsaState : Type}
+    {isa : Machine IsaState} {admit : Input → Prop}
+    {start : Nat} {state state' : IsaState} {packet : TaggedPacket}
+    (h : TaggedPacketRefines isa admit start state packet state') :
+    state' = machineStateAfter isa state (packet.map TaggedCommit.input) := by
+  calc
+    state' = machineStateAfter isa state
+        ((packet.map TaggedCommit.payload).map Prod.fst) :=
+      packet_refines_state h.2
+    _ = machineStateAfter isa state (packet.map TaggedCommit.input) := by
+      rw [map_payload_fst]
+
 /-! ## A packet machine with a threaded ROB order -/
 
 structure RobMachine (State : Type) where
@@ -209,6 +221,7 @@ theorem rob_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rob_trace_refines
+#print axioms LeanModels.Refine.tagged_packet_refines_state
 #print axioms LeanModels.Refine.robStateAfter_append
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append

@@ -88,6 +88,20 @@ theorem rob_one_cycle :
       (by exact ⟨rfl, rfl, rfl, rfl⟩)
   simpa [robMachine, robTrace, robInputs] using h
 
+theorem rob_packet_state_projection :
+    let first := toyNext rvMachine.init
+    let second := toyNext first
+    second = machineStateAfter rvMachine rvMachine.init
+      [addiInput, addiInput] := by
+  let first := toyNext rvMachine.init
+  let second := toyNext first
+  have hw := rob_step robMachine.init rvMachine.init 0
+      (by exact ⟨rfl, rfl, rfl, rfl⟩) addiInput
+  simp only [robMachine] at hw
+  rcases hw with ⟨a', order', hrel, horder, hp⟩
+  have hstate := tagged_packet_refines_state hp
+  exact hrel.1.trans hstate
+
 theorem rob_windows_state :
     robStateAfter robMachine robMachine.init
         ([addiInput] ++ [addiInput]) =
@@ -190,6 +204,7 @@ theorem rob_progress_trace_prefix :
 
 #print axioms rob_step_refines
 #print axioms rob_one_cycle
+#print axioms rob_packet_state_projection
 #print axioms rob_windows_state
 #print axioms rob_windows_trace
 #print axioms rob_windows_inputs

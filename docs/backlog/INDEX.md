@@ -63,6 +63,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-05-pycomplete-297` |  | admit ten positive float digits | python-completeness |
 | `2026-11-05-pycomplete-296` |  | admit nine positive float digits | python-completeness |
 | `2026-11-05-pycomplete-295` |  | admit eight positive float digits | python-completeness |
+| `2026-11-05-ls-sv2-38` |  | project tagged ROB packets to final ISA state | ls-sv2 |
 | `2026-11-05-ls-sv2-37` |  | project packet certificates to final ISA state | ls-sv2 |
 | `2026-11-05-ls-sv2-36` |  | transport refinement relations across windows | ls-sv2 |
 | `2026-11-05-ls-sv2-35` |  | compose stateful memory windows | ls-sv2 |

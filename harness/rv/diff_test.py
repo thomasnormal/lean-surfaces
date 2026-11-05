@@ -60,11 +60,13 @@ in docs/rv-model.md):
   that wrap the 2^32 address-space edge are #guard-covered instead.
 
 Usage:  python3 harness/rv/diff_test.py [--no-build] [--only PREFIX]
-                                        [--sail BIN] [--keep DIR] [-v]
+                                        [--sail BIN] [--seed N] [--keep DIR] [-v]
+        python3 harness/rv/diff_test.py --self-test [--seed N]
 Exits non-zero on any divergence. Python 3.9 compatible.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -73,10 +75,12 @@ import struct
 import subprocess
 import sys
 import tempfile
+import zlib
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SAIL_DEFAULT = os.path.join(
     REPO_ROOT, "tools", "rv-oracle", "sail-riscv-Linux-x86_64", "bin", "sail_riscv_sim")
+SAIL_VERSION = "0.13.1"
 OVERRIDE = os.path.join(REPO_ROOT, "harness", "rv", "sail_rv32imc_override.json")
 RUNNER = os.path.join(REPO_ROOT, "harness", "rv", "isa_run.lean")
 
@@ -474,6 +478,68 @@ def build_case(name, test, pre=(), pads=0, flavor='exc', mode=1, mie=None,
 
 import random
 
+
+def _oracle_metadata(path):
+    """Return the pinned Sail version line and the oracle binary's digest.
+
+    The release path is configurable for lab hosts, so the version check is
+    the trust boundary here: a different Sail release must refuse rather
+    than silently turn a differential result into a result for another
+    semantics.  The digest is printed as provenance for the exact binary
+    that was run.
+    """
+    try:
+        probe = subprocess.run([path, "--version"], capture_output=True,
+                               text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise RuntimeError("could not query Sail oracle version at %s: %s" %
+                           (path, exc))
+    report = "\n".join(x.strip() for x in (probe.stdout, probe.stderr) if x.strip())
+    if probe.returncode != 0:
+        raise RuntimeError("Sail oracle --version failed (exit %d): %s" %
+                           (probe.returncode, report or "<no output>"))
+    if not re.search(r"(?<![0-9])%s(?![0-9])" % re.escape(SAIL_VERSION), report):
+        raise RuntimeError("Sail oracle version is not pinned %s: %s" %
+                           (SAIL_VERSION, report or "<no output>"))
+    version_line = next((line for line in report.splitlines()
+                         if SAIL_VERSION in line), report.splitlines()[0])
+    digest = hashlib.sha256()
+    try:
+        with open(path, "rb") as oracle:
+            for chunk in iter(lambda: oracle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError as exc:
+        raise RuntimeError("could not hash Sail oracle at %s: %s" % (path, exc))
+    return version_line, digest.hexdigest()
+
+
+def _case_fingerprint(cases):
+    """Hash the generated corpus without relying on Python's salted hash."""
+    return hashlib.sha256(repr(cases).encode("ascii")).hexdigest()
+
+
+def _self_test(seed):
+    """Check that a seeded case corpus is independent of hash randomization."""
+    first = gen_cases(seed)
+    second = gen_cases(seed)
+    if first != second:
+        raise AssertionError("gen_cases(%d) changed between identical calls" % seed)
+    expected = _case_fingerprint(first)
+    for hash_seed in ("1", "2"):
+        env = os.environ.copy()
+        env["PYTHONHASHSEED"] = hash_seed
+        probe = subprocess.run(
+            [sys.executable, os.path.abspath(__file__), "--_fingerprint",
+             "--seed", str(seed)],
+            capture_output=True, text=True, env=env)
+        if probe.returncode != 0 or probe.stdout.strip() != expected:
+            raise AssertionError(
+                "gen_cases(%d) changed with PYTHONHASHSEED=%s" %
+                (seed, hash_seed))
+    print("rv-harness self-test: gen_cases(%d) deterministic across hash seeds "
+          "(%d cases; fingerprint %s)" % (seed, len(first), expected))
+    return 0
+
 def gen_cases(seed):
     rng = random.Random(seed)
     cases = []
@@ -495,7 +561,11 @@ def gen_cases(seed):
             a, b = rnd32(), rnd32()
             add("alu_r_%s_rand%d" % (nm, k), [W(op_r(f3, f7, 6, 7, 8))],
                 pre=[(7, a), (8, b)])
-        a, b = corners[hash(nm) % len(corners)]
+        # Python's string hash is salted per process.  Keep corner selection
+        # deterministic without consuming another value from the seeded RNG,
+        # so the random rows remain stable when this harness is upgraded.
+        corner = zlib.crc32(nm.encode("ascii")) % len(corners)
+        a, b = corners[corner]
         add("alu_r_%s_corner" % nm, [W(op_r(f3, f7, 6, 7, 8))], pre=[(7, a), (8, b)])
     # rd == rs1 and operands aliased
     add("alu_r_add_rd_eq_rs1", [W(op_r(0, 0, 7, 7, 8))], pre=[(7, 5), (8, 9)])
@@ -894,14 +964,29 @@ def main():
     ap.add_argument("--only", default=None, help="run only cases with this name prefix")
     ap.add_argument("--sail", default=os.environ.get("RV_SAIL_SIM", SAIL_DEFAULT))
     ap.add_argument("--seed", type=int, default=0xC0FFEE)
+    ap.add_argument("--self-test", action="store_true",
+                    help="check that gen_cases(--seed) is deterministic and exit")
+    ap.add_argument("--_fingerprint", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--keep", default=None, help="keep work artifacts in this directory")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
+
+    if args._fingerprint:
+        print(_case_fingerprint(gen_cases(args.seed)))
+        return 0
+    if args.self_test:
+        return _self_test(args.seed)
 
     if not os.path.isfile(args.sail) or not os.access(args.sail, os.X_OK):
         print("rv-harness: sail oracle not present at %s" % args.sail)
         print("fetch: https://github.com/riscv/sail-riscv/releases/tag/0.13.1 "
               "(sail-riscv-Linux-x86_64.tar.gz, unpack under tools/rv-oracle/)")
+        return 2
+
+    try:
+        oracle_version, oracle_sha256 = _oracle_metadata(args.sail)
+    except RuntimeError as exc:
+        print("rv-harness: %s" % exc)
         return 2
 
     if not args.no_build:
@@ -921,7 +1006,10 @@ def main():
     if args.keep:
         os.makedirs(workdir, exist_ok=True)
     try:
-        print("rv-harness: %d cases; oracle: sail-riscv (%s)" % (len(cases), args.sail))
+        print("rv-harness: %d cases; seed: %d; oracle: sail-riscv (%s)" %
+              (len(cases), args.seed, args.sail))
+        print("rv-harness: oracle version: %s; sha256: %s" %
+              (oracle_version, oracle_sha256))
         lean_out = run_lean(cases, workdir)
         n_pass = n_fail = 0
         failures = []

@@ -6,7 +6,8 @@ import Examples.«system-verilog».cores.toy_rv32i.proof
 The toy's ADDI retirement is encoded once as packed RVFI-style signals and
 then decoded through the generic adapter.  The theorem compares the result
 with the existing semantic `Retirement.ofRvStep`; malformed and invalid
-records are rejected by the same boundary.
+records are rejected by the same boundary.  The reverse direction also checks
+the generic lossless round trip for a one-register retirement.
 -/
 
 namespace Examples.«system-verilog».cores.toy_rv32i.rvfi_proof
@@ -45,14 +46,24 @@ theorem toy_rvfi_normalizes :
     toyRvfi.toRetirement? = some toyRetirement := by
   decide
 
+theorem toy_retirement_roundtrip :
+    (toyRetirement.toRvfi?).bind RvfiObservation.toRetirement? =
+      some toyRetirement := by
+  apply Retirement.toRvfi?_bind_toRetirement?
+  right
+  refine ⟨1, 1, by decide, ?_⟩
+  decide
+
 def invalidRvfi : RvfiObservation := { toyRvfi with valid := false }
 
 def malformedRvfi : RvfiObservation := { toyRvfi with memRmask := 0b0101 }
 
 #guard toyRvfi.toRetirement? == some toyRetirement
+#guard (toyRetirement.toRvfi?).bind RvfiObservation.toRetirement? == some toyRetirement
 #guard invalidRvfi.toRetirement? == none
 #guard malformedRvfi.toRetirement? == none
 
 #print axioms toy_rvfi_normalizes
+#print axioms toy_retirement_roundtrip
 
 end Examples.«system-verilog».cores.toy_rv32i.rvfi_proof

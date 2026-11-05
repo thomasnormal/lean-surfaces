@@ -277,6 +277,75 @@ theorem RvfiObservation.ofRetirement_toRetirement? (r : Retirement)
   exact RvfiObservation.toRetirement?_eq_some _ rfl
     (RvfiObservation.ofRetirement_wellFormed r rd)
 
+/-! ## Lossless representable-retirement round trip -/
+
+private theorem ofRetirement_none_toRetirement (r : Retirement)
+    (hwrites : r.writes = []) :
+    (RvfiObservation.ofRetirement r none).toRetirement = r := by
+  cases r with
+  | mk pc instr nextPc writes memory trap =>
+    cases hwrites
+    cases memory with
+    | none =>
+        simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+          RvfiObservation.memoryEffect?, memoryFields, widthOfMask, maskOfWidth]
+    | some effect =>
+        cases effect with
+        | read address width data =>
+            cases width <;>
+              simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+                RvfiObservation.memoryEffect?, memoryFields, widthOfMask,
+                maskOfWidth]
+        | write address width data =>
+            cases width <;>
+              simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+                RvfiObservation.memoryEffect?, memoryFields, widthOfMask,
+                maskOfWidth]
+
+private theorem ofRetirement_some_toRetirement (r : Retirement)
+    (reg : Reg) (data : Word) (hreg : reg ≠ 0)
+    (hwrites : r.writes = [(reg, data)]) :
+    (RvfiObservation.ofRetirement r (some (reg, data))).toRetirement = r := by
+  cases r with
+  | mk pc instr nextPc writes memory trap =>
+    cases hwrites
+    cases memory with
+    | none =>
+        simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+          RvfiObservation.memoryEffect?, memoryFields, widthOfMask, maskOfWidth,
+          hreg]
+    | some effect =>
+        cases effect with
+        | read address width data' =>
+            cases width <;>
+              simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+                RvfiObservation.memoryEffect?, memoryFields, widthOfMask,
+                maskOfWidth, hreg]
+        | write address width data' =>
+            cases width <;>
+              simp [RvfiObservation.ofRetirement, RvfiObservation.toRetirement,
+                RvfiObservation.memoryEffect?, memoryFields, widthOfMask,
+                maskOfWidth, hreg]
+
+/-- Encoding and immediately decoding a representable retirement preserves it.
+
+The predicate is explicit because RVFI's packed shape has room for at most one
+non-`x0` register write.  A caller that has more writes must provide a wider
+interface instead of silently truncating the list. -/
+theorem Retirement.toRvfi?_bind_toRetirement? (r : Retirement)
+    (h : r.rvfiRepresentable) :
+    (r.toRvfi?).bind RvfiObservation.toRetirement? = some r := by
+  rcases h with hwrites | ⟨reg, data, hreg, hwrites⟩
+  · simp only [Retirement.toRvfi?, hwrites, Option.bind_some]
+    rw [RvfiObservation.ofRetirement_toRetirement?]
+    exact congrArg some (ofRetirement_none_toRetirement r hwrites)
+  · simp only [Retirement.toRvfi?, hwrites]
+    have hzero : ¬ reg = 0 := hreg
+    simp only [hzero, ↓reduceIte, Option.bind_some]
+    rw [RvfiObservation.ofRetirement_toRetirement?]
+    exact congrArg some (ofRetirement_some_toRetirement r reg data hreg hwrites)
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
+#print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?

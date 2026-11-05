@@ -136,6 +136,10 @@ private theorem round_float_thirty_seven_value :
     roundFloatThirtySeven (Float64.ofBits 0x0000000000000001) =
       .ok (.float (Float64.ofBits 0x0000000000000000)) := by rfl
 
+private theorem round_float_thirty_eight_value :
+    roundFloatThirtyEight (Float64.ofBits 0x0000000000000001) =
+      .ok (.float (Float64.ofBits 0x0000000000000000)) := by rfl
+
 theorem round_float_half :
     round_lab.round_float(Float64.ofBits 0x3fe0000000000000) ==> Val.int 0 := by
   exact ⟨32, rfl⟩
@@ -1265,6 +1269,47 @@ theorem round_float_thirty_seven :
     Stmt.genAllocFree, Stmt.genAllocFreeList, isLoweredBuiltinName,
     isPyBuiltinName, flattenStarRun, flattenStarCallArgs, Run.bind,
     Run.liftRes, Run.toPublic, RVal.freezeB]
+  all_goals rfl
+
+theorem round_float_thirty_eight :
+    round_lab.round_float_thirty_eight(Float64.ofBits 0x0000000000000001) ==>
+      Val.float (Float64.ofBits 0x0000000000000000) := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundFloatOne,
+    roundFloatTwo, roundFloatThree, roundFloatFour, roundFloatFive,
+    roundFloatSix, roundFloatSeven, roundFloatEight, roundFloatNine,
+    roundFloatTen, roundFloatEleven, roundFloatTwelve, roundFloatThirteen,
+    roundFloatFourteen, roundFloatFifteen, roundFloatSixteen,
+    roundFloatSeventeen, roundFloatEighteen, roundFloatNineteen,
+    roundFloatTwenty, roundFloatTwentyOne, roundFloatTwentyTwo,
+    roundFloatTwentyThree, roundFloatTwentyFour, roundFloatTwentyFive,
+    roundFloatTwentySix, roundFloatTwentySeven, roundFloatTwentyEight,
+    roundFloatTwentyNine, roundFloatThirty, roundFloatThirtyOne,
+    roundFloatThirtyTwo, roundFloatThirtyThree, roundFloatThirtyFour,
+    roundFloatThirtyFive, roundFloatThirtySix, roundFloatThirtySeven,
+    roundFloatThirtyEight, roundDigitsNonnegative, roundDigitsZero,
+    roundDigitsOne, roundDigitsTwo, roundDigitsThree, roundDigitsFour,
+    roundDigitsFive, roundDigitsSix, roundDigitsSeven, roundDigitsEight,
+    roundDigitsNine, roundDigitsTen, roundDigitsEleven, roundDigitsTwelve,
+    roundDigitsThirteen, roundDigitsFourteen, roundDigitsFifteen,
+    roundDigitsSixteen, roundDigitsSeventeen, roundDigitsEighteen,
+    roundDigitsNineteen, roundDigitsTwenty, roundDigitsTwentyOne,
+    roundDigitsTwentyTwo, roundDigitsTwentyThree, roundDigitsTwentyFour,
+    roundDigitsTwentyFive, roundDigitsTwentySix, roundDigitsTwentySeven,
+    roundDigitsTwentyEight, roundDigitsTwentyNine, roundDigitsThirty,
+    roundDigitsThirtyOne, roundDigitsThirtyTwo, roundDigitsThirtyThree,
+    roundDigitsThirtyFour, roundDigitsThirtyFive, roundDigitsThirtySix,
+    roundDigitsThirtySeven, roundDigitsThirtyEight, roundRatioInt,
+    roundEvenNat, round_float_thirty_eight_value, Float64.fromInt,
+    Float64.ofBits, funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList,
+    Stmt.heapFree, Expr.heapFreeList, Expr.heapFree, hasUnboundLocal,
+    unboundLocalMarker, moduleGenFree, funsGenAllocFree, Stmt.genAllocFree,
+    Stmt.genAllocFreeList, isLoweredBuiltinName, isPyBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+    RVal.freezeB]
   all_goals rfl
 
 end Examples.python.round_lab.proof

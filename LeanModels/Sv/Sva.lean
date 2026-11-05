@@ -95,15 +95,18 @@ def caseEqual (left right : Option LVec) : Bool :=
   | _, _ => false
 
 def edgeValue (rises : Logic → Logic → Bool) (trace : List SvState)
-    (index : Nat) (name : String) : Except String Bool :=
-  if index == 0 then
-    .ok false
-  else do
-    let previous ← logicAt trace (index - 1) name
-    let current ← logicAt trace index name
-    return match previous, current with
-    | some old, some new => rises old new
-    | _, _ => false
+    (index : Nat) (name : String) : Except String Bool := do
+  let previous ← if index == 0 then pure (some .lx) else logicAt trace (index - 1) name
+  let current ← logicAt trace index name
+  return match previous, current with
+  | some old, some new => rises old new
+  | _, _ => false
+
+/-- SVA sampled-value edges are value transitions to 1/0 (§16.9.3), rather
+than event-control edges: 0->x and 0->z are not `$rose`, and the first sample
+uses the default x value. -/
+def svaRose (old new : Logic) : Bool := new == .l1 && old != .l1
+def svaFell (old new : Logic) : Bool := new == .l0 && old != .l0
 
 /-!
 The `caseEq` constructor is intentionally a signal-oriented first fragment:
@@ -116,13 +119,18 @@ def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Excep
   | .caseEq _ _ => .error "SVA: case equality currently requires signal operands"
   | .lit value => .ok value
   | .signal name => boolValue <$> signalAt trace index name
+  | .not (.signal name) => do
+      match (← logicAt trace index name) with
+      | some .l0 => .ok true
+      | some .l1 => .ok false
+      | some .lx | some .lz | none => .ok false
   | .not arg => return !(← arg.evalChecked trace index)
   | .and left right => return (← left.evalChecked trace index) && (← right.evalChecked trace index)
   | .or left right => return (← left.evalChecked trace index) || (← right.evalChecked trace index)
   | .past cycles arg =>
       if cycles ≤ index then arg.evalChecked trace (index - cycles) else .ok false
-  | .rose name => edgeValue isPosedge trace index name
-  | .fell name => edgeValue isNegedge trace index name
+  | .rose name => edgeValue svaRose trace index name
+  | .fell name => edgeValue svaFell trace index name
   | .stable name =>
       if index == 0 then .ok false
       else do
@@ -250,6 +258,10 @@ private def svaCover : SvaCheck :=
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption == some true
 #guard (SvaCheck.evalRegion svaTrace svaPast).toOption == some true
 #guard (SvaCheck.evalRegion svaTrace svaCover).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a"))).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .l0 .l0, svaState .l0 .lx .l0] 1 (.rose "a")).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0, svaState .l0 .lx .l0] 1 (.fell "a")).toOption == some false
 #guard (SvaSeq.matches [svaState .l1 .l1 .l0] 0 (.delay 1 (.atom (.signal "a")))).toOption == some false
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption ==
   (SvaCheck.evalRegion svaTraceFinalChanged svaImplication).toOption

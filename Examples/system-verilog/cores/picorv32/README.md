@@ -82,5 +82,7 @@ then `lw`'s `rmask=f`, address `0x100`, and data 5.  The Lean witness
 `Cause.breakpoint`; it also proves that the raw trap row without that
 proof-side annotation is refused.  This validates the RVFI observation
 boundary against two simulators; it does not bypass the loader's
-unpacked-memory/generate wall or claim a core refinement theorem.
+unpacked-memory/generate wall or claim a core refinement theorem.  The same
+Lean witness also checks that all five observed instruction words decode to
+the expected RV32I/system constructors in `LeanModels.Rv`.
 

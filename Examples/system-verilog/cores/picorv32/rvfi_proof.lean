@@ -70,12 +70,27 @@ theorem unannotated_trap_is_refused :
     ebreakUnannotated.toRetirement? = none := by
   rfl
 
+theorem pinned_instruction_words_decode :
+    [ decode 0x00500093
+    , decode 0x10102023
+    , decode 0x10002103
+    , decode 0x00110193
+    , decode 0x00100073 ] =
+    [ some (.alu .add 1 (.reg 0) (.imm 5))
+    , some (.mem .store .word 1 0 0x100)
+    , some (.mem (.load true) .word 2 0 0x100)
+    , some (.alu .add 3 (.reg 2) (.imm 1))
+    , some (.system .ebreak) ] := by
+  decide
+
 #guard observations.map RvfiObservation.toRetirement? == expected.map some
 #guard observations.map RvfiObservation.order == [0, 1, 2, 3, 4]
 #guard ebreakUnannotated.toRetirement? == none
+#guard decode 0x00100073 == some (.system .ebreak)
 
 #print axioms pinned_rows_normalize
 #print axioms pinned_orders_are_consecutive
 #print axioms unannotated_trap_is_refused
+#print axioms pinned_instruction_words_decode
 
 end Examples.«system-verilog».cores.picorv32.rvfi_proof

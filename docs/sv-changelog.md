@@ -61,6 +61,10 @@ contract. Signal names, the retained clock, and assertion kind are validated;
 the non-overlapped `|=>` form is covered as well. Delays, expressions, reset
 guards, and other SVA forms remain loud.
 
+The same parser now admits an exact `##n` delay in either implication arm,
+mapping it to the finite `SvaSeq.delay` evaluator. Bounded ranges and dynamic
+delays remain loud.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

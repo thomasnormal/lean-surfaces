@@ -109,7 +109,8 @@ remain loud until their parser and contract rule are added.
 `assert/assume/cover property (@(posedge clk) a |-> b);` and its non-overlapped
 `|=>` twin. It checks the retained kind and clock and admits only simple signal
 operands; delays, reset guards, and richer expressions remain explicit parser
-refusals.
+refusals. Exact `##n` delays are now mapped to the finite `SvaSeq.delay`
+fragment; bounded ranges and dynamic delays remain explicit refusals.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable

@@ -54,6 +54,19 @@ private def simpleAtom (text : String) : Except String SvaBool :=
     .error "SVA: simple implication operands must be signal names"
   else .ok (.signal n)
 
+private def simpleSeq (text : String) : Except String SvaSeq :=
+  let n := text.trimAscii.toString
+  if n.startsWith "##" then
+    let rest := (n.drop 2).toString.trimAscii.toString
+    match rest.splitOn " " with
+    | [count, signal] =>
+        match count.toNat? with
+        | some cycles => (simpleAtom signal).map (fun b => .delay cycles (.atom b))
+        | none => .error "SVA: exact delay requires a decimal cycle count"
+    | _ => .error "SVA: exact delay requires ##n followed by one signal"
+  else
+    .atom <$> simpleAtom n
+
 private def simpleKind (kind : String) : Except String SvaKind :=
   match kind with
   | "assert" => .ok .assert
@@ -88,13 +101,13 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   let implication := body.splitOn operator
   match implication with
   | [antecedent, consequent] =>
-      let left ← simpleAtom antecedent
-      let right ← simpleAtom consequent
+      let left ← simpleSeq antecedent
+      let right ← simpleSeq consequent
       let check : SvaCheck :=
         { kind := kind, clock := clock,
           property := if operator == "|=>"
-            then .nonoverlap (.atom left) (.atom right)
-            else .implies (.atom left) (.atom right) }
+            then .nonoverlap left right
+            else .implies left right }
       ofCheck source check
   | _ => throw "SVA: expected exactly one implication"
 
@@ -167,6 +180,12 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) a |=> b);" } with
   | .ok C => match C.check.property with
     | .nonoverlap _ _ => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a |-> ##1 b);" } with
+  | .ok C => match C.check.property with
+    | .implies _ (.delay 1 (.atom (.signal "b"))) => true
     | _ => false
   | .error _ => false
 

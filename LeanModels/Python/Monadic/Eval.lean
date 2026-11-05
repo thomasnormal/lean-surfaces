@@ -2419,12 +2419,17 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
       pure (.ref w.heap.size)
     else do
       let w ← get
-      let flow ← inWorld (globalCallEnv w f.params args f.body f.hasGlobal) (execOpenList K m f.body.toList)
-      match flow with
-      | .ret v => pure v
-      | .next  => pure .none
-      | .brk   => refuse "'break' outside loop"
-      | .cont  => refuse "'continue' outside loop"
+      if w.callDepth >= pythonRecursionLimit then
+        raisePy .recursionError
+      else
+        set { w with callDepth := w.callDepth + 1 }
+        let flow ← inWorld (globalCallEnv w f.params args f.body f.hasGlobal)
+          (execOpenList K m f.body.toList)
+        match flow with
+        | .ret v => pure v
+        | .next  => pure .none
+        | .brk   => refuse "'break' outside loop"
+        | .cont  => refuse "'continue' outside loop"
 
 /-- The fueled operations at each fuel level. `kont m 0` is `Kont.bottom` —
 every operation `.timeout`s — which is what makes fuel exhaustion loud rather

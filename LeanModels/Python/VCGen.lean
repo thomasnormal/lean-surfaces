@@ -2011,7 +2011,7 @@ repo, over the ingested lab module. -/
 namespace GenSmokeTest
 
 private def m0 : Module := ⟨#[], #[], #[], #[], #[]⟩
-private def st0 : FrameState := ⟨⟨#[], [], [], []⟩, []⟩
+private def st0 : FrameState := ⟨⟨#[], [], [], [], 0⟩, []⟩
 
 /-- An `enumerate` over a two-element snapshot yields both pairs and stops
 — `GenSteps` twice, then the exhausted stack. -/
@@ -2043,23 +2043,23 @@ example : GenYieldsPrefix m0 st0 [.countFrom 5 3]
 
 /-- L4: the same frame seen from OUTSIDE, as the ray meets it — a `count`
 OBJECT on the heap, stepped by the `forGen` frame above it. -/
-example : IterSteps m0 ⟨#[countObj 5 3], [], [], []⟩ 0 (some (.int 5))
-    ⟨#[countObj 8 3], [], [], []⟩ :=
+example : IterSteps m0 ⟨#[countObj 5 3], [], [], [], 0⟩ 0 (some (.int 5))
+    ⟨#[countObj 8 3], [], [], [], 0⟩ :=
   iterSteps_countFrom (by rfl) (by rfl)
 
 /-- L6: a two-element `enumerate` OBJECT drained WHOLE — both pairs in
 order, the object left `.closed`, and no locality hypothesis anywhere (an
 `enumSeq` frame reads nothing, so the chain composes on its own). -/
-example : IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], []⟩ 0
+example : IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], [], 0⟩ 0
     [.tuple #[.int 0, .int 7], .tuple #[.int 1, .int 8]]
-    ⟨#[.generator "<enumerate>" [] [] .closed], [], [], []⟩ :=
+    ⟨#[.generator "<enumerate>" [] [] .closed], [], [], [], 0⟩ :=
   IterDrains.cons (iterSteps_enumSeq (by rfl) (by rfl))
     (IterDrains.cons (iterSteps_enumSeq (by rfl) (by rfl))
       (IterDrains.nil (iterSteps_enumDone (by rfl) (by rfl))))
 
 /-- The same drain through the general rule, which computes the pair list
 from the snapshot rather than being handed it. -/
-example : ∃ w', IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], []⟩ 0
+example : ∃ w', IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], [], 0⟩ 0
     [.tuple #[.int 0, .int 7], .tuple #[.int 1, .int 8]] w' :=
   iterDrains_enumSeq [.int 7, .int 8] _ 0 0 (by rfl)
 

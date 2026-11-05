@@ -60,7 +60,7 @@ BASE leaf meet in one normal form: structure-update syntax elaborates to
 constructor applications, the projections rewrite seeded fields, and
 these two finish the job. Terminating: the RHS has no `withClock`. -/
 @[simp] theorem World.withClock_mk (h : Heap) (g : REnv) (s : List String)
-    (c tr : List Int) : (World.mk h g s c).withClock tr = World.mk h g s tr := rfl
+    (c tr : List Int) : (World.mk h g s c 0).withClock tr = World.mk h g s tr 0 := rfl
 
 @[simp] theorem FrameState.withClock_mk (w : World) (l : REnv) (tr : List Int) :
     (FrameState.mk w l).withClock tr = FrameState.mk (w.withClock tr) l := rfl

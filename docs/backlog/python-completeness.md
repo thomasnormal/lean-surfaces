@@ -8952,3 +8952,8 @@ The float `round(number, 43)` slice now computes from the exact binary64 ratio s
 | Root build | Pending |
 
 DECIDED: admit positive float `ndigits == 43`; richer protocols remain loud.
+## 2026-11-05-pycomplete-331 — model CPython's recursion limit
+
+The script runner carries active frame depth in `World` and raises the pinned CPython 3.9 `RecursionError` at depth 1000 through its monadic call entry. The module shell resets the counter between completed top-level statements. Added `harness/scripts/recursion_limit_script.py`, whose former wrong answer was `3000` while CPython raises. The closed-function trunk remains a follow-up surface because its universal recursive specs need a depth parameter or hypothesis.
+
+DECIDED: model the default recursion limit; changing `sys.setrecursionlimit` remains outside the tier.

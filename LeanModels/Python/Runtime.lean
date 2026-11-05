@@ -319,7 +319,14 @@ structure World where
   integer microseconds (`time.time_ns() // 1000` on the CPython side,
   which CONSUMES what it records — both sides see the same integers). -/
   clock : List Int := []
+  /-- Active Python frame depth used by the script runner.  CPython 3.9's
+  default recursion limit is 1000; the module shell resets this counter after
+  each completed top-level statement. -/
+  callDepth : Nat := 0
 deriving Repr, Inhabited, BEq
+
+/-- CPython 3.9's pinned default `sys.getrecursionlimit()`. -/
+def pythonRecursionLimit : Nat := 1000
 
 /-- One frame's full interpreter state: the shared world + this frame's
 locals. Statement execution transforms a `FrameState`; a nested call

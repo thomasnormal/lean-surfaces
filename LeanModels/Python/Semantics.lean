@@ -11814,7 +11814,7 @@ def initBodyStmts (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc) :
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
-      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ s with
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ s with
       | .ok st flow =>
         (match flushInitLocals mV acc st.locals with
          | some acc' =>
@@ -11874,7 +11874,7 @@ def initExecStmt (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
     | .forStmt target (.call (.attribute d "items" _) #[] #[] Option.none _) body orelse _ =>
       (match orelse.toList with
        | [] =>
-         (match evalExpr mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ d with
+         (match evalExpr mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ d with
           | .ok st dv =>
             (match dv with
              | .ref a =>
@@ -11890,7 +11890,7 @@ def initExecStmt (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
           | .unsupported msg => .unsupported msg)
        | _ :: _ => .unsupported "'for … else' at module init is outside the tier")
     | s =>
-      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ s with
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ s with
       | .ok st flow =>
         (match flushInitLocals mV acc st.locals with
          | some acc' =>

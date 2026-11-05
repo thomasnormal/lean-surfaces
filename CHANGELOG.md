@@ -2979,3 +2979,6 @@ change is listed here under **Changed** or **Removed**.
   runner 1301.
 - Only Linux has been timed from a fresh clone; macOS is expected to work
   but is untested.
+
+- Python: model CPython 3.9's default recursion limit (1000) in nested calls;
+  deep recursion now raises `RecursionError` instead of returning an unbounded value.

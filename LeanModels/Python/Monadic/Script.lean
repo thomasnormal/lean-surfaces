@@ -122,6 +122,10 @@ def scriptStmtsAt (S : SKont) (m : Module) : List Stmt → SemF RFlow
         | some n => raisePy (.nameError n)
         | Option.none => S.one s
       publishM m
+      -- `callInM` counts active entries.  The script shell is the module
+      -- frame, so after a top-level statement has completed all nested frames
+      -- have returned; start the next statement at the module depth again.
+      modify fun st => { st with world := { st.world with callDepth := 0 } }
       match flow with
       | .next => S.stmts rest
       | .ret _ => refuse "'return' at module top level (CPython: SyntaxError at compile time)"

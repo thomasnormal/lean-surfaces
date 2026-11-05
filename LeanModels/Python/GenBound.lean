@@ -564,7 +564,7 @@ namespace GenBoundSmokeTest
 
 private def m0 : Module := ⟨#[], #[], #[], #[], #[]⟩
 private def sp0 : Span := ⟨0, 0, 0, 0⟩
-private def w0 : World := ⟨#[.list #[.int 7, .int 8]], [], [], []⟩
+private def w0 : World := ⟨#[.list #[.int 7, .int 8]], [], [], [], 0⟩
 private def tgt : Expr := .name "x" sp0
 private def yieldS : Stmt := .yieldStmt (.constant (.int 1) sp0) sp0
 

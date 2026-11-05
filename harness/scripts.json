@@ -8,6 +8,11 @@
     "expect": "match"
   },
   {
+    "file": "harness/scripts/recursion_limit_script.py",
+    "expect": "match",
+    "note": "CPython 3.9 raises RecursionError at its default recursion limit of 1000"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

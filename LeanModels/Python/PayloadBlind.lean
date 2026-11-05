@@ -248,7 +248,7 @@ def FrameState.swapAt (st : FrameState) (a : Addr) (o : Obj) : FrameState :=
 
 @[simp] theorem World.swapAt_mk (h : Heap) (g : REnv) (so : List String)
     (c : List Int) (a : Addr) (o : Obj) :
-    World.swapAt ⟨h, g, so, c⟩ a o = ⟨Heap.swapAt h a o, g, so, c⟩ := rfl
+    World.swapAt ⟨h, g, so, c, 0⟩ a o = ⟨Heap.swapAt h a o, g, so, c, 0⟩ := rfl
 @[simp] theorem FrameState.swapAt_mk (w : World) (l : REnv) (a : Addr) (o : Obj) :
     FrameState.swapAt ⟨w, l⟩ a o = ⟨w.swapAt a o, l⟩ := rfl
 

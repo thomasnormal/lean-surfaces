@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 1566 | 1549 | 0 | 7 | 0 | 10 |
+| 1567 | 1550 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -1580,6 +1580,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-break-negative-false` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-return-false-negative` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-return-false-path-negative-false` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-return-false-path-false-negative` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 
 ## Grammar census
 

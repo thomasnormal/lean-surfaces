@@ -70,6 +70,25 @@ def rvfiPacketObservations {State : Type} (machine : RvfiPacketMachine State) :
       entries.map RvfiPacketEntry.observation ++
         rvfiPacketObservations machine state' cycles
 
+/-- The tagged packet emitted at every cycle boundary, including empty
+packets.  This retains the packet boundaries needed by a ROB relation while
+`rvfiPacketObservations` is the flattened validation view. -/
+def rvfiPacketTags {State : Type} (machine : RvfiPacketMachine State) :
+    State → List Input → List TaggedPacket
+  | _, [] => []
+  | state, cycleInput :: cycles =>
+      let (state', entries) := machine.step state cycleInput
+      entries.filterMap RvfiPacketEntry.toTaggedCommit? ::
+        rvfiPacketTags machine state' cycles
+
+/-- Every packet in a tagged stream starts immediately after the retirements
+of its preceding packets. -/
+def InOrderPacketStream : Nat → List TaggedPacket → Prop
+  | _, [] => True
+  | start, packet :: packets =>
+      InOrderTags start packet ∧
+        InOrderPacketStream (start + packet.length) packets
+
 private theorem packetEntries_snd (entries : List RvfiPacketEntry) :
     (entries.filterMap (fun entry =>
       entry.observation.toRetirement?.map (fun retirement =>
@@ -99,6 +118,17 @@ private theorem packetEntries_tagged_fst (entries : List RvfiPacketEntry) :
       (entries.filterMap (fun entry =>
         entry.observation.toRetirement?.map (fun retirement =>
           (entry.input, retirement)))).map Prod.fst := by
+  induction entries with
+  | nil => rfl
+  | cons entry entries ih =>
+      cases hret : entry.observation.toRetirement? with
+      | none => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
+      | some retirement => simp [RvfiPacketEntry.toTaggedCommit?, hret, ih]
+
+private theorem packetEntries_tagged_length (entries : List RvfiPacketEntry) :
+    (entries.filterMap RvfiPacketEntry.toTaggedCommit?).length =
+      ((entries.map RvfiPacketEntry.observation).filterMap
+        RvfiObservation.toRetirement?).length := by
   induction entries with
   | nil => rfl
   | cons entry entries ih =>
@@ -245,6 +275,52 @@ theorem normalizeRvfiPacketTags {start : Nat}
         simp only [List.filterMap, RvfiPacketEntry.toTaggedCommit?, hnone]
         exact ih h
 
+/-- A normalized packet trace carries a local in-order tag certificate for
+every packet boundary. -/
+theorem normalizeRvfiPacketTags_stream {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    InOrderPacketStream start (rvfiPacketTags machine state cycles) := by
+  induction cycles generalizing state start retirements with
+  | nil =>
+      simp [rvfiPacketTags, InOrderPacketStream]
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' entries =>
+          have hobs : rvfiPacketObservations machine state (cycleInput :: cycles) =
+              entries.map RvfiPacketEntry.observation ++
+                rvfiPacketObservations machine state' cycles := by
+            simp [rvfiPacketObservations, hstep]
+          rw [hobs] at h
+          have htags : rvfiPacketTags machine state (cycleInput :: cycles) =
+              entries.filterMap RvfiPacketEntry.toTaggedCommit? ::
+                rvfiPacketTags machine state' cycles := by
+            simp [rvfiPacketTags, hstep]
+          rw [htags]
+          rw [normalizeRvfiTrace?_append] at h
+          cases hfirst : normalizeRvfiTrace? start
+              (entries.map RvfiPacketEntry.observation) with
+          | none => simp [hfirst] at h
+          | some firstRetirements =>
+              simp only [hfirst] at h
+              cases htail : normalizeRvfiTrace? (start + firstRetirements.length)
+                  (rvfiPacketObservations machine state' cycles) with
+              | none => simp [htail] at h
+              | some tailRetirements =>
+                  simp only [htail, Option.map] at h
+                  cases h
+                  have htags := normalizeRvfiPacketTags hfirst
+                  have hlen := normalizeRvfiTrace?_filterMap hfirst
+                  have hpacketLen := packetEntries_tagged_length entries
+                  have htailTags := ih state' (start := start + firstRetirements.length)
+                    (retirements := tailRetirements) htail
+                  constructor
+                  · exact htags
+                  · rw [hpacketLen, hlen]
+                    exact htailTags
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -263,4 +339,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

@@ -404,3 +404,28 @@ adaptation was introduced.
 **DECIDED:** retain tag certification as a proof obligation derived from the
 packed stream; no sorting or completion-order choice is added.  The remaining
 PicoRV32 symbolic admission walls are unchanged.
+
+## 2026-11-05-ls-sv2-17 — thread packet tag certificates across cycles
+
+Per-packet `InOrderTags` was available, but a cycle trace also needs the
+starting order for every later packet.  Added `rvfiPacketTags` and
+`InOrderPacketStream`, with `normalizeRvfiPacketTags_stream` proving that one
+global normalized RVFI stream yields a consecutive tag certificate at every
+packet boundary.  The proof uses the compositional normalization theorem and
+the exact decoded-row count, so bubbles do not advance the order and packet
+lengths cannot drift from retirement counts.
+
+The PicoRV32 packet witness now proves the stream-level tag property for all
+four measured two-entry packets, in addition to the first-packet local fact.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), with
+`normalizeRvfiPacketTags_stream` reporting only `propext`/`Quot.sound`.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** expose the packet-boundary order invariant as a reusable
+certificate for `RobStepRefines`; leave completion scheduling and fairness to
+the core relation.  PicoRV32's symbolic loader remains blocked at the same
+memory/generate walls.

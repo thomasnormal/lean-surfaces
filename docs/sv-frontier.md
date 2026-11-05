@@ -140,7 +140,8 @@ this order:
 | 3 | an unpacked memory written in `always_ff` | **Resolved in this packet:** one-rank parameter-sized memories retain `UnpackedDecl` and `ArraySel`, then run through `MemState`/`MemCycle` without expansion. Nested ranks, loops, partial targets, and compound memory expressions remain loud. |
 | 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |
 | 5 | a user function in a combinational expression | **Resolved in this packet:** the extractor's pure automatic input-only function path inlines the return expression, and run2 evaluates the resulting expression. Side effects, recursion, static functions, tasks, and unsupported bodies remain loud. |
-| 6 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |
+| 6 | `assign n = d` beside an async-reset `always_ff` | **Resolved in this packet:** `ffResetProfileB` admits comb processes before/after the retained reset process, while `ffMixedProfileB` covers the corresponding no-reset profile. `cycleStep2_mixedProfile` settles comb logic before reset, edge/NBA, and final settle under an explicit acyclic-comb settle contract. The `async_reset_comb_profile` witness matches Icarus over five cycles. |
+| 7 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |
 
 The same audit exercises the F1 property forms. Finite concurrent assertions,
 bounded ranges, and assumptions with `disable iff` load with their retained

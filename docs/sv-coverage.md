@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 220 | 245 | 89.8% |
+| grammar syntax kinds (MATCH) | 220 | 254 | 86.6% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -669,7 +669,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 245 | 220 | 25 | pyslang SyntaxKind |
+| 254 | 220 | 34 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -693,11 +693,13 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/always_event_dynamic_part_select/always_event_dynamic_part_select.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.AssertPropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentExpression` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternExpression` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternItem` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.AssumePropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.AttributeInstance` | `Examples/system-verilog/sem2/xcelium_qualified_ops/xcelium_qualified_ops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AttributeSpec` | `Examples/system-verilog/sem2/xcelium_qualified_ops/xcelium_qualified_ops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryAndExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
@@ -718,19 +720,24 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CompilationUnit` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/always_event_concat/always_event_concat.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ConcurrentAssertionMember` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.ConditionalExpression` | `Examples/system-verilog/always_event_conditional/always_event_conditional.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPattern` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPredicate` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalStatement` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConstructorName` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ContinuousAssign` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CoverPropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DataDeclaration` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.Declarator` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DefaultCaseItem` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DefaultPatternKeyExpression` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DeferredAssertion` | `Examples/system-verilog/immediate_assertions/deferred.sv` | **REFUSE** | `unsupported` unsupported statement 'ImmediateAssertion:deferred' |
 | `SyntaxKind.DelayControl` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.DelayedSequenceElement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.DelayedSequenceExpr` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DescendingRangeSelect` | `Examples/system-verilog/always_event_dynamic_part_select_desc_explicit_edge_iff/always_event_dynamic_part_select_desc_explicit_edge_iff.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.DisableIff` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DivideAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
@@ -774,6 +781,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ImmediateAssertStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateAssumeStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateCoverStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ImplicationPropertyExpr` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.ImplicitAnsiPort` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitEventControl` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitNonAnsiPort` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **MATCH** | `ok`  |
@@ -852,6 +860,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.PowerExpression` | `Examples/system-verilog/power/context_power.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ProgramDeclaration` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramHeader` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
+| `SyntaxKind.PropertySpec` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **MATCH** | `ok`  |

@@ -103,6 +103,19 @@ def Design2.ffDisjB (d : Design2) : Bool :=
     i == j || ((d.processes[i]?.map Process2.procWins).getD []).all fun a =>
       ((d.processes[j]?.map Process2.procWins).getD []).all fun b => !a.overlaps b
 
+/-- All statically written windows, including continuous assignments. The
+FF-only profile has no assigns, but the mixed reset profile must also reject a
+comb driver that overlaps a flop target. -/
+def Process2.profileWins : Process2 → List DrvWin
+  | .assign t _ => t.drvWins
+  | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.drvWins
+  | .unsupported _ _ => []
+
+def Design2.mixedDisjB (d : Design2) : Bool :=
+  (List.range d.processes.size).all fun i => (List.range d.processes.size).all fun j =>
+    i == j || ((d.processes[i]?.map Process2.profileWins).getD []).all fun a =>
+      ((d.processes[j]?.map Process2.profileWins).getD []).all fun b => !a.overlaps b
+
 /-- **The FF-only profile**, decided. -/
 def Design2.ffOnlyProfileB (d : Design2) : Bool :=
   let clk := match d.processes.toList.head? with
@@ -153,56 +166,91 @@ records the NBA-only body and the single clock/reset pair shared by the
 processes. -/
 structure FFResetOnly (d : Design2) : Prop where
   procs : ∀ (i : Nat) (p : Process2), d.processes[i]? = some p →
-    ∃ (c rn : String) (b : Stmt2) (high : Bool),
-      p = .alwaysFFR c rn b high ∧ b.nbaOnly = true
+    p.isCombPhase = true ∨
+      ∃ (c rn : String) (b : Stmt2) (high : Bool),
+        p = .alwaysFFR c rn b high ∧ b.nbaOnly = true
+
+/-- The first asynchronous-reset key in source order. Continuous assigns and
+comb blocks may precede the clocked process, so the profile must not use
+`processes.head?` as its key. -/
+def Design2.firstResetKey? (ps : List Process2) : Option (String × String × Bool) :=
+  match ps with
+  | [] => none
+  | .alwaysFFR c rn _ high :: _ => some (c, rn, high)
+  | _ :: rest => Design2.firstResetKey? rest
+
+/-- The clock of the first edge process, ignoring comb processes that may be
+placed before it in source order. -/
+def Design2.firstEdgeClock? (ps : List Process2) : Option String :=
+  match ps with
+  | [] => none
+  | .alwaysFF c _ :: _ | .alwaysPlain c _ :: _ | .alwaysFFR c _ _ _ :: _ => some c
+  | _ :: rest => Design2.firstEdgeClock? rest
+
+/-- Mixed edge/comb admission for the no-reset profile.  The historical
+`ffOnlyProfileB` remains the strict edge-only predicate consumed by
+`cycleStep2_profile`; this companion predicate is the source-shaped mixed
+profile used when a design has next-state assigns beside edge processes. -/
+def Design2.ffMixedProfileB (d : Design2) : Bool :=
+  match Design2.firstEdgeClock? d.processes.toList with
+  | none => false
+  | some clk =>
+      d.processes.toList.all (fun p => match p with
+        | .alwaysFF c b | .alwaysPlain c b | .alwaysFFR c _ b _ => c == clk && b.nbaOnly &&
+            b.nbaStaticB d && b.drvWins.all fun w => !d.inputNames.toList.contains w.1
+        | .alwaysComb _ | .assign _ _ => true
+        | _ => false) && d.mixedDisjB
 
 def Design2.ffResetProfileB (d : Design2) : Bool :=
-  let key := match d.processes.toList.head? with
-    | some (.alwaysFFR c rn _ high) => (c, rn, high)
-    | _ => ("", "", false)
-  d.processes.toList.all (fun p => match p with
-    | .alwaysFFR c rn b high =>
-        c == key.1 && rn == key.2.1 && high == key.2.2 && b.nbaOnly &&
-          b.nbaStaticB d && b.drvWins.all fun w => !d.inputNames.toList.contains w.1
-    | _ => false) && d.ffDisjB
+  match Design2.firstResetKey? d.processes.toList with
+  | none => false
+  | some key =>
+      d.processes.toList.all (fun p => match p with
+        | .alwaysFFR c rn b high =>
+            c == key.1 && rn == key.2.1 && high == key.2.2 && b.nbaOnly &&
+              b.nbaStaticB d && b.drvWins.all fun w => !d.inputNames.toList.contains w.1
+        | .alwaysComb _ | .assign _ _ => true
+        | _ => false) && d.mixedDisjB
 
 theorem FFResetOnly.ofProfile {d : Design2} (h : d.ffResetProfileB = true) : FFResetOnly d := by
   refine ⟨fun i p hp => ?_⟩
-  simp only [Design2.ffResetProfileB, Bool.and_eq_true, List.all_eq_true] at h
-  cases p with
-  | alwaysFFR c rn b high =>
-      have hp' := h.1 (.alwaysFFR c rn b high)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp only [Bool.and_eq_true] at hp'
-      have hb : b.nbaOnly = true := hp'.1.1.2
-      exact ⟨c, rn, b, high, rfl, hb⟩
-  | alwaysFF c b =>
-      have hp' := h.1 (.alwaysFF c b)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp at hp'
-  | alwaysPlain c b =>
-      have hp' := h.1 (.alwaysPlain c b)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp at hp'
-  | alwaysComb b =>
-      have hp' := h.1 (.alwaysComb b)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp at hp'
-  | assign t e =>
-      have hp' := h.1 (.assign t e)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp at hp'
-  | unsupported k t =>
-      have hp' := h.1 (.unsupported k t)
-        (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
-      simp at hp'
-
-theorem FFResetOnly.combIndices {d : Design2} (h : FFResetOnly d) : d.combIndices = [] := by
-  simp only [Design2.combIndices, List.filter_eq_nil_iff, List.mem_range]
-  intro i hi
-  obtain ⟨c, rn, b, high, hp, -⟩ := h.procs i _ (Array.getElem?_eq_getElem hi)
-  simp [Array.getElem?_eq_getElem hi, hp, Process2.isCombPhase]
-
+  simp only [Design2.ffResetProfileB] at h
+  generalize hk : Design2.firstResetKey? d.processes.toList = key at h
+  cases key with
+  | none => simp [hk] at h
+  | some key =>
+    simp only [Bool.and_eq_true] at h
+    have hall := List.all_eq_true.mp h.1
+    clear h
+    cases p with
+    | alwaysFFR c rn b high =>
+        have hp' := hall (.alwaysFFR c rn b high)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp only [Bool.and_eq_true] at hp'
+        have hb : b.nbaOnly = true := hp'.1.1.2
+        exact Or.inr ⟨c, rn, b, high, rfl, hb⟩
+    | alwaysFF c b =>
+        have hp' := hall (.alwaysFF c b)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp at hp'
+    | alwaysPlain c b =>
+        have hp' := hall (.alwaysPlain c b)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp at hp'
+    | alwaysComb b =>
+        have hp' := hall (.alwaysComb b)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp at hp'
+        exact Or.inl rfl
+    | assign t e =>
+        have hp' := hall (.assign t e)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp at hp'
+        exact Or.inl rfl
+    | unsupported k t =>
+        have hp' := hall (.unsupported k t)
+          (Array.mem_toList_iff.mpr (Array.mem_of_getElem? hp))
+        simp at hp'
 /-- The reset-event pass preserves the pre-reset state and appends exactly the
 source-shaped NBA updates of the selected reset processes.  This is the
 cycle-level bridge missing from the FF-only profile. -/
@@ -225,6 +273,76 @@ theorem resetPass2_ffResetOnly {d : Design2} (h : d.ffResetProfileB = true)
           simp only [resetPass2, hp, hq, Res.ok_bind, Res.pure_eq]
           rw [resetPass2_ffResetOnly h hrun l (nba ++ q)]
           simp [hff, List.append_assoc]
+
+/-- The edge pass for a mixed reset profile. The side condition records that
+the supplied order really is the profile's edge list; it rules out the comb
+processes admitted by `ffResetProfileB` while retaining their source order in
+the design. -/
+theorem edgePass2_ffResetOnly {d : Design2} (h : d.ffResetProfileB = true)
+    {fuel : Nat} {st : SvState}
+    (hrun : ∀ (i : Nat) (p : Process2), d.processes[i]? = some p →
+      ∀ nba, ∃ q, runEdgeProcess2 fuel st nba p = .ok (st, nba ++ q) ∧
+        d.ffUpd fuel st i = q) :
+    ∀ (l : List Nat), (∀ i ∈ l, i ∈ d.edgeIndices) → ∀ (nba : NbaQueue2),
+      edgePass2 d fuel st nba l = .ok (st, nba ++ l.flatMap (d.ffUpd fuel st))
+  | [], _, nba => by simp [edgePass2]
+  | i :: l, hl, nba => by
+      have hi : i ∈ d.edgeIndices := hl i (List.mem_cons_self)
+      have hrest : ∀ j ∈ l, j ∈ d.edgeIndices := by
+        intro j hj; exact hl j (List.mem_cons_of_mem _ hj)
+      cases hp : d.processes[i]? with
+      | none =>
+          simp only [edgePass2, hp, Res.pure_eq, Res.ok_bind]
+          rw [edgePass2_ffResetOnly h hrun l hrest nba]
+          simp [Design2.ffUpd, hp]
+      | some p =>
+          have he : p.isEdgePhase = true := by
+            simp only [Design2.edgeIndices, List.mem_filter, List.mem_range] at hi
+            rw [hp] at hi
+            exact hi.2
+          obtain ⟨q, hq, hff⟩ := hrun i _ hp nba
+          simp only [edgePass2, hp, hq, Res.ok_bind]
+          rw [edgePass2_ffResetOnly h hrun l hrest (nba ++ q)]
+          simp [hff, List.append_assoc]
+
+/-! ## Mixed combinational/clocked cycles -/
+
+/-- Operational form of the comb tier's acyclicity result for a design that
+also contains edge processes. The comb theorem supplies this contract from
+its rank certificate; keeping it as a hypothesis here avoids flattening the
+clocked processes into the comb AST. -/
+structure CombPhaseAcyclic (d : Design2) : Prop where
+  settle : ∀ (σ : ScheduleOracle) (fuel : Nat) (st : SvState) (k : Nat),
+    2 ≤ fuel → ∃ S k', combSettle2 d σ fuel st k = .ok (S, k')
+
+/-- A mixed profile has a terminating comb settle before reset, after reset,
+and after the edge/NBA phase. The process source kinds remain in `Design2`; the
+comb contract is the only extra hypothesis needed by the existing scheduler. -/
+theorem cycleStep2_mixedProfile {d : Design2} (h : d.ffResetProfileB = true)
+    (hc : CombPhaseAcyclic d) (σ : ScheduleOracle) {fuel : Nat}
+    (inputs st : SvState) (k : Nat)
+    (hreset : ∀ (s : SvState) (l : List Nat) (nba : NbaQueue2),
+      ∃ s' nba', resetPass2 d fuel s nba l = .ok (s', nba'))
+    (hedge : ∀ (s : SvState) (l : List Nat) (nba : NbaQueue2),
+      ∃ s' nba', edgePass2 d fuel s nba l = .ok (s', nba'))
+    (hf : 2 ≤ fuel) :
+    ∃ S k', cycleStep2 d σ fuel inputs st k = .ok (S, k') := by
+  obtain ⟨S0, k0, h0⟩ := hc.settle σ fuel (applyInputs2 d inputs st) k hf
+  simp only [cycleStep2, h0, Res.ok_bind, Res.pure_eq]
+  cases hr : d.resetIndices st S0 with
+  | nil =>
+      simp only [hr, Res.pure_eq]
+      obtain ⟨se, ne, he⟩ := hedge S0 (σ.choose k0 d.edgeIndices) []
+      obtain ⟨S, k', hs⟩ := hc.settle σ fuel (commitNba2 se ne) (k0 + 1) hf
+      exact ⟨S, k', by simp [he, hs]⟩
+  | cons r rs =>
+      obtain ⟨sr, nr, hrun⟩ := hreset S0 (σ.choose k0 (d.resetIndices st S0)) []
+      obtain ⟨sc, kc, hc'⟩ := hc.settle σ fuel (commitNba2 sr nr) (k0 + 1) hf
+      obtain ⟨se, ne, he⟩ := hedge sc (σ.choose kc d.edgeIndices) []
+      obtain ⟨S, k', hs⟩ := hc.settle σ fuel (commitNba2 se ne) (kc + 1) hf
+      have hrun' := hrun
+      rw [hr] at hrun'
+      exact ⟨S, k', by simp [hrun', hc', he, hs]⟩
 /-! ## Soundness: updates stay inside the windows a body names -/
 
 /-- `w` covers the update `u`: same signal, and inside `w`'s bits when `w` is a window. -/

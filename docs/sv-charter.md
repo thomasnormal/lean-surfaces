@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Mixed combinational and asynchronous-reset cycles — 2026-11-05
+
+`Design2.ffResetProfileB` now admits continuous assignments and `always_comb`
+processes alongside a shared `always_ff @(posedge clk or negedge rstn)` profile.
+The reset key is selected from the first retained reset process rather than
+from `processes.head?`, so source order may put next-state logic first.
+The no-reset companion predicate `ffMixedProfileB` uses the same source-order
+edge discovery for plain or `always_ff` edge processes.
+`CombPhaseAcyclic` is the operational contract supplied by the comb tier's
+acyclic settle theorem; `cycleStep2_mixedProfile` refines the scheduler's
+input-settle, reset-event, edge/NBA, and final-settle phases under that
+contract. The source processes remain separate and source-shaped. The
+`async_reset_comb_profile` witness and differential row match Icarus over five
+cycles.
+
 ## Active-high asynchronous reset in E — 2026-11-04
 
 The retained `alwaysFFR` process now carries reset polarity. An active-high

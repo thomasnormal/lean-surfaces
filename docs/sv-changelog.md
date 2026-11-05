@@ -1,5 +1,17 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Mixed combinational and asynchronous-reset cycles
+
+The sequential reset profile now admits continuous assignments and comb
+processes next to a shared asynchronous-reset `always_ff`. `firstResetKey?`
+finds the clock/reset pair in source order, and `CombPhaseAcyclic` plus
+`cycleStep2_mixedProfile` provide the refinement boundary for the comb settle
+before reset, edge/NBA, and final settle. The `async_reset_comb_profile`
+witness and its Icarus differential row cover a continuous next-state signal
+feeding the reset flop. The no-reset `ffMixedProfileB` companion accepts the
+same comb-plus-edge source shape. Hierarchy, initial ROM loading, and comb
+cycles without an acyclic settle contract remain loud.
+
 ## F4: one-rank sequential unpacked memories
 
 The symbolic extractor now retains the shorthand `mem [N]` as a source-shaped

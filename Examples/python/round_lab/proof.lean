@@ -68,6 +68,9 @@ private theorem round_float_sixteen_value :
 private theorem round_float_seventeen_value :
     roundFloatSeventeen (Float64.ofBits 0x3f4b6113d6000000) =
       .ok (.float (Float64.ofBits 0x3f4b6113d600001c)) := by rfl
+private theorem round_float_eighteen_value :
+    roundFloatEighteen (Float64.ofBits 0x3f296619b1800000) =
+      .ok (.float (Float64.ofBits 0x3f296619b17ffff2)) := by rfl
 
 theorem round_float_half :
     round_lab.round_float(Float64.ofBits 0x3fe0000000000000) ==> Val.int 0 := by
@@ -525,6 +528,33 @@ theorem round_float_seventeen :
     roundDigitsThirteen, roundDigitsFourteen, roundDigitsFifteen,
     roundDigitsSixteen, roundDigitsSeventeen, roundRatioInt, roundEvenNat,
     round_float_seventeen_value, Float64.fromInt, Float64.ofBits, funsHeapFree,
+    FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+    Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+    moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
+    isLoweredBuiltinName, isPyBuiltinName, flattenStarRun,
+    flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+  all_goals rfl
+
+theorem round_float_eighteen :
+    round_lab.round_float_eighteen(Float64.ofBits 0x3f296619b1800000) ==>
+      Val.float (Float64.ofBits 0x3f296619b17ffff2) := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [round_lab, round_ne_fstring, round_ne_lenMult, round_ne_starArg,
+    round_ne_starTuple, round_ne_starList, roundFloatZero, roundFloatOne,
+    roundFloatTwo, roundFloatThree, roundFloatFour, roundFloatFive,
+    roundFloatSix, roundFloatSeven, roundFloatEight, roundFloatNine,
+    roundFloatTen, roundFloatEleven, roundFloatTwelve, roundFloatThirteen,
+    roundFloatFourteen, roundFloatFifteen, roundFloatSixteen,
+    roundFloatSeventeen, roundFloatEighteen, roundDigitsNonnegative,
+    roundDigitsZero, roundDigitsOne, roundDigitsTwo, roundDigitsThree,
+    roundDigitsFour, roundDigitsFive, roundDigitsSix, roundDigitsSeven,
+    roundDigitsEight, roundDigitsNine, roundDigitsTen, roundDigitsEleven,
+    roundDigitsTwelve, roundDigitsThirteen, roundDigitsFourteen,
+    roundDigitsFifteen, roundDigitsSixteen, roundDigitsSeventeen,
+    roundDigitsEighteen, roundRatioInt, roundEvenNat,
+    round_float_eighteen_value, Float64.fromInt, Float64.ofBits, funsHeapFree,
     FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
     Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
     moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,

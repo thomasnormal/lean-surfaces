@@ -100,3 +100,7 @@ def round_float_sixteen(value):
 
 def round_float_seventeen(value):
     return round(value, 17)
+
+
+def round_float_eighteen(value):
+    return round(value, 18)

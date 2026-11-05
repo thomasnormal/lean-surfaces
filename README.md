@@ -17,7 +17,7 @@ These bars use each tier's checked-in differential corpus: `MATCH` rows divided 
 
 | Language | Completion | Current measurement |
 | --- | --- | --- |
-| Python | <progress value="99.7" max="100" aria-label="99.7% complete">99.7%</progress> **99.7%** | 4,070 / 4,084 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 3,955 / 4,084 |
+| Python | <progress value="99.7" max="100" aria-label="99.7% complete">99.7%</progress> **99.7%** | 4,074 / 4,088 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 3,959 / 4,088 |
 | C++ | <progress value="98.9" max="100" aria-label="98.9% complete">98.9%</progress> **98.9%** | 1,565 / 1,582 differential rows ([coverage](docs/cpp-coverage.md)) |
 | Rust | <progress value="0.0" max="100" aria-label="0.0% complete">0.0%</progress> **0.0%** | Lane planned, implementation not started ([roadmap](#roadmap-not-built--do-not-expect-it-in-this-tree)) |
 | SystemVerilog | <progress value="96.4" max="100" aria-label="96.4% complete">96.4%</progress> **96.4%** | 616 / 639 differential self-check rows ([coverage](docs/sv-coverage.md)) |

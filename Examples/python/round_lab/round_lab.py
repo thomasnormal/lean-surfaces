@@ -132,3 +132,7 @@ def round_float_twenty_four(value):
 
 def round_float_twenty_five(value):
     return round(value, 25)
+
+
+def round_float_twenty_six(value):
+    return round(value, 26)

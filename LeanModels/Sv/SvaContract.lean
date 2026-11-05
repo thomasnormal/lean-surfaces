@@ -58,12 +58,27 @@ private def simpleSeq (text : String) : Except String SvaSeq :=
   let n := text.trimAscii.toString
   if n.startsWith "##" then
     let rest := (n.drop 2).toString.trimAscii.toString
-    match rest.splitOn " " with
-    | [count, signal] =>
-        match count.toNat? with
-        | some cycles => (simpleAtom signal).map (fun b => .delay cycles (.atom b))
-        | none => .error "SVA: exact delay requires a decimal cycle count"
-    | _ => .error "SVA: exact delay requires ##n followed by one signal"
+    if rest.startsWith "[" then
+      match rest.splitOn "]" with
+      | [bounds, signal] =>
+          let inside := (bounds.drop 1).toString
+          match (inside.splitOn ":", signal.trimAscii.toString) with
+          | ([lo, hi], signal) =>
+              match lo.toNat?, hi.toNat? with
+              | some lower, some upper =>
+                  if lower ≤ upper then
+                    (simpleAtom signal).map (fun b => .range lower upper (.atom b))
+                  else .error "SVA: bounded delay lower bound exceeds upper bound"
+              | _, _ => .error "SVA: bounded delay requires decimal bounds"
+          | _ => .error "SVA: bounded delay requires ##[m:n] and one signal"
+      | _ => .error "SVA: bounded delay requires ##[m:n] and one signal"
+    else
+      match rest.splitOn " " with
+      | [count, signal] =>
+          match count.toNat? with
+          | some cycles => (simpleAtom signal).map (fun b => .delay cycles (.atom b))
+          | none => .error "SVA: exact delay requires a decimal cycle count"
+      | _ => .error "SVA: exact delay requires ##n followed by one signal"
   else
     .atom <$> simpleAtom n
 
@@ -186,6 +201,12 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) a |-> ##1 b);" } with
   | .ok C => match C.check.property with
     | .implies _ (.delay 1 (.atom (.signal "b"))) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a |-> ##[1:2] b);" } with
+  | .ok C => match C.check.property with
+    | .implies _ (.range 1 2 (.atom (.signal "b"))) => true
     | _ => false
   | .error _ => false
 

@@ -94,6 +94,10 @@ def packetRows : List (List RvfiPacketEntry) :=
 def packetCycleInputs : List Input :=
   [ bubbleInput, bubbleInput, bubbleInput, bubbleInput ]
 
+def packetFirstCycles : List Input := [ bubbleInput, bubbleInput ]
+
+def packetSecondCycles : List Input := [ bubbleInput, bubbleInput ]
+
 def pinnedPacketMachine : RvfiPacketMachine (List (List RvfiPacketEntry)) where
   init := packetRows
   step remaining _ :=
@@ -161,6 +165,29 @@ theorem pinned_packet_observations_normalize :
         (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
           packetCycleInputs) = some nontrapExpected := by
   decide
+
+theorem pinned_packet_first_window_normalize :
+    normalizeRvfiTrace? 0
+        (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) = some nontrapFirstExpected := by
+  decide
+
+theorem pinned_packet_second_window_normalize :
+    normalizeRvfiTrace? 2
+        (rvfiPacketObservations pinnedPacketMachine
+          (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+            packetFirstCycles) packetSecondCycles) =
+      some nontrapSecondExpected := by
+  decide
+
+theorem pinned_packet_windows_append :
+    normalizeRvfiTrace? 0
+        (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
+          (packetFirstCycles ++ packetSecondCycles)) =
+      some (nontrapFirstExpected ++ nontrapSecondExpected) := by
+  exact normalizeRvfiPacketTrace_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
 
 theorem pinned_packet_first_tags :
     InOrderTags 0
@@ -255,6 +282,10 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #guard (directRun memZero nontrapMemoryRequests).2 == nontrapMemoryEffects
 #guard normalizeRvfiTrace? 0 nontrapObservations == some nontrapExpected
 #guard normalizeRvfiTrace? 2 nontrapSecondObservations == some nontrapSecondExpected
+#guard normalizeRvfiTrace? 0
+  (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
+    (packetFirstCycles ++ packetSecondCycles)) ==
+  some (nontrapFirstExpected ++ nontrapSecondExpected)
 #guard (retireInputs pinnedCycleMachine.toCycleMachine
   pinnedCycleMachine.toCycleMachine.init cycleInputs).length == 4
 #guard robTrace pinnedCycleMachine.toRobMachine
@@ -277,6 +308,9 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_inputs
 #print axioms pinned_packet_observations_normalize
+#print axioms pinned_packet_first_window_normalize
+#print axioms pinned_packet_second_window_normalize
+#print axioms pinned_packet_windows_append
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream
 #print axioms pinned_packet_trace

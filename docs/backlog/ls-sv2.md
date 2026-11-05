@@ -552,3 +552,30 @@ adaptation was introduced.
 **DECIDED:** keep flush progress as a filtered finite-prefix contract; flush
 cycles are explicit stutter in the architectural stream, and no fairness or
 flush resolution is selected by the generic bridge.
+
+## 2026-11-05-ls-sv2-23 — compose state-threaded RVFI packet windows
+
+Added `rvfiPacketStateAfter` and
+`rvfiPacketObservations_append` to `LeanModels/Refine/RvfiPacket.lean`.
+These definitions carry the packet machine's post-window state explicitly;
+they prove that flattening two adjacent windows neither drops nor replays a
+packet.  `normalizeRvfiPacketTrace_append` then composes successful
+normalization certificates, advancing the second window by the first
+window's retirement count.
+
+The PicoRV32 witness splits its four measured packets into two two-cycle
+windows, proves each window's normalization (including the carried state),
+and derives the combined certificate with the generic theorem.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs); the
+state-threading theorem has no axioms, and the composition theorem and
+witness report only existing `propext`/`Quot.sound` entries.  `python3
+tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff --check`
+pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** keep packet-window state threading in the generic RVFI adapter;
+streaming core captures must supply the carried state and the next order
+explicitly, while normalization remains the sole authority for validity and
+retirement order.

@@ -70,6 +70,51 @@ def rvfiPacketObservations {State : Type} (machine : RvfiPacketMachine State) :
       entries.map RvfiPacketEntry.observation ++
         rvfiPacketObservations machine state' cycles
 
+/-! ## State-threaded packet windows -/
+
+/-- The core state after a finite packet-cycle window.  Packet contents are
+discarded here; only the state transition is needed to continue a stream. -/
+def rvfiPacketStateAfter {State : Type} (machine : RvfiPacketMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, cycleInput :: cycles =>
+      rvfiPacketStateAfter machine (machine.step state cycleInput).1 cycles
+
+theorem rvfiPacketStateAfter_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    rvfiPacketStateAfter machine state (first ++ second) =
+      rvfiPacketStateAfter machine
+        (rvfiPacketStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons cycleInput first ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' entries =>
+          simp only [List.cons_append, rvfiPacketStateAfter, hstep]
+          exact ih state'
+
+/-- Flattening a packet stream across two windows retains the state produced
+by the first window, so no packet is dropped or replayed at the boundary. -/
+theorem rvfiPacketObservations_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    rvfiPacketObservations machine state (first ++ second) =
+      rvfiPacketObservations machine state first ++
+        rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons cycleInput first ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' entries =>
+          simp only [List.cons_append, rvfiPacketObservations,
+            rvfiPacketStateAfter, hstep]
+          rw [ih state']
+          rw [List.append_assoc]
+
+/-! ## Normalized packet-window composition -/
+
 /-- The tagged packet emitted at every cycle boundary, including empty
 packets.  This retains the packet boundaries needed by a ROB relation while
 `rvfiPacketObservations` is the flattened validation view. -/
@@ -225,6 +270,26 @@ theorem normalizeRvfiPacketTrace {State : Type}
   rw [machine.toPacketMachine_trace]
   exact normalizeRvfiTrace?_filterMap h
 
+/-- Two successful packet-window certificates compose at the carried RVFI
+order.  The state transition between windows is explicit, and the second
+window starts after the first window's retirement count. -/
+theorem normalizeRvfiPacketTrace_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state (first ++ second)) =
+      some (firstRetirements ++ secondRetirements) := by
+  rw [rvfiPacketObservations_append, normalizeRvfiTrace?_append]
+  simp [hfirst, hsecond]
+
 /-- A normalized packet's decoded commit tags are the consecutive prefix at
 the supplied starting order.  Bubbles do not enter the packet, while a
 retirement row contributes exactly the tag checked by normalization. -/
@@ -358,7 +423,10 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
+#print axioms LeanModels.Refine.rvfiPacketStateAfter_append
+#print axioms LeanModels.Refine.rvfiPacketObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

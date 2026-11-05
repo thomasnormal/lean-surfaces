@@ -1326,3 +1326,14 @@ the measured first and second packet windows.
 **DECIDED:** derive generic ROB tag-window composition from normalized
 retirement cardinality; packet boundaries remain available to packet-aware
 proofs, while the generic stream sees the same in-order prefix.
+
+## 2026-11-06-ls-sv2-60 — project generic ROB tags to architectural streams
+
+Added `robTags_retirements` and `robTags_inputs` to the generic ROB layer.
+Mapping the flattened tagged stream now recovers exactly the existing
+retirement and source-input projections.  The PicoRV32 witness checks both
+equalities for the packetized four-retirement stream.
+
+**DECIDED:** keep tag metadata as an observational refinement layer whose
+retirement and input erasures are definitionally aligned with the ROB
+architectural projections.

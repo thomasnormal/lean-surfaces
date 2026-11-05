@@ -182,6 +182,34 @@ theorem robTags_append {State : Type}
           rw [ih state']
           rw [List.append_assoc]
 
+/-- Erasing order and source inputs from the flattened tag stream recovers
+the ROB retirement projection. -/
+theorem robTags_retirements {State : Type}
+    (machine : RobMachine State) (state : State) (cycles : List Input) :
+    (robTags machine state cycles).map TaggedCommit.retirement =
+      robTrace machine state cycles := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' packet =>
+          simp only [robTags, robTrace, hstep, List.map_append]
+          rw [ih state']
+
+/-- Erasing order and retirement payloads from the flattened tag stream
+recovers the ROB input projection. -/
+theorem robTags_inputs {State : Type}
+    (machine : RobMachine State) (state : State) (cycles : List Input) :
+    (robTags machine state cycles).map TaggedCommit.input =
+      robInputs machine state cycles := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' packet =>
+          simp only [robTags, robInputs, hstep, List.map_append]
+          rw [ih state']
+
 theorem robStateAfter_append {State : Type}
     (machine : RobMachine State) (state : State)
     (first second : List Input) :
@@ -334,6 +362,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.tagged_packet_refines_state
 #print axioms LeanModels.Refine.robStateAfter_refines
 #print axioms LeanModels.Refine.robTags_append
+#print axioms LeanModels.Refine.robTags_retirements
+#print axioms LeanModels.Refine.robTags_inputs
 #print axioms LeanModels.Refine.robStateAfter_append
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append

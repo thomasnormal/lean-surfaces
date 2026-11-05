@@ -475,6 +475,8 @@ def runScriptClockMono (m : Module) (clock : List Int) (fuel : Nat) :
     .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
   else if !scriptCompoundDefsBoundBefore m m.topLevel.toList then
     .unsupported "a compound top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): its branch-sensitive test or iterable needs a control-shell admission before the model can decide the faithful runtime NameError"
+  else if !defsReachableBefore m then
+    .unsupported "a function body reaches a module definition before CPython has bound it, or the module redefines a function name; position-independent function tables cannot reproduce that runtime binding"
   else if !scriptFlushCoherent m then
     .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
   else

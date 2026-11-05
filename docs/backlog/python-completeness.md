@@ -8957,3 +8957,9 @@ DECIDED: admit positive float `ndigits == 43`; richer protocols remain loud.
 The script runner carries active frame depth in `World` and raises the pinned CPython 3.9 `RecursionError` at depth 1000 through its monadic call entry. The module shell resets the counter between completed top-level statements. Added `harness/scripts/recursion_limit_script.py`, whose former wrong answer was `3000` while CPython raises. The closed-function trunk remains a follow-up surface because its universal recursive specs need a depth parameter or hypothesis.
 
 DECIDED: model the default recursion limit; changing `sys.setrecursionlimit` remains outside the tier.
+
+## 2026-11-05-pycomplete-332 — refuse position-independent module definition hazards
+
+The script admission now inspects module function bodies before execution. A body that reaches a later module definition, or a module that redefines a function name, is refused because the static function table cannot reproduce CPython's sequential binding. Added forward-reference and redefinition fixtures; their old answers were respectively an incorrect value and two values instead of CPython's `NameError` and `1`/`2` sequence. Recursive self-calls and existing list-comprehension scripts remain admitted.
+
+DECIDED: make module definition ordering hazards loud until definitions become runtime-bound AST nodes. Class and namedtuple table ordering remains a later audit item.

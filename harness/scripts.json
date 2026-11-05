@@ -13,6 +13,16 @@
     "note": "CPython 3.9 raises RecursionError at its default recursion limit of 1000"
   },
   {
+    "file": "harness/scripts/def_table_forward.py",
+    "expect": "unsupported",
+    "note": "admission refuses a function body that reaches a later module definition"
+  },
+  {
+    "file": "harness/scripts/def_table_rebind.py",
+    "expect": "unsupported",
+    "note": "admission refuses a module-level function redefinition"
+  },
+  {
     "file": "harness/scripts/dict_script.py",
     "expect": "match"
   },

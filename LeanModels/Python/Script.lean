@@ -297,6 +297,26 @@ def defBindEnd (m : Module) (n : String) : Option Nat :=
         if nt.name == n then some nt.span.endLineno else Option.none)
   ends.foldl (fun acc e => some (max (acc.getD 0) e)) Option.none
 
+/-- A conservative admission for module-level definitions reached through a
+function body.  The runtime tables are position-independent, but CPython
+binds each definition at its statement.  A body may therefore call a module
+definition only when that definition ended before the caller's definition;
+recursive self-calls are the one intentional exception.  Duplicate plain
+definition names are refused because the static table cannot reproduce a
+position-sensitive rebind. -/
+def defsReachableBefore (m : Module) : Bool :=
+  let names := m.functions.toList.map FunctionDefn.name
+  let duplicate := names.any fun n => names.count n > 1
+  if duplicate then false
+  else
+    m.functions.toList.all fun f =>
+      let locals := f.params.toList.map Param.arg ++ Stmt.assignedNamesList f.body.toList
+      (Stmt.allNamesList f.body.toList).all fun n =>
+        if n.startsWith "<" || n == f.name || locals.contains n then true
+        else match defBindEnd m n with
+        | some e => decide (e < f.span.lineno)
+        | Option.none => true
+
 /-- ORDERED ADMISSION (2026-08-12 — replaces the blanket "every definition
 precedes all live code"). `Module` splits definitions out of `topLevel`
 into position-independent tables, so the model can reach a function CPython
@@ -1058,6 +1078,8 @@ def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit
     .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
   else if !scriptCompoundDefsBoundBefore m m.topLevel.toList then
     .unsupported "a compound top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): its branch-sensitive test or iterable needs a control-shell admission before the model can decide the faithful runtime NameError"
+  else if !defsReachableBefore m then
+    .unsupported "a function body reaches a module definition before CPython has bound it, or the module redefines a function name; position-independent function tables cannot reproduce that runtime binding"
   else if !scriptFlushCoherent m then
     .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
   else

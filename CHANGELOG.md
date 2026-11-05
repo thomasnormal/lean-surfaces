@@ -2982,3 +2982,6 @@ change is listed here under **Changed** or **Removed**.
 
 - Python: model CPython 3.9's default recursion limit (1000) in nested calls;
   deep recursion now raises `RecursionError` instead of returning an unbounded value.
+- Python: refuse script modules whose function bodies reach later definitions or
+  redefine a function name; static function tables no longer silently answer
+  through CPython's sequential binding.

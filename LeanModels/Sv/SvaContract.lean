@@ -75,6 +75,13 @@ private def simpleBool (text : String) : Except String SvaBool :=
     (simpleAtom inner).map (fun b => match b with
       | .signal name => .fell name
       | _ => .lit false)
+  else if n.startsWith "$stable(" && n.endsWith ")" then
+    let inner := match n.splitOn "$stable(" with
+      | ["", rest] => rest.dropEnd 1 |>.toString
+      | _ => ""
+    (simpleAtom inner).map (fun b => match b with
+      | .signal name => .stable name
+      | _ => .lit false)
   else simpleAtom n
 
 private def simpleSeq (text : String) : Except String SvaSeq :=
@@ -135,7 +142,8 @@ def parseSimple (source : PProperty) : Except String SvaContract := do
   let some bodyText := afterEdge[1]?
     | throw "SVA: missing implication body"
   let body := (bodyText ++
-    (if bodyText.contains "$past(" || bodyText.contains "$rose(" || bodyText.contains "$fell(" then ")" else "")).trimAscii.toString
+    (if bodyText.contains "$past(" || bodyText.contains "$rose(" ||
+        bodyText.contains "$fell(" || bodyText.contains "$stable(" then ")" else "")).trimAscii.toString
   let operator := if body.contains "|=>" then "|=>" else "|->"
   let implication := body.splitOn operator
   match implication with
@@ -249,6 +257,12 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) a |-> $fell(b));" } with
   | .ok C => match C.check.property with
     | .implies _ (.atom (.fell "b")) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a |-> $stable(b));" } with
+  | .ok C => match C.check.property with
+    | .implies _ (.atom (.stable "b")) => true
     | _ => false
   | .error _ => false
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The C++ differential corpus now pins nested member-call receivers as a
+  recorded refusal until typed result-object, lifetime, and effect sequencing
+  evidence is available.
+
 - C++ constructor metadata now requires a structured selected
   `CXXConstructorDecl` handle on `CXXConstructExpr`; the pinned Clang JSON
   shape with only `ctorType` is recorded as a loud refusal instead of a

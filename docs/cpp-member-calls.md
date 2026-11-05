@@ -102,6 +102,10 @@ witness today. The kernel witness keeps it loud as `unsupportedReceiver` until
 those records and a two-call sequencing rule exist, while the ordinary direct
 receiver and field-base tiers remain unchanged.
 
+The differential corpus also pins this boundary with a compilable
+`owner.parent().read()` witness. The native expression succeeds while the
+Lean admission reports the recorded `unsupportedReceiver` refusal.
+
 The other 472 refusals in that run are 314 unsupported argument lists, 155
 missing `this` owners, and 2 malformed names. This is source pricing only:
 the census still performs no receiver conversion, object lookup, or call.

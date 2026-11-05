@@ -3324,6 +3324,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-call-chain-refusal",
+    "kind": "expression",
+    "corpus": "rung-7 refusal",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "nestedMemberCallRefusal",
+    "cpp_source": "struct Parent { int read() const { return 1; } }; struct Owner { Parent parent() const { return {}; } }; bool callable_witness() { Owner owner; return owner.parent().read() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 7
+  },
+  {
     "id": "expression.member-getter-lvalue-cast-call",
     "kind": "expression",
     "corpus": "rung-7 witness",

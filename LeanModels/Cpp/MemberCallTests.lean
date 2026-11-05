@@ -1160,6 +1160,12 @@ def memberGetterCanonicalWitness : Bool :=
 
 #guard memberGetterCanonicalWitness
 
+def nestedMemberCallRefusal : Bool :=
+  !(syntaxError (rawNestedCall methodHandle.value methodHandle.value receiverHandle.value "read") ==
+    some .unsupportedReceiver)
+
+#guard !nestedMemberCallRefusal
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

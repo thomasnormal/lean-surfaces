@@ -135,6 +135,15 @@ theorem wide_packet_state_projection :
   have hstate := packet_refines_state hp
   exact hrel.1.trans hstate
 
+theorem wide_packet_state_after_refines :
+    packetRel
+      (packetStateAfter widePacketMachine widePacketMachine.init [addiInput])
+      (machineStateAfter rvMachine rvMachine.init
+        (packetInputs widePacketMachine widePacketMachine.init [addiInput])) := by
+  exact LeanModels.Refine.packetStateAfter_refines wide_packet_step_refines
+    widePacketMachine.init rvMachine.init [addiInput]
+    (by exact ⟨rfl, rfl, rfl⟩)
+
 theorem wide_packet_windows_state :
     packetStateAfter widePacketMachine widePacketMachine.init
         ([addiInput] ++ [addiInput]) =
@@ -175,6 +184,7 @@ theorem wide_packet_windows_inputs :
 #print axioms packet_one_cycle
 #print axioms wide_packet_step_refines
 #print axioms wide_packet_one_cycle
+#print axioms wide_packet_state_after_refines
 #print axioms wide_packet_windows_state
 #print axioms wide_packet_windows_trace
 #print axioms wide_packet_windows_inputs

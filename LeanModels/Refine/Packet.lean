@@ -189,10 +189,32 @@ theorem packet_trace_refines {CoreState IsaState : Type}
       rcases hs with ⟨isaState', hrel', hpacket⟩
       rw [packet_refines_trace_append hpacket, ih coreState' isaState' hrel']
 
+theorem packetStateAfter_refines {CoreState IsaState : Type}
+    {core : PacketMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Prop} {admit : Input → Prop}
+    (h : PacketStepRefines core isa rel admit) :
+    ∀ (coreState : CoreState) (isaState : IsaState) (cycles : List Input),
+      rel coreState isaState →
+      rel (packetStateAfter core coreState cycles)
+        (machineStateAfter isa isaState
+          (packetInputs core coreState cycles)) := by
+  intro coreState isaState cycles hrel
+  induction cycles generalizing coreState isaState with
+  | nil => exact hrel
+  | cons cycleInput rest ih =>
+      have hs := h.2 coreState isaState cycleInput hrel
+      rcases hC : core.step coreState cycleInput with ⟨coreState', packet⟩
+      simp only [packetStateAfter, packetInputs, hC]
+      simp only [hC] at hs
+      rcases hs with ⟨isaState', hrel', hpacket⟩
+      rw [machineStateAfter_append, ← packet_refines_state hpacket]
+      exact ih coreState' isaState' hrel'
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.packet_trace_refines
 #print axioms LeanModels.Refine.packet_refines_state
+#print axioms LeanModels.Refine.packetStateAfter_refines
 #print axioms LeanModels.Refine.packetStateAfter_append
 #print axioms LeanModels.Refine.packetTrace_append
 #print axioms LeanModels.Refine.packetInputs_append

@@ -979,3 +979,23 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep ROB order accounting in the state-transport theorem; the
 architectural input stream, rather than physical completion order, determines
 the counter advance.
+
+## 2026-11-05-ls-sv2-42 — transport packet-machine relations across windows
+
+Added `packetStateAfter_refines` to `LeanModels/Refine/Packet.lean`.  A
+`PacketStepRefines` certificate now transports the core/ISA relation across a
+finite packet-machine window, using each packet certificate to advance the ISA
+over exactly its emitted inputs.
+
+The toy wide-packet witness applies the theorem to one two-entry packet and
+checks the resulting relation against the packet machine's input projection.
+
+**MEASURED:** `lake build LeanModels.Refine.Packet
+Examples.«system-verilog».cores.toy_rv32i.packet_proof` passed (28 jobs), and
+`packetStateAfter_refines` reports only the existing `Quot.sound` dependency.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git
+diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation
+was introduced.
+
+**DECIDED:** keep packet-machine relation transport above individual packet
+certificates; the emitted input stream remains the sole driver of ISA state.

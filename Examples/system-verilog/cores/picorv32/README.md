@@ -141,3 +141,9 @@ state carries the byte memory across instructions, and
 `threadRvInputs` supplies each preceding memory view.  The separate
 `directRun` certificate records the concrete write/read values.
 
+The generic RVFI normalizer is also exercised on two observation windows.  The
+first ends at order 1; the second starts at order 2, and
+`normalizeRvfiTrace?_append` proves that their concatenation is the same
+four-row normalized stream.  This is the chunking rule a streamed RVFI capture
+can use without resetting the architectural order.
+

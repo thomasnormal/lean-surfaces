@@ -241,3 +241,26 @@ loader adaptation was introduced.
 **DECIDED:** use `RvMemoryState` as the memory-threading boundary for later
 in-order and out-of-order core proofs.  The symbolic PicoRV32 loader remains
 blocked at the unchanged unpacked-register-memory and generate-member routes.
+
+## 2026-11-05-ls-sv2-11 — compose RVFI normalization across trace windows
+
+The inbox was reread before this item; the current exact PicoRV32 envelope was
+also re-probed and still reports the unchanged `cpuregs` unpacked-memory wall
+and `memory cycle route does not yet admit generate members`.  Added the
+generic theorem `normalizeRvfiTrace?_append` to `LeanModels/Refine/Rvfi.lean`.
+It states that normalizing `first ++ second` is equivalent to normalizing the
+first window, advancing the expected order by its retirement count, and then
+normalizing the second window.  Invalid rows do not advance that count.
+
+The PicoRV32 witness splits the four non-trapping rows after order 1 and
+proves both chunk certificates and their composition, so a streamed capture
+can be checked window by window without resetting order or sorting rows.
+
+**MEASURED:** the focused Rvfi/PicoRV32 build, docs check, backlog-index check,
+and `git diff --check` passed.  The theorem reports remain within the standard
+`propext`/`Classical.choice`/`Quot.sound` ledger; no new axiom, RTL edit, or
+loader adaptation was introduced.
+
+**DECIDED:** keep chunk composition in the generic observation layer and keep
+the concrete window split in the PicoRV32 witness.  The symbolic core remains
+blocked on the owner lane's unchanged memory/generate route.

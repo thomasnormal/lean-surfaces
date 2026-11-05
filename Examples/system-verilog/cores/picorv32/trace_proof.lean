@@ -50,6 +50,14 @@ def nontrapObservations : List RvfiObservation := observations.take 4
 
 def nontrapExpected : List Retirement := expected.take 4
 
+def nontrapFirstObservations : List RvfiObservation := [addi1, store1]
+
+def nontrapSecondObservations : List RvfiObservation := [load1, addi2]
+
+def nontrapFirstExpected : List Retirement := expected.take 2
+
+def nontrapSecondExpected : List Retirement := (expected.drop 2).take 2
+
 def cycleObservations : List RvfiObservation :=
   [ bubbleObservation, addi1, bubbleObservation, store1
   , bubbleObservation, load1, bubbleObservation, addi2 ]
@@ -75,6 +83,22 @@ theorem pinned_nontrap_rows_normalize :
 theorem pinned_nontrap_trace_certificate :
     normalizeRvfiTrace? 0 nontrapObservations = some nontrapExpected := by
   decide
+
+theorem pinned_nontrap_trace_chunks :
+    normalizeRvfiTrace? 0 nontrapFirstObservations = some nontrapFirstExpected ∧
+    normalizeRvfiTrace? 2 nontrapSecondObservations = some nontrapSecondExpected := by
+  decide
+
+theorem pinned_nontrap_trace_append :
+    normalizeRvfiTrace? 0
+        (nontrapFirstObservations ++ nontrapSecondObservations) =
+      some (nontrapFirstExpected ++ nontrapSecondExpected) := by
+  rw [normalizeRvfiTrace?_append]
+  rw [pinned_nontrap_trace_chunks.1]
+  simp only [Option.map, Nat.zero_add]
+  have hlen : nontrapFirstExpected.length = 2 := by decide
+  rw [hlen]
+  rw [pinned_nontrap_trace_chunks.2]
 
 /-- The measured non-trapping PicoRV32 stream has exactly the ISA effects. -/
 theorem pinned_nontrap_trace_refines_isa :
@@ -129,6 +153,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #guard trace rvMachine rvMachine.init nontrapInputs == nontrapExpected
 #guard (directRun memZero nontrapMemoryRequests).2 == nontrapMemoryEffects
 #guard normalizeRvfiTrace? 0 nontrapObservations == some nontrapExpected
+#guard normalizeRvfiTrace? 2 nontrapSecondObservations == some nontrapSecondExpected
 #guard (retireInputs pinnedCycleMachine.toCycleMachine
   pinnedCycleMachine.toCycleMachine.init cycleInputs).length == 4
 #guard normalizeRvfiTrace? 0 nontrapObservations ==
@@ -136,6 +161,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 
 #print axioms pinned_nontrap_rows_normalize
 #print axioms pinned_nontrap_trace_certificate
+#print axioms pinned_nontrap_trace_chunks
+#print axioms pinned_nontrap_trace_append
 #print axioms pinned_nontrap_trace_refines_isa
 #print axioms pinned_nontrap_memory_effects
 #print axioms pinned_cycle_retire_inputs

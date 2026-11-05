@@ -207,6 +207,49 @@ theorem normalizeRvfiTrace?_iff {start : Nat} {observations : List RvfiObservati
     | retire hvalid horder hretirement htail ih =>
         simp [normalizeRvfiTrace?, hvalid, horder, hretirement, ih]
 
+/-- Normalization is compositional across finite observation windows.  The
+second window starts after the number of retirements in the first, so bubbles
+do not affect the order carried into the next chunk. -/
+theorem normalizeRvfiTrace?_append (start : Nat)
+    (first second : List RvfiObservation) :
+    normalizeRvfiTrace? start (first ++ second) =
+      match normalizeRvfiTrace? start first with
+      | none => none
+      | some retirements =>
+          (normalizeRvfiTrace? (start + retirements.length) second).map
+            (fun tail => retirements ++ tail) := by
+  induction first generalizing start with
+  | nil =>
+      simp [normalizeRvfiTrace?]
+  | cons observation observations ih =>
+      by_cases hv : observation.valid = true
+      · simp [normalizeRvfiTrace?, hv]
+        by_cases ho : observation.order = start
+        · simp [ho]
+          cases hret : observation.toRetirement? with
+          | none => simp
+          | some retirement =>
+              cases htail : normalizeRvfiTrace? (start + 1) observations with
+              | none =>
+                  rw [ih (start := start + 1), htail]
+              | some tail =>
+                  rw [ih (start := start + 1)]
+                  simp only [htail]
+                  simp only [List.length_cons]
+                  have hindex : start + 1 + tail.length =
+                      start + (tail.length + 1) := by omega
+                  rw [hindex]
+                  cases h2 : normalizeRvfiTrace?
+                      (start + (tail.length + 1)) second with
+                  | none => simp
+                  | some tail2 => simp
+        · simp [ho]
+      · have hv' : observation.valid = false := by
+          cases hval : observation.valid with
+          | false => exact rfl
+          | true => exact False.elim (hv hval)
+        simp [normalizeRvfiTrace?, hv', ih]
+
 /-! ## Feeding packed observations into the cycle bridge -/
 
 /-- A cycle-level core whose commit port is the packed RVFI shape. -/
@@ -428,3 +471,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
+#print axioms LeanModels.Refine.normalizeRvfiTrace?_append

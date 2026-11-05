@@ -182,6 +182,39 @@ theorem normalizeRvfiRobTrace_input_length {State : Type}
   rw [robTrace_length_eq_robInputs_length] at hlength
   exact hlength
 
+/-- Combine retained RVFI/ROB state transport with normalization.  The
+normalized retirement count is therefore the exact increment of the carried
+ROB order counter. -/
+theorem rvfiRobStateAfter_refines_normalized
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (start : Nat)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (state : State) (isaState : IsaState)
+    (hrel : rel state isaState start)
+    (inputs : List Input) (retirements : List Retirement)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    ∃ finalOrder,
+      rel (rvfiStateAfter machine state inputs)
+        (machineStateAfter isa isaState
+          (retireInputs machine.toCycleMachine state inputs)) finalOrder ∧
+      finalOrder = start + retirements.length := by
+  rcases rvfiRobStateAfter_refines machine isa rel admit start hrob
+      state isaState start inputs hrel with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, hfinal, ?_⟩
+  have hlength :
+      (retireInputs machine.toCycleMachine state inputs).length =
+        retirements.length := by
+    rw [← RvfiCycleMachine.toRobMachine_inputs]
+    exact normalizeRvfiRobTrace_input_length machine state inputs hobs
+  calc
+    finalOrder = start +
+        (retireInputs machine.toCycleMachine state inputs).length := horder
+    _ = start + retirements.length := by rw [hlength]
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
@@ -192,3 +225,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_input_length
+#print axioms LeanModels.Refine.rvfiRobStateAfter_refines_normalized

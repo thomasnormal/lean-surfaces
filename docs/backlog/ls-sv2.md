@@ -1175,3 +1175,25 @@ introduced.
 **DECIDED:** derive ROB order advancement from validated retirement cardinality;
 bubbles and refused observations contribute to neither projection, so no
 unchecked length or hidden repair enters the order certificate.
+
+## 2026-11-05-ls-sv2-51 — combine normalized RVFI state and order transport
+
+Added `rvfiRobStateAfter_refines_normalized` to
+`LeanModels/Refine/RvfiRob.lean`.  A `RobStepRefines` relation transported over
+a single-channel RVFI window now returns a final related state whose order
+counter is exactly `start + retirements.length` when the packed window has
+successfully normalized.
+
+The PicoRV32 witness checks the corresponding zero-based order offset for its
+measured four-retirement stream.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and the
+combined state/order theorem reports only the existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** make normalization the source of the order-count equality while
+retaining the generic ROB relation and state transport as independent proof
+obligations.

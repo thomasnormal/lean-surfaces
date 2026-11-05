@@ -144,3 +144,7 @@ def round_float_twenty_seven(value):
 
 def round_float_twenty_eight(value):
     return round(value, 28)
+
+
+def round_float_twenty_nine(value):
+    return round(value, 29)

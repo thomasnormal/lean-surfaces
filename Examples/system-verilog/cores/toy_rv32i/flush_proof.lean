@@ -63,6 +63,35 @@ theorem flush_trace_one :
       (by exact ⟨rfl, rfl, rfl⟩)
   simpa [flushMachine, flushTrace, flushInputs] using h
 
+theorem flush_windows_state :
+    flushStateAfter flushMachine flushMachine.init
+        ([addiInput] ++ [addiInput]) =
+      flushStateAfter flushMachine
+        (flushStateAfter flushMachine flushMachine.init [addiInput])
+        [addiInput] := by
+  exact flushStateAfter_append flushMachine flushMachine.init
+    [addiInput] [addiInput]
+
+theorem flush_windows_trace :
+    flushTrace flushMachine flushMachine.init
+        ([addiInput] ++ [addiInput]) =
+      flushTrace flushMachine flushMachine.init [addiInput] ++
+        flushTrace flushMachine
+          (flushStateAfter flushMachine flushMachine.init [addiInput])
+          [addiInput] := by
+  exact flushTrace_append flushMachine flushMachine.init
+    [addiInput] [addiInput]
+
+theorem flush_windows_inputs :
+    flushInputs flushMachine flushMachine.init
+        ([addiInput] ++ [addiInput]) =
+      flushInputs flushMachine flushMachine.init [addiInput] ++
+        flushInputs flushMachine
+          (flushStateAfter flushMachine flushMachine.init [addiInput])
+          [addiInput] := by
+  exact flushInputs_append flushMachine flushMachine.init
+    [addiInput] [addiInput]
+
 def flushSchedule : Nat → Input := fun _ => addiInput
 
 theorem flush_inputs_phase_one (a : ArchState) (n : Nat) :
@@ -106,11 +135,18 @@ theorem flush_progress_trace_prefix :
 
 #guard (flushTrace flushMachine flushMachine.init [addiInput, addiInput]).length == 1
 #guard (flushInputs flushMachine flushMachine.init [addiInput, addiInput]).length == 1
+#guard (flushTrace flushMachine flushMachine.init
+  ([addiInput] ++ [addiInput])).length == 1
+#guard (flushInputs flushMachine flushMachine.init
+  ([addiInput] ++ [addiInput])).length == 1
 #guard (flushInputs flushMachine flushMachine.init
     (schedulePrefix flushSchedule 4)).length == 3
 
 #print axioms flush_step_refines
 #print axioms flush_trace_one
+#print axioms flush_windows_state
+#print axioms flush_windows_trace
+#print axioms flush_windows_inputs
 #print axioms flush_progress
 #print axioms flush_progress_trace_prefix
 

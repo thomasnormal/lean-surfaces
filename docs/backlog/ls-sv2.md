@@ -763,3 +763,25 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep cycle-window composition below packetization; stutter
 behavior is retained in the cycle layer, while packet and ROB layers consume
 the explicitly threaded post-window state.
+
+## 2026-11-05-ls-sv2-32 — compose flush-aware cycle windows
+
+Added `flushStateAfter`, `flushStateAfter_append`, `flushTrace_append`, and
+`flushInputs_append` to `LeanModels/Refine/Flush.lean`.  The bridges carry
+state across adjacent flush/retirement windows, preserving flush stutter and
+packet input order without turning a flush into an ISA step.
+
+The toy flush witness applies all three append theorems to its initial flush
+window and following retirement window, checking the one-entry architectural
+stream and its filtered input stream.
+
+**MEASURED:** `lake build LeanModels.Refine.Flush
+Examples.«system-verilog».cores.toy_rv32i.flush_proof` passed (29 jobs).  The
+state theorem has no axioms; trace/input composition reports only existing
+`propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep flush-window composition at the named flush boundary;
+flushes remain explicit architectural stutter and packet refinement handles
+only the events that actually retire.

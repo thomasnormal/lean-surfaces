@@ -44,6 +44,80 @@ def flushInputs {State : Type} (machine : FlushMachine State) :
       | .retire packet =>
           packet.map Prod.fst ++ flushInputs machine state' inputs
 
+/-! ## State-threaded flush windows -/
+
+/-- The state after a finite flush/retirement window.  Flushes still advance
+the core state even though they contribute no architectural input. -/
+def flushStateAfter {State : Type} (machine : FlushMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      flushStateAfter machine (machine.step state input).1 inputs
+
+theorem flushStateAfter_append {State : Type}
+    (machine : FlushMachine State) (state : State)
+    (first second : List Input) :
+    flushStateAfter machine state (first ++ second) =
+      flushStateAfter machine
+        (flushStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' event =>
+          simp only [List.cons_append, flushStateAfter, hstep]
+          exact ih state'
+
+theorem flushTrace_append {State : Type}
+    (machine : FlushMachine State) (state : State)
+    (first second : List Input) :
+    flushTrace machine state (first ++ second) =
+      flushTrace machine state first ++
+        flushTrace machine (flushStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' event =>
+          simp only [List.cons_append, flushTrace, flushStateAfter, hstep]
+          cases event with
+          | flush =>
+              change flushTrace machine state' (first ++ second) =
+                flushTrace machine state' first ++
+                  flushTrace machine (flushStateAfter machine state' first) second
+              exact ih state'
+          | retire packet =>
+              change packet.map Prod.snd ++ flushTrace machine state' (first ++ second) =
+                (packet.map Prod.snd ++ flushTrace machine state' first) ++
+                  flushTrace machine (flushStateAfter machine state' first) second
+              rw [ih state']
+              rw [List.append_assoc]
+
+theorem flushInputs_append {State : Type}
+    (machine : FlushMachine State) (state : State)
+    (first second : List Input) :
+    flushInputs machine state (first ++ second) =
+      flushInputs machine state first ++
+        flushInputs machine (flushStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' event =>
+          simp only [List.cons_append, flushInputs, flushStateAfter, hstep]
+          cases event with
+          | flush =>
+              change flushInputs machine state' (first ++ second) =
+                flushInputs machine state' first ++
+                  flushInputs machine (flushStateAfter machine state' first) second
+              exact ih state'
+          | retire packet =>
+              change packet.map Prod.fst ++ flushInputs machine state' (first ++ second) =
+                (packet.map Prod.fst ++ flushInputs machine state' first) ++
+                  flushInputs machine (flushStateAfter machine state' first) second
+              rw [ih state']
+              rw [List.append_assoc]
+
 def FlushStepRefines {CoreState IsaState : Type}
     (core : FlushMachine CoreState) (isa : Machine IsaState)
     (rel : CoreState → IsaState → Prop) (admit : Input → Prop) : Prop :=
@@ -84,3 +158,6 @@ theorem flush_trace_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.flush_trace_refines
+#print axioms LeanModels.Refine.flushStateAfter_append
+#print axioms LeanModels.Refine.flushTrace_append
+#print axioms LeanModels.Refine.flushInputs_append

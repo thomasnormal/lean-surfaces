@@ -72,7 +72,10 @@ wired into the edge evaluator.
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
 cell and an out-of-range all-x/no-op access. Dynamic indices, partial array
-targets, and process scheduling remain explicit boundaries.
+targets, and process scheduling remain explicit boundaries. `Kernel/MemProc`
+now carries those targets through a source-shaped NBA queue and commits them
+through `MemState`; scalar RHS evaluation and direct cell reads are covered by
+kernel guards, while compound memory expressions remain loud.
 
 ## Ladder
 

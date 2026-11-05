@@ -44,6 +44,15 @@ constant operation classes. A guard covers the parameterized sign-extension
 replication shape used by downstream proofs, so a free replication count is
 classified as a signal-context refusal without requiring private helper names.
 
+## F4: procedural memory NBA adapter
+
+The E kernel now has a source-shaped one-rank memory process adapter. Memory
+NBA entries retain their declaration and `PLhs.arrayElem` target, enqueue
+without flattening, and commit through `MemState`. Scalar RHS values use the
+existing expression evaluator; direct memory-cell reads are explicit, while
+compound memory expressions remain loud until their source-shaped evaluator is
+defined.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

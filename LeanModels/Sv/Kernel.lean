@@ -3,6 +3,7 @@ import LeanModels.Sv.Kernel.Core1Disc
 import LeanModels.Sv.Kernel.Core1Obs
 import LeanModels.Sv.Kernel.CoreMem
 import LeanModels.Sv.Kernel.MemElab
+import LeanModels.Sv.Kernel.MemProc
 import LeanModels.Sv.Comb2Fuel
 
 /-!

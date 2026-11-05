@@ -49,6 +49,16 @@ def fetchAt (m : Mem) (pc : BitVec 32) : Fetched :=
   else
     .half h
 
+/-- The decode-table row exercised by a fetched parcel.  Compressed parcels
+carry their original halfword in `Fetched`, so use the expansion only for
+row attribution; execution still goes through `Fetched.decode`. -/
+def fetchedRow? : Fetched → Option String
+  | .word w => (decodeTable.find? (·.matches w)).map (·.mnemonic)
+  | .half h => (expandC h).bind fun w =>
+      (decodeTable.find? (·.matches w)).map (·.mnemonic)
+
+def modelDecodeUniverse : Array String := decodeTable.toArray.map (·.mnemonic)
+
 /-- One case's observable trace. -/
 structure CaseOut where
   name  : String
@@ -57,6 +67,8 @@ structure CaseOut where
   pcs   : Array Nat := #[]
   gprs  : Array (Nat × Nat) := #[]
   mems  : Array (Nat × Nat × Nat) := #[]
+  decodeRows : Array String := #[]
+  decodeUniverse : Array String := modelDecodeUniverse
   regs  : Array Nat := #[]
   csrs  : List (String × Nat) := []
 
@@ -72,6 +84,8 @@ def CaseOut.toJson (o : CaseOut) : Json :=
     , ("gprs", Json.arr (o.gprs.map fun (r, v) => Json.arr #[jnat r, jnat v]))
     , ("mems", Json.arr (o.mems.map fun (a, n, v) =>
         Json.arr #[jnat a, jnat n, jnat v]))
+    , ("decodeRows", Json.arr (o.decodeRows.map Json.str))
+    , ("decodeUniverse", Json.arr (o.decodeUniverse.map Json.str))
     , ("regs", Json.arr (o.regs.map jnat))
     , ("csrs", Json.mkObj (o.csrs.map fun (k, v) => (k, jnat v))) ]
 
@@ -97,6 +111,9 @@ def runCase (name : String) (entry tohost irqgen : Nat) (maxSteps : Nat)
         | _ => true
       let out := { out with steps := out.steps + 1 }
       let out := if retired then { out with pcs := out.pcs.push s.pc.toNat } else out
+      let out := match if retired then fetchedRow? parcel else none with
+        | some row => { out with decodeRows := out.decodeRows.push row }
+        | none => out
       -- value-changing register writes, in index order (at most one per step)
       let out := (List.range 32).foldl (init := out) fun out r =>
         let r : Reg := ⟨r % 32, Nat.mod_lt _ (by omega)⟩

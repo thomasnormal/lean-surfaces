@@ -18,6 +18,7 @@ re-derived in this tree's idiom.
 | `LeanModels/Rv/Csr.lean` | `CsrBehavior` rows with WARL legalization as data (`legalize_<csr>` shape), `csrTable` for {mstatus, mie, mtvec, mscratch, mepc, mcause} |
 | `LeanModels/Rv/Priv.lean` | `Cause`, `trapEnter`/`mret` (the mstatus stack dance, defined once), `trapVector`, `pendingSet`/`irqPriority`/`selectIrq`/`takeInterrupt?` |
 | `LeanModels/Rv/Step.lean` | `Fetched` parcels, CSR read-modify-write, profile-selected WFI wake, the full architectural step `isaStepWith` (with the CV32E40P wrapper `isaStep`) and its projection index |
+| `LeanModels/Isa/RiscV/Oracle.lean` | Explicit platform, reservation, randomness, and floating-point parameters for the generated Sail support boundary; no default implementation |
 
 The projection table (which def feeds which gallery spec) lives in
 `Step.lean`'s module docstring.
@@ -52,7 +53,11 @@ device (MSI/MEI set/clear by store), mirrored by a platform layer in the
 Lean runner — dispatch timing, vectoring, and masking are compared, not
 just CSR values.
 
-**Result: 257 cases, 257 PASS** (seeded random + corner vectors per family:
+For hosts without the gitignored Sail binary, `python3 harness/rv/diff_test.py
+--coverage-only` still runs the Lean side and checks decoder-row coverage; it
+does not claim an oracle result.
+
+**Recorded oracle result: 257 cases, 257 PASS** (seeded random + corner vectors per family:
 ALU R/I, LUI/AUIPC, all eight M ops with the §7.2 div/rem quirk battery,
 branches taken/not-taken/misaligned-target/into-own-encoding, JAL/JALR
 (odd-target bit-0 clearing, rd = rs1), loads/stores at every width and
@@ -65,6 +70,15 @@ direct, MEI-beats-MSI priority, mie/mstatus masking, mid-RVC-stream
 dispatch), WFI wake, and the x0-write-discard kernel. A deliberate
 mutation of the runner's fetch path makes the harness fail, so it detects
 what it claims to detect.
+
+The harness now also attributes every retired parcel to the model's
+`decodeTable` row and requires all rows to appear in at least one passing Sail
+case. `python3 harness/rv/diff_test.py --coverage-only` performs the model-side
+check without requiring the oracle. On the deterministic 257-case corpus it
+observed **57/57 rows** (the full table, no missing rows). The local Sail
+binary was absent when this gate was added, so that measurement is coverage
+attribution, not a new oracle PASS claim; the recorded 257/257 result above
+remains the last Sail comparison.
 
 ### Divergences found and their resolutions
 

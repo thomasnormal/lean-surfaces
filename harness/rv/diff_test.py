@@ -38,6 +38,11 @@ The same bytes go to both sides: to sail as a handcrafted ELF (with the
 * the final 32-entry register file (plus the x0 = 0 kernel invariant),
 * termination via the HTIF store pair.
 
+The Lean runner also reports the ``decodeTable`` row attributed to every
+retired parcel and the complete model row universe. A run fails unless every
+row has at least one passing Sail comparison; this prevents an aggregate case
+count from hiding an unexercised decoder row.
+
 Known WARL scope divergences (CV32E40P RTL choice vs sail's choice, both
 legal; vectors below stay inside the agreeing subset, the CV32E40P-specific
 behavior is pinned by ``#guard``s in LeanModels/Rv/Csr.lean and documented
@@ -62,6 +67,7 @@ in docs/rv-model.md):
 Usage:  python3 harness/rv/diff_test.py [--no-build] [--only PREFIX]
                                         [--sail BIN] [--seed N] [--keep DIR] [-v]
         python3 harness/rv/diff_test.py --self-test [--seed N]
+        python3 harness/rv/diff_test.py --coverage-only [--seed N]
 Exits non-zero on any divergence. Python 3.9 compatible.
 """
 
@@ -912,8 +918,20 @@ def run_lean(cases, workdir):
         rec = json.loads(line)
         rec["gprs"] = [list(x) for x in rec["gprs"]]
         rec["mems"] = [list(x) for x in rec["mems"]]
+        rec["decodeRows"] = list(rec.get("decodeRows", []))
+        rec["decodeUniverse"] = list(rec.get("decodeUniverse", []))
         out[rec["name"]] = rec
     return out
+
+
+def decode_coverage(lean_out):
+    """Return (model rows, rows seen in the supplied case results)."""
+    expected = set()
+    observed = set()
+    for result in lean_out.values():
+        expected.update(result.get("decodeUniverse", []))
+        observed.update(result.get("decodeRows", []))
+    return expected, observed
 
 # ---------------------------------------------------------------------------
 # Comparison
@@ -966,6 +984,8 @@ def main():
     ap.add_argument("--seed", type=int, default=0xC0FFEE)
     ap.add_argument("--self-test", action="store_true",
                     help="check that gen_cases(--seed) is deterministic and exit")
+    ap.add_argument("--coverage-only", action="store_true",
+                    help="run the Lean side and check decoder-row coverage without Sail")
     ap.add_argument("--_fingerprint", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--keep", default=None, help="keep work artifacts in this directory")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -976,6 +996,30 @@ def main():
         return 0
     if args.self_test:
         return _self_test(args.seed)
+
+    if args.coverage_only:
+        cases = gen_cases(args.seed)
+        if args.only:
+            cases = [c for c in cases if c["name"].startswith(args.only)]
+        if not cases:
+            print("no cases selected")
+            return 1
+        workdir = args.keep or tempfile.mkdtemp(prefix="rv_coverage_")
+        if args.keep:
+            os.makedirs(workdir, exist_ok=True)
+        try:
+            lean_out = run_lean(cases, workdir)
+            expected, observed = decode_coverage(lean_out)
+            missing = sorted(expected - observed)
+            print("rv-harness: decode rows covered %d/%d" %
+                  (len(expected) - len(missing), len(expected)))
+            if missing:
+                print("rv-harness: missing rows: %s" % ", ".join(missing))
+                return 1
+            return 0
+        finally:
+            if not args.keep:
+                shutil.rmtree(workdir, ignore_errors=True)
 
     if not os.path.isfile(args.sail) or not os.access(args.sail, os.X_OK):
         print("rv-harness: sail oracle not present at %s" % args.sail)
@@ -1013,6 +1057,7 @@ def main():
         lean_out = run_lean(cases, workdir)
         n_pass = n_fail = 0
         failures = []
+        passed_lean = {}
         for case in cases:
             sail_r = run_sail(args.sail, case, workdir, args.verbose)
             lean_r = lean_out.get(case["name"])
@@ -1029,8 +1074,17 @@ def main():
                     print(sail_r["raw"])
             else:
                 n_pass += 1
+                passed_lean[case["name"]] = lean_r
                 if args.verbose:
                     print("PASS %-32s (%d retired)" % (case["name"], len(sail_r["pcs"])))
+        expected_rows, passed_rows = decode_coverage(passed_lean)
+        missing_rows = sorted(expected_rows - passed_rows)
+        print("rv-harness: decode rows covered %d/%d" %
+              (len(expected_rows) - len(missing_rows), len(expected_rows)))
+        if missing_rows:
+            n_fail += 1
+            failures.append(("<decode-row-coverage>",
+                             ["missing differential rows: %s" % ", ".join(missing_rows)]))
         print("rv-harness: %d PASS, %d FAIL" % (n_pass, n_fail))
         for name, problems in failures:
             print("FAIL %s" % name)

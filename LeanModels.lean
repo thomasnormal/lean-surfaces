@@ -108,6 +108,7 @@ import LeanModels.Sv.CombExhaustiveTactic
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).
 import LeanModels.Rv.Step
+import LeanModels.Isa.RiscV.Oracle
 -- R1: the core-independent commit observation and trace-refinement theorem.
 import LeanModels.Refine
 -- SoftFloat: the family's shared IEEE 754 component (docs/family-architecture.md

@@ -11,11 +11,14 @@ Do not vendor the official Sail Lean output or add it as a Lake dependency in
 this revision.  Sail generates a substantial RV32I-configured package, but the
 package does not build as emitted and its handwritten support file contributes
 75 `axiom` declarations.  Both facts violate this repository's build and
-no-new-axioms rules.  The current usable seed is the axiom-free handwritten
-model in [`LeanModels/Rv`](../../Rv), with the Sail C emulator used only as a
-differential oracle.  A future official integration needs an upstream
-namespace fix and explicit platform/oracle parameters (or a manually curated
-axiom-free RV32I model with Sail C retained as validation only).
+no-new-axioms rules.  `LeanModels/Isa/RiscV/Oracle.lean` now records all 75
+support signatures as explicit parameters, without pretending to provide
+their implementations.  The current usable seed is the axiom-free
+handwritten model in [`LeanModels/Rv`](../../Rv), with the Sail C emulator
+used only as a differential oracle.  A future official integration still
+needs an upstream namespace fix and a generated semantics that consumes the
+explicit oracle (or a manually curated axiom-free RV32I model with Sail C
+retained as validation only).
 
 ## Pins and profile
 
@@ -123,10 +126,11 @@ hand-editing this output would conceal an upstream/backend packaging defect.
 
 There is a second independent admission blocker: `RiscvExtras.lean` contains
 75 `axiom` declarations (8 platform/reservation/randomness hooks and 67
-floating-point/rounding hooks, MEASURED).  They must become explicit
-platform, nondeterminism, and arithmetic-oracle parameters before this output
-can enter a no-new-axioms development.  Even if the namespace error were
-fixed, the generated package would not be admissible as-is.
+floating-point/rounding hooks, MEASURED).  The repository-side parameter
+contract for those signatures is `SailOracle M PA` in
+`LeanModels/Isa/RiscV/Oracle.lean`; the generated package has not yet been
+rewired to consume it.  Even if the namespace error were fixed, the emitted
+package would not be admissible as-is.
 
 ## Differential validation boundary
 
@@ -135,8 +139,10 @@ claim is made for it and no `riscv-tests` run is recorded for it.  The existing
 fallback model has a separate measured validation: `docs/rv-model.md` records
 257/257 generated RV32IMC + M-mode cases matching the pinned Sail 0.13.1 C
 emulator, including traps, CSRs, interrupts, compressed instructions, and
-memory effects.  That result validates the fallback model only; it is not a
-substitute for a successful build of the official generated package.
+memory effects.  The harness's `--coverage-only` mode additionally checks the
+fallback model's full 57-row decoder universe without pretending that this is
+an oracle comparison.  That result validates the fallback model only; it is
+not a substitute for a successful build of the official generated package.
 
 ## Packaging recommendation (JUDGED)
 
@@ -148,5 +154,6 @@ substitute for a successful build of the official generated package.
 3. Use `LeanModels/Rv` as the R0 seed for the next rung, retaining the Sail C
    emulator as a validation oracle.  If the official backend remains blocked,
    grow an axiom-free RV32I model under this tree and record every semantic
-   cross-check against Sail.
+   cross-check against Sail; the differential harness now requires all 57
+   decoder rows to be covered by passing cases.
 

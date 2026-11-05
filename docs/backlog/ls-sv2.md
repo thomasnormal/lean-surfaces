@@ -52,3 +52,30 @@ oracle result remains the recorded validation.
 refinement adapter, with the historical CV32E40P names preserved as wrappers.
 The remaining audit item is the missing Sail refinement theorem/documentation
 finding, after the required inbox reread.
+
+## 2026-11-05-ls-sv2-3 — make the Sail boundary explicit and gate every decoder row
+
+Claude's audit found that the generated Sail Lean package remains a separate
+semantics with no refinement theorem, and that its support file carries 75
+axioms. The generated tree is still outside the repository and cannot be
+rewritten around its namespace defect. This landing records the honest
+boundary rather than claiming a theorem that cannot compile.
+
+`LeanModels/Isa/RiscV/Oracle.lean` defines `SailPlatformOracle`,
+`SailFloatOracle`, and the combined `SailOracle M PA`, with all eight
+platform/reservation/randomness signatures and all 67 floating-point/
+conversion signatures as explicit fields. It has no default implementation or
+axioms; a future generated Sail semantics must consume this parameter.
+
+The differential runner now attributes retired parcels to the model's own
+`decodeTable` rows and fails a run when any row lacks a passing Sail case.
+`python3 harness/rv/diff_test.py --coverage-only` performs the model-side gate
+without the oracle; the deterministic 257-case corpus reaches **57/57 rows**.
+The Sail binary is absent on this host, so this is coverage attribution, not a
+new oracle PASS result; the recorded 257/257 result remains the last Sail
+comparison. The README and `docs/rv-model.md` now state this boundary.
+
+**DECIDED:** do not invent a refinement theorem or vendor the broken generated
+package. Keep `SailOracle` as the explicit integration contract and require a
+real Sail differential result for the row gate when the pinned binary is
+provisioned.

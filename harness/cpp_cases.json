@@ -2190,6 +2190,18 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-free-operator-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedFreeOperatorCallTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "struct S {}; int operator+(S, S); int f(S a, S b) { return operator+(a, b); }",
+    "expect": "match",
+    "rung": 8
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

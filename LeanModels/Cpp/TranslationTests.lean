@@ -2179,6 +2179,22 @@ def resolvedCxxOperatorCallTranslationWitness : Except String FrontendHandle :=
 def resolvedCxxOperatorCallTranslationWitnessOk : Bool :=
   resolvedCxxOperatorCallTranslationWitness matches .ok _
 
+private def resolvedFreeOperatorCallTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x11"), ("kind", .string "FunctionDecl"),
+        ("name", .string "operator+"), ("inner", .array [])],
+      .object [("id", .string "0x12"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [("id", .string "0x13"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [("id", .string "0x11"),
+              ("kind", .string "FunctionDecl")])]])]])]}
+
+def resolvedFreeOperatorCallTranslationWitnessOk : Bool :=
+  admitResolvedCXXOperatorCallExpression resolvedFreeOperatorCallTranslation [1] matches
+    .ok {value := "0x11"}
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 

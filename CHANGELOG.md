@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a free-function overload identity witness for `CXXOperatorCallExpr`;
+  the pinned differential corpus now has 1,583 rows, with both method and
+  free-function declaration handles retained as WITNESS metadata.
+
 - C++ differential coverage now includes a source-shaped resolved-operator
   identity witness; the corpus measures 1,582 rows with the new operator
   metadata path recorded as a WITNESS.

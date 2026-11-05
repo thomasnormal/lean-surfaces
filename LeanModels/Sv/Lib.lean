@@ -17,7 +17,8 @@ arithmetic of register-transfer proofs:
 * `Lib/BitVecArith.lean` (`LeanModels.Sv.Lib`): `BitVec` facts of datapaths (sign extension truncated back, a
   multiply-accumulate at a wider width, a part select of a shift, a counter at its last value). Imports nothing.
 * `Lib/XFVal.lean` (`LeanModels.Sv.XF`): the `Nat` value of the word-level helpers (`XF.val` of windows,
-  concatenations, extensions, constants, shifts, `addBits`/`subBits`; `XF.any`/`XF.all`/`XF.eqv` as value tests).
+  concatenations, extensions, constants, shifts, `addBits`/`subBits`; `XF.any`/`XF.all`/`XF.eqv` as value tests; a
+  carry-save adder row, `val_csa`, and an XOR with the top-bit constant, `val_xor_top`).
 * `Lib/RowMajor.lean` (`LeanModels.Sv.Lib`): `CombView.rmN` at natural coordinates (`rmN_row0`, `rmN_succ0`,
   `rmN_last_col`, `rmN_eq`).
 * `Lib/Restoring.lean` (`LeanModels.Sv.Lib`): restoring division (`restRem`, `restQuo`, `restore_inv`,

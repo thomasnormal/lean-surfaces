@@ -309,4 +309,42 @@ theorem val_four (f : Nat → Bool) (a w : Nat) :
     Nat.mul_comm (2 ^ a) (f a).toNat, Nat.mul_comm (2 ^ (a + 1)) (XF.val (fun x => f (a + 1 + x)) w),
     Nat.mul_comm (2 ^ (a + 1 + w)) (f (a + 1 + w)).toNat]
 
+/-- A carry-save adder row: the sum `f ^ g ^ h` plus twice the majority `f & g | f & h | g & h` (both at `n` bits)
+is the sum of the three rows. -/
+theorem val_csa (f g h : Nat → Bool) : ∀ n,
+    XF.val (fun x => f x ^^ g x ^^ h x) n + 2 * XF.val (fun x => f x && g x || f x && h x || g x && h x) n =
+      XF.val f n + XF.val g n + XF.val h n
+  | 0 => rfl
+  | n + 1 => by
+    have ih := val_csa f g h n
+    simp only [val_succ]
+    generalize XF.val (fun x => f x ^^ g x ^^ h x) n = A at ih ⊢
+    generalize XF.val (fun x => f x && g x || f x && h x || g x && h x) n = B at ih ⊢
+    generalize XF.val f n = F at ih ⊢
+    generalize XF.val g n = G at ih ⊢
+    generalize XF.val h n = H at ih ⊢
+    cases f n <;> cases g n <;> cases h n <;> simp <;> omega
+
+/-- An XOR with the one-hot constant of the top bit (`c` of value `2^n` at `n + 1` bits) flips the top bit:
+`+ 2^n` modulo `2^(n+1)`. -/
+theorem val_xor_top (f c : Nat → Bool) (n : Nat) (hc : XF.val c (n + 1) = 2 ^ n) :
+    XF.val (fun x => f x ^^ c x) (n + 1) = (XF.val f (n + 1) + 2 ^ n) % 2 ^ (n + 1) := by
+  have hcb : ∀ j, j < n + 1 → c j = decide (n = j) := by
+    intro j hj
+    rw [← XF.testBit_val c (n + 1) j hj, hc, Nat.testBit_two_pow]
+  have hlow : XF.val (fun x => f x ^^ c x) n = XF.val f n :=
+    XF.val_congr_lt (fun j hj => by
+      rw [hcb j (by omega), decide_eq_false (show ¬ n = j by omega), Bool.xor_false])
+  have hlt := XF.val_lt f n
+  have hp : 2 ^ (n + 1) = 2 * 2 ^ n := by rw [Nat.pow_succ, Nat.mul_comm]
+  simp only [val_succ]
+  rw [hlow, hcb n (by omega), hp, show decide (n = n) = true from decide_eq_true rfl]
+  cases f n
+  · simp only [Bool.false_xor, Bool.toNat_true, Bool.toNat_false, Nat.mul_one, Nat.mul_zero, Nat.add_zero]
+    exact (Nat.mod_eq_of_lt (show XF.val f n + 2 ^ n < 2 * 2 ^ n by omega)).symm
+  · simp only [Bool.true_xor, Bool.not_true, Bool.toNat_true, Bool.toNat_false, Nat.mul_one, Nat.mul_zero,
+      Nat.add_zero]
+    rw [show XF.val f n + 2 ^ n + 2 ^ n = XF.val f n + 2 * 2 ^ n by omega, Nat.add_mod_right,
+      Nat.mod_eq_of_lt (show XF.val f n < 2 * 2 ^ n by omega)]
+
 end LeanModels.Sv.XF

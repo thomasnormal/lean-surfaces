@@ -47,6 +47,18 @@ with `disable iff` retain metadata and connect to the E contract. A bare cover
 sequence remains loud because the current contract requires an implication;
 immediate assertions and unbounded `s_eventually` remain outside F1 by design.
 
+## `Lib/XFVal.lean`: a carry-save row and an XOR with the top bit
+
+Two general `XF.val` facts, from svGolf's radix-4 SRT divider reference
+(`fdivp_srt`): `val_csa`, a carry-save adder row (the XOR sum plus twice the
+majority is the sum of the three rows, at every width), and `val_xor_top`, an
+XOR with the one-hot constant of the top bit (`+ 2^n` modulo `2^(n+1)`). They
+hold for any design that uses those shapes, so they stay in the library; the
+SRT model itself (the selection table, the stage invariant, on-the-fly
+conversion) is that reference's own section `SrCore`, by the rule of the
+Newton move below. Nothing is renamed; the `Lib.lean` index names the two
+lemmas.
+
 ## `Lib/Newton.lean` moves into the fdivp_newton reference
 
 `LeanModels/Sv/Lib/Newton.lean` leaves the library, and with it

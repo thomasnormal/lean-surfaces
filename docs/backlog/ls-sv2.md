@@ -1274,3 +1274,18 @@ eventual hardware proof.
 
 **DECIDED:** keep packet-window state threading in the adapter theorem and
 reuse the generic ROB trace refinement for the final ISA equality.
+
+## 2026-11-05-ls-sv2-56 — compose packetized RVFI tag streams
+
+Added `packetStreamLength`, `inOrderPacketStream_append`,
+`rvfiPacketTags_append`, and `rvfiPacketTags_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  The new
+`normalizeRvfiPacketTags_stream_append` theorem combines local packet-stream
+order certificates across adjacent windows, using the first window's exact
+decoded retirement count as the second window's order boundary.
+
+The PicoRV32 witness proves the composed packet tag stream is in order over
+its measured first and second packet-cycle windows.
+
+**DECIDED:** retain packet boundaries for local ROB certificates while using
+the flattened normalization count to connect packet widths to RVFI order.

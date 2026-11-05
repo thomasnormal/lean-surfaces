@@ -12,6 +12,14 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Qualified-case checks at execution time — 2026-11-06
+
+Qualified-case claims are checked where the selected process executes, on the
+pre-reset or pre-edge state, before its NBA queue commits. This follows IEEE
+1800-2023 §12.5.3's violation reporting point and avoids treating a post-edge
+register value as the value that the case saw. `qualified_case_timing` pins
+both a pre-edge violation and a violation created by an earlier NBA.
+
 ## Exact multi-clock instants — 2026-11-05
 
 `MultiClock.lean` adds `ClockInstant` and `runMulti` over the existing E

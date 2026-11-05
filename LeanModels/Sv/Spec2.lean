@@ -130,11 +130,11 @@ theorem run2_from_ok {d : Design2} {σ : ScheduleOracle} {fuel : Nat}
   simp only [run2] at h
   obtain ⟨tr', hrun, hv⟩ := Res.bind_eq_ok.mp h
   by_cases hq : d.processes.toList.any Process2.hasQualifiedCase = true
-  · simp only [if_pos hq] at hv
+  · simp only [hq, if_true, validateTraceChecks2] at hv
     obtain ⟨u, _, hu⟩ := Res.bind_eq_ok.mp hv
     have heq : tr' = tr := Res.ok.inj hu
     simpa [heq] using hrun
-  · simp only [if_neg hq] at hv
+  · simp only [hq, Bool.not_eq_true, if_false] at hv
     have heq : tr' = tr := Res.ok.inj hv
     simpa [heq] using hrun
 
@@ -244,7 +244,7 @@ theorem Runs2.nil_iff {d : Design2} {σ : ScheduleOracle} {tr : List SvState} :
   · rintro rfl
     refine ⟨0, ?_⟩
     simp only [run2, runFrom2_nil, Res.ok_bind]
-    simp [validateTraceChecks2]
+    split <;> simp [validateTraceChecks2]
 
 /-- **Snapshot decomposition, step form**: snapshot `c` of a completed run
 is an `.ok` `cycleStep2` from the previous snapshot — read off the shifted

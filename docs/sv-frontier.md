@@ -229,6 +229,10 @@ remain explicit and kernel checked.
 
 ## Working rule
 
+Qualified-case diagnostics are attached to process execution rather than
+post-trace snapshots; `sem2/qualified_case_timing` pins pre-edge and
+post-edge-created violations.
+
 The Wally items (casts, instances, `ifndef`, `'x`, loop variables, and structs)
 remain on the critical path whenever they unblock an F1–F3 target. Other
 loader work waits behind the target census. Each rung records its before/after

@@ -206,7 +206,7 @@ def main (argv : List String) : IO UInt32 := do
       for ln in xcheckLines envText prText casesText caseName do
         o.putStrLn ln
       o.flush
-    let r : Except String (Design2 × HarnessStimulus × List String × Nat) := do
+    let r : Except String (Design2 × HarnessStimulus × List String × Nat × Bool) := do
       let (pd, lib) ← loadHierString envText
       match pd.crossCheck with
       | [] => pure ()
@@ -286,10 +286,10 @@ def main (argv : List String) : IO UInt32 := do
             let entries ← (← stimulusArray case).toList.mapM (parseEntry d)
             pure (HarnessStimulus.cycles entries)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
-      pure (d, stim, signals, fuel)
+      pure (d, stim, signals, fuel, (case.getObjVal? "execution_checks").isOk)
     match r with
     | .error e => err e
-    | .ok (d, stim, signals, fuel) =>
+    | .ok (d, stim, signals, fuel, executionChecks) =>
       let σ ← match sigmaOf sigmaName with
         | .ok σ => pure σ
         | .error e => return (← err e)
@@ -299,7 +299,10 @@ def main (argv : List String) : IO UInt32 := do
         if dc.isInput then out.putStrLn s!"PORT {dc.name} in {dc.width} {sign}"
         else if dc.isOutput then out.putStrLn s!"PORT {dc.name} out {dc.width} {sign}"
       let result := match stim with
-        | .cycles entries => run2 d σ fuel entries
+        | .cycles entries =>
+            if executionChecks
+            then run2ExecChecks d σ fuel entries
+            else run2 d σ fuel entries
         | .instants entries => runMulti d σ fuel entries
       match result with
       | .timeout => err "run2: timeout (fuel exhausted / comb loop)"

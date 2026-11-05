@@ -69110,6 +69110,32 @@
       ]
     },
     {
+      "name": "qualified_case_pre_edge",
+      "example": "sem2/qualified_case_timing",
+      "file": "pre_edge",
+      "top": "qualified_case_pre_edge",
+      "refusal": "CaseCheck:unique",
+      "execution_checks": true,
+      "signals": ["d", "q"],
+      "stimulus": [{"d": "1"}],
+      "measured": "A unique-case violation visible in the pre-edge state is reported when the edge process executes, before any NBA commit."
+    },
+    {
+      "name": "qualified_case_post_edge",
+      "example": "sem2/qualified_case_timing",
+      "file": "post_edge",
+      "top": "qualified_case_post_edge",
+      "refusal": "CaseCheck:unique",
+      "execution_checks": true,
+      "signals": ["rstn", "d", "q"],
+      "stimulus": [
+        {"rstn": "0", "d": "0"},
+        {"rstn": "1", "d": "1"},
+        {"rstn": "1", "d": "1"}
+      ],
+      "measured": "A violation created by an edge's NBA is not checked as if it were pre-edge; it is reported on the following edge when that state is sampled."
+    },
+    {
       "name": "dim_query_fixed",
       "example": "sem2/dim_query_fixed",
       "top": "dim_query_fixed",

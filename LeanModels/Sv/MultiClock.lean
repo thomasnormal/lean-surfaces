@@ -61,8 +61,6 @@ trace convention. -/
 def runMulti (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
     (instants : List ClockInstant) : Res (List SvState) := do
   let tr ← runFromMulti d σ fuel (initState2 d) 0 instants
-  if d.processes.toList.any Process2.hasQualifiedCase then
-    validateTraceChecks2 fuel d tr
   return tr
 
 /-! ## Clean-room two-clock guards -/

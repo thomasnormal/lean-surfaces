@@ -639,6 +639,9 @@ def validateProcessChecks2 (fuel : Nat) (st : SvState) : List Process2 → Res U
       | .assign _ _ | .unsupported _ _ => .ok ()
       validateProcessChecks2 fuel st rest
 
+def validateBodyChecks2 (fuel : Nat) (st : SvState) (body : Stmt2) : Res Unit :=
+  if body.hasQualifiedCase then validateCaseChecks2 fuel st body else .ok ()
+
 /-! ## Phase classification -/
 
 /-- Comb-phase processes (`unsupported` scheduled here for loudness — the
@@ -832,15 +835,44 @@ def validateTraceChecks2 (fuel : Nat) (d : Design2) : List SvState → Res Unit
       validateProcessChecks2 fuel st d.processes.toList
       validateTraceChecks2 fuel d rest
 
+
 /-- The semantic-tier entry point (M0 contract shape: startup from
 declaration initializers, all else x; one snapshot per stimulus entry). -/
 def run2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) (stim : List SvState) :
     Res (List SvState) :=
   do
     let tr ← runFrom2 d σ fuel (initState2 d) 0 stim
-    if d.processes.toList.any Process2.hasQualifiedCase then
-      validateTraceChecks2 fuel d tr
+    let _ ← if d.processes.toList.any Process2.hasQualifiedCase
+      then validateTraceChecks2 fuel d tr else .ok ()
     return tr
+
+/-! ## Execution-time qualified-case route
+
+The historical `run2` entry point retains its completed-trace diagnostic for
+backward compatibility.  `run2ExecChecks` is the exact E route for new rows:
+it settles the input state, checks qualified claims on that pre-process state,
+then delegates the actual scheduler step to the same `cycleStep2`.  Thus edge
+claims are checked before their NBA commit; no second AST or scheduler is
+introduced. -/
+
+def cycleStep2ExecChecks (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
+    (inputs st : SvState) (k : Nat := 0) : Res (SvState × Nat) := do
+  let st0 := applyInputs2 d inputs st
+  let (settled, _) ← combSettle2 d σ fuel st0 k
+  validateProcessChecks2 fuel settled d.processes.toList
+  cycleStep2 d σ fuel inputs st k
+
+def runFrom2ExecChecks (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
+    (st : SvState) (k : Nat) : List SvState → Res (List SvState)
+  | [] => .ok []
+  | inputs :: rest => do
+      let (st', k') ← cycleStep2ExecChecks d σ fuel inputs st k
+      let tr ← runFrom2ExecChecks d σ fuel st' k' rest
+      return st' :: tr
+
+def run2ExecChecks (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
+    (stim : List SvState) : Res (List SvState) :=
+  runFrom2ExecChecks d σ fuel (initState2 d) 0 stim
 
 /-! ## The pinned-fact table (`#guard` twins of the diff rows)
 

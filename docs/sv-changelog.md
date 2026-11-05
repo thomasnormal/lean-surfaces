@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Qualified-case checks at execution time
+
+`unique`, `unique0`, and `priority` claims are now checked in reset, edge, and
+combinational process execution, before any NBA commit. The old post-trace
+validation could inspect the wrong state for an edge process. The
+`qualified_case_timing` rows cover a pre-edge violation and a violation
+created by one edge and observed on the next.
+
 ## Exact multi-clock E instants
 
 The E semantics now has a source-shaped `ClockInstant`/`runMulti` route for

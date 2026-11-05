@@ -1152,3 +1152,26 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep the normalized RVFI certificate and the ROB refinement
 certificate as separate obligations; their composition is the reusable R1 to
 R3 boundary and does not reinterpret or repair packed observations.
+
+## 2026-11-05-ls-sv2-50 — certify normalized single-channel ROB counts
+
+Added `robTrace_length_eq_robInputs_length` to `LeanModels/Refine/Rob.lean`
+and `normalizeRvfiRobTrace_input_length` to
+`LeanModels/Refine/RvfiRob.lean`.  The generic ROB projections now prove that
+each tagged retirement contributes exactly one retained input, and a successful
+single-channel RVFI normalization connects that input count to the checked
+retirement count.
+
+The PicoRV32 witness applies the normalized count theorem to its measured
+four-instruction cycle stream.
+
+**MEASURED:** `lake build LeanModels.Refine.Rob LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and the
+new count theorems report only the existing `propext`/`Quot.sound` dependencies.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git diff
+--check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation was
+introduced.
+
+**DECIDED:** derive ROB order advancement from validated retirement cardinality;
+bubbles and refused observations contribute to neither projection, so no
+unchecked length or hidden repair enters the order certificate.

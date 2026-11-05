@@ -167,6 +167,21 @@ theorem normalizeRvfiRobTrace_refines
     _ = trace isa isaState (robInputs machine.toRobMachine state inputs) :=
       rob_trace_refines hrob state isaState start inputs hrel
 
+/-- A successful RVFI normalization also certifies the number of ROB inputs:
+the adapter's retained input stream has exactly the normalized retirement
+count, including bubbles and malformed rows that contribute neither side. -/
+theorem normalizeRvfiRobTrace_input_length {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    (robInputs machine.toRobMachine state inputs).length =
+      retirements.length := by
+  have htrace := normalizeRvfiRobTrace machine state inputs h
+  have hlength := congrArg List.length htrace
+  rw [robTrace_length_eq_robInputs_length] at hlength
+  exact hlength
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiCycleMachine.toRobMachine_trace
@@ -176,3 +191,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_refines
+#print axioms LeanModels.Refine.normalizeRvfiRobTrace_input_length

@@ -179,6 +179,21 @@ theorem robInputs_append {State : Type}
           rw [ih state']
           rw [List.append_assoc]
 
+/-- A ROB emits one retirement and retains one input for each tagged commit,
+so the two architectural projections always have the same finite length. -/
+theorem robTrace_length_eq_robInputs_length {State : Type}
+    (machine : RobMachine State) (state : State) (cycles : List Input) :
+    (robTrace machine state cycles).length =
+      (robInputs machine state cycles).length := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' packet =>
+          simp only [robTrace, robInputs, hstep, List.length_append,
+            List.length_map]
+          exact congrArg (fun n => packet.length + n) (ih state')
+
 /-- A one-cycle ROB refinement relation.  `order'` is explicit so the core
 proof cannot forget to advance the commit sequence after a packet. -/
 def RobStepRefines {CoreState IsaState : Type}
@@ -258,3 +273,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.robStateAfter_append
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append
+#print axioms LeanModels.Refine.robTrace_length_eq_robInputs_length

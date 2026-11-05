@@ -69,6 +69,21 @@ class SymbolicUnpackedPorts(unittest.TestCase):
         self.assertEqual(len(grid["unpacked"]), 2)
         self.assertEqual(grid["unpacked"][0]["lsb"]["kind"], "Binary")
 
+    def test_parameter_dependent_memory_keeps_array_selects(self):
+        module = self.extract(
+            "module top #(parameter int W = 8, parameter int N = 4) ("
+            "input logic clk, input logic [W-1:0] d, output logic [W-1:0] y); "
+            "logic [W-1:0] mem [N]; "
+            "always_ff @(posedge clk) mem[0] <= d; "
+            "assign y = mem[0]; endmodule")
+        mem = next(d for d in module["decls"] if d["name"] == "mem")
+        self.assertEqual(mem["kind"], "UnpackedDecl")
+        self.assertEqual(mem["unpacked"][0]["msb"]["value"], 0)
+        self.assertEqual(mem["unpacked"][0]["lsb"]["left"]["name"], "N")
+        selects = find(module, lambda n: n.get("kind") == "ArraySel")
+        self.assertEqual(len(selects), 2)
+        self.assertTrue(all(s.get("unpacked") is True for s in selects))
+
     def test_partial_fixed_output_net_array_ports_flatten_with_z_cell(self):
         module = self.extract(
             "module top(input logic a, output wire logic [3:0] y [0:1]); "

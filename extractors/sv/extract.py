@@ -13350,6 +13350,31 @@ def _sym_select_checked(sm, e, cname, node):
 
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
+        # A parameter-dependent fixed unpacked array must remain a
+        # source-shaped ArraySel path. The legacy fixed-array helper below
+        # intentionally lowers only stable default-point cells; using it for
+        # ``mem [N]`` would freeze the family's layout to the default N.
+        # The ``unpacked`` marker is metadata for the E route; the envelope
+        # parser still maps the node to PExpr.arrayElem.
+        try:
+            root = e.value
+            if (type(root).__name__ == "NamedValueExpression"
+                    and type(root.type.canonicalType).__name__ ==
+                    "FixedSizeUnpackedArrayType"
+                    and _sym_array_point_dependent(sm, root.symbol)):
+                with _SymPos():
+                    index = _convert_expr(sm, e.selector)
+                return {
+                    "kind": "ArraySel",
+                    "span": node_span(sm, e),
+                    "width": _safe_width(e),
+                    "name": root.symbol.name,
+                    "indices": [index],
+                    "part": None,
+                    "unpacked": True,
+                }
+        except Exception:
+            pass
         if _sym_cell_index_point_dependent(e):
             return unsupported(sm, e, "ElementSelect:default-point-index")
         cell = _fixed_array_cell(sm, e)
@@ -30205,7 +30230,29 @@ def _syntax_unpacked_dims(sm, declarator):
         if spec is None:
             return None
         sels = _syntax_children(spec)
-        if len(sels) != 1 or sels[0].kind != SyntaxKind.SimpleRangeSelect:
+        if len(sels) != 1:
+            return None
+        # ``logic [W-1:0] mem [N]`` is the source spelling for the
+        # zero-based unpacked range ``[0:N-1]``.  slang exposes this
+        # shorthand as a BitSelectSyntax below the range dimension rather
+        # than a SimpleRangeSelectSyntax.  Keep the bound symbolic instead
+        # of sampling slang's default-point cell count.
+        if sels[0].kind == SyntaxKind.BitSelect:
+            labels = _syntax_children(sels[0])
+            if len(labels) != 1:
+                return None
+            with _SymPos():
+                dimensions.append({
+                    "msb": {"kind": "Int", "span": None,
+                            "value": 0, "resolved_width": None},
+                    "lsb": {"kind": "Binary", "span": None,
+                            "width": None, "op": "-",
+                            "left": _syntax_expr(sm, labels[0]),
+                            "right": {"kind": "Int", "span": None,
+                                      "value": 1, "resolved_width": None}},
+                })
+            continue
+        if sels[0].kind != SyntaxKind.SimpleRangeSelect:
             return None
         lr = _syntax_children(sels[0])
         if len(lr) != 2:

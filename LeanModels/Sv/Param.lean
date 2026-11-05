@@ -2652,7 +2652,22 @@ private def PType.resolved? : PType → Option Nat
 private def checkDecls (env : IEnv) : List PDecl → List String
   | [] => []
   | pd :: rest =>
-      match instDecl env pd with
+      -- A one-rank unpacked declaration is retained for the E memory route.
+      -- The legacy flat store still cannot turn it into a `Decl`, but its
+      -- packed element width is a real elaboration fact and must participate
+      -- in the loader's defaults cross-check rather than making every
+      -- source-shaped memory look like a differential disagreement.
+      if pd.unpackedDims.length == 1 then
+        match pd.type.width env with
+        | .error e => [s!"decl '{pd.name}': {e}"]
+        | .ok w =>
+            let tail := checkDecls
+              { env with widths := (pd.name, w) :: env.widths } rest
+            match pd.type.resolved? with
+            | some r => if r == w then tail
+                        else s!"decl '{pd.name}': our width {w} ≠ resolved {r}" :: tail
+            | none => tail
+      else match instDecl env pd with
       | .ok dc =>
           let tail := checkDecls
             { env with widths := (pd.name, dc.width) :: env.widths } rest

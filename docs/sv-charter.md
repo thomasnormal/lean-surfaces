@@ -111,28 +111,30 @@ profiles default to `posedge`; the `negedge` selector uses the same four-state
 IEEE edge predicate and has kernel guards for firing and release non-firing.
 Loader admission and the source-shaped clocked-process path remain separate.
 
-## Parameter-dependent unpacked arrays remain loud — 2026-11-04
+## One-rank parameter-dependent memories — 2026-11-05
 
 The `unpacked_generate_array` witness keeps a declaration whose unpacked range
-depends on parameters as a source-shaped `UnpackedDecl`, then refuses it at
-the loader with `UnpackedDecl:memory`. A default-point flattening would
-silently fix the layout for one parameter choice, so this boundary stays loud
-until parametric aggregate layout and access semantics are defined. The
-recorded differential row checks the refusal itself; it does not claim a
-simulator value for the refused design.
+depends on parameters as a source-shaped `UnpackedDecl`; the legacy `Design2`
+runner records `UnpackedDecl:memory` for it. A default-point flattening would
+silently fix the layout for one parameter choice. The one-rank sequential
+shape now stays source-shaped and runs through `MemState`; nested ranks and
+unsupported access forms remain loud.
 
 The first E-side memory state is `LeanModels.Sv.Kernel.CoreMem`. Its
 `MemShape` preserves the source labels and packed element width, while
 `MemBlock` and `MemState` provide functional reads and writes with proved
 same-cell, other-cell, out-of-range, and unknown-name behavior.
 `Kernel/MemElab` maps one-rank retained declarations into this native state.
-This is a trusted, fuel-free state primitive; process target wiring is still
-deliberately loud until the retained source node is connected to it.
+This is a trusted, fuel-free state primitive. `Kernel/MemCycle` connects the
+retained source node for scalar conditions, direct cell reads, and scalar or
+cell NBA updates without expanding the array.
 
 The same bridge now resolves a one-rank `PLhs.arrayElem` against the source
 label range and delegates reads and writes to `MemState`. Out-of-range labels
 retain all-x read and no-op write behavior; dynamic indices, partial array
-targets, and process scheduling remain named boundaries.
+targets, loops, compound expressions, and hierarchy remain named boundaries.
+The `async_mem_fifo` clean-room fixture matches Icarus over reset, write, and
+read cycles.
 
 ## Signed packed localparam width conversions — 2026-11-04
 

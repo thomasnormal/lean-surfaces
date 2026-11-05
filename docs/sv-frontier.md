@@ -55,9 +55,9 @@ are the loader work that can unblock the next OpenTitan F1/F2 target; property
 members are no longer the first executable-process wall.
 
 The first array packet retains parameter-dependent unpacked declarations as
-`UnpackedDecl` with symbolic bounds. The current flat E store refuses this
-node with `UnpackedDecl:memory`; no default-point cells are fabricated. The
-array-valued memory state needed by F4 is the next packet for this boundary.
+`UnpackedDecl` with symbolic bounds. The flat scalar store does not fabricate
+default-point cells. The one-rank sequential memory packet now routes that
+retained source form through `MemDesign2` and `MemState` instead.
 
 The first E memory packet is now present in `LeanModels.Sv.Kernel.CoreMem`.
 `MemShape` retains the source labels and element width, `MemBlock` stores
@@ -66,8 +66,10 @@ Read and write laws cover same-cell updates, other-cell preservation,
 out-of-range reads and writes, and unknown memory names. `Kernel/MemElab`
 now evaluates a retained one-rank `UnpackedDecl` at a parameter point and
 constructs its native memory state; nested ranks remain a named refusal. The
-process evaluator still stops at `UnpackedDecl:memory` until array targets are
-wired into the edge evaluator.
+`Kernel/MemCycle` view admits the clean one-rank FIFO shape with scalar
+conditions, direct cell RHSs, scalar or cell NBAs, and a continuous scalar
+assign from a cell. Its refinement target is the E memory state; the legacy
+`run2` route remains unchanged for scalar designs.
 
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
@@ -75,7 +77,9 @@ cell and an out-of-range all-x/no-op access. Dynamic indices, partial array
 targets, and process scheduling remain explicit boundaries. `Kernel/MemProc`
 now carries those targets through a source-shaped NBA queue and commits them
 through `MemState`; scalar RHS evaluation and direct cell reads are covered by
-kernel guards, while compound memory expressions remain loud.
+kernel guards, while compound memory expressions remain loud. The
+`async_mem_fifo` clean-room fixture is differentially matched against Icarus
+over reset, write, and read cycles.
 
 ## Ladder
 
@@ -133,7 +137,7 @@ this order:
 |---:|---|---|
 | 1 | `always @(posedge clk)` | **Resolved in this packet:** `SeqProfile.ffOnlyProfileB` now admits a plain edge-triggered `always` when its body is NBA-only, while `Process2.alwaysPlain` preserves the source kind. The retained profile has a kernel guard and an Icarus differential row. |
 | 2 | `always_ff @(posedge clk or negedge rstn)` | **Resolved in this packet:** `ffResetProfileB` admits the retained `Process2.alwaysFFR` shape, and `resetPass2_ffResetOnly` bridges selected reset events to source-shaped NBA updates. Kernel guards cover assertion and release; the differential row matches Icarus over five cycles. |
-| 3 | an unpacked memory written in `always_ff` | `sv_structure` reports out-of-tier module members; the E memory bridge and procedural NBA adapter do not yet reach the structure and cycle views. |
+| 3 | an unpacked memory written in `always_ff` | **Resolved in this packet:** one-rank parameter-sized memories retain `UnpackedDecl` and `ArraySel`, then run through `MemState`/`MemCycle` without expansion. Nested ranks, loops, partial targets, and compound memory expressions remain loud. |
 | 4 | one module instance | `sv_structure` refuses hierarchy because the combinational tactics do not summarize instances yet. |
 | 5 | a user function in a combinational expression | **Resolved in this packet:** the extractor's pure automatic input-only function path inlines the return expression, and run2 evaluates the resulting expression. Side effects, recursion, static functions, tasks, and unsupported bodies remain loud. |
 | 6 | `initial $readmemh(...)` ROM initialization | `sv_structure` refuses `ProceduralBlockSymbol:Initial`; initial-process semantics remain a named boundary. |

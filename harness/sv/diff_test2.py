@@ -88,6 +88,7 @@ HARNESS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HARNESS_DIR))
 CASES_JSON = os.path.join(HARNESS_DIR, "cases2.json")
 RUNNER = os.path.join("harness", "sv", "runner2.lean")
+RUNNER_MEM = os.path.join("harness", "sv", "runner_mem2.lean")
 
 sys.path.insert(0, HARNESS_DIR)
 import gen_tb2  # noqa: E402
@@ -139,11 +140,11 @@ def xcheck_lines(text):
     return [ln.rstrip() for ln in text.splitlines() if ln.startswith("XCHECK ")]
 
 
-def run_lean(envelope, case_name, sigma, probes=None, xout=None):
+def run_lean(envelope, case_name, sigma, probes=None, xout=None, runner=RUNNER):
     """`probes`: a probe sidecar path — the runner then prints the
     case point's `XCHECK` lines first, which are appended to `xout` (a
     list) even when the run itself fails."""
-    cmd = ["lake", "env", "lean", "--run", RUNNER, envelope,
+    cmd = ["lake", "env", "lean", "--run", runner, envelope,
            CASES_JSON, case_name, sigma]
     if probes is not None:
         cmd.append(probes)
@@ -376,12 +377,12 @@ def envelope_refusal_kinds(envelope):
     return found
 
 
-def check_refusal(case, envelope, sigma, probes=None, xout=None):
+def check_refusal(case, envelope, sigma, probes=None, xout=None, runner=RUNNER):
     """A loud-refusal row: `(True, detail)` when the runner refuses the
     case and names the expected kind (in its error or the envelope)."""
     kind = case["refusal"]
     try:
-        run_lean(envelope, case["name"], sigma, probes, xout)
+        run_lean(envelope, case["name"], sigma, probes, xout, runner)
     except HarnessError as exc:
         if kind in str(exc) or kind in envelope_refusal_kinds(envelope):
             return True, kind
@@ -512,8 +513,9 @@ def main():
             else:
                 xstatus = (st, info)
         xout = []
+        runner = RUNNER_MEM if case.get("memory") else RUNNER
         if "refusal" in case:
-            ok, detail = check_refusal(case, envelope, sigmas[0], xprobe, xout)
+            ok, detail = check_refusal(case, envelope, sigmas[0], xprobe, xout, runner)
             xnote = ""
             if xprobe is not None:
                 bad = [ln for ln in xout if not ln.startswith("XCHECK ok")]
@@ -546,7 +548,7 @@ def main():
             ports = None
             for i, sg in enumerate(sigmas):
                 ports, lines = run_lean(envelope, name, sg,
-                                        xprobe if i == 0 else None, xout)
+                                        xprobe if i == 0 else None, xout, runner)
                 lean[sg] = lines
             # The cross-check verdict: `FAIL` lines (a silent difference, a
             # refusal, slang's metadata or errors at the point) fail the

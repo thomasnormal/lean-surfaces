@@ -1324,7 +1324,12 @@ expression/target node:
 
 | kind | key order / fields |
 |---|---|
-| `ArraySel` | `kind`, `span`, `width` (defaults-elaborated metadata), `name` (the declared signal), `indices` (symbolic label expressions, outermost dimension first), `part` (`null`, or `{"mode": "range" \| "up" \| "down", "left", "right"}` — `range`: msb/lsb labels; `up`/`down`: base label and width) |
+| `ArraySel` | `kind`, `span`, `width` (defaults-elaborated metadata), `name` (the declared signal), `indices` (symbolic label expressions, outermost dimension first), `part` (`null`, or `{"mode": "range" \| "up" \| "down", "left", "right"}` — `range`: msb/lsb labels; `up`/`down`: base label and width), optional `unpacked: true` for a retained one-rank unpacked-memory cell |
+
+An `ArraySel` with `unpacked: true` preserves a source declaration such as
+`logic [W-1:0] mem [N]` and its cell path `mem[i]`; it is not a default-point
+cell expansion. The memory cycle view consumes this form through `MemState`.
+Nested ranks and partial unpacked targets remain named refusals.
 
 Every index and bound is the RAW declared label as a symbolic expression
 (`Int`, `ParamRef`, `GenvarRef`, operators over them): nothing is folded at

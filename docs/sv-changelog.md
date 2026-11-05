@@ -1,5 +1,16 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F4: one-rank sequential unpacked memories
+
+The symbolic extractor now retains the shorthand `mem [N]` as a source-shaped
+`UnpackedDecl` with the `[0:N-1]` bound, and retains `mem[i]` as an `ArraySel`
+path rather than a default-point cell. `Kernel/MemCycle` connects that form to
+the fuel-free `MemState` storage through a provisional cycle view: scalar
+conditions, direct cell reads, scalar or cell NBAs, asynchronous reset, and a
+continuous scalar read are covered by the `async_mem_fifo` clean-room fixture.
+Nested ranks, partial targets, loops, and compound memory expressions remain
+loud. The fixture matches Icarus over three reset/write/read cycles.
+
 ## Plain edge-triggered `always` joins the NBA cycle profile
 
 `Design2.ffOnlyProfileB` and its kernel-checked cycle theorem now accept a
@@ -227,21 +238,21 @@ they no longer become `NoEventControl` process refusals. The source generate
 body stays structural and empty of executable processes until property paths
 are part of the hierarchy contract.
 
-## Parameter-dependent unpacked arrays remain loud
+## Parameter-dependent unpacked arrays: source retention
 
 The `unpacked_generate_array` clean-room witness records the current boundary
 for a declaration such as `logic [W-1:0] stage [0:S-1]`: slang emits
-`VariableSymbol:default-point-array`, and `load_design_sv2` refuses the envelope
-by that named reason at every parameter point. The refusal preserves the
-source-shaped array declaration; flattening the cells from the default point
-would give parameter changes the wrong layout. No simulator result is claimed
-for this refusal row.
+`VariableSymbol:default-point-array`, and the symbolic extractor now retains
+the source-shaped declaration rather than sampling slang's default-point
+cells. Flattening those cells would give parameter changes the wrong layout.
+The legacy `Design2` runner still records `UnpackedDecl:memory` as a loud
+refusal; the memory cycle route below handles the admitted one-rank shape.
 
 The symbolic envelope now retains that declaration as `UnpackedDecl`, carrying
 the packed element type and each parameter-dependent unpacked bound. The
-current flat E store still refuses it with the named `UnpackedDecl:memory`
-boundary; no default-point cells are fabricated. This is the source-shape
-packet for the array-valued memory rung.
+current flat E store still does not fabricate default-point cells. This is the
+source-shape packet for the array-valued memory rung; the admitted one-rank
+process path is described above.
 
 ## Native E memory state
 

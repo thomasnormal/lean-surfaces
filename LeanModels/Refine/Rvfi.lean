@@ -323,6 +323,61 @@ def rvfiObservations {State : Type} (machine : RvfiCycleMachine State) :
       let (state', observation) := machine.step state input
       observation :: rvfiObservations machine state' inputs
 
+/-! ## State-threaded RVFI observation windows -/
+
+/-- The RVFI machine state after a finite observation window.  The wire rows
+are discarded here; the state is retained for the next window. -/
+def rvfiStateAfter {State : Type} (machine : RvfiCycleMachine State) :
+    State → List Input → State
+  | state, [] => state
+  | state, input :: inputs =>
+      rvfiStateAfter machine (machine.step state input).1 inputs
+
+theorem rvfiStateAfter_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input) :
+    rvfiStateAfter machine state (first ++ second) =
+      rvfiStateAfter machine
+        (rvfiStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, rvfiStateAfter, hstep]
+          exact ih state'
+
+theorem rvfiObservations_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input) :
+    rvfiObservations machine state (first ++ second) =
+      rvfiObservations machine state first ++
+        rvfiObservations machine (rvfiStateAfter machine state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons input first ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+          simp only [List.cons_append, rvfiObservations, rvfiStateAfter, hstep]
+          rw [ih state']
+
+theorem normalizeRvfiCycleTrace_append {State : Type}
+    (machine : RvfiCycleMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    normalizeRvfiTrace? start
+        (rvfiObservations machine state (first ++ second)) =
+      some (firstRetirements ++ secondRetirements) := by
+  rw [rvfiObservations_append, normalizeRvfiTrace?_append]
+  simp [hfirst, hsecond]
+
 /-- A successful RVFI normalization is exactly the retirement stream emitted
 by the generic cycle bridge for the same window.  The hypothesis is
 deliberately an executable certificate: valid rows must have consecutive
@@ -584,4 +639,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap
+#print axioms LeanModels.Refine.rvfiStateAfter_append
+#print axioms LeanModels.Refine.rvfiObservations_append
+#print axioms LeanModels.Refine.normalizeRvfiCycleTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiCycleTrace

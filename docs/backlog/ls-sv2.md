@@ -785,3 +785,27 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep flush-window composition at the named flush boundary;
 flushes remain explicit architectural stutter and packet refinement handles
 only the events that actually retire.
+
+## 2026-11-05-ls-sv2-33 — compose normalized RVFI cycle windows
+
+Added `rvfiStateAfter`, `rvfiStateAfter_append`, `rvfiObservations_append`,
+and `normalizeRvfiCycleTrace_append` to `LeanModels/Refine/Rvfi.lean`.  The
+normalization bridge carries the exact post-window core state and advances
+the RVFI order by the first window's retirement count before validating the
+second window.
+
+The PicoRV32 witness now splits its measured eight-cycle RVFI stream into two
+four-cycle windows, proves each local normalization certificate, and invokes
+the generic append theorem for the combined four-retirement result.
+
+**MEASURED:** `lake build LeanModels.Refine.Rvfi
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs).
+`rvfiStateAfter_append` and `rvfiObservations_append` have no axioms; the
+normalization composition and witness report only existing
+`propext`/`Quot.sound`.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`, new
+axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep RVFI order advancement at the normalization boundary;
+windowed captures must provide the carried state and local certificates, and
+invalid rows remain explicit bubbles rather than being repaired.

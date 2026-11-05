@@ -19,6 +19,8 @@ import tempfile
 
 PINNED = "21.1.8"
 SOURCE = "export module m;\n"
+MODULE_SOURCE = "export module m; export int f(){return 1;}\n"
+IMPORT_SOURCE = "import m; int g(){return f();}\n"
 
 
 def frontend():
@@ -48,6 +50,19 @@ def kinds(value):
     return found
 
 
+def nodes(value, wanted):
+    found = []
+    if isinstance(value, dict):
+        if value.get("kind") == wanted:
+            found.append(value)
+        for child in value.values():
+            found.extend(nodes(child, wanted))
+    elif isinstance(value, list):
+        for child in value:
+            found.extend(nodes(child, wanted))
+    return found
+
+
 def measure():
     clang, version = frontend()
     if clang is None:
@@ -55,28 +70,46 @@ def measure():
                 "frontend": version, "source": SOURCE,
                 "execution": "not-attempted"}
     with tempfile.TemporaryDirectory(prefix="cpp-module-probe-") as directory:
-        source = pathlib.Path(directory) / "module.cpp"
-        source.write_text(SOURCE, encoding="utf-8")
+        source = pathlib.Path(directory) / "module.cppm"
+        pcm = pathlib.Path(directory) / "m.pcm"
+        source.write_text(MODULE_SOURCE, encoding="utf-8")
         result = subprocess.run(
-            [clang, "-std=c++23", "-fsyntax-only", "-w", "-Xclang",
-             "-ast-dump=json", str(source)], capture_output=True,
+            [clang, "-std=c++23", "-x", "c++-module", "--precompile",
+             str(source), "-o", str(pcm)], capture_output=True,
             text=True, check=False, timeout=60)
-    if result.returncode != 0:
-        return {"format": "cpp-module-frontend-1", "status": "ORACLE",
+        if result.returncode != 0:
+            return {"format": "cpp-module-frontend-1", "status": "ORACLE",
+                    "frontend": version, "source": SOURCE,
+                    "execution": "compile-failed",
+                    "diagnostic": (result.stderr or result.stdout)[-1000:]}
+        importer = pathlib.Path(directory) / "import.cpp"
+        importer.write_text(IMPORT_SOURCE, encoding="utf-8")
+        result = subprocess.run(
+            [clang, "-std=c++23", "-fmodule-file=m=" + str(pcm),
+             "-fsyntax-only", "-w", "-Xclang", "-ast-dump=json", str(importer)],
+            capture_output=True, text=True, check=False, timeout=60)
+        if result.returncode != 0:
+            return {"format": "cpp-module-frontend-1", "status": "ORACLE",
+                    "frontend": version, "source": SOURCE,
+                    "execution": "import-compile-failed",
+                    "diagnostic": (result.stderr or result.stdout)[-1000:]}
+        try:
+            ast = json.loads(result.stdout)
+        except ValueError as error:
+            return {"format": "cpp-module-frontend-1", "status": "ORACLE",
+                    "frontend": version, "source": SOURCE,
+                    "execution": "import-malformed-json", "diagnostic": str(error)}
+        import_nodes = nodes(ast, "ImportDecl")
+        observed = sorted(set(kinds(ast)))
+        return {"format": "cpp-module-frontend-1", "status": "REFUSE",
                 "frontend": version, "source": SOURCE,
-                "execution": "compile-failed",
-                "diagnostic": (result.stderr or result.stdout)[-1000:]}
-    try:
-        ast = json.loads(result.stdout)
-    except ValueError as error:
-        return {"format": "cpp-module-frontend-1", "status": "ORACLE",
-                "frontend": version, "source": SOURCE,
-                "execution": "malformed-json", "diagnostic": str(error)}
-    observed = sorted(set(kinds(ast)))
-    return {"format": "cpp-module-frontend-1", "status": "REFUSE",
-            "frontend": version, "source": SOURCE, "execution": "compiled",
-            "root": ast.get("kind"), "module_node": "ModuleDecl" in observed,
-            "observed_module_kinds": [kind for kind in observed if "Module" in kind]}
+                "execution": "module-and-import-compiled", "root": ast.get("kind"),
+                "module_node": "ModuleDecl" in observed,
+                "import_node": bool(import_nodes),
+                "import_identity": all(
+                    any(key in node for key in ("name", "module", "importedModule", "referencedDecl"))
+                    for node in import_nodes),
+                "observed_module_kinds": [kind for kind in observed if "Module" in kind]}
 
 
 def main():

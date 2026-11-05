@@ -16,12 +16,18 @@ SPEC.loader.exec_module(MODULE)
 class ModuleProbeTests(unittest.TestCase):
     def test_witness_is_a_module_unit(self):
         self.assertIn("export module", MODULE.SOURCE)
+        self.assertIn("import m", MODULE.IMPORT_SOURCE)
 
     def test_json_kind_walk_is_structured(self):
         self.assertEqual(
             sorted(set(MODULE.kinds({"kind": "TranslationUnitDecl",
                                       "inner": [{"kind": "ModuleDecl"}]}))),
             ["ModuleDecl", "TranslationUnitDecl"])
+
+    def test_import_node_requires_structured_identity(self):
+        node = {"kind": "ImportDecl", "id": "0x1"}
+        self.assertFalse(any(key in node for key in
+                            ("name", "module", "importedModule", "referencedDecl")))
 
 
 if __name__ == "__main__":

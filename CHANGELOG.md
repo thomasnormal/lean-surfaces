@@ -3,9 +3,9 @@
 ## Unreleased
 
 - Added a pinned C++ module frontend probe and boundary document. Clang 21.1.8
-  compiles `export module m;` but its JSON AST retains no `ModuleDecl`, so the
-  module rung remains a recorded loud refusal pending structured frontend
-  evidence.
+  produces an `ImportDecl` for a valid importer but retains no `ModuleDecl`,
+  module name, or imported-module handle, so the module rung remains a loud
+  refusal pending structured identity evidence.
 
 - C++ switch evaluator witnesses now use an explicit hand-built
   `CallableFunction`, keeping the evaluator battery executable while source

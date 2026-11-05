@@ -113,6 +113,7 @@ refusals. Exact `##n` delays are now mapped to the finite `SvaSeq.delay`
 fragment, and finite `##[m:n]` ranges map to `SvaSeq.range`; dynamic delays
 remain explicit refusals. Simple `$past(signal)` maps to the sampled
 `SvaBool.past` form, and `$rose(signal)` maps to `SvaBool.rose`.
+`$fell(signal)` maps to `SvaBool.fell` as well.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable

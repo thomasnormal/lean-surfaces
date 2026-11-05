@@ -66,6 +66,7 @@ mapping it to the finite `SvaSeq.delay` evaluator. Bounded ranges and dynamic
 delays are now distinguished: finite `##[m:n]` maps to `SvaSeq.range`, while
 dynamic delays remain loud. Simple `$past(signal)` operands now map to the
 sampled `SvaBool.past` form, and `$rose(signal)` maps to `SvaBool.rose`.
+`$fell(signal)` now maps to `SvaBool.fell` as well.
 
 ## F1: prove the SVA sampling refinement
 

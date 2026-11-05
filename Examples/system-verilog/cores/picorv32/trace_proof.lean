@@ -1,5 +1,6 @@
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
 import LeanModels.Refine.Bus
+import LeanModels.Refine.Memory
 import LeanModels.Refine.MemoryMachine
 import LeanModels.Refine.RvfiPacket
 import LeanModels.Refine.RvfiRob
@@ -35,6 +36,12 @@ def nontrapMemoryRequests : List BusRequest :=
 def nontrapMemoryEffects : List MemoryEffect :=
   [ .write 0x100 .word 5
   , .read 0x100 .word 5 ]
+
+def nontrapMemoryPacket : TaggedMemoryPacket :=
+  [ { order := 1, request := .write 0x100 .word 5,
+      effect := .write 0x100 .word 5 }
+  , { order := 2, request := .read 0x100 .word false,
+      effect := .read 0x100 .word 5 } ]
 
 def bubbleObservation : RvfiObservation :=
   { valid := false, insn := 0, pcRdata := 0, pcWdata := 0 }
@@ -138,6 +145,35 @@ theorem pinned_nontrap_trace_refines_isa :
 theorem pinned_nontrap_memory_effects :
     (directRun memZero nontrapMemoryRequests).2 = nontrapMemoryEffects := by
   decide
+
+theorem pinned_nontrap_memory_packet :
+    TaggedMemoryPacketRefines 1 memZero nontrapMemoryPacket
+      (directRun memZero nontrapMemoryRequests).1 := by
+  constructor
+  · rfl
+  · refine MemoryPacketRefines.cons (by decide) ?_
+    refine MemoryPacketRefines.cons (by decide) ?_
+    exact MemoryPacketRefines.nil _
+
+theorem pinned_nontrap_memory_packet_effects :
+    nontrapMemoryPacket.map TaggedMemoryCommit.effect =
+      nontrapMemoryEffects := by
+  decide
+
+theorem pinned_nontrap_memory_packet_requests :
+    nontrapMemoryPacket.map TaggedMemoryCommit.request =
+      nontrapMemoryRequests := by
+  decide
+
+theorem pinned_nontrap_memory_packet_bus_effects (latency : LatencyOracle) :
+    completed
+        (runBus memZero (scheduleWith latency
+          (nontrapMemoryPacket.map TaggedMemoryCommit.request))).2 =
+      nontrapMemoryEffects := by
+  have hbus := taggedMemoryPacket_refines_bus
+    pinned_nontrap_memory_packet latency
+  rw [pinned_nontrap_memory_packet_requests] at hbus
+  exact hbus.2.symm.trans pinned_nontrap_memory_packet_effects
 
 theorem pinned_nontrap_bus_effects (latency : LatencyOracle) :
     completed
@@ -309,6 +345,10 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_nontrap_trace_append
 #print axioms pinned_nontrap_trace_refines_isa
 #print axioms pinned_nontrap_memory_effects
+#print axioms pinned_nontrap_memory_packet
+#print axioms pinned_nontrap_memory_packet_effects
+#print axioms pinned_nontrap_memory_packet_requests
+#print axioms pinned_nontrap_memory_packet_bus_effects
 #print axioms pinned_nontrap_bus_effects
 #print axioms pinned_cycle_retire_inputs
 #print axioms pinned_cycle_observations_normalize

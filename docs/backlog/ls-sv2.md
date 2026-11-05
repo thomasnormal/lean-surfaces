@@ -601,3 +601,28 @@ was introduced.
 **DECIDED:** expose the ROB projection as a corollary of the normalized
 window bridge; packet validation, state threading, and ROB retirement remain
 separate proof layers.
+
+## 2026-11-05-ls-sv2-25 — certify PicoRV32's tagged memory packet
+
+Added a two-entry `TaggedMemoryPacket` to the pinned PicoRV32 trace witness,
+with tags 1 and 2 for the measured store and load.  The new theorem
+`pinned_nontrap_memory_packet` proves its exact byte-level effects and final
+memory through `TaggedMemoryPacketRefines`; separate reduction lemmas identify
+its requests and effects with the measured `nontrapMemoryRequests` and
+`nontrapMemoryEffects`.
+
+`pinned_nontrap_memory_packet_bus_effects` then lifts this core-specific
+packet certificate through `taggedMemoryPacket_refines_bus` for every
+`LatencyOracle`, connecting the measured RVFI memory rows to the timed-bus
+architectural effect stream.
+
+**MEASURED:** `lake build
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and
+the packet/effect/request theorems report only existing `propext`/`Quot.sound`
+entries (the reduction lemmas have no axioms).  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  No `sorry`,
+new axiom, RTL edit, or SV-loader adaptation was introduced.
+
+**DECIDED:** keep the measured RVFI memory packet explicit at the core
+boundary; its tags, effects, and requests are independently checked before
+the generic latency theorem is applied.

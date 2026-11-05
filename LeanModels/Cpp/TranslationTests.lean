@@ -2209,6 +2209,32 @@ private def resolvedCallTranslation : Artifact := {emptyTranslation with
 def resolvedCallTranslationWitnessOk : Bool :=
   admitResolvedCallExpression resolvedCallTranslation [1] matches .ok {value := "0x21"}
 
+private def resolvedConstructorTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x31"), ("kind", .string "CXXConstructorDecl"),
+        ("name", .string "S"), ("inner", .array [])],
+      .object [("id", .string "0x32"), ("kind", .string "CXXConstructExpr"),
+        ("ctor", .object [("id", .string "0x31"),
+          ("kind", .string "CXXConstructorDecl")]),
+        ("ctorType", .object [("qualType", .string "void (int)")]),
+        ("inner", .array [])]])]}
+
+def resolvedConstructorTranslationWitnessOk : Bool :=
+  admitResolvedCXXConstructExpression resolvedConstructorTranslation [1] matches
+    .ok {value := "0x31"}
+
+private def resolvedConstructorRefusalTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x33"), ("kind", .string "CXXConstructExpr"),
+        ("ctorType", .object [("qualType", .string "void (int)")]),
+        ("inner", .array [])]])]}
+
+def resolvedConstructorTranslationRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXConstructExpression resolvedConstructorRefusalTranslation [0]
+  pure ()
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 
@@ -2450,6 +2476,8 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxConstructExpressionTranslationWitness matches .ok ()
 #guard admitCXXConstructExpression cxxConstructExpressionTranslation [] matches .error _
 #guard admitCXXConstructExpression functionTranslation [0] matches .error _
+#guard resolvedConstructorTranslationWitnessOk
+#guard resolvedConstructorTranslationRefusal matches .error _
 #guard newTranslationWitness matches .ok ()
 #guard admitCXXNewExpression newTranslation [] matches .error _
 #guard admitCXXNewExpression functionTranslation [0] matches .error _

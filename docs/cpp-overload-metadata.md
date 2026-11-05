@@ -15,3 +15,11 @@ boundary for later overload work.
 The same handle contract is available for ordinary `CallExpr` nodes through
 `admitResolvedCallExpression`; direct function and method references retain
 their Clang declaration identity while name lookup and invocation remain loud.
+
+`admitResolvedCXXConstructExpression` applies the same contract to
+`CXXConstructExpr` only when the AST carries a selected
+`CXXConstructorDecl` handle in its structured `ctor` field. The pinned Clang
+21.1.8 JSON for an ordinary `S value(1)` construction carries `ctorType` but
+no `ctor` handle, so that source shape is recorded as a loud refusal rather
+than treating the type spelling as overload identity. Construction,
+conversion, and lifetime execution remain outside this metadata gate.

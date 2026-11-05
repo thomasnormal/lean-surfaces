@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ constructor metadata now requires a structured selected
+  `CXXConstructorDecl` handle on `CXXConstructExpr`; the pinned Clang JSON
+  shape with only `ctorType` is recorded as a loud refusal instead of a
+  spelling-based overload guess.
+
 - C++ call metadata now retains resolved direct function/method identity for
   ordinary `CallExpr` nodes, with a pinned differential witness alongside the
   operator identity rows; lookup, conversion, and invocation remain refused.

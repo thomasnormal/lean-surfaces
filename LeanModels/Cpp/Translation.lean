@@ -679,6 +679,26 @@ def admitResolvedCallExpression (artifact : Artifact) (path : List Nat) :
     throw "translation: selected call declaration is not callable"
   pure handle
 
+/-- Retain a selected constructor declaration only when Clang carries its
+    declaration handle on the `CXXConstructExpr`. `ctorType` is type evidence,
+    not overload identity, so the absence of a handle remains a loud refusal.
+    Construction and overload execution are outside this metadata boundary. -/
+def admitResolvedCXXConstructExpression (artifact : Artifact) (path : List Nat) :
+    Except String FrontendHandle := do
+  let _ ← admitCXXConstructExpression artifact path
+  let raw := (rawAtInnerPath artifact.ast path).getD .null
+  let some selected := raw.field "ctor"
+    | throw "translation: construct expression has no selected constructor declaration handle"
+  let handle ← match selected with
+    | .object reference => evidenceHandle (.object reference) "id"
+    | .string value => parseFrontendHandle value
+    | _ => throw "translation: selected constructor handle is malformed"
+  let some declaration := artifact.declarations.find? (·.id == handle.value)
+    | throw "translation: selected constructor declaration is absent from artifact"
+  unless declaration.kind == "CXXConstructorDecl" do
+    throw "translation: selected constructor declaration is not a constructor"
+  pure handle
+
 def admitCompoundStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CompoundStmt" "compound-statement"
 

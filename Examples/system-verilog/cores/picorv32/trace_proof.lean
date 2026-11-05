@@ -114,10 +114,17 @@ theorem pinned_cycle_retire_inputs :
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapInputs := by
   rfl
 
+theorem pinned_cycle_observations_normalize :
+    normalizeRvfiTrace? 0
+        (rvfiObservations pinnedCycleMachine pinnedCycleMachine.init cycleInputs) =
+      some nontrapExpected := by
+  decide
+
 theorem pinned_cycle_trace :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapExpected := by
-  decide
+  exact normalizeRvfiCycleTrace pinnedCycleMachine pinnedCycleMachine.init cycleInputs
+    pinned_cycle_observations_normalize
 
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
@@ -166,6 +173,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_nontrap_trace_refines_isa
 #print axioms pinned_nontrap_memory_effects
 #print axioms pinned_cycle_retire_inputs
+#print axioms pinned_cycle_observations_normalize
 #print axioms pinned_cycle_trace
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace

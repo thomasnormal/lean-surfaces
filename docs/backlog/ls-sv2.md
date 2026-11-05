@@ -264,3 +264,32 @@ loader adaptation was introduced.
 **DECIDED:** keep chunk composition in the generic observation layer and keep
 the concrete window split in the PicoRV32 witness.  The symbolic core remains
 blocked on the owner lane's unchanged memory/generate route.
+
+## 2026-11-05-ls-sv2-12 — bridge packed RVFI cycles to normalized cycle traces
+
+The cycle adapter already projected each RVFI observation to an optional
+retirement, but it had no generic theorem connecting that projection to the
+order-aware packed-stream checker.  Added `rvfiObservations` and
+`normalizeRvfiCycleTrace` to `LeanModels/Refine/Rvfi.lean`.  The theorem
+inducts over every cycle and proves that, whenever normalization succeeds, the
+existing `cycleTrace` emits exactly the normalized retirements.  Invalid rows
+remain explicit bubbles and malformed valid rows cannot be silently dropped;
+the proof does not sort or repair order tags.
+
+The PicoRV32 bubble witness now proves normalization of its complete eight
+cycle observation window and derives `pinned_cycle_trace` through the generic
+bridge rather than evaluating the cycle trace independently.  The measured
+four-row ISA equality and the stateful-memory witness remain unchanged.
+
+**MEASURED:** `lake build LeanModels.Refine.Rvfi
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (20 jobs), with
+the new theorem reports limited to the existing `propext`/`Quot.sound` ledger.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** keep the packed observation stream and cycle projection tied by a
+single reusable theorem; later cores can discharge normalization from their
+RVFI contracts without duplicating cycle recursion.  The symbolic PicoRV32
+loader remains blocked at the unchanged unpacked-memory and generate-member
+routes.

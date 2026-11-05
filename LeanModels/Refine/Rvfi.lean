@@ -271,6 +271,76 @@ def RvfiCycleMachine.toCycleMachine {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
 
+/-- The packed observations emitted by a finite cycle window.  Unlike
+`cycleTrace`, this retains bubbles and malformed valid rows so that the RVFI
+normalizer can check the complete wire stream before it is projected to
+architectural retirements. -/
+def rvfiObservations {State : Type} (machine : RvfiCycleMachine State) :
+    State → List Input → List RvfiObservation
+  | _, [] => []
+  | state, input :: inputs =>
+      let (state', observation) := machine.step state input
+      observation :: rvfiObservations machine state' inputs
+
+/-- A successful RVFI normalization is exactly the retirement stream emitted
+by the generic cycle bridge for the same window.  The hypothesis is
+deliberately an executable certificate: valid rows must have consecutive
+orders and decode to a retirement, while invalid rows are explicit bubbles.
+Thus the bridge never repairs, sorts, or silently drops a malformed row. -/
+theorem normalizeRvfiCycleTrace {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start (rvfiObservations machine state inputs) =
+      some retirements) :
+    cycleTrace machine.toCycleMachine state inputs = retirements := by
+  induction inputs generalizing state start retirements with
+  | nil =>
+      simp [rvfiObservations, normalizeRvfiTrace?, cycleTrace] at h ⊢
+      cases h
+      rfl
+  | cons input inputs ih =>
+      cases hstep : machine.step state input with
+      | mk state' observation =>
+        have hobs : rvfiObservations machine state (input :: inputs) =
+            observation :: rvfiObservations machine state' inputs := by
+          simp [rvfiObservations, hstep]
+        rw [hobs] at h
+        have hcycle : cycleTrace machine.toCycleMachine state (input :: inputs) =
+            match observation.toRetirement? with
+            | none => cycleTrace machine.toCycleMachine state' inputs
+            | some retirement => retirement :: cycleTrace machine.toCycleMachine state' inputs := by
+          simp [cycleTrace, RvfiCycleMachine.toCycleMachine, hstep]
+          rfl
+        rw [hcycle]
+        by_cases hv : observation.valid = true
+        · simp [normalizeRvfiTrace?, hv] at h
+          by_cases ho : observation.order = start
+          · simp [ho] at h
+            cases hret : observation.toRetirement? with
+            | none => simp [hret] at h
+            | some retirement =>
+                cases htail : normalizeRvfiTrace? (start + 1)
+                    (rvfiObservations machine state' inputs) with
+                | none => simp [hret, htail] at h
+                | some retirements =>
+                    simp [hret, htail] at h
+                    cases h
+                    change retirement :: cycleTrace machine.toCycleMachine state' inputs =
+                      retirement :: retirements
+                    congr 1
+                    exact ih state' (start := start + 1)
+                      (retirements := retirements) htail
+          · simp [ho] at h
+        · have hv' : observation.valid = false := by
+            cases hval : observation.valid with
+            | false => exact rfl
+            | true => exact False.elim (hv hval)
+          simp [normalizeRvfiTrace?, hv'] at h
+          have hnone : observation.toRetirement? = none := by
+            simp [RvfiObservation.toRetirement?, hv']
+          rw [hnone]
+          exact ih state' (start := start) (retirements := retirements) h
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -472,3 +542,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
+#print axioms LeanModels.Refine.normalizeRvfiCycleTrace

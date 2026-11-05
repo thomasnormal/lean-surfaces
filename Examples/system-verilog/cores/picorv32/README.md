@@ -50,3 +50,36 @@ the parameter-sized-array follow-up).  Once that generic route is integrated,
 the generated members and the remaining source-shaped process forms must be
 re-measured before core-specific proof glue is added.
 
+## RVFI and memory-port witness
+
+The unchanged source also exposes an RVFI port under `RISCV_FORMAL`.  The
+clean-room harness [`rvfi_probe.v`](rvfi_probe.v) drives the real memory port
+with `mem_ready = 1` and runs this five-instruction program:
+
+```text
+addi x1, x0, 5
+sw   x1, 0x100(x0)
+lw   x2, 0x100(x0)
+addi x3, x2, 1
+ebreak
+```
+
+Compile it against the pinned source (without modifying that source) with:
+
+```text
+iverilog -g2012 -DRISCV_FORMAL -s tb_picorv32_rvfi \
+  -o /tmp/picorv32_rvfi_tb <PINNED_PICORV32>/picorv32.v \
+  Examples/system-verilog/cores/picorv32/rvfi_probe.v
+vvp /tmp/picorv32_rvfi_tb
+```
+
+Icarus Verilog 13.0 and Verilator 5.052 produced the same five RVFI rows.  The
+first four are the non-trapping RV32I stream (orders 0 through 3); the fifth is
+the `ebreak` row with `trap=1`.  The rows include `sw`'s `wmask=f` and data 5,
+then `lw`'s `rmask=f`, address `0x100`, and data 5.  The Lean witness
+[`rvfi_proof.lean`](rvfi_proof.lean) normalizes the first four packed rows
+through `RvfiObservation.toRetirement?`, checks their consecutive orders, and
+contains no source-specific semantic shortcut.  This validates the RVFI
+observation boundary against two simulators; it does not bypass the loader's
+unpacked-memory/generate wall or claim a core refinement theorem.
+

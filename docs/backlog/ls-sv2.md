@@ -915,3 +915,25 @@ was introduced.
 **DECIDED:** keep the ROB state projection layered over `PacketRefines`; tag
 validation constrains commit order while the shared packet certificate owns
 the architectural state transition.
+
+## 2026-11-05-ls-sv2-39 — transport refinement across flush windows
+
+Added `flushStateAfter_refines` to `LeanModels/Refine/Flush.lean`.  A
+`FlushStepRefines` certificate now transports the core/ISA relation across a
+finite cycle window, retaining core state changes from flushes and advancing
+the ISA only over the packet inputs emitted by retire events.
+
+The toy flush proof applies the theorem to its initial flush followed by one
+retirement, so the resulting relation is checked against the filtered
+architectural input stream rather than against all cycle inputs.
+
+**MEASURED:** `lake build LeanModels.Refine.Flush
+Examples.«system-verilog».cores.toy_rv32i.flush_proof` passed (29 jobs), and
+`flushStateAfter_refines` reports only the existing `Quot.sound` dependency.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git
+diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation
+was introduced.
+
+**DECIDED:** keep flush relation transport independent from trace equality;
+flushes advance the core state without consuming an ISA step, while retire
+packets use the shared packet state projection.

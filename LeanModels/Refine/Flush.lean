@@ -155,9 +155,36 @@ theorem flush_trace_refines {CoreState IsaState : Type}
           rw [packet_refines_trace_append hpacket,
             ih coreState' isaState' hrel']
 
+theorem flushStateAfter_refines {CoreState IsaState : Type}
+    {core : FlushMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Prop} {admit : Input → Prop}
+    (h : FlushStepRefines core isa rel admit) :
+    ∀ (coreState : CoreState) (isaState : IsaState) (cycles : List Input),
+      rel coreState isaState →
+      rel (flushStateAfter core coreState cycles)
+        (machineStateAfter isa isaState
+          (flushInputs core coreState cycles)) := by
+  intro coreState isaState cycles hrel
+  induction cycles generalizing coreState isaState with
+  | nil => exact hrel
+  | cons cycleInput rest ih =>
+      have hs := h.2 coreState isaState cycleInput hrel
+      rcases hC : core.step coreState cycleInput with ⟨coreState', event⟩
+      simp only [flushStateAfter, flushInputs, hC]
+      simp only [hC] at hs
+      cases event with
+      | flush =>
+          exact ih coreState' isaState hs
+      | retire packet =>
+          rcases hs with ⟨isaState', hrel', hpacket⟩
+          have hstate := packet_refines_state hpacket
+          rw [machineStateAfter_append, ← hstate]
+          exact ih coreState' isaState' hrel'
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.flush_trace_refines
+#print axioms LeanModels.Refine.flushStateAfter_refines
 #print axioms LeanModels.Refine.flushStateAfter_append
 #print axioms LeanModels.Refine.flushTrace_append
 #print axioms LeanModels.Refine.flushInputs_append

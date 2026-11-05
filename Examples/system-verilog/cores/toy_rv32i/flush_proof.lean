@@ -63,6 +63,15 @@ theorem flush_trace_one :
       (by exact ⟨rfl, rfl, rfl⟩)
   simpa [flushMachine, flushTrace, flushInputs] using h
 
+theorem flush_state_after_refines :
+    flushRel
+      (flushStateAfter flushMachine flushMachine.init [addiInput, addiInput])
+      (machineStateAfter rvMachine rvMachine.init
+        (flushInputs flushMachine flushMachine.init [addiInput, addiInput])) := by
+  exact LeanModels.Refine.flushStateAfter_refines flush_step_refines
+    flushMachine.init rvMachine.init [addiInput, addiInput]
+    (by exact ⟨rfl, rfl, rfl⟩)
+
 theorem flush_windows_state :
     flushStateAfter flushMachine flushMachine.init
         ([addiInput] ++ [addiInput]) =
@@ -144,6 +153,7 @@ theorem flush_progress_trace_prefix :
 
 #print axioms flush_step_refines
 #print axioms flush_trace_one
+#print axioms flush_state_after_refines
 #print axioms flush_windows_state
 #print axioms flush_windows_trace
 #print axioms flush_windows_inputs

@@ -9006,3 +9006,17 @@ the former global fixture printed `1` while CPython 3.9 printed `None`.
 
 DECIDED: retain the first-step local dead-yield admission, and refuse global or
 nonlocal targets until expression-yield send semantics has an explicit channel.
+
+## 2026-11-05-pycomplete-339 — preserve non-simple annotation order by scope
+
+The extractor's non-simple `AnnAssign` lowering now follows CPython 3.9:
+function bodies evaluate only the value and target, while module and class
+scopes store the value before evaluating the annotation. The previous lowering
+ran the annotation first in both scopes, producing `ann/val/ann/val/1` for a
+module plus function witness where CPython prints `val/ann/val/1`. Added the
+script and extractor regression rows; ordinary `__annotations__` handling for
+simple targets is unchanged.
+
+DECIDED: keep the current structured statement split with CPython's order until
+`AnnAssign` receives a direct semantic node; function annotation evaluation is
+omitted and module/class evaluation follows the value store.

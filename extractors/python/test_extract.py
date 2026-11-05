@@ -1139,6 +1139,18 @@ class ExtractorTests(unittest.TestCase):
                 self.assertEqual(statement["kind"], "Assign")
                 local = self._first_fn("def f():\n    " + source)["body"][0]
                 self.assertEqual(local["kind"], "Assign")
+        module = self._envelope_of(
+            "obj = {}\n"
+            "def ann():\n    return int\n"
+            "def val():\n    return 7\n"
+            "obj['x']: ann() = val()\n")["module"]["body"]
+        self.assertEqual([item["kind"] for item in module[-2:]],
+                         ["Assign", "Expr"])
+        local = self._first_fn(
+            "def f(obj):\n"
+            "    obj['x']: ann() = val()\n")
+        self.assertEqual([item["kind"] for item in local["body"]],
+                         ["Assign"])
         module = self._envelope_of("x: int\n")["module"]["body"][0]
         self.assertEqual(module["kind"], "Unsupported")
         self.assertEqual(module["py_kind"], "AnnAssign:module-no-value")

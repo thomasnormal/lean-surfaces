@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**752 entries across 18 lanes.** Regenerate with
+**753 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -57,6 +57,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-05-pycomplete-297` |  | admit ten positive float digits | python-completeness |
 | `2026-11-05-pycomplete-296` |  | admit nine positive float digits | python-completeness |
 | `2026-11-05-pycomplete-295` |  | admit eight positive float digits | python-completeness |
+| `2026-11-05-ls-sv2-5` |  | connect the measured PicoRV32 RVFI prefix to the ISA trace | ls-sv2 |
 | `2026-11-05-ls-sv2-4` |  | re-probe the R2 cores after the memory route | ls-sv2 |
 | `2026-11-05-ls-sv2-3` |  | make the Sail boundary explicit and gate every decoder row | ls-sv2 |
 | `2026-11-05-ls-sv2-2` |  | expose the privileged WFI ordering as a platform profile | ls-sv2 |

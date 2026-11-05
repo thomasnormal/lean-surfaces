@@ -100,3 +100,26 @@ source-shaped wall, and the CV32E40P/Ibex process-form walls are unchanged.
 Keep the exact owner-lane requests in its inbox, make no core-specific
 adaptation, and wait for a generic generate/member or process-semantics change
 before adding proof glue.
+
+## 2026-11-05-ls-sv2-5 — connect the measured PicoRV32 RVFI prefix to the ISA trace
+
+The inbox was reread before this item.  The pinned PicoRV32 RVFI witness has a
+four-instruction non-trapping prefix (`ADDI`, `SW`, `LW`, `ADDI`) whose rows
+were already checked against Icarus 13.0 and Verilator 5.052.  Added
+`Examples/system-verilog/cores/picorv32/trace_proof.lean`: explicit byte
+memories model the post-store load response, and the axiom-free theorem
+`pinned_nontrap_trace_refines_isa` proves that the normalized hardware rows
+equal the finite `rvMachine` trace, including register and memory effects.
+
+The measured `ebreak` row remains intentionally outside this equality.  The
+core reports `pcWdata = 16` on the trap while the architectural model enters
+`mtvec = 0`; the README records this visible RVFI/ISA contract boundary rather
+than guessing a correction.  The theorem is therefore a finite observation
+witness for the real pinned core, not a whole-core refinement theorem; the
+loader's unpacked-memory/generate wall is unchanged.
+
+**MEASURED:** `lake build LeanModels.Refine Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs); the two new theorem axiom reports contain only `propext` and `Quot.sound`. `python3 tools/docs_check.py` and `git diff --check` passed.
+
+**DECIDED:** retain the four-row bridge as the first real-core use of the R1
+ISA trace contract, and keep the trap-PC mismatch explicit until a core-wide
+RVFI trap convention is specified and proved.

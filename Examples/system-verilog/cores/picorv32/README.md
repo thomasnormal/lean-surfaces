@@ -100,3 +100,15 @@ unpacked-memory/generate wall or claim a core refinement theorem.  The same
 Lean witness also checks that all five observed instruction words decode to
 the expected RV32I/system constructors in `LeanModels.Rv`.
 
+## Finite ISA trace witness
+
+[`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI
+rows to the R1 `rvMachine` adapter with explicit byte memories: the store is
+followed by a load response of 5 at address `0x100`.  The axiom-free theorem
+`pinned_nontrap_trace_refines_isa` proves that this measured retirement stream
+equals the ISA trace, including the register writes and memory effects.  The
+`ebreak` row remains in `rvfi_proof.lean` but is deliberately outside this
+equality: the measured core reports `pcWdata = 16` on the trap, while the
+architectural model enters `mtvec = 0`.  This is a visible RVFI/ISA contract
+boundary, not a guessed correction or a whole-core refinement claim.
+

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Float `round(number, 23)` now uses an exact binary64 ratio scaled by one hundred sextillion, preserving ties-to-even and signed zero.
+
+
 - Refreshed the `tri` proof's symbolic simplification for the late exception-name census, restoring the Python quickstart proof on current semantics.
 
 

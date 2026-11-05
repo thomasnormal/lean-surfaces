@@ -293,3 +293,32 @@ single reusable theorem; later cores can discharge normalization from their
 RVFI contracts without duplicating cycle recursion.  The symbolic PicoRV32
 loader remains blocked at the unchanged unpacked-memory and generate-member
 routes.
+
+## 2026-11-05-ls-sv2-13 — project packed RVFI cycles into the ROB boundary
+
+The reusable ROB layer already handled tagged in-order commit packets, but
+the RVFI adapter had no connection to it.  Added `RvfiRob.lean` with
+`RvfiCycleMachine.toRobMachine`: each decoded observation becomes a singleton
+`TaggedCommit` carrying its original `order` and cycle input, while bubbles and
+refused rows become empty packets.  The generic trace and input theorems prove
+that this projection agrees exactly with `cycleTrace` and `retireInputs`; a
+normalization corollary then supplies the ROB trace only after the packed
+order/decode certificate succeeds.
+
+The PicoRV32 eight-cycle witness now derives both `robTrace` and `robInputs`
+for its four measured non-trapping instructions through this adapter.  No
+completion order is reconstructed: the order tags are transported unchanged
+and checked by `normalizeRvfiTrace?`.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRob
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (23 jobs), with
+the three new theorem reports limited to `propext`/`Quot.sound`.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** keep the RVFI-to-ROB projection generic and one-entry-per-channel;
+future superscalar cores can replace the packet producer while retaining the
+same `TaggedPacketRefines`/`rob_trace_refines` contract.  PicoRV32 remains a
+finite observed witness, not symbolic whole-core admission, at the unchanged
+unpacked-memory and generate-member walls.

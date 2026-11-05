@@ -1,6 +1,7 @@
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
 import LeanModels.Refine.Bus
 import LeanModels.Refine.MemoryMachine
+import LeanModels.Refine.RvfiRob
 
 /-!
 # PicoRV32 finite RVFI-to-ISA trace witness
@@ -126,6 +127,18 @@ theorem pinned_cycle_trace :
   exact normalizeRvfiCycleTrace pinnedCycleMachine pinnedCycleMachine.init cycleInputs
     pinned_cycle_observations_normalize
 
+theorem pinned_rob_trace :
+    robTrace pinnedCycleMachine.toRobMachine
+        pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapExpected := by
+  exact normalizeRvfiRobTrace pinnedCycleMachine pinnedCycleMachine.init cycleInputs
+    pinned_cycle_observations_normalize
+
+theorem pinned_rob_inputs :
+    robInputs pinnedCycleMachine.toRobMachine
+        pinnedCycleMachine.toRobMachine.init cycleInputs = nontrapInputs := by
+  rw [RvfiCycleMachine.toRobMachine_inputs]
+  exact pinned_cycle_retire_inputs
+
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs =
@@ -163,6 +176,10 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #guard normalizeRvfiTrace? 2 nontrapSecondObservations == some nontrapSecondExpected
 #guard (retireInputs pinnedCycleMachine.toCycleMachine
   pinnedCycleMachine.toCycleMachine.init cycleInputs).length == 4
+#guard robTrace pinnedCycleMachine.toRobMachine
+  pinnedCycleMachine.toRobMachine.init cycleInputs == nontrapExpected
+#guard (robInputs pinnedCycleMachine.toRobMachine
+  pinnedCycleMachine.toRobMachine.init cycleInputs).length == 4
 #guard normalizeRvfiTrace? 0 nontrapObservations ==
   some (trace rvMachine rvMachine.init nontrapInputs)
 
@@ -175,6 +192,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_retire_inputs
 #print axioms pinned_cycle_observations_normalize
 #print axioms pinned_cycle_trace
+#print axioms pinned_rob_trace
+#print axioms pinned_rob_inputs
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_nontrap_observed_trace_refines_isa

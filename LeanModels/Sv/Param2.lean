@@ -2225,4 +2225,9 @@ private def loopDec : PExpr := .unary .dec (.genvarRef "i")
 #guard (forFuel2 {} "i" (.int 200) loopDescCond loopDec).toOption == some 203
 #guard (Res.toOption (forValues2 {} "i" (.int 0) loopAscCond loopInc)).map List.length == some 200
 
+-- Generate guards read 32-bit int parameters from `nvals` as well as the
+-- unbounded `vals` table; both paths must select the same guarded family.
+private def int32GuardEnv : IEnv := { nvals := [("N", (16, 32, true))] }
+#guard (evalGenGuard int32GuardEnv (.binary (.m0 .eq) (.paramRef "N" none) (.int 16))).toOption == some 1
+
 end LeanModels.Sv

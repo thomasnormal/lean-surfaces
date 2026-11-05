@@ -6339,3 +6339,10 @@ The `sv_equations?` report now prints constant bit indices as numerals and
 generate-loop bounds over the Nat binder (`1 ≤ i → i < N`). The summary keeps
 its Int affine representation internally; only the diagnostic presentation is
 normalized, so existing proof terms and soundness checks are unchanged.
+
+## Guarded generate guards in int32 mode
+
+Generate-if constant evaluation now reads typed 32-bit integer parameters from
+`IEnv.nvals`, matching the unbounded `vals` path. This keeps `int32Agrees`
+semantic rather than representation-sensitive for guarded families; the
+`sklansky_guards/int32_guard` fixture pins agreement at `N = 16` and `N = 1`.

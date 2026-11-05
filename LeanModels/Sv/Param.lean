@@ -1627,7 +1627,10 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
   | .paramRef n none =>
       match env.vals.lookup n with
       | some v => .ok v
-      | none => .error s!"unbound parameter '{n}'"
+      | none =>
+          match env.nvals.lookup n with
+          | some (v, _, _) => .ok v
+          | none => .error s!"unbound parameter '{n}'"
   | .genvarRef n =>
       match env.vals.lookup n with
       | some v => .ok v

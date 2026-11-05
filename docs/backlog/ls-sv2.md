@@ -354,3 +354,29 @@ core's scheduling or completion policy; a future superscalar proof can provide
 its packet entries and consume the same `PacketRefines` contract.  The
 PicoRV32 symbolic loader remains blocked at the unchanged memory/generate
 walls.
+
+## 2026-11-05-ls-sv2-15 — carry packetized RVFI rows into tagged ROB commits
+
+The packet adapter now also exposes a tagged ROB view.  Added
+`RvfiPacketMachine.toRobMachine`, preserving each row's RVFI `order` and
+associated input in a `TaggedCommit`, plus trace and input projection
+theorems.  `normalizeRvfiPacketRobTrace` reuses the flattened normalization
+certificate before equating the tagged stream with retirements; the adapter
+does not infer or reorder completion.
+
+The PicoRV32 packet witness proves both tagged ROB outputs for the four
+two-entry measured packets.  This exercises the same `robTrace`/`robInputs`
+boundary that a future superscalar proof will use while keeping the measured
+core's single-channel status explicit.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), with
+the new ROB theorem reports limited to `propext`/`Quot.sound`.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** keep packet and tagged-ROB projections as separate views over the
+same observations so a core proof can state its commit-order certificate once.
+The symbolic PicoRV32 loader remains blocked at the unchanged memory/generate
+walls.

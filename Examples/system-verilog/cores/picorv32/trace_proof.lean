@@ -183,6 +183,20 @@ theorem pinned_packet_inputs :
       nontrapInputs := by
   rfl
 
+theorem pinned_packet_rob_trace :
+    robTrace pinnedPacketMachine.toRobMachine
+        pinnedPacketMachine.toRobMachine.init packetCycleInputs =
+      nontrapExpected := by
+  exact normalizeRvfiPacketRobTrace pinnedPacketMachine pinnedPacketMachine.init
+    packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_rob_inputs :
+    robInputs pinnedPacketMachine.toRobMachine
+        pinnedPacketMachine.toRobMachine.init packetCycleInputs =
+      nontrapInputs := by
+  rw [RvfiPacketMachine.toRobMachine_inputs]
+  exact pinned_packet_inputs
+
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs =
@@ -241,6 +255,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_observations_normalize
 #print axioms pinned_packet_trace
 #print axioms pinned_packet_inputs
+#print axioms pinned_packet_rob_trace
+#print axioms pinned_packet_rob_inputs
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_nontrap_observed_trace_refines_isa

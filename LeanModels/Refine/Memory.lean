@@ -83,7 +83,31 @@ theorem taggedMemoryPacket_refines_direct
         (directRun memory (packet.map TaggedMemoryCommit.request)).2 :=
   memoryPacket_refines_direct h.2
 
+/-! ## Timing erasure at the tagged commit boundary -/
+
+/-- A tagged memory packet remains exact when the requests are sent through a
+timed FIFO bus.  The packet's commit order is preserved by `completed`, while
+the latency oracle may insert any finite number of response bubbles. -/
+theorem taggedMemoryPacket_refines_bus
+    {start : Nat} {memory finalMemory : Memory}
+    {packet : TaggedMemoryPacket}
+    (h : TaggedMemoryPacketRefines start memory packet finalMemory)
+    (latency : LatencyOracle) :
+    finalMemory =
+        (runBus memory (scheduleWith latency
+          (packet.map TaggedMemoryCommit.request))).1 ∧
+      packet.map TaggedMemoryCommit.effect =
+        completed (runBus memory (scheduleWith latency
+          (packet.map TaggedMemoryCommit.request))).2 := by
+  have hdirect := taggedMemoryPacket_refines_direct h
+  have hbus := runBus_oracle_projection memory latency
+    (packet.map TaggedMemoryCommit.request)
+  constructor
+  · exact hdirect.1.trans hbus.1.symm
+  · exact hdirect.2.trans hbus.2.symm
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.memoryPacket_refines_direct
 #print axioms LeanModels.Refine.taggedMemoryPacket_refines_direct
+#print axioms LeanModels.Refine.taggedMemoryPacket_refines_bus

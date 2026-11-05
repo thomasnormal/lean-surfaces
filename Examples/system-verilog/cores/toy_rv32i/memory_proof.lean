@@ -33,6 +33,12 @@ def packet : TaggedMemoryPacket :=
 
 def completionOrder : List Nat := [3, 1, 0, 2]
 
+def latency : LatencyOracle
+  | 0 => 4
+  | 1 => 0
+  | 2 => 7
+  | _ => 1
+
 theorem completion_order_is_a_permutation :
     CompletionOrder completionOrder packet := by
   change List.Perm [3, 1, 0, 2] [0, 1, 2, 3]
@@ -64,10 +70,21 @@ theorem packet_projects_to_direct :
         (directRun zeroMemory (packet.map TaggedMemoryCommit.request)).2 := by
   exact taggedMemoryPacket_refines_direct packet_certificate
 
+theorem packet_projects_to_timed_bus :
+    (directRun zeroMemory requests).1 =
+        (runBus zeroMemory (scheduleWith latency requests)).1 ∧
+      packet.map TaggedMemoryCommit.effect =
+        completed (runBus zeroMemory (scheduleWith latency requests)).2 := by
+  simpa [requests, packet] using
+    (taggedMemoryPacket_refines_bus packet_certificate latency)
+
 #guard completionOrder == [3, 1, 0, 2]
 #guard packet.map TaggedMemoryCommit.order == [0, 1, 2, 3]
+#guard (completed (runBus zeroMemory (scheduleWith latency requests)).2).length ==
+  packet.length
 
 #print axioms packet_certificate
 #print axioms packet_projects_to_direct
+#print axioms packet_projects_to_timed_bus
 
 end Examples.«system-verilog».cores.toy_rv32i.memory_proof

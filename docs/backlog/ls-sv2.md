@@ -477,3 +477,29 @@ new axiom, RTL edit, or SV-loader adaptation was introduced.
 the completed architectural effects to the PicoRV32 trace witness.  The
 symbolic loader remains blocked at the unchanged unpacked-register-memory and
 generate-member routes.
+
+## 2026-11-05-ls-sv2-20 — compose tagged memory commits with timed buses
+
+Added `taggedMemoryPacket_refines_bus` to `LeanModels/Refine/Memory.lean`.
+The theorem composes a packet's exact byte-level memory certificate with
+`runBus_oracle_projection`: for every `LatencyOracle`, the final memory and
+the completed effect stream agree with the packet's in-order committed
+requests and effects.  It preserves the packet's explicit order and does not
+choose or reconstruct a completion schedule.
+
+The toy memory witness now applies the theorem to a word store followed by
+mixed-width loads, with a nonconstant latency function, through
+`packet_projects_to_timed_bus` in
+`Examples/system-verilog/cores/toy_rv32i/memory_proof.lean`.
+
+**MEASURED:** `lake build LeanModels.Refine.Memory
+Examples.«system-verilog».cores.toy_rv32i.memory_proof` passed (20 jobs), and
+the new theorem and witness report only the existing `propext`/`Quot.sound`
+entries.  `python3 tools/docs_check.py`, `tools/backlog-index.sh --check`,
+and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader
+adaptation was introduced.
+
+**DECIDED:** keep the memory packet certificate as the bridge between
+arbitrary timed bus completion and architectural commit effects; later ROB
+proofs can reuse it without adding a timing assumption.  The PicoRV32 loader
+walls remain unchanged.

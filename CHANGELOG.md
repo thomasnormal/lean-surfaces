@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- C++ object-frame evaluation now reports a dedicated `unsupportedCall` for
+  nested callable expressions. The object-frame and value-only evaluators stay
+  distinct because only the former retains caller-owned storage and failure
+  state; the refusal no longer mislabels a call as arithmetic conversion.
+
 - C++ differential checks now classify a completed native assertion failure
   (exit 3) as `DIVERGE`, print the pinned Clang oracle line, and require an
   available oracle by default under CI; unavailable compilation/runtime inputs

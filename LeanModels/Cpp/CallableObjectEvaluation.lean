@@ -11,6 +11,10 @@ inductive CallableObjectEvaluationError where
   | unsupportedArgument (reason : IntegralUnsupported)
   | argumentTypeMismatch (declaration : FrontendHandle)
   | unsupportedOperator (operator : String)
+  /-- Calls require the caller-owned function environment; this evaluator is
+      intentionally the object-frame layer and does not silently switch to the
+      value-only evaluator. -/
+  | unsupportedCall
   | voidResultRequiresResultAPI
   | returnTypeMismatch
   | missingReturn
@@ -326,7 +330,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     | .ok result => success rightResult.frame result
               | .ok result => success leftResult.frame result
           | _ => success frame (.unsupported .unresolvedArithmeticConversions)
-      | .call _ _ => success frame (.unsupported .unresolvedArithmeticConversions)
+      | .call _ _ => failure frame .unsupportedCall
 termination_by structural fuel
 
 /-- The callback already has smaller fuel; fallthrough itself descends the clause list. -/

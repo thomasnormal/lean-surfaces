@@ -358,6 +358,21 @@ private def valueOnlyRemainsLoud : Bool :=
 
 def callableValueOnlyRefusal : Bool := !valueOnlyRemainsLoud
 
+private def objectCallRefusal : Bool :=
+  let callee : CallableCallee := {
+    signature := {result := intType, parameters := [], variadic := false},
+    parameters := [],
+    body := .return_ {expression := .integer 1, sourceType := intType, type := intType}}
+  let caller : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ {
+        expression := .call callee [], sourceType := intType, type := intType})}
+  match evaluateCallableObject 32 .lp64 caller [signed 7] with
+  | .error .unsupportedCall => true
+  | _ => false
+
+def callableObjectCallRefusal : Bool := objectCallRefusal
+
 private def selfInitializerRetainsFrame : Bool :=
   match CallableObjectFrame.start .lp64
       (functionWithLocal (.read (handle "0x11"))) [signed 7] with
@@ -453,6 +468,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard callableSwitchScopeFailureWitness
 #guard callableReadsParameterWitness
 #guard !callableValueOnlyRefusal
+#guard callableObjectCallRefusal
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

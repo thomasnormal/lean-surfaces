@@ -958,3 +958,24 @@ SV-loader adaptation was introduced.
 **DECIDED:** keep cycle relation transport aligned with the filtered input
 semantics; bubbles are architectural stutter and never become fabricated ISA
 steps.
+
+## 2026-11-05-ls-sv2-41 — transport ROB relations and order across windows
+
+Added `robStateAfter_refines` to `LeanModels/Refine/Rob.lean`.  The theorem
+transports a `RobStepRefines` relation across a finite cycle window and
+returns the final commit-order counter, proving it equals the starting order
+plus the length of the emitted architectural input stream.
+
+The toy ROB proof instantiates the result for one two-entry commit packet,
+checking both the final architectural state and the order-counter accounting.
+
+**MEASURED:** `lake build LeanModels.Refine.Rob
+Examples.«system-verilog».cores.toy_rv32i.rob_proof` passed (29 jobs), and
+`robStateAfter_refines` reports only existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep ROB order accounting in the state-transport theorem; the
+architectural input stream, rather than physical completion order, determines
+the counter advance.

@@ -218,10 +218,43 @@ theorem rob_trace_refines {CoreState IsaState : Type}
       rw [tagged_packet_refines_trace_append hpacket,
         ih coreState' isaState' order' hrel']
 
+theorem robStateAfter_refines {CoreState IsaState : Type}
+    {core : RobMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Nat → Prop} {start : Nat}
+    {admit : Input → Prop}
+    (h : RobStepRefines core isa rel start admit) :
+    ∀ (coreState : CoreState) (isaState : IsaState) (order : Nat)
+      (cycles : List Input),
+      rel coreState isaState order →
+      ∃ finalOrder,
+        rel (robStateAfter core coreState cycles)
+          (machineStateAfter isa isaState
+            (robInputs core coreState cycles)) finalOrder ∧
+        finalOrder = order + (robInputs core coreState cycles).length := by
+  intro coreState isaState order cycles hrel
+  induction cycles generalizing coreState isaState order with
+  | nil =>
+      exact ⟨order, hrel, by rfl⟩
+  | cons cycleInput rest ih =>
+      have hs := h.2 coreState isaState order cycleInput hrel
+      rcases hC : core.step coreState cycleInput with ⟨coreState', packet⟩
+      simp only [robStateAfter, robInputs, hC]
+      simp only [hC] at hs
+      rcases hs with ⟨isaState', order', hrel', horder', hpacket⟩
+      rcases ih coreState' isaState' order' hrel' with
+        ⟨finalOrder, hfinal, hfinalOrder⟩
+      refine ⟨finalOrder, ?_, ?_⟩
+      · rw [machineStateAfter_append, ← tagged_packet_refines_state hpacket]
+        exact hfinal
+      · rw [hfinalOrder, horder']
+        simp only [List.length_append, List.length_map]
+        omega
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rob_trace_refines
 #print axioms LeanModels.Refine.tagged_packet_refines_state
+#print axioms LeanModels.Refine.robStateAfter_refines
 #print axioms LeanModels.Refine.robStateAfter_append
 #print axioms LeanModels.Refine.robTrace_append
 #print axioms LeanModels.Refine.robInputs_append

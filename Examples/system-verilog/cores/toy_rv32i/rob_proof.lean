@@ -102,6 +102,18 @@ theorem rob_packet_state_projection :
   have hstate := tagged_packet_refines_state hp
   exact hrel.1.trans hstate
 
+theorem rob_state_after_refines :
+    ∃ finalOrder,
+      robRel
+        (robStateAfter robMachine robMachine.init [addiInput])
+        (machineStateAfter rvMachine rvMachine.init
+          (robInputs robMachine robMachine.init [addiInput])) finalOrder ∧
+      finalOrder = 0 +
+        (robInputs robMachine robMachine.init [addiInput]).length := by
+  exact LeanModels.Refine.robStateAfter_refines rob_step_refines
+    robMachine.init rvMachine.init 0 [addiInput]
+    (by exact ⟨rfl, rfl, rfl, rfl⟩)
+
 theorem rob_windows_state :
     robStateAfter robMachine robMachine.init
         ([addiInput] ++ [addiInput]) =
@@ -205,6 +217,7 @@ theorem rob_progress_trace_prefix :
 #print axioms rob_step_refines
 #print axioms rob_one_cycle
 #print axioms rob_packet_state_projection
+#print axioms rob_state_after_refines
 #print axioms rob_windows_state
 #print axioms rob_windows_trace
 #print axioms rob_windows_inputs

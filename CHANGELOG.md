@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Corrected C++ coverage accounting: hand-built IR rows are reported as
+  `WITNESS`, while `MATCH` is reserved for source-derived Lean admission;
+  native source checks remain visible separately.
+
 - Fixed a C++ soundness gap by refusing multi-argument calls with effectful
   arguments whose initialization order is indeterminate; added a differential
   recorded-refusal row.

@@ -274,6 +274,13 @@ def native_rows(cases, clang):
 
 
 def differential(cases, model, native):
+    def source_derived(row):
+        # The retained TinyXML-2 callable rows are admitted from extracted
+        # source probes. The remaining rows are hand-built IR witnesses until
+        # the source-to-callable admission path is wired into this corpus.
+        return (row.get("kind", "callable") == "callable" and
+                row.get("lean_module") == "Examples.cpp.tinyxml2.proof")
+
     rows = []
     for row in cases:
         model_value = model[row["id"]]
@@ -288,9 +295,12 @@ def differential(cases, model, native):
                 else:
                     verdict, detail = "DIVERGE", "model answered a recorded refusal"
             elif row.get("kind") in ("translation", "lifetime", "scalar", "expression", "statement") and model_value == native_value:
-                verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
+                verdict, detail = "WITNESS", "hand-built Lean IR witness; native source check is separate"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
-                verdict, detail = "MATCH", "Lean and Clang agree"
+                if source_derived(row):
+                    verdict, detail = "MATCH", "Lean source-derived admission and Clang agree"
+                else:
+                    verdict, detail = "WITNESS", "hand-built Lean IR witness; native source check is separate"
             else:
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
         else:
@@ -379,34 +389,34 @@ def render_rung_page(diff_rows, grammar_rows_value):
     lines += ["", "## Three-corpus census", "",
               "The source-owned denominator is the retained 2026-10-20 callable census where available. A null denominator means extraction or resource limits prevented a semantic count.",
               "",
-              "| corpus | capture | source-owned admitted | source-owned refused | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
-              "|---|---|---:|---:|---:|---:|---:|---:|---:|"]
+              "| corpus | capture | source-owned admitted | source-owned refused | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
+              "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for corpus in CORPORA:
         execution = corpus["execution"]
-        lines.append("| %s | %s | %s | %s | %d | %d | %d | %d | %d |" %
+        lines.append("| %s | %s | %s | %s | %d | %d | %d | %d | %d | %d |" %
                      (corpus["name"], corpus["capture"],
                       corpus["admitted"] if corpus["admitted"] is not None else "—",
                       corpus["refused"] if corpus["refused"] is not None else "—",
-                      execution["MATCH"], execution["DIVERGE"], execution["REFUSE"],
-                      execution["TIMEOUT"], execution["ORACLE"]))
+                      execution["MATCH"], execution.get("WITNESS", 0), execution["DIVERGE"],
+                      execution["REFUSE"], execution["TIMEOUT"], execution["ORACLE"]))
         lines.append("")
         lines.append("*%s:* %s" % (corpus["name"], corpus["note"]))
         lines.append("")
     lines += ["## This run's grammar and differential measurements", "",
               "The grammar census uses one source witness per listed Clang AST node kind. The root-shape admission is executable, while declaration and body execution remain loud refusals; therefore a successfully compiled declaration witness is a `REFUSE` until its rung is admitted.",
               "",
-              "| measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
-              "|---|---:|---:|---:|---:|---:|---:|"]
+              "| measurement | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
+              "|---|---:|---:|---:|---:|---:|---:|---:|"]
     grammar_count = counts(grammar_rows_value)
     diff_count = counts(diff_rows)
     lines.append("| grammar witnesses | %d | %d | %d | %d | %d | %d |" %
                  (len(grammar_rows_value), grammar_count.get("MATCH", 0),
                   grammar_count.get("DIVERGE", 0), grammar_count.get("REFUSE", 0),
                   grammar_count.get("TIMEOUT", 0), grammar_count.get("ORACLE", 0)))
-    lines.append("| differential calls | %d | %d | %d | %d | %d | %d |" %
-                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
-                  diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
-                  diff_count.get("ORACLE", 0)))
+    lines.append("| differential calls | %d | %d | %d | %d | %d | %d | %d |" %
+                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("WITNESS", 0),
+                  diff_count.get("DIVERGE", 0), diff_count.get("REFUSE", 0),
+                  diff_count.get("TIMEOUT", 0), diff_count.get("ORACLE", 0)))
     translation_count = sum(1 for row in diff_rows if row["rung"] == 0)
     lifetime_count = sum(1 for row in diff_rows if row["rung"] == 1)
     scalar_count = sum(1 for row in diff_rows if row["kind"] == "scalar")
@@ -417,7 +427,7 @@ def render_rung_page(diff_rows, grammar_rows_value):
     statement_count = sum(1 for row in diff_rows if row["kind"] == "statement")
     callable_count = (len(diff_rows) - translation_count - lifetime_count - scalar_count -
                       expression_count - statement_count - member_expression_count)
-    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, %d rung-7 member-expression checks, and %d callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, member_expression_count, callable_count), ""]
+    lines += ["", "The corpus includes %d compile-only translation rows, %d rung-1 lifetime rows, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, %d rung-7 member-expression checks, and %d callable rows. Hand-built rows are `WITNESS`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace source-derived callable `ORACLE` rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, member_expression_count, callable_count), ""]
     return "\n".join(lines)
 
 
@@ -427,18 +437,18 @@ def render_coverage(diff_rows, grammar_rows_value):
         "",
         "<!-- GENERATED by harness/cpp_diff_test.py --check -->",
         "",
-        "This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.json`. The native oracle is the unchanged source compiled and called by Clang/LLVM 21.1.8. The Lean side is the literal artifact and evaluator in `Examples/cpp`; unavailable inputs are counted as `ORACLE`.",
+        "This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.json`. `MATCH` is reserved for source-derived Lean admission compared with the unchanged source compiled and called by Clang/LLVM 21.1.8. `WITNESS` rows exercise hand-built Lean IR and retain a separate native source check; they are not source-derived differential matches. Unavailable inputs are counted as `ORACLE`.",
         "",
         "## Differential table",
         "",
-        "| rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
-        "|---:|---:|---:|---:|---:|---:|",
+        "| rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
     ]
     diff_count = counts(diff_rows)
-    lines.append("| %d | %d | %d | %d | %d | %d |" %
-                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
-                  diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
-                  diff_count.get("ORACLE", 0)))
+    lines.append("| %d | %d | %d | %d | %d | %d | %d |" %
+                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("WITNESS", 0),
+                  diff_count.get("DIVERGE", 0), diff_count.get("REFUSE", 0),
+                  diff_count.get("TIMEOUT", 0), diff_count.get("ORACLE", 0)))
     lines += ["", "Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.", "", "| case | rung | Lean | native | verdict | detail |", "|---|---:|---|---|---|---|"]
     for row in diff_rows:
         lines.append("| `%s` | %d | `%s` | `%s` | **%s** | %s |" %
@@ -506,9 +516,10 @@ def main(argv=None):
         write_or_check(RUNG_PAGE, rung, False)
         print("cpp_diff_test: wrote %s and %s" % (COVERAGE_PAGE, RUNG_PAGE))
     counts_text = counts(diff_rows)
-    print("%d differential rows: %d MATCH, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %
-          (len(diff_rows), counts_text.get("MATCH", 0), counts_text.get("DIVERGE", 0),
-           counts_text.get("REFUSE", 0), counts_text.get("TIMEOUT", 0), counts_text.get("ORACLE", 0)))
+    print("%d differential rows: %d MATCH, %d WITNESS, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %
+          (len(diff_rows), counts_text.get("MATCH", 0), counts_text.get("WITNESS", 0),
+           counts_text.get("DIVERGE", 0), counts_text.get("REFUSE", 0),
+           counts_text.get("TIMEOUT", 0), counts_text.get("ORACLE", 0)))
     grammar_text = counts(grammar_result)
     print("%d grammar witnesses: %d MATCH, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %
           (len(grammar_result), grammar_text.get("MATCH", 0), grammar_text.get("DIVERGE", 0),

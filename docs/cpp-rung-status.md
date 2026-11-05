@@ -26,17 +26,17 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 
 The source-owned denominator is the retained 2026-10-20 callable census where available. A null denominator means extraction or resource limits prevented a semantic count.
 
-| corpus | capture | source-owned admitted | source-owned refused | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| TinyXML-2 | COMPLETE | 0 | 202 | 0 | 0 | 202 | 0 | 0 |
+| corpus | capture | source-owned admitted | source-owned refused | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| TinyXML-2 | COMPLETE | 0 | 202 | 0 | 0 | 0 | 202 | 0 | 0 |
 
 *TinyXML-2:* 202 source-owned implementation bodies in the 2026-10-20 complete callable census; execution remains behind the translation refusal.
 
-| nlohmann/json | RESOURCE | — | — | 0 | 0 | 0 | 0 | 1 |
+| nlohmann/json | RESOURCE | — | — | 0 | 0 | 0 | 0 | 0 | 1 |
 
 *nlohmann/json:* Clang emitted a 1,975,718,707-byte probe; the recorded 128 MiB runtime census bound refused measurement before body admission.
 
-| extension-heavy systems input | EXTRACT | — | — | 0 | 0 | 0 | 0 | 1 |
+| extension-heavy systems input | EXTRACT | — | — | 0 | 0 | 0 | 0 | 0 | 1 |
 
 *extension-heavy systems input:* Strict C++23 extraction stopped on four anonymous-structure extension diagnostics; no source-owned denominator was published.
 
@@ -44,9 +44,9 @@ The source-owned denominator is the retained 2026-10-20 callable census where av
 
 The grammar census uses one source witness per listed Clang AST node kind. The root-shape admission is executable, while declaration and body execution remain loud refusals; therefore a successfully compiled declaration witness is a `REFUSE` until its rung is admitted.
 
-| measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
-|---|---:|---:|---:|---:|---:|---:|
+| measurement | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
+|---|---:|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 24 | 0 | 0 |
-| differential calls | 1581 | 1563 | 0 | 8 | 0 | 10 |
+| differential calls | 1581 | 0 | 1563 | 0 | 8 | 0 | 10 |
 
-The differential rows include 48 compile-only translation witness, 43 rung-1 lifetime witnesses, 2 rung-2 scalar checks, 225 rung-3 expression checks, 1075 rung-4 statement checks, 21 rung-7 member-expression checks, and 167 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The corpus includes 48 compile-only translation rows, 43 rung-1 lifetime rows, 2 rung-2 scalar checks, 225 rung-3 expression checks, 1075 rung-4 statement checks, 21 rung-7 member-expression checks, and 167 callable rows. Hand-built rows are `WITNESS`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace source-derived callable `ORACLE` rows with compiled calls.

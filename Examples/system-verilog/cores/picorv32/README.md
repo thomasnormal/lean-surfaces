@@ -50,6 +50,20 @@ the parameter-sized-array follow-up).  Once that generic route is integrated,
 the generated members and the remaining source-shaped process forms must be
 re-measured before core-specific proof glue is added.
 
+## Re-probe after the generic memory route
+
+On 2026-11-05, the unchanged pinned envelope was re-probed against
+`origin/master` at `38288d414` (which includes the generic one-rank memory
+adapter).  The normal semantic family still reports exactly the
+`cpuregs` unpacked-memory wall above, and
+`pdesign.instantiateMemD2` still returns
+`unsupported "Instantiate" "memory cycle route does not yet admit generate members"`.
+The route has therefore not silently advanced past the source's generate
+members; no core-specific proof was started.  The CV32E40P and Ibex probes
+were also rerun from their pinned envelopes: their first loader diagnostics
+remain `AlwaysPosedge:edge` and `AlwaysLatch`, respectively.  These are
+measurements of the current tool, not adaptations of any upstream RTL.
+
 ## RVFI and memory-port witness
 
 The unchanged source also exposes an RVFI port under `RISCV_FORMAL`.  The

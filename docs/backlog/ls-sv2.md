@@ -79,3 +79,24 @@ comparison. The README and `docs/rv-model.md` now state this boundary.
 package. Keep `SailOracle` as the explicit integration contract and require a
 real Sail differential result for the row gate when the pinned binary is
 provisioned.
+
+## 2026-11-05-ls-sv2-4 — re-probe the R2 cores after the memory route
+
+The inbox was reread before this item.  The owner lane's generic one-rank
+memory route is present on `origin/master`, so the three pinned in-order core
+envelopes were re-probed without changing their RTL.  The CV32E40P envelope
+(`e5888846…`, 21,289,394 bytes) still refuses at
+`AlwaysPosedge: AlwaysPosedge:edge — edge-qualified clock requires its retained
+event semantics`; Ibex (`ae014736…`, 13,914,127 bytes) still refuses at
+`AlwaysLatch: unknown process kind "AlwaysLatch"`.  The current PicoRV32
+envelope (`009cc395…`, 3,178,052 bytes) loads, but its default semantic
+family still reports
+`unsupported "Instantiate" "decl 'cpuregs': unpacked array storage outside E
+(UnpackedDecl:memory)"`; the memory adapter still reports
+`memory cycle route does not yet admit generate members`.
+
+**DECIDED:** the generic memory work has not moved PicoRV32 past its first
+source-shaped wall, and the CV32E40P/Ibex process-form walls are unchanged.
+Keep the exact owner-lane requests in its inbox, make no core-specific
+adaptation, and wait for a generic generate/member or process-semantics change
+before adding proof glue.

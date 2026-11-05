@@ -579,3 +579,25 @@ introduced.
 streaming core captures must supply the carried state and the next order
 explicitly, while normalization remains the sole authority for validity and
 retirement order.
+
+## 2026-11-05-ls-sv2-24 — lift packet-window composition to ROB traces
+
+Added `normalizeRvfiPacketRobTrace_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  It transports the state-threaded,
+order-advanced normalization composition directly to the tagged ROB
+retirement stream, so a core capture can validate adjacent windows without
+rebuilding one monolithic observation list.
+
+The PicoRV32 witness now derives the concatenated two-window ROB trace from
+the two local normalization certificates.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiPacket
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (24 jobs), and
+the new theorem/witness report only existing `propext`/`Quot.sound` entries.
+`python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and `git
+diff --check` pass.  No `sorry`, new axiom, RTL edit, or SV-loader adaptation
+was introduced.
+
+**DECIDED:** expose the ROB projection as a corollary of the normalized
+window bridge; packet validation, state threading, and ROB retirement remain
+separate proof layers.

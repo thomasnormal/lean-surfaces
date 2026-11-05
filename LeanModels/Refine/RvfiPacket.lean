@@ -397,6 +397,24 @@ theorem normalizeRvfiPacketRobTrace {State : Type}
   rw [machine.toRobMachine_trace]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/-- The state-threaded normalization composition also gives the ROB-projected
+retirement stream for the concatenated windows. -/
+theorem normalizeRvfiPacketRobTrace_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    robTrace machine.toRobMachine state (first ++ second) =
+      firstRetirements ++ secondRetirements := by
+  apply normalizeRvfiPacketRobTrace machine state (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
 /-- The reusable R1-to-R3 conclusion: once a core-specific `RobStepRefines`
 proof supplies the ISA effect relation, a successful normalized RVFI packet
 stream is exactly the ISA trace over the packet's associated inputs. -/
@@ -427,6 +445,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiPacketObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

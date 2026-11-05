@@ -9050,3 +9050,17 @@ their existing matches.
 DECIDED: retain the bounded integer-set table only for direct nonnegative
 insertions; refuse negative hashes, copies, and intersections until their
 CPython 3.9 table transitions are modeled.
+
+## 2026-11-05-pycomplete-342 — remove shape-specific ingestion rewrites
+
+Deleted the exact two-statement rewrites for immediate builtin aliases,
+dead function/class values, immediate generator-expression drains, and direct
+bare re-raises. These source forms now remain represented by their original AST
+statements and reach the existing loud first-class-value, generator, or active
+exception boundaries. Ordinary differential rows remain unchanged; the
+rewrites had no sound semantic theorem and could erase a lookup or exception
+payload that CPython observes.
+
+DECIDED: preserve source statement structure and refuse first-class callable,
+active-exception, and unmodeled generator protocol shapes until those runtime
+states are modeled directly.

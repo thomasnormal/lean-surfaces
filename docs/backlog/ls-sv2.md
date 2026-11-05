@@ -1244,3 +1244,18 @@ introduced.
 **DECIDED:** carry tag-stream boundaries through the packed RVFI state and
 retirement count; local order certificates compose only after the first
 window's exact decoded width is established.
+
+## 2026-11-05-ls-sv2-54 — compose normalized RVFI windows through ISA refinement
+
+Added `normalizeRvfiRobTrace_refines_append` to
+`LeanModels/Refine/RvfiRob.lean`.  Two adjacent single-channel RVFI
+normalization certificates now compose through the ROB adapter and its
+`RobStepRefines` contract, concluding that the concatenated normalized
+retirements equal the ISA trace over the concatenated ROB input stream.
+
+The PicoRV32 witness applies the theorem to the measured first and second
+cycle windows, with the adapter's exact state threading at the boundary.
+
+**DECIDED:** keep the composition theorem above the adapter-specific
+normalization law; ISA refinement consumes the complete concatenated ROB input
+projection after each local window has been checked.

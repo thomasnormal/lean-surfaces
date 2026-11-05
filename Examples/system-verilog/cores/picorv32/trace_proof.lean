@@ -257,6 +257,23 @@ theorem pinned_cycle_windows_rob_append :
     cycleFirstInputs cycleSecondInputs
     pinned_cycle_first_window_normalize pinned_cycle_second_window_normalize
 
+theorem pinned_cycle_windows_rob_refines_isa_of
+    {rel : List RvfiObservation → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedCycleMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedCycleMachine.init rvMachine.init 0) :
+    nontrapFirstExpected ++ nontrapSecondExpected =
+      trace rvMachine rvMachine.init
+        (robInputs pinnedCycleMachine.toRobMachine pinnedCycleMachine.init
+          (cycleFirstInputs ++ cycleSecondInputs)) := by
+  exact normalizeRvfiRobTrace_refines_append pinnedCycleMachine rvMachine
+    rel admit
+    pinnedCycleMachine.init rvMachine.init 0
+    cycleFirstInputs cycleSecondInputs
+    hrob hrel
+    pinned_cycle_first_window_normalize pinned_cycle_second_window_normalize
+
 theorem pinned_packet_observations_normalize :
     normalizeRvfiTrace? 0
         (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
@@ -512,6 +529,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_state_after_bridge
 #print axioms pinned_rob_state_after_bridge
 #print axioms pinned_cycle_windows_rob_append
+#print axioms pinned_cycle_windows_rob_refines_isa_of
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_trace_refines_isa

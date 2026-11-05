@@ -285,6 +285,36 @@ theorem normalizeRvfiRobTrace_append {State : Type}
   apply normalizeRvfiRobTrace machine state (first ++ second)
   exact normalizeRvfiCycleTrace_append machine state first second hfirst hsecond
 
+/- A pair of local RVFI certificates composes all the way through the ROB
+   refinement boundary: the concatenated normalized retirements equal the
+   ISA trace over the adapter's concatenated input stream. -/
+theorem normalizeRvfiRobTrace_refines_append
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (robInputs machine.toRobMachine state (first ++ second)) := by
+  calc
+    firstRetirements ++ secondRetirements =
+        robTrace machine.toRobMachine state (first ++ second) :=
+      (normalizeRvfiRobTrace_append machine state first second hfirst hsecond).symm
+    _ = trace isa isaState
+        (robInputs machine.toRobMachine state (first ++ second)) :=
+      rob_trace_refines hrob state isaState start (first ++ second) hrel
+
 /-- The reusable R1-to-R3 conclusion for a single RVFI channel: a successful
 normalization certificate and a core-specific ROB refinement certificate give
 the same retirement stream as the ISA run over the ROB's associated inputs. -/
@@ -366,6 +396,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiRobTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiRobTrace_input_length
 #print axioms LeanModels.Refine.rvfiRobStateAfter_refines_normalized

@@ -370,6 +370,14 @@ theorem pinned_stateful_memory_trace :
         (threadRvInputs cv32e40pProfile rvMachine.init memZero nontrapInputs) := by
   exact rvMemoryMachine_trace cv32e40pProfile rvMachine.init memZero nontrapInputs
 
+theorem pinned_stateful_memory_arch :
+    (rvMemoryStateAfter cv32e40pProfile
+      { arch := rvMachine.init, memory := memZero } nontrapInputs).arch =
+      machineStateAfter (rvMachineWith cv32e40pProfile) rvMachine.init
+        (threadRvInputs cv32e40pProfile rvMachine.init memZero nontrapInputs) := by
+  exact rvMemoryStateAfter_arch cv32e40pProfile rvMachine.init memZero
+    nontrapInputs
+
 theorem pinned_stateful_memory_windows :
     trace (rvMemoryMachineWith cv32e40pProfile)
         { arch := rvMachine.init, memory := memZero }
@@ -449,6 +457,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_inputs
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
+#print axioms pinned_stateful_memory_arch
 #print axioms pinned_stateful_memory_windows
 #print axioms pinned_nontrap_observed_trace_refines_isa
 

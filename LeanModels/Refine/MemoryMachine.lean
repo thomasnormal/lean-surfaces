@@ -93,8 +93,23 @@ theorem rvMemoryMachine_trace (profile : PlatformProfile) (arch : ArchState)
       have htail := ih arch' (applyMemEffect memory effects.mem)
       congr 1
 
+theorem rvMemoryStateAfter_arch (profile : PlatformProfile) (arch : ArchState)
+    (memory : Memory) (inputs : List Input) :
+    (rvMemoryStateAfter profile { arch := arch, memory := memory } inputs).arch =
+      machineStateAfter (rvMachineWith profile) arch
+        (threadRvInputs profile arch memory inputs) := by
+  induction inputs generalizing arch memory with
+  | nil => rfl
+  | cons input inputs ih =>
+      simp only [rvMemoryStateAfter, machineStateAfter, rvMemoryMachineWith,
+        rvMachineWith, threadRvInputs]
+      generalize hstep : isaStepWith profile arch memory input.fetched input.irq = step
+      rcases step with ⟨arch', effects⟩
+      exact ih arch' (applyMemEffect memory effects.mem)
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rvMemoryMachine_trace
+#print axioms LeanModels.Refine.rvMemoryStateAfter_arch
 #print axioms LeanModels.Refine.threadRvInputs_append
 #print axioms LeanModels.Refine.rvMemoryMachine_trace_append

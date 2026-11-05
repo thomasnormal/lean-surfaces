@@ -1045,3 +1045,24 @@ axiom, RTL edit, or SV-loader adaptation was introduced.
 **DECIDED:** keep single-channel RVFI state transport layered over the cycle
 bridge; normalization remains the separate proof that packed rows are valid
 architectural observations.
+
+## 2026-11-05-ls-sv2-45 — project stateful memory to the ISA state
+
+Added `rvMemoryStateAfter_arch` to `LeanModels/Refine/MemoryMachine.lean`.
+The theorem proves that the architectural component of the stateful memory
+machine after a window equals the ordinary ISA machine state after the same
+window with `threadRvInputs` supplying each instruction's preceding memory.
+
+The PicoRV32 witness applies it to the four-instruction non-trapping memory
+run, alongside the existing stateful trace and memory-window laws.
+
+**MEASURED:** `lake build LeanModels.Refine.MemoryMachine
+Examples.«system-verilog».cores.picorv32.trace_proof` passed (25 jobs), and
+`rvMemoryStateAfter_arch` reports only existing `propext`/`Quot.sound`
+dependencies.  `python3 tools/docs_check.py`, `tools/backlog-index.sh
+--check`, and `git diff --check` pass.  No `sorry`, new axiom, RTL edit, or
+SV-loader adaptation was introduced.
+
+**DECIDED:** keep stateful memory projection explicit: memory threading
+determines the stateless ISA input view, while the architectural component
+remains the state observed by refinement proofs.

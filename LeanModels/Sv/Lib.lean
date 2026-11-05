@@ -3,6 +3,7 @@ import LeanModels.Sv.Lib.BitVecArith
 import LeanModels.Sv.Lib.XFVal
 import LeanModels.Sv.Lib.RowMajor
 import LeanModels.Sv.Lib.Restoring
+import LeanModels.Sv.Lib.Prefix
 
 /-!
 # `LeanModels.Sv.Lib`: a proof library for word-level `sv_comb` proofs
@@ -23,6 +24,12 @@ arithmetic of register-transfer proofs:
   `rmN_last_col`, `rmN_eq`).
 * `Lib/Restoring.lean` (`LeanModels.Sv.Lib`): restoring division (`restRem`, `restQuo`, `restore_inv`,
   `restore_spec`) and the value of its quotient-bit row (`val_restQuo`).
+* `Lib/Prefix.lean` (`LeanModels.Sv.Lib`): parallel-prefix carry arithmetic: the carry operator `pgOp` on
+  (generate, propagate) pairs (`pgOp_assoc`, `pgOp_idem`), the pair of a block of positions (`pgSpan`, `pgBlock`;
+  adjacent and overlapping blocks combine, `pgBlock_combine`, `pgBlock_overlap`), group generate and propagate of
+  two bit functions (`grpG`, `grpP`, with closed forms), and the carry into bit `k` as the group generate of the
+  adder's positions `[0, k]` (`addPos`, `rippleCarry`, `pgBlock_addPos_zero`; `rippleCarry_bv`: core's
+  `BitVec.carry`). Imports nothing.
 
 What belongs here: results that any proof of a class of designs would use. A model of one design's datapath
 belongs to that design's proof, which is compiled (and timed) with it: the Newton-Raphson core of svGolf's

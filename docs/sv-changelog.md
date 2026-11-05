@@ -79,6 +79,18 @@ with `disable iff` retain metadata and connect to the E contract. A bare cover
 sequence remains loud because the current contract requires an implication;
 immediate assertions and unbounded `s_eventually` remain outside F1 by design.
 
+## `Lib/Prefix.lean`: parallel-prefix carry arithmetic
+
+A new library module (imports nothing; indexed in `Lib.lean`) with the facts any
+prefix-adder proof uses: the (generate, propagate) carry operator `pgOp` with
+associativity, an empty-block unit and idempotence; group generate/propagate of
+a block `pgBlock f j k` and the combination of adjacent or overlapping blocks;
+the adder's positions `addPos` (position 0 carries the carry in), the carry into
+bit `k` as the group generate of positions `[0, k]` (`pgBlock_addPos_zero`), and
+its agreement with core's `BitVec.carry` (`rippleCarry_bv`). Nothing in it is
+specific to one adder: svGolf's Sklansky proof keeps its aligned-block
+recurrence in its own reference, by the rule of the Newton move below.
+
 ## `Lib/XFVal.lean`: a carry-save row and an XOR with the top bit
 
 Two general `XF.val` facts, from svGolf's radix-4 SRT divider reference

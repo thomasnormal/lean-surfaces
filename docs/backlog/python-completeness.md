@@ -8472,3 +8472,18 @@ The float `round(number, 11)` slice now computes from the exact binary64 ratio s
 | Root build | Pending |
 
 DECIDED: admit positive float `ndigits == 11`; richer digit protocols remain loud.
+
+
+## 2026-11-05-pycomplete-299 — admit twelve positive float digits
+
+The float `round(number, 12)` slice now computes from the exact binary64 ratio scaled by one trillion, preserving ties-to-even and signed zero.
+
+| Measurement | Result |
+|---|---|
+| Focused build | Passed, 20 jobs |
+| Native differential | 4,067 rows: 4,053 matched, 14 refusals, 0 failed |
+| Proof differential | 4,067 rows: 3,938 matched, 129 refused, 0 failed |
+| Runner build | Passed, 40 jobs |
+| Root build | Pending |
+
+DECIDED: admit positive float `ndigits == 12`; richer protocols remain loud.

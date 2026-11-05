@@ -5323,7 +5323,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                                       · simp only [heleven, if_true]
                                                                         exact PBF.liftRes invariant _
                                                                       · simp only [heleven, if_false]
-                                                                        exact PBF.unsupported
+                                                                        by_cases htwelve : roundDigitsTwelve digits = true
+                                                                        · simp only [htwelve, if_true]
+                                                                          exact PBF.liftRes invariant _
+                                                                        · simp only [htwelve, if_false]
+                                                                          exact PBF.unsupported
                                               | _ => exact PBF.unsupported
                                             · simp only [hn, if_false]
                                               exact PBF.unsupported

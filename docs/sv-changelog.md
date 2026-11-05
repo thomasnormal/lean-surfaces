@@ -70,6 +70,8 @@ sampled `SvaBool.past` form, and `$rose(signal)` maps to `SvaBool.rose`.
 `$stable(signal)` now maps to `SvaBool.stable`.
 The retained `disable iff (reset)` wrapper now maps to `SvaProp.disable` for
 simple signal guards.
+The first boolean conjunction/disjunction forms (`a && b`, `a || b`) now map
+to `SvaBool.and` and `SvaBool.or`.
 
 ## F1: prove the SVA sampling refinement
 

@@ -54,7 +54,7 @@ private def simpleAtom (text : String) : Except String SvaBool :=
     .error "SVA: simple implication operands must be signal names"
   else .ok (.signal n)
 
-private def simpleBool (text : String) : Except String SvaBool :=
+private def simpleBoolLeaf (text : String) : Except String SvaBool :=
   let n := text.trimAscii.toString
   if n.startsWith "$past(" && n.endsWith ")" then
     let inner := match n.splitOn "$past(" with
@@ -83,6 +83,14 @@ private def simpleBool (text : String) : Except String SvaBool :=
       | .signal name => .stable name
       | _ => .lit false)
   else simpleAtom n
+
+private def simpleBool (text : String) : Except String SvaBool :=
+  let n := text.trimAscii.toString
+  if let [left, right] := n.splitOn "&&" then
+    .and <$> simpleBoolLeaf left <*> simpleBoolLeaf right
+  else if let [left, right] := n.splitOn "||" then
+    .or <$> simpleBoolLeaf left <*> simpleBoolLeaf right
+  else simpleBoolLeaf n
 
 private def simpleSeq (text : String) : Except String SvaSeq :=
   let n := text.trimAscii.toString
@@ -284,6 +292,13 @@ private def portTrace : List (CycleObs PortSample) :=
     { sourceProperty with text := "assert property (@(posedge clk) disable iff (rst) a |-> b);" } with
   | .ok C => match C.check.property with
     | .disable (.signal "rst") (.implies _ _) => true
+    | _ => false
+  | .error _ => false
+#guard match SvaContract.parseSimple
+    { sourceProperty with text := "assert property (@(posedge clk) a && b |-> c || d);" } with
+  | .ok C => match C.check.property with
+    | .implies (.atom (.and (.signal "a") (.signal "b")))
+        (.atom (.or (.signal "c") (.signal "d"))) => true
     | _ => false
   | .error _ => false
 

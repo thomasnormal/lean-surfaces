@@ -32,6 +32,9 @@
 - Added a recorded refusal for constructor handles whose structured kind
   contradicts the retained declaration kind.
 
+- Added a recorded refusal for constructor declaration evidence missing its
+  structured kind field.
+
 - Added a recorded refusal for overloaded-operator handles duplicated in
   artifact declaration evidence.
 

@@ -35,6 +35,9 @@ A structured `ctor` object whose declared kind disagrees with the retained
 constructor declaration is also refused; both pieces of frontend evidence must
 agree.
 
+A structured `ctor` object that omits `kind` is also refused; constructor
+metadata does not infer a missing evidence field from the declaration table.
+
 A string-valued `ctor` field with malformed frontend-handle syntax is also a
 recorded refusal; constructor handles must use the artifact-local format.
 

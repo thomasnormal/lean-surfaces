@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Removed the unused exception-handler name delimiter encoder; handler semantics now retain structured name arrays end to end.
+
 - Plain `import time` is now a structured AST statement; import admission and the clock census no longer parse source-text whitelist strings, while richer imports remain loud.
 
 - Float `round(number, ndigits)` now uses one exact-ratio worker with CPython's positive and negative exponent cutoffs; the former per-digit workers and proof branches were removed.

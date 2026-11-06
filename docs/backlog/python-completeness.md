@@ -9264,3 +9264,18 @@ its exact-text whitelist were removed; richer import forms remain loud.
 
 DECIDED: keep import admission on structured AST fields; unsupported import
 shapes refuse without source-text reparsing.
+
+## 2026-11-06-pycomplete-353 — remove the dead exception-name delimiter encoder
+
+The last leftover source-text encoding from the text-keyed semantics audit,
+`excHandlerText`, was unused after exception handlers became structured name
+arrays. It is deleted; handler matching and diagnostics continue to consume
+structured names directly.
+
+| Measurement | Result |
+|---|---|
+| Text-consumer search | No `splitOn`, `unparse`, or exception-name delimiter encoder remains in the semantic path |
+| Formatting | `git diff --check` passed |
+
+DECIDED: exception-handler names remain arrays end to end; no delimiter
+serialization is retained for compatibility.

@@ -8480,9 +8480,6 @@ def excHandlerTuple (names : Array String) : Bool := names.size > 1
 
 def excHandlerBare (names : Array String) : Bool := names.isEmpty
 
-def excHandlerText (names : Array String) : String :=
-  String.intercalate "|" names.toList
-
 def excHandlerAdmitted (m : Module) (name : String) : Bool :=
   if (findNamedTuple m name).isSome then false
   else

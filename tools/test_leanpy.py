@@ -21,6 +21,7 @@ Run: python3 tools/test_leanpy.py   (wired into tools/ci.sh)
 """
 
 import glob
+import io
 import importlib.machinery
 import importlib.util
 import json
@@ -31,6 +32,9 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import redirect_stderr
+from types import SimpleNamespace
+from unittest.mock import patch
 from multiprocessing import Process, Queue
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -269,6 +273,56 @@ class CompanionPathInvarianceTests(unittest.TestCase):
             self.assertEqual(extract.rel_posix(os.path.join(d, ".", "m.py")), direct)
         finally:
             shutil.rmtree(d, ignore_errors=True)
+
+
+class PinningTests(unittest.TestCase):
+    def test_compare_reexecutes_frontend_and_uses_pinned_oracle(self):
+        """The user-facing differential names both pinned ends.
+
+        Start it with this process's interpreter so the test exercises the
+        frontend re-exec path; the tool must hand extraction to CPython 3.9
+        before it compares against the same pinned oracle.
+        """
+        root = tempfile.mkdtemp(prefix="leanpy-pinning-test-")
+        try:
+            env = os.environ.copy()
+            for key in ("LEANPY_CPYTHON", "LEANPY_FRONTEND",
+                        "LEANPY_NO_REEXEC"):
+                env.pop(key, None)
+            result = subprocess.run(
+                [sys.executable, os.path.join(REPO_ROOT, "tools", "leanpy"),
+                 os.path.join(REPO_ROOT, "Examples/python/ann_lab/ann_lab.py"),
+                 "--compare", "--cache", os.path.join(root, "cache")],
+                cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+                timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertRegex(result.stderr, r"frontend 3\.9(?:\.\d+)?")
+            self.assertRegex(result.stderr, r"oracle Python 3\.9(?:\.\d+)?")
+            self.assertIn("MATCH cpython (exit 0)", result.stderr)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_survey_warns_when_pinned_oracle_falls_back(self):
+        """A missing pinned oracle is visible instead of silently changing it."""
+        spec = importlib.util.spec_from_file_location(
+            "leanpy_survey_under_test",
+            os.path.join(REPO_ROOT, "harness", "leanpy_survey.py"))
+        survey = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(survey)
+
+        def fake_run(cmd, **kwargs):
+            if cmd[0] == "python3.9":
+                raise OSError("not installed")
+            if cmd[0] == "python3":
+                return SimpleNamespace(returncode=0)
+            raise AssertionError("unexpected oracle probe: %r" % (cmd,))
+
+        output = io.StringIO()
+        with patch.object(survey.subprocess, "run",
+                          side_effect=fake_run), \
+                redirect_stderr(output):
+            self.assertEqual(survey.default_oracle(), "python3")
+        self.assertIn("WARNING pinned oracle 'python3.9'", output.getvalue())
 
 
 class CompareExceptionTests(unittest.TestCase):

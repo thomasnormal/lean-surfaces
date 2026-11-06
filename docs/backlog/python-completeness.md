@@ -9449,3 +9449,23 @@ rows make the boundary loud rather than silently changing the source program.
 | Formatting | `git diff --check` passed |
 
 DECIDED: exception causes remain in the AST and are never erased by ingestion.
+
+## 2026-11-06-pycomplete-363 — pinning regression coverage for leanpy compare
+
+The CI-wired `tools/test_leanpy.py` suite now exercises the whole `--compare`
+entry point from an unpinned interpreter and asserts that both the frontend and
+oracle report CPython 3.9 before declaring `MATCH`. It also stubs an unavailable
+`python3.9` oracle in `leanpy_survey.default_oracle` and asserts that the
+fallback to `python3` emits an explicit warning.
+
+| Measurement | Result |
+|---|---|
+| leanpy tests | 10 passed |
+| Compare smoke | frontend 3.9.25, oracle Python 3.9.25, MATCH |
+| Survey smoke | `--limit 1 --no-cpython` completed with telemetry |
+| Python syntax checks | `py_compile` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep the pinning behavior executable in the regular leanpy test gate;
+future changes cannot silently restore an unpinned comparison or warning-free
+oracle fallback.

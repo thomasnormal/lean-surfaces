@@ -9681,3 +9681,15 @@ was stale after the structured node landed.
 
 DECIDED: keep global declarations as structured AST data through ingestion and
 execution; source-text parsing is not part of the Python semantics path.
+
+## 2026-11-06-pycomplete-375 — recheck ordered definition admission
+
+Re-ran the pinned CPython 3.9.25 and leanpy script witnesses after the
+recursion-proof update. `def_table_forward.py` raises `NameError` under
+CPython and is a loud `leanpy-unsupported` result; `def_table_rebind.py`
+prints `1` then `2` under CPython and is likewise refused by the static-table
+admission. The current `defsReachableBefore`/`defsBoundBefore` checks remain
+the sound boundary for the position-independent module tables.
+
+DECIDED: this audit finding is complete; continue to the generator-expression
+capture census item.

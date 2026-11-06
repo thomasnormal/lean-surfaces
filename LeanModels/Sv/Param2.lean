@@ -1,5 +1,6 @@
 import LeanModels.Sv.Param
 import LeanModels.Sv.CombGuard2
+import LeanModels.Sv.CombAliasCore
 
 /-!
 # SV parametric lowering to the semantic tier (`PDesign.instantiate2`)

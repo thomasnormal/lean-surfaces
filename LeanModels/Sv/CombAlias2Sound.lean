@@ -607,16 +607,6 @@ end
 
 /-! ## The design-level facts -/
 
-/-- The flows of a design with no continuous assignment are empty. -/
-theorem aliasFlows_nil_of_noAssign {wd : String → Option Nat} {ps : List Process2}
-    (h : ∀ p ∈ ps, ∀ t e, p ≠ .assign t e) : aliasFlows wd ps = [] := by
-  unfold aliasFlows
-  rw [List.flatMap_eq_nil_iff]
-  intro p hp
-  cases p with
-  | assign t e => exact absurd rfl (h _ hp t e)
-  | _ => rfl
-
 /-- **A design without continuous assignments is its own guard**: no
 `always_comb` can read a copy of anything. This covers the hand-built
 designs of `Comb2ProcExample.lean` (every `always_comb` design the proof API
@@ -750,7 +740,7 @@ info: 'LeanModels.Sv.fanAux_closed' depends on axioms: [propext, Quot.sound]
 #print axioms fanAux_closed
 
 /--
-info: 'LeanModels.Sv.aliasFlows_nil_of_noAssign' depends on axioms: [propext, Quot.sound]
+info: 'LeanModels.Sv.aliasFlows_nil_of_noAssign' depends on axioms: [propext]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms aliasFlows_nil_of_noAssign

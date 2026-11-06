@@ -191,9 +191,17 @@ separate from `Agrees` so existing non-parametric proofs retain their shape.
 def IntRange (σ : String → Int) (ns : List String) : Prop :=
   ∀ n ∈ ns, -2147483648 ≤ σ n ∧ σ n < 2147483648
 
+/-- All intermediate affine values used by an exact constant fold are
+representable signed-32 values.  This is deliberately a premise over the
+recognized affine form, rather than a fuel or a hidden evaluator guard. -/
+def Aff.InInt32 (σ : String → Int) (a : Aff) : Prop :=
+  -2147483648 ≤ a.eval σ ∧ a.eval σ < 2147483648
+
+
 theorem IntRange.mono {σ : String → Int} {ns ms : List String}
     (h : IntRange σ ns) (hs : ∀ n ∈ ms, n ∈ ns) : IntRange σ ms :=
   fun n hn => h n (hs n hn)
+
 
 theorem canonInt32_of_range {v : Int} (h : -2147483648 ≤ v ∧ v < 2147483648) :
     canonInt 32 true v = v := by
@@ -238,6 +246,14 @@ def affOf? : PExpr → Option Aff
       | some a, some b => affBin op a b
       | _, _ => none
   | _ => none
+
+/-! Exact semantic folds need a premise that every recognized affine result
+stays in the signed-32 range. -/
+def ExactAffObl (σ : String → Int) (e : PExpr) : Prop :=
+  ∀ a, affOf? e = some a → Aff.InInt32 σ a
+
+theorem ExactAffObl.mono {σ : String → Int} {e : PExpr}
+    (h : ExactAffObl σ e) : ExactAffObl σ e := h
 
 theorem affMul_eval {a b c : Aff} (σ : String → Int) (h : affMul a b = some c) :
     c.eval σ = a.eval σ * b.eval σ := by

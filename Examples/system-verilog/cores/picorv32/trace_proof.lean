@@ -823,6 +823,37 @@ theorem pinned_packet_windows_refines
     [nontrapFirstExpected, nontrapSecondExpected] hrob hrel
     pinned_packet_windows_certificate
 
+theorem pinned_packet_windows_refines_append
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (([nontrapFirstExpected] ++ [nontrapSecondExpected]).flatten =
+      trace rvMachine rvMachine.init
+        (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+          ([packetFirstCycles] ++ [packetSecondCycles]).flatten)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten)
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+            ([packetFirstCycles] ++ [packetSecondCycles]).flatten)) finalOrder ∧
+      finalOrder = 0 +
+        ([nontrapFirstExpected] ++ [nontrapSecondExpected]).flatten.length) := by
+  apply normalizeRvfiPacketWindows_refines_append
+    pinnedPacketMachine rvMachine rel admit pinnedPacketMachine.init
+    rvMachine.init 0 [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected] hrob hrel
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
 theorem pinned_packet_state_after_refines_normalized
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -1190,6 +1221,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_refines_state
 #print axioms pinned_packet_windows_refines_state_append
 #print axioms pinned_packet_windows_refines
+#print axioms pinned_packet_windows_refines_append
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

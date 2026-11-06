@@ -1712,3 +1712,16 @@ consumer-facing contract over its two certified packet windows.
 
 **DECIDED:** combine the independently reusable packet-facing trace and
 state/order theorems; no tag stream, input order, or final state is inferred.
+
+## 2026-11-06-ls-sv2-91 — compose the complete packet-facing chain contract
+
+Added `normalizeRvfiPacketWindows_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now compose directly to the complete packet-facing contract:
+normalized retirement equality with the ISA trace over packet inputs, the
+final related state, and the exact retirement-order increment.  The PicoRV32
+witness pins this append route over its two singleton packet windows.
+
+**DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
+single-chain packet-facing contract; no tag stream, input order, or final
+state is inferred.

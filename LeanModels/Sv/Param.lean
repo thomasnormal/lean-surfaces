@@ -1618,59 +1618,74 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
-/-- Evaluate the integer constant subset used by generate guards.  Generate
-conditions are elaboration-time arithmetic over parameters and genvars; the
-vector-shift operators therefore use their integer arithmetic meaning here,
-rather than `evalInt`'s width-dependent vector path. -/
+/-- Generate-time integer arithmetic uses the declared `integer`/`int`
+32-bit signed type (§27.4, §6.11). -/
+def guard32 (v : Int) : Int := canonInt 32 true v
+
+def guardBits (v : Int) : Nat := (guard32 v).emod ((2 : Int) ^ 32) |>.toNat
+
+def guardShift32 (a b : Int) : Except String Int :=
+  if b < 0 || 32 ≤ b then .error "invalid shift in generate guard"
+  else .ok (guard32 (a * (2 : Int) ^ b.toNat))
+
+/-- Generate guards use the same signed 32-bit integer arithmetic as `int`.
+In particular, bitwise operations preserve the signed operand bit pattern. -/
 def evalGenGuard (env : IEnv) : PExpr → Except String Int
-  | .int v => .ok v
+  | .int v => .ok (guard32 v)
   | .paramRef n none =>
       match env.vals.lookup n with
-      | some v => .ok v
+      | some v => .ok (guard32 v)
       | none =>
           match env.nvals.lookup n with
-          | some (v, _, _) => .ok v
+          | some (v, _, _) => .ok (guard32 v)
           | none => .error s!"unbound parameter '{n}'"
   | .genvarRef n =>
       match env.vals.lookup n with
-      | some v => .ok v
+      | some v => .ok (guard32 v)
       | none => .error s!"genvar '{n}' outside its loop"
   | .paramRef n (some p) =>
       match env.packageVal p n with
-      | some v => .ok v
-      | none => .error s!"package-scoped parameter '{p}::{n}'"
+      | some v => .ok (guard32 v)
+      | none =>
+          match env.packageNVal p n with
+          | some (v, _, _) => .ok (guard32 v)
+          | none => .error s!"package-scoped parameter '{p}::{n}'"
   | .unary op a => do
       let v ← evalGenGuard env a
       match op with
-      | .m0 .neg => .ok (-v)
-      | .m0 .pos | .plus => .ok v
-      | .m0 .lnot => .ok (b2i (v == 0))
-      | _ => evalInt env (.unary op a)
+      | .m0 .neg => .ok (guard32 (-v))
+      | .m0 .pos | .plus => .ok (guard32 v)
+      | .m0 .lnot => .ok (guard32 (b2i (v == 0)))
+      | _ => .error "operator outside generate integer guards"
   | .binary op l r => do
       let a ← evalGenGuard env l
       let b ← evalGenGuard env r
       match op with
-      | .m0 .add => .ok (a + b)
-      | .m0 .sub => .ok (a - b)
-      | .m0 .mul | .mul => .ok (a * b)
-      | .m0 .and => .ok (Int.ofNat (a.toNat &&& b.toNat))
-      | .m0 .or => .ok (Int.ofNat (a.toNat ||| b.toNat))
-      | .m0 .xor => .ok (Int.ofNat (a.toNat ^^^ b.toNat))
-      | .m0 .eq => .ok (b2i (a == b))
-      | .m0 .ne => .ok (b2i (a != b))
-      | .m0 .lt | .m0 .slt | .slt => .ok (b2i (a < b))
-      | .m0 .le | .m0 .sle | .sle => .ok (b2i (a ≤ b))
-      | .m0 .gt | .m0 .sgt | .sgt => .ok (b2i (a > b))
-      | .m0 .ge | .m0 .sge | .sge => .ok (b2i (a ≥ b))
-      | .m0 .land | .land => .ok (b2i (a != 0 && b != 0))
-      | .m0 .lor | .lor => .ok (b2i (a != 0 || b != 0))
-      | .m0 (.shl _) | .shl =>
-          if b < 0 then .error "negative shift in generate guard" else .ok (a * (2 : Int) ^ b.toNat)
+      | .m0 .add => .ok (guard32 (a + b))
+      | .m0 .sub => .ok (guard32 (a - b))
+      | .m0 .mul | .mul => .ok (guard32 (a * b))
+      | .m0 .and => .ok (guard32 (Int.ofNat (guardBits a &&& guardBits b)))
+      | .m0 .or => .ok (guard32 (Int.ofNat (guardBits a ||| guardBits b)))
+      | .m0 .xor => .ok (guard32 (Int.ofNat (guardBits a ^^^ guardBits b)))
+      | .m0 .eq => .ok (guard32 (b2i (a == b)))
+      | .m0 .ne => .ok (guard32 (b2i (a != b)))
+      | .m0 .lt | .m0 .slt | .slt => .ok (guard32 (b2i (a < b)))
+      | .m0 .le | .m0 .sle | .sle => .ok (guard32 (b2i (a ≤ b)))
+      | .m0 .gt | .m0 .sgt | .sgt => .ok (guard32 (b2i (a > b)))
+      | .m0 .ge | .m0 .sge | .sge => .ok (guard32 (b2i (a ≥ b)))
+      | .m0 .land | .land => .ok (guard32 (b2i (a != 0 && b != 0)))
+      | .m0 .lor | .lor => .ok (guard32 (b2i (a != 0 || b != 0)))
+      | .m0 (.shl _) | .shl => guardShift32 a b
       | .m0 (.shr _) | .shr =>
-          if b < 0 then .error "negative shift in generate guard" else .ok (a.tdiv ((2 : Int) ^ b.toNat))
-      | _ => evalInt env (.binary op l r)
-  | e => evalInt env e
-
+          if b < 0 || 32 ≤ b then .error "invalid shift in generate guard"
+          else .ok (guard32 (a.tdiv ((2 : Int) ^ b.toNat)))
+      | _ => .error "operator outside generate integer guards"
+  | .resize _ a | .signedResize _ a | .squash2 _ a | .cast _ a => evalGenGuard env a
+  | .sysCall .clog2 a => do
+      let v ← evalGenGuard env a
+      if v < 0 then .error "$clog2 of a negative value"
+      else .ok (guard32 (clog2 v.toNat : Int))
+  | _ => .error "expression outside generate integer guards"
 
 /-! ## Package constants -/
 
@@ -3530,5 +3545,12 @@ private def guardShift : PExpr :=
 #guard (match evalGenGuard guardEnv (.binary (.m0 (.shl false)) (.int 1) (.genvarRef "l")) with
   | .ok v => v == 2
   | .error _ => false)
+
+/-! Signed guard regression. -/
+private def guardSignedEnv : IEnv := { nvals := [("N", (5, 32, true))] }
+private def guardSignedExpr : PExpr :=
+  .binary (.m0 .ne) (.binary (.m0 .and)
+    (.binary (.m0 .sub) (.paramRef "N" none) (.int 6)) (.int 1)) (.int 0)
+#guard (evalGenGuard guardSignedEnv guardSignedExpr).toOption == some 1
 
 end LeanModels.Sv

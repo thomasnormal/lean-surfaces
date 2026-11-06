@@ -6346,3 +6346,10 @@ Generate-if constant evaluation now reads typed 32-bit integer parameters from
 `IEnv.nvals`, matching the unbounded `vals` path. This keeps `int32Agrees`
 semantic rather than representation-sensitive for guarded families; the
 `sklansky_guards/int32_guard` fixture pins agreement at `N = 16` and `N = 1`.
+
+## Exact signed generate guards
+
+Generate-if and generate-for guard arithmetic now uses signed 32-bit `int`
+semantics, including the sign bit of `&`, `|`, and `^` operands, with typed
+parameters read from `nvals`. Unsupported guard operators remain loud. The
+clean-room `guard_correctness/add_gg2` fixture pins the signed-bitwise case.

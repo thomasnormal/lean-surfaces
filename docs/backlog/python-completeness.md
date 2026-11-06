@@ -9605,3 +9605,20 @@ and yield delegation.
 DECIDED: regenerate committed envelopes and coverage summaries whenever a
 battery or ingestion boundary changes; stale generated artifacts fail the
 acceptance gate.
+
+## 2026-11-06-pycomplete-371 — complete payload-blind statement coverage
+
+The structured `importStmt` and `classDef` statement constructors were added
+to the AST after the payload-blind walker was written. Its exhaustive
+`pbExecStmt_succ` proof therefore failed to compile even though both runtime
+arms are loud refusals. The walker now discharges both fuel-free refusal arms,
+preserving the payload-blindness invariant without changing execution.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean build | `lake build LeanModels.Python.PayloadBlind`: 14 jobs passed |
+| Python umbrella dependency | `lake build LeanModels.Python`: rebuilt successfully |
+| Formatting | `git diff --check` passed |
+
+DECIDED: every structured statement constructor must have an explicit proof
+walker arm, including loud statement forms that carry no heap payload.

@@ -2310,6 +2310,24 @@ def resolvedOperatorStringMissingDeclarationRefusal : Except String Unit := do
   let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorStringMissingDeclarationTranslation [0]
   pure ()
 
+private def resolvedOperatorMissingIdTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0x83"), ("kind", .string "FunctionDecl"),
+        ("name", .string "operator+"), ("inner", .array [])],
+      .object [
+        ("id", .string "0x84"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0x85"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [("kind", .string "FunctionDecl")])]])]])]}
+
+def resolvedOperatorMissingIdRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorMissingIdTranslation [1]
+  pure ()
+
 private def resolvedOperatorStringDuplicateTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -3182,6 +3200,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedOperatorMethodStringTranslationWitnessOk
 #guard resolvedOperatorStringNonCallableRefusal matches .error _
 #guard resolvedOperatorStringMissingDeclarationRefusal matches .error _
+#guard resolvedOperatorMissingIdRefusal matches .error _
 #guard resolvedOperatorStringDuplicateRefusal matches .error _
 #guard resolvedOperatorMissingDeclarationRefusal matches .error _
 #guard resolvedOperatorDuplicateDeclarationRefusal matches .error _

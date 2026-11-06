@@ -2281,6 +2281,17 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-operator-missing-id-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedOperatorMissingIdRefusal",
+    "cpp_source": "struct S {}; S operator+(S, S); int f() { return 0; }",
+    "expect": "refuse",
+    "rung": 8
+  },
+  {
     "id": "translation.resolved-operator-string-duplicate-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

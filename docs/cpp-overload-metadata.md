@@ -94,6 +94,9 @@ also refused; string handles do not bypass the ambiguity check.
 A syntactically valid string operator handle absent from declaration evidence is
 also refused; operator identity requires one retained declaration row.
 
+A structured operator `referencedDecl` object missing `id` is also refused; the
+operator gate requires a complete retained frontend handle.
+
 A string operator handle occurring in multiple retained declaration rows is also
 refused; string handles do not bypass the ambiguity check.
 

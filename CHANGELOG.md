@@ -41,6 +41,9 @@
 - Added a recorded refusal for string operator handles absent from declaration
   evidence.
 
+- Added a recorded refusal for structured operator declaration evidence missing
+  its `id` field.
+
 - Added a recorded refusal for string operator handles duplicated in
   declaration evidence.
 

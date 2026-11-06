@@ -4218,6 +4218,36 @@ theorem normalizeRvfiPacketRobTags_length_robTrace_append
     (first ++ second)
     (normalizeRvfiPacketTrace_append machine state first second _hfirst _hsecond)
 
+/- A successful normalized packet capture has equal generic ROB-tag and
+   generic ROB-input cardinalities. -/
+theorem normalizeRvfiPacketRobTags_length_robInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {_start : Nat} {_retirements : List Retirement}
+    (_h : normalizeRvfiTrace? _start
+        (rvfiPacketObservations machine state cycles) = some _retirements) :
+    (robTags machine.toRobMachine state cycles).length =
+      (robInputs machine.toRobMachine state cycles).length := by
+  exact robTags_length_eq_robInputs_length machine.toRobMachine state cycles
+
+/- The normalized ROB-tag/ROB-input cardinality bridge composes across
+   adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTags_length_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {_start : Nat} {_firstRetirements _secondRetirements : List Retirement}
+    (_hfirst : normalizeRvfiTrace? _start
+        (rvfiPacketObservations machine state first) = some _firstRetirements)
+    (_hsecond : normalizeRvfiTrace?
+        (_start + _firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some _secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).length =
+      (robInputs machine.toRobMachine state (first ++ second)).length := by
+  exact robTags_length_eq_robInputs_length machine.toRobMachine state
+    (first ++ second)
+
 /- A certified packet-window chain has equal generic ROB-tag and generic
    ROB-trace cardinalities. -/
 theorem normalizeRvfiPacketWindows_rob_tags_length_robTrace
@@ -4525,6 +4555,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_packetInputs

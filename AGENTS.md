@@ -1,6 +1,6 @@
 # AGENTS.md — operating manual for the proof AI
 
-You are proving real Python programs correct in Lean 4 (`leanprover/lean4:v4.33.0-rc1`, core only, no packages).
+You are proving real Python programs correct in Lean 4 (`leanprover/lean4:v4.35.0`, core only, no packages).
 
 ## Engineering rules (every lane)
 

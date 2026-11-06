@@ -111,7 +111,7 @@ lake build
 ```
 
 `lake update` selected Lean `leanprover/lean4:v4.29.0` and the pinned
-`lean-sail` revision above.  The repository uses Lean 4.33.0-rc1.  `Defs`
+`lean-sail` revision above.  The repository then used Lean 4.33.0-rc1.  `Defs`
 compiled, then the build failed in `LeanRV32I/RiscvExtras.lean` after
 **196.969 s** (MEASURED):
 
@@ -150,7 +150,7 @@ not a substitute for a successful build of the official generated package.
    Sail/`lean-sail` emits a consistent namespace and the support interfaces
    carry explicit oracles instead of axioms.
 2. Do not add a Lake dependency pinned to Lean 4.29 while this repository is
-   on Lean 4.33.0-rc1; revisit after an upstream compatibility pin exists.
+   on Lean v4.35.0; revisit after an upstream compatibility pin exists.
 3. Use `LeanModels/Rv` as the R0 seed for the next rung, retaining the Sail C
    emulator as a validation oracle.  If the official backend remains blocked,
    grow an axiom-free RV32I model under this tree and record every semantic

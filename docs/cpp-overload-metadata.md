@@ -43,6 +43,10 @@ evidence must be an object or a valid handle string.
 A syntactically valid constructor handle absent from the artifact declaration
 table is also a recorded refusal; the handle must resolve to retained evidence.
 
+If the same constructor handle occurs in more than one retained declaration
+row, the metadata gate refuses because the artifact does not identify one
+declaration occurrence unambiguously.
+
 The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution

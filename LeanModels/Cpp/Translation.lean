@@ -693,8 +693,11 @@ def admitResolvedCXXConstructExpression (artifact : Artifact) (path : List Nat) 
     | .object reference => evidenceHandle (.object reference) "id"
     | .string value => parseFrontendHandle value
     | _ => throw "translation: selected constructor handle is malformed"
-  let some declaration := artifact.declarations.find? (·.id == handle.value)
+  let declarations := artifact.declarations.filter (·.id == handle.value)
+  let some declaration := declarations.head?
     | throw "translation: selected constructor declaration is absent from artifact"
+  unless declarations.length == 1 do
+    throw "translation: selected constructor declaration is duplicated in artifact"
   unless declaration.kind == "CXXConstructorDecl" do
     throw "translation: selected constructor declaration is not a constructor"
   pure handle

@@ -2473,6 +2473,23 @@ def resolvedConstructorMissingDeclarationRefusal : Except String Unit := do
   let _ ← admitResolvedCXXConstructExpression resolvedConstructorMissingDeclarationTranslation [0]
   pure ()
 
+private def resolvedConstructorDuplicateDeclarationTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x3e"), ("kind", .string "CXXConstructorDecl"),
+        ("name", .string "S"), ("inner", .array [])],
+      .object [("id", .string "0x3e"), ("kind", .string "CXXConstructorDecl"),
+        ("name", .string "S"), ("inner", .array [])],
+      .object [("id", .string "0x3f"), ("kind", .string "CXXConstructExpr"),
+        ("ctor", .object [("id", .string "0x3e"),
+          ("kind", .string "CXXConstructorDecl")]),
+        ("ctorType", .object [("qualType", .string "void (int)")]),
+        ("inner", .array [])]])]}
+
+def resolvedConstructorDuplicateDeclarationRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXConstructExpression resolvedConstructorDuplicateDeclarationTranslation [2]
+  pure ()
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 
@@ -2723,6 +2740,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedConstructorWrongKindRefusal matches .error _
 #guard resolvedConstructorMalformedScalarRefusal matches .error _
 #guard resolvedConstructorMissingDeclarationRefusal matches .error _
+#guard resolvedConstructorDuplicateDeclarationRefusal matches .error _
 #guard resolvedCallNonCallableRefusal matches .error _
 #guard resolvedCallCastTranslationWitnessOk
 #guard resolvedCallMalformedCastRefusal matches .error _

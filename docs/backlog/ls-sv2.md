@@ -3465,3 +3465,15 @@ and adjacent-chain forms.
 **DECIDED:** transport the certified generic ROB trace/state contract through
 the exact packet-machine input and state projections; packet boundaries and
 the carried retirement order remain unchanged.
+
+## 2026-11-06-ls-sv2-233 — expose packet-window ROB trace state through packet state
+
+Added `normalizeRvfiPacketWindows_rob_trace_refines_state_packet` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`. Certified packet-window
+ROB traces now state both their ISA trace equality and final relation directly
+through packet inputs and packet state. The PicoRV32 witness pins the chain
+and adjacent-chain forms.
+
+**DECIDED:** transport the certified generic ROB trace/state contract through
+the exact packet-machine input and state projections; packet boundaries and
+the carried retirement order remain unchanged.

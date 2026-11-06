@@ -4519,8 +4519,8 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 (findFunction m excName).isSome) = true)
                           (fun _ => PBF.exn hslot' _) (fun _ => ?_)
                         by_cases hc : (builtinExcCatches excName e || userExcCatches m excName e) = true
-                        · exact ihSs m st' handler.toList hslot'
-                        · exact PBF.exn hslot' _
+                        · simpa [excName, hc] using (ihSs m st' handler.toList hslot')
+                        · simpa [excName, hc] using (PBF.exn hslot' (e := e))
                     | timeout => exact PBF.timeout
                     | unsupported msg => exact PBF.unsupported
                   · refine PBF.ite (c := refusedAncestorExc.contains excName = true)
@@ -5288,192 +5288,21 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         | cons digits tail =>
                                           cases tail with
                                           | nil =>
-                                            by_cases hn : roundDigitsNonnegative digits = true
-                                            · simp only [hn, if_true]
+                                            cases hd : asInt digits with
+                                            | none => simp [hd]; exact PBF.unsupported
+                                            | some d =>
+                                              simp [hd]
                                               cases value with
-                                              | int _ => exact PBF.ok invariant _
-                                              | bool _ => exact PBF.ok invariant _
-                                              | float _ =>
-                                                by_cases hz : roundDigitsZero digits = true
-                                                · simp only [hz, if_true]
-                                                  exact PBF.liftRes invariant _
-                                                · simp only [hz, if_false]
-                                                  by_cases ho : roundDigitsOne digits = true
-                                                  · simp only [ho, if_true]
-                                                    exact PBF.liftRes invariant _
-                                                  · simp only [ho, if_false]
-                                                    by_cases ht : roundDigitsTwo digits = true
-                                                    · simp only [ht, if_true]
-                                                      exact PBF.liftRes invariant _
-                                                    · simp only [ht, if_false]
-                                                      by_cases hthree : roundDigitsThree digits = true
-                                                      · simp only [hthree, if_true]
-                                                        exact PBF.liftRes invariant _
-                                                      · simp only [hthree, if_false]
-                                                        by_cases hfour : roundDigitsFour digits = true
-                                                        · simp only [hfour, if_true]
-                                                          exact PBF.liftRes invariant _
-                                                        · simp only [hfour, if_false]
-                                                          by_cases hfive : roundDigitsFive digits = true
-                                                          · simp only [hfive, if_true]
-                                                            exact PBF.liftRes invariant _
-                                                          · simp only [hfive, if_false]
-                                                            by_cases hsix : roundDigitsSix digits = true
-                                                            · simp only [hsix, if_true]
-                                                              exact PBF.liftRes invariant _
-                                                            · simp only [hsix, if_false]
-                                                              by_cases hseven : roundDigitsSeven digits = true
-                                                              · simp only [hseven, if_true]
-                                                                exact PBF.liftRes invariant _
-                                                              · simp only [hseven, if_false]
-                                                                by_cases height : roundDigitsEight digits = true
-                                                                · simp only [height, if_true]
-                                                                  exact PBF.liftRes invariant _
-                                                                · simp only [height, if_false]
-                                                                  by_cases hnine : roundDigitsNine digits = true
-                                                                  · simp only [hnine, if_true]
-                                                                    exact PBF.liftRes invariant _
-                                                                  · simp only [hnine, if_false]
-                                                                    by_cases hten : roundDigitsTen digits = true
-                                                                    · simp only [hten, if_true]
-                                                                      exact PBF.liftRes invariant _
-                                                                    · simp only [hten, if_false]
-                                                                      by_cases heleven : roundDigitsEleven digits = true
-                                                                      · simp only [heleven, if_true]
-                                                                        exact PBF.liftRes invariant _
-                                                                      · simp only [heleven, if_false]
-                                                                        by_cases htwelve : roundDigitsTwelve digits = true
-                                                                        · simp only [htwelve, if_true]
-                                                                          exact PBF.liftRes invariant _
-                                                                        · simp only [htwelve, if_false]
-                                                                          by_cases hthirteen : roundDigitsThirteen digits = true
-                                                                          · simp only [hthirteen, if_true]
-                                                                            exact PBF.liftRes invariant _
-                                                                          · simp only [hthirteen, if_false]
-                                                                            by_cases hfourteen : roundDigitsFourteen digits = true
-                                                                            · simp only [hfourteen, if_true]
-                                                                              exact PBF.liftRes invariant _
-                                                                            · simp only [hfourteen, if_false]
-                                                                              by_cases hfifteen : roundDigitsFifteen digits = true
-                                                                              · simp only [hfifteen, if_true]
-                                                                                exact PBF.liftRes invariant _
-                                                                              · simp only [hfifteen, if_false]
-                                                                                by_cases hsixteen : roundDigitsSixteen digits = true
-                                                                                · simp only [hsixteen, if_true]
-                                                                                  exact PBF.liftRes invariant _
-                                                                                · simp only [hsixteen, if_false]
-                                                                                  by_cases hseventeen : roundDigitsSeventeen digits = true
-                                                                                  · simp only [hseventeen, if_true]
-                                                                                    exact PBF.liftRes invariant _
-                                                                                  · simp only [hseventeen, if_false]
-                                                                                    by_cases heighteen : roundDigitsEighteen digits = true
-                                                                                    · simp only [heighteen, if_true]
-                                                                                      exact PBF.liftRes invariant _
-                                                                                    · simp only [heighteen, if_false]
-                                                                                      by_cases hnineteen : roundDigitsNineteen digits = true
-                                                                                      · simp only [hnineteen, if_true]
-                                                                                        exact PBF.liftRes invariant _
-                                                                                      · simp only [hnineteen, if_false]
-                                                                                        by_cases htwenty : roundDigitsTwenty digits = true
-                                                                                        · simp only [htwenty, if_true]
-                                                                                          exact PBF.liftRes invariant _
-                                                                                        · simp only [htwenty, if_false]
-                                                                                          by_cases htwentyone : roundDigitsTwentyOne digits = true
-                                                                                          · simp only [htwentyone, if_true]
-                                                                                            exact PBF.liftRes invariant _
-                                                                                          · simp only [htwentyone, if_false]
-                                                                                            by_cases htwentytwo : roundDigitsTwentyTwo digits = true
-                                                                                            · simp only [htwentytwo, if_true]
-                                                                                              exact PBF.liftRes invariant _
-                                                                                            · simp only [htwentytwo, if_false]
-                                                                                              by_cases htwentythree : roundDigitsTwentyThree digits = true
-                                                                                              · simp only [htwentythree, if_true]
-                                                                                                exact PBF.liftRes invariant _
-                                                                                              · simp only [htwentythree, if_false]
-                                                                                                by_cases htwentyfour : roundDigitsTwentyFour digits = true
-                                                                                                · simp only [htwentyfour, if_true]
-                                                                                                  exact PBF.liftRes invariant _
-                                                                                                · simp only [htwentyfour, if_false]
-                                                                                                  by_cases htwentyfive : roundDigitsTwentyFive digits = true
-                                                                                                  · simp only [htwentyfive, if_true]
-                                                                                                    exact PBF.liftRes invariant _
-                                                                                                  · simp only [htwentyfive, if_false]
-                                                                                                    by_cases htwentysix : roundDigitsTwentySix digits = true
-                                                                                                    · simp only [htwentysix, if_true]
-                                                                                                      exact PBF.liftRes invariant _
-                                                                                                    · simp only [htwentysix, if_false]
-                                                                                                      by_cases htwentyseven : roundDigitsTwentySeven digits = true
-                                                                                                      · simp only [htwentyseven, if_true]
-                                                                                                        exact PBF.liftRes invariant _
-                                                                                                      · simp only [htwentyseven, if_false]
-                                                                                                        by_cases htwentyeight : roundDigitsTwentyEight digits = true
-                                                                                                        · simp only [htwentyeight, if_true]
-                                                                                                          exact PBF.liftRes invariant _
-                                                                                                        · simp only [htwentyeight, if_false]
-                                                                                                          by_cases htwentynine : roundDigitsTwentyNine digits = true
-                                                                                                          · simp only [htwentynine, if_true]
-                                                                                                            exact PBF.liftRes invariant _
-                                                                                                          · simp only [htwentynine, if_false]
-                                                                                                            by_cases hthirty : roundDigitsThirty digits = true
-                                                                                                            · simp only [hthirty, if_true]
-                                                                                                              exact PBF.liftRes invariant _
-                                                                                                            · simp only [hthirty, if_false]
-                                                                                                              by_cases hthirtyone : roundDigitsThirtyOne digits = true
-                                                                                                              · simp only [hthirtyone, if_true]
-                                                                                                                exact PBF.liftRes invariant _
-                                                                                                              · simp only [hthirtyone, if_false]
-                                                                                                                by_cases hthirtytwo : roundDigitsThirtyTwo digits = true
-                                                                                                                · simp only [hthirtytwo, if_true]
-                                                                                                                  exact PBF.liftRes invariant _
-                                                                                                                · simp only [hthirtytwo, if_false]
-                                                                                                                  by_cases hthirtythree : roundDigitsThirtyThree digits = true
-                                                                                                                  · simp only [hthirtythree, if_true]
-                                                                                                                    exact PBF.liftRes invariant _
-                                                                                                                  · simp only [hthirtythree, if_false]
-                                                                                                                    by_cases hthirtyfour : roundDigitsThirtyFour digits = true
-                                                                                                                    · simp only [hthirtyfour, if_true]
-                                                                                                                      exact PBF.liftRes invariant _
-                                                                                                                    · simp only [hthirtyfour, if_false]
-                                                                                                                      by_cases hthirtyfive : roundDigitsThirtyFive digits = true
-                                                                                                                      · simp only [hthirtyfive, if_true]
-                                                                                                                        exact PBF.liftRes invariant _
-                                                                                                                      · simp only [hthirtyfive, if_false]
-                                                                                                                        by_cases hthirtysix : roundDigitsThirtySix digits = true
-                                                                                                                        · simp only [hthirtysix, if_true]
-                                                                                                                          exact PBF.liftRes invariant _
-                                                                                                                        · simp only [hthirtysix, if_false]
-                                                                                                                          by_cases hthirtyseven : roundDigitsThirtySeven digits = true
-                                                                                                                          · simp only [hthirtyseven, if_true]
-                                                                                                                            exact PBF.liftRes invariant _
-                                                                                                                          · simp only [hthirtyseven, if_false]
-                                                                                                                            by_cases hthirtyeight : roundDigitsThirtyEight digits = true
-                                                                                                                            · simp only [hthirtyeight, if_true]
-                                                                                                                              exact PBF.liftRes invariant _
-                                                                                                                            · simp only [hthirtyeight, if_false]
-                                                                                                                              by_cases hthirtynine : roundDigitsThirtyNine digits = true
-                                                                                                                              · simp only [hthirtynine, if_true]
-                                                                                                                                exact PBF.liftRes invariant _
-                                                                                                                              · simp only [hthirtynine, if_false]
-                                                                                                                                by_cases hforty : roundDigitsForty digits = true
-                                                                                                                                · simp only [hforty, if_true]
-                                                                                                                                  exact PBF.liftRes invariant _
-                                                                                                                                · simp only [hforty, if_false]
-                                                                                                                                  by_cases hfortyone : roundDigitsFortyOne digits = true
-                                                                                                                                  · simp only [hfortyone, if_true]
-                                                                                                                                    exact PBF.liftRes invariant _
-                                                                                                                                  · simp only [hfortyone, if_false]
-                                                                                                                                    by_cases hfortytwo : roundDigitsFortyTwo digits = true
-                                                                                                                                    · simp only [hfortytwo, if_true]
-                                                                                                                                      exact PBF.liftRes invariant _
-                                                                                                                                    · simp only [hfortytwo, if_false]
-                                                                                                                                      by_cases hfortythree : roundDigitsFortyThree digits = true
-                                                                                                                                      · simp only [hfortythree, if_true]
-                                                                                                                                        exact PBF.liftRes invariant _
-                                                                                                                                      · simp only [hfortythree, if_false]
-                                                                                                                                        exact PBF.unsupported
+                                              | int _ =>
+                                                by_cases hneg : d < 0
+                                                · simp [hneg]; exact PBF.unsupported
+                                                · simp [hneg]; exact PBF.ok invariant _
+                                              | bool _ =>
+                                                by_cases hneg : d < 0
+                                                · simp [hneg]; exact PBF.unsupported
+                                                · simp [hneg]; exact PBF.ok invariant _
+                                              | float _ => exact PBF.liftRes invariant _
                                               | _ => exact PBF.unsupported
-                                            · simp only [hn, if_false]
-                                              exact PBF.unsupported
                                           | cons _ _ => exact PBF.unsupported
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))

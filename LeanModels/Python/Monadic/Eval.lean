@@ -421,8 +421,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- The one-argument integer/Boolean slice: CPython's
     -- `round(int)` returns the same mathematical integer, while
     -- `round(bool)` returns an `int`, not a `bool`. One-argument floats use
-    -- the exact binary64 ratio and ties-to-even; integer/Boolean inputs also
-    -- admit nonnegative ndigits, while floats remain limited to ndigits == 0.
+    -- the exact binary64 ratio and ties-to-even. Integral ndigits use the
+    -- parameterized decimal scaling rule below.
     match vs with
     | [] => raisePy (.typeError "round() missing required argument 'number' (pos 1)")
     | [v] =>
@@ -432,58 +432,18 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         | .float value => liftRes (roundFloatVal value)
         | _ => refuse "round() over this non-integral value is outside the tier"
     | [v, digits] =>
-        if roundDigitsNonnegative digits then
+        match asInt digits with
+        | none => refuse "round() with non-integral ndigits is outside the tier"
+        | some d =>
           match v with
-          | .int n => pure (.int n)
-          | .bool b => pure (.int (if b then 1 else 0))
-          | .float value =>
-            if roundDigitsZero digits then liftRes (roundFloatZero value)
-            else if roundDigitsOne digits then liftRes (roundFloatOne value)
-            else if roundDigitsTwo digits then liftRes (roundFloatTwo value)
-            else if roundDigitsThree digits then liftRes (roundFloatThree value)
-            else if roundDigitsFour digits then liftRes (roundFloatFour value)
-            else if roundDigitsFive digits then liftRes (roundFloatFive value)
-            else if roundDigitsSix digits then liftRes (roundFloatSix value)
-            else if roundDigitsSeven digits then liftRes (roundFloatSeven value)
-            else if roundDigitsEight digits then liftRes (roundFloatEight value)
-            else if roundDigitsNine digits then liftRes (roundFloatNine value)
-            else if roundDigitsTen digits then liftRes (roundFloatTen value)
-            else if roundDigitsEleven digits then liftRes (roundFloatEleven value)
-            else if roundDigitsTwelve digits then liftRes (roundFloatTwelve value)
-            else if roundDigitsThirteen digits then liftRes (roundFloatThirteen value)
-            else if roundDigitsFourteen digits then liftRes (roundFloatFourteen value)
-            else if roundDigitsFifteen digits then liftRes (roundFloatFifteen value)
-            else if roundDigitsSixteen digits then liftRes (roundFloatSixteen value)
-            else if roundDigitsSeventeen digits then liftRes (roundFloatSeventeen value)
-            else if roundDigitsEighteen digits then liftRes (roundFloatEighteen value)
-            else if roundDigitsNineteen digits then liftRes (roundFloatNineteen value)
-            else if roundDigitsTwenty digits then liftRes (roundFloatTwenty value)
-            else if roundDigitsTwentyOne digits then liftRes (roundFloatTwentyOne value)
-            else if roundDigitsTwentyTwo digits then liftRes (roundFloatTwentyTwo value)
-            else if roundDigitsTwentyThree digits then liftRes (roundFloatTwentyThree value)
-            else if roundDigitsTwentyFour digits then liftRes (roundFloatTwentyFour value)
-            else if roundDigitsTwentyFive digits then liftRes (roundFloatTwentyFive value)
-            else if roundDigitsTwentySix digits then liftRes (roundFloatTwentySix value)
-            else if roundDigitsTwentySeven digits then liftRes (roundFloatTwentySeven value)
-            else if roundDigitsTwentyEight digits then liftRes (roundFloatTwentyEight value)
-            else if roundDigitsTwentyNine digits then liftRes (roundFloatTwentyNine value)
-            else if roundDigitsThirty digits then liftRes (roundFloatThirty value)
-            else if roundDigitsThirtyOne digits then liftRes (roundFloatThirtyOne value)
-            else if roundDigitsThirtyTwo digits then liftRes (roundFloatThirtyTwo value)
-            else if roundDigitsThirtyThree digits then liftRes (roundFloatThirtyThree value)
-            else if roundDigitsThirtyFour digits then liftRes (roundFloatThirtyFour value)
-            else if roundDigitsThirtyFive digits then liftRes (roundFloatThirtyFive value)
-            else if roundDigitsThirtySix digits then liftRes (roundFloatThirtySix value)
-            else if roundDigitsThirtySeven digits then liftRes (roundFloatThirtySeven value)
-            else if roundDigitsThirtyEight digits then liftRes (roundFloatThirtyEight value)
-            else if roundDigitsThirtyNine digits then liftRes (roundFloatThirtyNine value)
-            else if roundDigitsForty digits then liftRes (roundFloatForty value)
-            else if roundDigitsFortyOne digits then liftRes (roundFloatFortyOne value)
-            else if roundDigitsFortyTwo digits then liftRes (roundFloatFortyTwo value)
-            else if roundDigitsFortyThree digits then liftRes (roundFloatFortyThree value)
-            else refuse "round() with positive ndigits for floats is outside the tier"
+          | .int n =>
+            if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
+            else pure (.int n)
+          | .bool b =>
+            if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
+            else pure (.int (if b then 1 else 0))
+          | .float value => liftRes (roundFloatNDigits value d)
           | _ => refuse "round() over this non-integral value is outside the tier"
-        else refuse "round() with negative or non-integral ndigits is outside the tier"
     | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
     liftRes (intCastArgs vs)

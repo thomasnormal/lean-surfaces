@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/round_lab/round_lab.py",
-  "source_sha256": "bcbef48f6cf508c219a050a6dd8482c79353dffa4fa00e00e7cb28263662a357",
+  "source_sha256": "feab354dee34988230bb0631afc2077158e9e09098a82bce751c0215f8efe90f",
   "module": {
     "kind": "Module",
     "body": [
@@ -4416,6 +4416,92 @@
                     "type": "int",
                     "repr": "43"
                   }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 209,
+          "col_offset": 0,
+          "end_lineno": 210,
+          "end_col_offset": 31
+        },
+        "name": "round_float_general",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 209,
+              "col_offset": 24,
+              "end_lineno": 209,
+              "end_col_offset": 29
+            }
+          },
+          {
+            "arg": "digits",
+            "span": {
+              "lineno": 209,
+              "col_offset": 31,
+              "end_lineno": 209,
+              "end_col_offset": 37
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 210,
+              "col_offset": 4,
+              "end_lineno": 210,
+              "end_col_offset": 31
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 210,
+                "col_offset": 11,
+                "end_lineno": 210,
+                "end_col_offset": 31
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 210,
+                  "col_offset": 11,
+                  "end_lineno": 210,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 210,
+                    "col_offset": 17,
+                    "end_lineno": 210,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 210,
+                    "col_offset": 24,
+                    "end_lineno": 210,
+                    "end_col_offset": 30
+                  },
+                  "id": "digits"
                 }
               ],
               "keywords": [],

@@ -4,7 +4,7 @@ open LeanModels.Sv LeanModels.Sv.CombView
 open Examples.«system-verilog».sklansky_guards.nonaffine.gen
 namespace Examples.«system-verilog».sklansky_guards.nonaffine.comb_errors
 /--
-error: sv_structure: outside the supported fragment — site `g_bit#0`: read `a[…]` has a non-affine (dynamic or nonlinear) index
+error: sv_structure: outside the supported fragment — site `g_bit#0`: non-affine genvar-index obligation: read `a[…]` has a dynamic or nonlinear index, so the driven window cannot be determined
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (nonaffine.sem N) := by

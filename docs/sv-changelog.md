@@ -6440,3 +6440,13 @@ just because the exact path uses the typed-value table.
 The `add_int32` proof also inspects the instantiated process shape: `N = 16`
 selects `s = sr`, while `N = 5` wraps `M` to the negative signed-32 value and
 selects `s = ~sr`.
+
+## Sklansky comb-tactic obligation boundary
+
+The source-shaped Sklansky walls remain loud and named: a conditional generate
+inside a generate loop reports `GuardEval obligation`, while a dynamic or
+nonlinear genvar read or write reports `non-affine genvar-index obligation`.
+The clean-room `sklansky_guards` and `sklansky_guards/nonaffine` rows pin these
+messages. Guarded-family retention is not admitted until its proof path carries
+guard totality through the generated family and preserves branch-selected site
+identities; no branch is dropped on a failed evaluation.

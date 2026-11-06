@@ -3357,3 +3357,16 @@ adjacent captures. The PicoRV32 witness pins both forms.
 **DECIDED:** compose the normalized packet-tag input/packet-input equality
 with the packetized RVFI-to-ROB input bridge; source-input order and payloads
 remain exact, and no packet reconstruction is introduced.
+
+## 2026-11-06-ls-sv2-224 — connect packet-window packet-tag inputs to ROB inputs
+
+Added `normalizeRvfiPacketWindows_tags_inputs_robInputs` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. Certified packet-window chains now
+identify the exact generic ROB input stream of their flattened packet-tag
+source-input projection, including adjacent chains. The PicoRV32 witness pins
+the chain and append forms.
+
+**DECIDED:** flatten through the existing packet-window tag-input certificate
+and compose it with the packetized RVFI-to-ROB input bridge; packet boundaries,
+source-input order, and payloads remain exact, with the carried state boundary
+retained.

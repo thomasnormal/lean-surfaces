@@ -2221,6 +2221,57 @@ theorem normalizeRvfiPacketTags_refines_append
   simpa only [RvfiPacketMachine.toRobMachine_tags,
     RvfiPacketMachine.toRobMachine_inputs] using htags.2
 
+/- The packet-preserving tag/ISA contract also exposes the generic ROB input
+   projection directly, while retaining packet boundaries. -/
+theorem normalizeRvfiPacketTags_refines_rob
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    InOrderPacketStream start (rvfiPacketTags machine state cycles) ∧
+      (rvfiPacketTags machine state cycles).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state cycles) := by
+  have htags := normalizeRvfiPacketTags_refines machine isa rel admit
+    state isaState start cycles retirements hrob hrel hobs
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
+/- The packet-preserving generic-ROB-input contract composes across adjacent
+   captures, retaining the carried state and retirement-order boundary. -/
+theorem normalizeRvfiPacketTags_refines_rob_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    InOrderPacketStream start
+        (rvfiPacketTags machine state (first ++ second)) ∧
+      (rvfiPacketTags machine state (first ++ second)).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state (first ++ second)) := by
+  have htags := normalizeRvfiPacketTags_refines_append machine isa rel admit
+    state isaState start first second hrob hrel hfirst hsecond
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
 /- The packet-boundary tag/ISA contract also transports the final relation and
    exact normalized order through the packet machine state. -/
 theorem normalizeRvfiPacketTags_refines_state

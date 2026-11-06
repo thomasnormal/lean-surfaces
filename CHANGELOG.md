@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rebased the round-lab proof artifact on the parameterized float-round worker; all 53 round theorems build without deleted per-digit helper references.
+
 - Refreshed the generated backlog index after cross-lane entries landed, restoring documentation freshness.
 
 - Restored fail-closed refusal-census taxonomy coverage for all unsupported differential rows and loud script witnesses; unclassified inventory entries now fail the gate.

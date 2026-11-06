@@ -15,7 +15,7 @@ convenience `parseEnvelopeString : String → Except String Envelope`.
 Notes:
 * Field names match the schema doc exactly (`schema_version`, `source_file`,
   `args_unsupported`, `py_kind`, `first_line`, …).
-* The envelope's `frontend` field is accepted but not retained.
+* The envelope records and validates the pinned CPython 3.9 AST frontend.
 * Int constants arrive as decimal strings (`{"type":"int","repr":"123"}`).
 * A `FunctionDef` at module top level becomes a `FunctionDefn`; a *nested*
   `def` is ingested as `Stmt.unsupported "FunctionDef" name span`.
@@ -40,6 +40,8 @@ structure Envelope where
   language : String
   sourceFile : String
   sourceSha256 : String
+  frontendName : String
+  frontendVersion : String
   module : Module
   leanBlocks : Array LeanBlock
 deriving Repr, Inhabited, BEq
@@ -1956,10 +1958,17 @@ def parseLeanBlock (j : Json) : Except String LeanBlock :=
 /-- Parse a full envelope document. -/
 def parseEnvelope (j : Json) : Except String Envelope :=
   withCtx "envelope" do
+    let frontend ← getField j "frontend"
+    let frontendName ← (← getField frontend "name").getStr?
+    let frontendVersion ← (← getField frontend "version").getStr?
+    if frontendName != "cpython-ast" || !frontendVersion.startsWith "3.9" then
+      throw s!"unsupported Python frontend {frontendName} {frontendVersion}; the tier is pinned to CPython 3.9"
     return { schemaVersion := ← (← getField j "schema_version").getStr?
              language := ← (← getField j "language").getStr?
              sourceFile := ← (← getField j "source_file").getStr?
              sourceSha256 := ← (← getField j "source_sha256").getStr?
+             frontendName := frontendName
+             frontendVersion := frontendVersion
              module := ← parseModule (← getField j "module")
              leanBlocks := ← (← (← getField j "lean_blocks").getArr?).mapM parseLeanBlock }
 

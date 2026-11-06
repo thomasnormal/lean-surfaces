@@ -3027,3 +3027,5 @@ change is listed here under **Changed** or **Removed**.
   joining and reparsing them with a delimiter.
 - Python: pin `tools/leanpy`'s frontend and comparison oracle to CPython 3.9,
   with explicit diagnostics for fallback interpreters.
+- Python: retain and validate envelope frontend metadata, rejecting non-CPython
+  3.9 envelopes before AST ingestion.

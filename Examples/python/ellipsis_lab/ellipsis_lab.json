@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/ellipsis_lab/ellipsis_lab.py",
   "source_sha256": "0670f8b8c900c5d0cc5cd8f3fa102438cd7534d434be0d5feb72338c217d681b",
@@ -571,9 +571,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 18,
-                        "col_offset": 34,
+                        "col_offset": 32,
                         "end_lineno": 18,
-                        "end_col_offset": 39
+                        "end_col_offset": 56
                       },
                       "value": {
                         "kind": "Constant",
@@ -594,9 +594,9 @@
                       "kind": "Constant",
                       "span": {
                         "lineno": 18,
-                        "col_offset": 39,
+                        "col_offset": 32,
                         "end_lineno": 18,
-                        "end_col_offset": 40
+                        "end_col_offset": 56
                       },
                       "value": {
                         "type": "str",
@@ -607,9 +607,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 18,
-                        "col_offset": 40,
+                        "col_offset": 32,
                         "end_lineno": 18,
-                        "end_col_offset": 47
+                        "end_col_offset": 56
                       },
                       "value": {
                         "kind": "Constant",
@@ -630,9 +630,9 @@
                       "kind": "Constant",
                       "span": {
                         "lineno": 18,
-                        "col_offset": 47,
+                        "col_offset": 32,
                         "end_lineno": 18,
-                        "end_col_offset": 48
+                        "end_col_offset": 56
                       },
                       "value": {
                         "type": "str",
@@ -643,9 +643,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 18,
-                        "col_offset": 48,
+                        "col_offset": 32,
                         "end_lineno": 18,
-                        "end_col_offset": 55
+                        "end_col_offset": 56
                       },
                       "value": {
                         "kind": "Constant",
@@ -2849,9 +2849,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 89,
-                        "col_offset": 56,
+                        "col_offset": 54,
                         "end_lineno": 89,
-                        "end_col_offset": 72
+                        "end_col_offset": 111
                       },
                       "value": {
                         "kind": "Name",
@@ -2870,9 +2870,9 @@
                       "kind": "Constant",
                       "span": {
                         "lineno": 89,
-                        "col_offset": 72,
+                        "col_offset": 54,
                         "end_lineno": 89,
-                        "end_col_offset": 73
+                        "end_col_offset": 111
                       },
                       "value": {
                         "type": "str",
@@ -2883,9 +2883,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 89,
-                        "col_offset": 73,
+                        "col_offset": 54,
                         "end_lineno": 89,
-                        "end_col_offset": 91
+                        "end_col_offset": 111
                       },
                       "value": {
                         "kind": "Name",
@@ -2904,9 +2904,9 @@
                       "kind": "Constant",
                       "span": {
                         "lineno": 89,
-                        "col_offset": 91,
+                        "col_offset": 54,
                         "end_lineno": 89,
-                        "end_col_offset": 92
+                        "end_col_offset": 111
                       },
                       "value": {
                         "type": "str",
@@ -2917,9 +2917,9 @@
                       "kind": "FormattedValue",
                       "span": {
                         "lineno": 89,
-                        "col_offset": 92,
+                        "col_offset": 54,
                         "end_lineno": 89,
-                        "end_col_offset": 110
+                        "end_col_offset": 111
                       },
                       "value": {
                         "kind": "Name",

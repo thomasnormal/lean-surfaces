@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/dictcomp_lab/dictcomp_lab.py",
   "source_sha256": "7641ae6e3fdbd44ae17720cd1958f7c8d19cdc806bdc57e6a6076593fa70110b",

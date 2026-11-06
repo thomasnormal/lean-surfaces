@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/with_lab/with_lab.py",
   "source_sha256": "14475c21c95fc80d52d5352d8bc42a0f9500cc79f2a526a9dbb3dee0aedbd3d1",

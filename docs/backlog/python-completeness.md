@@ -9182,3 +9182,24 @@ warning instead of silently changing the reference implementation.
 
 DECIDED: keep CPython 3.9 as the default at both ends of the whole-program
 comparison; alternate interpreters require an explicit environment or flag.
+
+## 2026-11-06-pycomplete-349 — enforce the pinned envelope frontend
+
+Python envelope ingestion now retains the frontend name and version and rejects
+anything outside the pinned `cpython-ast` 3.9 family before parsing the module.
+This makes a stale or foreign frontend an explicit ingestion failure instead of
+silently changing spans and ordering decisions. The freshness manifest now
+checks the 3.9 family rather than one historical point release, and all 81
+tracked Python envelopes were regenerated with CPython 3.9.25; the two stale
+envelopes found by the gate were refreshed as part of this item.
+
+| Measurement | Result |
+|---|---|
+| Envelope freshness | `envelope_fresh.py --tier python`: FRESH 81, STALE 0 |
+| Freshness self-test | 27 checks passed |
+| Frontend rejection | a 3.12 envelope exits with the explicit pinned-frontend error |
+| Extractor tests | 161 passed |
+| Lean build | managed `lake build leanmodels-run`: 40 jobs passed |
+
+DECIDED: validate the frontend stamp at the ingestion boundary and keep the
+family-level 3.9 pin stable across point releases.

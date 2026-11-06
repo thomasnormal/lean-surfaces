@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/with_suppress_script.py",
   "source_sha256": "83c9ad9dd515e60da01366673a501f4ccf50d89c273f25ae659b854f1b68c57c",

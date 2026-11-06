@@ -982,6 +982,7 @@ def Stmt.kindName : Stmt → String
   | .brk _ => "Break"
   | .cont _ => "Continue"
   | .unsupported pyKind _ _ => pyKind
+  | .annNoValue .. => "AnnAssignNoValue"
 
 /-- A CLOSURE CELL reached a VALUE position (H7 cells,
 docs/memory-model.md §nested defs and closures). A cell is an
@@ -7363,6 +7364,7 @@ mutual
   the exact-text whitelist (`benignImportBinds`, Ast.lean) — anything else
   is unknown, because an import runs arbitrary code. -/
   def Stmt.g1Binds : Stmt → Option (List String)
+    | .annNoValue name _ => some [name]
     | .assign tgts _ _ => targetBindsListG tgts.toList
     | .unpackAssign before star after _ _ => some (before.toList ++ [star] ++ after.toList)
     | .augAssign t _ _ _ => targetBindsG t
@@ -7744,9 +7746,8 @@ surface and the public frame type do not change.  A later ordinary assignment
 shadows the marker in lookup order; a read while the marker is still the first
 binding raises the faithful `UnboundLocalError`.
 
-The extractor leaves observed declarations as `Unsupported "AnnAssign:no-value"`
-nodes.  Their source text is enough to recover the plain target name, while
-the recursive walker makes declarations in a branch/loop local from function
+The approved AST carries the plain target name in `Stmt.annNoValue`.  The
+recursive walker makes declarations in a branch/loop local from function
 entry, as CPython's symbol-table pass requires.  Function definitions are
 scope boundaries and are intentionally not descended into here. -/
 
@@ -7755,13 +7756,6 @@ def unboundLocalMarker (id : String) : String := "<unbound-local>" ++ id
 def hasUnboundLocal (locals : Env) (id : String) : Bool :=
   (Env.lookup locals id).isNone &&
     (Env.lookup locals (unboundLocalMarker id)).isSome
-
-def annNoValueName (text : String) : Option String :=
-  match text.splitOn ":" with
-  | name :: _ =>
-      let name := name.trim
-      if name == "" then Option.none else some name
-  | [] => Option.none
 
 def typeErrorTarget (target : Expr) : Bool :=
   match target with
@@ -7809,8 +7803,7 @@ mutual
   bodies, which keeps proof-frame normalization cheap as well as making the
   runtime census exact. -/
   def stmtUnboundLocalNames : Stmt → List String
-    | .unsupported "AnnAssign:no-value" text _ =>
-        (annNoValueName text).toList
+    | .annNoValue name _ => [name]
     | .delStmt names _ => names.toList
     | .assign targets _ _ =>
         if typeErrorTargetList targets.toList then ["TypeError"] else []
@@ -7868,7 +7861,7 @@ mutual
   admitted function has an ordinary body, and its call frame should reduce
   directly to the parameter environment. -/
   def stmtHasUnboundLocal : Stmt → Bool
-    | .unsupported "AnnAssign:no-value" _ _ => true
+    | .annNoValue _ _ => true
     | .delStmt names _ => !names.isEmpty
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
         stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList orelse.toList
@@ -8599,6 +8592,7 @@ end
 mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
+    | .annNoValue .. => true
     | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
     | .unpackAssign .. => false
@@ -8769,6 +8763,7 @@ mutual
   /-- `Expr.genAllocFree` over a statement's whole subtree; a nested
   generator `def` allocates when it is CALLED, so it counts too. -/
   def Stmt.genAllocFree : Stmt → Bool
+    | .annNoValue .. => true
     | .ret Option.none _ => true
     | .ret (some e) _ => e.genAllocFree
     | .assign tgts v _ => Expr.genAllocFreeList tgts.toList && v.genAllocFree
@@ -10665,6 +10660,8 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
   | 0 => .timeout
   | fuel + 1 =>
     match s with
+    | .annNoValue id _ =>
+        .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
     | .ret Option.none _ => .ok st (.ret .none)
     | .ret (some e) _ =>
         evalExpr m fuel st e ⤳ fun st v =>
@@ -11199,11 +11196,6 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont
-    | .unsupported "AnnAssign:no-value" text _ =>
-      match annNoValueName text with
-      | some id =>
-          .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
-      | Option.none => .unsupported "unsupported statement 'AnnAssign:no-value'"
     | .unsupported "TypeErrorHandler" _ _ => .ok st .next
     | .globalDecl names _ =>
       let locals := names.toList.foldl (fun env id =>
@@ -12007,6 +11999,7 @@ mutual
         wb.toList.any (fun kv => proofCellDrainExpr genName kv.2)
 
   partial def proofCellDrainStmt (genName : String) : Stmt → Bool
+    | .annNoValue .. => false
     | .ret (some e) _ | .exprStmt e _ | .yieldStmt e _ => proofCellDrainExpr genName e
     | .assign ts v _ => ts.toList.any (proofCellDrainExpr genName) || proofCellDrainExpr genName v
     | .unpackAssign _ _ _ v _ => proofCellDrainExpr genName v

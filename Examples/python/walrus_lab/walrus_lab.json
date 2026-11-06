@@ -56,15 +56,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 19,
               "col_offset": 8,
               "end_lineno": 19,
               "end_col_offset": 18
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "m: <walrus>"
+            "name": "m"
           },
           {
             "kind": "If",
@@ -222,15 +221,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 26,
               "col_offset": 9,
               "end_lineno": 26,
               "end_col_offset": 19
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "b: <walrus>"
+            "name": "b"
           },
           {
             "kind": "Assign",
@@ -404,15 +402,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 33,
               "col_offset": 14,
               "end_lineno": 33,
               "end_col_offset": 24
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "q: <walrus>"
+            "name": "q"
           },
           {
             "kind": "If",
@@ -585,15 +582,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 41,
               "col_offset": 11,
               "end_lineno": 41,
               "end_col_offset": 21
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "n: <walrus>"
+            "name": "n"
           },
           {
             "kind": "Assign",
@@ -807,15 +803,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 48,
               "col_offset": 16,
               "end_lineno": 48,
               "end_col_offset": 26
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "h: <walrus>"
+            "name": "h"
           },
           {
             "kind": "Assign",
@@ -1005,15 +1000,14 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "AnnAssignNoValue",
             "span": {
               "lineno": 54,
               "col_offset": 12,
               "end_lineno": 54,
               "end_col_offset": 22
             },
-            "py_kind": "AnnAssign:no-value",
-            "text": "p: <walrus>"
+            "name": "p"
           },
           {
             "kind": "Return",

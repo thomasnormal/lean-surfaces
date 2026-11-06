@@ -3890,6 +3890,14 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   obtain ⟨ihE, ihEs, -, -, -, ihSs, ihWhile, ihCall, ihFor, -, ihForList, -⟩ := ih
   intro m st s hslot
   cases s with
+  | annNoValue name sp =>
+      simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
+        World.swapAt_heap]
+      refine ⟨fun st' v' h => ?_, fun st' e' h => ?_⟩
+      · injection h with hst hv
+        subst hst; subst hv
+        exact ⟨hslot, rfl⟩
+      · exact absurd h (by simp)
   | globalDecl names sp =>
       simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
         World.swapAt_heap]
@@ -4551,22 +4559,13 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   | pass sp => simp only [execStmt]; exact PBF.ok hslot _
   | brk sp => simp only [execStmt]; exact PBF.ok hslot _
   | cont sp => simp only [execStmt]; exact PBF.ok hslot _
-  | unsupported pyKind text sp =>
-      by_cases hpy : pyKind = "AnnAssign:no-value"
+  | unsupported pyKind _ sp =>
+      by_cases htype : pyKind = "TypeErrorHandler"
       · subst pyKind
         simp only [execStmt]
-        cases han : annNoValueName text with
-        | none => exact PBF.unsupported
-        | some id =>
-            simp [han]
-            exact PBF.ok (st := { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none })
-              hslot _
-      · by_cases htype : pyKind = "TypeErrorHandler"
-        · subst pyKind
-          simp only [execStmt]
-          exact PBF.ok hslot _
-        · simp [execStmt, hpy, htype]
-          exact PBF.unsupported
+        exact PBF.ok hslot _
+      · simp [execStmt, htype]
+        exact PBF.unsupported
 
 set_option maxHeartbeats 1600000 in
 /-- **The block's largest member**, 1047 of its 1976 lines, and the arm

@@ -1545,6 +1545,9 @@ mutual
 /-- Execute one statement. Structural on `Stmt`; `while` and the `for` cursors
 go out through `K` because their recursion is not structural. -/
 def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
+  | .annNoValue id _ => do
+      modify fun st => { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none }
+      pure .next
   | .ret Option.none _ => pure (.ret .none)
   | .ret (some e) _ => do
       let v ← evalOpen K m e
@@ -1749,8 +1752,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
         else
           refuse "unsupported statement 'Nonlocal'"
   | .unsupported pyKind _ _ =>
-      if pyKind == "AnnAssign:no-value" then pure .next
-      else if pyKind == "TypeErrorHandler" then pure .next
+      if pyKind == "TypeErrorHandler" then pure .next
       else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"

@@ -3029,3 +3029,5 @@ change is listed here under **Changed** or **Removed**.
   with explicit diagnostics for fallback interpreters.
 - Python: retain and validate envelope frontend metadata, rejecting non-CPython
   3.9 envelopes before AST ingestion.
+- Python: add differential coverage for negative set hashes and creation-time
+  generator-expression iteration.

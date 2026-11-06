@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/gen_lab/gen_lab.py",
-  "source_sha256": "592c937d1db4728224af2e787850a97b7973ac26a52cd7f98abfd50f5259e594",
+  "source_sha256": "d9c21c54128036c18ea47368924b201d6247d01ec88114fea06463497131a190",
   "module": {
     "kind": "Module",
     "body": [
@@ -9881,6 +9881,108 @@
               "value": {
                 "type": "int",
                 "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 416,
+          "col_offset": 0,
+          "end_lineno": 420,
+          "end_col_offset": 12
+        },
+        "name": "unconsumed_noniterable",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 419,
+              "col_offset": 4,
+              "end_lineno": 419,
+              "end_col_offset": 22
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 419,
+                  "col_offset": 4,
+                  "end_lineno": 419,
+                  "end_col_offset": 5
+                },
+                "id": "g"
+              }
+            ],
+            "value": {
+              "kind": "GeneratorExp",
+              "span": {
+                "lineno": 419,
+                "col_offset": 8,
+                "end_lineno": 419,
+                "end_col_offset": 22
+              },
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 419,
+                  "col_offset": 9,
+                  "end_lineno": 419,
+                  "end_col_offset": 10
+                },
+                "id": "x"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 419,
+                  "col_offset": 15,
+                  "end_lineno": 419,
+                  "end_col_offset": 16
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 419,
+                  "col_offset": 20,
+                  "end_lineno": 419,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "5"
+                }
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 420,
+              "col_offset": 4,
+              "end_lineno": 420,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 420,
+                "col_offset": 11,
+                "end_lineno": 420,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
               }
             }
           }

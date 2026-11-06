@@ -1092,6 +1092,40 @@ theorem normalizeRvfiPacketRobTags_inputs_robInputs_append {State : Type}
           (rvfiPacketStateAfter machine state first) second :=
       RvfiPacketMachine.toRobMachine_inputs_append machine state first second
 
+/- The normalized generic-ROB tagged source-input projection has the exact
+   generic ROB input cardinality. -/
+theorem normalizeRvfiPacketRobTags_inputs_length_robInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((robTags machine.toRobMachine state cycles).map
+        TaggedCommit.input).length =
+      (robInputs machine.toRobMachine state cycles).length := by
+  exact congrArg List.length
+    (normalizeRvfiPacketRobTags_inputs_robInputs machine state cycles h)
+
+/- The normalized generic-ROB tagged source-input cardinality bridge composes
+   across adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTags_inputs_length_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input).length =
+      (robInputs machine.toRobMachine state (first ++ second)).length := by
+  apply normalizeRvfiPacketRobTags_inputs_length_robInputs machine state
+    (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
 /- A successful normalized packet capture fixes the generic ROB input
    cardinality to the decoded retirement count. -/
 theorem normalizeRvfiPacketRobInputs_length {State : Type}
@@ -3489,6 +3523,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append

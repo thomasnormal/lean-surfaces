@@ -177,6 +177,9 @@ row.
 An overloaded-operator call whose structured `referencedDecl.id` is numeric is
 also refused; operator identity remains the artifact's string-typed handle.
 
+A structured operator handle with malformed string `id` is also refused; the
+artifact-local handle parser validates object and string forms uniformly.
+
 An overloaded-operator call whose structured `referencedDecl.kind` contradicts
 the retained function or method declaration is also refused; both evidence
 records must agree.

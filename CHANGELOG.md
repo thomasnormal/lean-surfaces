@@ -89,6 +89,9 @@
 - Added a recorded refusal for overloaded-operator declaration handles with
   numeric ids; frontend identity remains string-typed.
 
+- Added a recorded refusal for structured overloaded-operator handles with
+  malformed string ids.
+
 - Added a recorded refusal for overloaded-operator handles whose structured
   kind contradicts the retained declaration kind.
 

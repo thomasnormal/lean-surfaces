@@ -1155,6 +1155,7 @@ SCRIPT_CLASS.update({
     'len_repeat_oversize': 'op.Mult-repetition',
     'listcomp_script': 'listcomp.lowering',
     'listcomp_shadow': 'listcomp.lowering',
+    'namedtuple_import_order': 'script.definition-order',
     'star_script': 'starred.display',
     'yield_global_target': 'yield.assignment',
 })

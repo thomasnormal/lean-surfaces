@@ -9869,3 +9869,22 @@ proves that remaining control-level refinement.
 
 DECIDED: retain the landed primitive refinement edge and keep the control-level
 adequacy theorem as an explicit architectural item.
+
+## 2026-11-06-pycomplete-388 — guard namedtuple recognition by import order
+
+The recognized namedtuple table already had a source-order guard for function
+bodies that reach a later namedtuple assignment. A separate direct hazard
+remained: `P = namedtuple("P", "x")` before the benign
+`from collections import namedtuple` was promoted to the static table, so the
+model printed `1` while CPython 3.9.25 raised `NameError`. Recognition now
+requires the structured benign import to end before every plain candidate and
+namedtuple-base candidate. When that condition fails, ingestion leaves the
+source assignment intact and the runtime takes the existing loud callable
+boundary.
+
+The new `harness/scripts/namedtuple_import_order.py` witness records this
+boundary. The ordinary namedtuple script remains a CPython 3.9.25 match.
+
+DECIDED: keep the value-like static table for candidates after their import;
+source-order hazards remain loud until namedtuple construction is modeled as a
+runtime builtin and class value.

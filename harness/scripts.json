@@ -97,6 +97,11 @@
     "expect": "match"
   },
   {
+    "file": "harness/scripts/namedtuple_import_order.py",
+    "expect": "unsupported",
+    "note": "admission refuses a namedtuple candidate before its benign import; CPython raises NameError"
+  },
+  {
     "file": "harness/scripts/str_script.py",
     "expect": "match"
   },

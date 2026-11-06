@@ -431,7 +431,10 @@ cycle DETECTION, never by running out of fuel).
   statement analyzable; `X` bound exactly once; `namedtuple` bound and
   referenced nowhere else; no def/class subtree contains `global` — the
   extractor-recorded `has_global`, exact even under opaque
-  `try`/`with`); the recognized statements become `pass` and the table
+  `try`/`with`). Recognition also requires the benign import to end before
+  each candidate; a candidate above `from collections import namedtuple`
+  remains an ordinary call and therefore refuses loudly instead of moving
+  the import earlier. The recognized statements become `pass` and the table
   fills `Module.namedtuples` — anything else leaves the module
   unchanged (poisoned binding, loud). Construction is exact-arity (the
   faithful `TypeError` otherwise) and allocates NOTHING — heap-free

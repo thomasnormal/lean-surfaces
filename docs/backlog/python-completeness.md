@@ -9488,3 +9488,29 @@ boundary's frontend validation.
 
 DECIDED: a Python envelope cannot enter CI or the runner without both a fresh
 source match and the pinned CPython 3.9 frontend family.
+
+## 2026-11-06-pycomplete-365 — cover audit edge cases in differential batteries
+
+The differential batteries now carry explicit witnesses for the set-table edges
+called out by the audit: negative integer iteration (`-5`), `set.copy()`,
+`set(dict)` construction, and set intersection. The copy and intersection
+shapes remain loud because their CPython hash-table layout is not modeled;
+the nonnegative `set(dict)` path matches CPython. Existing script witnesses
+for recursion limits, generator creation, list-comprehension shadowing, long
+global declarations, oversized repetition, annotated assignment order, and
+dead global-yield targets are retained. Script expectations were synchronized
+with the intentional loud boundaries for list comprehensions, starred displays,
+definition deletion, and the opcode-shaped formatting fixture.
+
+| Measurement | Result |
+|---|---|
+| Native differential | 4199 cases: 0 failed, 185 whitelisted unsupported, 4014 matched |
+| Focused set rows | 6 rows: 0 failed, 4 whitelisted unsupported, 2 matched |
+| Script corpus | 156 scripts: 0 failed, 141 matched, 15 loud |
+| Extractor tests | 161 passed |
+| Envelope freshness | FRESH 81, STALE 0 |
+| Formatting and JSON validation | passed |
+
+DECIDED: keep each audited edge as an oracle-backed row or explicit loud
+expectation; set iteration order is never inferred from an unmodeled table
+construction path.

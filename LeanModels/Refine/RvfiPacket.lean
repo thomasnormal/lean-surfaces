@@ -1143,6 +1143,27 @@ theorem normalizeRvfiPacketWindows_rob_trace_refines_append
     state isaState start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
 
+/-- A certified packet-window chain exposes the ISA trace through the packet
+machine's architectural input projection, without requiring callers to name
+the intermediate generic ROB view. -/
+theorem normalizeRvfiPacketWindows_trace_refines {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    retirementWindows.flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state windows.flatten) := by
+  have htrace := normalizeRvfiPacketWindows_rob_trace_refines machine isa
+    rel admit state isaState start windows retirementWindows hrob hrel h
+  rw [machine.toRobMachine_inputs] at htrace
+  exact htrace
+
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_append {State : Type}
@@ -1328,6 +1349,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream_append

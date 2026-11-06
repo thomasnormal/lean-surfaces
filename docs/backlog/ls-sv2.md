@@ -1648,3 +1648,16 @@ singleton packet windows.
 **DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
 single-chain ISA trace theorem; no independent trace reconstruction,
 scheduling, or completion order is introduced.
+
+## 2026-11-06-ls-sv2-86 — expose packet-facing ISA trace equality
+
+Added `normalizeRvfiPacketWindows_trace_refines` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain now
+exposes the exact equality between its flattened normalized retirement payload
+and the ISA trace over the packet machine's architectural input stream,
+without requiring callers to name the intermediate generic ROB projection.
+The PicoRV32 witness pins this packet-facing contract over its two certified
+packet windows.
+
+**DECIDED:** transport the established ROB trace refinement through the exact
+`toRobMachine_inputs` projection; no input stream is reconstructed or reordered.

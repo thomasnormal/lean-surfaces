@@ -27,6 +27,10 @@
   parses diagnostic text from unsupported nodes or reconstructed import and
   handler payloads.
 
+- Clarified the two-interpreter status: pure-worker refinement theorems are
+  landed, while the mutually recursive control and script adequacy edge remains
+  outstanding.
+
 - Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
 
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.

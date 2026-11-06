@@ -9856,3 +9856,16 @@ payloads and from-imports as text-keyed semantic inputs.
 DECIDED: keep structured AST fields as the only semantic inputs; diagnostic
 text on unsupported nodes may remain for loud error reporting but is not
 parsed or used to decide supported behavior.
+
+## 2026-11-07-pycomplete-387 — recheck the two-interpreter refinement edge
+
+The audit's claim that no `twinAgrees` theorem exists is stale. Current
+`Monadic/Prim.lean` has kernel-checked `twinAgrees_liftRes` and
+`twinAgrees_binOp`, establishing equality at the shared pure-worker boundary.
+The architecture page now records that result and narrows the remaining debt
+to the mutually recursive control evaluators and stateful script layer. The
+runner and proof differential suites remain separate checks; neither alone
+proves that remaining control-level refinement.
+
+DECIDED: retain the landed primitive refinement edge and keep the control-level
+adequacy theorem as an explicit architectural item.

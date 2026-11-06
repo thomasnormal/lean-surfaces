@@ -2031,3 +2031,14 @@ this payload projection over its two packet windows.
 
 **DECIDED:** reuse the existing ROB tag erasure and packet trace bridges; no
 retirement payload or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-117 — expose packet ROB tag input threading
+
+Added `RvfiPacketMachine.toRobMachine_tags_inputs_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Erasing `TaggedCommit` metadata from the
+concatenated ROB tag stream now exposes the two packet input streams with the
+first window's retained packet state threaded into the second.  The PicoRV32
+witness pins this source-input projection over its two packet windows.
+
+**DECIDED:** reuse the existing tag-input bridge and `packetInputs_append`; no
+input order or completion order is reconstructed.

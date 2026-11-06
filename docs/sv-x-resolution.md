@@ -1,0 +1,83 @@
+# Unknown-bit resolution in E
+
+Status: **design decision; implementation pending**.
+
+SystemVerilog `x` and `z` represent a bit whose 0/1 value is not known (IEEE
+1800-2023 §6.3.1). The exact E semantics therefore treats an unknown as a set
+of possible 0/1 values, rather than choosing a simulator's x-optimistic or
+x-pessimistic result. A proof about a design must hold for every resolution
+allowed by this relation. This is the formal-tools reading adopted by the
+SystemVerilog lane; it is not an attempt to match a particular synthesizer.
+
+## The relation
+
+E continues to store four-state values. Alongside a four-state run, define its
+finite 0/1 concretizations. A concretization replaces every unknown source bit
+with 0 or 1 and then runs the same source-shaped AST and schedule. The resolved
+semantics is the relation from one E state and environment choice to the set
+of those concrete runs.
+
+The choice is correlated. An uninitialized variable or input bit gets one
+0/1 value for the run and keeps that value when the variable is read again.
+The semantics does not choose a fresh value at each read. A value produced by
+an operation may contain unknown bits; once that value is stored, its chosen
+concretization is retained. If an operation itself is nondeterministic (for
+example, a division-by-zero result), its explicit result witness is part of the
+run choice and is likewise correlated after storage. Scheduling, active-region
+order, clock timing, and environment inputs remain the independent choices
+already quantified by E.
+
+At every operation whose result depends on an unknown, the relation includes
+every 0/1 result permitted by the operation's defined four-state rule and the
+chosen concretization. A known result remains known. A branch, conditional
+select, case match, or dynamic index is evaluated in each concrete run; if the
+unknown permits both outcomes, both paths are in the relation. An out-of-range
+or unknown dynamic read is therefore checked in every concrete path, and a
+write is a no-op or update according to that path's resolved index. Generate
+and other elaboration constants cannot contain unknown bits: those remain
+loud elaboration refusals.
+
+A 2-state assignment is a conversion boundary, not a new resolution rule.
+It maps `x`/`z` to 0 as specified by IEEE 1800 §6.11; after that conversion the
+stored bit is known. A formal or simulator result that disagrees with this
+conversion is a consumer boundary, never a reason to change E.
+
+## Refinement obligations
+
+The implementation will introduce an explicit concretization/resolution
+judgment over E's source-shaped states and traces. It must prove:
+
+1. **Soundness.** Every resolved E run is a concrete run permitted by the
+   four-state AST semantics, including the same environment and schedule
+   choices.
+2. **Known-state agreement.** If every value consulted by a decision, select,
+   index, or assertion is known, the resolved relation is a singleton and its
+   projection equals today's exact evaluator.
+3. **Correlation.** Repeated reads of one stored unknown use the same witness;
+   a state transition and its later observations preserve that witness.
+4. **Derived-view refinement.** Cycle views, contracts, and proof tactics
+   quantify over the resolved E relation. They may use the known-state
+   sufficient condition, but may not silently select one resolution.
+
+The first regression witnesses are the clean-room designs measured by the
+universal-correctness audit:
+
+- `band_undrv.sv`: an undriven value under a parameter guard can make an `if`
+  take either branch; proving only the current else-branch result is invalid.
+- `band_loop.sv`: an `always_comb` loop powered up at `x` has more than one
+  stable resolved state; a single settled snapshot is not a proof.
+- `clmul_div1.sv`: a zero divisor can produce an unknown that controls a
+  decision. The `bit` variant is a separate 2-state conversion case.
+
+Differential rows will record simulator behavior for these shapes, but the
+simulator is not the definition when it chooses one x resolution. Formal
+witnesses must cover all permitted resolutions.
+
+## Boundaries for the implementation packet
+
+This note adds no AST constructor, lowering, or semantic fuel. The existing
+four-state evaluator remains unchanged until the concretization judgment and
+its refinement lemmas are implemented. Unknown-sensitive SVA booleans use the
+same relation; an assertion is proved only when it holds for every resolved
+sample (or the claim explicitly requires known samples). Unbounded liveness
+and constructs without an E rule remain loud.

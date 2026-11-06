@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Unknown-bit resolution design
+
+`docs/sv-x-resolution.md` records the owner-approved E design for `x`/`z`:
+unknown bits are quantified over all correlated 0/1 concretizations, with
+2-state conversion remaining the IEEE-defined `x`/`z` to 0 boundary. The
+concretization judgment and its refinement theorems are implementation work;
+this packet changes no evaluator or AST.
+
 ## Exact signed-32-bit `int` constants at every parameter point
 
 `PDesign.instantiate2` and hierarchical instantiation now evaluate `int`-class

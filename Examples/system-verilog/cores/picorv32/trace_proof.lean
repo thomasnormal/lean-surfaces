@@ -1644,6 +1644,20 @@ theorem pinned_packet_tags_stream :
   exact normalizeRvfiPacketTags_stream pinnedPacketMachine pinnedPacketMachine.init
     packetCycleInputs pinned_packet_observations_normalize
 
+theorem pinned_packet_tags_length :
+    packetStreamLength (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      packetCycleInputs) = nontrapExpected.length := by
+  exact normalizeRvfiPacketTags_length pinnedPacketMachine pinnedPacketMachine.init
+    packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_tags_length_append :
+    packetStreamLength (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      (packetFirstCycles ++ packetSecondCycles)) =
+      (nontrapFirstExpected ++ nontrapSecondExpected).length := by
+  exact normalizeRvfiPacketTags_length_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
 theorem pinned_cycle_trace :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapExpected := by
@@ -2144,6 +2158,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_state_after_append
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream
+#print axioms pinned_packet_tags_length
+#print axioms pinned_packet_tags_length_append
 #print axioms pinned_packet_trace
 #print axioms pinned_packet_trace_length
 #print axioms pinned_packet_trace_length_append

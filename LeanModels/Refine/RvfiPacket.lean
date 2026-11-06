@@ -621,6 +621,35 @@ theorem normalizeRvfiPacketTrace_length_append {State : Type}
   apply normalizeRvfiPacketTrace_length machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/- A successful normalized packet capture fixes the packet-boundary tag
+   stream's total width to the decoded retirement count. -/
+theorem normalizeRvfiPacketTags_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    packetStreamLength (rvfiPacketTags machine state cycles) = retirements.length := by
+  rw [rvfiPacketTags_length]
+  simpa using congrArg List.length (normalizeRvfiTrace?_filterMap h)
+
+/- Packet-boundary tag-stream cardinality composes across adjacent normalized
+   windows, with the second window evaluated from the first retained state. -/
+theorem normalizeRvfiPacketTags_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    packetStreamLength (rvfiPacketTags machine state (first ++ second)) =
+      (firstRetirements ++ secondRetirements).length := by
+  apply normalizeRvfiPacketTags_length machine state (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
 /-- A normalized packet's decoded commit tags are the consecutive prefix at
 the supplied starting order.  Bubbles do not enter the packet, while a
 retirement row contributes exactly the tag checked by normalization. -/
@@ -2834,6 +2863,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_append

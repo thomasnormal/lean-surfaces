@@ -2327,3 +2327,16 @@ witness pins both forms over its two measured windows.
 **DECIDED:** reuse the exact `robTags_inputs` erasure and generic ROB input
 append laws; the window certificate supplies state/order validity but does not
 reconstruct or reorder inputs.
+
+## 2026-11-06-ls-sv2-142 — bridge packet-window tag retirements to ROB traces
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements_robTrace` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window
+chain now identifies the tagged generic ROB retirement payload with the
+generic ROB retirement trace, and two adjacent chains compose the same bridge
+while retaining the second chain's carried state.  The PicoRV32 witness pins
+both forms over its two measured windows.
+
+**DECIDED:** reuse the exact `robTags_retirements` erasure and generic ROB
+trace append laws; the window certificate validates state/order but does not
+reconstruct or reorder retirements.

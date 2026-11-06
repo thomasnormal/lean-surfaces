@@ -536,12 +536,8 @@ class ExtractorTests(unittest.TestCase):
 
     def test_call_starred_argument_uses_synthetic_expansion_marker(self):
         e = self._first_return_expr("def f(xs):\n    return g(1, *xs, 2)\n")
-        self.assertEqual(e["kind"], "Call")
-        self.assertIsNone(e["call_unsupported"])
-        self.assertEqual([arg["kind"] for arg in e["args"]],
-                         ["Constant", "Call", "Constant"])
-        self.assertEqual(e["args"][1]["func"]["id"], "<star-arg>")
-        self.assertEqual(e["args"][1]["args"][0]["id"], "xs")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "Starred:call")
 
     def test_sorted_shadowing_assignment_after_is_admitted(self):
         # H7 refinement: a single direct assignment with every call AFTER
@@ -956,8 +952,8 @@ class ExtractorTests(unittest.TestCase):
             "    a = [1, 2]\n"
             "    return [*a, n]\n")
         shadowed, elsewhere = env["module"]["body"]
-        self.assertEqual(shadowed["body"][-1]["value"]["kind"], "Call")
-        self.assertEqual(elsewhere["body"][-1]["value"]["kind"], "Call")
+        self.assertEqual(shadowed["body"][-1]["value"]["kind"], "Unsupported")
+        self.assertEqual(elsewhere["body"][-1]["value"]["kind"], "Unsupported")
 
     def test_for_else_keeps_orelse(self):
         # `for … else` is representable (the interpreter refuses it loudly).
@@ -973,13 +969,8 @@ class ExtractorTests(unittest.TestCase):
             "def f(rows):\n    for a, *rest, z in rows:\n"
             "        return a, rest, z\n")
         st = env["module"]["body"][0]["body"][0]
-        self.assertEqual(st["kind"], "For")
-        self.assertEqual(st["target"]["id"], "<star-for-target>")
-        self.assertEqual(st["body"][0]["kind"], "UnpackAssign")
-        self.assertEqual(st["body"][0]["before"], ["a"])
-        self.assertEqual(st["body"][0]["star"], "rest")
-        self.assertEqual(st["body"][0]["after"], ["z"])
-        self.assertEqual(st["body"][0]["value"]["id"], "<star-for-target>")
+        self.assertEqual(st["kind"], "Unsupported")
+        self.assertEqual(st["py_kind"], "Starred:target")
 
     def test_starred_for_target_keeps_nested_shape_loud(self):
         env = self._envelope_of(
@@ -1229,32 +1220,25 @@ class ExtractorTests(unittest.TestCase):
 
     def test_set_display_lowers_to_existing_set_constructor(self):
         e = self._first_return_expr("def f(a):\n    return {1, True, a}\n")
-        self.assertEqual(e["kind"], "Call")
-        self.assertEqual(e["func"]["kind"], "Name")
-        self.assertEqual(e["func"]["id"], "set")
-        self.assertEqual(e["args"][0]["kind"], "List")
-        self.assertEqual(len(e["args"][0]["elts"]), 3)
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "Set:display")
 
     def test_set_display_unpack_reuses_starred_list_lowering(self):
         e = self._first_return_expr("def f(xs):\n    return {*xs}\n")
-        self.assertEqual(e["kind"], "Call")
-        self.assertEqual(e["func"]["id"], "set")
-        self.assertEqual(e["args"][0]["kind"], "Call")
-        self.assertEqual(e["args"][0]["func"]["id"], "<star-list>")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "Set:display")
 
     def test_set_comprehension_lowers_to_set_generator(self):
         e = self._first_return_expr(
             "def f(xs):\n    return {x + 1 for x in xs if x > 0}\n")
-        self.assertEqual(e["kind"], "Call")
-        self.assertEqual(e["func"]["id"], "set")
-        self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "SetComp")
 
     def test_dict_comprehension_lowers_to_dict_generator(self):
         e = self._first_return_expr(
             "def f(xs):\n    return {x: x + 1 for x in xs}\n")
-        self.assertEqual(e["kind"], "Call")
-        self.assertEqual(e["func"]["id"], "dict")
-        self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "DictComp")
 
     def test_dict_comprehension_shadow_stays_unsupported(self):
         env = self._envelope_of(
@@ -1262,7 +1246,7 @@ class ExtractorTests(unittest.TestCase):
             "def f(xs):\n    return {x: x for x in xs}\n")
         e = env["module"]["body"][1]["body"][0]["value"]
         self.assertEqual(e["kind"], "Unsupported")
-        self.assertEqual(e["py_kind"], "DictComp:shadowed")
+        self.assertEqual(e["py_kind"], "DictComp")
 
     def test_matmul_is_structured(self):
         e = self._first_return_expr("def f(a, b):\n    return a @ b\n")

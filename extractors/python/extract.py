@@ -632,6 +632,8 @@ def convert_expr(node):
         # (a keyword node with arg=None) stays a loud call_unsupported.
         if any(kw.arg is None for kw in node.keywords):
             reasons.append("** unpacking in call")
+        if any(isinstance(a, ast.Starred) for a in node.args):
+            return unsupported(node, "Starred:call")
         return {
             "kind": "Call",
             "span": span(node),
@@ -667,9 +669,10 @@ def convert_expr(node):
 
     if isinstance(node, (ast.List, ast.Tuple)):
         if any(isinstance(e, ast.Starred) for e in node.elts):
-            # A LOAD position is a display unpacking and LOWERS.
+            # Starred displays remain a whole-node boundary until BUILD_* with
+            # unpacking has a native semantic case.
             if isinstance(node.ctx, ast.Load):
-                return lower_starred_display(node)
+                return unsupported(node, "Starred:display")
             # Store/Del is an assignment or `for` TARGET — position 2 of the
             # design, deliberately NOT landed. It must be refused as a WHOLE
             # node. Keeping the structural tuple (whose starred element
@@ -686,41 +689,7 @@ def convert_expr(node):
         }
 
     if isinstance(node, ast.Set):
-        if _MODULE_SHADOWS_DISPLAY:
-            return unsupported(node, "Set:shadowed")
-        if any(isinstance(e, ast.Starred) for e in node.elts):
-            # A starred set display has the same element evaluation and
-            # deduplication as ``set([*parts])``.  Reuse the existing
-            # starred-display lowering for the fresh list argument, then the
-            # ordinary set constructor for hashability and value equality.
-            return {
-                "kind": "Call",
-                "span": span(node),
-                "func": {
-                    "kind": "Name",
-                    "span": span(node),
-                    "id": "set",
-                },
-                "args": [lower_starred_display(node, outer="list")],
-                "keywords": [],
-                "call_unsupported": None,
-            }
-        return {
-            "kind": "Call",
-            "span": span(node),
-            "func": {
-                "kind": "Name",
-                "span": span(node),
-                "id": "set",
-            },
-            "args": [{
-                "kind": "List",
-                "span": span(node),
-                "elts": [convert_expr(e) for e in node.elts],
-            }],
-            "keywords": [],
-            "call_unsupported": None,
-        }
+        return unsupported(node, "Set:display")
 
     if isinstance(node, ast.Dict):
         # `{k: v, ...}` — structured (H0, docs/memory-model.md). A None key
@@ -787,59 +756,14 @@ def convert_expr(node):
         }
 
     if isinstance(node, ast.DictComp):
-        if _MODULE_SHADOWS_DISPLAY:
-            return unsupported(node, "DictComp:shadowed")
-        gens = node.generators
-        if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
-            g = gens[0]
-            pair = ast.copy_location(
-                ast.Tuple(elts=[node.key, node.value], ctx=ast.Load()), node)
-            _COMP_DEPTH[0] += 1
-            try:
-                comp = _convert_comprehension(
-                    node, g, kind="GeneratorExp", elt=pair)
-            finally:
-                _COMP_DEPTH[0] -= 1
-            return {
-                "kind": "Call",
-                "span": span(node),
-                "func": {
-                    "kind": "Name",
-                    "span": span(node),
-                    "id": "dict",
-                },
-                "args": [comp],
-                "keywords": [],
-                "call_unsupported": None,
-            }
         return unsupported(node, "DictComp")
 
     if isinstance(node, ast.SetComp):
-        if _MODULE_SHADOWS_DISPLAY:
-            return unsupported(node, "SetComp:shadowed")
-        gens = node.generators
-        if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
-            g = gens[0]
-            _COMP_DEPTH[0] += 1
-            try:
-                comp = _convert_comprehension(node, g, kind="GeneratorExp")
-            finally:
-                _COMP_DEPTH[0] -= 1
-            return {
-                "kind": "Call",
-                "span": span(node),
-                "func": {
-                    "kind": "Name",
-                    "span": span(node),
-                    "id": "set",
-                },
-                "args": [comp],
-                "keywords": [],
-                "call_unsupported": None,
-            }
         return unsupported(node, "SetComp")
 
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
+        if isinstance(node, ast.ListComp):
+            return unsupported(node, "ListComp")
         if isinstance(node, ast.ListComp) and _MODULE_SHADOWS_DISPLAY:
             return unsupported(node, "ListComp:shadowed")
         # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
@@ -2317,6 +2241,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # (ast.AsyncFor) and falls through to Unsupported.
         unpack = _starred_unpack_target(node.target)
         if unpack is not None:
+            return unsupported(node, "Starred:target")
+        if False:
             before, star, after = unpack
             # A starred loop target is the same per-iteration operation as a
             # starred assignment target.  Lower it into a fresh, unspellable

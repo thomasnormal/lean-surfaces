@@ -85,132 +85,15 @@
               }
             ],
             "value": {
-              "kind": "Call",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 5,
                 "col_offset": 13,
                 "end_lineno": 5,
                 "end_col_offset": 41
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 5,
-                  "col_offset": 13,
-                  "end_lineno": 5,
-                  "end_col_offset": 41
-                },
-                "id": "dict"
-              },
-              "args": [
-                {
-                  "kind": "GeneratorExp",
-                  "span": {
-                    "lineno": 5,
-                    "col_offset": 13,
-                    "end_lineno": 5,
-                    "end_col_offset": 41
-                  },
-                  "elt": {
-                    "kind": "Tuple",
-                    "span": {
-                      "lineno": 5,
-                      "col_offset": 13,
-                      "end_lineno": 5,
-                      "end_col_offset": 41
-                    },
-                    "elts": [
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 5,
-                          "col_offset": 14,
-                          "end_lineno": 5,
-                          "end_col_offset": 15
-                        },
-                        "id": "i"
-                      },
-                      {
-                        "kind": "BinOp",
-                        "span": {
-                          "lineno": 5,
-                          "col_offset": 17,
-                          "end_lineno": 5,
-                          "end_col_offset": 22
-                        },
-                        "left": {
-                          "kind": "Name",
-                          "span": {
-                            "lineno": 5,
-                            "col_offset": 17,
-                            "end_lineno": 5,
-                            "end_col_offset": 18
-                          },
-                          "id": "i"
-                        },
-                        "op": "Mult",
-                        "right": {
-                          "kind": "Name",
-                          "span": {
-                            "lineno": 5,
-                            "col_offset": 21,
-                            "end_lineno": 5,
-                            "end_col_offset": 22
-                          },
-                          "id": "i"
-                        }
-                      }
-                    ]
-                  },
-                  "target": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 5,
-                      "col_offset": 27,
-                      "end_lineno": 5,
-                      "end_col_offset": 28
-                    },
-                    "id": "i"
-                  },
-                  "iter": {
-                    "kind": "Call",
-                    "span": {
-                      "lineno": 5,
-                      "col_offset": 32,
-                      "end_lineno": 5,
-                      "end_col_offset": 40
-                    },
-                    "func": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 5,
-                        "col_offset": 32,
-                        "end_lineno": 5,
-                        "end_col_offset": 37
-                      },
-                      "id": "range"
-                    },
-                    "args": [
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 5,
-                          "col_offset": 38,
-                          "end_lineno": 5,
-                          "end_col_offset": 39
-                        },
-                        "id": "n"
-                      }
-                    ],
-                    "keywords": [],
-                    "call_unsupported": null
-                  },
-                  "ifs": [],
-                  "walrus": []
-                }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              "py_kind": "DictComp",
+              "text": "{i: i * i for i in range(n)}"
             }
           },
           {
@@ -378,135 +261,15 @@
               }
             ],
             "value": {
-              "kind": "Call",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 10,
                 "col_offset": 13,
                 "end_lineno": 10,
                 "end_col_offset": 41
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 10,
-                  "col_offset": 13,
-                  "end_lineno": 10,
-                  "end_col_offset": 41
-                },
-                "id": "dict"
-              },
-              "args": [
-                {
-                  "kind": "GeneratorExp",
-                  "span": {
-                    "lineno": 10,
-                    "col_offset": 13,
-                    "end_lineno": 10,
-                    "end_col_offset": 41
-                  },
-                  "elt": {
-                    "kind": "Tuple",
-                    "span": {
-                      "lineno": 10,
-                      "col_offset": 13,
-                      "end_lineno": 10,
-                      "end_col_offset": 41
-                    },
-                    "elts": [
-                      {
-                        "kind": "BinOp",
-                        "span": {
-                          "lineno": 10,
-                          "col_offset": 14,
-                          "end_lineno": 10,
-                          "end_col_offset": 19
-                        },
-                        "left": {
-                          "kind": "Name",
-                          "span": {
-                            "lineno": 10,
-                            "col_offset": 14,
-                            "end_lineno": 10,
-                            "end_col_offset": 15
-                          },
-                          "id": "i"
-                        },
-                        "op": "Mod",
-                        "right": {
-                          "kind": "Constant",
-                          "span": {
-                            "lineno": 10,
-                            "col_offset": 18,
-                            "end_lineno": 10,
-                            "end_col_offset": 19
-                          },
-                          "value": {
-                            "type": "int",
-                            "repr": "2"
-                          }
-                        }
-                      },
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 10,
-                          "col_offset": 21,
-                          "end_lineno": 10,
-                          "end_col_offset": 22
-                        },
-                        "id": "i"
-                      }
-                    ]
-                  },
-                  "target": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 10,
-                      "col_offset": 27,
-                      "end_lineno": 10,
-                      "end_col_offset": 28
-                    },
-                    "id": "i"
-                  },
-                  "iter": {
-                    "kind": "Call",
-                    "span": {
-                      "lineno": 10,
-                      "col_offset": 32,
-                      "end_lineno": 10,
-                      "end_col_offset": 40
-                    },
-                    "func": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 10,
-                        "col_offset": 32,
-                        "end_lineno": 10,
-                        "end_col_offset": 37
-                      },
-                      "id": "range"
-                    },
-                    "args": [
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 10,
-                          "col_offset": 38,
-                          "end_lineno": 10,
-                          "end_col_offset": 39
-                        },
-                        "id": "n"
-                      }
-                    ],
-                    "keywords": [],
-                    "call_unsupported": null
-                  },
-                  "ifs": [],
-                  "walrus": []
-                }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              "py_kind": "DictComp",
+              "text": "{i % 2: i for i in range(n)}"
             }
           },
           {
@@ -897,133 +660,15 @@
               },
               "args": [
                 {
-                  "kind": "Call",
+                  "kind": "Unsupported",
                   "span": {
                     "lineno": 23,
                     "col_offset": 15,
                     "end_lineno": 23,
                     "end_col_offset": 39
                   },
-                  "func": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 23,
-                      "col_offset": 15,
-                      "end_lineno": 23,
-                      "end_col_offset": 39
-                    },
-                    "id": "dict"
-                  },
-                  "args": [
-                    {
-                      "kind": "GeneratorExp",
-                      "span": {
-                        "lineno": 23,
-                        "col_offset": 15,
-                        "end_lineno": 23,
-                        "end_col_offset": 39
-                      },
-                      "elt": {
-                        "kind": "Tuple",
-                        "span": {
-                          "lineno": 23,
-                          "col_offset": 15,
-                          "end_lineno": 23,
-                          "end_col_offset": 39
-                        },
-                        "elts": [
-                          {
-                            "kind": "List",
-                            "span": {
-                              "lineno": 23,
-                              "col_offset": 16,
-                              "end_lineno": 23,
-                              "end_col_offset": 22
-                            },
-                            "elts": [
-                              {
-                                "kind": "Constant",
-                                "span": {
-                                  "lineno": 23,
-                                  "col_offset": 17,
-                                  "end_lineno": 23,
-                                  "end_col_offset": 18
-                                },
-                                "value": {
-                                  "type": "int",
-                                  "repr": "1"
-                                }
-                              },
-                              {
-                                "kind": "Constant",
-                                "span": {
-                                  "lineno": 23,
-                                  "col_offset": 20,
-                                  "end_lineno": 23,
-                                  "end_col_offset": 21
-                                },
-                                "value": {
-                                  "type": "int",
-                                  "repr": "2"
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "kind": "Constant",
-                            "span": {
-                              "lineno": 23,
-                              "col_offset": 24,
-                              "end_lineno": 23,
-                              "end_col_offset": 25
-                            },
-                            "value": {
-                              "type": "int",
-                              "repr": "3"
-                            }
-                          }
-                        ]
-                      },
-                      "target": {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 23,
-                          "col_offset": 30,
-                          "end_lineno": 23,
-                          "end_col_offset": 31
-                        },
-                        "id": "_"
-                      },
-                      "iter": {
-                        "kind": "List",
-                        "span": {
-                          "lineno": 23,
-                          "col_offset": 35,
-                          "end_lineno": 23,
-                          "end_col_offset": 38
-                        },
-                        "elts": [
-                          {
-                            "kind": "Constant",
-                            "span": {
-                              "lineno": 23,
-                              "col_offset": 36,
-                              "end_lineno": 23,
-                              "end_col_offset": 37
-                            },
-                            "value": {
-                              "type": "int",
-                              "repr": "0"
-                            }
-                          }
-                        ]
-                      },
-                      "ifs": [],
-                      "walrus": []
-                    }
-                  ],
-                  "keywords": [],
-                  "call_unsupported": null
+                  "py_kind": "DictComp",
+                  "text": "{[1, 2]: 3 for _ in [0]}"
                 }
               ],
               "keywords": [],

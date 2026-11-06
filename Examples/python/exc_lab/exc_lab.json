@@ -4682,23 +4682,37 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Return",
+            "kind": "Try",
             "span": {
-              "lineno": 243,
-              "col_offset": 8,
-              "end_lineno": 243,
-              "end_col_offset": 16
+              "lineno": 242,
+              "col_offset": 4,
+              "end_lineno": 245,
+              "end_col_offset": 12
             },
-            "value": {
-              "kind": "Name",
-              "span": {
-                "lineno": 243,
-                "col_offset": 15,
-                "end_lineno": 243,
-                "end_col_offset": 16
-              },
-              "id": "n"
-            }
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 243,
+                  "col_offset": 8,
+                  "end_lineno": 243,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 243,
+                    "col_offset": 15,
+                    "end_lineno": 243,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              }
+            ],
+            "exc_names": [],
+            "handler": [],
+            "try_unsupported": "no handler, 'finally' clause"
           }
         ]
       },
@@ -4725,40 +4739,6 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
-          {
-            "kind": "Assign",
-            "span": {
-              "lineno": 249,
-              "col_offset": 4,
-              "end_lineno": 254,
-              "end_col_offset": 16
-            },
-            "targets": [
-              {
-                "kind": "Name",
-                "span": {
-                  "lineno": 249,
-                  "col_offset": 4,
-                  "end_lineno": 254,
-                  "end_col_offset": 16
-                },
-                "id": "__leanpy_try_else_249_4"
-              }
-            ],
-            "value": {
-              "kind": "Constant",
-              "span": {
-                "lineno": 249,
-                "col_offset": 4,
-                "end_lineno": 254,
-                "end_col_offset": 16
-              },
-              "value": {
-                "type": "bool",
-                "value": false
-              }
-            }
-          },
           {
             "kind": "Try",
             "span": {
@@ -4821,40 +4801,6 @@
                     }
                   }
                 }
-              },
-              {
-                "kind": "Assign",
-                "span": {
-                  "lineno": 249,
-                  "col_offset": 4,
-                  "end_lineno": 254,
-                  "end_col_offset": 16
-                },
-                "targets": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 249,
-                      "col_offset": 4,
-                      "end_lineno": 254,
-                      "end_col_offset": 16
-                    },
-                    "id": "__leanpy_try_else_249_4"
-                  }
-                ],
-                "value": {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 249,
-                    "col_offset": 4,
-                    "end_lineno": 254,
-                    "end_col_offset": 16
-                  },
-                  "value": {
-                    "type": "bool",
-                    "value": true
-                  }
-                }
               }
             ],
             "exc_names": [
@@ -4884,48 +4830,7 @@
                 }
               }
             ],
-            "try_unsupported": null
-          },
-          {
-            "kind": "If",
-            "span": {
-              "lineno": 249,
-              "col_offset": 4,
-              "end_lineno": 254,
-              "end_col_offset": 16
-            },
-            "test": {
-              "kind": "Name",
-              "span": {
-                "lineno": 249,
-                "col_offset": 4,
-                "end_lineno": 254,
-                "end_col_offset": 16
-              },
-              "id": "__leanpy_try_else_249_4"
-            },
-            "body": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 254,
-                  "col_offset": 8,
-                  "end_lineno": 254,
-                  "end_col_offset": 16
-                },
-                "value": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 254,
-                    "col_offset": 15,
-                    "end_lineno": 254,
-                    "end_col_offset": 16
-                  },
-                  "id": "n"
-                }
-              }
-            ],
-            "orelse": []
+            "try_unsupported": "else clause"
           }
         ]
       },
@@ -4952,40 +4857,6 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
-          {
-            "kind": "Assign",
-            "span": {
-              "lineno": 258,
-              "col_offset": 4,
-              "end_lineno": 263,
-              "end_col_offset": 17
-            },
-            "targets": [
-              {
-                "kind": "Name",
-                "span": {
-                  "lineno": 258,
-                  "col_offset": 4,
-                  "end_lineno": 263,
-                  "end_col_offset": 17
-                },
-                "id": "__leanpy_try_else_258_4"
-              }
-            ],
-            "value": {
-              "kind": "Constant",
-              "span": {
-                "lineno": 258,
-                "col_offset": 4,
-                "end_lineno": 263,
-                "end_col_offset": 17
-              },
-              "value": {
-                "type": "bool",
-                "value": false
-              }
-            }
-          },
           {
             "kind": "Try",
             "span": {
@@ -5036,40 +4907,6 @@
                     "id": "n"
                   }
                 }
-              },
-              {
-                "kind": "Assign",
-                "span": {
-                  "lineno": 258,
-                  "col_offset": 4,
-                  "end_lineno": 263,
-                  "end_col_offset": 17
-                },
-                "targets": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 258,
-                      "col_offset": 4,
-                      "end_lineno": 263,
-                      "end_col_offset": 17
-                    },
-                    "id": "__leanpy_try_else_258_4"
-                  }
-                ],
-                "value": {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 258,
-                    "col_offset": 4,
-                    "end_lineno": 263,
-                    "end_col_offset": 17
-                  },
-                  "value": {
-                    "type": "bool",
-                    "value": true
-                  }
-                }
               }
             ],
             "exc_names": [
@@ -5099,51 +4936,7 @@
                 }
               }
             ],
-            "try_unsupported": null
-          },
-          {
-            "kind": "If",
-            "span": {
-              "lineno": 258,
-              "col_offset": 4,
-              "end_lineno": 263,
-              "end_col_offset": 17
-            },
-            "test": {
-              "kind": "Name",
-              "span": {
-                "lineno": 258,
-                "col_offset": 4,
-                "end_lineno": 263,
-                "end_col_offset": 17
-              },
-              "id": "__leanpy_try_else_258_4"
-            },
-            "body": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 263,
-                  "col_offset": 8,
-                  "end_lineno": 263,
-                  "end_col_offset": 17
-                },
-                "value": {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 263,
-                    "col_offset": 15,
-                    "end_lineno": 263,
-                    "end_col_offset": 17
-                  },
-                  "value": {
-                    "type": "int",
-                    "repr": "99"
-                  }
-                }
-              }
-            ],
-            "orelse": []
+            "try_unsupported": "else clause"
           }
         ]
       },
@@ -5294,92 +5087,28 @@
             },
             "body": [
               {
-                "kind": "Try",
+                "kind": "Raise",
                 "span": {
-                  "lineno": 274,
-                  "col_offset": 4,
-                  "end_lineno": 279,
-                  "end_col_offset": 16
-                },
-                "body": [
-                  {
-                    "kind": "Raise",
-                    "span": {
-                      "lineno": 275,
-                      "col_offset": 8,
-                      "end_lineno": 275,
-                      "end_col_offset": 18
-                    },
-                    "exc": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 275,
-                        "col_offset": 14,
-                        "end_lineno": 275,
-                        "end_col_offset": 18
-                      },
-                      "id": "Stop"
-                    }
-                  }
-                ],
-                "exc_names": [
-                  "Stop"
-                ],
-                "handler": [
-                  {
-                    "kind": "Return",
-                    "span": {
-                      "lineno": 277,
-                      "col_offset": 8,
-                      "end_lineno": 277,
-                      "end_col_offset": 16
-                    },
-                    "value": {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 277,
-                        "col_offset": 15,
-                        "end_lineno": 277,
-                        "end_col_offset": 16
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "1"
-                      }
-                    }
-                  }
-                ],
-                "try_unsupported": null
-              }
-            ],
-            "exc_names": [
-              "Other"
-            ],
-            "handler": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 279,
+                  "lineno": 275,
                   "col_offset": 8,
-                  "end_lineno": 279,
-                  "end_col_offset": 16
+                  "end_lineno": 275,
+                  "end_col_offset": 18
                 },
-                "value": {
-                  "kind": "Constant",
+                "exc": {
+                  "kind": "Name",
                   "span": {
-                    "lineno": 279,
-                    "col_offset": 15,
-                    "end_lineno": 279,
-                    "end_col_offset": 16
+                    "lineno": 275,
+                    "col_offset": 14,
+                    "end_lineno": 275,
+                    "end_col_offset": 18
                   },
-                  "value": {
-                    "type": "int",
-                    "repr": "2"
-                  }
+                  "id": "Stop"
                 }
               }
             ],
-            "try_unsupported": null
+            "exc_names": [],
+            "handler": [],
+            "try_unsupported": "multiple handlers"
           }
         ]
       },
@@ -6080,23 +5809,49 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Yield",
+            "kind": "Try",
             "span": {
-              "lineno": 334,
-              "col_offset": 8,
-              "end_lineno": 334,
-              "end_col_offset": 15
+              "lineno": 333,
+              "col_offset": 4,
+              "end_lineno": 336,
+              "end_col_offset": 12
             },
-            "value": {
-              "kind": "Name",
-              "span": {
-                "lineno": 334,
-                "col_offset": 14,
-                "end_lineno": 334,
-                "end_col_offset": 15
-              },
-              "id": "n"
-            }
+            "body": [
+              {
+                "kind": "Yield",
+                "span": {
+                  "lineno": 334,
+                  "col_offset": 8,
+                  "end_lineno": 334,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 334,
+                    "col_offset": 14,
+                    "end_lineno": 334,
+                    "end_col_offset": 15
+                  },
+                  "id": "n"
+                }
+              }
+            ],
+            "exc_names": [
+              "Stop"
+            ],
+            "handler": [
+              {
+                "kind": "Pass",
+                "span": {
+                  "lineno": 336,
+                  "col_offset": 8,
+                  "end_lineno": 336,
+                  "end_col_offset": 12
+                }
+              }
+            ],
+            "try_unsupported": "generator try frame"
           }
         ],
         "is_generator": true

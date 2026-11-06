@@ -3039,3 +3039,16 @@ forms.
 cardinality through the generic ROB-trace/packet-trace equality; packet
 boundaries, retirement payloads, retirement order, and source-input order are
 not reconstructed.
+
+## 2026-11-06-ls-sv2-198 — certify packet-window tag-retirement cardinality against ROB trace
+
+Added `normalizeRvfiPacketWindows_tags_retirements_length_robTrace` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  Certified packet-window
+chains now determine the exact generic ROB retirement-trace cardinality of
+their packet-tag retirement projection, including adjacent chains.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the normalized packet tag-retirement/ROB-trace cardinality bridge;
+packet boundaries, retirement payloads, retirement order, and source-input
+order are not reconstructed.

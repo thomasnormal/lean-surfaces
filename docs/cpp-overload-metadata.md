@@ -76,6 +76,9 @@ A callee handle absent from the artifact declaration table is also a recorded
 refusal; retained AST identity must be backed by corresponding declaration
 evidence.
 
+An ordinary call handle duplicated in declaration evidence is also refused;
+the call gate requires one unambiguous retained function or method row.
+
 An empty overloaded-operator child list is also a recorded refusal; the
 operator gate does not manufacture a selected callee.
 

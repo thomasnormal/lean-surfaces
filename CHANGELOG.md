@@ -11,6 +11,9 @@
 - Added a recorded refusal for constructor handles duplicated in artifact
   declaration evidence.
 
+- Added a recorded refusal for ordinary-call handles duplicated in artifact
+  declaration evidence.
+
 - Added a recorded refusal for constructor handles absent from the artifact's
   declaration evidence table.
 

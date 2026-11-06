@@ -2666,6 +2666,66 @@ theorem normalizeRvfiPacketWindows_tags_inputs_append {State : Type}
         RvfiPacketMachine.toPacketMachine_inputs_append machine state
           firstWindows.flatten secondWindows.flatten
 
+/- A certified packet-window chain also exposes its packet-tag source inputs
+   under the generic ROB machine's input projection. -/
+theorem normalizeRvfiPacketWindows_tags_inputs_robInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (_h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state windows.flatten := by
+  calc
+    (rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.input =
+      packetInputs machine.toPacketMachine state windows.flatten :=
+      normalizeRvfiPacketWindows_tags_inputs machine state start windows
+        retirementWindows _h
+    _ = robInputs machine.toRobMachine state windows.flatten :=
+      (machine.toRobMachine_inputs state windows.flatten).symm
+
+/- Packet-window tag source-input/ROB-input projections compose across two
+   certified chains, retaining the second chain's carried state and order. -/
+theorem normalizeRvfiPacketWindows_tags_inputs_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state firstWindows.flatten ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  calc
+    (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten :=
+      normalizeRvfiPacketWindows_tags_inputs_robInputs machine state start
+        (firstWindows ++ secondWindows)
+        (firstRetirementWindows ++ secondRetirementWindows) hcombined
+    _ = robInputs machine.toRobMachine state firstWindows.flatten ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+      simpa only [List.flatten_append] using
+        RvfiPacketMachine.toRobMachine_inputs_append machine state
+          firstWindows.flatten secondWindows.flatten
+
 /-- Erasing the packet boundaries from a certified window chain preserves the
 same global consecutive tag prefix. -/
 theorem normalizeRvfiPacketWindows_tags_flat {State : Type}
@@ -5952,6 +6012,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_retirements_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length_packetInputs

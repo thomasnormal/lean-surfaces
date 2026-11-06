@@ -209,11 +209,11 @@ theorem xnor_n_processes (N : Nat) :
 #guard_msgs (whitespace := lax) in
 #print axioms xnor_n_processes
 
-/-- info: 'Examples.«system-verilog».xnor_n.proof.xnor_vec' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Examples.«system-verilog».xnor_n.proof.xnor_vec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms xnor_vec
 
-/-- info: 'Examples.«system-verilog».xnor_n.proof.xnor_vec_unknown' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Examples.«system-verilog».xnor_n.proof.xnor_vec_unknown' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms xnor_vec_unknown
 

@@ -2104,6 +2104,59 @@ theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_append
     start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified packet-window chain exposes the generic ROB input stream under
+   the tagged source-input projection. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_robInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (_h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state windows.flatten := by
+  exact robTags_inputs machine.toRobMachine state windows.flatten
+
+/- The tagged source-input bridge composes across adjacent certified
+   packet-window chains, retaining the second chain's carried state. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state firstWindows.flatten ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  calc
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten :=
+      normalizeRvfiPacketWindows_rob_tags_inputs_robInputs machine state start
+        (firstWindows ++ secondWindows)
+        (firstRetirementWindows ++ secondRetirementWindows) hcombined
+    _ = robInputs machine.toRobMachine state firstWindows.flatten ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+      simpa only [List.flatten_append] using
+        RvfiPacketMachine.toRobMachine_inputs_append machine state
+          firstWindows.flatten secondWindows.flatten
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -2657,6 +2710,10 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines

@@ -2314,3 +2314,16 @@ forms.
 
 **DECIDED:** derive cardinality from the exact tagged retirement payload
 equality and `List.length`; no retirement order or payload is reconstructed.
+
+## 2026-11-06-ls-sv2-141 — bridge packet-window tag inputs to ROB inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs_robInputs` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+now identifies the tagged generic ROB source-input projection with the
+generic ROB machine's `robInputs` stream, and two adjacent chains compose the
+same bridge while retaining the second chain's carried state.  The PicoRV32
+witness pins both forms over its two measured windows.
+
+**DECIDED:** reuse the exact `robTags_inputs` erasure and generic ROB input
+append laws; the window certificate supplies state/order validity but does not
+reconstruct or reorder inputs.

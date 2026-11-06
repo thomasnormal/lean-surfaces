@@ -34,7 +34,7 @@ set_option warning.simp.varHead false in
 step case `py_lift` puts the two IH runs in fuel-threshold form
 (`CallsTo.at_least`, i.e. FuelMono), so a single symbolic execution of the
 body closes the goal by conditional rewriting. -/
-theorem fib_total (k : Nat) : fib(k) ==> fibSpec k := by
+theorem fib_total (k : Nat) (hk : k < pythonRecursionLimit) : fib(k) ==> fibSpec k := by
   induction k using Nat.strongRecOn with
   | ind k ih =>
     match k, ih with
@@ -44,8 +44,8 @@ theorem fib_total (k : Nat) : fib(k) ==> fibSpec k := by
       -- `py_lift`: the IHs in threshold form, valid at EVERY fuel ≥ f₁/f₂ —
       -- the final conditional rewrite discharges the ≥ side conditions by
       -- omega, so no exact-offset bookkeeping is needed anywhere below.
-      py_lift ⟨f₁, h₁⟩ := ih (k + 1) (by omega) with [fib]
-      py_lift ⟨f₂, h₂⟩ := ih k (by omega) with [fib]
+      py_lift ⟨f₁, h₁⟩ := ih (k + 1) (by omega) (by omega) with [fib]
+      py_lift ⟨f₂, h₂⟩ := ih k (by omega) (by omega) with [fib]
       refine ⟨f₁ + f₂ + 32, ?_⟩   -- any generous slack works
       unfold callFunction
       rw [callIn.eq_2]
@@ -69,15 +69,17 @@ set_option warning.simp.varHead false in
 /-- Determinism corollary of `fib_total` — one `py_corollary`
 (Surface.lean), instantiated at `n.toNat` (the total theorem is
 `Nat`-indexed). -/
-theorem fib_spec (n : Int) (hn : 0 ≤ n) {fuel : Nat} {r : Val}
+theorem fib_spec (n : Int) (hn : 0 ≤ n)
+    (hnDepth : n.toNat < pythonRecursionLimit) {fuel : Nat} {r : Val}
     (h : callFunction fib "fib" #[.int n] fuel = .ok r) :
     r = .int (fibSpec n.toNat) := by
-  py_corollary [fib_total n.toNat]
+  py_corollary [fib_total n.toNat hnDepth]
 
 set_option warning.simp.varHead false in
 /-- The typed surface form, another `py_corollary` of `fib_total`. -/
-theorem fib_correct (n r : PyInt) (hn : 0 ≤ n) (h : fib(n) ⇓ r) :
+theorem fib_correct (n r : PyInt) (hn : 0 ≤ n)
+    (hnDepth : n.toNat < pythonRecursionLimit) (h : fib(n) ⇓ r) :
     r = fibSpec n.toNat := by
-  py_corollary [fib_total n.toNat]
+  py_corollary [fib_total n.toNat hnDepth]
 
 end Examples.python.fib.proof

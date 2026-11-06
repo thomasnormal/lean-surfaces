@@ -108,6 +108,9 @@ A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.
 
+A malformed string operator handle is a recorded refusal; operator metadata does
+not normalize arbitrary text into an artifact identity.
+
 A second positive witness combines that string form with a retained
 `CXXMethodDecl`, covering method identity without executing the operator body.
 

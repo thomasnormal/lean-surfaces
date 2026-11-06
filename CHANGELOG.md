@@ -50,6 +50,9 @@
 - Added a positive overloaded-operator metadata witness for artifact-local
   string declaration handles.
 
+- Added a recorded refusal for malformed overloaded-operator string declaration
+  handles.
+
 - Added a positive overloaded-operator metadata witness for a retained
   `CXXMethodDecl` string handle.
 

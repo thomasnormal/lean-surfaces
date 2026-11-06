@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for overloaded-operator callees with an unexpected
+  AST node kind.
+
 - Added a recorded refusal for overloaded-operator callees with malformed
   multi-child implicit-cast structure.
 

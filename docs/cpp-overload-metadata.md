@@ -55,6 +55,9 @@ operator gate does not manufacture a selected callee.
 A multi-child implicit-cast wrapper around an operator callee is likewise a
 recorded refusal; the gate requires one unambiguous child.
 
+An operator callee with an unexpected AST node kind is also a recorded refusal;
+the gate accepts only declaration references or the supported one-child cast.
+
 The overloaded-operator gate has the matching negative control: a retained
 operator callee whose declaration kind is `VarDecl` is refused before any
 operator identity can be accepted.

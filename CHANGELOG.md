@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for overloaded-operator nodes with no callee child,
+  preserving the frontend's missing-identity boundary.
+
 - Added a recorded refusal for overloaded-operator identity when the retained
   callee handle has no matching declaration evidence.
 

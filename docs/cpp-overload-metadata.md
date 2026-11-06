@@ -49,6 +49,9 @@ A callee handle absent from the artifact declaration table is also a recorded
 refusal; retained AST identity must be backed by corresponding declaration
 evidence.
 
+An empty overloaded-operator child list is also a recorded refusal; the
+operator gate does not manufacture a selected callee.
+
 The overloaded-operator gate has the matching negative control: a retained
 operator callee whose declaration kind is `VarDecl` is refused before any
 operator identity can be accepted.

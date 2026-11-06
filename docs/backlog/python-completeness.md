@@ -9771,3 +9771,18 @@ positive results beyond the tier's materialization budget remain loud until
 allocation outcomes are modeled. The proof artifact keeps concrete theorem
 checks for the ordinary materialization path; its former symbolic length
 theorems depended on the removed synthetic worker and are no longer claimed.
+
+## 2026-11-06-pycomplete-382 — synchronize the set iteration example boundary
+
+The set table implementation already refuses negative integer hashes through
+`setHashNat`, and its copy/intersection paths remain loud. CPython 3.9.25
+confirms the negative witness (`set([-5, -4])` iterates `[-5, -4]`), while the
+admitted nonnegative witness preserves CPython order. The differential rows
+had already moved to explicit refusals, but `set_lab/spec.lean` still asserted
+the old `iter_order(-1)` value and the memory-model paragraph still cited the
+removed signed `-1` hash case. Replaced the theorem assertion with an explicit
+unsupported guard and corrected the documentation.
+
+DECIDED: keep set iteration limited to the modeled nonnegative integer/bool
+table; negative hashes, copies, and intersections remain loud until their
+CPython table transitions are represented.

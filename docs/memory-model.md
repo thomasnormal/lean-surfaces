@@ -1330,12 +1330,12 @@ loud. The `BitAnd` expression is outside `Expr.heapFree` because this arm
 allocates.
 
 **Iteration.** `for v in s` now reconstructs CPython 3.9's open-addressed
-table for sets whose elements are integer/bool values: the initial
-eight slots, nearby linear probes, five-bit perturbation, integer `-1` hash
-special case, and resize thresholds are all represented, so hash-table order
-matches CPython (for example `set([-1, 0])` iterates `0, -1`). Other hash
-families remain loud because their process or identity hash is not an input to
-the model. `max`/`min` over a set,
+table for sets whose elements are nonnegative integer/bool values: the initial
+eight slots, nearby linear probes, five-bit perturbation, and resize thresholds
+are represented, so hash-table order matches CPython on that admitted subset.
+Negative integer hashes remain loud because the signed hash path is not
+represented. Other hash families remain loud because their process or identity
+hash is not an input to the model. `max`/`min` over a set,
 every mutator
 (`add`/`remove`/`discard`/`pop` — `pop` removes an ARBITRARY element,
 the message says so), set operators and `==` between sets, a set

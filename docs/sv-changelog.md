@@ -53,6 +53,8 @@ the ripple-adder negative rows pin the index message. The clean-room
 `sklansky_guards/nonaffine` fixture now pins the same named obligation for a
 non-affine read. Neither shape is silently flattened or assigned a fabricated
 window.
+Verification on 2026-11-06 rebuilt `LeanModels.Sv.CombViewMain` and both
+clean-room fixtures; the named obligations remain stable on the green chain.
 
 ## Straight-line automatic functions with local case
 

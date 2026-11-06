@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for ordinary `CallExpr` nodes with no callee child,
+  preserving the frontend's missing-identity boundary.
+
 - Added a recorded refusal for ordinary-call callee casts with malformed
   multi-child structure; the identity gate requires exactly one cast child.
 

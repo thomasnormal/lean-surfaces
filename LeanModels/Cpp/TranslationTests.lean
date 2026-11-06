@@ -2245,6 +2245,16 @@ def resolvedCallMalformedCastRefusal : Except String Unit := do
   let _ ← admitResolvedCallExpression resolvedCallMalformedCastTranslation [1]
   pure ()
 
+private def resolvedCallMissingCalleeTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x2c"), ("kind", .string "CallExpr"),
+        ("inner", .array [])]])]}
+
+def resolvedCallMissingCalleeRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallMissingCalleeTranslation [0]
+  pure ()
+
 private def resolvedCallNonCallableTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -2532,6 +2542,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedCallNonCallableRefusal matches .error _
 #guard resolvedCallCastTranslationWitnessOk
 #guard resolvedCallMalformedCastRefusal matches .error _
+#guard resolvedCallMissingCalleeRefusal matches .error _
 #guard newTranslationWitness matches .ok ()
 #guard admitCXXNewExpression newTranslation [] matches .error _
 #guard admitCXXNewExpression functionTranslation [0] matches .error _

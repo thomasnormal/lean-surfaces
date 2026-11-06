@@ -41,3 +41,6 @@ without string lookup or conversion inference.
 A malformed cast wrapper with two children is a recorded refusal; the gate
 requires the exact one-child frontend shape and does not choose one child by
 position.
+
+An empty `CallExpr` child list is likewise a recorded refusal; a selected
+callee cannot be manufactured when the frontend supplies no callee occurrence.

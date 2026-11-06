@@ -8,9 +8,16 @@ on:
   push:
   pull_request:
 
+# Superseded pushes do not need to consume a hosted runner. Keep one active
+# workflow per ref and bound the full check if a tool or dependency hangs.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - name: Install elan (pinned toolchain comes from lean-toolchain)

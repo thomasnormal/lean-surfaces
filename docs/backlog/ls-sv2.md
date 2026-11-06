@@ -2437,3 +2437,16 @@ boundary.  The PicoRV32 witness pins both forms.
 **DECIDED:** flatten only after the window certificate supplies its carried
 state and normalized retirement boundary, then reuse the normalized packet-tag
 retirement projection; no retirement order or packet boundary is reconstructed.
+
+## 2026-11-06-ls-sv2-151 — expose normalized packet tag inputs
+
+Added `normalizeRvfiPacketTags_inputs` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now exposes its packet-facing source-input stream directly from the flattened
+packet-boundary tagged stream, and adjacent captures compose the same stream
+with the first capture's state feeding the second.  The PicoRV32 witness pins
+both forms.
+
+**DECIDED:** reuse the exact packet-tag flattening and generic ROB input
+projection; normalization supplies validity but does not reconstruct or reorder
+source inputs.

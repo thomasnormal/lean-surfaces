@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1626 | 0 | 1587 | 0 | 29 | 0 | 10 |
+| 1627 | 0 | 1587 | 0 | 30 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -216,6 +216,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.resolved-free-operator-identity` | 8 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `translation.resolved-operator-noncallable-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-missing-declaration-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `translation.resolved-operator-duplicate-declaration-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-missing-callee-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-malformed-cast-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-unexpected-callee-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |

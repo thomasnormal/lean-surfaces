@@ -94,3 +94,7 @@ operator identity can be accepted.
 
 An operator callee handle absent from the artifact declaration table is also a
 recorded refusal; overload metadata requires retained declaration evidence.
+
+An overloaded-operator handle duplicated in declaration evidence is also
+refused; operator identity requires one unambiguous retained function or method
+row.

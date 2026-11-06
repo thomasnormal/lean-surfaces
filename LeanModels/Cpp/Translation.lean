@@ -657,8 +657,11 @@ def admitResolvedCXXOperatorCallExpression (artifact : Artifact) (path : List Na
   let some (.array (callee :: _)) := raw.field "inner"
     | throw "translation: operator-call expression has no callee child"
   let handle ← resolvedCalleeHandle callee
-  let some declaration := artifact.declarations.find? (·.id == handle.value)
+  let declarations := artifact.declarations.filter (·.id == handle.value)
+  let some declaration := declarations.head?
     | throw "translation: selected operator declaration is absent from artifact"
+  unless declarations.length == 1 do
+    throw "translation: selected operator declaration is duplicated in artifact"
   unless declaration.kind == "CXXMethodDecl" || declaration.kind == "FunctionDecl" do
     throw "translation: selected operator declaration is not callable"
   pure handle

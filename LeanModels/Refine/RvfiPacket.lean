@@ -1582,6 +1582,40 @@ theorem normalizeRvfiPacketRefines_append
   exact normalizeRvfiPacketRefines machine isa rel admit state isaState start
     (first ++ second) (firstRetirements ++ secondRetirements) hrob hrel hcombined
 
+/- The complete packet-facing contract composes across adjacent windows while
+   exposing the generic packet-machine state at the final boundary. -/
+theorem normalizeRvfiPacketRefines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state (first ++ second))) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+        finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length) := by
+  rcases normalizeRvfiPacketRefines_append machine isa rel admit state isaState
+      start first second hrob hrel hfirst hsecond with
+    ⟨htrace, finalOrder, hfinal, horder⟩
+  refine ⟨htrace, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /- The trace-only packet-facing projection is available without unpacking the
    state/order conjunct of the complete contract. -/
 theorem normalizeRvfiPacketTrace_refines
@@ -1833,6 +1867,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRefines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines

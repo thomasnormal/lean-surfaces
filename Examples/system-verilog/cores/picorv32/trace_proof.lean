@@ -2505,6 +2505,23 @@ theorem pinned_packet_tags_length_packetTrace_append :
     pinnedPacketMachine.init packetFirstCycles packetSecondCycles
     pinned_packet_first_window_normalize pinned_packet_second_window_normalize
 
+theorem pinned_packet_tags_length_packetInputs :
+    packetStreamLength (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      packetCycleInputs) =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        packetCycleInputs).length := by
+  exact normalizeRvfiPacketTags_length_packetInputs pinnedPacketMachine
+    pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_tags_length_packetInputs_append :
+    packetStreamLength (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      (packetFirstCycles ++ packetSecondCycles)) =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length := by
+  exact normalizeRvfiPacketTags_length_packetInputs_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
 theorem pinned_packet_tags_retirements :
     (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
       packetCycleInputs).flatten.map TaggedCommit.retirement =
@@ -3244,6 +3261,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_tags_length_append
 #print axioms pinned_packet_tags_length_packetTrace
 #print axioms pinned_packet_tags_length_packetTrace_append
+#print axioms pinned_packet_tags_length_packetInputs
+#print axioms pinned_packet_tags_length_packetInputs_append
 #print axioms pinned_packet_tags_retirements
 #print axioms pinned_packet_tags_retirements_append
 #print axioms pinned_packet_tags_retirements_length

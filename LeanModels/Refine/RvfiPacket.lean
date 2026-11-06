@@ -4221,6 +4221,43 @@ theorem normalizeRvfiPacketRobTags_length_packetTrace_append
   exact normalizeRvfiPacketRobTags_length_packetTrace machine state
     (first ++ second) hcombined
 
+/- A successful normalized packet capture fixes the packet-boundary tag-stream
+   cardinality to the packet machine's input cardinality. -/
+theorem normalizeRvfiPacketTags_length_packetInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    packetStreamLength (rvfiPacketTags machine state cycles) =
+      (packetInputs machine.toPacketMachine state cycles).length := by
+  calc
+    packetStreamLength (rvfiPacketTags machine state cycles) =
+        (packetTrace machine.toPacketMachine state cycles).length :=
+      normalizeRvfiPacketTags_length_packetTrace machine state cycles h
+    _ = (packetInputs machine.toPacketMachine state cycles).length :=
+      (normalizeRvfiPacketInputs_length_packetTrace machine state cycles h).symm
+
+/- The packet-tag-stream/packet-input cardinality bridge composes across
+   adjacent normalized captures, retaining the first capture's boundary. -/
+theorem normalizeRvfiPacketTags_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    packetStreamLength (rvfiPacketTags machine state (first ++ second)) =
+      (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketTags_length_packetInputs machine state
+    (first ++ second) hcombined
+
 /- A successful normalized packet capture has equal generic ROB-tag and
    packet-input cardinalities. -/
 theorem normalizeRvfiPacketRobTags_length_packetInputs {State : Type}

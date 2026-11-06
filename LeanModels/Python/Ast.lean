@@ -11,7 +11,8 @@ lowerCamelCase spellings of CPython's class names with a documented 1:1 mapping
 source `LeanModels.Span`.
 
 Unknown constructs are represented by `Expr.unsupported` / `Stmt.unsupported`
-(carrying the CPython kind name and unparsed text), so ingestion never fails.
+(carrying the CPython kind name and diagnostic text), so ingestion never
+fails. Supported semantics never reparses that diagnostic payload.
 
 This file also defines the core value/result types from `docs/DESIGN.md`
 ("Core Lean types"): `Val`, `PyErr`, `Res`, `Flow`, `Env`. The interpreter

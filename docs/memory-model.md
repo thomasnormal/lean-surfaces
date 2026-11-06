@@ -4624,14 +4624,11 @@ handler, literally `except ImportError:`); a try that is otherwise out
 of v0 still carries `try_unsupported` and refuses whole at execution
 before any guarded import inside could run — loud, never wrong.
 
-New statement: `Stmt.importFrom (module : String) (names : Array
-String) (star : Bool) (sp : Span)` (Ast.lean — a full-rebuild edit).
-Ingestion (Json.lean) CANONICALIZES the whitelist collision: a
-structured row whose reconstructed text `from {module} import {names}`
-hits `benignImportBinds` is rewritten back to the legacy `.unsupported
-"ImportFrom" text` node, so all five text-keyed consumers — the
-namedtuple census, `scriptImports`, G1, the survey's benign rows — see
-today's shape unchanged, one table (Ast.lean), one rewrite site.
+`Stmt.importFrom (module : String) (names : Array String) (star : Bool)
+(sp : Span)` is structured from the approved extractor through ingestion.
+The benign-import table is keyed directly by `(module, names, star)` in
+`Ast.lean`; no reconstructed `from ... import ...` text or legacy text marker
+is consulted by the namedtuple census, script admission, G1, or the survey.
 Semantics: ONE new execStmt arm, `.importFrom mod _ _ _ => .exn
 (.importError mod)` — fuel-free, state unchanged, never `.ok` in
 Pass 0. Script mode needs nothing: `execScriptStmts`' generic

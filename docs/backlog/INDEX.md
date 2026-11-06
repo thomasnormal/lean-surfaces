@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-386` |  | recheck text-keyed semantic residues | python-completeness |
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |

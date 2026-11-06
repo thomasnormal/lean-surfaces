@@ -1198,10 +1198,9 @@ The attribute name is an ingestion-time constant, so the synthetic call cannot
 be confused with a user expression or a shadowable Python builtin. -/
 def attrDelBuiltinName : String := "<attrdel>"
 
-/-- `len(sequence * count)` lowers to this synthetic builtin so the two
-operands are ordinary call arguments. Keeping the rewrite in ingestion lets
-the structural evaluator recurse into each operand without a non-structural
-look through the call's argument array. -/
+/-- Legacy name retained only so hand-built ASTs can be rejected explicitly.
+Approved ingestion preserves `len(sequence * count)` as ordinary nested AST
+nodes; source programs cannot produce this synthetic call. -/
 def lenMultBuiltinName : String := "<lenmult>"
 
 /-- A literal f-string format specification lowered at ingestion. The angle

@@ -9754,3 +9754,20 @@ behavior.
 DECIDED: the reported silent order/scope bug is already closed by the
 structured extractor split; retain direct `AnnAssign` semantics as the later
 rule-2 cleanup.
+
+## 2026-11-06-pycomplete-381 — finish the length-only repetition removal
+
+The source-level length-only repetition rewrite was already removed, and the
+pinned oversized witness still agrees with CPython 3.9.25 by refusing before a
+fabricated length can escape. This audit pass found the remaining stale proof
+recipes: `string_repeat` and `tuple_repeat` still named the deleted
+`lowerLenRepeatPairs`, so both example proof targets failed with unknown
+identifiers. Removed those recipe entries, updated the current memory-model
+and AST comments to describe ordinary multiplication and materialization, and
+kept the compatibility worker loud for hand-built synthetic ASTs only.
+
+DECIDED: ordinary `len(sequence * count)` is the only approved source path;
+positive results beyond the tier's materialization budget remain loud until
+allocation outcomes are modeled. The proof artifact keeps concrete theorem
+checks for the ordinary materialization path; its former symbolic length
+theorems depended on the removed synthetic worker and are no longer claimed.

@@ -52,6 +52,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-06-pycomplete-346` |  | keep structured from-imports structured | python-completeness |
 | `2026-11-06-pycomplete-345` |  | carry value-less annotations as AST nodes | python-completeness |
 | `2026-11-06-pycomplete-344` |  | refuse integer clock readings | python-completeness |
+| `2026-11-06-ls-sv2-212` |  | certify packet-window packet-tag input cardinality against ROB trace | ls-sv2 |
 | `2026-11-06-ls-sv2-211` |  | certify normalized packet-tag input cardinality against ROB trace | ls-sv2 |
 | `2026-11-06-ls-sv2-210` |  | certify packet-window ROB-tag input cardinality against packet trace | ls-sv2 |
 | `2026-11-06-ls-sv2-209` |  | certify normalized ROB-tag input cardinality against packet trace | ls-sv2 |

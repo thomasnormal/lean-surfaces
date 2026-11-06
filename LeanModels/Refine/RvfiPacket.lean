@@ -881,6 +881,44 @@ theorem normalizeRvfiPacketTags_retirements_append {State : Type}
   exact normalizeRvfiPacketTags_retirements machine state (first ++ second)
     hcombined
 
+/- The normalized packet-tag retirement projection is exactly the packet
+   machine's retirement trace. -/
+theorem normalizeRvfiPacketTags_retirements_packetTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (rvfiPacketTags machine state cycles).flatten.map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state cycles := by
+  calc
+    (rvfiPacketTags machine state cycles).flatten.map TaggedCommit.retirement =
+        retirements := normalizeRvfiPacketTags_retirements machine state cycles h
+    _ = packetTrace machine.toPacketMachine state cycles :=
+      (normalizeRvfiPacketTrace machine state cycles h).symm
+
+/- The packet-tag retirement/packet-trace projection composes across adjacent
+   normalized captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketTags_retirements_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state (first ++ second) := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketTags_retirements_packetTrace machine state
+    (first ++ second) hcombined
+
 /-- Flattened ROB tag inputs are exactly the packet machine's retained
 architectural input stream. -/
 theorem RvfiPacketMachine.toRobMachine_tags_inputs {State : Type}

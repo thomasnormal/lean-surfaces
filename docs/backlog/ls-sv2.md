@@ -1901,3 +1901,16 @@ two adjacent chains.  The PicoRV32 witness pins both projected contracts.
 **DECIDED:** transport only the final state through the shared packet
 state-after bridge; the flattened inputs, retirement payloads, and order
 boundary remain those certified by the existing window theorems.
+
+## 2026-11-06-ls-sv2-106 — expose projected packet-window state refinement
+
+Added `normalizeRvfiPacketWindows_refines_state_packet` and
+`normalizeRvfiPacketWindows_refines_state_packet_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Finite normalized window chains now
+expose their state/order-only contract through `packetStateAfter
+machine.toPacketMachine`, directly and across two adjacent chains.  The
+PicoRV32 witness pins both projected state refinements.
+
+**DECIDED:** transport only the state/order conjunct through the shared
+state-after bridge; trace equality and retirement payloads remain in the
+complete window contract.

@@ -2966,3 +2966,16 @@ forms.
 **DECIDED:** bridge through the exact normalized packet-trace/input
 cardinality equality; packet boundaries, tag payloads, retirement order, and
 source-input order are not reconstructed.
+
+## 2026-11-06-ls-sv2-192 — certify packet-window tag-stream cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_tags_length_packetInputs` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  Certified packet-window chains
+now determine equal cardinality for the packet-boundary tag stream and packet
+input stream, including adjacent chains.  The PicoRV32 witness pins both
+forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the normalized packet tag-stream/packet-input cardinality bridge;
+packet boundaries, tag payloads, retirement order, and source-input order are
+not reconstructed.

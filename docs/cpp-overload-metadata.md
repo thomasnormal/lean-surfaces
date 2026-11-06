@@ -104,6 +104,9 @@ retained declaration row; it is not used for name lookup.
 A malformed string `referencedDecl` handle is a recorded refusal; call metadata
 does not normalize arbitrary text into an artifact identity.
 
+A structured ordinary-call `referencedDecl` object missing `id` is also refused;
+the call gate requires a complete retained handle.
+
 A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.

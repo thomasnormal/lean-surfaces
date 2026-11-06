@@ -23,6 +23,9 @@
 - Added a recorded refusal for malformed ordinary-call string declaration
   handles.
 
+- Added a recorded refusal for structured ordinary-call declaration evidence
+  missing its `id` field.
+
 - Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
   identity.
 

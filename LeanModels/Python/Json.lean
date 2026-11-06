@@ -1523,9 +1523,6 @@ mutual
         -- observable exception-cause payload.  Lower this exact literal
         -- cause to the existing class-identity raise path; dynamic causes
         -- remain structured so evaluation can refuse them loudly.
-        let cause' := match cause' with
-          | some (.constant .none _) => Option.none
-          | other => other
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) cause' sp
     | .assertStmt t m sp =>
         return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp

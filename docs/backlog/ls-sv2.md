@@ -1778,3 +1778,16 @@ its first and second packet windows.
 **DECIDED:** compose through the normalized packet trace append certificate
 and the trace-only packet projection; the carried state and retirement offset
 remain explicit at the normalization boundary.
+
+## 2026-11-06-ls-sv2-96 — expose single packet state refinement
+
+Added `normalizeRvfiPacketState_refines` to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet capture now exposes
+its final packet/ISA state relation and exact retirement-order increment
+directly, without requiring consumers to unpack the complete trace contract.
+The PicoRV32 witness pins this state/order projection over its four-cycle
+packet capture.
+
+**DECIDED:** reuse the existing normalized state transport theorem; the
+packet input stream and retirement count remain explicitly threaded, with no
+state reconstruction or order inference.

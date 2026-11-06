@@ -1233,6 +1233,38 @@ theorem normalizeRvfiPacketRobTags_inputs_length_append {State : Type}
     second hfirst hsecond
   simpa only [List.length_map] using hlen
 
+/- A successful normalized packet capture fixes the flattened packet-tag
+   source-input cardinality to the decoded retirement count. -/
+theorem normalizeRvfiPacketTags_inputs_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((rvfiPacketTags machine state cycles).flatten.map TaggedCommit.input).length =
+      retirements.length := by
+  have hlen := normalizeRvfiPacketRobTags_inputs_length machine state cycles h
+  simpa only [machine.toRobMachine_tags, List.length_map] using hlen
+
+/- Packet-tag source-input cardinality composes across adjacent normalized
+   windows, retaining the first window's state for the second. -/
+theorem normalizeRvfiPacketTags_inputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input).length =
+      (firstRetirements ++ secondRetirements).length := by
+  have hlen := normalizeRvfiPacketRobTags_inputs_length_append machine state
+    first second hfirst hsecond
+  simpa only [machine.toRobMachine_tags, List.length_map] using hlen
+
 /-- A normalized packetized RVFI stream and a ROB refinement certificate
 jointly establish both global tag order and the ISA equality of its tagged
 retirements. -/
@@ -3093,6 +3125,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length

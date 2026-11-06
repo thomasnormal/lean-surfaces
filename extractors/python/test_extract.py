@@ -1653,19 +1653,18 @@ class ImportFromTests(unittest.TestCase):
         self.assertEqual(inner["kind"], "ImportFrom")
         self.assertEqual(inner["module"], "zzz_no_such_module")
 
-    def test_plain_import_stays_unsupported(self):
+    def test_plain_import_time_is_structured(self):
         missing = self._module_body("import zzz_no_such_module\n")[0]
         self.assertEqual(missing["kind"], "ImportFrom")
         self.assertEqual(missing["module"], "zzz_no_such_module")
         self.assertEqual(missing["names"], [])
         present = self._module_body("import time\n")[0]
-        self.assertEqual(present["kind"], "Unsupported")
-        self.assertEqual(present["py_kind"], "Import")
+        self.assertEqual(present["kind"], "Import")
+        self.assertEqual(present["module"], "time")
 
     def test_benign_whitelist_rows_are_structured(self):
-        # canonicalized BACK to the legacy node at ingestion (Json.lean);
-        # structured here so envelope-structured <=> admitted holds and
-        # the survey's wall census needs zero code change
+        # Structured fields are carried through ingestion; the model's benign
+        # import admission keys on module and names rather than source text.
         for src, mod, name in (
                 ("from itertools import count\n", "itertools", "count"),
                 ("from collections import namedtuple\n", "collections",

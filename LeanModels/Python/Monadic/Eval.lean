@@ -1940,6 +1940,8 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                   | .user cid _ | .userMessage cid _ _ =>
                       if cid == ci then execOpenList K m handler.toList else raisePy e
                   | e => raisePy e)
+  | .importStmt mod _ =>
+      refuse s!"plain import {mod} is only admitted at module scope"
   | .importFrom mod _ _ _ =>
       -- Pass 0 (§import forms): the importable universe is EMPTY, so every
       -- admitted from-import RAISES — fuel-free, state unchanged, never `.ok`.

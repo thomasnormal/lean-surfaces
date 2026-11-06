@@ -280,9 +280,12 @@ inductive Stmt where
   census answers `none` for it — unanalysable by fiat). The FUTURE
   modeled-module arm binds through this same constructor (recorded so
   Pass 0 does not foreclose it); today it binds nothing. Ingestion
-  canonicalizes the benign-whitelist collision back to the legacy
-  `.unsupported "ImportFrom" text` node (Json.lean, one rewrite site). -/
+  Import admission remains a structured whitelist keyed by these fields. -/
   | importFrom (module : String) (names : Array String) (star : Bool) (span : Span)
+  /-- A plain, absolute, unaliased single-module import.  The extractor
+  carries the module name structurally; richer import lists and aliases remain
+  `unsupported` rather than being recovered from source text. -/
+  | importStmt (module : String) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)
@@ -453,6 +456,7 @@ mutual
     | .delStmt names' _ => stringListMentionsAny names names'.toList
     | .importFrom module imported _ _ =>
         names.contains module || stringListMentionsAny names imported.toList
+    | .importStmt module _ => names.contains module
     | .globalDecl names' _ | .nonlocalDecl names' _ =>
         stringListMentionsAny names names'.toList
     | .pass _ | .brk _ | .cont _ | .annNoValue .. | .unsupported .. => false
@@ -645,34 +649,8 @@ structure Module where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt`/`FunctionDefn` have none (nested arrays).
 
-/-- The EXACT import statements the tier treats as BENIGN, with the name
-each of them binds and whether the interpreter MODELS that name.
-
-An import is not benign in general: executing one runs the imported
-module's top level, and a circular import can rebind or mutate names in
-*this* module before it finishes. So this is a whitelist of exact
-statement TEXTS, never a shape rule — `import time` is admitted, `import
-sitecustomize` is not, and anything not listed keeps the blunt behaviour
-(the whole module's binding set becomes unknown).
-
-`true` in the second component means the model already gives the bound
-name a meaning (`count` IS `itertools.count` in `isBuiltinName`), so G1
-binds nothing and resolution falls through to it; `false` means the value
-is outside the tier, and G1 binds the name POISONED, so a read refuses
-loudly instead of faking a `NameError` for a name CPython did bind.
-
-The namedtuple ingestion census (`isBenignNtImport`, Json.lean)
-established this whitelist for its single member and reads it from here —
-one table, so a new row is reviewed once. -/
-def benignImportBinds : String → Option (String × Bool)
-  | "import time" => some ("time", false)
-  | "from itertools import count" => some ("count", true)
-  | "from collections import namedtuple" => some ("namedtuple", false)
-  | _ => Option.none
-
-/-- The same narrow whitelist keyed by the structured approved AST fields.
-This is the path used by `ImportFrom`; the text table above remains only for
-legacy unsupported import markers. -/
+/-- The narrow import whitelist keyed by structured AST fields.  Unsupported
+import shapes are never reparsed from source text. -/
 def benignImportBindsStructured (module : String) (names : Array String)
     (star : Bool) : Option (String × Bool) :=
   if module == "time" && !star && names.isEmpty then

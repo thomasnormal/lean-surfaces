@@ -9244,3 +9244,23 @@ workers and nested proof branches are gone.
 
 DECIDED: keep float decimal rounding parametric and exact; negative `ndigits`
 for integer and Boolean inputs remains an explicit loud boundary.
+
+## 2026-11-06-pycomplete-352 — structure plain imports and remove text-keyed import handling
+
+The admitted plain `import time` AST node is now carried as a structured
+`Import` statement with its module field. The extractor, envelope parser,
+script and monadic executors, proof observers, heap and binding walkers, and
+clock census consume that field directly. Legacy source-text import parsing and
+its exact-text whitelist were removed; richer import forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Native differential | 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+| Proof differential | 1 pre-existing `uses_nonlocal(4)` mismatch; 219 refused, 3976 matched |
+| Extractor tests | 161 passed |
+| Envelope freshness | FRESH 81, STALE 0 |
+| Lean build | Managed `lake build leanmodels-run`: 40 jobs passed |
+| Text-consumer search | No `benignImportBinds`, `importBinds`, or unsupported-import text dispatch remains |
+
+DECIDED: keep import admission on structured AST fields; unsupported import
+shapes refuse without source-text reparsing.

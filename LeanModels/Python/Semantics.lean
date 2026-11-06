@@ -384,6 +384,7 @@ def Stmt.kindName : Stmt → String
   | .tryStmt .. => "Try"
   | .withStmt .. => "With"
   | .importFrom .. => "ImportFrom"
+  | .importStmt .. => "Import"
   | .delStmt .. => "Delete"
   | .globalDecl .. => "Global"
   | .nonlocalDecl .. => "Nonlocal"
@@ -6770,10 +6771,11 @@ end
 mutual
   /-- Names the statement's subtree can REBIND at module level; `none` =
   the shape is unanalysable, so the set is unknown. Imports are decided by
-  the exact-text whitelist (`benignImportBinds`, Ast.lean) — anything else
-  is unknown, because an import runs arbitrary code. -/
+  structured import whitelist — anything else is unknown, because an import
+  runs arbitrary code. -/
   def Stmt.g1Binds : Stmt → Option (List String)
     | .annNoValue name _ => some [name]
+    | .importStmt module _ => some [module]
     | .assign tgts _ _ => targetBindsListG tgts.toList
     | .unpackAssign before star after _ _ => some (before.toList ++ [star] ++ after.toList)
     | .augAssign t _ _ _ => targetBindsG t
@@ -6831,13 +6833,6 @@ mutual
       match benignImportBindsStructured module names star with
       | some (n, modelled) => some (if modelled then [] else [n])
       | Option.none => if star then Option.none else some names.toList
-    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
-      match benignImportBinds text with
-      -- a MODELLED name (`count` is `itertools.count`) must stay
-      -- unbound here, so resolution falls through to the model's
-      -- builtin; an unmodelled one is bound POISONED below
-      | some (n, modelled) => some (if modelled then [] else [n])
-      | Option.none => Option.none
     | .unsupported .. => Option.none
 
   /-- Elementwise `Stmt.g1Binds`. -/
@@ -7035,7 +7030,7 @@ binding or attribute-error path. -/
 
 /-- Is this top-level statement the exact benign clock import? -/
 def stmtIsClockImport : Stmt → Bool
-  | .unsupported "Import" "import time" _ => true
+  | .importStmt "time" _ => true
   | _ => false
 
 /-- The clock CENSUS: the module's poisoned `time` binding provably IS
@@ -8008,6 +8003,7 @@ mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
     | .annNoValue .. => true
+    | .importStmt .. => true
     | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
     | .unpackAssign .. => false
@@ -8179,6 +8175,7 @@ mutual
   generator `def` allocates when it is CALLED, so it counts too. -/
   def Stmt.genAllocFree : Stmt → Bool
     | .annNoValue .. => true
+    | .importStmt .. => true
     | .ret Option.none _ => true
     | .ret (some e) _ => e.genAllocFree
     | .assign tgts v _ => Expr.genAllocFreeList tgts.toList && v.genAllocFree
@@ -10545,6 +10542,8 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                   | e => .exn st' e)
                | .timeout => .timeout
                | .unsupported msg => .unsupported msg)
+    | .importStmt mod _ =>
+      .unsupported s!"plain import {mod} is only admitted at module scope"
     | .importFrom mod _ _ _ =>
       -- Pass 0 (docs/memory-model.md §import forms): the importable
       -- universe is EMPTY — every admitted from-import RAISES,
@@ -11381,7 +11380,7 @@ mutual
         hnd.toList.any (proofCellDrainStmt genName)
     | .withStmt items body _ _ => items.toList.any (fun i => proofCellDrainExpr genName i.context ||
         (i.target.map (proofCellDrainExpr genName)).getD false) || body.toList.any (proofCellDrainStmt genName)
-    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .delStmt .. | .globalDecl .. | .nonlocalDecl .. | .unsupported .. => false
+    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .importStmt .. | .delStmt .. | .globalDecl .. | .nonlocalDecl .. | .unsupported .. => false
 
 end
 

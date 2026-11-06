@@ -206,6 +206,7 @@ mutual
     -- Pass 0 (§import forms): an import reads no in-module names (its
     -- bound names are the binding censuses' business, `Stmt.g1Binds`)
     | .importFrom .. => []
+    | .importStmt module _ => [module]
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 
@@ -281,7 +282,7 @@ def scriptStmtSpan : Stmt → Span
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp
-  | .importFrom _ _ _ sp | .delStmt _ sp
+  | .importFrom _ _ _ sp | .importStmt _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The last line at which the module's `def` / `class` / recognized
@@ -451,7 +452,7 @@ def scriptImports (m : Module) : List Stmt :=
   m.topLevel.toList.filter fun s =>
     match s with
     | .importFrom .. => true
-    | .unsupported "Import" _ _ | .unsupported "ImportFrom" _ _ => true
+    | .importStmt .. => true
     | _ => false
 
 /-! ### Modeled-builtin shadows in the static script view -/
@@ -507,8 +508,7 @@ def benignImportNames (m : Module) : List String :=
     match s with
     | .importFrom module names star _ =>
       (benignImportBindsStructured module names star).map Prod.fst
-    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
-      (benignImportBinds text).map Prod.fst
+    | .importStmt module _ => if module == "time" then some "time" else Option.none
     | _ => Option.none
 
 /-- A static definition/import binding can be deleted as a no-op when the
@@ -865,15 +865,12 @@ mutual
           else
             .unsupported s!"class {name}: executable class creation is outside the tier"
         | none => .unsupported s!"internal: class marker {name} has no class table entry"
+      | .importStmt module _ =>
+        if module == "time" then .ok st .next
+        else .unsupported s!"plain import {module} is outside the tier"
       | .importFrom module names star sp =>
         if (benignImportBindsStructured module names star).isSome then .ok st .next
         else execStmt m fuel st (.importFrom module names star sp)
-      | .unsupported "Import" text sp =>
-        if (benignImportBinds text).isSome then .ok st .next
-        else execStmt m fuel st (.unsupported "Import" text sp)
-      | .unsupported "ImportFrom" text sp =>
-        if (benignImportBinds text).isSome then .ok st .next
-        else execStmt m fuel st (.unsupported "ImportFrom" text sp)
       | .delStmt names sp =>
         -- The MODULE-scope `del` arm (docs/backlog.md §`del` RECONCILED
         -- with the one pipeline; docs/memory-model.md §the del

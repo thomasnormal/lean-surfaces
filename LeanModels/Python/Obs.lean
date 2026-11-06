@@ -1406,6 +1406,8 @@ theorem fuelMono (fuel : Nat) :
         cases s with
         | annNoValue _ _ =>
           simp only [execStmt]; exact Run.le_refl _
+        | importStmt _ _ =>
+          simp only [execStmt]; exact Run.le_refl _
         | globalDecl names _ | nonlocalDecl names _ =>
           simp only [execStmt]; exact Run.le_refl _
         | defStmt name params ao lo hg ig body caps _ =>
@@ -3271,6 +3273,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp [Stmt.heapFree] at hfree
       | withStmt items body tu _ =>
         simp [Stmt.heapFree] at hfree
+      | importStmt mod _ =>
+        simp only [execStmt]
+        exact .unsupported
       | importFrom mod names star _ =>
         -- Pass 0 (§import forms): IN the fragment, vacuously — the arm
         -- never decides `.ok` (it raises, fuel-free); the `raiseStmt`

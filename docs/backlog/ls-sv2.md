@@ -1635,3 +1635,16 @@ packet windows.
 **DECIDED:** derive the ISA trace equality from the existing ROB refinement
 contract and certified packet retirement projection; no independent trace
 reconstruction, scheduling, or completion order is introduced.
+
+## 2026-11-06-ls-sv2-85 — compose packet-chain ISA trace equality
+
+Added `normalizeRvfiPacketWindows_rob_trace_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now compose directly to the ISA trace equality, with the second
+chain starting from the first chain's retained state and retirement-order
+boundary.  The PicoRV32 witness exercises this append route over its two
+singleton packet windows.
+
+**DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
+single-chain ISA trace theorem; no independent trace reconstruction,
+scheduling, or completion order is introduced.

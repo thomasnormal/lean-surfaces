@@ -155,19 +155,21 @@ theorem listWfB_iff (d : Design2) (l : List Expr2) :
   simp [Expr2.listWfB, List.all_eq_true]
 
 theorem symSubst_nil_aux (d : Design2) : ∀ n : Nat,
-    (∀ e : Expr2, e.size < n → e.wfB d = true → e.symSubst d [] = some e) ∧
+    (∀ e : Expr2, e.size < n → e.wfB d = true → e.idxFree = true → e.symSubst d [] = some e) ∧
     (∀ l : List Expr2, Expr2.listSize l < n → Expr2.listWfB d l = true →
-      Expr2.listSymSubst d [] l = some l) := by
+      Expr2.listIdxFree l = true → Expr2.listSymSubst d [] l = some l) := by
   intro n
   induction n with
-  | zero => exact ⟨fun e h => by omega, fun l h => by omega⟩
+  | zero => exact ⟨fun e h _ _ => by omega, fun l h _ _ => by omega⟩
   | succ n ih =>
     obtain ⟨ihe, ihl⟩ := ih
-    refine ⟨fun e he hw => ?_, fun l hl hw => ?_⟩
+    refine ⟨fun e he hw hx => ?_, fun l hl hw hx => ?_⟩
     · rw [wfB_iff] at hw
       obtain ⟨hu, hi⟩ := hw
-      have sub : ∀ a : Expr2, a.size < n → a.unsupportedFree = true → (∀ x ∈ a.idents, x ∈ d.symNames) →
-          a.symSubst d [] = some a := fun a ha hu hi => ihe a ha ((wfB_iff d a).2 ⟨hu, hi⟩)
+      have sub : ∀ a : Expr2, a.size < n → a.unsupportedFree = true →
+          (∀ x ∈ a.idents, x ∈ d.symNames) → a.idxFree = true →
+          a.symSubst d [] = some a :=
+        fun a ha hu hi hx => ihe a ha ((wfB_iff d a).2 ⟨hu, hi⟩) hx
       cases e with
       | lit v => simp [Expr2.symSubst]
       | ident m =>
@@ -176,70 +178,81 @@ theorem symSubst_nil_aux (d : Design2) : ∀ n : Nat,
       | unsupported k t => simp [Expr2.unsupportedFree] at hu
       | unary op a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | resizeSigned w a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | squash2 a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | repl k a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | reduce op a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | resize w a =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
-          simp [Expr2.symSubst, sub a (by omega) hu hi]
+          simp only [Expr2.idxFree] at hx
+          simp [Expr2.symSubst, sub a (by omega) hu hi hx]
       | binary op l r =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.idents, List.mem_append] at hi
-          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)),
-            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx))]
+          simp only [Expr2.idxFree, Bool.and_eq_true] at hx
+          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)) hx.1,
+            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx)) hx.2]
       | scmp op l r =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.idents, List.mem_append] at hi
-          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)),
-            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx))]
+          simp only [Expr2.idxFree, Bool.and_eq_true] at hx
+          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)) hx.1,
+            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx)) hx.2]
       | logical b l r =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.idents, List.mem_append] at hi
-          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)),
-            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx))]
+          simp only [Expr2.idxFree, Bool.and_eq_true] at hx
+          simp [Expr2.symSubst, sub l (by omega) hu.1 (fun x hx => hi x (Or.inl hx)) hx.1,
+            sub r (by omega) hu.2 (fun x hx => hi x (Or.inr hx)) hx.2]
       | index a i w =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.idents, List.mem_append] at hi
-          simp [Expr2.symSubst, sub a (by omega) hu.1 (fun x hx => hi x (Or.inl hx)),
-            sub i (by omega) hu.2 (fun x hx => hi x (Or.inr hx))]
+          simp [Expr2.idxFree] at hx
       | ternary c t f =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.idents, List.mem_append] at hi
-          simp [Expr2.symSubst, sub c (by omega) hu.1.1 (fun x hx => hi x (Or.inl (Or.inl hx))),
-            sub t (by omega) hu.1.2 (fun x hx => hi x (Or.inl (Or.inr hx))),
-            sub f (by omega) hu.2 (fun x hx => hi x (Or.inr hx))]
+          simp only [Expr2.idxFree, Bool.and_eq_true] at hx
+          simp [Expr2.symSubst, sub c (by omega) hu.1.1 (fun x hx => hi x (Or.inl (Or.inl hx))) hx.1.1,
+            sub t (by omega) hu.1.2 (fun x hx => hi x (Or.inl (Or.inr hx))) hx.1.2,
+            sub f (by omega) hu.2 (fun x hx => hi x (Or.inr hx)) hx.2]
       | slice a lo w =>
           simp only [Expr2.size] at he; simp only [Expr2.unsupportedFree] at hu
           simp only [Expr2.idents] at hi
           by_cases hid : ∃ m, a = .ident m
           · obtain ⟨m, rfl⟩ := hid
             have : m ∈ d.symNames := hi m (by simp [Expr2.idents])
+            simp only [Expr2.idxFree] at hx
             simp [Expr2.symSubst, Expr2.sliceSubst, this, SymState.readWin, SymState.findCover,
               SymState.overlapsAny]
           · have hs : ∀ r, Expr2.sliceSubst d [] a lo w r = r.map fun b => Expr2.slice b lo w := by
               intro r; cases a <;> simp_all [Expr2.sliceSubst]
-            have ih := sub a (by omega) hu hi
+            have ih := sub a (by omega) hu hi hx
             simp [Expr2.symSubst, hs, ih]
       | concat parts =>
           simp only [Expr2.size] at he
           simp only [Expr2.unsupportedFree] at hu
           simp only [Expr2.idents] at hi
-          have := ihl parts.toList (by omega) ((listWfB_iff d _).2 ⟨hu, hi⟩)
+          simp only [Expr2.idxFree] at hx
+          have := ihl parts.toList (by omega) ((listWfB_iff d _).2 ⟨hu, hi⟩) hx
           simp [Expr2.symSubst, this]
     · cases l with
       | nil => simp [Expr2.listSymSubst]
@@ -249,20 +262,24 @@ theorem symSubst_nil_aux (d : Design2) : ∀ n : Nat,
           simp only [Expr2.listSize] at hl
           simp only [Expr2.listUnsupportedFree, Bool.and_eq_true] at hu
           simp only [Expr2.listIdents, List.mem_append] at hi
+          simp only [Expr2.listIdxFree, Bool.and_eq_true] at hx
           have h1 := ihe e (by omega) ((wfB_iff d e).2 ⟨hu.1, fun x hx => hi x (Or.inl hx)⟩)
+            hx.1
           have h2 := ihl es (by omega) ((listWfB_iff d es).2 ⟨hu.2, fun x hx => hi x (Or.inr hx)⟩)
+            hx.2
           simp [Expr2.listSymSubst, h1, h2]
 
-theorem symSubst_nil (d : Design2) (e : Expr2) (h : e.wfB d = true) : e.symSubst d [] = some e :=
-  (symSubst_nil_aux d (e.size + 1)).1 e (Nat.lt_succ_self _) h
+theorem symSubst_nil (d : Design2) (e : Expr2) (h : e.wfB d = true)
+    (hx : e.idxFree = true) : e.symSubst d [] = some e :=
+  (symSubst_nil_aux d (e.size + 1)).1 e (Nat.lt_succ_self _) h hx
 
 
 
 /-! ## A1: the symbolic execution -/
 
-theorem listSymSubst_nil (d : Design2) (l : List Expr2) (h : Expr2.listWfB d l = true) :
-    Expr2.listSymSubst d [] l = some l :=
-  (symSubst_nil_aux d (Expr2.listSize l + 1)).2 l (Nat.lt_succ_self _) h
+theorem listSymSubst_nil (d : Design2) (l : List Expr2) (h : Expr2.listWfB d l = true)
+    (hx : Expr2.listIdxFree l = true) : Expr2.listSymSubst d [] l = some l :=
+  (symSubst_nil_aux d (Expr2.listSize l + 1)).2 l (Nat.lt_succ_self _) h hx
 
 /-- No `index` node in a pattern or arm value. -/
 def CasesIdxFree (its : List (List Expr2 × Expr2)) : Prop :=

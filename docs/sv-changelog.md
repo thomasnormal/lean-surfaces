@@ -35,6 +35,16 @@ proof route. The `add_int32` fixture checks both the default `N=16` and the
 non-default `N=5`, where `1073741824 * 2` wraps to `-2147483648` and selects
 the other generate arm.
 
+## Signed dynamic select indices
+
+Dynamic packed and unpacked element selects now retain the source expression's
+signedness through ingestion and evaluation. A signed declaration, explicit
+`$signed` cast, or signed literal is evaluated as a two's-complement `Int`;
+negative reads produce all `x` and negative writes are no-ops, while unsigned
+indices keep the existing `toNat?` behavior. The `sem2/signed_index` fixtures
+pin both read and write outcomes. The comb and sequential observation proofs
+now use the same signed/unsigned index split.
+
 ## Qualified-case checks at execution time
 
 `unique`, `unique0`, and `priority` claims are now checked in reset, edge, and

@@ -184,10 +184,10 @@ def evalPure2 (st : SvState) : Expr2 → Res LVec
   | .index base idx elemW => do
       let bv ← evalPure2 st base
       let iv ← evalPure2 st idx
-      match iv.toNat? with
+      match indexInt? idx iv with
       | some i =>
-          if (i + 1) * elemW ≤ bv.width then
-            return bv.extract (i * elemW) elemW
+          if 0 ≤ i && (i + 1) * elemW ≤ bv.width then
+            return bv.extract (i.toNat * elemW) elemW
           else
             return LVec.xVec elemW      -- out-of-range read: all-x (W05)
       | none => return LVec.xVec elemW  -- x/z index read: all-x (R02/R03/R05)
@@ -290,10 +290,10 @@ theorem evalPure2_ident_of_lookup {st : SvState} {name : String} {v : LVec}
     evalPure2 st (.index base idx elemW) = (do
       let bv ← evalPure2 st base
       let iv ← evalPure2 st idx
-      match iv.toNat? with
+      match indexInt? idx iv with
       | some i =>
-          if (i + 1) * elemW ≤ bv.width then
-            return bv.extract (i * elemW) elemW
+          if 0 ≤ i && (i + 1) * elemW ≤ bv.width then
+            return bv.extract (i.toNat * elemW) elemW
           else
             return LVec.xVec elemW
       | none => return LVec.xVec elemW) := rfl

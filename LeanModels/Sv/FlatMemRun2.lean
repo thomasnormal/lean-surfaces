@@ -55,11 +55,26 @@ theorem eval_index {F W : Nat} (hF : 2 ≤ F) {st : SvState} {m r : String} {mem
     (hm : SvState.lookup st m = some mem) (hr : SvState.lookup st r = some ra) :
     evalExpr2 F st (.index (.ident m) (.ident r) W) = .ok (rfRead W mem ra) := by
   obtain ⟨f, rfl⟩ : ∃ f, F = f + 2 := ⟨F - 2, by omega⟩
-  simp only [evalExpr2, readSignal, hm, hr, Res.ok_bind]
+  simp only [evalExpr2, readSignal, hm, hr, Res.ok_bind, indexInt?, Expr2.indexSigned,
+    Bool.false_eq_true, ↓reduceIte]
   unfold rfRead
-  cases ra.toNat? with
-  | none => rfl
-  | some i => dsimp only; split <;> rfl
+  cases hra : ra.toNat? with
+  | none => simp [hra]
+  | some i =>
+      simp only [hra, Option.map_some, Option.some.injEq]
+      by_cases h : (i + 1) * W ≤ mem.width
+      · have h' : (0 : Int) ≤ i ∧ ((i : Int) + 1) * W ≤ mem.width := by
+          exact ⟨by omega, by exact_mod_cast h⟩
+        simp [h, h']
+      · have h' : ¬((0 : Int) ≤ i ∧ ((i : Int) + 1) * W ≤ mem.width) := by
+          intro hh
+          apply h
+          exact_mod_cast hh.2
+        have h'' : ¬((i : Int) + 1) * W ≤ mem.width := by
+          intro hh
+          apply h
+          exact_mod_cast hh
+        simp [h, h', h'']
 
 /-- **Array read** on a `Fin (2^A)`-indexed store: the word at a known in-range address, else `x`. -/
 def arrRead {A : Nat} (W : Nat) (s : Fin (2 ^ A) → LVec) (ra : LVec) : LVec :=

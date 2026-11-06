@@ -315,6 +315,24 @@ evaluation (§10.4.2). -/
 
 abbrev NbaQueue2 := List (String × Nat × LVec)
 
+/- The root marker is deliberately separate from the value bits: symbolic
+substitution may replace the operand while the select still has the source
+declaration's signedness. -/
+def Expr2.indexSigned : Expr2 → Bool
+  | .resizeSigned _ _ => true
+  | _ => false
+
+/-- Read a dynamic select index using the source expression's signedness.
+`resizeSigned` is the width-preserving marker emitted for a signed
+declaration or `$signed` index; an unmarked index follows the unsigned
+`toNat?` rule. -/
+def indexInt? (idx : Expr2) (v : LVec) : Option Int :=
+  if idx.indexSigned then v.toInt? else v.toNat?.map Int.ofNat
+
+theorem indexInt?_congr {a b : Expr2} {v : LVec}
+    (h : a.indexSigned = b.indexSigned) : indexInt? a v = indexInt? b v := by
+  simp [indexInt?, h]
+
 /-- Commit in issue order; last write to overlapping bits wins. -/
 def commitNba2 (st : SvState) (nba : NbaQueue2) : SvState :=
   nba.foldl
@@ -386,10 +404,10 @@ def evalExpr2 (fuel : Nat) (st : SvState) (e : Expr2) : Res LVec :=
     | .index base idx elemW => do
         let bv ← evalExpr2 fuel st base
         let iv ← evalExpr2 fuel st idx
-        match iv.toNat? with
+        match indexInt? idx iv with
         | some i =>
-            if (i + 1) * elemW ≤ bv.width then
-              return bv.extract (i * elemW) elemW
+            if 0 ≤ i && (i + 1) * elemW ≤ bv.width then
+              return bv.extract (i.toNat * elemW) elemW
             else
               return LVec.xVec elemW      -- out-of-range read: all-x (W05)
         | none => return LVec.xVec elemW  -- x/z index read: all-x (R02/R03/R05)
@@ -427,10 +445,10 @@ def resolveLhs2 (fuel : Nat) (st : SvState) : Lhs2 → Res (String × Option (Na
       match SvState.lookup st n with
       | none => .unsupported s!"unknown assignment target '{n}'"
       | some old =>
-          match iv.toNat? with
+          match indexInt? idx iv with
           | some i =>
-              if (i + 1) * elemW ≤ old.width then
-                return (n, some (i * elemW, elemW))
+              if 0 ≤ i && (i + 1) * elemW ≤ old.width then
+                return (n, some (i.toNat * elemW, elemW))
               else
                 return (n, none)  -- OOB write: no-op (Z05)
           | none => return (n, none)  -- x/z-index write: no-op (W01/W03/W06/W08)

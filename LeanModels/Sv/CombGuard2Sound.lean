@@ -731,13 +731,13 @@ theorem resolveLhs2_some {wd : String → Option Nat} {fuel : Nat} {σ : SvState
     | some old =>
       rw [hm] at h
       have hn : n = m := by
-        rcases hiv : iv.toNat? with _ | i
-        · rw [hiv] at h; simp at h
-        · rw [hiv] at h
-          simp only at h
-          by_cases hc : (i + 1) * ew ≤ old.width
-          · rw [if_pos hc] at h; simp at h; exact h.1.symm
-          · rw [if_neg hc] at h; simp at h
+        cases hidx : indexInt? idx iv with
+        | none => rw [hidx] at h; simp at h
+        | some i =>
+          rw [hidx] at h
+          by_cases hc : 0 ≤ i ∧ (i + 1) * ew ≤ old.width
+          · simp [hc] at h; exact h.1.symm
+          · simp [hc] at h
       subst hn
       refine ⟨fun m' j hj => absurd hj (by simp [Lhs2.mustW]), fun j _ old' hold hj => ?_⟩
       rw [hm] at hold; cases hold

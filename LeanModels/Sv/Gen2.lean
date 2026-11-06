@@ -1000,8 +1000,8 @@ theorem instExpr2_bitSel_ident (ctx : Option Nat) {n : String} {idx : PExpr} {ew
 theorem instExpr2_bitSel_ident_dyn (ctx : Option Nat) {n : String} {idx : PExpr} {ew : Nat}
     {e : String} (hel : elems.lookup n = some ew) (hi : evalInt env idx = .error e) :
     instExpr2 env elems ctx (.bitSel (.ident n) idx) =
-      .index (.ident n) (instExpr2 env elems (selfWidth2 env elems idx) idx) ew := by
-  simp [instExpr2, hel, hi]
+      .index (.ident n) (instIndex2 env elems idx) ew := by
+  simp [instExpr2, instIndex2, hel, hi]
 
 /-- Constant part-select `n[msb:lsb]` of a declared signal. -/
 theorem instExpr2_partSel_ident (ctx : Option Nat) {n : String} {msb lsb : PExpr} {ew : Nat}
@@ -1129,8 +1129,8 @@ theorem instLhs2_bitSel {n : String} {idx : PExpr} {ew : Nat} {i : Int}
 theorem instLhs2_bitSel_dyn {n : String} {idx : PExpr} {ew : Nat} {e : String}
     (hel : elems.lookup n = some ew) (hi : evalInt env idx = .error e) :
     instLhs2 env elems (.bitSel n idx) =
-      .ok (.index n (instExpr2 env elems (selfWidth2 env elems idx) idx) ew, ew) := by
-  simp [instLhs2, instLhsLeaf2, hel, hi]
+      .ok (.index n (instIndex2 env elems idx) ew, ew) := by
+  simp [instLhs2, instLhsLeaf2, instIndex2, hel, hi]
 
 /-- Constant part-select target `n[msb:lsb]`. -/
 theorem instLhs2_partSel {n : String} {msb lsb : PExpr} {ew : Nat} {m l : Int}

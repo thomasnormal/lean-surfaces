@@ -454,7 +454,11 @@ def Expr2.symSubst (d : Design2) (S : SymState) : Expr2 → Option Expr2
   | .binary op l r => (l.symSubst d S).bind fun l' => (r.symSubst d S).map (.binary op l')
   | .scmp op l r => (l.symSubst d S).bind fun l' => (r.symSubst d S).map (.scmp op l')
   | .logical b l r => (l.symSubst d S).bind fun l' => (r.symSubst d S).map (.logical b l')
-  | .index a i w => (a.symSubst d S).bind fun a' => (i.symSubst d S).map fun i' => .index a' i' w
+  | .index a i w =>
+      if i.indexSigned then none
+      else (a.symSubst d S).bind fun a' =>
+        (i.symSubst d S).bind fun i' =>
+          if i'.indexSigned then none else some (.index a' i' w)
   | .ternary c t f =>
       (c.symSubst d S).bind fun c' => (t.symSubst d S).bind fun t' =>
         (f.symSubst d S).map (.ternary c' t')
@@ -1270,12 +1274,27 @@ private theorem symSubst_aux {d : Design2} {S : SymState} {st₀ st : SvState}
           exact ResOkImp.bind (ihE l (by omega) l' hl) fun _ =>
             ResOkImp.bind (ihE r (by omega) r' hr) fun _ => ResOkImp.refl _
       | index a i w =>
-          simp only [Expr2.symSubst, Option.bind_eq_some_iff, Option.map_eq_some_iff] at h
-          obtain ⟨a', ha, i', hi, rfl⟩ := h
-          simp only [Expr2.size] at hs
-          simp only [evalPure2]
-          exact ResOkImp.bind (ihE a (by omega) a' ha) fun _ =>
-            ResOkImp.bind (ihE i (by omega) i' hi) fun _ => ResOkImp.refl _
+          simp only [Expr2.symSubst] at h
+          split at h
+          · cases h
+          · next hnot =>
+            simp only [Option.bind_eq_some_iff] at h
+            obtain ⟨a', ha, i', hi, hidx⟩ := h
+            split at hidx
+            · cases hidx
+            · next hnot' =>
+              simp only [Option.some.injEq] at hidx
+              subst hidx
+              simp only [Expr2.size] at hs
+              simp only [evalPure2]
+              exact ResOkImp.bind (ihE a (by omega) a' ha) fun _ =>
+                ResOkImp.bind (ihE i (by omega) i' hi) fun _ => by
+                  have hiu : i.indexSigned = false := by
+                    cases hx : i.indexSigned <;> simp_all
+                  have hiu' : i'.indexSigned = false := by
+                    cases hx : i'.indexSigned <;> simp_all
+                  simp only [indexInt?, hiu, hiu']
+                  exact ResOkImp.refl _
       | ternary c t f =>
           simp only [Expr2.symSubst, Option.bind_eq_some_iff, Option.map_eq_some_iff] at h
           obtain ⟨c', hc, t', ht, f', hf, rfl⟩ := h

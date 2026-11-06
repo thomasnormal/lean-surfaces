@@ -2157,6 +2157,60 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs_robInputs_append
         RvfiPacketMachine.toRobMachine_inputs_append machine state
           firstWindows.flatten secondWindows.flatten
 
+/- A certified packet-window chain identifies tagged retirement payloads with
+   the generic ROB retirement trace. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_robTrace
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (_h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state windows.flatten := by
+  exact robTags_retirements machine.toRobMachine state windows.flatten
+
+/- The tagged retirement-to-trace bridge composes across adjacent certified
+   packet-window chains, retaining the second chain's carried state. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_robTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state firstWindows.flatten ++
+        robTrace machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  calc
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten :=
+      normalizeRvfiPacketWindows_rob_tags_retirements_robTrace machine state
+        start (firstWindows ++ secondWindows)
+        (firstRetirementWindows ++ secondRetirementWindows) hcombined
+    _ = robTrace machine.toRobMachine state firstWindows.flatten ++
+        robTrace machine.toRobMachine
+          (rvfiPacketStateAfter machine state firstWindows.flatten)
+          secondWindows.flatten := by
+      simpa only [List.flatten_append] using
+        RvfiPacketMachine.toRobMachine_trace_append machine state
+          firstWindows.flatten secondWindows.flatten
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -2714,6 +2768,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_robInputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines

@@ -9551,3 +9551,19 @@ rows and 14 scripts.
 
 DECIDED: a new `expect: unsupported` row must have a taxonomy entry, and the
 census remains fail-closed when any row or script is unclassified.
+
+## 2026-11-06-pycomplete-368 — refresh the generated backlog index after lane merges
+
+The shared generated backlog index had drifted after unrelated lane entries
+landed on `master`. Regenerating it restored the current 953-entry count and
+ordering; no hand-authored backlog content changed.
+
+| Measurement | Result |
+|---|---|
+| Backlog index | `tools/backlog-index.sh --check`: in sync, 953 entries |
+| Documentation check | 89 marked blocks passed; stale-index warning cleared |
+| Formatting | `git diff --check` passed |
+
+DECIDED: regenerate the shared index whenever another lane advances the
+backlog, so documentation CI sees the same generated state as the current
+master.

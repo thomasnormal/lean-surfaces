@@ -24,11 +24,11 @@ construct's semantics decision), and [spec-surface.md](spec-surface.md)
 2. **Ingestion.** `load_program foo from "foo.json"` reads the envelope
    during Lean elaboration (`LeanModels/Python/Json.lean`). It produces
    `foo : Module`, a literal AST term that proofs can unfold. Ingestion
-   also lowers a few constructs the same way CPython's compiler does:
-   class definitions remain structured source-order statements, with method bodies indexed for dispatch; list
-   comprehensions become `list(<genexpr>)`, generator expressions become
+   also performs a small set of explicit, documented ingestion translations:
+   class definitions remain structured source-order statements, with method bodies indexed for dispatch; generator expressions become
    synthesized generator functions, and dict views and `del d[k]` become
-   synthetic builtins such as `<dictkeys>`. It also recognises
+   synthetic builtins such as `<dictkeys>`. List/set/dict comprehensions and
+   starred displays remain explicit loud AST boundaries. It also recognises
    `namedtuple` definitions.
 3. **Interpretation.** A definitional interpreter gives the `Module`
    meaning. It is fuel-bounded: every run ends in `.ok v`, `.exn e`,

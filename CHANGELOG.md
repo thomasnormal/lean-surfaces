@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ member-call coverage now pins the enum parameter join to one structured
+  `ParmVarDecl`, retaining its handle, name, spelling, and ordinal before
+  argument binding.
+
 - C++ member-call coverage now exercises enum argument value validation with
   an explicit representation oracle and underlying value, preserving the enum
   tag without manufacturing an enumerator or invoking the setter.

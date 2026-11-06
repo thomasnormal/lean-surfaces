@@ -347,6 +347,11 @@ its native source call is checked separately, while Lean requires the explicit
 unsigned representation and underlying integral value before preserving the
 enum tag.
 
+The parameter side is separately witnessed as well: the structured enum type
+must join exactly one `ParmVarDecl`, preserving its declaration handle, name,
+source spelling, and ordinal. Missing, repeated, misordered, or mismatched
+parameter rows remain refusals.
+
 `IntegralMemberEnumArgument.parameter` closes the declaration side of that
 boundary. Given a canonical method handle, ordinal, and the same enum
 representation, it joins the structured parameter-type list to exactly one

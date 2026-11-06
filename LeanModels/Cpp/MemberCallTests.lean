@@ -1191,6 +1191,11 @@ def enumArgumentValueWitness : Bool :=
 
 #guard enumArgumentValueWitness
 
+def enumParameterEvidenceWitness : Bool :=
+  enumParameterAccepted
+
+#guard enumParameterEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

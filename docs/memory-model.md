@@ -2309,9 +2309,10 @@ division by zero, all identical, because none of them runs.
   `ann_lab.ann_novalue_read` and `ann_lab.ann_novalue_shadows_global` pin the
   class and CPython message at the observation boundary.
 * **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
-  `__annotations__` entry but still evaluate the annotation. They lower to
-  the annotation expression followed by the ordinary assignment, preserving
-  that order without adding an annotation-table store.
+  `__annotations__` entry. In a function body the annotation is not evaluated
+  and the target follows the ordinary assignment path. At module scope the
+  value and target run first, followed by annotation evaluation, preserving
+  CPython's order without adding an annotation-table store.
 
 **Function-scope lowering.** One extractor clause and no new AST node: a
 function-body `AnnAssign` with `simple == 1` and a value converts to the

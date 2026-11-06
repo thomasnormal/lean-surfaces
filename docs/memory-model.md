@@ -4967,7 +4967,12 @@ assignment is evaluated and published in the module frame; the script
 executor's local-first resolution then observes that value for subsequent
 calls and reads. A function-valued re-alias remains refused, as does a
 function body that would need to read the shadow through the closed
-first-class-value path. Out of scope, stated: aliases of NESTED defs
+first-class-value path. Script mode poisons an admitted alias name when a
+later top-level binding can shadow it, so a function body consults the live
+module frame instead of silently calling the copied table entry; that shape
+now follows the live shadow (and reproduces CPython's `TypeError` for a scalar
+callee). Out of scope, stated:
+aliases of NESTED defs
 (never in `Module.functions`), aliases in class bodies (not top level),
 `del alias` (the `del` statement is unsupported, so its file rejects
 wholesale until del lands), `__all__` (no import system — it is an

@@ -37,6 +37,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-ls-sv2-250` |  | exercise the ADDI boundary after state threading | ls-sv2 |
 | `2026-11-07-ls-sv2-249` |  | bridge the raw ADDI boundary to one ISA step | ls-sv2 |
 | `2026-11-07-ls-sv2-248` |  | add the raw RVFI ADDI boundary predicate | ls-sv2 |
+| `2026-11-06-pycomplete-389` |  | keep shadowed aliases dynamic inside callees | python-completeness |
 | `2026-11-06-pycomplete-388` |  | guard namedtuple recognition by import order | python-completeness |
 | `2026-11-06-pycomplete-385` |  | recheck the clock-reading boundary | python-completeness |
 | `2026-11-06-pycomplete-384` |  | recheck the static definition-delete census | python-completeness |

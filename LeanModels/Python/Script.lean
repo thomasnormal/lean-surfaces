@@ -485,6 +485,22 @@ def scriptBuiltinShadowStmt (n : String) : Stmt :=
 def scriptBuiltinShadowStmts (m : Module) : List Stmt :=
   (scriptBuiltinShadowNames m).map scriptBuiltinShadowStmt
 
+/-! A copied module-level alias is a static function-table entry, while a
+later ordinary assignment to that alias is a live module binding.  The script
+view must poison such names so a function body consults the live frame before
+falling back to the static table; without this marker `a = f; def g(): return
+a(); a = 3` would call the copied `a` entry and print `1` instead of the
+CPython `TypeError`.  Aliases with no later top-level binding keep their static
+fast path and existing acceptance. -/
+
+def scriptAliasShadowNames (m : Module) : List String :=
+  let bound :=
+    (m.topLevel.toList.map (fun s => (s.g1Binds).getD [])).flatten
+  m.aliases.toList.filter (fun n => bound.contains n)
+
+def scriptAliasShadowStmts (m : Module) : List Stmt :=
+  (scriptAliasShadowNames m).map scriptBuiltinShadowStmt
+
 /-! The extractor admits one explicit annotation-table shape:
 `__annotations__ = alias = {}`.  `Json.lean` splits that chain into
 `__annotations__ = {}` followed by `alias = __annotations__`; the script
@@ -553,7 +569,8 @@ remain subject to the script-shell admission guards. -/
 def scriptView (m : Module) : Module :=
   { m with topLevel :=
       (scriptNameBinding :: scriptViewMarker ::
-        scriptBuiltinShadowStmts m ++ scriptAnnotationTableStmt m ++
+        scriptBuiltinShadowStmts m ++ scriptAliasShadowStmts m ++
+        scriptAnnotationTableStmt m ++
         scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).

@@ -830,6 +830,35 @@ theorem pinned_packet_windows_rob_inputs_length_packetTrace_append :
         [nontrapSecondExpected] from
         ⟨pinned_packet_second_window_normalize, trivial⟩)
 
+theorem pinned_packet_windows_rob_inputs_length_robTrace_chain :
+    (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).length =
+      (robTrace pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).length := by
+  exact normalizeRvfiPacketWindows_robInputs_length_robTrace
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
+
+theorem pinned_packet_windows_rob_inputs_length_robTrace_append :
+    (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length =
+      (robTrace pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length := by
+  apply normalizeRvfiPacketWindows_robInputs_length_robTrace_append
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected]
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
 theorem pinned_packet_windows_chain_refines_state
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -3052,6 +3081,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_inputs_length_packetTrace_append
 #print axioms pinned_packet_rob_inputs_length_robTrace
 #print axioms pinned_packet_rob_inputs_length_robTrace_append
+#print axioms pinned_packet_windows_rob_inputs_length_robTrace_chain
+#print axioms pinned_packet_windows_rob_inputs_length_robTrace_append
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_stateful_memory_arch

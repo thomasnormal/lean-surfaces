@@ -2739,3 +2739,16 @@ forms.
 **DECIDED:** take `List.length` of the exact normalized generic ROB and packet
 trace equalities and compose through normalized trace append; retirement
 payloads, packet boundaries, and order are not reconstructed.
+
+## 2026-11-06-ls-sv2-174 — certify packet-window ROB trace cardinality against packet trace
+
+Added `normalizeRvfiPacketWindows_rob_trace_length_packetTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+now certifies equal generic-ROB and packet retirement-trace cardinalities, and
+adjacent chains compose the bridge through their carried state boundary.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate,
+reuse the normalized ROB-trace/packet-trace cardinality bridge, and retain the
+carried state; packet boundaries, retirement payloads, and order are not
+reconstructed.

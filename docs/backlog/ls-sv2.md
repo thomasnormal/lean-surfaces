@@ -3178,3 +3178,15 @@ witness pins both forms.
 the generic ROB-tag input/ROB-input cardinality bridge with the generic
 ROB-trace/ROB-input length equality; packet boundaries, tag payloads,
 retirement order, and source-input order are not reconstructed.
+
+## 2026-11-06-ls-sv2-209 — certify normalized ROB-tag input cardinality against packet trace
+
+Added `normalizeRvfiPacketRobTags_inputs_length_packetTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies equal cardinality for the generic ROB-tag input projection and the
+packet-machine retirement trace, including adjacent captures.  The PicoRV32
+witness pins both forms.
+
+**DECIDED:** compose the normalized ROB-tag input/ROB-trace cardinality bridge
+with the generic ROB-trace/packet-trace equality; retirement payloads, packet
+boundaries, retirement order, and source-input order are not reconstructed.

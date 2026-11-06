@@ -2241,3 +2241,15 @@ this append count.
 
 **DECIDED:** compose through the explicit window-chain append certificate and
 the flattened generic ROB input count; no input order is reconstructed.
+
+## 2026-11-06-ls-sv2-135 — certify packet-window ROB trace cardinality
+
+Added `normalizeRvfiPacketWindows_rob_trace_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now proves that its flattened generic ROB retirement trace has exactly the
+flattened normalized retirement cardinality.  The PicoRV32 witness pins this
+trace count over its two measured windows.
+
+**DECIDED:** transport the generic ROB trace/input cardinality equality
+through the certified packet-window input count; no trace payload or order is
+reconstructed.

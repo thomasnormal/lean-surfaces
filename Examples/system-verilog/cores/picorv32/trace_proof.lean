@@ -955,6 +955,16 @@ theorem pinned_packet_windows_rob_inputs_length_chain :
     [nontrapFirstExpected, nontrapSecondExpected]
     pinned_packet_windows_certificate
 
+theorem pinned_packet_windows_rob_trace_length_chain :
+    (robTrace pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).length =
+      [nontrapFirstExpected, nontrapSecondExpected].flatten.length := by
+  exact normalizeRvfiPacketWindows_rob_trace_length pinnedPacketMachine
+    pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
+
 theorem pinned_packet_windows_rob_inputs_length_append :
     (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
         ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length =
@@ -1862,6 +1872,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_rob_tags_length_chain
 #print axioms pinned_packet_windows_rob_tags_inputs_length_chain
 #print axioms pinned_packet_windows_rob_inputs_length_chain
+#print axioms pinned_packet_windows_rob_trace_length_chain
 #print axioms pinned_packet_windows_rob_inputs_length_append
 #print axioms pinned_packet_windows_rob_tags_length_append
 #print axioms pinned_packet_windows_rob_tags_inputs_length_append

@@ -3346,3 +3346,14 @@ pins the chain and append forms.
 the normalized generic ROB-tag retirement/packet-trace payload bridge;
 retirement order and payloads are preserved exactly, with the carried state
 boundary retained.
+
+## 2026-11-06-ls-sv2-223 — connect normalized packet-tag inputs to ROB inputs
+
+Added `normalizeRvfiPacketTags_inputs_robInputs` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet-tag source-input
+projection now identifies the exact generic ROB input stream, including
+adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** compose the normalized packet-tag input/packet-input equality
+with the packetized RVFI-to-ROB input bridge; source-input order and payloads
+remain exact, and no packet reconstruction is introduced.

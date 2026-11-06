@@ -978,6 +978,54 @@ theorem normalizeRvfiPacketTags_inputs {State : Type}
   rw [← machine.toRobMachine_tags]
   exact machine.toRobMachine_tags_inputs state cycles
 
+/- A successful normalized packet capture also exposes the packet-tag source
+   inputs under the generic ROB machine's input projection. -/
+theorem normalizeRvfiPacketTags_inputs_robInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (_h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (rvfiPacketTags machine state cycles).flatten.map TaggedCommit.input =
+      robInputs machine.toRobMachine state cycles := by
+  calc
+    (rvfiPacketTags machine state cycles).flatten.map TaggedCommit.input =
+        packetInputs machine.toPacketMachine state cycles :=
+      normalizeRvfiPacketTags_inputs machine state cycles _h
+    _ = robInputs machine.toRobMachine state cycles :=
+      (machine.toRobMachine_inputs state cycles).symm
+
+/- Packet-tag source-input projections compose across adjacent normalized
+   windows through the generic ROB input append law. -/
+theorem normalizeRvfiPacketTags_inputs_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state first ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  calc
+    (rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state (first ++ second) :=
+      normalizeRvfiPacketTags_inputs_robInputs machine state
+        (first ++ second) hcombined
+    _ = robInputs machine.toRobMachine state first ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second :=
+      RvfiPacketMachine.toRobMachine_inputs_append machine state first second
+
 /- Packet-tag source-input projections compose across adjacent normalized
    windows, with the second window evaluated from the first retained state. -/
 theorem normalizeRvfiPacketTags_inputs_append {State : Type}
@@ -5840,6 +5888,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_append

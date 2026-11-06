@@ -7336,7 +7336,7 @@ theorem markUnboundLocals_noop {body : List Stmt} {env : Env}
   · simp [markUnboundLocals, hbody, hraise, hhandler]
   · simp [markUnboundLocals, hbody, hraise, htarget]
 
-/-- Extract names from the extractor's retained `Unsupported Global` text.
+/-- Collect the names carried by structured `globalDecl` nodes.
 The declaration has no runtime action; its names are the compile-time scope
 fact consumed by the call frame. -/
 def globalNamesBody (body : Array Stmt) : List String :=

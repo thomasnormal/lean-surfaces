@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
+
 - Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
 
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.

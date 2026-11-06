@@ -9662,3 +9662,22 @@ the AST carries its names directly.
 DECIDED: retain per-name definition ordering and duplicate-name refusal until
 module definitions become runtime bindings; the current table representation
 must never answer a position-sensitive program silently.
+
+## 2026-11-06-pycomplete-374 — remove the stale global-text audit description
+
+The structured-global audit is now reflected in the implementation comments as
+well as the AST and parser: `ast.Global.names` becomes `Stmt.globalDecl` and
+scope setup consumes that array directly. No Python source text is reparsed, and
+the old comment claiming that an `Unsupported Global` text payload was retained
+was stale after the structured node landed.
+
+| Measurement | Result |
+|---|---|
+| Long-name script | CPython/model output `5` |
+| Runner build | `lake build leanmodels-run`: 40 jobs passed |
+| Documentation check | 89 marked blocks passed |
+| Backlog index | regenerated and synchronized |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep global declarations as structured AST data through ingestion and
+execution; source-text parsing is not part of the Python semantics path.

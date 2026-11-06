@@ -9412,3 +9412,24 @@ refuses before silently changing control flow.
 DECIDED: try control flow remains a structured AST boundary; no exact-source
 shape is lowered into another program until full handler and cleanup state is
 modeled.
+
+## 2026-11-06-pycomplete-361 — remove builtin-name display and comprehension lowerings
+
+The extractor no longer spells set displays, list/set/dict comprehensions,
+starred displays, starred call arguments, or starred `for` targets as calls to
+shadowable builtins or synthetic temporaries. These constructs now remain
+explicit `Unsupported` AST boundaries until native display and unpacking cases
+are implemented. The affected envelopes were regenerated under CPython 3.9,
+and differential rows were changed to explicit loud expectations where the
+construct is reached.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 161 passed |
+| Envelope freshness | FRESH 81, STALE 0 |
+| Native differential | 4196 cases: 0 failed, 181 whitelisted unsupported, 4015 matched |
+| Formatting | `git diff --check` passed |
+
+DECIDED: display and comprehension syntax is never represented as a call to a
+shadowable builtin; unsupported display shapes refuse loudly until their own
+semantic cases land.

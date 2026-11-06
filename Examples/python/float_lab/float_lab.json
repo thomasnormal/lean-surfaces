@@ -3747,64 +3747,15 @@
               }
             ],
             "value": {
-              "kind": "Call",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 137,
                 "col_offset": 13,
                 "end_lineno": 137,
                 "end_col_offset": 23
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 137,
-                  "col_offset": 13,
-                  "end_lineno": 137,
-                  "end_col_offset": 23
-                },
-                "id": "set"
-              },
-              "args": [
-                {
-                  "kind": "List",
-                  "span": {
-                    "lineno": 137,
-                    "col_offset": 13,
-                    "end_lineno": 137,
-                    "end_col_offset": 23
-                  },
-                  "elts": [
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 137,
-                        "col_offset": 14,
-                        "end_lineno": 137,
-                        "end_col_offset": 17
-                      },
-                      "value": {
-                        "type": "float",
-                        "bits": "4607182418800017408"
-                      }
-                    },
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 137,
-                        "col_offset": 19,
-                        "end_lineno": 137,
-                        "end_col_offset": 22
-                      },
-                      "value": {
-                        "type": "float",
-                        "bits": "4611686018427387904"
-                      }
-                    }
-                  ]
-                }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              "py_kind": "Set:display",
+              "text": "{1.0, 2.0}"
             }
           },
           {
@@ -6682,95 +6633,15 @@
               "end_col_offset": 53
             },
             "value": {
-              "kind": "ListComp",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 270,
                 "col_offset": 11,
                 "end_lineno": 270,
                 "end_col_offset": 53
               },
-              "elt": {
-                "kind": "Call",
-                "span": {
-                  "lineno": 270,
-                  "col_offset": 12,
-                  "end_lineno": 270,
-                  "end_col_offset": 24
-                },
-                "func": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 270,
-                    "col_offset": 12,
-                    "end_lineno": 270,
-                    "end_col_offset": 17
-                  },
-                  "id": "float"
-                },
-                "args": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 270,
-                      "col_offset": 18,
-                      "end_lineno": 270,
-                      "end_col_offset": 23
-                    },
-                    "id": "value"
-                  }
-                ],
-                "keywords": [],
-                "call_unsupported": null
-              },
-              "target": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 270,
-                  "col_offset": 29,
-                  "end_lineno": 270,
-                  "end_col_offset": 34
-                },
-                "id": "value"
-              },
-              "iter": {
-                "kind": "Tuple",
-                "span": {
-                  "lineno": 270,
-                  "col_offset": 38,
-                  "end_lineno": 270,
-                  "end_col_offset": 52
-                },
-                "elts": [
-                  {
-                    "kind": "Constant",
-                    "span": {
-                      "lineno": 270,
-                      "col_offset": 39,
-                      "end_lineno": 270,
-                      "end_col_offset": 44
-                    },
-                    "value": {
-                      "type": "str",
-                      "value": "0.1"
-                    }
-                  },
-                  {
-                    "kind": "Constant",
-                    "span": {
-                      "lineno": 270,
-                      "col_offset": 46,
-                      "end_lineno": 270,
-                      "end_col_offset": 51
-                    },
-                    "value": {
-                      "type": "str",
-                      "value": "1.5"
-                    }
-                  }
-                ]
-              },
-              "ifs": [],
-              "walrus": []
+              "py_kind": "ListComp",
+              "text": "[float(value) for value in ('0.1', '1.5')]"
             }
           }
         ]

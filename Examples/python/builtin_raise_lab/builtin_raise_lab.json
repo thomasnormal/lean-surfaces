@@ -8298,7 +8298,7 @@
                 }
               }
             ],
-            "try_unsupported": null
+            "try_unsupported": "generator try frame"
           },
           {
             "kind": "Yield",

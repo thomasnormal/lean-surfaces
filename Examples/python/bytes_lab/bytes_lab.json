@@ -2306,68 +2306,15 @@
               "end_col_offset": 45
             },
             "value": {
-              "kind": "ListComp",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 84,
                 "col_offset": 11,
                 "end_lineno": 84,
                 "end_col_offset": 45
               },
-              "elt": {
-                "kind": "BinOp",
-                "span": {
-                  "lineno": 84,
-                  "col_offset": 12,
-                  "end_lineno": 84,
-                  "end_col_offset": 23
-                },
-                "left": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 84,
-                    "col_offset": 12,
-                    "end_lineno": 84,
-                    "end_col_offset": 19
-                  },
-                  "id": "element"
-                },
-                "op": "Add",
-                "right": {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 84,
-                    "col_offset": 22,
-                    "end_lineno": 84,
-                    "end_col_offset": 23
-                  },
-                  "value": {
-                    "type": "int",
-                    "repr": "1"
-                  }
-                }
-              },
-              "target": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 84,
-                  "col_offset": 28,
-                  "end_lineno": 84,
-                  "end_col_offset": 35
-                },
-                "id": "element"
-              },
-              "iter": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 84,
-                  "col_offset": 39,
-                  "end_lineno": 84,
-                  "end_col_offset": 44
-                },
-                "id": "value"
-              },
-              "ifs": [],
-              "walrus": []
+              "py_kind": "ListComp",
+              "text": "[element + 1 for element in value]"
             }
           }
         ]

@@ -1312,74 +1312,15 @@
               }
             ],
             "value": {
-              "kind": "Call",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 47,
                 "col_offset": 8,
                 "end_lineno": 47,
                 "end_col_offset": 20
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 47,
-                  "col_offset": 8,
-                  "end_lineno": 47,
-                  "end_col_offset": 20
-                },
-                "id": "set"
-              },
-              "args": [
-                {
-                  "kind": "List",
-                  "span": {
-                    "lineno": 47,
-                    "col_offset": 8,
-                    "end_lineno": 47,
-                    "end_col_offset": 20
-                  },
-                  "elts": [
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 47,
-                        "col_offset": 9,
-                        "end_lineno": 47,
-                        "end_col_offset": 10
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "1"
-                      }
-                    },
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 47,
-                        "col_offset": 12,
-                        "end_lineno": 47,
-                        "end_col_offset": 16
-                      },
-                      "value": {
-                        "type": "bool",
-                        "value": true
-                      }
-                    },
-                    {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 47,
-                        "col_offset": 18,
-                        "end_lineno": 47,
-                        "end_col_offset": 19
-                      },
-                      "id": "a"
-                    }
-                  ]
-                }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              "py_kind": "Set:display",
+              "text": "{1, True, a}"
             }
           },
           {
@@ -1512,75 +1453,15 @@
               },
               "args": [
                 {
-                  "kind": "Call",
+                  "kind": "Unsupported",
                   "span": {
                     "lineno": 52,
                     "col_offset": 15,
                     "end_lineno": 52,
                     "end_col_offset": 23
                   },
-                  "func": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 52,
-                      "col_offset": 15,
-                      "end_lineno": 52,
-                      "end_col_offset": 23
-                    },
-                    "id": "set"
-                  },
-                  "args": [
-                    {
-                      "kind": "List",
-                      "span": {
-                        "lineno": 52,
-                        "col_offset": 15,
-                        "end_lineno": 52,
-                        "end_col_offset": 23
-                      },
-                      "elts": [
-                        {
-                          "kind": "List",
-                          "span": {
-                            "lineno": 52,
-                            "col_offset": 16,
-                            "end_lineno": 52,
-                            "end_col_offset": 22
-                          },
-                          "elts": [
-                            {
-                              "kind": "Constant",
-                              "span": {
-                                "lineno": 52,
-                                "col_offset": 17,
-                                "end_lineno": 52,
-                                "end_col_offset": 18
-                              },
-                              "value": {
-                                "type": "int",
-                                "repr": "1"
-                              }
-                            },
-                            {
-                              "kind": "Constant",
-                              "span": {
-                                "lineno": 52,
-                                "col_offset": 20,
-                                "end_lineno": 52,
-                                "end_col_offset": 21
-                              },
-                              "value": {
-                                "type": "int",
-                                "repr": "2"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
-                  "keywords": [],
-                  "call_unsupported": null
+                  "py_kind": "Set:display",
+                  "text": "{[1, 2]}"
                 }
               ],
               "keywords": [],
@@ -3080,114 +2961,15 @@
               }
             ],
             "value": {
-              "kind": "Call",
+              "kind": "Unsupported",
               "span": {
                 "lineno": 103,
                 "col_offset": 8,
                 "end_lineno": 103,
                 "end_col_offset": 33
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 103,
-                  "col_offset": 8,
-                  "end_lineno": 103,
-                  "end_col_offset": 33
-                },
-                "id": "set"
-              },
-              "args": [
-                {
-                  "kind": "GeneratorExp",
-                  "span": {
-                    "lineno": 103,
-                    "col_offset": 8,
-                    "end_lineno": 103,
-                    "end_col_offset": 33
-                  },
-                  "elt": {
-                    "kind": "BinOp",
-                    "span": {
-                      "lineno": 103,
-                      "col_offset": 9,
-                      "end_lineno": 103,
-                      "end_col_offset": 14
-                    },
-                    "left": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 103,
-                        "col_offset": 9,
-                        "end_lineno": 103,
-                        "end_col_offset": 10
-                      },
-                      "id": "i"
-                    },
-                    "op": "Mod",
-                    "right": {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 103,
-                        "col_offset": 13,
-                        "end_lineno": 103,
-                        "end_col_offset": 14
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "3"
-                      }
-                    }
-                  },
-                  "target": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 103,
-                      "col_offset": 19,
-                      "end_lineno": 103,
-                      "end_col_offset": 20
-                    },
-                    "id": "i"
-                  },
-                  "iter": {
-                    "kind": "Call",
-                    "span": {
-                      "lineno": 103,
-                      "col_offset": 24,
-                      "end_lineno": 103,
-                      "end_col_offset": 32
-                    },
-                    "func": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 103,
-                        "col_offset": 24,
-                        "end_lineno": 103,
-                        "end_col_offset": 29
-                      },
-                      "id": "range"
-                    },
-                    "args": [
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 103,
-                          "col_offset": 30,
-                          "end_lineno": 103,
-                          "end_col_offset": 31
-                        },
-                        "id": "n"
-                      }
-                    ],
-                    "keywords": [],
-                    "call_unsupported": null
-                  },
-                  "ifs": [],
-                  "walrus": []
-                }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              "py_kind": "SetComp",
+              "text": "{i % 3 for i in range(n)}"
             }
           },
           {

@@ -7451,60 +7451,15 @@
               },
               "args": [
                 {
-                  "kind": "Call",
+                  "kind": "Unsupported",
                   "span": {
                     "lineno": 267,
                     "col_offset": 17,
                     "end_lineno": 267,
                     "end_col_offset": 21
                   },
-                  "func": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 267,
-                      "col_offset": 17,
-                      "end_lineno": 267,
-                      "end_col_offset": 21
-                    },
-                    "id": "<star-list>"
-                  },
-                  "args": [
-                    {
-                      "kind": "Call",
-                      "span": {
-                        "lineno": 267,
-                        "col_offset": 18,
-                        "end_lineno": 267,
-                        "end_col_offset": 20
-                      },
-                      "func": {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 267,
-                          "col_offset": 18,
-                          "end_lineno": 267,
-                          "end_col_offset": 20
-                        },
-                        "id": "<star-tuple>"
-                      },
-                      "args": [
-                        {
-                          "kind": "Name",
-                          "span": {
-                            "lineno": 267,
-                            "col_offset": 19,
-                            "end_lineno": 267,
-                            "end_col_offset": 20
-                          },
-                          "id": "d"
-                        }
-                      ],
-                      "keywords": [],
-                      "call_unsupported": null
-                    }
-                  ],
-                  "keywords": [],
-                  "call_unsupported": null
+                  "py_kind": "Starred:display",
+                  "text": "[*d]"
                 }
               ],
               "keywords": [],
@@ -11567,64 +11522,15 @@
                       },
                       "op": "BitAnd",
                       "right": {
-                        "kind": "Call",
+                        "kind": "Unsupported",
                         "span": {
                           "lineno": 405,
                           "col_offset": 35,
                           "end_lineno": 405,
                           "end_col_offset": 41
                         },
-                        "func": {
-                          "kind": "Name",
-                          "span": {
-                            "lineno": 405,
-                            "col_offset": 35,
-                            "end_lineno": 405,
-                            "end_col_offset": 41
-                          },
-                          "id": "set"
-                        },
-                        "args": [
-                          {
-                            "kind": "List",
-                            "span": {
-                              "lineno": 405,
-                              "col_offset": 35,
-                              "end_lineno": 405,
-                              "end_col_offset": 41
-                            },
-                            "elts": [
-                              {
-                                "kind": "Constant",
-                                "span": {
-                                  "lineno": 405,
-                                  "col_offset": 36,
-                                  "end_lineno": 405,
-                                  "end_col_offset": 37
-                                },
-                                "value": {
-                                  "type": "int",
-                                  "repr": "1"
-                                }
-                              },
-                              {
-                                "kind": "Constant",
-                                "span": {
-                                  "lineno": 405,
-                                  "col_offset": 39,
-                                  "end_lineno": 405,
-                                  "end_col_offset": 40
-                                },
-                                "value": {
-                                  "type": "int",
-                                  "repr": "9"
-                                }
-                              }
-                            ]
-                          }
-                        ],
-                        "keywords": [],
-                        "call_unsupported": null
+                        "py_kind": "Set:display",
+                        "text": "{1, 9}"
                       }
                     }
                   ],

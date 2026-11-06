@@ -1161,6 +1161,39 @@ theorem normalizeRvfiPacketRobInputs_length_append {State : Type}
   exact normalizeRvfiPacketRobInputs_length machine state (first ++ second)
     hcombined
 
+/- The normalized generic ROB input stream has the packet machine's exact
+   packet-input cardinality. -/
+theorem normalizeRvfiPacketRobInputs_length_packetInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robInputs machine.toRobMachine state cycles).length =
+      (packetInputs machine.toPacketMachine state cycles).length := by
+  exact congrArg List.length
+    (machine.toRobMachine_inputs state cycles)
+
+/- The normalized generic ROB input cardinality bridge composes across
+   adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobInputs_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robInputs machine.toRobMachine state (first ++ second)).length =
+      (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRobInputs_length_packetInputs machine state
+    (first ++ second) hcombined
+
 /- Normalized packet source-input projections compose across adjacent windows
    with the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
@@ -3737,6 +3770,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_packetInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_packetInputs

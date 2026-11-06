@@ -108,6 +108,12 @@ Dynamic, overlapping, or incomplete qualified cases remain loud rather than
 falling through to plain-case behavior; `function_unique_case_eval` pins the
 admitted shape.
 
+The `function_case_return_name` clean-room witness also admits a qualified
+case whose default arm assigns the function name while an explicit `return`
+publishes the local temporary. The inliner preserves the temporary's
+uninitialized `x` result on that path instead of substituting the unrelated
+function-name assignment.
+
 ## Mixed combinational and asynchronous-reset cycles
 
 The sequential reset profile now admits continuous assignments and comb

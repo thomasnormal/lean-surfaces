@@ -11941,8 +11941,13 @@ def _sym_case_function_shape(subroutine):
         if (getattr(default_assignment, "op", None) is not None
                 or getattr(default_assignment, "timingControl", None) is not None
                 or getattr(default_assignment, "isNonBlocking", False)
-                or type(default_left).__name__ != "NamedValueExpression"
-                or getattr(default_left, "symbol", None) is not local):
+                or type(default_left).__name__ != "NamedValueExpression"):
+            return None
+        default_symbol = getattr(default_left, "symbol", None)
+        default_to_x = default_symbol is not local
+        if (default_to_x
+                and getattr(default_symbol, "name", None)
+                    != getattr(subroutine, "name", None)):
             return None
         # Every declaration except the selected local must be absent from the
         # shape: a later local read would require a scoped SSA environment.
@@ -11966,7 +11971,8 @@ def _sym_case_function_shape(subroutine):
                         return None
                     seen.add(key)
         return (getattr(case, "expr", None), arms,
-                getattr(default_assignment, "right", None), local, check)
+                getattr(default_assignment, "right", None), local, check,
+                default_to_x)
     except Exception:
         return None
 
@@ -13085,7 +13091,7 @@ def _sym_inline_function_call(sm, e):
             for expression in conditional_shape:
                 expression.visit(inspect)
         else:
-            case_expr, case_arms, case_default, _local, _case_check = case_shape
+            case_expr, case_arms, case_default, _local, _case_check, _default_to_x = case_shape
             case_expr.visit(inspect)
             case_default.visit(inspect)
             for patterns, arm in case_arms:
@@ -13184,9 +13190,14 @@ def _convert_sym_call_expr(sm, e):
         case_check = None
         with _SymCallBinding(bindings):
             if case_shape is not None:
-                case_subject, case_arms, case_default, _local, case_check = case_shape
+                case_subject, case_arms, case_default, _local, case_check, default_to_x = case_shape
                 subject = convert_expr(sm, case_subject)
-                value = convert_expr(sm, case_default)
+                if default_to_x:
+                    value = {"kind": "Literal", "span": node_span(sm, e),
+                             "width": e.type.bitWidth,
+                             "bits": "x" * e.type.bitWidth}
+                else:
+                    value = convert_expr(sm, case_default)
                 if subject is None or value is None:
                     value = None
                 else:

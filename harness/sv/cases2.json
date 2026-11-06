@@ -86,6 +86,17 @@
       "measured": "A straight-line automatic function with a statically safe unique case (distinct literal labels and a default) is inlined with ordinary first-match value semantics; overlapping, dynamic, or incomplete qualified cases remain loud."
     },
     {
+      "name": "function_case_return_name",
+      "example": "seq_function_case_return_name",
+      "top": "function_case_return_name",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0001"}
+      ],
+      "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
+    },
+    {
       "name": "async_mem_fifo",
       "example": "seq_mem",
       "top": "async_mem_fifo",

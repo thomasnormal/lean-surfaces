@@ -6427,3 +6427,6 @@ The regression guard now also checks the INT lookup itself (`N` is bound in
 `only_n16`, `add_gg2`, and `add_int32` fixtures all build with their
 `int32Agrees` checks, so parameter-dependent generate branches no longer fail
 just because the exact path uses the typed-value table.
+The `add_int32` proof also inspects the instantiated process shape: `N = 16`
+selects `s = sr`, while `N = 5` wraps `M` to the negative signed-32 value and
+selects `s = ~sr`.

@@ -1,6 +1,7 @@
 import LeanModels.Sv.Hier2Gen
 import LeanModels.Sv.Comb2Base
 import LeanModels.Sv.CombViewArith
+import LeanModels.Sv.Loop2
 
 /-!
 # `sv_structure`, stage 1: the family summary of a `PDesign` and its soundness
@@ -193,6 +194,10 @@ def IntRange (σ : String → Int) (ns : List String) : Prop :=
 theorem IntRange.mono {σ : String → Int} {ns ms : List String}
     (h : IntRange σ ns) (hs : ∀ n ∈ ms, n ∈ ns) : IntRange σ ms :=
   fun n hn => h n (hs n hn)
+
+theorem canonInt32_of_range {v : Int} (h : -2147483648 ≤ v ∧ v < 2147483648) :
+    canonInt 32 true v = v := by
+  exact Loop2.int32_of_inInt32 h
 
 theorem Agrees.bindVal {σ : String → Int} {E : IEnv} {ns : List String} (h : Agrees σ E ns)
     (g : String) (i : Int) : Agrees (bindσ g i σ) (E.bindVal g i) (g :: ns) := by

@@ -1867,6 +1867,20 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs_length {State : Type}
     windows retirementWindows h
   simpa only [List.length_map] using hlen
 
+/- A certified packet-window chain's generic ROB input stream has exactly the
+   flattened normalized retirement cardinality. -/
+theorem normalizeRvfiPacketWindows_robInputs_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robInputs machine.toRobMachine state windows.flatten).length =
+      retirementWindows.flatten.length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketRobInputs_length machine state windows.flatten hflat
+
 /- ROB-tag cardinality composes across adjacent normalized packet-window
    chains, retaining the second chain's carried state and order boundary. -/
 theorem normalizeRvfiPacketWindows_rob_tags_length_append {State : Type}
@@ -2460,6 +2474,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

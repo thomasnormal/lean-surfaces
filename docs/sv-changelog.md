@@ -6475,3 +6475,10 @@ default sample before the trace begins. This prevents simulator-style
 x-optimism (`!x` becoming true) in the E contract. `$rose` and `$fell` keep
 their sampled-value edge semantics.
 
+## 2026-11-06 — typed-int `$clog2` localparams
+
+The comb summary's constant-expression path now keeps `$clog2` in the same
+32-bit signed `int` class for typed `int` localparams as for `integer`
+localparams. Concrete guards cover both a positive and a zero result; the
+source-shaped Sklansky generate-family walls remain the named obligations above.
+

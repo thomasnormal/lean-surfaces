@@ -2011,6 +2011,12 @@ private def guardIntClog2 : PLocalParam :=
 #guard (match lpOf? ["N"] guardIntClog2 with
   | .ok (.clog2S (.ref "N")) => true
   | _ => false)
+#guard (match bindLocal { vals := [("N", 16)], int32 := true } guardIntClog2 with
+  | .ok e => e.nvals.lookup "L" == some (4, 32, true)
+  | .error _ => false)
+#guard (match bindLocal { vals := [("N", 1)], int32 := true } guardIntClog2 with
+  | .ok e => e.nvals.lookup "L" == some (0, 32, true)
+  | .error _ => false)
 
 end CombView
 end LeanModels.Sv

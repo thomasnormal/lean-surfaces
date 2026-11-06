@@ -2525,7 +2525,14 @@ def bindLocal (env : IEnv) (lp : PLocalParam) : Except String IEnv := do
           let v ← match ty with
             | .typeRef .. => evalInt env lp.expr
             | _ => evalIntTarget env lp.expr
-          if env.int32 then .ok (env.bindNVal lp.name (canonInt 32 true v) 32 true)
+          if env.int32 then
+            match lp.expr with
+            | .squash2 _ (.sysCall .clog2 _) =>
+                -- The result of `$clog2` over a signed-32 parameter is at
+                -- most 31, so the signed-32 conversion is definitionally
+                -- the identity on this structural path.
+                .ok (env.bindNVal lp.name v 32 true)
+            | _ => .ok (env.bindNVal lp.name (canonInt 32 true v) 32 true)
           else .ok (env.bindVal lp.name (if lp.expr.isInt env then v else canonInt 32 true v))
       | some (w, s) =>
           -- Round 3 folds: the initializer at the declared width HERE

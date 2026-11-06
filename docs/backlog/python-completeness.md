@@ -9888,3 +9888,22 @@ boundary. The ordinary namedtuple script remains a CPython 3.9.25 match.
 DECIDED: keep the value-like static table for candidates after their import;
 source-order hazards remain loud until namedtuple construction is modeled as a
 runtime builtin and class value.
+
+## 2026-11-06-pycomplete-389 — keep shadowed aliases dynamic inside callees
+
+The copied alias table already refused identity observations and handled a
+direct top-level shadow (`g = f; g = 7; print(g)`). A deeper source-order hole
+remained when a function body called the alias after that shadow:
+`a = f; def g(): return a(); a = 3; print(g())` printed `1` in leanpy while
+CPython 3.9.25 raised `TypeError`. The script view now adds a poisoned marker
+for every admitted alias with a later top-level binding, forcing function-body
+lookups through the live module frame. The resulting scalar callee now raises
+the same `TypeError` as CPython rather than using stale static dispatch.
+
+The new `harness/scripts/alias_rebound_callee.py` witness records this match;
+the existing direct `alias_rebound.py` row continues to match and still prints
+`7`.
+
+DECIDED: retain copied static alias dispatch only while no later live binding
+can shadow the name; function-valued alias semantics remain a later runtime
+value extension.

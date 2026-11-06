@@ -7,6 +7,11 @@
   `from collections import namedtuple` stays on the loud runtime path, so
   ingestion cannot move the import before its CPython execution point.
 
+- Script mode now poisons copied function aliases that have a later ordinary
+  binding, so function bodies consult the live module frame instead of calling
+  a stale static alias entry; the scalar shadow now reproduces CPython's
+  `TypeError`. General function-object values remain outside the tier.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

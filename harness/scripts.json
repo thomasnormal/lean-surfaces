@@ -274,6 +274,11 @@
     "note": "an ordinary later assignment shadows the admitted alias"
   },
   {
+    "file": "harness/scripts/alias_rebound_callee.py",
+    "expect": "match",
+    "note": "a later ordinary alias shadow is visible inside a function body; both runtimes raise TypeError"
+  },
+  {
     "file": "harness/scripts/alias_bisect_shape.py",
     "expect": "match"
   },

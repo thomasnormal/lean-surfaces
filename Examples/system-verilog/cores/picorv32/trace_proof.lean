@@ -3081,6 +3081,25 @@ theorem pinned_packet_tags_inputs_length_robTrace_append :
     packetSecondCycles pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_tags_inputs_length_packetTrace :
+    ((rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      packetCycleInputs).flatten.map TaggedCommit.input).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        packetCycleInputs).length := by
+  exact normalizeRvfiPacketTags_inputs_length_packetTrace pinnedPacketMachine
+    pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_tags_inputs_length_packetTrace_append :
+    ((rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      (packetFirstCycles ++ packetSecondCycles)).flatten.map
+        TaggedCommit.input).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length := by
+  exact normalizeRvfiPacketTags_inputs_length_packetTrace_append
+    pinnedPacketMachine pinnedPacketMachine.init packetFirstCycles
+    packetSecondCycles pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
+
 theorem pinned_cycle_trace :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs = nontrapExpected := by
@@ -3839,6 +3858,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_tags_inputs_length_packetInputs_append
 #print axioms pinned_packet_tags_inputs_length_robTrace
 #print axioms pinned_packet_tags_inputs_length_robTrace_append
+#print axioms pinned_packet_tags_inputs_length_packetTrace
+#print axioms pinned_packet_tags_inputs_length_packetTrace_append
 #print axioms pinned_packet_trace
 #print axioms pinned_packet_trace_length
 #print axioms pinned_packet_trace_length_append

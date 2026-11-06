@@ -411,3 +411,10 @@ def walrus_stmt(n):
     if (v := n + 1) > 2:
         return v
     return 0
+
+
+def unconsumed_noniterable():
+    # CPython performs GET_ITER when the generator expression is created;
+    # the model's creation-time admission keeps this TypeError loud.
+    g = (x for x in 5)
+    return 1

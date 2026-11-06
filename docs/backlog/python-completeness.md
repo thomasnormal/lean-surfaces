@@ -9203,3 +9203,23 @@ envelopes found by the gate were refreshed as part of this item.
 
 DECIDED: validate the frontend stamp at the ingestion boundary and keep the
 family-level 3.9 pin stable across point releases.
+
+## 2026-11-06-pycomplete-350 — add differential rows for audit edges
+
+The differential battery now covers the negative set hash whose iteration order
+does not coincide with the old `-1` probe, and generator-expression creation
+over a non-iterable source. The latter is an explicit loud row: CPython raises
+the creation-time `TypeError`, while the model refuses rather than returning a
+value before the generator is consumed. The existing script fixtures continue
+to cover the recursion-limit, list-comprehension shadow, oversized repetition,
+module annotation, and dead-yield audit examples.
+
+| Measurement | Result |
+|---|---|
+| Differential suite | 4189 cases: 0 failed, 105 whitelisted unsupported, 4084 matched |
+| Extractor tests | 161 passed |
+| Added rows | `set_lab.iter_order(-5)`, `gen_lab.unconsumed_noniterable()` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep audit witnesses in the pinned differential corpus, including
+explicit loud rows where the semantics has not yet modeled the construct.

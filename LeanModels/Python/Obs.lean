@@ -3346,7 +3346,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         simp [hfc]
                         split
                         · cases args.toList with
-                          | nil => exact .unsupported
+                          | nil => exact .exn
                           | cons arg rest =>
                             cases rest with
                             | cons _ _ => simp; exact .unsupported
@@ -3365,7 +3365,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           by_cases hpy : isPyBuiltinName id
                           · simp [hfc, hnt, hpy]
                             cases args.toList with
-                            | nil => exact .unsupported
+                            | nil =>
+                              by_cases hb : id ∈ admittedBuiltinRaise
+                              · simp [hb]; exact .exn
+                              · simp [hb]; exact .unsupported
                             | cons arg rest =>
                               cases rest with
                               | cons _ _ => simp; exact .unsupported

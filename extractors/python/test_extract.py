@@ -604,11 +604,13 @@ class ExtractorTests(unittest.TestCase):
             "    raise ValueError\n")
         self.assertIsNone(fn["locals_unsupported"])
 
-    def test_zero_argument_raise_constructor_lowers_to_class_name(self):
+    def test_zero_argument_raise_constructor_stays_a_call(self):
         fn = self._first_fn("def f():\n    raise ValueError()\n")
         exc = fn["body"][0]["exc"]
-        self.assertEqual(exc["kind"], "Name")
-        self.assertEqual(exc["id"], "ValueError")
+        self.assertEqual(exc["kind"], "Call")
+        self.assertEqual(exc["func"]["kind"], "Name")
+        self.assertEqual(exc["func"]["id"], "ValueError")
+        self.assertEqual(exc["args"], [])
 
     def test_raise_constructor_with_arguments_stays_a_call(self):
         fn = self._first_fn("def f():\n    raise ValueError('boom')\n")
@@ -762,7 +764,7 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(stmt["exc_names"], ["TypeError", "ZeroDivisionError"])
         self.assertIsNone(stmt["try_unsupported"])
 
-    def test_noop_finally_lowers_to_body(self):
+    def test_noop_finally_stays_structured_and_loud(self):
         env = self._envelope_of(
             "def f(n):\n"
             "    try:\n"
@@ -773,7 +775,7 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(body[0]["kind"], "Try")
         self.assertIn("finally", body[0]["try_unsupported"])
 
-    def test_scalar_append_finally_lowers_before_return(self):
+    def test_scalar_append_finally_stays_structured_and_loud(self):
         env = self._envelope_of(
             "def f():\n"
             "    values = []\n"
@@ -798,7 +800,7 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(stmt["kind"], "Try")
         self.assertIn("'finally' clause", stmt["try_unsupported"])
 
-    def test_safe_generator_yield_under_stop_lowers_to_yield(self):
+    def test_generator_yield_under_try_stays_structured_and_loud(self):
         env = self._envelope_of(
             "def f(value):\n"
             "    try:\n"

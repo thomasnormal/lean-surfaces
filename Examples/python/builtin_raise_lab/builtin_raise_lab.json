@@ -8525,14 +8525,26 @@
               "end_col_offset": 22
             },
             "exc": {
-              "kind": "Name",
+              "kind": "Call",
               "span": {
                 "lineno": 770,
                 "col_offset": 10,
                 "end_lineno": 770,
-                "end_col_offset": 20
+                "end_col_offset": 22
               },
-              "id": "ValueError"
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 770,
+                  "col_offset": 10,
+                  "end_lineno": 770,
+                  "end_col_offset": 20
+                },
+                "id": "ValueError"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]

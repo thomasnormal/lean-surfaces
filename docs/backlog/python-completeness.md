@@ -9880,6 +9880,25 @@ DECIDED: keep the structured class marker and qualified method index as the
 current exact boundary; defer full runtime class objects/namespaces rather than
 silently extending the flattened representation.
 
+## 2026-11-06-pycomplete-393 — retain structured try and raise nodes
+
+The extractor's shape-specific `try` lowerings are already absent. Current
+`convert_stmt(ast.Try)` carries the body, one structured handler, and a
+`try_unsupported` reason; `else`, `finally`, multiple handlers, and generator
+try frames remain loud. The dead success-flag helper and stale comments that
+described nested-`Try` or finalizer rewrites were removed. The extractor tests
+now name these cases as structured-and-loud rather than lowerings.
+
+One remaining rewrite from the audit was real: `raise N()` was converted to
+the different `raise N` node. The approved call is now retained in the
+`Raise.exc` expression, and the existing interpreter arm owns the measured
+zero-argument class-identity behavior. Regenerated the two affected envelopes;
+their builtin-exception rows retain the CPython 3.9.25 result.
+
+DECIDED: preserve `Try` and `Raise` source nodes through extraction and let
+their interpreters decide the admitted shape; unsupported cleanup, handler,
+and generator-frame forms remain loud until their full semantics is modeled.
+
 ## 2026-11-06-pycomplete-385 — recheck the clock-reading boundary
 
 The clock arm already refuses zero-argument `time.time()` in both interpreters

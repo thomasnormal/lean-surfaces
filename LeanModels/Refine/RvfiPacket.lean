@@ -1023,6 +1023,20 @@ theorem normalizeRvfiPacketWindows_tags_flat_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/-- A certified finite packet-window chain also gives the generic ROB
+interface's flattened tag-order certificate. -/
+theorem normalizeRvfiPacketWindows_rob_tags {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    InOrderTags start
+      (robTags machine.toRobMachine state windows.flatten) := by
+  rw [machine.toRobMachine_tags]
+  exact normalizeRvfiPacketWindows_tags_flat machine state start windows
+    retirementWindows h
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -1177,5 +1191,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

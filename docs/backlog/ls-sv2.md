@@ -1541,3 +1541,14 @@ over its two singleton windows.
 **DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
 chain-level ROB trace projection; no packet completion order or independent
 trace reconstruction is introduced.
+
+## 2026-11-06-ls-sv2-77 — expose generic ROB tags from packet window chains
+
+Added `normalizeRvfiPacketWindows_rob_tags` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now projects directly to the generic `robTags` order certificate, reusing the
+packet-aware flattened tag theorem and the exact packet-to-ROB projection.  The
+PicoRV32 witness pins the generic ROB tag route over its two-window chain.
+
+**DECIDED:** expose generic ROB tags by definitional projection from the
+packet-aware tags; no second order scan or completion ordering is introduced.

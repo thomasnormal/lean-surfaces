@@ -2450,3 +2450,15 @@ both forms.
 **DECIDED:** reuse the exact packet-tag flattening and generic ROB input
 projection; normalization supplies validity but does not reconstruct or reorder
 source inputs.
+
+## 2026-11-06-ls-sv2-152 — expose packet-window tag inputs
+
+Added `normalizeRvfiPacketWindows_tags_inputs` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now exposes its flattened packet-boundary source-input stream, and two
+adjacent certified chains compose that stream with the second chain's carried
+state and order boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only after the window certificate supplies its carried
+state and normalized retirement boundary, then reuse the exact packet-input
+append law; packet boundaries and source-input order remain unchanged.

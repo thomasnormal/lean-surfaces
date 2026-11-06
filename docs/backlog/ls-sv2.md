@@ -2076,3 +2076,16 @@ input-count contract over the complete packet capture.
 
 **DECIDED:** derive mapped-input cardinality from the generic ROB tag count
 and `List.length_map`; no input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-121 — compose normalized packet ROB tag cardinality
+
+Added `normalizeRvfiPacketRobTags_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now prove directly that the concatenated generic ROB tag stream has the
+concatenated decoded retirement cardinality, with the second window evaluated
+from the first window's retained state.  The PicoRV32 witness pins this direct
+append route.
+
+**DECIDED:** compose the existing normalized trace append theorem with the
+flat ROB-tag cardinality projection; no tag order or completion order is
+reconstructed.

@@ -2492,120 +2492,15 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # exact lowering is simply the try body. Keep real finalizers in the
         # structured-but-loud path below; dropping their effects would be
         # unsound.
-        # A measured two-handler slice is lowered to nested existing Try
-        # nodes.  This preserves clause order and lets a nonmatching error
-        # reach the next clause without changing the Lean AST schema.  The
-        # lowering is deliberately narrow: each handler must be a plain-name
-        # class with one scalar-literal return and no binding, so an exception
-        # raised by a handler can never be mistaken for a sibling clause.  A
-        # wider representation needs an explicit handler list and remains a
-        # loud boundary until that state is modeled.
-        if (len(node.handlers) == 2 and not node.orelse and not node.finalbody
-                and all(isinstance(h.type, ast.Name) and h.name is None
-                        and len(h.body) == 1
-                        and isinstance(h.body[0], ast.Return)
-                        and h.body[0].value is not None
-                        and isinstance(h.body[0].value, ast.Constant)
-                        and (h.body[0].value.value is None
-                             or isinstance(h.body[0].value.value,
-                                           (bool, int, str, bytes, float)))
-                        for h in node.handlers)):
-            nested_body = convert_stmt_list(node.body, enclosing=enclosing,
-                                            module_scope=module_scope,
-                                            func_scope=func_scope,
-                                            import_guard=False)
-            # Build the first clause closest to the original body; each later
-            # clause wraps it and therefore sees only a nonmatching error.
-            for h in node.handlers:
-                nested_body = [{
-                    "kind": "Try",
-                    "span": span(node),
-                    "body": nested_body,
-                    "exc_names": [h.type.id],
-                    "handler": convert_stmt_list(
-                        h.body, enclosing=enclosing, module_scope=module_scope,
-                        func_scope=func_scope, import_guard=False),
-                    "try_unsupported": None,
-                }]
-            return nested_body
-        # A generator whose only suspendable statement is a safe yield under
-        # ``except Stop: pass`` can use the existing generator continuation
-        # directly. The general shape needs a try frame so that an exception
-        # raised while resuming can reach its handler; that frame is not part
-        # of the current runtime. This narrow lowering is faithful for the
-        # measured slice because the yield expression is either a scalar
-        # literal or a direct function parameter (neither can raise), and
-        # generator ``throw`` is outside the tier. Keep all other forms
-        # structured-but-loud rather than silently dropping the handler.
-        if (func_scope and isinstance(enclosing, (ast.FunctionDef,
-                                                   ast.AsyncFunctionDef))
-                and _is_generator(enclosing)
-                and len(node.handlers) == 1 and not node.orelse
-                and not node.finalbody
-                and isinstance(node.handlers[0].type, ast.Name)
-                and node.handlers[0].type.id == "Stop"
-                and node.handlers[0].name is None
-                and len(node.handlers[0].body) == 1
-                and isinstance(node.handlers[0].body[0], ast.Pass)
-                and len(node.body) == 1
-                and isinstance(node.body[0], ast.Expr)
-                and isinstance(node.body[0].value, ast.Yield)):
-            yielded = node.body[0].value.value
-            params = {a.arg for a in (*enclosing.args.posonlyargs,
-                                      *enclosing.args.args)}
-            scalar = (isinstance(yielded, ast.Constant)
-                      and (yielded.value is None
-                           or isinstance(yielded.value,
-                                         (bool, int, str, bytes, float))))
-            parameter = isinstance(yielded, ast.Name) and yielded.id in params
-            if scalar or parameter:
-                return convert_stmt_list(
-                    node.body, enclosing=enclosing, module_scope=module_scope,
-                    func_scope=func_scope)
-        # A narrow effectful-finally slice can be lowered without adding a
-        # cleanup frame: when the protected body only returns a name and the
-        # finalizer appends one scalar to that same name, the append executes
-        # before the returned reference is frozen. The name read itself can
-        # only succeed or raise NameError, so no represented exception can
-        # enter the handler; exceptions from the append still propagate from
-        # the finalizer exactly as they do in Python. Keep every other
-        # effectful-finally shape structured-but-loud until all-flow cleanup
-        # is represented in the frame state.
-        if (node.finalbody and not node.orelse
-                and len(node.handlers) == 1
-                and isinstance(node.handlers[0].type, ast.Name)
-                and node.handlers[0].type.id == "TypeError"
-                and node.handlers[0].name is None
-                and len(node.handlers[0].body) == 1
-                and isinstance(node.handlers[0].body[0], ast.Return)
-                and isinstance(node.handlers[0].body[0].value, ast.List)
-                and not node.handlers[0].body[0].value.elts
-                and len(node.body) == 1
-                and isinstance(node.body[0], ast.Return)
-                and isinstance(node.body[0].value, ast.Name)
-                and len(node.finalbody) == 1
-                and isinstance(node.finalbody[0], ast.Expr)
-                and isinstance(node.finalbody[0].value, ast.Call)
-                and isinstance(node.finalbody[0].value.func, ast.Attribute)
-                and node.finalbody[0].value.func.attr == "append"
-                and isinstance(node.finalbody[0].value.func.value, ast.Name)
-                and (node.finalbody[0].value.func.value.id
-                     == node.body[0].value.id)
-                and len(node.finalbody[0].value.args) == 1
-                and not node.finalbody[0].value.keywords
-                and isinstance(node.finalbody[0].value.args[0], ast.Constant)
-                and (node.finalbody[0].value.args[0].value is None
-                     or isinstance(node.finalbody[0].value.args[0].value,
-                                   (bool, int, str, bytes, float)))):
-            return convert_stmt_list(
-                list(node.finalbody) + list(node.body), enclosing=enclosing,
-                module_scope=module_scope, func_scope=func_scope)
-        if (node.finalbody and not node.handlers and not node.orelse
-                and all(isinstance(s, ast.Pass) for s in node.finalbody)):
-            return convert_stmt_list(node.body, enclosing=enclosing,
-                                     module_scope=module_scope,
-                                     func_scope=func_scope)
+        # Shape-specific handler/finally lowerings are deliberately absent.
+        # The compact envelope schema carries a single handler and no else or
+        # finalbody suite, so those forms are retained as structured-but-loud.
         reasons = []
+        if node.orelse:
+            reasons.append("else clause")
+        if (func_scope and isinstance(enclosing, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and _is_generator(enclosing)):
+            reasons.append("generator try frame")
         exc_names = []
         handler_body = []
         if len(node.handlers) != 1:
@@ -2683,32 +2578,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                  func_scope=func_scope,
                                  import_guard=guard)
         handler = handler_body
-        if not node.orelse:
-            return {
-                "kind": "Try",
-                "span": span(node),
-                "body": body,
-                "exc_names": exc_names,
-                "handler": handler,
-                "try_unsupported": ", ".join(reasons) if reasons else None,
-            }
-
-        # CPython runs the ``else`` suite only after the try body completes
-        # normally.  A synthetic flag is assigned at the end of the body;
-        # returns, breaks, continues, unmatched exceptions, and handled
-        # exceptions therefore bypass the trailing ``if`` exactly as they do
-        # in Python.  The marker is fresh in the whole source envelope and
-        # cannot be observed by source code in this tier.
-        marker = _try_else_marker(node)
-        marker_span = span(node)
-        name_node = {"kind": "Name", "span": marker_span, "id": marker}
-        false_node = {"kind": "Constant", "span": marker_span,
-                      "value": {"type": "bool", "value": False}}
-        true_node = {"kind": "Constant", "span": marker_span,
-                     "value": {"type": "bool", "value": True}}
-        body.append({"kind": "Assign", "span": marker_span,
-                     "targets": [name_node], "value": true_node})
-        try_node = {
+        return {
             "kind": "Try",
             "span": span(node),
             "body": body,
@@ -2716,21 +2586,6 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "handler": handler,
             "try_unsupported": ", ".join(reasons) if reasons else None,
         }
-        if_node = {
-            "kind": "If",
-            "span": marker_span,
-            "test": name_node,
-            "body": convert_stmt_list(node.orelse, enclosing=enclosing,
-                                       module_scope=module_scope,
-                                       func_scope=func_scope),
-            "orelse": [],
-        }
-        return [
-            {"kind": "Assign", "span": marker_span,
-             "targets": [name_node], "value": false_node},
-            try_node,
-            if_node,
-        ]
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.YieldFrom):
         # pass 5: `yield from e` in STATEMENT position -- structured

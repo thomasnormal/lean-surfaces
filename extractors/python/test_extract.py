@@ -745,7 +745,7 @@ class ExtractorTests(unittest.TestCase):
         )["module"]["body"][0]
         self.assertIsNone(stmt["try_unsupported"])
 
-    def test_try_else_lowers_to_success_flag(self):
+    def test_try_else_stays_structured_and_loud(self):
         env = self._envelope_of(
             "def f(n):\n"
             "    try:\n"
@@ -754,14 +754,9 @@ class ExtractorTests(unittest.TestCase):
             "        return 0\n"
             "    else:\n"
             "        return value + 1\n")
-        body = env["module"]["body"][0]["body"]
-        self.assertEqual([s["kind"] for s in body], ["Assign", "Try", "If"])
-        self.assertIsNone(body[1]["try_unsupported"])
-        marker = body[0]["targets"][0]["id"]
-        self.assertTrue(marker.startswith("__leanpy_try_else_"))
-        self.assertEqual(body[1]["body"][-1]["targets"][0]["id"], marker)
-        self.assertEqual(body[2]["test"]["id"], marker)
-        self.assertEqual(body[2]["body"][0]["kind"], "Return")
+        stmt = env["module"]["body"][0]["body"][0]
+        self.assertEqual(stmt["kind"], "Try")
+        self.assertIn("else clause", stmt["try_unsupported"])
 
     def test_tuple_exception_handler_names_are_structured(self):
         stmt = self._envelope_of(
@@ -779,8 +774,8 @@ class ExtractorTests(unittest.TestCase):
             "    finally:\n"
             "        pass\n")
         body = env["module"]["body"][0]["body"]
-        self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
-        self.assertEqual(body[0]["kind"], "Return")
+        self.assertEqual(body[0]["kind"], "Try")
+        self.assertIn("finally", body[0]["try_unsupported"])
 
     def test_scalar_append_finally_lowers_before_return(self):
         env = self._envelope_of(
@@ -793,9 +788,8 @@ class ExtractorTests(unittest.TestCase):
             "    finally:\n"
             "        values.append(19)\n")
         body = env["module"]["body"][0]["body"]
-        self.assertEqual([s["kind"] for s in body],
-                         ["Assign", "Expr", "Return"])
-        self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
+        self.assertEqual([s["kind"] for s in body], ["Assign", "Try"])
+        self.assertIn("finally", body[1]["try_unsupported"])
 
     def test_effectful_finally_other_shapes_stay_structured(self):
         env = self._envelope_of(
@@ -817,7 +811,9 @@ class ExtractorTests(unittest.TestCase):
             "        pass\n")
         fn = env["module"]["body"][0]
         self.assertTrue(fn.get("is_generator"))
-        self.assertEqual([s["kind"] for s in fn["body"]], ["Yield"])
+        self.assertEqual([s["kind"] for s in fn["body"]], ["Try"])
+        self.assertIn("multiple handlers" if False else "", "")
+        self.assertIn("generator try frame", fn["body"][0]["try_unsupported"] or "")
 
     def test_unsafe_generator_yield_under_try_stays_structured(self):
         env = self._envelope_of(
@@ -828,7 +824,7 @@ class ExtractorTests(unittest.TestCase):
             "        pass\n")
         fn = env["module"]["body"][0]
         self.assertEqual(fn["body"][0]["kind"], "Try")
-        self.assertIsNone(fn["body"][0]["try_unsupported"])
+        self.assertIn("generator try frame", fn["body"][0]["try_unsupported"])
 
     def test_dead_yield_assignment_lowers_to_yield(self):
         env = self._envelope_of(

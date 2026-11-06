@@ -1192,6 +1192,48 @@ theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
           (packetStateAfter machine.toPacketMachine state first) second :=
       RvfiPacketMachine.toPacketMachine_inputs_append machine state first second
 
+/- The normalized generic-ROB tagged source-input projection has the exact
+   packet-machine input cardinality. -/
+theorem normalizeRvfiPacketRobTags_inputs_length_packetInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((robTags machine.toRobMachine state cycles).map
+        TaggedCommit.input).length =
+      (packetInputs machine.toPacketMachine state cycles).length := by
+  exact congrArg List.length
+    (normalizeRvfiPacketRobTags_inputs machine state cycles h)
+
+/- The normalized generic-ROB tagged-input cardinality bridge composes across
+   adjacent captures, retaining the first capture's state for the second. -/
+theorem normalizeRvfiPacketRobTags_inputs_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input).length =
+      (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+  calc
+    ((robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input).length =
+        (packetInputs machine.toPacketMachine state first ++
+          packetInputs machine.toPacketMachine
+            (packetStateAfter machine.toPacketMachine state first) second).length :=
+      congrArg List.length
+        (normalizeRvfiPacketRobTags_inputs_append machine state first second
+          hfirst hsecond)
+    _ = (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+      rw [packetInputs_append]
+
 /- Normalized retirement payloads compose across adjacent packet windows with
    the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_retirements_append {State : Type}
@@ -3570,6 +3612,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_packetInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags

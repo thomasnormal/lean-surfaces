@@ -2329,6 +2329,14 @@ theorem pinned_packet_rob_tags_inputs_normalized :
   exact normalizeRvfiPacketRobTags_inputs pinnedPacketMachine
     pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
 
+theorem pinned_packet_rob_tags_inputs_length_packetInputs :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+      packetCycleInputs).map TaggedCommit.input).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init packetCycleInputs).length := by
+  exact normalizeRvfiPacketRobTags_inputs_length_packetInputs pinnedPacketMachine
+    pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
+
 theorem pinned_packet_rob_tags_inputs_normalized_robInputs :
     (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
       packetCycleInputs).map TaggedCommit.input =
@@ -2395,6 +2403,17 @@ theorem pinned_packet_windows_rob_tags_inputs_append_normalized :
   exact normalizeRvfiPacketRobTags_inputs_append pinnedPacketMachine
     pinnedPacketMachine.init packetFirstCycles packetSecondCycles
     pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
+theorem pinned_packet_rob_tags_inputs_length_packetInputs_append :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).map
+        TaggedCommit.input).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length := by
+  exact normalizeRvfiPacketRobTags_inputs_length_packetInputs_append
+    pinnedPacketMachine pinnedPacketMachine.init packetFirstCycles
+    packetSecondCycles pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
 
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
@@ -2636,6 +2655,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_retirements_length_robTrace_append
 #print axioms pinned_packet_rob_tags_retirements_normalized
 #print axioms pinned_packet_rob_tags_inputs_normalized
+#print axioms pinned_packet_rob_tags_inputs_length_packetInputs
 #print axioms pinned_packet_rob_tags_inputs_normalized_robInputs
 #print axioms pinned_packet_rob_tags_inputs_length_robInputs
 #print axioms pinned_packet_windows_rob_tags_inputs_normalized_robInputs_append
@@ -2643,6 +2663,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_inputs_normalized_length
 #print axioms pinned_packet_windows_rob_inputs_normalized_length_append
 #print axioms pinned_packet_windows_rob_tags_inputs_append_normalized
+#print axioms pinned_packet_rob_tags_inputs_length_packetInputs_append
 #print axioms pinned_packet_refines
 #print axioms pinned_packet_refines_packet
 #print axioms pinned_packet_refines_append

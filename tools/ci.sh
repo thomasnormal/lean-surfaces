@@ -721,6 +721,7 @@ step  "py-float-boundary-tests" python3 harness/test_float_boundary.py
 step  "notebook-dependency-tests" python3 tools/test_notebook_dependencies.py
 step  "py-declared-divergences" python3 harness/pyc_divergence_probe.py
 step  "py-harness"      python3 harness/diff_test.py --no-build
+step  "py-envelope-fresh" python3 harness/envelope_fresh.py --tier python
 # The same rows through the interpreter the THEOREMS are about
 # (Semantics.lean; the runner's is Monadic/). Its tier is narrower, so a
 # refusal passes; a wrong answer fails exactly as above.

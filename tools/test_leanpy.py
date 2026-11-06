@@ -325,6 +325,33 @@ class PinningTests(unittest.TestCase):
         self.assertIn("WARNING pinned oracle 'python3.9'", output.getvalue())
 
 
+class FrontendAdmissionTests(unittest.TestCase):
+    def test_runner_rejects_a_foreign_frontend_before_execution(self):
+        """A stale 3.12 envelope cannot reach the script interpreter."""
+        source = os.path.join(REPO_ROOT, "Examples/python/add/add.json")
+        with open(source, encoding="utf-8") as f:
+            envelope = json.load(f)
+        envelope["frontend"]["version"] = "3.12.14"
+        path = tempfile.NamedTemporaryFile(prefix="leanpy-foreign-",
+                                            suffix=".json", mode="w",
+                                            encoding="utf-8", delete=False)
+        try:
+            with path:
+                json.dump(envelope, path)
+            result = subprocess.run(
+                [leanpy.BIN, "--script", path.name], cwd=REPO_ROOT,
+                capture_output=True, text=True, timeout=60)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("unsupported Python frontend cpython-ast 3.12.14",
+                          result.stderr)
+            self.assertEqual(result.stdout, "")
+        finally:
+            try:
+                os.unlink(path.name)
+            except OSError:
+                pass
+
+
 class CompareExceptionTests(unittest.TestCase):
     def test_exception_class_parser_uses_cpython_traceback_tail(self):
         stderr = ("Traceback (most recent call last):\n"

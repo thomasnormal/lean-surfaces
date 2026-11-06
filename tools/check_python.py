@@ -61,6 +61,7 @@ def acceptance_gates(root):
         ("py-refusal-census", [python, "harness/refusal_census.py", "--whitelist",
                                "--scripts", "--no-build", "--runner", runner]),
         ("leanpy-survey", [python, "harness/leanpy_survey.py"]),
+        ("py-envelope-fresh", [python, "harness/envelope_fresh.py", "--tier", "python"]),
         ("py-coverage-fresh", [python, "harness/coverage_page.py", "--check",
                                "--runner", runner]),
         ("py-examples-axioms", [python, "harness/lean_axiom_census.py", "--modules",

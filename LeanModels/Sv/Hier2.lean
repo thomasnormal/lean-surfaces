@@ -989,7 +989,7 @@ hierarchical envelope): `instantiate2` with every module instance flattened
 (`Hier2Gen.lean`, `PDesign.instantiateH_flat`). -/
 def PDesign.instantiateH (d : PDesign) (lib : List PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res Design2 :=
-  d.instantiateHFrom {} lib args iterFuel
+  d.instantiateHFrom { int32 := true } lib args iterFuel
 
 /-- Total `Design2` family of a hierarchical envelope (the `load_design_sv2`
 binder encoding's `name.sem`): errors collapse to the loud error design. -/

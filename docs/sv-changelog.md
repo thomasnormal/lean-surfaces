@@ -1,5 +1,15 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Exact signed-32-bit `int` constants at every parameter point
+
+`PDesign.instantiate2` and hierarchical instantiation now evaluate `int`-class
+parameters and localparams through the exact signed-32-bit path for every
+parameter argument, rather than using the unbounded constant path by default.
+`int32Agrees` remains the diagnostic comparing that path with the unbounded
+proof route. The `add_int32` fixture checks both the default `N=16` and the
+non-default `N=5`, where `1073741824 * 2` wraps to `-2147483648` and selects
+the other generate arm.
+
 ## Qualified-case checks at execution time
 
 `unique`, `unique0`, and `priority` claims are now checked in reset, edge, and

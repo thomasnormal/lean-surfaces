@@ -240,10 +240,11 @@ one-driver rule, `PDesign.topGuard`, is the identity there). -/
 theorem PDesign.instantiateH_flat (d : PDesign) (lib : List PDesign) (args : List Int) (F : Nat)
     (h : GenItem.listInstFree d.generates = true) :
     d.instantiateH lib args F = d.instantiate2 args F := by
-  have hrec := PDesign.instantiateRec_flat lib.length lib {} d args F h
+  have hrec := PDesign.instantiateRec_flat lib.length lib { int32 := true } d args F h
   simp only [PDesign.instantiateH, PDesign.instantiateHFrom, PDesign.topGuard, h, if_true, hrec]
-  show (d.instantiate2From {} args F >>= fun m => Res.ok m) = d.instantiate2From {} args F
-  cases d.instantiate2From {} args F <;> rfl
+  show (d.instantiate2From { int32 := true } args F >>= fun m => Res.ok m) =
+    d.instantiate2From { int32 := true } args F
+  cases d.instantiate2From { int32 := true } args F <;> rfl
 
 /-! ## The one-driver rule (`driversOk`) -/
 
@@ -360,7 +361,7 @@ top's one-driver rule passing on its result (vacuous for an instance-free
 top). -/
 theorem PDesign.instantiateH_of_rec {d : PDesign} {lib : List PDesign} {args : List Int}
     {F : Nat} {m : Design2}
-    (h : PDesign.instantiateRec (lib.length + 1) lib {} d args F = .ok m)
+    (h : PDesign.instantiateRec (lib.length + 1) lib { int32 := true } d args F = .ok m)
     (hok : driversOk d.declNames d.inputNames m.processes.toList = true) :
     d.instantiateH lib args F = .ok m := by
   simp only [PDesign.instantiateH, PDesign.instantiateHFrom, h, Res.ok_bind, PDesign.topGuard,

@@ -1539,7 +1539,10 @@ instantiation (`name.sem`, every proof): INT-class constants on the
 unbounded fast path (`Param.lean`'s ledger). -/
 def PDesign.instantiate2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
     Res Design2 :=
-  d.instantiate2From {} args iterFuel
+  -- The semantic family is the exact IEEE signed-32 `int` path at every
+  -- parameter point. The unbounded path is retained only for proofs and the
+  -- explicit `int32Agrees` diagnostic.
+  d.instantiate2From { int32 := true } args iterFuel
 
 /-- **The 32-bit `int` agreement check** at a parameter point: the design
 `instantiate2` builds equals the one built with exact 32-bit `int`

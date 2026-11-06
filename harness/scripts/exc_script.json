@@ -389,7 +389,9 @@
                 }
               }
             ],
-            "exc_name": "Boom",
+            "exc_names": [
+              "Boom"
+            ],
             "handler": [
               {
                 "kind": "Assign",

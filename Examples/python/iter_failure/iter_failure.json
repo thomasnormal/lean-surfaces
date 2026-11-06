@@ -287,7 +287,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Pass",
@@ -648,7 +650,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Pass",
@@ -1017,7 +1021,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -1272,7 +1278,9 @@
                     }
                   }
                 ],
-                "exc_name": "RuntimeError",
+                "exc_names": [
+                  "RuntimeError"
+                ],
                 "handler": [
                   {
                     "kind": "AugAssign",
@@ -1676,7 +1684,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -1876,7 +1886,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -2212,7 +2224,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Pass",
@@ -2747,7 +2761,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -2947,7 +2963,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -3317,7 +3335,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -3572,7 +3592,9 @@
                     }
                   }
                 ],
-                "exc_name": "RuntimeError",
+                "exc_names": [
+                  "RuntimeError"
+                ],
                 "handler": [
                   {
                     "kind": "AugAssign",
@@ -3989,7 +4011,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -4189,7 +4213,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "AugAssign",
@@ -4602,7 +4628,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Pass",
@@ -5104,7 +5132,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Pass",

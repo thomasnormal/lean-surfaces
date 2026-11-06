@@ -549,7 +549,9 @@
             }
           }
         ],
-        "exc_name": "ZeroDivisionError",
+        "exc_names": [
+          "ZeroDivisionError"
+        ],
         "handler": [
           {
             "kind": "Expr",

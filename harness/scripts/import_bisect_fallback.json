@@ -956,7 +956,9 @@
             "star": true
           }
         ],
-        "exc_name": "ImportError",
+        "exc_names": [
+          "ImportError"
+        ],
         "handler": [
           {
             "kind": "Pass",

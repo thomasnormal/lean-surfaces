@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/ellipsis_lab/ellipsis_script.py",
   "source_sha256": "8128c4fa313baf8ca5429f3113a772babda628b42c064c7777b9c645e95d9aab",
@@ -210,9 +210,9 @@
                   "kind": "FormattedValue",
                   "span": {
                     "lineno": 2,
-                    "col_offset": 29,
+                    "col_offset": 27,
                     "end_lineno": 2,
-                    "end_col_offset": 36
+                    "end_col_offset": 37
                   },
                   "value": {
                     "kind": "Constant",
@@ -1343,7 +1343,9 @@
             "orelse": []
           }
         ],
-        "exc_name": "TypeError",
+        "exc_names": [
+          "TypeError"
+        ],
         "handler": [
           {
             "kind": "Expr",

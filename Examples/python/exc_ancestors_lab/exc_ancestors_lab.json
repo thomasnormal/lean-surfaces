@@ -222,7 +222,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -290,7 +292,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1627,7 +1631,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1757,7 +1763,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2021,7 +2029,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2112,7 +2122,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2183,7 +2195,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2254,7 +2268,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2361,7 +2377,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2458,7 +2476,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2529,7 +2549,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2656,7 +2678,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2826,7 +2850,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2933,7 +2959,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3030,7 +3058,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3101,7 +3131,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3366,7 +3398,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -3726,7 +3760,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -3984,7 +4020,9 @@
                     }
                   }
                 ],
-                "exc_name": "LookupError",
+                "exc_names": [
+                  "LookupError"
+                ],
                 "handler": [
                   {
                     "kind": "Expr",
@@ -4045,7 +4083,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -4194,7 +4234,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4419,7 +4461,9 @@
                     }
                   }
                 ],
-                "exc_name": "ArithmeticError",
+                "exc_names": [
+                  "ArithmeticError"
+                ],
                 "handler": [
                   {
                     "kind": "Expr",
@@ -4525,7 +4569,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -4684,7 +4730,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4815,7 +4863,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4946,7 +4996,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5039,7 +5091,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5170,7 +5224,9 @@
                 }
               }
             ],
-            "exc_name": "OSError",
+            "exc_names": [
+              "OSError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5267,7 +5323,9 @@
                 }
               }
             ],
-            "exc_name": "EnvironmentError",
+            "exc_names": [
+              "EnvironmentError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5372,7 +5430,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5503,7 +5563,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5729,7 +5791,9 @@
                     }
                   }
                 ],
-                "exc_name": "Exception",
+                "exc_names": [
+                  "Exception"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -5767,7 +5831,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",

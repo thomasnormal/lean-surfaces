@@ -3023,3 +3023,5 @@ change is listed here under **Changed** or **Removed**.
   the old text parser; annotation-local differential rows remain matched.
 - Python: keep admitted `ImportFrom` nodes structured through ingestion and
   key benign import handling by module, names, and star fields.
+- Python: carry `Try` exception-handler names as structured arrays instead of
+  joining and reparsing them with a delimiter.

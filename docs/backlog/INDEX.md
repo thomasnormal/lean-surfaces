@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-347` |  | carry exception-handler names as AST arrays | python-completeness |
 | `2026-11-06-pycomplete-346` |  | keep structured from-imports structured | python-completeness |
 | `2026-11-06-pycomplete-345` |  | carry value-less annotations as AST nodes | python-completeness |
 | `2026-11-06-pycomplete-344` |  | refuse integer clock readings | python-completeness |

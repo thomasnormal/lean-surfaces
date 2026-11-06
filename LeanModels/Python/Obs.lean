@@ -1436,7 +1436,8 @@ theorem fuelMono (fuel : Nat) :
           | none => exact Run.le_refl _
           | some e =>
             exact Run.le_bind (ihE m st e k hk) fun st v => Run.le_refl _
-        | tryStmt body excName handler tu _ =>
+        | tryStmt body excNames handler tu _ =>
+          let excName := excHandlerPrimary excNames
           simp only [execStmt]
           cases tu with
           | some reason => exact Run.le_refl _
@@ -1444,8 +1445,8 @@ theorem fuelMono (fuel : Nat) :
             -- shadow guard, handler-class resolution, isExc — all
             -- fuel-independent; then the body run (IH), the match on its
             -- retained outcome, and the handler run (IH again)
-            by_cases hempty : excName.isEmpty
-            · simp [hempty]
+            by_cases hempty : excHandlerBare excNames = true
+            · simp only [if_pos hempty]
               rcases ihSs m st body.toList k hk with h | h
               · rw [h]; exact Or.inl rfl
               · rw [h]
@@ -1454,8 +1455,9 @@ theorem fuelMono (fuel : Nat) :
                 | exn st' e => exact ihSs m st' handler.toList k hk
                 | timeout => exact Run.le_refl _
                 | unsupported msg => exact Run.le_refl _
-            · by_cases htuple : excHandlerTuple excName
-              · simp [hempty, htuple]
+            · have hempty' : excHandlerBare excNames ≠ true := hempty
+              by_cases htuple : excHandlerTuple excNames
+              · simp only [if_neg hempty, if_pos htuple]
                 split <;> try exact Run.le_refl _
                 split <;> try exact Run.le_refl _
                 rcases ihSs m st body.toList k hk with h | h
@@ -1468,7 +1470,7 @@ theorem fuelMono (fuel : Nat) :
                       (Run.le_refl _)
                   | timeout => exact Run.le_refl _
                   | unsupported msg => exact Run.le_refl _
-              · simp [hempty, htuple]
+              · simp only [if_neg hempty, if_neg htuple]
                 refine Run.le_ite (Run.le_refl _) ?_
                 cases findClass m excName with
                 | none =>
@@ -3433,7 +3435,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | yieldFromStmt v _ =>
         -- pass 5: OUT of the fragment (docs/memory-model.md §yield from)
         simp [Stmt.heapFree] at hfree
-      | tryStmt body excName handler tu _ =>
+      | tryStmt body excNames handler tu _ =>
         -- OUT of the fragment (as-built delta, docs/memory-model.md
         -- §exceptions): the handler resumes from the body's retained
         -- `.exn` state, invisible to the ok-only invariant

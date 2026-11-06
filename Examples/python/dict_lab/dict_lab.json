@@ -26436,7 +26436,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Return",

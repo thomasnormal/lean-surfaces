@@ -2521,7 +2521,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     "kind": "Try",
                     "span": span(node),
                     "body": nested_body,
-                    "exc_name": h.type.id,
+                    "exc_names": [h.type.id],
                     "handler": convert_stmt_list(
                         h.body, enclosing=enclosing, module_scope=module_scope,
                         func_scope=func_scope, import_guard=False),
@@ -2606,7 +2606,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                      module_scope=module_scope,
                                      func_scope=func_scope)
         reasons = []
-        exc_name = ""
+        exc_names = []
         handler_body = []
         if len(node.handlers) != 1:
             reasons.append("multiple handlers" if node.handlers
@@ -2615,19 +2615,18 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             h = node.handlers[0]
             if h.type is None:
                 # A bare handler catches every represented Python exception.
-                # `exc_name == ""` is the structured marker consumed by both
+                # `exc_names == []` is the structured marker consumed by both
                 # interpreters; unsupported control shells still refuse via
                 # the other reasons below.
                 pass
             elif isinstance(h.type, ast.Name):
-                exc_name = h.type.id
+                exc_names = [h.type.id]
             elif (isinstance(h.type, ast.Tuple) and len(h.type.elts) >= 2
                   and all(isinstance(elt, ast.Name) for elt in h.type.elts)):
                 # A tuple of plain exception names has the same class-only
                 # matching semantics as the existing single-handler node.
-                # Encode the ordered names in the stable string field so the
-                # AST schema and both interpreters retain one handler body.
-                exc_name = "|".join(elt.id for elt in h.type.elts)
+                # Keep the ordered names as a structured AST field.
+                exc_names = [elt.id for elt in h.type.elts]
             else:
                 reasons.append("non-name handler class "
                                "(tuple pattern / attribute)")
@@ -2650,8 +2649,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # rebinding remains static-local for every handler except the admitted
         # TypeError slice, which is deferred by ``_shadowed_handlers`` and
         # checked by the runtime after a raise.
-        if module_scope and exc_name:
-            handler_names = exc_name.split("|")
+        if module_scope and exc_names:
+            handler_names = exc_names
             definition_names = {
                 n.name for n in ast.walk(ast.Module(body=node.body,
                                                      type_ignores=[]))
@@ -2689,7 +2688,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 "kind": "Try",
                 "span": span(node),
                 "body": body,
-                "exc_name": exc_name,
+                "exc_names": exc_names,
                 "handler": handler,
                 "try_unsupported": ", ".join(reasons) if reasons else None,
             }
@@ -2713,7 +2712,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "Try",
             "span": span(node),
             "body": body,
-            "exc_name": exc_name,
+            "exc_names": exc_names,
             "handler": handler,
             "try_unsupported": ", ".join(reasons) if reasons else None,
         }

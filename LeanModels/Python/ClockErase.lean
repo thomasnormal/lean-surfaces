@@ -1498,26 +1498,27 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                               | _ => exact .unsupported
                             | _ => exact .unsupported
           | _ => exact .unsupported
-  | tryStmt body excName handler tryUnsupported sp =>
+  | tryStmt body excNames handler tryUnsupported sp =>
+    let excName := excHandlerPrimary excNames
     simp only [execStmt]
     ce_norm
     cases tryUnsupported with
     | some reason => exact .unsupported
     | none =>
-      refine ClockErasedF.ite (c := excName.isEmpty = true) ?_ ?_
+      refine ClockErasedF.ite (c := excHandlerBare excNames = true) ?_ ?_
       · simpa only using (.matchBindE (ihSs m st body.toList h)
           (fun _ flow hs => .ok hs flow)
           (fun s _ hs => ihSs m s handler.toList hs))
-      · refine ClockErasedF.ite (c := excHandlerTuple excName = true) ?_ ?_
+      · refine ClockErasedF.ite (c := excHandlerTuple excNames = true) ?_ ?_
         · refine ClockErasedF.ite
-            (c := (excHandlerNames excName).any (fun name =>
+            (c := (excHandlerNames excNames).any (fun name =>
               (Env.lookup st.locals name).isSome ||
                 (lookupG (moduleGlobals m).1 name).isSome ||
                 (Env.lookup st.world.globals name).isSome ||
                 (findFunction m name).isSome) = true) ?_ ?_
           · exact .unsupported
           · refine ClockErasedF.ite
-              (c := (excHandlerNames excName).any (fun name =>
+              (c := (excHandlerNames excNames).any (fun name =>
                 !excHandlerAdmitted m name) = true) ?_ ?_
             · exact .unsupported
             · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
@@ -1530,7 +1531,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                 obtain ⟨h2, hy⟩ := hexn s2 e hrun
                 simp only [hy]
                 refine ClockErasedF.ite
-                    (c := (excHandlerNames excName).any
+                    (c := (excHandlerNames excNames).any
                       (fun name => excHandlerMatches m name e) = true) ?_ ?_
                 · exact ihSs m s2 handler.toList h2
                 · exact .exn h2 _

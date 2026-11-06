@@ -7418,8 +7418,10 @@ mutual
     -- is unknowable without a module), so a top-level star import fails
     -- the clock census too — a from-import can NOT open a path around
     -- the trace-clock discipline.
-    | .importFrom _ names star _ =>
-      if star then Option.none else some names.toList
+    | .importFrom module names star _ =>
+      match benignImportBindsStructured module names star with
+      | some (n, modelled) => some (if modelled then [] else [n])
+      | Option.none => if star then Option.none else some names.toList
     | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
       match benignImportBinds text with
       -- a MODELLED name (`count` is `itertools.count`) must stay
@@ -7855,6 +7857,9 @@ def lateRaiseNames : List Stmt → List String
           if hasDirectAssignAfter id rest then id :: tail else tail
       | none => tail
 
+def excHandlerPrimary (names : Array String) : String :=
+  names.toList.head?.getD ""
+
 mutual
   /-- Cheap short-circuit census used by `markUnboundLocals`.  Keeping the
   no-marker case separate is important to the proof layer: nearly every
@@ -7887,7 +7892,8 @@ def lateHandlerNames : List Stmt → List String
   | stmt :: rest =>
       let tail := lateHandlerNames rest
       match stmt with
-      | .tryStmt _ excName _ _ _ =>
+      | .tryStmt _ excNames _ _ _ =>
+          let excName := excHandlerPrimary excNames
           if dynamicShadowHandlerName excName && hasDirectAssignAfter excName rest
           then excName :: tail else tail
       | _ => tail
@@ -9061,25 +9067,15 @@ def importErrorHandlerMatch : String → Bool
   | "ImportError" | "ModuleNotFoundError" => true
   | _ => false
 
-/- The extractor encodes a tuple of plain exception names in the existing
-`excName` field, separated by `|` (Python identifiers cannot contain that
-character). Keep the tuple admission and matching logic shared by the
-function and script interpreters. -/
-/- `String.splitOn` is implemented through an irreducible runtime helper, so
-the kernel cannot reduce it on the literal handler names in loaded ASTs.
-The extractor's encoding uses exactly one-character `|` separators; a small
-structural scanner keeps the same behavior while remaining reducible for
-proofs. -/
-def excHandlerNamesAux : List Char → List Char → List String
-  | [], rev => [String.ofList rev.reverse]
-  | '|' :: rest, rev => String.ofList rev.reverse :: excHandlerNamesAux rest []
-  | c :: rest, rev => excHandlerNamesAux rest (c :: rev)
+/- Handler names are carried structurally by the approved AST. -/
+def excHandlerNames (names : Array String) : List String := names.toList
 
-def excHandlerNames (encoded : String) : List String :=
-  excHandlerNamesAux encoded.toList []
+def excHandlerTuple (names : Array String) : Bool := names.size > 1
 
-def excHandlerTuple (encoded : String) : Bool :=
-  (excHandlerNames encoded).length > 1
+def excHandlerBare (names : Array String) : Bool := names.isEmpty
+
+def excHandlerText (names : Array String) : String :=
+  String.intercalate "|" names.toList
 
 def excHandlerAdmitted (m : Module) (name : String) : Bool :=
   if (findNamedTuple m name).isSome then false
@@ -11076,7 +11072,8 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         | _ =>
           .unsupported "with context must be a direct class constructor call"
       | _, _ => .unsupported "multiple context-manager items are outside the tier"
-    | .tryStmt body excName handler tryUnsupported _ =>
+    | .tryStmt body excNames handler tryUnsupported _ =>
+      let excName := excHandlerPrimary excNames
       -- exceptions tier: the v0 single-handler shape on the retained-state
       -- covenant — run the body; `.ok` skips the handler; a MATCHING
       -- `.user` exn runs the handler FROM THE RETAINED STATE (no
@@ -11089,14 +11086,14 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
        | some reason =>
          .unsupported s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
        | Option.none =>
-         if excName.isEmpty then
+         if excHandlerBare excNames then
            match execStmts m fuel st body.toList with
            | .ok st' flow => .ok st' flow
            | .exn st' _ => execStmts m fuel st' handler.toList
            | .timeout => .timeout
            | .unsupported msg => .unsupported msg
-         else if excHandlerTuple excName then
-           let names := excHandlerNames excName
+         else if excHandlerTuple excNames then
+           let names := excHandlerNames excNames
            if names.any (fun name =>
                (Env.lookup st.locals name).isSome
                  || (lookupG (moduleGlobals m).1 name).isSome

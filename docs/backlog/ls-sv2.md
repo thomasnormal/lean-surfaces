@@ -2658,3 +2658,17 @@ boundary.  The PicoRV32 witness pins both forms.
 **DECIDED:** bridge the exact normalized generic-ROB tag-retirement/ROB-trace
 cardinality through `toRobMachine_trace` to the packet trace; retirement
 order, packet boundaries, and payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-168 — certify packet-window ROB tag-retirement cardinality against packet trace
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements_length_packetTrace` and
+its append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies the exact packet-machine retirement-trace
+cardinality of its generic ROB tagged-retirement projection, and adjacent
+chains compose the same bridge while retaining the carried state and order
+boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only after the window certificate supplies carried state
+and normalized retirement boundaries, then bridge the exact generic-ROB
+tag-retirement/ROB-trace cardinality through `toRobMachine_trace` to the packet
+trace; packet boundaries, retirement order, and payloads are not reconstructed.

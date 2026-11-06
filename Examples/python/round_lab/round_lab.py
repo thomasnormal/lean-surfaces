@@ -204,3 +204,7 @@ def round_float_forty_two(value):
 
 def round_float_forty_three(value):
     return round(value, 43)
+
+
+def round_float_general(value, digits):
+    return round(value, digits)

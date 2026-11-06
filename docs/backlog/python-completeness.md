@@ -9223,3 +9223,24 @@ module annotation, and dead-yield audit examples.
 
 DECIDED: keep audit witnesses in the pinned differential corpus, including
 explicit loud rows where the semantics has not yet modeled the construct.
+
+## 2026-11-06-pycomplete-351 — parameterize float round ndigits
+
+Float `round(number, ndigits)` now uses one parameterized exact-ratio worker. It
+handles integral positive and negative `ndigits`, CPython's signed-zero and
+large-exponent cutoffs, and values beyond the former forty-three duplicated
+workers. The monadic runner, proof interpreter, observation proof, and
+payload-blind proof all dispatch through the same worker; the eighty-six per-digit
+workers and nested proof branches are gone.
+
+| Measurement | Result |
+|---|---|
+| Native differential | 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+| Focused float probe | CPython 3.9.25 and `tools/leanpy` agree for `ndigits` −1000 through 1000, including signed zero and 100-digit rounding |
+| Extractor tests | 161 passed |
+| Envelope freshness | FRESH 81, STALE 0 |
+| Lean builds | Managed `lake build LeanModels.Python.Obs`, `LeanModels.Python.PayloadBlind`, and `lake build leanmodels-run` passed |
+| Proof differential | 1 pre-existing `uses_nonlocal(4)` mismatch; 219 refused, 3976 matched |
+
+DECIDED: keep float decimal rounding parametric and exact; negative `ndigits`
+for integer and Boolean inputs remains an explicit loud boundary.

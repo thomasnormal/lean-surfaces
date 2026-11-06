@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-351` |  | parameterize float round ndigits | python-completeness |
 | `2026-11-06-pycomplete-350` |  | add differential rows for audit edges | python-completeness |
 | `2026-11-06-pycomplete-349` |  | enforce the pinned envelope frontend | python-completeness |
 | `2026-11-06-pycomplete-348` |  | pin leanpy's oracle and frontend | python-completeness |

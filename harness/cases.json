@@ -1527,4 +1527,6 @@
 
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "iter_order", "args": [[-5]], "expect": "unsupported", "note": "negative hash row that does not cancel modulo the existing -1 coincidence"}
   ,{"file": "Examples/python/gen_lab/gen_lab.py", "function": "unconsumed_noniterable", "args": [], "expect": "unsupported", "note": "generator-expression creation performs GET_ITER before the body is consumed"}
+  ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_general", "args": [[2.675, 100], [125.0, -2], [125.0, -308], [1.25, -1], [5e-324, 43], [1.0, 324]], "expect": "match", "note": "parameterized float ndigits covers values beyond the former unrolled range and negative cutoffs"}
+  ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_general", "args": [[125, -2]], "expect": "unsupported", "note": "negative ndigits for integer inputs remains outside the admitted slice"}
 ]

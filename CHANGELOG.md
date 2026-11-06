@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Float `round(number, ndigits)` now uses one exact-ratio worker with CPython's positive and negative exponent cutoffs; the former per-digit workers and proof branches were removed.
+
 - Refuse zero-argument `time.time()` reads while the trace carries only
   integers; CPython returns binary64 floats. Positional arity errors remain
   faithful and do not consume the trace.

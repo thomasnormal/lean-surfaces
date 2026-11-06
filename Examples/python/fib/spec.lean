@@ -29,7 +29,7 @@ set_option warning.simp.varHead false in
 the typed surface (`ToVal Nat` marshals `k`; no `Val`, no fuel). Proof
 (base cases by `py_prove`, step case by `py_lift`-threshold IHs and one
 symbolic execution): `Examples/python/fib/proof.lean`. -/
-theorem fib_total (k : Nat) : fib(k) ==> fibSpec k := by proofs
+theorem fib_total (k : Nat) (hk : k < pythonRecursionLimit) : fib(k) ==> fibSpec k := by proofs
 
 set_option warning.simp.varHead false in
 /-- `fib(n)` computes the Fibonacci numbers for `n ≥ 0`: any successful
@@ -38,12 +38,14 @@ corollary of `fib_total` — one `py_corollary` (Surface.lean), instantiated
 at `n.toNat` because the total theorem is `Nat`-indexed; the tactic's
 built-in `Int.toNat_of_nonneg` bridge (discharged by `hn`) aligns the
 marshalled argument. -/
-@[spec] theorem fib_spec (n : Int) (hn : 0 ≤ n) {fuel : Nat} {r : Val}
+@[spec] theorem fib_spec (n : Int) (hn : 0 ≤ n)
+    (hnDepth : n.toNat < pythonRecursionLimit) {fuel : Nat} {r : Val}
     (h : callFunction fib "fib" #[.int n] fuel = .ok r) :
     r = .int (fibSpec n.toNat) := by proofs
 
 set_option warning.simp.varHead false in
 /-- The typed surface form: `fib(n)` relationally yields the mathematical
 Fibonacci numbers — no `Val`, no fuel in the statement. -/
-@[spec] theorem fib_correct (n r : PyInt) (hn : 0 ≤ n) (h : fib(n) ⇓ r) :
+@[spec] theorem fib_correct (n r : PyInt) (hn : 0 ≤ n)
+    (hnDepth : n.toNat < pythonRecursionLimit) (h : fib(n) ⇓ r) :
     r = fibSpec n.toNat := by proofs

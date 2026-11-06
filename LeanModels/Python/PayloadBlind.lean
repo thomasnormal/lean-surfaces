@@ -3908,9 +3908,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       · exact absurd h (by simp)
   | nonlocalDecl names sp =>
       simp only [execStmt]
-      by_cases h : names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome)
-      · simp [h]; exact PBF.ok hslot _
-      · simp [h]; exact PBF.unsupported
+      exact PBF.unsupported
   | ret v sp =>
       cases v with
       | none => simp only [execStmt]; exact PBF.ok hslot _

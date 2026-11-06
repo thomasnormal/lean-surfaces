@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.
+
 - Completed the payload-blind proof walker for structured `import` and class-definition statement nodes; the umbrella Lean artifact now builds through the Python proof layer.
 
 - Refreshed the set-lab envelope and generated Python coverage page after the audit-row and explicit refusal updates.

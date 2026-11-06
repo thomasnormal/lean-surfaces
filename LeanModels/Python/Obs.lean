@@ -3259,11 +3259,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [execStmt]
         exact .okF rfl _
       | nonlocalDecl names _ =>
-        by_cases h : names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome)
-        · simp [execStmt, h]
-          exact .okF rfl _
-        · simp [execStmt, h]
-          exact .unsupported
+        simp only [execStmt]
+        exact .unsupported
       | defStmt name params ao lo hg ig body caps _ =>
         simp [Stmt.heapFree] at hfree
       | unpackAssign before star after value _ =>

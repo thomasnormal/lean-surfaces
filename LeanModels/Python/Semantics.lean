@@ -10566,10 +10566,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       let locals := names.toList.foldl (fun env id =>
         Env.set env (globalMarker id) RVal.none) st.locals
       .ok { st with locals := locals } .next
-    | .nonlocalDecl names _ =>
-      if names.toList.all (fun id => (Env.lookup st.locals (cellKey id)).isSome) then
-        .ok st .next
-      else .unsupported "unsupported statement 'Nonlocal'"
+    | .nonlocalDecl _ _ =>
+      -- The proof-facing interpreter keeps compound `nonlocal` targets loud;
+      -- the monadic runner owns the cell mutation path.  Returning `.ok` here
+      -- when a cell happens to exist silently drops the subsequent store.
+      .unsupported "unsupported statement 'Nonlocal'"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported statement '{pyKind}'"
   termination_by structural fuel
 

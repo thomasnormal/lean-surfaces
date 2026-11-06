@@ -9622,3 +9622,23 @@ preserving the payload-blindness invariant without changing execution.
 
 DECIDED: every structured statement constructor must have an explicit proof
 walker arm, including loud statement forms that carry no heap payload.
+
+## 2026-11-06-pycomplete-372 — keep proof-side `nonlocal` loud
+
+The proof-facing interpreter's `nonlocalDecl` arm returned `.ok` whenever a
+cell directory entry existed, but its assignment path did not update that
+cell. `uses_nonlocal(4)` therefore returned `4` instead of CPython's `5`.
+The documented proof-tier boundary is now explicit: `nonlocal` refuses in the
+theorem interpreter, while the monadic runner retains the measured cell
+mutation semantics.
+
+| Measurement | Result |
+|---|---|
+| Proof differential | 4,199 cases: 3,900 matched, 299 refused, 0 failed |
+| Focused Python build | `lake build LeanModels.Python`: 23 jobs passed |
+| Runner build | `lake build leanmodels-run`: 40 jobs passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: a narrower proof interpreter must refuse a construct rather than
+returning a value when its stateful implementation is available only in the
+monadic runner.

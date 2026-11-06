@@ -859,6 +859,24 @@ theorem pinned_packet_windows_rob_inputs_length_robTrace_append :
         [nontrapSecondExpected] from
         ⟨pinned_packet_second_window_normalize, trivial⟩)
 
+theorem pinned_packet_rob_tags_length_packetTrace :
+    (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+      packetCycleInputs).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        packetCycleInputs).length := by
+  exact normalizeRvfiPacketRobTags_length_packetTrace pinnedPacketMachine
+    pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
+
+theorem pinned_packet_rob_tags_length_packetTrace_append :
+    (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length := by
+  exact normalizeRvfiPacketRobTags_length_packetTrace_append
+    pinnedPacketMachine pinnedPacketMachine.init packetFirstCycles
+    packetSecondCycles pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
+
 theorem pinned_packet_windows_chain_refines_state
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -3083,6 +3101,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_inputs_length_robTrace_append
 #print axioms pinned_packet_windows_rob_inputs_length_robTrace_chain
 #print axioms pinned_packet_windows_rob_inputs_length_robTrace_append
+#print axioms pinned_packet_rob_tags_length_packetTrace
+#print axioms pinned_packet_rob_tags_length_packetTrace_append
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_stateful_memory_arch

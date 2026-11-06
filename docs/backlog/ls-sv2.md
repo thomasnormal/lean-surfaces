@@ -2829,3 +2829,15 @@ boundary.  The PicoRV32 witness pins both forms.
 projection symmetrically after the window certificate supplies its carried
 state; packet boundaries, source-input order, retirement payloads, and
 completion order are not reconstructed.
+
+## 2026-11-06-ls-sv2-181 — certify normalized ROB tag cardinality against packet trace
+
+Added `normalizeRvfiPacketRobTags_length_packetTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the generic ROB tag stream has exactly the packet retirement
+trace cardinality, and adjacent captures compose the bridge through their
+retained state boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** bridge the exact normalized generic ROB-tag cardinality through
+the normalized packet-trace length equality; tag payloads, packet boundaries,
+retirement order, and source-input order are not reconstructed.

@@ -1944,6 +1944,46 @@ theorem normalizeRvfiPacketWindows_tags_length_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified finite packet-window chain has packet-boundary tag-stream
+   cardinality equal to the packet machine's retirement-trace cardinality. -/
+theorem normalizeRvfiPacketWindows_tags_length_packetTrace
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    packetStreamLength (rvfiPacketTags machine state windows.flatten) =
+      (packetTrace machine.toPacketMachine state windows.flatten).length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketTags_length_packetTrace machine state
+    windows.flatten hflat
+
+/- The packet-window tag-stream/packet-trace cardinality bridge composes
+   across two certified chains, retaining the second chain's carried state. -/
+theorem normalizeRvfiPacketWindows_tags_length_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    packetStreamLength (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten) =
+      (packetTrace machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_tags_length_packetTrace machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- A certified finite packet-window chain exposes its decoded retirement
    payload directly from the flattened packet-boundary tag stream. -/
 theorem normalizeRvfiPacketWindows_tags_retirements {State : Type}

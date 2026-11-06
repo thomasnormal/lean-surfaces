@@ -2685,3 +2685,17 @@ forms.
 **DECIDED:** take `List.length` of the exact `toRobMachine_inputs` projection
 and compose it across normalized captures; retirement order, packet
 boundaries, source-input order, and payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-170 — certify packet-window ROB input cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_robInputs_length_packetInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies the exact packet-machine input cardinality of
+its generic ROB input stream, and adjacent chains compose the same bridge while
+retaining the carried state and order boundary.  The PicoRV32 witness pins
+both forms.
+
+**DECIDED:** take `List.length` of the exact `toRobMachine_inputs` projection
+after the window certificate supplies its carried state, and compose it across
+chains; packet boundaries, source-input order, and payloads are not
+reconstructed.

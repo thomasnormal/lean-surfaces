@@ -844,6 +844,25 @@ def PExpr.mentionsAnyList (names : List String) : List PExpr → Bool
   | p :: ps => p.mentionsAny names || PExpr.mentionsAnyList names ps
 end
 
+
+/-! Exact-mode INT classification is separate from the historical proof-path
+predicate.  `instantiate2` stores signed 32-bit INT values in `nvals`; this
+view exposes that class without changing the unbounded `evalInt` API. -/
+def PExpr.isIntExact (env : IEnv) : PExpr → Bool
+  | .int _ | .genvarRef _ | .sysCall .. => true
+  | .paramRef n none =>
+      (env.vals.lookup n).isSome ||
+        match env.nvals.lookup n with
+        | some (_, 32, true) => true
+        | _ => false
+  | .paramRef n (some p) => (env.packageVal p n).isSome
+  | .unary (.m0 .neg) a | .unary (.m0 .pos) a | .unary .plus a => a.isIntExact env
+  | .binary op l r => op.intArith && l.isIntExact env && r.isIntExact env
+  | .ternary _ t e => t.isIntExact env && e.isIntExact env
+  | _ => false
+
+attribute [simp] PExpr.isIntExact
+
 /-! A constant-context replication must reject a signal operand before it
 evaluates the repetition count.  In particular, a select has a structural
 width, so `ctype` alone would otherwise accept it and get stuck on a symbolic
@@ -1642,6 +1661,10 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .cast s a => if s && a.isInt env then evalInt env a else evalSized env (.cast s a)
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
+
+/-- Exact-mode proof entry point; the evaluator already routes nvals-backed
+arithmetic through the width-exact ctype/evalAt path. -/
+def evalIntExact (env : IEnv) (e : PExpr) : Except String Int := evalInt env e
 
 /-- Generate-time integer arithmetic uses the declared `integer`/`int`
 32-bit signed type (§27.4, §6.11). -/

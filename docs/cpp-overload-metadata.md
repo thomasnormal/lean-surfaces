@@ -94,6 +94,10 @@ the call gate requires one unambiguous retained function or method row.
 An ordinary call whose structured `referencedDecl.id` is numeric is also
 refused; declaration identity remains the artifact's string-typed handle.
 
+An ordinary call whose structured `referencedDecl.kind` contradicts the
+retained function or method declaration is also refused; the two evidence
+records must agree.
+
 An empty overloaded-operator child list is also a recorded refusal; the
 operator gate does not manufacture a selected callee.
 

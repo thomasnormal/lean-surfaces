@@ -647,6 +647,25 @@ private partial def resolvedCalleeHandle : Raw → Except String FrontendHandle
       | none => .error "translation: operator callee has no kind"
   | _ => .error "translation: operator callee is malformed"
 
+private partial def resolvedCalleeEvidenceKind : Raw → Except String (Option String)
+  | .object fields =>
+      match (Raw.object fields).text "kind" with
+      | some "DeclRefExpr" =>
+          match (Raw.object fields).field "referencedDecl" with
+          | some (.object reference) =>
+              match Raw.text (.object reference) "kind" with
+              | some kind => pure (some kind)
+              | none => .error "translation: referenced declaration has no kind"
+          | some (.string _) => pure none
+          | _ => .error "translation: declaration reference is absent"
+      | some "ImplicitCastExpr" =>
+          match (Raw.object fields).field "inner" with
+          | some (.array [child]) => resolvedCalleeEvidenceKind child
+          | _ => .error "translation: callee cast must have one child"
+      | some kind => .error s!"translation: callee has unexpected node {kind}"
+      | none => .error "translation: callee has no kind"
+  | _ => .error "translation: callee is malformed"
+
 /-- Retain Clang's selected overloaded-operator declaration handle. This is
     metadata only: no name lookup, overload resolution, conversion, or body
     execution is performed here. -/
@@ -675,12 +694,18 @@ def admitResolvedCallExpression (artifact : Artifact) (path : List Nat) :
   let raw := (rawAtInnerPath artifact.ast path).getD .null
   let some (.array (callee :: _)) := raw.field "inner"
     | throw "translation: call expression has no callee child"
+  let evidenceKind ← resolvedCalleeEvidenceKind callee
   let handle ← resolvedCalleeHandle callee
   let declarations := artifact.declarations.filter (·.id == handle.value)
   let some declaration := declarations.head?
     | throw "translation: selected call declaration is absent from artifact"
   unless declarations.length == 1 do
     throw "translation: selected call declaration is duplicated in artifact"
+  match evidenceKind with
+  | some kind =>
+      unless kind == "FunctionDecl" || kind == "CXXMethodDecl" do
+        throw "translation: selected call handle has unexpected declaration kind"
+  | none => pure ()
   unless declaration.kind == "FunctionDecl" || declaration.kind == "CXXMethodDecl" do
     throw "translation: selected call declaration is not callable"
   pure handle

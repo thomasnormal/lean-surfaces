@@ -2333,6 +2333,22 @@ private def resolvedCallTranslation : Artifact := {emptyTranslation with
 def resolvedCallTranslationWitnessOk : Bool :=
   admitResolvedCallExpression resolvedCallTranslation [1] matches .ok {value := "0x21"}
 
+private def resolvedCallKindMismatchTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x52"), ("kind", .string "FunctionDecl"),
+        ("name", .string "g"), ("inner", .array [])],
+      .object [("id", .string "0x53"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [("id", .string "0x54"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [("id", .string "0x52"),
+              ("kind", .string "VarDecl")])]])]])]}
+
+def resolvedCallKindMismatchRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallKindMismatchTranslation [1]
+  pure ()
+
 private def resolvedCallStringTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2858,6 +2874,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedConstructorDuplicateDeclarationRefusal matches .error _
 #guard resolvedCallNonCallableRefusal matches .error _
 #guard resolvedCallCastTranslationWitnessOk
+#guard resolvedCallKindMismatchRefusal matches .error _
 #guard resolvedCallStringTranslationWitnessOk
 #guard resolvedCallMalformedCastRefusal matches .error _
 #guard resolvedCallMissingCalleeRefusal matches .error _

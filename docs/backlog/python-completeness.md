@@ -9823,6 +9823,22 @@ DECIDED: retain a loud refusal for every module `def`/`class`/namedtuple/alias
 deletion until definitions become runtime bindings; the function-body census
 is no longer a soundness gate for definition deletion.
 
+## 2026-11-06-pycomplete-390 — recheck trailing definition deletion
+
+The audit's trailing-delete rewrite is already absent from current ingestion:
+`parseStmt` retains `Delete` as `.delStmt`, and the script executor refuses a
+module `def`/`class`/namedtuple/alias deletion at runtime. Re-ran the pinned
+CPython 3.9.25 witnesses: `del_trailing_script.py` and the opcode-shaped
+delete exit successfully under CPython but remain loud at the static-table
+boundary in leanpy; the partial and non-trailing definition deletes likewise
+retain CPython's side effects before their different failures while the model
+refuses before inventing a tombstone. Removed the last stale comments that
+claimed the trailing statement was rewritten to `pass`.
+
+DECIDED: keep every definition deletion as an explicit AST statement and a
+loud script boundary until definitions become runtime bindings; no ingestion
+rewrite remains.
+
 ## 2026-11-06-pycomplete-385 — recheck the clock-reading boundary
 
 The clock arm already refuses zero-argument `time.time()` in both interpreters

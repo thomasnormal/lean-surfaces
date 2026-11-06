@@ -908,9 +908,9 @@ mutual
         -- A benign-import name is
         -- loud (it binds statically, so the removal has nothing to act
         -- on); a `def`/`class`/namedtuple/alias name is loud (a static
-        -- table entry — the TRAILING position is rewritten away at
-        -- ingestion, so reaching here means a non-trailing del of a
-        -- definition); anything else is the faithful `NameError`, with
+        -- table entry — trailing and non-trailing deletes both remain
+        -- AST statements and reach this refusal); anything else is the
+        -- faithful `NameError`, with
         -- the PARTIAL left-to-right effect retained on the raise
         -- (`del x, nosuch` really removes `x` — the recorded row 5).
         -- Deletion never consults builtins: CPython's `del len` is the

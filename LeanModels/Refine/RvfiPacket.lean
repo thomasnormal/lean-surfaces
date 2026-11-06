@@ -2370,6 +2370,82 @@ theorem normalizeRvfiPacketRobTags_refines_windows_append
     isaState start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
 
+/- The finite normalized ROB-tag contract can expose both conclusions through
+   packet inputs and packet state. -/
+theorem normalizeRvfiPacketRobTags_refines_windows_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hwindows : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state windows.flatten) ∧
+      (robTags machine.toRobMachine state windows.flatten).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state windows.flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten))
+          finalOrder ∧
+      finalOrder = start + retirementWindows.flatten.length) := by
+  rcases normalizeRvfiPacketRobTags_refines_windows machine isa rel admit
+      state isaState start windows retirementWindows hrob hrel hwindows with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨?_, finalOrder, ?_, horder⟩
+  · refine ⟨htags.1, ?_⟩
+    simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+  · rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+    exact hfinal
+
+/- The packet-facing finite normalized ROB-tag contract composes across
+   adjacent window chains with the carried state and order boundary. -/
+theorem normalizeRvfiPacketRobTags_refines_windows_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state
+          (firstWindows ++ secondWindows).flatten) ∧
+      (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten))
+          finalOrder ∧
+      finalOrder = start +
+        (firstRetirementWindows ++ secondRetirementWindows).flatten.length) := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketRobTags_refines_windows_packet machine isa rel admit
+    state isaState start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
+
 /-- A certified finite window chain also preserves the packet boundaries of
 the flattened cycle stream, not only its generic ROB projection. -/
 theorem normalizeRvfiPacketWindows_tags_stream {State : Type}
@@ -6484,6 +6560,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_packet

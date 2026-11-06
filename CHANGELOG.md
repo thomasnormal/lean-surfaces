@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added differential witnesses for negative and constructed set iteration paths; synchronized script expectations with the intentional loud boundaries for displays and definition deletion.
+
 - CI now cancels superseded runs per ref and bounds the full check with a 180-minute job timeout.
 
 - Python envelope freshness is now a required full-CI and `--python-only` gate; leanpy regression coverage verifies foreign frontend stamps are rejected before execution.

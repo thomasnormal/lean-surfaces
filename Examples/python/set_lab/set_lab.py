@@ -102,3 +102,32 @@ def unhashable_probe(a):
 def comprehension(n, probe):
     s = {i % 3 for i in range(n)}
     return (len(s), probe in s)
+
+def copy_order(a):
+    # Copying a set rebuilds its table with CPython's own sizing and order.
+    s = set([a, a + 1])
+    t = s.copy()
+    out = []
+    for v in t:
+        out.append(v)
+    return out
+
+
+def from_dict_order(a):
+    # Constructing a set from dict keys uses the live dict iterator and its
+    # own set table; neither order is guessed by the tier.
+    d = {a: 1, a + 1: 2}
+    s = set(d)
+    out = []
+    for v in s:
+        out.append(v)
+    return out
+
+
+def intersection_order(a):
+    # Set intersection has CPython-specific table sizing and insertion order.
+    s = set([a, a + 1]) & set([a + 1, a + 2])
+    out = []
+    for v in s:
+        out.append(v)
+    return out

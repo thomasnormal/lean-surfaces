@@ -9693,3 +9693,16 @@ the sound boundary for the position-independent module tables.
 
 DECIDED: this audit finding is complete; continue to the generator-expression
 capture census item.
+
+## 2026-11-06-pycomplete-376 — generator capture census and creation-time iteration
+
+Rechecked the generator-expression audit witnesses against CPython 3.9.25.
+The ingestion census now includes unpack targets, walrus stores, and `del`
+bindings (`bodyAssigns`/`exprAssigns`); the unsafe capture fixture therefore
+refuses loudly instead of returning a stale by-value capture. The non-iterable
+outer-source fixture now performs creation-time iteration and raises the same
+`TypeError: 'int' object is not iterable` as CPython.
+
+DECIDED: the reported silent capture bug is closed by the structured census
+and loud refusal boundary, and the creation-time iterator case is complete.
+Retain the broader generator-expression lowering as a later rule-2 debt.

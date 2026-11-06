@@ -9838,3 +9838,21 @@ readings to floats on the oracle side.
 DECIDED: keep clock comparisons against the source program's real float result;
 do not reinterpret integer trace readings as Python values until a binary64
 trace representation is implemented.
+
+## 2026-11-07-pycomplete-386 — recheck text-keyed semantic residues
+
+The audited text consumers are already removed from the current semantic path:
+value-less annotations, globals/nonlocals, from-import admission, and exception
+handler names all use structured AST fields; the searches for
+`annNoValueName`, `nonlocalNamesText`, `importBinds`, `globalNamesText`, and
+`excHandlerNamesAux` are empty. The remaining `split` calls in the extractor
+handle Python dotted import aliases or the namedtuple field specification;
+they do not reparse a synthesized source program. `Unsupported.text` remains
+diagnostic payload only and is never interpreted by supported semantics.
+
+Corrected stale AST and memory-model prose that still described unsupported
+payloads and from-imports as text-keyed semantic inputs.
+
+DECIDED: keep structured AST fields as the only semantic inputs; diagnostic
+text on unsupported nodes may remain for loud error reporting but is not
+parsed or used to decide supported behavior.

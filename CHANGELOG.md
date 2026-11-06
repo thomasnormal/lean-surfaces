@@ -23,6 +23,10 @@
   the model's integer trace remains an explicit loud boundary until binary64
   trace readings are modeled.
 
+- Rechecked the structured-AST text boundary: supported semantics no longer
+  parses diagnostic text from unsupported nodes or reconstructed import and
+  handler payloads.
+
 - Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
 
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.

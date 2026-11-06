@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added an end-to-end pinned differential test for float `round` values beyond the former per-digit worker range and at both exponent cutoffs.
+
 - Added differential witnesses for negative and constructed set iteration paths; synchronized script expectations with the intentional loud boundaries for displays and definition deletion.
 
 - CI now cancels superseded runs per ref and bounds the full check with a 180-minute job timeout.

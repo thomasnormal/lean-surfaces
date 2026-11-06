@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-366` |  | regression coverage for parameterized float round | python-completeness |
 | `2026-11-06-pycomplete-365` |  | cover audit edge cases in differential batteries | python-completeness |
 | `2026-11-06-pycomplete-364` |  | gate Python envelope freshness in CI | python-completeness |
 | `2026-11-06-pycomplete-363` |  | pinning regression coverage for leanpy compare | python-completeness |

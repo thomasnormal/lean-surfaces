@@ -3599,6 +3599,71 @@ including adjacent captures. The PicoRV32 witness pins both forms.
 state-threaded normalization theorem; packet boundaries, retirement payloads,
 state threading, and order offsets remain unchanged.
 
+## 2026-11-06-ls-sv2-245 — choose PicoRV32 and state the real-core R2 theorem
+
+The inbox was reread before this item.  The owner redirected this lane from the
+packet-window projection matrix to R2's real-core result: choose the smallest
+unmodified core that loads today, state the theorem exactly, and name the first
+core invariant.  The existing generic memory/generate request in the `ls-sv`
+inbox was reread; no new owner-lane request is needed here.
+
+The selected core is YosysHQ PicoRV32, source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, under the ISC license, with the
+single `picorv32` module and no RTL adaptation.  It is the only one of the
+three candidates whose envelope loads today: CV32E40P stops at retained
+`AlwaysPosedge` event semantics and Ibex at `AlwaysLatch`.  PicoRV32's current
+canonical envelope is 3,178,052 bytes with SHA-256
+`009cc39591b3fcb1c88403ca44f822cb1854d2ebc0b5c728c7cade06a2e47b1b`; its first
+semantic wall remains the `cpuregs` unpacked memory, and the source-shaped
+memory route still refuses generated members.  The older 3,181,105-byte hash
+in the initial census was an earlier extractor snapshot and is now explicitly
+identified as historical in the core census.
+
+The theorem to prove is the following, stated over the exact SystemVerilog
+semantics rather than a hand-built cycle model.  Let `pico` be the unmodified
+pinned RTL instantiated at the RV32I/no-interrupt profile
+(`COMPRESSED_ISA = 0`, `ENABLE_MUL = 0`, `ENABLE_FAST_MUL = 0`,
+`ENABLE_DIV = 0`, `ENABLE_PCPI = 0`, `ENABLE_IRQ = 0`, `ENABLE_TRACE = 0`,
+`ENABLE_COUNTERS = 0`, `ENABLE_COUNTERS64 = 0`, all 32 integer registers
+enabled, and reset PC `0`; the remaining source parameters are pinned to their
+declared defaults).  For every admissible reset state, RV32I program, initial
+byte memory, and every legal memory response, event schedule, and 0/1
+resolution of unknown bits, every finite completed E-run from reset satisfies
+
+```text
+rvfiRetirements run
+  = trace (rvMachineWith picorv32Profile) isaInit (retirementInputs run)
+∧ CoreIsaRel (finalCoreState run)
+    (machineStateAfter (rvMachineWith picorv32Profile)
+      isaInit (retirementInputs run))
+```
+
+Here `rvfiRetirements` is the order-checked RVFI stream (bubbles omitted only
+by the existing normalizer), `retirementInputs` is the exact instruction and
+byte-memory view at each completed retirement, and `CoreIsaRel` relates the
+RTL architectural state—including its memory-visible effects—to the ISA state.
+The run quantifier ranges over all resolutions admitted by E; it does not pick
+one simulator schedule or one value for an unknown.  The theorem is scoped to
+RV32I, no interrupts, minimal CSRs, and explicit trap boundaries; unsupported
+extensions and traps outside that profile remain loud until their contracts are
+added.
+
+The first proof milestone is an RTL invariant for `ADDI`, quantified over every
+program and every legal run.  At each instruction boundary, if the next valid
+RVFI commit decodes as `addi rd, rs1, imm`, then its PC and instruction equal
+the related ISA state's PC and fetched word, `pc_wdata = pc + 4`, its register
+effect is `rd := (x[rs1] + signExtend(imm))` (or no write for `rd = x0`), its
+memory masks and trap are empty, and the post-commit RTL state is related to
+the ISA state after exactly one `isaStep` for that input.  The invariant also
+preserves the byte memory and x0.  This is a genuine RTL boundary invariant;
+it must be discharged from the loaded PicoRV32 state and not assumed as a
+`RobStepRefines` hypothesis.
+
+**DECIDED:** use PicoRV32 as the R2 target and make its whole-core theorem a
+universal E-run/RV32I trace-and-final-state statement.  Build the `ADDI`
+boundary invariant first; do not add another conditional packet projection or
+call the existing finite RVFI witnesses a core theorem.
+
 ## 2026-11-06-ls-sv2-242 — expose normalized packet-tag refinement through ROB inputs
 
 Added `normalizeRvfiPacketTags_refines_rob` and its append form to

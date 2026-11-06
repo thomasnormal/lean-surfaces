@@ -41,7 +41,7 @@ load_design_sv2 NAME from "RESULT.sv.json"
 | --- | ---: | --- | ---: | ---: | --- |
 | CV32E40P | 17.08 s | 21,289,394 / `e588884691159820eac0a28eff5315e721b99fdf989f6611540931e5f264a6de` | 23 | 293 | **refused** |
 | Ibex | 39.13 s | 13,914,127 / `ae014736a66a58b0f725d0bf358ee8ebab6fb05ef75e0645ea1507137ce2f7d4` | 20 | 396 | **refused** |
-| PicoRV32 | 2.21 s | 3,181,105 / `25ac7e444bd6f4171348484fcba4d99e9c5192036764dabb8b64a6ef8c77be26` | 1 | 70 | **loaded** |
+| PicoRV32 | 4.37 s | 3,178,052 / `009cc39591b3fcb1c88403ca44f822cb1854d2ebc0b5c728c7cade06a2e47b1b` | 1 | 70 | **loaded** |
 
 The loader diagnostics below are the complete first errors, copied from the
 Lean probes:
@@ -68,6 +68,14 @@ envelope loader itself succeeds.  Its most frequent static walls are
 unsized/XZ parametric literals (16), call expressions (13), width
 conversions (11), net-z (8), and assignment targets (6); these counts are
 telemetry, not silently admitted semantics.
+
+The first admission pass recorded a 2.21-second, 3,181,105-byte envelope with SHA-256
+`25ac7e444bd6f4171348484fcba4d99e9c5192036764dabb8b64a6ef8c77be26` before the
+extractor was re-run for the current re-probe.  The canonical measurement for
+the pinned source is now the reproducible 3,178,052-byte envelope above
+(`009cc395…`); the source commit and all loader diagnostics are unchanged.
+Later R2 decisions use the canonical envelope, rather than mixing the two
+extractor snapshots.
 
 ## Ranking and next requests
 

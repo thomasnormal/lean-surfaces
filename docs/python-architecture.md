@@ -49,8 +49,10 @@ Contributors need to know which one a given check exercises.
 | status | theorem statements still target the legacy deep interpreter | current definition of the published Python tier |
 
 **Canonical statement:** theorems are stated over
-`LeanModels/Python/Semantics.lean`; the adequacy edge to the definition
-`LeanModels/Python/Monadic/` is still owed (`twinAgrees`).
+`LeanModels/Python/Semantics.lean`. The shared pure-worker edge is already
+kernel-checked by `twinAgrees_liftRes` and `twinAgrees_binOp` in
+`Monadic/Prim.lean`; the remaining owed work is the control-level refinement
+for the mutually recursive evaluators and stateful script layer.
 
 The two interpreters share the pure workers: arithmetic, comparison,
 string operations, rendering, and the dict and list primitives. Those live
@@ -66,8 +68,8 @@ differential suite through `Semantics.lean`. A refusal there is recorded
 rather than failed because that legacy theorem target is narrower. A wrong
 answer, meaning a value or exception class different from CPython's, fails
 exactly as it does for the runner. The monadic runner is checked separately;
-these differential checks do not establish the owed adequacy edge. Both
-modes run in CI, and both sets of numbers are on
+these differential checks do not establish the remaining control-level
+adequacy edge. Both modes run in CI, and both sets of numbers are on
 [python-coverage.md](python-coverage.md).
 
 ## The proof layer

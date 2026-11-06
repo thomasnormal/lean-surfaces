@@ -1059,6 +1059,30 @@ theorem normalizeRvfiPacketWindows_rob_tags_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/-- The generic ROB tag projection of a certified window chain carries
+exactly the flattened retirement payloads accepted by normalization. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement = retirementWindows.flatten := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  have htrace :
+      robTrace machine.toRobMachine state windows.flatten =
+        retirementWindows.flatten := by
+    rw [machine.toRobMachine_trace]
+    exact normalizeRvfiPacketTrace machine state windows.flatten hflat
+  calc
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state windows.flatten :=
+        robTags_retirements machine.toRobMachine state windows.flatten
+    _ = retirementWindows.flatten := htrace
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -1215,5 +1239,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

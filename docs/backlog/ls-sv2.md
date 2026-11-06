@@ -1564,3 +1564,15 @@ its two singleton windows.
 **DECIDED:** derive the generic tag result through chain certification and the
 packet-to-ROB projection; no independent order scan or completion ordering is
 introduced.
+
+## 2026-11-06-ls-sv2-79 — expose ROB retirement payloads from packet chains
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain now
+proves that mapping retirement payloads from its generic `robTags` stream is
+exactly the flattened retirement-window result accepted by normalization.  The
+PicoRV32 witness pins this payload projection over its two-window chain.
+
+**DECIDED:** derive payload equality through the existing ROB tag erasure and
+flattened ROB trace bridge; no independent retirement extraction or completion
+ordering is introduced.

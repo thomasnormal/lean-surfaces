@@ -1528,3 +1528,16 @@ pins this route over its two certified packet windows.
 **DECIDED:** derive the ROB trace through the existing flattened observation
 certificate and packet projection theorem; no independent packet scan or
 completion ordering is introduced.
+
+## 2026-11-06-ls-sv2-76 — compose flattened ROB traces across window chains
+
+Added `normalizeRvfiPacketWindows_rob_trace_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now compose directly to the exact flattened `robTrace` equality,
+with the second chain starting from the first chain's retained state and
+retirement-order boundary.  The PicoRV32 witness exercises the append route
+over its two singleton windows.
+
+**DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
+chain-level ROB trace projection; no packet completion order or independent
+trace reconstruction is introduced.

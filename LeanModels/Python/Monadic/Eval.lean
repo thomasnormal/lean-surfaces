@@ -1797,6 +1797,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               | some (ci, c) =>
                   if c.isExc then
                     match args.toList with
+                    | [] => raisePy (.user ci c.name)
                     | [arg] => do
                         let v ← evalOpen K m arg
                         match v with
@@ -1814,6 +1815,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               raisePy (.nameError id)
             else
               match args.toList with
+              | [] =>
+                  if admittedBuiltinRaise.contains id then
+                    raisePy (.builtinException (builtinExceptionIdentity id))
+                  else
+                    refuse s!"'raise {id}()': only an admitted builtin exception class can be constructed without arguments"
               | [arg] => do
                   let v ← evalOpen K m arg
                   match v with

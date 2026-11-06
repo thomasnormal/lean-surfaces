@@ -10296,6 +10296,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
              | some (ci, c) =>
                if c.isExc then
                  match args.toList with
+                 | [] => .exn st (.user ci c.name)
                  | [(.constant (.str msg) _)] =>
                    .exn st (.userMessage ci c.name msg)
                  | [_] =>
@@ -10315,6 +10316,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
              .exn st (.nameError id)
            else
              match args.toList with
+             | [] =>
+               if admittedBuiltinRaise.contains id then
+                 .exn st (.builtinException (builtinExceptionIdentity id))
+               else
+                 .unsupported s!"'raise {id}()': only an admitted builtin exception class can be constructed without arguments"
              | [(.constant (.str msg) _)] =>
                match builtinExcWithMessage id msg with
                | some e => .exn st e

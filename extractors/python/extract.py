@@ -197,24 +197,6 @@ def binds_any_name_scope(scope, names):
     return bool(_scope_binding_names(scope) & set(names))
 
 
-def _try_else_marker(node):
-    """Return a fresh local name for the lowered ``try … else`` flag.
-
-    The marker is an implementation detail of the envelope.  It is still a
-    real assignment, so it must not shadow a source name in the enclosing
-    scope; choose a deterministic span-based spelling and suffix it if the
-    source already uses that spelling.
-    """
-    base = "__leanpy_try_else_%d_%d" % (node.lineno, node.col_offset)
-    name = base
-    suffix = 0
-    while name in _SYNTHETIC_NAMES:
-        suffix += 1
-        name = base + "_" + str(suffix)
-    _SYNTHETIC_NAMES.add(name)
-    return name
-
-
 def annotation_table_alias(tree):
     """Return the one explicit annotation-table alias this tier models.
 
@@ -2385,39 +2367,27 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # structured in FULL generality -- bare raise, raise <expr>,
         # raise ... from ... all parse; evaluation owns the tier boundary
         # (only `raise N` of an admitted exception class is admitted).
-        # A direct zero-argument NAME constructor is observationally the
-        # same class-identity raise for the represented exception tier:
-        # `raise ValueError()` and `raise ValueError` both create an empty
-        # exception instance, and the model intentionally carries no
-        # instance payload. Lowering here keeps the runtime/proof surface
-        # unchanged while preserving the existing shadow/class checks.
+        # Zero-argument constructors remain call nodes; the interpreter
+        # owns their class-identity boundary and evaluation order.
         d = {"kind": "Raise", "span": span(node)}
         if node.exc is not None:
-            if (isinstance(node.exc, ast.Call)
-                    and isinstance(node.exc.func, ast.Name)
-                    and not node.exc.args and not node.exc.keywords):
-                d["exc"] = convert_expr(node.exc.func)
-            else:
-                d["exc"] = convert_expr(node.exc)
+            # Preserve the approved AST call node. The interpreter owns the
+            # exact zero-argument constructor path; ingestion must not turn
+            # `raise N()` into a different `raise N` program.
+            d["exc"] = convert_expr(node.exc)
         if node.cause is not None:
             d["cause"] = convert_expr(node.cause)
         return d
 
     if isinstance(node, ast.Try):
         # Exceptions tier: the v0 single-handler shape is carried
-        # structurally (exc_name + handler body).  ``else`` is lowered below
-        # to a success flag plus an ordinary ``if``; this keeps the AST
-        # constructor stable while preserving the distinction between a
-        # normal body exit and a handled exception.  Other out-of-v0
+        # structurally (exc_name + handler body).  `else` and `finally` are
+        # retained as admission reasons because the compact AST has no fields
+        # for those suites. Other out-of-v0
         # features fill try_unsupported (the call_unsupported pattern), and
         # execution refuses with the reason -- structured-but-loud. The
         # body/handler are carried best-effort either way so the Lean-side
         # censuses (binds/refs/yield/def walkers) stay exact.
-        # A `finally: pass` suite has no observable effect on any flow
-        # (normal return, break/continue, or a propagated exception), so the
-        # exact lowering is simply the try body. Keep real finalizers in the
-        # structured-but-loud path below; dropping their effects would be
-        # unsound.
         # Shape-specific handler/finally lowerings are deliberately absent.
         # The compact envelope schema carries a single handler and no else or
         # finalbody suite, so those forms are retained as structured-but-loud.
@@ -2514,11 +2484,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         }
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.YieldFrom):
-        # pass 5: `yield from e` in STATEMENT position -- structured
-        # (schema `YieldFrom`); ingestion INLINES the admitted genexp
-        # shape into `for target in it: yield elt` (docs/memory-model.md
-        # section "yield from") and everything un-lowered refuses loudly
-        # at execution. Expression-position `yield from` (a delegation
+        # `yield from e` in statement position remains structured as
+        # `YieldFrom:delegation`; ingestion retains the node and the
+        # interpreter refuses it until a delegation frame is modeled.
+        # Expression-position `yield from` (a delegation
         # RESULT consumer) keeps falling through to Unsupported below.
         return unsupported(node, "YieldFrom:delegation")
 

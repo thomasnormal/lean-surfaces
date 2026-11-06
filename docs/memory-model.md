@@ -1441,16 +1441,9 @@ keeps the wider evaluated-string form.
 Other builtin constructors, keyword or multiple arguments, and non-string
 payloads remain loud. `raise <expr>` beyond the measured scalar-parameter
 slice or an admitted class name, dynamic exception causes, and general bare
-re-raises refuse loudly. The exact
-direct shape `try: raise N; except N: raise` is lowered to `raise N`, because
-the handler's active class identity is statically known; broad handlers,
-tuple handlers, and nested re-raises remain loud.
-The exact `raise N from None` shape lowers to `raise N`: exception causes are
-not observable in this tier, while a dynamic cause remains structured and loud.
-A direct zero-argument
-constructor in raise position (`raise N()`) is lowered at ingestion to
-the same class-identity path as `raise N`; it carries no inspectable
-instance payload. `raise N` maps to
+re-raises refuse loudly. A direct zero-argument constructor in raise position
+(`raise N()`) is admitted through the same class-identity path as `raise N`;
+it carries no inspectable instance payload. `raise N` maps to
 `.exn (.user cid)` — CPython's implicit no-arg instantiation of an
 empty subclass is observationally the class identity as long as the
 instance can never be INSPECTED, which the refusals above guarantee.
@@ -1460,22 +1453,14 @@ representation by any deviation from the exact shape.
 
 **`try`/`except`: structure and semantics.** `Stmt.tryStmt body
 handlers orelse finalbody` is structured by the extractor; the v0 tier
-admits one handler, either naming one admitted exception class or
-using a bare `except:`. An unused `as e` binding is erased safely; observing
-the bound exception object remains outside the tier. `else` is lowered at
-ingestion to a success flag, the existing `try` node, and an ordinary `if`,
-so the suite runs only after a normal body exit; a `finally: pass` suite is
-lowered away because it is observationally a no-op. The measured narrow
-effectful slice whose body returns a name and whose finalizer appends one
-scalar to that same name lowers to the append followed by the return; other
-effectful `finally` suites remain loud. A tuple of plain admitted exception names is
-matched left to right against the same retained-state handler body. The
-measured multiple-handler slice has two plain-name clauses whose handler
-bodies are one scalar-literal `return`; ingestion lowers these clauses to
-nested existing `Try` nodes in source order. This is sound because the
-handlers cannot raise and therefore cannot be mistaken for a sibling clause.
-Other multiple-handler bodies, dynamic exception expressions, and tuple
-patterns stay structured-but-loud. Evaluation composes on the existing
+admits one handler, either naming one admitted exception class or using a bare
+`except:`. An unused `as e` binding is erased safely; observing the bound
+exception object remains outside the tier. `else`, `finally`, and multiple
+handlers remain structured-but-loud because the compact envelope carries one
+handler and no suite fields for those clauses. A tuple of plain admitted
+exception names is matched left to right against the same retained-state
+handler body. Other multiple-handler bodies, dynamic exception expressions,
+and tuple patterns stay structured-but-loud. Evaluation composes on the existing
 `Run`: run the body; `.ok` skips the handler; a bare handler catches every
 represented `.exn`; `.exn (.user cid)` with cid matching a named handler's
 class runs the handler FROM THE RETAINED STATE (no rollback — CPython); any
@@ -1510,13 +1495,9 @@ divergence yet — nothing in tier survives the second step — so the pin
 is Lean-side, and the fix lands WITH the tier (the build flips the pin
 to `closed` and adds the `try`-driven differential row in `exc_lab`). `execForGen` needs nothing: `Run.bind` already propagates the
 step's `.exn` out of the loop. A `yield` INSIDE a `try` body would make
-`tryStmt` a suspendable construct needing its own `GenFrame`. The measured
-safe slice is narrower: ingestion lowers a generator whose entire body is
-`try: yield <scalar literal or direct parameter> except Stop: pass` to the
-existing yield continuation. The yield expression cannot raise in that
-slice and generator `throw` is outside the tier, so erasing the otherwise
-unobservable handler is faithful. All other yield-under-try forms remain
-structured-but-loud (`genPlan` still refuses a surviving try frame).
+`tryStmt` a suspendable construct needing its own `GenFrame`. A generator `try` frame remains structured-but-loud; `genPlan` refuses a
+surviving try frame rather than erasing a handler keyed to one exception name.
+All yield-under-try forms therefore retain their source node.
 
 **Fragments and proof layer.** `raise` of an admitted class and
 `tryStmt` over heap-free subtrees allocate nothing — both can stay IN
@@ -1529,7 +1510,7 @@ raise-catch roundtrip; mutations-before-raise visible in the handler
 (the state-retention covenant observable); non-matching class
 propagates; an exception crossing a generator resume closes the
 generator (the `next()`-after-exn row); the refusal battery (observed `as`,
-effectful `finally` outside the measured append-before-return slice, args on
+effectful `finally` cleanup, args on
 raise, `raise` bare,
 heap-backed or rebound value raises, and general yield-under-try). The scalar
 parameter raise is covered by `exc_lab.raise_value`; the safe parameter-yield
@@ -1550,7 +1531,7 @@ constructors remain the next exception-value boundary.
 
 **Explicitly NOT decided here:** the `time.time()` abstraction, general
 exception MROs beyond the direct measured ancestor table, all-flow `finally`
-cleanup outside the measured append-before-return slice, and exception
+cleanup, and exception
 payloads/`as` bindings. Each needs its own recorded decision.
 
 **As built (2026-08-11, pass 4) — the deltas the implementation
@@ -1594,12 +1575,9 @@ unshadowed-name rule and reports zero ground-truth violations.
   single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every remaining
   out-of-v0 feature (multiple handlers beyond the measured literal-return
-  slice, tuple pattern, observed `as`, effectful `finally` outside the measured
-  append-before-return slice, a non-name handler class expression) and
-  execution refuses with that reason — structured-but-loud,
-  one channel. A `try … else`
-  suite is lowered at ingestion to a success flag and an ordinary `if`,
-  so it keeps the same constructor and runs only after normal completion.
+  slice, tuple pattern, observed `as`, any `finally`/`else` suite, a non-name
+  handler class expression) and execution refuses with that reason —
+  structured-but-loud, one channel.
 * **The handler class resolves STATICALLY-FIRST**: `except N:` refuses
   loudly (never runs the body) unless `N` is an admitted exception
   class of the module. CPython evaluates the handler expression only
@@ -2631,10 +2609,8 @@ local/global/definition shadow guards remain in force for other handler names.
 Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Tuple/attribute patterns,
-observed `as` bindings, wider multiple-handler bodies, effectful `finally`
-outside the measured append-before-return slice, and builtin exception objects
-as values remain loud; `else` is admitted through the
-ingestion lowering described above.
+observed `as` bindings, wider multiple-handler bodies, effectful `finally`/`else` clauses, and builtin exception objects
+as values remain loud; no suite-lowering is performed.
 
 `exc_handlers_lab` pins the matching and refusal boundaries in the kernel and
 against CPython 3.9. Its module fixture also pins global publication through a

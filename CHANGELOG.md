@@ -25,6 +25,11 @@
   remains the deliberate dispatch representation. Unsupported creation stays
   loud until runtime class namespaces and class objects are modeled.
 
+- Retained structured `Try` and `Raise` nodes through extraction. Removed the
+  dead try-else marker and stale shape-lowering descriptions; `raise N()` now
+  reaches the interpreter as a call expression, while unsupported cleanup and
+  handler forms remain loud.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

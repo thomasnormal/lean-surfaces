@@ -987,6 +987,20 @@ theorem normalizeRvfiPacketWindows_tags_stream_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/-- Erasing the packet boundaries from a certified window chain preserves the
+same global consecutive tag prefix. -/
+theorem normalizeRvfiPacketWindows_tags_flat {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    InOrderTags start
+      (rvfiPacketTags machine state windows.flatten).flatten := by
+  exact inOrderPacketStream_flatten
+    (normalizeRvfiPacketWindows_tags_stream machine state start windows
+      retirementWindows h)
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -1100,5 +1114,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

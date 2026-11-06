@@ -1492,3 +1492,15 @@ witness exercises this append theorem over the two singleton windows.
 **DECIDED:** compose packet-local order through the same state/order-carrying
 window append certificate; the packet stream is never sorted or reconstructed
 from completion order.
+
+## 2026-11-06-ls-sv2-73 — expose flattened tags from packet window chains
+
+Added `normalizeRvfiPacketWindows_tags_flat` to
+`LeanModels/Refine/RvfiPacket.lean`.  The packet-aware chain certificate now
+projects directly to a global `InOrderTags` proof after packet boundaries are
+erased.  The PicoRV32 witness pins the flattened tag prefix over its complete
+two-window capture.
+
+**DECIDED:** obtain the flat tag certificate by the established
+`InOrderPacketStream` erasure theorem; no independent tag scan or completion
+ordering is introduced.

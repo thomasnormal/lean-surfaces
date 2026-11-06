@@ -117,7 +117,7 @@ end DelabTests
 
 /-! ## Axiom pin (surface theorems use only the standard axioms) -/
 
-/-- info: 'LeanModels.Sv.run_functional' depends on axioms: [propext] -/
+/-- info: 'LeanModels.Sv.run_functional' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms run_functional
 

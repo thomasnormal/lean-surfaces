@@ -2147,3 +2147,14 @@ witness pins this append projection.
 **DECIDED:** compose through the finite window certificate and the exact
 packet-to-ROB tag-input bridge; no input order or completion order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-127 — expose normalized packet ROB tag inputs
+
+Added `normalizeRvfiPacketRobTags_inputs` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now exposes its packet-facing source-input stream directly through the generic
+ROB tag stream.  The PicoRV32 witness pins this normalized input projection
+over the complete packet capture.
+
+**DECIDED:** reuse the exact packet-to-ROB tag-input bridge; normalization
+certifies the capture but does not reconstruct or reorder inputs.

@@ -1927,3 +1927,15 @@ The PicoRV32 witness pins both packet-input cardinality projections.
 **DECIDED:** derive the window result from the flattened normalization and the
 existing packet input-length theorem; the carried state, packet boundaries,
 and retirement order remain explicit at the window append boundary.
+
+## 2026-11-06-ls-sv2-108 — compose packet-window ROB tag cardinality
+
+Added `normalizeRvfiPacketWindows_rob_tags_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet-window
+chains now compose directly to the exact cardinality of the flattened generic
+ROB tag stream and the concatenated normalized retirement windows.  The
+PicoRV32 witness pins this append cardinality over its two singleton windows.
+
+**DECIDED:** compose through the existing finite-window certificate and the
+single-chain ROB-tag cardinality theorem; no tag stream, padding, or
+completion order is reconstructed at the append boundary.

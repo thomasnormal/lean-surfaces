@@ -207,6 +207,12 @@ theorem canonInt32_of_range {v : Int} (h : -2147483648 ≤ v ∧ v < 2147483648)
     canonInt 32 true v = v := by
   exact Loop2.int32_of_inInt32 h
 
+theorem evalIntExact_paramRef {E : IEnv} {n : String} {v : Int}
+    (hm : E.int32 = true) (h : IEnv.intVal? E n = some v) :
+    evalIntExact E (.paramRef n none) = .ok (canonInt 32 true v) := by
+  unfold evalIntExact
+  simp [hm, h]
+
 theorem Agrees.bindVal {σ : String → Int} {E : IEnv} {ns : List String} (h : Agrees σ E ns)
     (g : String) (i : Int) : Agrees (bindσ g i σ) (E.bindVal g i) (g :: ns) := by
   intro n hn

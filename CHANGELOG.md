@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a positive ordinary-call identity witness through a one-child
+  `ImplicitCastExpr`, retaining the selected function handle recursively.
+
 - Added a recorded refusal for ordinary `CallExpr` identity when the retained
   declaration handle is a non-callable `VarDecl`.
 

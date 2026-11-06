@@ -33,3 +33,7 @@ Ordinary `CallExpr` identity has the corresponding negative control: a
 retained declaration handle whose structured kind is `VarDecl` is refused even
 when the separate native source witness is well-formed. The gate never turns a
 non-callable declaration into a callable by name.
+
+The positive ordinary-call corpus also covers the one-child implicit-cast path,
+confirming that the retained function handle survives the frontend wrapper
+without string lookup or conversion inference.

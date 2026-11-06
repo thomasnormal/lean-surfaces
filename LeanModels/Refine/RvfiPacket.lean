@@ -1867,6 +1867,20 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs_length {State : Type}
     windows retirementWindows h
   simpa only [List.length_map] using hlen
 
+/- A certified packet-window chain's tagged retirement payload has exactly the
+   flattened normalized retirement cardinality. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ((robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement).length = retirementWindows.flatten.length := by
+  have hret := normalizeRvfiPacketWindows_rob_tags_retirements machine state
+    start windows retirementWindows h
+  simpa using congrArg List.length hret
+
 /- A certified packet-window chain's generic ROB input stream has exactly the
    flattened normalized retirement cardinality. -/
 theorem normalizeRvfiPacketWindows_robInputs_length {State : Type}
@@ -2064,6 +2078,30 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs_length_append {State : Type}
     hfirst hsecond
   exact normalizeRvfiPacketWindows_rob_tags_inputs_length machine state start
     (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
+/- Tagged retirement-payload cardinality composes across adjacent certified
+   packet-window chains. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.retirement).length =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten.length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_retirements_length machine state
+    start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
 /-- A successful flattened RVFI certificate also supplies the tagged ROB

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a differential witness for enum field reads through an explicit object
+  projection, including rejection of a wrong receiver object before value
+  transport.
+
 - Added a direct differential witness for canonical-to-defining member method
   body identity, retaining the defining handle and `CompoundStmt` kind before
   body execution.

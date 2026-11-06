@@ -1277,6 +1277,11 @@ def memberMethodBodyEvidenceWitness : Bool :=
 
 #guard memberMethodBodyEvidenceWitness
 
+def enumFieldReadEvidenceWitness : Bool :=
+  enumReadAccepted && enumReadWrongObject
+
+#guard enumFieldReadEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

@@ -413,6 +413,9 @@ telemetry: the live receiver, field state, and variadic body are not executed.
 The body relation is independently witnessed in the corpus: a declaration-only
 canonical method must resolve to exactly one defining occurrence with a
 retained `CompoundStmt` body kind before any body walk or object execution.
+The enum field-read row composes the typed field and representation with the
+explicit receiver projection, accepting the valid stored cell and rejecting a
+wrong receiver object before returning a value.
 
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is

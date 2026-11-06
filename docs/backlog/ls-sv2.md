@@ -1588,3 +1588,14 @@ witness exercises this append route over its two singleton windows.
 **DECIDED:** compose through the finite-window certificate and the existing ROB
 payload projection; no independent retirement extraction or completion order is
 introduced.
+
+## 2026-11-06-ls-sv2-81 — connect ROB tag inputs to packet inputs
+
+Added `RvfiPacketMachine.toRobMachine_tags_inputs` to
+`LeanModels/Refine/RvfiPacket.lean`.  Mapping source inputs from the flattened
+generic `robTags` stream now equals the packet machine's retained `packetInputs`
+stream, reusing the existing packet-to-ROB projections.  The PicoRV32 witness
+pins this input bridge over the certified two-window capture.
+
+**DECIDED:** retain the packet machine's explicit input threading as the sole
+source of ROB inputs; no input order or completion order is inferred.

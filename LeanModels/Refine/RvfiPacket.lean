@@ -626,6 +626,14 @@ theorem RvfiPacketMachine.toRobMachine_tags {State : Type}
           exact congrArg (List.append
             (entries.filterMap RvfiPacketEntry.toTaggedCommit?)) (ih state')
 
+/-- Flattened ROB tag inputs are exactly the packet machine's retained
+architectural input stream. -/
+theorem RvfiPacketMachine.toRobMachine_tags_inputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input) :
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.input =
+      packetInputs machine.toPacketMachine state cycles := by
+  rw [robTags_inputs, machine.toRobMachine_inputs]
+
 /-- A successful packetized RVFI normalization therefore certifies the
 flattened tag stream exposed by the generic ROB interface. -/
 theorem normalizeRvfiPacketRobTags {State : Type}
@@ -1244,6 +1252,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_flat
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines

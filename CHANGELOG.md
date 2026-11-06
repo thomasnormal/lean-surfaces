@@ -19,6 +19,10 @@
   loud until definitions become runtime bindings; only unobserved benign-import
   deletion retains its narrow no-op path.
 
+- Kept CPython's clock oracle values as binary64 floats in differential replay;
+  the model's integer trace remains an explicit loud boundary until binary64
+  trace readings are modeled.
+
 - Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
 
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.

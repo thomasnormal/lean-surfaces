@@ -2229,3 +2229,15 @@ chain count over its two measured windows.
 
 **DECIDED:** flatten only after the window certificate supplies each carried
 state and retirement boundary, then reuse the single-window ROB-input count.
+
+## 2026-11-06-ls-sv2-134 — compose packet-window ROB input cardinality
+
+Added `normalizeRvfiPacketWindows_robInputs_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now prove directly that their concatenated generic ROB input
+stream has the concatenated flattened retirement cardinality, retaining the
+second chain's carried state and order boundary.  The PicoRV32 witness pins
+this append count.
+
+**DECIDED:** compose through the explicit window-chain append certificate and
+the flattened generic ROB input count; no input order is reconstructed.

@@ -1881,6 +1881,28 @@ theorem normalizeRvfiPacketWindows_robInputs_length {State : Type}
     windows retirementWindows h
   exact normalizeRvfiPacketRobInputs_length machine state windows.flatten hflat
 
+/- Generic ROB input cardinality composes across adjacent certified packet
+   window chains, retaining the second chain's carried state and order. -/
+theorem normalizeRvfiPacketWindows_robInputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robInputs machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).length =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten.length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_robInputs_length machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- ROB-tag cardinality composes across adjacent normalized packet-window
    chains, retaining the second chain's carried state and order boundary. -/
 theorem normalizeRvfiPacketWindows_rob_tags_length_append {State : Type}
@@ -2475,6 +2497,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace

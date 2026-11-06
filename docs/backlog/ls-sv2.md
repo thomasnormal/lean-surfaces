@@ -1998,3 +1998,14 @@ projection over its two packet windows.
 
 **DECIDED:** reuse the generic `packetTrace_append` law at the packetized RVFI
 projection boundary; no retirement order or packet contents are reconstructed.
+
+## 2026-11-06-ls-sv2-114 — expose packet input threading
+
+Added `RvfiPacketMachine.toPacketMachine_inputs_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The packet-facing architectural input
+stream now has an explicit append law, with the second segment evaluated from
+the first segment's retained packet state.  The PicoRV32 witness pins this
+projection over its two packet windows.
+
+**DECIDED:** reuse the generic `packetInputs_append` law at the packetized RVFI
+projection boundary; no input order or completion order is reconstructed.

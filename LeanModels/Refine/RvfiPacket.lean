@@ -848,6 +848,17 @@ theorem normalizeRvfiPacketRobTags_retirements {State : Type}
   rw [machine.toRobMachine_tags_retirements]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- A successful normalized packet capture exposes its packet-facing source
+   inputs directly through the generic ROB tag stream. -/
+theorem normalizeRvfiPacketRobTags_inputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (_h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.input =
+      packetInputs machine.toPacketMachine state cycles := by
+  exact RvfiPacketMachine.toRobMachine_tags_inputs machine state cycles
+
 /- Normalized retirement payloads compose across adjacent packet windows with
    the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_retirements_append {State : Type}
@@ -2297,6 +2308,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_append

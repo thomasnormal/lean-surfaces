@@ -2952,6 +2952,54 @@ theorem normalizeRvfiPacketWindows_rob_trace_refines_append
     state isaState start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
 
+/- The normalized packet-window ROB-trace contract also exposes the packet
+   machine's architectural input projection directly. -/
+theorem normalizeRvfiPacketWindows_rob_trace_refines_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    retirementWindows.flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state windows.flatten) := by
+  have htrace := normalizeRvfiPacketWindows_rob_trace_refines machine isa
+    rel admit state isaState start windows retirementWindows hrob hrel h
+  rw [machine.toRobMachine_inputs] at htrace
+  exact htrace
+
+/- The packet-input form of the normalized packet-window ROB-trace contract
+   composes across adjacent certified chains. -/
+theorem normalizeRvfiPacketWindows_rob_trace_refines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (firstRetirementWindows ++ secondRetirementWindows).flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten) := by
+  have htrace := normalizeRvfiPacketWindows_rob_trace_refines_append machine
+    isa rel admit state isaState start firstWindows secondWindows
+    firstRetirementWindows secondRetirementWindows hrob hrel hfirst hsecond
+  rw [machine.toRobMachine_inputs] at htrace
+  exact htrace
+
 /-- A certified packet-window chain exposes the ISA trace through the packet
 machine's architectural input projection, without requiring callers to name
 the intermediate generic ROB view. -/
@@ -6104,6 +6152,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state_packet

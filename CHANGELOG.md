@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a source-shaped ordinary-call witness for parenthesized callees; the
+  metadata gate follows `ImplicitCastExpr` and `ParenExpr` wrappers to the
+  retained function declaration.
+
 - Added a recorded refusal for scalar overloaded-operator declaration
   references; frontend identity is never coerced from scalar data.
 

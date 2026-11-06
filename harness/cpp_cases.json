@@ -2738,6 +2738,18 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-parenthesized-callee-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallParenTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "int g(int value) { return value; } int f(int value) { return (g)(value); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.resolved-call-cast-kind-mismatch-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

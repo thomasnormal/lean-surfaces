@@ -643,6 +643,10 @@ private partial def resolvedCalleeHandle : Raw → Except String FrontendHandle
           match (Raw.object fields).field "inner" with
           | some (.array [child]) => resolvedCalleeHandle child
           | _ => .error "translation: operator callee cast must have one child"
+      | some "ParenExpr" =>
+          match (Raw.object fields).field "inner" with
+          | some (.array [child]) => resolvedCalleeHandle child
+          | _ => .error "translation: operator callee parentheses must have one child"
       | some kind => .error s!"translation: operator callee has unexpected node {kind}"
       | none => .error "translation: operator callee has no kind"
   | _ => .error "translation: operator callee is malformed"
@@ -662,6 +666,10 @@ private partial def resolvedCalleeEvidenceKind : Raw → Except String (Option S
           match (Raw.object fields).field "inner" with
           | some (.array [child]) => resolvedCalleeEvidenceKind child
           | _ => .error "translation: callee cast must have one child"
+      | some "ParenExpr" =>
+          match (Raw.object fields).field "inner" with
+          | some (.array [child]) => resolvedCalleeEvidenceKind child
+          | _ => .error "translation: callee parentheses must have one child"
       | some kind => .error s!"translation: callee has unexpected node {kind}"
       | none => .error "translation: callee has no kind"
   | _ => .error "translation: callee is malformed"

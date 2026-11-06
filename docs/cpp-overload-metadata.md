@@ -113,6 +113,11 @@ retained declaration row; it is not used for name lookup.
 A malformed string `referencedDecl` handle is a recorded refusal; call metadata
 does not normalize arbitrary text into an artifact identity.
 
+A parenthesized ordinary-call callee is retained through Clang's
+`ImplicitCastExpr` and one-child `ParenExpr` wrappers. The gate follows those
+source AST nodes to the same `FunctionDecl` handle; it does not strip the
+parentheses by reparsing source text.
+
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 

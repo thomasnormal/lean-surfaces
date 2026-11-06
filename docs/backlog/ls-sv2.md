@@ -2514,3 +2514,15 @@ retaining the carried state.  The PicoRV32 witness pins both forms.
 projection and use the packet-input append law for the composed form; packet
 boundaries, source-input order, and normalization cardinality are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-157 — certify normalized packet tag-retirement cardinality
+
+Added `normalizeRvfiPacketTags_retirements_length` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the flattened packet-tag retirement projection has exactly the
+decoded retirement cardinality, and adjacent captures compose the same count.
+The PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the existing exact packet-tag retirement
+projection; retirement order, packet boundaries, and payloads are not
+reconstructed.

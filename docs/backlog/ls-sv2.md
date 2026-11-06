@@ -1791,3 +1791,15 @@ packet capture.
 **DECIDED:** reuse the existing normalized state transport theorem; the
 packet input stream and retirement count remain explicitly threaded, with no
 state reconstruction or order inference.
+
+## 2026-11-06-ls-sv2-97 — compose single packet state refinement
+
+Added `normalizeRvfiPacketState_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`. Two adjacent normalized packet windows
+now compose directly to the final packet/ISA state relation and exact combined
+retirement-order increment. The PicoRV32 witness pins this state/order append
+route over its first and second packet windows.
+
+**DECIDED:** compose through the existing normalized state transport append
+theorem; both window state transitions and the carried retirement offset stay
+explicit.

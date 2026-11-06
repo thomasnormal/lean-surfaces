@@ -1622,3 +1622,16 @@ pins this input-count contract over its two-window capture.
 **DECIDED:** derive input cardinality from the tag cardinality theorem and
 `List.length_map`; the packet input stream remains explicitly threaded and no
 padding, truncation, or completion order is inferred.
+
+## 2026-11-06-ls-sv2-84 — expose packet-chain ISA trace equality
+
+Added `normalizeRvfiPacketWindows_rob_trace_refines` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now exposes the exact equality between its flattened normalized retirement
+payload and the ISA trace driven by the corresponding flattened generic ROB
+inputs.  The PicoRV32 witness pins this refinement route over its two certified
+packet windows.
+
+**DECIDED:** derive the ISA trace equality from the existing ROB refinement
+contract and certified packet retirement projection; no independent trace
+reconstruction, scheduling, or completion order is introduced.

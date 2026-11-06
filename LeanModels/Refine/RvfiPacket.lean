@@ -1091,6 +1091,29 @@ theorem normalizeRvfiPacketWindows_rob_tags_retirements {State : Type}
         robTags_retirements machine.toRobMachine state windows.flatten
     _ = retirementWindows.flatten := htrace
 
+/-- A certified packet-window chain directly exposes its normalized
+retirement payload as the ISA trace over the generic ROB inputs. -/
+theorem normalizeRvfiPacketWindows_rob_trace_refines {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    retirementWindows.flatten =
+      trace isa isaState
+        (robInputs machine.toRobMachine state windows.flatten) := by
+  have hcontract := normalizeRvfiPacketRobTags_refines_windows machine isa rel
+    admit state isaState start windows retirementWindows hrob hrel h
+  rcases hcontract with ⟨⟨horder, hret⟩, hstate⟩
+  have hretire := normalizeRvfiPacketWindows_rob_tags_retirements machine state
+    start windows retirementWindows h
+  have htraceTags := hretire.symm.trans hret
+  exact htraceTags
+
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_append {State : Type}
@@ -1294,6 +1317,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat

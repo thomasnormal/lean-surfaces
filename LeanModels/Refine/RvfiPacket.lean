@@ -859,6 +859,37 @@ theorem normalizeRvfiPacketRobTags_inputs {State : Type}
       packetInputs machine.toPacketMachine state cycles := by
   exact RvfiPacketMachine.toRobMachine_tags_inputs machine state cycles
 
+/- Normalized packet source-input projections compose across adjacent windows
+   with the second window evaluated from the first window's retained state. -/
+theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input =
+      packetInputs machine.toPacketMachine state first ++
+        packetInputs machine.toPacketMachine
+          (packetStateAfter machine.toPacketMachine state first) second := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  calc
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input =
+        packetInputs machine.toPacketMachine state (first ++ second) :=
+      normalizeRvfiPacketRobTags_inputs machine state (first ++ second)
+        hcombined
+    _ = packetInputs machine.toPacketMachine state first ++
+        packetInputs machine.toPacketMachine
+          (packetStateAfter machine.toPacketMachine state first) second :=
+      RvfiPacketMachine.toPacketMachine_inputs_append machine state first second
+
 /- Normalized retirement payloads compose across adjacent packet windows with
    the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_retirements_append {State : Type}
@@ -2309,6 +2340,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_append

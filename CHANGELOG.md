@@ -3025,3 +3025,5 @@ change is listed here under **Changed** or **Removed**.
   key benign import handling by module, names, and star fields.
 - Python: carry `Try` exception-handler names as structured arrays instead of
   joining and reparsing them with a delimiter.
+- Python: pin `tools/leanpy`'s frontend and comparison oracle to CPython 3.9,
+  with explicit diagnostics for fallback interpreters.

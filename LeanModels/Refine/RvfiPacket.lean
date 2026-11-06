@@ -4182,6 +4182,42 @@ theorem normalizeRvfiPacketRobTags_length_packetInputs_append
   exact normalizeRvfiPacketRobTags_length_packetInputs machine state
     (first ++ second) hcombined
 
+/- A successful normalized packet capture has equal generic ROB-tag and
+   generic ROB-trace cardinalities. -/
+theorem normalizeRvfiPacketRobTags_length_robTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {_start : Nat} {_retirements : List Retirement}
+    (_h : normalizeRvfiTrace? _start
+        (rvfiPacketObservations machine state cycles) = some _retirements) :
+    (robTags machine.toRobMachine state cycles).length =
+      (robTrace machine.toRobMachine state cycles).length := by
+  calc
+    (robTags machine.toRobMachine state cycles).length =
+        (robInputs machine.toRobMachine state cycles).length :=
+      robTags_length_eq_robInputs_length machine.toRobMachine state cycles
+    _ = (robTrace machine.toRobMachine state cycles).length :=
+      (robTrace_length_eq_robInputs_length machine.toRobMachine state cycles).symm
+
+/- The normalized ROB-tag/ROB-trace cardinality bridge composes across
+   adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTags_length_robTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {_start : Nat} {_firstRetirements _secondRetirements : List Retirement}
+    (_hfirst : normalizeRvfiTrace? _start
+        (rvfiPacketObservations machine state first) = some _firstRetirements)
+    (_hsecond : normalizeRvfiTrace?
+        (_start + _firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some _secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).length =
+      (robTrace machine.toRobMachine state (first ++ second)).length := by
+  exact normalizeRvfiPacketRobTags_length_robTrace machine state
+    (first ++ second)
+    (normalizeRvfiPacketTrace_append machine state first second _hfirst _hsecond)
+
 /- A certified packet-window chain has equal generic ROB-tag and packet-input
    cardinalities. -/
 theorem normalizeRvfiPacketWindows_rob_tags_length_packetInputs
@@ -4448,6 +4484,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_packetInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_packetInputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_packetInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_packetTrace

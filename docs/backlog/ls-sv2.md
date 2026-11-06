@@ -3697,3 +3697,31 @@ shape and without lowering or unrolling the source.
 **DECIDED:** treat this as generic loader/semantics work required by the real
 PicoRV32 target.  No PicoRV32 RTL edit or core-specific workaround is allowed;
 the R2 proof remains parked at this wall until the owner lane lands support.
+
+## 2026-11-06-ls-sv2-247 — establish the RV32I ADDI architectural boundary
+
+The inbox was reread before this item.  The generated-member request is now
+parked with `ls-sv`; while the owner lane works on that generic wall, this item
+moves the R2 proof forward in the owned refinement layer without constructing a
+model of PicoRV32.
+
+Added `LeanModels/Refine/Rv32i.lean` with the exact ADDI boundary contract:
+`isaStepWith_addi` reduces every interrupt-free decoded 32-bit ADDI to its
+architectural register update and `pc + 4`, `isaStepMemWith_addi` proves that
+its byte memory is unchanged, and `rvMachineWith_addi` exposes the same result
+as the RVFI-shaped `Retirement.ofRvStep` commit.  The decoder hypothesis is on
+`Fetched.decode`, so a future loaded-core invariant must establish it from the
+actual RTL instruction word.  `addiRetirement` is the reusable expected commit
+and `addiNext`/`addiEffects` are the exact state/effect equations.
+
+The PicoRV32-side witness
+`Examples/system-verilog/cores/picorv32/addi_boundary.lean` pins the measured
+`addi x1, x0, 5` word (`0x00500093`) and proves both the memory-threaded ISA
+boundary and the generic commit boundary.  These are architecture-side
+contracts only; no theorem assumes `RobStepRefines`, and no finite RVFI witness
+is promoted to a core theorem.
+
+**DECIDED:** make this exact ADDI contract the first proof target for the
+future invariant extracted from loaded PicoRV32 state.  Keep the contract
+profile-parametric and preserve the current no-interrupt/RV32I scope; generated
+memory support remains an owner-lane prerequisite for the actual RTL proof.

@@ -1504,3 +1504,14 @@ two-window capture.
 **DECIDED:** obtain the flat tag certificate by the established
 `InOrderPacketStream` erasure theorem; no independent tag scan or completion
 ordering is introduced.
+
+## 2026-11-06-ls-sv2-74 — compose flattened tags across window chains
+
+Added `normalizeRvfiPacketWindows_tags_flat_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified window
+chains now produce the global flattened `InOrderTags` certificate directly at
+their append boundary.  The PicoRV32 witness exercises this flat append route
+over the two singleton windows.
+
+**DECIDED:** derive the flattened append result through chain composition and
+packet-boundary erasure, retaining the established state/order carry.

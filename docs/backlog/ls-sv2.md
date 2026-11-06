@@ -2500,3 +2500,17 @@ captures compose the same bridge.  The PicoRV32 witness pins both forms.
 **DECIDED:** take the length of the existing exact packet-tag input
 projection; packet boundaries, source-input order, and normalization
 cardinality are not reconstructed.
+
+## 2026-11-06-ls-sv2-156 — certify packet-window tag-input cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_tags_inputs_length_packetInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies that its flattened packet-tag source-input
+projection has exactly the packet machine's flattened `packetInputs`
+cardinality, and adjacent certified chains compose the same bridge while
+retaining the carried state.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** take the length of the existing exact packet-window tag-input
+projection and use the packet-input append law for the composed form; packet
+boundaries, source-input order, and normalization cardinality are not
+reconstructed.

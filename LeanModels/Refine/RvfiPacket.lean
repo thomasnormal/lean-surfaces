@@ -2526,6 +2526,56 @@ theorem normalizeRvfiPacketWindows_tags_inputs_length_append {State : Type}
     secondRetirementWindows hfirst hsecond
   simpa only [machine.toRobMachine_tags, List.length_map] using hlen
 
+/- The certified packet-window tag-input projection has exactly the packet
+   machine's flattened input cardinality. -/
+theorem normalizeRvfiPacketWindows_tags_inputs_length_packetInputs
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ((rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.input).length =
+      (packetInputs machine.toPacketMachine state windows.flatten).length := by
+  exact congrArg List.length
+    (normalizeRvfiPacketWindows_tags_inputs machine state start windows
+      retirementWindows h)
+
+/- The finite packet-window tag-input cardinality bridge composes across two
+   certified chains, retaining the second chain's carried state. -/
+theorem normalizeRvfiPacketWindows_tags_inputs_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.input).length =
+      (packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  calc
+    ((rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.input).length =
+        (packetInputs machine.toPacketMachine state firstWindows.flatten ++
+          packetInputs machine.toPacketMachine
+            (packetStateAfter machine.toPacketMachine state firstWindows.flatten)
+            secondWindows.flatten).length :=
+      congrArg List.length
+        (normalizeRvfiPacketWindows_tags_inputs_append machine state start
+          firstWindows secondWindows firstRetirementWindows
+          secondRetirementWindows hfirst hsecond)
+    _ = (packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+      rw [List.flatten_append, packetInputs_append]
+
 /- Tagged retirement-payload cardinality composes across adjacent certified
    packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_append
@@ -3247,6 +3297,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length_packetInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_inputs_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags

@@ -3444,6 +3444,48 @@ theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_robInputs_append
     machine state start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified finite packet-window chain's generic ROB tagged retirement
+   projection has exactly the packet machine's input cardinality. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_packetInputs
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ((robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state windows.flatten).length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketRobTags_retirements_length_packetInputs machine state
+    windows.flatten hflat
+
+/- The packet-window generic ROB tagged-retirement/packet-input cardinality
+   bridge composes across two certified chains with the carried state boundary. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_retirements_length_packetInputs
+    machine state start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}

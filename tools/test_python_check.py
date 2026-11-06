@@ -76,6 +76,7 @@ class PythonCheckPlanTests(unittest.TestCase):
                 self.assertIn("--no-build", plan[name])
                 self.assertIn("--runner", plan[name])
         self.assertIn("--check", plan["py-coverage-fresh"])
+        self.assertEqual(plan["py-envelope-fresh"][-2:], ["--tier", "python"])
         self.assertIn("--whitelist", plan["py-refusal-census"])
         self.assertIn("--scripts", plan["py-refusal-census"])
 

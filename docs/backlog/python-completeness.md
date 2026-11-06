@@ -9469,3 +9469,22 @@ fallback to `python3` emits an explicit warning.
 DECIDED: keep the pinning behavior executable in the regular leanpy test gate;
 future changes cannot silently restore an unpinned comparison or warning-free
 oracle fallback.
+
+## 2026-11-06-pycomplete-364 — gate Python envelope freshness in CI
+
+The pinned Python envelope check is now a required acceptance gate in both the
+full `tools/ci.sh` run and `./check.sh --python-only`. The leanpy tool tests
+also mutate a committed envelope to a CPython 3.12 stamp and verify that the
+runner rejects it before executing the module, preserving the ingestion
+boundary's frontend validation.
+
+| Measurement | Result |
+|---|---|
+| Python envelope freshness | `envelope_fresh.py --tier python`: FRESH 81, STALE 0 |
+| Frontend admission regression | foreign 3.12 envelope rejected with the pinned-frontend error |
+| leanpy tests | 11 passed |
+| Python-check tests | 18 passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: a Python envelope cannot enter CI or the runner without both a fresh
+source match and the pinned CPython 3.9 frontend family.

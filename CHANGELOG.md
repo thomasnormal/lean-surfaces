@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Python envelope freshness is now a required full-CI and `--python-only` gate; leanpy regression coverage verifies foreign frontend stamps are rejected before execution.
+
 - Added CI-wired regression coverage for leanpy's CPython 3.9 frontend/oracle pinning and the survey's explicit fallback warning.
 
 - `raise X from cause` now retains its structured cause through ingestion; cause-bearing raises remain loud until exception chaining is modeled.

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a direct-dot enum setter witness, retaining `Owner` receiver evidence
+  separately from the arrow setter's `Owner *` path.
+
 - Added a direct-dot enum getter witness, retaining the `Owner` receiver shape
   separately from the arrow getter's `Owner *` evidence.
 

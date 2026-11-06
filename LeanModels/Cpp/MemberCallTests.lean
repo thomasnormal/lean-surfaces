@@ -654,6 +654,9 @@ private def enumSetterCallSyntax : IntegralMemberCallSyntax := {
   method := methodHandle, receiver := receiverHandle, receiverType := "Owner *",
   resultType := "void", name := "set", canonicalMethod := methodHandle}
 
+private def enumSetterDotCallSyntax : IntegralMemberCallSyntax :=
+  {enumSetterCallSyntax with receiverType := "Owner", receiverIsArrow := false}
+
 private def enumSetterCallArgument : IntegralMemberEnumValue :=
   {representation := enumSetterRepresentation.getD
       {profile := enumReadProfile, underlying := .unsignedInt},
@@ -785,6 +788,19 @@ private def enumSetterCallObserved : Option Int :=
             | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
             | .error _ => none
         | .error _ => none
+  | _, _, _ => none
+
+private def enumSetterDotCallObserved : Option Int :=
+  match enumSetterEvidence, enumSetterSourceArgument, enumParameterEvidence with
+  | some setter, some sourceArgument, some sourceParameter =>
+      match IntegralMemberEnumSetterCall.bindWithArgumentParameterValue enumSetterDotCallSyntax
+          setter {enumSetterCallAccess with receiverType := "Owner"} receiverHandle
+          sourceArgument sourceParameter ⟨.unsigned 32, 9⟩ enumProjection with
+      | .ok call =>
+          match call.invoke with
+          | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
+          | .error _ => none
+      | .error _ => none
   | _, _, _ => none
 
 private def enumSetterCallArgumentError : Option IntegralMemberEnumSetterCallError :=
@@ -1306,6 +1322,11 @@ def enumSetterCallEvidenceWitness : Bool :=
     enumSetterCallResultError == some .resultTypeMismatch
 
 #guard enumSetterCallEvidenceWitness
+
+def enumSetterDotCallEvidenceWitness : Bool :=
+  enumSetterDotCallObserved == some 9
+
+#guard enumSetterDotCallEvidenceWitness
 
 def enumGetterResultRefusal : Bool :=
   !(enumCallResultError == some .resultTypeMismatch)

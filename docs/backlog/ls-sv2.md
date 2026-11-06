@@ -3575,6 +3575,18 @@ witness pins both the finite chain and adjacent-chain forms.
 existing packet-window tag/state contract; window boundaries, retirement
 payloads, carried state, and order offsets remain unchanged.
 
+## 2026-11-06-ls-sv2-243 — expose packet-window tag refinement through ROB inputs
+
+Added `normalizeRvfiPacketWindows_tags_refines_rob` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A certified finite packet-window tag
+stream now retains its `InOrderPacketStream` certificate while its flattened
+retirement payload equals the ISA trace over generic ROB inputs, including
+adjacent certified chains. The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten through the existing packet-window tag refinement and
+apply the exact `toRobMachine_inputs` projection; window boundaries,
+retirement payloads, carried state, and order offsets remain unchanged.
+
 ## 2026-11-06-ls-sv2-242 — expose normalized packet-tag refinement through ROB inputs
 
 Added `normalizeRvfiPacketTags_refines_rob` and its append form to

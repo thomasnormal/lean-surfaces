@@ -1572,6 +1572,13 @@ theorem pinned_packet_rob_tags_length :
   exact normalizeRvfiPacketRobTags_length pinnedPacketMachine
     pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
 
+theorem pinned_packet_rob_tags_inputs_length :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+      packetCycleInputs).map TaggedCommit.input).length =
+      nontrapExpected.length := by
+  exact normalizeRvfiPacketRobTags_inputs_length pinnedPacketMachine
+    pinnedPacketMachine.init packetCycleInputs pinned_packet_observations_normalize
+
 theorem pinned_cycle_trace_refines_isa :
     cycleTrace pinnedCycleMachine.toCycleMachine
         pinnedCycleMachine.toCycleMachine.init cycleInputs =
@@ -1749,6 +1756,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_retirements
 #print axioms pinned_packet_rob_tags_inputs
 #print axioms pinned_packet_rob_tags_length
+#print axioms pinned_packet_rob_tags_inputs_length
 #print axioms pinned_packet_refines
 #print axioms pinned_packet_refines_packet
 #print axioms pinned_packet_refines_append

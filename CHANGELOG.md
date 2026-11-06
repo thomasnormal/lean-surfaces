@@ -32,6 +32,9 @@
 - Added a positive overloaded-operator metadata witness for artifact-local
   string declaration handles.
 
+- Added a positive overloaded-operator metadata witness for a retained
+  `CXXMethodDecl` string handle.
+
 - Added a recorded refusal for constructor handles whose structured kind
   contradicts the retained declaration kind.
 

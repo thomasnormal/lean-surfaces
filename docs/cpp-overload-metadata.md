@@ -83,6 +83,9 @@ A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.
 
+A second positive witness combines that string form with a retained
+`CXXMethodDecl`, covering method identity without executing the operator body.
+
 A malformed cast wrapper with two children is a recorded refusal; the gate
 requires the exact one-child frontend shape and does not choose one child by
 position.

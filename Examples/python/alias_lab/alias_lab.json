@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/alias_lab/alias_lab.py",
-  "source_sha256": "202b2908f7a5b45d86c0d0f4faeb972d8a98cbe0f69da830c8834dc72ad74734",
+  "source_sha256": "9bb94eaa0858d4bbecede847e7b0f073215d3354dd52afa0cc0995da6b411ccd",
   "module": {
     "kind": "Module",
     "body": [
@@ -3140,6 +3140,64 @@
               ],
               "keywords": [],
               "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 165,
+          "col_offset": 0,
+          "end_lineno": 166,
+          "end_col_offset": 26
+        },
+        "name": "identity_alias",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 166,
+              "col_offset": 4,
+              "end_lineno": 166,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 166,
+                "col_offset": 11,
+                "end_lineno": 166,
+                "end_col_offset": 26
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 166,
+                  "col_offset": 11,
+                  "end_lineno": 166,
+                  "end_col_offset": 17
+                },
+                "id": "scale2"
+              },
+              "ops": [
+                "Is"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 21,
+                    "end_lineno": 166,
+                    "end_col_offset": 26
+                  },
+                  "id": "scale"
+                }
+              ]
             }
           }
         ]

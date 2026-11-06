@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a differential witness for callable-alias identity; `alias is target` now remains an explicit loud boundary while admitted alias calls keep their existing tier.
+
 - Namedtuple table resolution now requires the definition to precede every function body that reaches it; unsafe forward reachability refuses instead of using a position-independent static table.
 
 - Added the first `twinAgrees` refinement lemmas: monadic pure-worker lifts and binary operators are proved equal to the theorem interpreter's `Run.liftRes` path.

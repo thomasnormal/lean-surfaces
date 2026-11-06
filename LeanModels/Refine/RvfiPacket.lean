@@ -4258,6 +4258,46 @@ theorem normalizeRvfiPacketTags_length_packetInputs_append
   exact normalizeRvfiPacketTags_length_packetInputs machine state
     (first ++ second) hcombined
 
+/- A certified packet-window chain fixes the packet-boundary tag-stream
+   cardinality to the packet machine's input cardinality. -/
+theorem normalizeRvfiPacketWindows_tags_length_packetInputs
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    packetStreamLength (rvfiPacketTags machine state windows.flatten) =
+      (packetInputs machine.toPacketMachine state windows.flatten).length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketTags_length_packetInputs machine state
+    windows.flatten hflat
+
+/- The packet-window tag-stream/packet-input cardinality bridge composes
+   across two certified chains, retaining the carried state boundary. -/
+theorem normalizeRvfiPacketWindows_tags_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    packetStreamLength (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten) =
+      (packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_tags_length_packetInputs machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- A successful normalized packet capture has equal generic ROB-tag and
    packet-input cardinalities. -/
 theorem normalizeRvfiPacketRobTags_length_packetInputs {State : Type}

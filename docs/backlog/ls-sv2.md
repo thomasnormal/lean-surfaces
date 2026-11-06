@@ -2135,3 +2135,15 @@ projection theorem.
 
 **DECIDED:** reuse the exact packet-to-ROB tag-input bridge; the normalization
 certificate supplies the chain boundary but no input order is reconstructed.
+
+## 2026-11-06-ls-sv2-126 — compose packet-window ROB tag inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two certified packet-window chains now
+compose their mapped generic ROB source-input streams over the concatenated
+window chain, retaining the second chain's carried state.  The PicoRV32
+witness pins this append projection.
+
+**DECIDED:** compose through the finite window certificate and the exact
+packet-to-ROB tag-input bridge; no input order or completion order is
+reconstructed.

@@ -3478,3 +3478,15 @@ pins both the single capture and adjacent capture forms.
 **DECIDED:** transport the existing normalized ROB-tag state contract through
 exact packet-machine projections; tagged retirement order and the carried
 state/order boundary remain unchanged.
+
+## 2026-11-06-ls-sv2-234 — expose normalized ROB-tag window refinement through packet state
+
+Added `normalizeRvfiPacketRobTags_refines_windows_packet` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. A finite normalized ROB-tag window
+chain now states its in-order tagged retirement/ISA equality and final relation
+directly through packet inputs and packet state. The PicoRV32 witness pins the
+chain and adjacent-chain forms.
+
+**DECIDED:** flatten through the existing normalized ROB-tag window contract,
+then apply exact packet input/state projections; tagged retirement order and
+the carried state/order boundary remain unchanged.

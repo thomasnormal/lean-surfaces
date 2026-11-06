@@ -9279,3 +9279,21 @@ structured names directly.
 
 DECIDED: exception-handler names remain arrays end to end; no delimiter
 serialization is retained for compatibility.
+
+## 2026-11-06-pycomplete-354 — land the first monadic-to-trunk refinement edge
+
+The two-interpreter audit now has a kernel-checked adequacy edge for the shared
+primitive boundary. `twinAgrees_liftRes` proves that every pure `Res` worker
+lifted by the monadic definition is exactly the trunk's `Run.liftRes`, and
+`twinAgrees_binOp` specializes that fact to the complete binary-operator
+worker. These theorems have no new axioms; the control-level interpreter
+adequacy edge remains a separate architectural surface.
+
+| Measurement | Result |
+|---|---|
+| Lean build | Managed `lake build LeanModels.Python.Monadic.Prim` passed 10 jobs |
+| Axiom audit | `twinAgrees_liftRes` has no axioms; `twinAgrees_binOp` uses only the existing monadic substrate axioms |
+| Differential baseline | Native 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+
+DECIDED: every new monadic primitive must expose a `twinAgrees` theorem at the
+shared-worker boundary before the control adequacy edge is extended.

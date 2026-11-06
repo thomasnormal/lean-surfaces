@@ -334,3 +334,27 @@ def notYetW (arm : String) : SemW α :=
   refuse s!"monadic-rebuild: arm not yet transliterated: {arm}"
 
 end LeanModels.Python.Monadic
+
+namespace LeanModels.Python.Monadic
+
+/-! ## The first refinement edge
+
+The monadic definition and the theorem interpreter share the pure `Res` workers.
+This equality is the small adequacy theorem that keeps that shared boundary
+honest: lifting a worker through the runner is definitionally the trunk's
+`Run.liftRes`, and `binOpM` adds no second arithmetic implementation.
+-/
+
+theorem twinAgrees_liftRes {σ α : Type} (r : Res α) (st : σ) :
+    LeanModels.Python.Monadic.toRun (liftRes r : PyM σ α) st = Run.liftRes st r := by
+  cases r <;> rfl
+
+theorem twinAgrees_binOp (op : BinOp) (a b : RVal) (st : FrameState) :
+    LeanModels.Python.Monadic.toRun (binOpM op a b) st = Run.liftRes st (evalBinOp op a b) := by
+  unfold binOpM
+  exact twinAgrees_liftRes (evalBinOp op a b) st
+
+#print axioms twinAgrees_liftRes
+#print axioms twinAgrees_binOp
+
+end LeanModels.Python.Monadic

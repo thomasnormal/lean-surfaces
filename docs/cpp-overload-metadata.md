@@ -120,3 +120,7 @@ row.
 
 An overloaded-operator call whose structured `referencedDecl.id` is numeric is
 also refused; operator identity remains the artifact's string-typed handle.
+
+An overloaded-operator call whose structured `referencedDecl.kind` contradicts
+the retained function or method declaration is also refused; both evidence
+records must agree.

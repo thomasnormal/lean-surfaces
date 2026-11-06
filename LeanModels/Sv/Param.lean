@@ -1697,7 +1697,14 @@ def evalInt (env : IEnv) : PExpr → Except String Int
 `nvals` are evaluated through their propagated signed-32 type; the legacy
 `evalInt` path remains available for unbounded proof arithmetic. -/
 def evalIntExact (env : IEnv) (e : PExpr) : Except String Int :=
-  if env.int32 then evalSized env e else evalInt env e
+  if !env.int32 then evalInt env e
+  else match e with
+    | .int v => .ok (canonInt 32 true v)
+    | .paramRef n none =>
+        match env.intVal? n with
+        | some v => .ok (canonInt 32 true v)
+        | none => .error s!"unbound parameter '{n}'"
+    | _ => evalSized env e
 
 #guard (evalIntExact ({ nvals := [("N", (5, 32, true))], int32 := true } : IEnv)
     (.binary (.m0 .add) (.paramRef "N" none) (.int 1))).toOption == some 6

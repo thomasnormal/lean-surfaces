@@ -86,6 +86,9 @@
 - Added a recorded refusal for constructor declaration evidence missing its
   structured kind field.
 
+- Added a recorded refusal for structured constructor handles with malformed
+  string ids.
+
 - Added a recorded refusal for overloaded-operator handles duplicated in
   artifact declaration evidence.
 

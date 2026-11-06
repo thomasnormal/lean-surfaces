@@ -853,6 +853,48 @@ theorem RvfiPacketMachine.toRobMachine_tags_inputs {State : Type}
       packetInputs machine.toPacketMachine state cycles := by
   rw [robTags_inputs, machine.toRobMachine_inputs]
 
+/- A successful normalized packet capture exposes its packet-facing source
+   inputs directly from the flattened packet-boundary tag stream. -/
+theorem normalizeRvfiPacketTags_inputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (_h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (rvfiPacketTags machine state cycles).flatten.map TaggedCommit.input =
+      packetInputs machine.toPacketMachine state cycles := by
+  rw [← machine.toRobMachine_tags]
+  exact machine.toRobMachine_tags_inputs state cycles
+
+/- Packet-tag source-input projections compose across adjacent normalized
+   windows, with the second window evaluated from the first retained state. -/
+theorem normalizeRvfiPacketTags_inputs_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input =
+      packetInputs machine.toPacketMachine state first ++
+        packetInputs machine.toPacketMachine
+          (packetStateAfter machine.toPacketMachine state first) second := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  calc
+    (rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input =
+        packetInputs machine.toPacketMachine state (first ++ second) :=
+      normalizeRvfiPacketTags_inputs machine state (first ++ second) hcombined
+    _ = packetInputs machine.toPacketMachine state first ++
+        packetInputs machine.toPacketMachine
+          (packetStateAfter machine.toPacketMachine state first) second :=
+      RvfiPacketMachine.toPacketMachine_inputs_append machine state first second
+
 /-- A successful packetized RVFI normalization therefore certifies the
 flattened tag stream exposed by the generic ROB interface. -/
 theorem normalizeRvfiPacketRobTags {State : Type}
@@ -2995,6 +3037,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length

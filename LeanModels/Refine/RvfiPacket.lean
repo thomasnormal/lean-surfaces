@@ -627,6 +627,47 @@ theorem normalizeRvfiPacketRobTags_refines
         htrace.symm.trans
           (rob_trace_refines hrob state isaState start cycles hrel)
 
+/-- Normalized packet observations also determine the exact order increment
+of the state-threaded packet/ISA refinement relation. -/
+theorem rvfiPacketStateAfter_refines_normalized
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (start : Nat)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (state : State) (isaState : IsaState)
+    (hrel : rel state isaState start)
+    (cycles : List Input) (retirements : List Retirement)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state cycles)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+      finalOrder = start + retirements.length := by
+  rcases rvfiPacketStateAfter_refines machine isa rel admit start hrob
+      state isaState start cycles hrel with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, hfinal, ?_⟩
+  have htrace :
+      robTrace machine.toRobMachine state cycles = retirements := by
+    rw [machine.toRobMachine_trace]
+    exact normalizeRvfiPacketTrace machine state cycles hobs
+  have hlength := congrArg List.length htrace
+  rw [robTrace_length_eq_robInputs_length] at hlength
+  have hpacketLength :
+      (packetInputs machine.toPacketMachine state cycles).length =
+        retirements.length := by
+    calc
+      (packetInputs machine.toPacketMachine state cycles).length =
+          (robInputs machine.toRobMachine state cycles).length := by
+        rw [machine.toRobMachine_inputs]
+      _ = retirements.length := hlength
+  calc
+    finalOrder = start +
+        (packetInputs machine.toPacketMachine state cycles).length := horder
+    _ = start + retirements.length := by rw [hpacketLength]
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -729,5 +770,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines
+#print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

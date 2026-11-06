@@ -1362,3 +1362,15 @@ abstract relation and admission predicate.
 **DECIDED:** keep tag-order admission and architectural refinement as separate
 proof components while providing one conjunction for consumers that need the
 complete tagged retirement contract.
+
+## 2026-11-06-ls-sv2-63 — transport normalized packet order through state refinement
+
+Added `rvfiPacketStateAfter_refines_normalized` to
+`LeanModels/Refine/RvfiPacket.lean`.  With a successful packet normalization,
+the state-threaded packet/ISA relation now returns a final related state whose
+order is exactly the starting order plus the normalized retirement count.  The
+PicoRV32 witness exposes the resulting existential state/order theorem.
+
+**DECIDED:** derive the final order increment from the packet adapter's exact
+retained-input length and the normalized retirement stream; no packet or
+completion order is inferred from an unvalidated observation.

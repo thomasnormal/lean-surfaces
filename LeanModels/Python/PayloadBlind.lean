@@ -4556,6 +4556,8 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           cases res with
           | none => refine PBF.ok ?_ _; exact hslot
           | some n => exact PBF.exn hslot _
+  | importStmt mod sp => simp only [execStmt]; exact PBF.unsupported
+  | classDef name sp => simp only [execStmt]; exact PBF.unsupported
   | importFrom mod names star sp => simp only [execStmt]; exact PBF.exn hslot _
   | pass sp => simp only [execStmt]; exact PBF.ok hslot _
   | brk sp => simp only [execStmt]; exact PBF.ok hslot _

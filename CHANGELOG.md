@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Completed the payload-blind proof walker for structured `import` and class-definition statement nodes; the umbrella Lean artifact now builds through the Python proof layer.
+
 - Refreshed the set-lab envelope and generated Python coverage page after the audit-row and explicit refusal updates.
 
 - Rebased the round-lab proof artifact on the parameterized float-round worker; all 53 round theorems build without deleted per-digit helper references.

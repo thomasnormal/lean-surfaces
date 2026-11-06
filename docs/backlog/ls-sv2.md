@@ -1413,3 +1413,16 @@ measured first and second packet windows.
 **DECIDED:** keep the tag/ISA stream equality and state/order transport as
 separate proof components internally, then expose their conjunction as the
 consumer-facing packet-window contract.
+
+## 2026-11-06-ls-sv2-67 — expose the single-window packet refinement contract
+
+Added `normalizeRvfiPacketRobTags_refines_state` to
+`LeanModels/Refine/RvfiPacket.lean`.  A single normalized packet capture now
+has one consumer-facing certificate containing global tagged ROB order, tagged
+retirement equality with the ISA trace, the final related packet/ISA state,
+and the exact order increment.  The PicoRV32 witness pins this contract over
+the complete four-retirement packet trace.
+
+**DECIDED:** provide the single-window conjunction directly while retaining
+the existing stream and state theorems as the independently reusable proof
+components.

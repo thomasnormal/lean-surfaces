@@ -390,6 +390,31 @@ theorem pinned_packet_rob_tags_refines_isa_of
     rel admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
     nontrapExpected hrob hrel pinned_packet_observations_normalize
 
+theorem pinned_packet_rob_tags_refines_state
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (InOrderTags 0
+        (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+          packetCycleInputs) ∧
+      (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        packetCycleInputs).map TaggedCommit.retirement =
+      trace rvMachine rvMachine.init
+        (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+          packetCycleInputs)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+        packetCycleInputs)
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init packetCycleInputs)) finalOrder ∧
+      finalOrder = 0 + nontrapExpected.length) := by
+  exact normalizeRvfiPacketRobTags_refines_state pinnedPacketMachine rvMachine
+    rel admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
+    nontrapExpected hrob hrel pinned_packet_observations_normalize
+
 theorem pinned_packet_state_after_refines_normalized
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -728,6 +753,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_windows_in_order
 #print axioms pinned_packet_rob_tags_of_refinement
 #print axioms pinned_packet_rob_tags_refines_isa_of
+#print axioms pinned_packet_rob_tags_refines_state
 #print axioms pinned_packet_state_after_refines_normalized
 #print axioms pinned_packet_state_after_refines_normalized_windows
 #print axioms pinned_packet_rob_tags_refines_isa_windows_of

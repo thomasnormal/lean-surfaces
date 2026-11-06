@@ -2182,3 +2182,15 @@ bridge over the complete packet capture.
 
 **DECIDED:** reuse the exact `robTags_inputs` erasure theorem; normalization
 certifies the capture but does not alter or reorder the generic ROB inputs.
+
+## 2026-11-06-ls-sv2-130 — compose normalized packet ROB tag inputs over ROB inputs
+
+Added `normalizeRvfiPacketRobTags_inputs_robInputs_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now expose their concatenated tagged source-input stream as the concatenation
+of the corresponding generic ROB `robInputs` streams, with the second stream
+evaluated from the first window's retained state.  The PicoRV32 witness pins
+this normalized append bridge.
+
+**DECIDED:** compose the normalized capture theorem with the exact generic ROB
+input append law; no input order or completion order is reconstructed.

@@ -9514,3 +9514,21 @@ definition deletion, and the opcode-shaped formatting fixture.
 DECIDED: keep each audited edge as an oracle-backed row or explicit loud
 expectation; set iteration order is never inferred from an unmodeled table
 construction path.
+
+## 2026-11-06-pycomplete-366 — regression coverage for parameterized float round
+
+The existing parameterized `roundFloatNDigits` implementation now has an
+end-to-end regression test in `harness/test_float_boundary.py`. A temporary
+program is run through `tools/leanpy --compare` under the pinned CPython 3.9
+frontend and oracle, covering 100 digits above the former worker range,
+`ndigits = -308`, and the unchanged-input cutoff at `ndigits = 324`.
+
+| Measurement | Result |
+|---|---|
+| Float-boundary tests | 3 passed |
+| End-to-end compare | all parameterized values reported `MATCH` |
+| Python syntax checks | `py_compile` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep one parameterized exact-ratio worker and protect its out-of-range
+and exponent-cutoff behavior with a pinned whole-program differential test.

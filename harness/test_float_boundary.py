@@ -2,7 +2,9 @@
 """Check exact binary64 transport and fail-closed runner decoding."""
 
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +16,32 @@ ENVELOPE = REPO_ROOT / "Examples/python/float_lab/float_lab.json"
 
 
 class FloatBoundaryTests(unittest.TestCase):
+    def test_round_ndigits_is_parameterized_beyond_the_old_worker_range(self):
+        """Exercise the shared round worker at both exponent cutoffs."""
+        root = Path(tempfile.mkdtemp(prefix="round-ndigits-test-"))
+        try:
+            source = root / "round.py"
+            source.write_text(
+                "print(round(2.675, 100))\n"
+                "print(round(125.0, -308))\n"
+                "print(round(1.0, 324))\n",
+                encoding="utf-8")
+            cache = root / "cache"
+            env = dict(os.environ)
+            for key in ("LEANPY_CPYTHON", "LEANPY_FRONTEND",
+                        "LEANPY_NO_REEXEC"):
+                env.pop(key, None)
+            result = subprocess.run(
+                [str(REPO_ROOT / "tools/leanpy"), str(source), "--compare",
+                 "--cache", str(cache)],
+                cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+                timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("MATCH cpython (exit 0)", result.stderr)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+
     def run_words(self, words, expected_exit=0):
         jobs = [{"path": str(ENVELOPE), "function": "default",
                  "args": [{"t": "float", "bits": word}]} for word in words]

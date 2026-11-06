@@ -1297,6 +1297,35 @@ theorem normalizeRvfiPacketWindows_refines
   · exact normalizeRvfiPacketWindows_refines_state machine isa rel admit
       state isaState start windows retirementWindows hrob hrel h
 
+/- The complete finite-chain contract can expose the generic packet-machine
+   state directly at the final boundary. -/
+theorem normalizeRvfiPacketWindows_refines_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (retirementWindows.flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state windows.flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state windows.flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten))
+        finalOrder ∧
+      finalOrder = start + retirementWindows.flatten.length) := by
+  rcases normalizeRvfiPacketWindows_refines machine isa rel admit state isaState
+      start windows retirementWindows hrob hrel h with
+    ⟨htrace, finalOrder, hfinal, horder⟩
+  refine ⟨htrace, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /-- The complete packet-facing contract composes across two certified window
 chains, preserving both the packet input stream and the carried state/order
 boundary. -/
@@ -1333,6 +1362,44 @@ theorem normalizeRvfiPacketWindows_refines_append
   exact normalizeRvfiPacketWindows_refines machine isa rel admit state isaState
     start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
+
+/- The projected finite-chain contract also composes across two certified
+   window chains with the packet-machine state exposed directly. -/
+theorem normalizeRvfiPacketWindows_refines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((firstRetirementWindows ++ secondRetirementWindows).flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten))
+        finalOrder ∧
+      finalOrder = start +
+        (firstRetirementWindows ++ secondRetirementWindows).flatten.length) := by
+  rcases normalizeRvfiPacketWindows_refines_append machine isa rel admit state
+      isaState start firstWindows secondWindows firstRetirementWindows
+      secondRetirementWindows hrob hrel hfirst hsecond with
+    ⟨htrace, finalOrder, hfinal, horder⟩
+  refine ⟨htrace, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
 
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
@@ -1860,7 +1927,9 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat

@@ -1888,3 +1888,16 @@ the equality over its first and second packet windows.
 
 **DECIDED:** specialize the existing packet state append law through the
 packet projection; no packet contents or retirement order is inspected.
+
+## 2026-11-06-ls-sv2-105 — expose projected packet-window refinement
+
+Added `normalizeRvfiPacketWindows_refines_packet` and
+`normalizeRvfiPacketWindows_refines_packet_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Finite chains of normalized packet
+windows now expose their complete ISA trace and final state/order contract
+through `packetStateAfter machine.toPacketMachine`, both directly and across
+two adjacent chains.  The PicoRV32 witness pins both projected contracts.
+
+**DECIDED:** transport only the final state through the shared packet
+state-after bridge; the flattened inputs, retirement payloads, and order
+boundary remain those certified by the existing window theorems.

@@ -919,7 +919,7 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
             (instExpr2 env elems (selfWidth2 env elems l) l)
             (instExpr2 env elems (selfWidth2 env elems r) r)
       | _ =>
-          match evalInt env (.binary op l r) with
+          match evalIntExact env (.binary op l r) with
           | .ok v =>
               if !env.stale.isEmpty && (PExpr.binary op l r).mentionsAny env.stale then
                 .unsupported "ParamRef:override-type" "constant folded from a stale parameter"

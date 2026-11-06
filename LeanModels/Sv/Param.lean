@@ -811,7 +811,11 @@ exactly when the name is bound in `IEnv.vals` (non-INT typed parameters
 live in `IEnv.nvals`). -/
 def PExpr.isInt (env : IEnv) : PExpr → Bool
   | .int _ | .genvarRef _ | .sysCall .. => true
-  | .paramRef n none => (env.vals.lookup n).isSome
+  | .paramRef n none =>
+      (env.vals.lookup n).isSome ||
+        match env.nvals.lookup n with
+        | some (_, 32, true) => true
+        | _ => false
   | .paramRef n (some p) => (env.packageVal p n).isSome
   | .unary (.m0 .neg) a | .unary (.m0 .pos) a | .unary .plus a => a.isInt env
   | .binary op l r => op.intArith && l.isInt env && r.isInt env
@@ -1662,9 +1666,16 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .unsupported k _ => .error s!"unsupported node '{k}' in a constant context"
 
-/-- Exact-mode proof entry point; the evaluator already routes nvals-backed
-arithmetic through the width-exact ctype/evalAt path. -/
-def evalIntExact (env : IEnv) (e : PExpr) : Except String Int := evalInt env e
+/-- Exact-mode proof entry point.  INT-class trees whose constants are in
+`nvals` are evaluated through their propagated signed-32 type; the legacy
+`evalInt` path remains available for unbounded proof arithmetic. -/
+def evalIntExact (env : IEnv) (e : PExpr) : Except String Int :=
+  if env.int32 && e.isIntExact env then evalSized env e else evalInt env e
+
+#guard (evalIntExact ({ nvals := [("N", (5, 32, true))], int32 := true } : IEnv)
+    (.binary (.m0 .add) (.paramRef "N" none) (.int 1))).toOption == some 6
+#guard (evalIntExact ({ nvals := [("N", (2147483647, 32, true))], int32 := true } : IEnv)
+    (.binary (.m0 .add) (.paramRef "N" none) (.int 1))).toOption == some (-2147483648)
 
 /-- Generate-time integer arithmetic uses the declared `integer`/`int`
 32-bit signed type (§27.4, §6.11). -/

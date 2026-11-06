@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a pointer-valued member-field receiver witness, retaining field/base
+  handles and field name before any chained-call value or execution semantics.
+
 - Added a direct-dot enum setter witness, retaining `Owner` receiver evidence
   separately from the arrow setter's `Owner *` path.
 

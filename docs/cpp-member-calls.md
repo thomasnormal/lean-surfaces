@@ -432,6 +432,9 @@ The direct-dot getter path has its own witness and retains `Owner` receiver
 shape separately from the arrow form's `Owner *` evidence.
 The setter wrapper has the same direct-dot witness, keeping its receiver-shape
 check independent from field mutation and argument evidence.
+The pointer-valued field receiver has a separate provenance witness retaining
+the field handle, base-owner handle, field name, and receiver handle; it does
+not infer the pointer value or execute the chained call.
 
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is

@@ -1328,6 +1328,18 @@ def enumSetterDotCallEvidenceWitness : Bool :=
 
 #guard enumSetterDotCallEvidenceWitness
 
+def memberFieldReceiverEvidenceWitness : Bool :=
+  match IntegralMemberCallSyntax.admit
+      (rawNestedMember methodHandle.value receiverFieldHandle.value receiverHandle.value "read") with
+  | .ok evidence =>
+      evidence.receiver == receiverFieldHandle &&
+        evidence.receiverField == some receiverFieldHandle &&
+        evidence.receiverBase == some receiverHandle &&
+        evidence.receiverFieldName == some "pool"
+  | .error _ => false
+
+#guard memberFieldReceiverEvidenceWitness
+
 def enumGetterResultRefusal : Bool :=
   !(enumCallResultError == some .resultTypeMismatch)
 

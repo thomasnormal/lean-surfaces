@@ -2340,3 +2340,15 @@ both forms over its two measured windows.
 **DECIDED:** reuse the exact `robTags_retirements` erasure and generic ROB
 trace append laws; the window certificate validates state/order but does not
 reconstruct or reorder retirements.
+
+## 2026-11-06-ls-sv2-143 — bridge normalized tag retirements to ROB traces
+
+Added `normalizeRvfiPacketRobTags_retirements_robTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+identifies mapped tagged retirements with the generic ROB retirement trace,
+and adjacent normalized captures compose that bridge with the first capture's
+retained state feeding the second.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** reuse the exact `robTags_retirements` erasure and the packetized
+ROB trace append law; normalization supplies validity but does not reconstruct
+or reorder retirements.

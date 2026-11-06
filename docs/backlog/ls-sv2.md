@@ -1852,3 +1852,15 @@ order increment.  The PicoRV32 witness pins both projections.
 **DECIDED:** derive the packet-state statements only through the reusable
 state-after bridge; no second state relation or packet reconstruction is
 introduced.
+
+## 2026-11-06-ls-sv2-102 — expose packet-projected refinement contract
+
+Added `normalizeRvfiPacketRefines_packet` to
+`LeanModels/Refine/RvfiPacket.lean`.  The complete normalized packet contract
+now exposes both its ISA trace equality and its final state/order relation
+through `packetStateAfter machine.toPacketMachine`.  The PicoRV32 witness pins
+this direct projected contract.
+
+**DECIDED:** transport only the state conjunct through the shared
+`toPacketMachine_stateAfter` equality; the trace conjunct and retirement order
+remain exactly those of the existing contract.

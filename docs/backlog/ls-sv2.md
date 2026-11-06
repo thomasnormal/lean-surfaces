@@ -3490,3 +3490,14 @@ chain and adjacent-chain forms.
 **DECIDED:** flatten through the existing normalized ROB-tag window contract,
 then apply exact packet input/state projections; tagged retirement order and
 the carried state/order boundary remain unchanged.
+
+## 2026-11-06-ls-sv2-235 — expose normalized ROB-tag refinement through packet inputs
+
+Added `normalizeRvfiPacketRobTags_refines_packet` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized generic ROB-tag retirement
+contract now identifies the ISA trace over packet-machine inputs, including
+adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** reuse the existing ROB-tag order/refinement proof and apply the
+exact `toRobMachine_inputs` projection; tagged retirement order and payloads
+remain unchanged.

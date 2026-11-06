@@ -2165,6 +2165,57 @@ theorem normalizeRvfiPacketRobTags_refines_append
     start (first ++ second) (firstRetirements ++ secondRetirements)
     hrob hrel hcombined
 
+/- The normalized ROB-tag retirement contract can expose the packet machine's
+   architectural input projection directly. -/
+theorem normalizeRvfiPacketRobTags_refines_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    InOrderTags start (robTags machine.toRobMachine state cycles) ∧
+      (robTags machine.toRobMachine state cycles).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state cycles) := by
+  have htags := normalizeRvfiPacketRobTags_refines machine isa rel admit
+    state isaState start cycles retirements hrob hrel hobs
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
+/- The packet-input form of the normalized ROB-tag retirement contract
+   composes across adjacent captures. -/
+theorem normalizeRvfiPacketRobTags_refines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    InOrderTags start
+        (robTags machine.toRobMachine state (first ++ second)) ∧
+      (robTags machine.toRobMachine state (first ++ second)).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)) := by
+  have htags := normalizeRvfiPacketRobTags_refines_append machine isa rel admit
+    state isaState start first second hrob hrel hfirst hsecond
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
 /- The complete two-window packet contract combines the tagged ROB/ISA
    equality with the state-threaded relation and its exact order increment. -/
 theorem normalizeRvfiPacketRobTags_refines_state_append
@@ -6552,6 +6603,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_packet

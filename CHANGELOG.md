@@ -65,6 +65,9 @@
 - Added a positive overloaded-operator metadata witness for a retained
   `CXXMethodDecl` string handle.
 
+- Added a recorded refusal for contradictory operator declaration kind evidence
+  below an implicit-cast wrapper.
+
 - Added a recorded refusal for string constructor handles resolving to a
   retained non-constructor declaration.
 

@@ -2277,6 +2277,24 @@ def resolvedOperatorMethodStringTranslationWitnessOk : Bool :=
   admitResolvedCXXOperatorCallExpression resolvedOperatorMethodStringTranslation [1] matches
     .ok {value := "0x63"}
 
+private def resolvedOperatorCastKindMismatchTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x94"), ("kind", .string "CXXMethodDecl"),
+        ("name", .string "operator+"), ("inner", .array [])],
+      .object [("id", .string "0x95"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [("id", .string "cast"), ("kind", .string "ImplicitCastExpr"),
+            ("inner", .array [
+              .object [("id", .string "0x96"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [("id", .string "0x94"),
+                  ("kind", .string "VarDecl")])]])]])]])]}
+
+def resolvedOperatorCastKindMismatchRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorCastKindMismatchTranslation [1]
+  pure ()
+
 private def resolvedOperatorStringNonCallableTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -3216,6 +3234,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedOperatorStringTranslationWitnessOk
 #guard resolvedOperatorMalformedStringRefusal matches .error _
 #guard resolvedOperatorMethodStringTranslationWitnessOk
+#guard resolvedOperatorCastKindMismatchRefusal matches .error _
 #guard resolvedOperatorStringNonCallableRefusal matches .error _
 #guard resolvedOperatorStringMissingDeclarationRefusal matches .error _
 #guard resolvedOperatorMissingIdRefusal matches .error _

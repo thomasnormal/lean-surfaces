@@ -123,6 +123,9 @@ not normalize arbitrary text into an artifact identity.
 A second positive witness combines that string form with a retained
 `CXXMethodDecl`, covering method identity without executing the operator body.
 
+The cast path also validates structured operator declaration kind recursively; a
+contradictory kind below a one-child `ImplicitCastExpr` is a recorded refusal.
+
 A string operator handle resolving to a retained non-callable declaration is a
 recorded refusal; string handles cannot bypass the callable-kind check.
 

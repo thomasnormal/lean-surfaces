@@ -848,6 +848,24 @@ theorem normalizeRvfiPacketRobTags_retirements {State : Type}
   rw [machine.toRobMachine_tags_retirements]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- Normalized retirement payloads compose across adjacent packet windows with
+   the second window evaluated from the first window's retained state. -/
+theorem normalizeRvfiPacketRobTags_retirements_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement = firstRetirements ++ secondRetirements := by
+  apply normalizeRvfiPacketRobTags_retirements machine state (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
 /- ROB-tag cardinality composes across adjacent normalized packet windows, with
    the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_length_append {State : Type}
@@ -2243,6 +2261,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags

@@ -2112,3 +2112,15 @@ over the complete packet capture.
 **DECIDED:** reuse the exact packet-to-ROB tag retirement bridge and the
 normalized packet trace theorem; no retirement order or completion order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-124 — compose normalized packet ROB tag retirements
+
+Added `normalizeRvfiPacketRobTags_retirements_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now expose their concatenated decoded retirement payload directly through the
+concatenated generic ROB tag stream.  The PicoRV32 witness pins this direct
+append route.
+
+**DECIDED:** compose the normalized packet trace append theorem through the
+exact packet-to-ROB tag retirement projection; no retirement order or
+completion order is reconstructed.

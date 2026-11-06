@@ -1193,6 +1193,29 @@ theorem normalizeRvfiPacketWindows_trace_refines_append
       secondWindows firstRetirementWindows secondRetirementWindows hfirst hsecond)
   exact htrace
 
+/-- A certified finite packet-window chain also supplies the final related
+state and its exact normalized retirement-order increment. -/
+theorem normalizeRvfiPacketWindows_refines_state
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state windows.flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten))
+        finalOrder ∧
+      finalOrder = start + retirementWindows.flatten.length := by
+  have hcontract := normalizeRvfiPacketRobTags_refines_windows machine isa
+    rel admit state isaState start windows retirementWindows hrob hrel h
+  exact hcontract.2
+
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_append {State : Type}
@@ -1400,6 +1423,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat

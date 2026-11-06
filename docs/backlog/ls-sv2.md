@@ -1674,3 +1674,15 @@ its two singleton packet windows.
 **DECIDED:** compose through the finite window-chain certificate and the
 packet-facing single-chain theorem; no input stream is reconstructed,
 reordered, or inferred.
+
+## 2026-11-06-ls-sv2-88 — expose packet-chain state refinement
+
+Added `normalizeRvfiPacketWindows_refines_state` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now exposes its final packet/ISA related state together with the exact order
+increment equal to the flattened normalized retirement count, directly over
+the packet machine's architectural input stream.  The PicoRV32 witness pins
+this state/order contract over its two certified packet windows.
+
+**DECIDED:** project the state/order component of the existing complete
+window-chain contract; no tag stream, input order, or final state is inferred.

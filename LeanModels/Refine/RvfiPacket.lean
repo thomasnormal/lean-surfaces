@@ -1535,6 +1535,28 @@ theorem normalizeRvfiPacketWindows_rob_tags_length_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- ROB-tag source-input cardinality composes across adjacent normalized
+   packet-window chains. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map TaggedCommit.input).length =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten.length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_inputs_length machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -2062,6 +2084,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines

@@ -3406,3 +3406,14 @@ including adjacent captures. The PicoRV32 witness pins both forms.
 **DECIDED:** reuse the existing normalized ROB-trace/ROB-input refinement and
 the exact `toRobMachine_inputs` projection; packet-input order and retirement
 payloads are preserved without reconstructing either stream.
+
+## 2026-11-06-ls-sv2-228 — bridge packet-window ROB trace refinement to packet inputs
+
+Added `normalizeRvfiPacketWindows_rob_trace_refines_packet` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. A certified packet-window ROB trace
+now exposes the ISA trace over the packet machine's architectural input stream,
+including adjacent certified chains. The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten through the existing packet-window ROB-trace/ROB-input
+refinement and apply the exact `toRobMachine_inputs` projection; packet-input
+order and retirement payloads are preserved with the carried chain boundary.

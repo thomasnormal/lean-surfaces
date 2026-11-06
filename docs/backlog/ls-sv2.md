@@ -3675,3 +3675,25 @@ including adjacent captures. The PicoRV32 witness pins both forms.
 **DECIDED:** reuse the packet-tag ISA refinement and apply the exact
 `toRobMachine_inputs` projection; packet boundaries, retirement payloads,
 and the carried state/order boundary remain unchanged.
+
+## 2026-11-06-ls-sv2-246 — reproduce PicoRV32's generated-member memory wall
+
+The inboxes were reread before this item.  The owner lane's next priority is
+the generic wall that keeps PicoRV32's one-rank memory route from loading:
+`instantiateMemD2` currently refuses any design whose memory declarations are
+accompanied by generated members.  Two clean-room designs reproduce the wall
+without changing the pinned core: `generate if` around a memory read and
+`generate for` over generated taps.  Their loader declarations succeed, while
+the memory route returns the exact refusal
+`unsupported "Instantiate" "memory cycle route does not yet admit generate members"`.
+
+The repros and their approved envelopes live under
+`Examples/system-verilog/cores/picorv32/`; their hashes and `rfl` probes are
+recorded in the PicoRV32 README.  A dated `REQUEST ls-sv:` asks the owner lane
+to admit generated members in the existing memory route with exact
+parameter/generate semantics, preserving a loud refusal outside the supported
+shape and without lowering or unrolling the source.
+
+**DECIDED:** treat this as generic loader/semantics work required by the real
+PicoRV32 target.  No PicoRV32 RTL edit or core-specific workaround is allowed;
+the R2 proof remains parked at this wall until the owner lane lands support.

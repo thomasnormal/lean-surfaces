@@ -64,6 +64,20 @@ were also rerun from their pinned envelopes: their first loader diagnostics
 remain `AlwaysPosedge:edge` and `AlwaysLatch`, respectively.  These are
 measurements of the current tool, not adaptations of any upstream RTL.
 
+## Generated-member clean-room repro
+
+The next wall is independent of PicoRV32's source.  The clean-room fixtures
+[`generate_memory_if.sv`](generate_memory_if.sv) and
+[`generate_memory_for.sv`](generate_memory_for.sv) combine a one-rank unpacked
+memory with a source-shaped `generate if` or `generate for`.  Their approved
+envelopes are checked by [`generate_memory_if_probe.lean`](generate_memory_if_probe.lean)
+and [`generate_memory_for_probe.lean`](generate_memory_for_probe.lean): the
+loader declaration succeeds, while
+`pdesign.instantiateMemD2 [4]` reduces exactly to
+`unsupported "Instantiate" "memory cycle route does not yet admit generate members"`.
+These fixtures are generic repros for the owner lane; they do not alter or
+lower the pinned PicoRV32 RTL.
+
 ## RVFI and memory-port witness
 
 The unchanged source also exposes an RVFI port under `RISCV_FORMAL`.  The

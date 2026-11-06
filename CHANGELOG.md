@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restored fail-closed refusal-census taxonomy coverage for all unsupported differential rows and loud script witnesses; unclassified inventory entries now fail the gate.
+
 - Added an end-to-end pinned differential test for float `round` values beyond the former per-digit worker range and at both exponent cutoffs.
 
 - Added differential witnesses for negative and constructed set iteration paths; synchronized script expectations with the intentional loud boundaries for displays and definition deletion.

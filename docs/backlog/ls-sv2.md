@@ -2042,3 +2042,14 @@ witness pins this source-input projection over its two packet windows.
 
 **DECIDED:** reuse the existing tag-input bridge and `packetInputs_append`; no
 input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-118 — expose packet ROB tag payload projection
+
+Added `RvfiPacketMachine.toRobMachine_tags_retirements` to
+`LeanModels/Refine/RvfiPacket.lean`.  Erasing `TaggedCommit` metadata from the
+generic ROB tag stream now directly recovers the packet-facing retirement trace
+for any finite cycle prefix.  The PicoRV32 witness pins this projection over
+the complete packet capture.
+
+**DECIDED:** compose the existing ROB tag erasure with the packet trace bridge;
+no retirement payload or completion order is reconstructed.

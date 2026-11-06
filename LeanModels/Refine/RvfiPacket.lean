@@ -742,6 +742,14 @@ theorem RvfiPacketMachine.toRobMachine_tags {State : Type}
           exact congrArg (List.append
             (entries.filterMap RvfiPacketEntry.toTaggedCommit?)) (ih state')
 
+/- Erasing generic ROB tag metadata recovers the packet-facing retirement
+   trace for every finite cycle prefix. -/
+theorem RvfiPacketMachine.toRobMachine_tags_retirements {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input) :
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state cycles := by
+  rw [robTags_retirements, machine.toRobMachine_trace]
+
 /-- Flattened ROB tag inputs are exactly the packet machine's retained
 architectural input stream. -/
 theorem RvfiPacketMachine.toRobMachine_tags_inputs {State : Type}
@@ -2152,6 +2160,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_flat
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_retirements
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Plain `import time` is now a structured AST statement; import admission and the clock census no longer parse source-text whitelist strings, while richer imports remain loud.
+
 - Float `round(number, ndigits)` now uses one exact-ratio worker with CPython's positive and negative exponent cutoffs; the former per-digit workers and proof branches were removed.
 
 - Refuse zero-argument `time.time()` reads while the trace carries only

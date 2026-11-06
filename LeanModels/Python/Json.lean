@@ -422,6 +422,9 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "Pass" => return .pass span
     | "Break" => return .brk span
     | "Continue" => return .cont span
+    | "Import" =>
+        let module ← (← getField j "module").getStr?
+        return .importStmt module span
     | "ImportFrom" =>
         -- Pass 0 (docs/memory-model.md §import forms (Pass 0)): the
         -- admitted from-import, structured by the EXTRACTOR (which owns
@@ -609,12 +612,10 @@ private def ntCandidate : Stmt → Option NamedTupleDefn
 
 /-- The exact benign import whose only effect (binding `namedtuple`) the
 recognition absorbs — the `namedtuple` row of the shared exact-import
-whitelist (`benignImportBinds`, Ast.lean; G1 reads the same table). -/
+structured whitelist (Ast.lean; G1 reads the same table). -/
 private def isBenignNtImport : Stmt → Bool
   | .importFrom module names star _ =>
     (benignImportBindsStructured module names star).map Prod.fst == some "namedtuple"
-  | .unsupported "ImportFrom" text _ =>
-    (benignImportBinds text).map Prod.fst == some "namedtuple"
   | _ => false
 
 /-- Names an assignment-like TARGET binds; `none` = unanalyzable shape.
@@ -629,20 +630,6 @@ private def targetBinds : Expr → Option (List String)
   | .subscript .. => some []
   | .attribute .. => some []
   | _ => Option.none
-
-/-- Names a simple import statement's TEXT binds (`from A import B` binds
-`B`; `import A.B` binds `A`); `none` = not a simple single-name import. -/
-private def importBinds (text : String) : Option (List String) :=
-  if (text.splitOn ",").length != 1 || (text.splitOn " as ").length != 1 then
-    Option.none
-  else
-    match splitWs text with
-    | ["from", _, "import", n] => if isPyIdent n then some [n] else Option.none
-    | ["import", m] =>
-      match (m.splitOn ".").head? with
-      | some root => if isPyIdent root then some [root] else Option.none
-      | Option.none => Option.none
-    | _ => Option.none
 
 /-- Names a top-level statement (nested included) can bind; `none` =
 unanalyzable (refuses the whole recognition). The `imp0` flag selects the
@@ -673,6 +660,7 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
     let ob ← orelse.toList.mapM (stmtBindsWith imp0)
     return bb.flatten ++ ob.flatten
   | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
+  | .importStmt _ _ => some ["time"]
   -- pass 5: impossible at module top level (CPython parse error) —
   -- unanalyzable, conservative
   | .yieldFromStmt .. => Option.none
@@ -708,8 +696,6 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
     else match benignImportBindsStructured module names star with
       | some (n, modelled) => some (if modelled then [] else [n])
       | Option.none => if star then Option.none else some names.toList
-  | .unsupported "ImportFrom" text _ => importBinds text
-  | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
 
 @[inherit_doc stmtBindsWith]
@@ -779,6 +765,7 @@ mutual
         ++ (body.toList.map stmtRefs).flatten
     -- Pass 0: an import references no in-module names
     | .importFrom .. => []
+    | .importStmt module _ => [module]
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -793,7 +780,7 @@ private def stmtSpanOf : Stmt → Span
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp
-  | .importFrom _ _ _ sp | .delStmt _ sp
+  | .importFrom _ _ _ sp | .importStmt _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -1154,6 +1141,7 @@ private partial def yfNames : Stmt → List String
   | .yieldFromStmt (.genExp ..) _ => []
   | .yieldFromStmt v _ => exprRefs v
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
+  | .importStmt module _ => [module]
   | .ret (some e) _ => exprRefs e
   | .assign ts v _ =>
       (ts.toList.map exprRefs).flatten
@@ -1284,6 +1272,7 @@ private partial def exprNamesXW : Expr → List String
 target expressions themselves — a target `Name` IS a name). -/
 private partial def stmtNamesXW : Stmt → List String
   | .globalDecl names _ | .nonlocalDecl names _ => names.toList
+  | .importStmt module _ => [module]
   | .annNoValue name _ => [name]
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
   | .ret (some e) _ => exprNamesXW e
@@ -1453,7 +1442,7 @@ mutual
       StateM (Nat × Array FunctionDefn) Stmt := do
     match s with
     -- Pass 0: `importFrom` carries no expression, nothing to lower
-    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .globalDecl .. | .nonlocalDecl .. | .annNoValue .. | .importFrom ..
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .globalDecl .. | .nonlocalDecl .. | .annNoValue .. | .importFrom .. | .importStmt ..
     | .unsupported .. => return s
     | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
     | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp

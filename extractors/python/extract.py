@@ -2773,6 +2773,14 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # and non-top-level imports remain the original loud Import wall.
         if (len(node.names) == 1
                 and node.names[0].asname is None
+                and node.names[0].name == "time"):
+            return {
+                "kind": "Import",
+                "span": span(node),
+                "module": "time",
+            }
+        if (len(node.names) == 1
+                and node.names[0].asname is None
                 and "." not in node.names[0].name
                 and node.names[0].name not in platform_inventory()):
             return {

@@ -246,7 +246,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             globalsDirty, Stmt.g1Dirty, Stmt.g1Binds, Stmt.g1BindsList,
             Stmt.g1Stores, Stmt.g1StoresList, Expr.g1Primary,
             Expr.g1TargetStores, Expr.g1TargetStoresList,
-            targetBindsG, targetBindsListG, benignImportBinds, isModuleDunder,
+            targetBindsG, targetBindsListG, isModuleDunder,
             resolvedG, resolvedGAux, targetNamesG, evalGlobalExpr, evalGlobalExprs,
             evalGlobalDictItems, globalFuel,
             sumArgs, sumFold, rangeLen, rangeValsAux, rangeVals, rangeMake,

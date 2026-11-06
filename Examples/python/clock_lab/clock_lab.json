@@ -33,15 +33,14 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "Import",
         "span": {
           "lineno": 28,
           "col_offset": 0,
           "end_lineno": 28,
           "end_col_offset": 11
         },
-        "py_kind": "Import",
-        "text": "import time"
+        "module": "time"
       },
       {
         "kind": "ClassDef",

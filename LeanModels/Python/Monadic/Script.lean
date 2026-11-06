@@ -23,7 +23,7 @@ compound whose bindings a function body might read stale — and it is kept here
 Everything above the trunk's executor is PURE and is imported, not rebuilt:
 `classesCreationAdmissible`, `scriptForwardName`, `scriptCompoundDefsBoundBefore`,
 `scriptFlushCoherent`, `scriptView`,
-`publishScriptGlobals`, `scriptRebindMsg`, `benignImportBinds`,
+`publishScriptGlobals`, `scriptRebindMsg`, `benignImportBindsStructured`,
 `benignImportNames`, `dunderShaped`. That is roughly 530 of the trunk's 893
 script lines. The rebuild owns the ~320 lines of CONTROL, exactly as it owns
 `evalOpen`'s control and none of `evalBinOp`'s arithmetic.
@@ -411,15 +411,12 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
             inFrame (inWorld [] (classBodyStmtsAt K m c.body.toList))
           else refuse s!"class {name}: executable class creation is outside the tier"
       | none => refuse s!"internal: class marker {name} has no class table entry"
+  | .importStmt module _ =>
+      if module == "time" then pure .next
+      else refuse s!"plain import {module} is outside the tier"
   | .importFrom module names star sp =>
       if (benignImportBindsStructured module names star).isSome then pure .next
       else execOpen K m (.importFrom module names star sp)
-  | .unsupported "Import" text sp =>
-      if (benignImportBinds text).isSome then pure .next
-      else execOpen K m (.unsupported "Import" text sp)
-  | .unsupported "ImportFrom" text sp =>
-      if (benignImportBinds text).isSome then pure .next
-      else execOpen K m (.unsupported "ImportFrom" text sp)
   | .delStmt names sp => do
       -- THE MODULE-SCOPE `del`. The frame's locals ARE the module globals and
       -- the one pipeline keeps them COMPLETE, so a locals HIT removes exactly

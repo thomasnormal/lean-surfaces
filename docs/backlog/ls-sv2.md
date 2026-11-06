@@ -2303,3 +2303,14 @@ boundary.  The PicoRV32 witnesses pin both forms.
 
 **DECIDED:** erase the generic ROB boundary through the exact
 `toRobMachine_trace` equality; no retirement payload or order is reconstructed.
+
+## 2026-11-06-ls-sv2-140 — certify packet-window tagged retirement cardinality
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements_length` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+and two adjacent certified chains now expose the exact cardinality of the
+tagged generic ROB retirement payload.  The PicoRV32 witnesses pin both
+forms.
+
+**DECIDED:** derive cardinality from the exact tagged retirement payload
+equality and `List.length`; no retirement order or payload is reconstructed.

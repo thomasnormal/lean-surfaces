@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Trailing `del` statements targeting static definitions are preserved in the AST and refuse at script execution instead of being rewritten to `pass`.
+
 - Added a differential witness for callable-alias identity; `alias is target` now remains an explicit loud boundary while admitted alias calls keep their existing tier.
 
 - Namedtuple table resolution now requires the definition to precede every function body that reaches it; unsafe forward reachability refuses instead of using a position-independent static table.

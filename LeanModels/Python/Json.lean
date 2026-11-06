@@ -1643,65 +1643,6 @@ mutual
     ((ss.toList.map splitChainStmt).flatten).toArray
 end
 
-/-- Every `del` target in the statement's subtree, with multiplicity —
-the uniqueness census of the trailing-del rewrite below. Nested
-compounds are walked; `defStmt` bodies are DELIBERATELY not (extractor
-clause 1 makes a function-scope `del` target a LOCAL of that function,
-so it never touches the module binding this census protects). -/
-private partial def delTargets : Stmt → List String
-  | .delStmt ns _ => ns.toList
-  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
-      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
-  | .forStmt _ _ b o _ =>
-      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
-  | .tryStmt b _ hnd _ _ =>
-      (b.toList.map delTargets).flatten ++ (hnd.toList.map delTargets).flatten
-  | .withStmt _ body _ _ => (body.toList.map delTargets).flatten
-  | _ => []
-
-/-- del RECONCILED (docs/backlog.md §`del` RECONCILED with the one
-pipeline): rewrite TRAILING `del`s of definition names away. A
-`def`/`class`/namedtuple/alias binding is a STATIC table entry no
-runtime arm can remove (the tombstone alternatives are the recorded
-design's rejected Option A), but in the module's TRAILING RUN — the
-maximal suffix of top-level statements that are all `Delete` or `Pass` —
-the removal is UNOBSERVABLE: the name is certainly bound there
-(`defsBoundBefore` orders the mention, `initBindable` forbids rebinding,
-the uniqueness census below forbids an earlier admitted del), so the
-deletion cannot raise, and nothing after the trailing run can read it.
-Per TARGET: a definition name occurring as a del target EXACTLY ONCE in
-the whole top level (nested compounds included — `del f; del f` must
-stay loud on the second) is dropped from its statement; a statement left
-with no targets becomes `pass`. Dropping preserves CPython's partial
-left-to-right order because a dropped target's deletion is the one step
-that cannot raise. Everything not dropped is the runtime arms' business
-(module scope: `execScriptOne`; the opcode.py payer:
-`del def_op, name_op, jrel_op, jabs_op` as the module's last statement). -/
-private def rewriteTrailingDefDels (functions : Array FunctionDefn)
-    (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
-    (topLevel : Array Stmt) : Array Stmt :=
-  let isTail : Stmt → Bool := fun s =>
-    match s with
-    | .delStmt .. | .pass _ => true
-    | _ => false
-  let stmts := topLevel.toList
-  let tailLen := (stmts.reverse.takeWhile isTail).length
-  if tailLen == 0 then topLevel else
-  let tailStart := stmts.length - tailLen
-  let isDefName : String → Bool := fun n =>
-    functions.any (·.name == n) || classes.any (·.name == n)
-      || namedtuples.any (·.name == n)
-  let allDelTargets := (stmts.map delTargets).flatten
-  let uniqueOnce : String → Bool := fun n =>
-    (allDelTargets.filter (· == n)).length == 1
-  let rewriteOne : Stmt → Stmt := fun s =>
-    match s with
-    | .delStmt ns sp =>
-      let keep := ns.filter fun n => !(isDefName n && uniqueOnce n)
-      if keep.isEmpty then .pass sp else .delStmt keep sp
-    | s => s
-  (stmts.take tailStart ++ (stmts.drop tailStart).map rewriteOne).toArray
-
 /-- MODULE-LEVEL DEF ALIASING (docs/memory-model.md §module-level def
 aliasing): recognize a direct top-level `alias = name` where `name` is a
 top-level def (or an earlier-admitted alias of one, transitively — the
@@ -1930,11 +1871,9 @@ def parseModule (j : Json) : Except String Module :=
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.
     let (functions'', topLevel''', aliases) :=
       recognizeDefAliases functions' classes' namedtuples topLevel''
-    -- del RECONCILED, after the alias pass (alias entries ARE functions
-    -- entries, so `del bisect` of an admitted alias is covered by the
-    -- same definition-name test).
-    let topLevel'''' :=
-      rewriteTrailingDefDels functions'' classes' namedtuples topLevel'''
+    -- Definition deletion stays in the AST. Static tables cannot execute
+    -- the deletion, so the script boundary handles it as a loud refusal.
+    let topLevel'''' := topLevel'''
     return { functions := functions'', topLevel := topLevel'''',
              classes := classes', namedtuples, aliases }
 

@@ -2858,7 +2858,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               · rfl
               · rw [bne, hbe] at hndct; simp at hndct
             simp only [evalExpr, hkw, funsHeapFree, Module.heapFree_funs hm,
-              eq_self_iff_true, if_true, hstarArgx]
+              eq_self_iff_true, Bool.false_eq_true, if_false, if_true, hstarArgx]
             have hargs0 : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
             have hargs : Run.OkW (·.world = st.world)
@@ -2871,6 +2871,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 | exact .unsupported
                 | exact .bind hargs fun st₁ _ h₁ => .exn
                 | skip
+              case callable _ => exact .bind hargs fun st₁ _ h₁ => .unsupported
               case ref a =>
                 -- H7 (+pass 3): hm's function-body walk AND top-level
                 -- def-freedom discharge the guard — the closure call is
@@ -2883,7 +2884,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases lookupG (moduleGlobals m).1 fname with
               | some vv =>
                 cases vv with
-                | some v => cases v <;> exact .bind hargs fun st₁ _ h₁ => .exn
+                | some v =>
+                    cases v with
+                    | callable _ => exact .bind hargs fun st₁ _ h₁ => .unsupported
+                    | _ => exact .bind hargs fun st₁ _ h₁ => .exn
                 | none =>
                   -- pass 3: the poisoned-arm live view — the guard kills
                   -- the closure dispatch in a heap-free module
@@ -2892,8 +2896,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                   | some v =>
                     cases v <;>
                       first
+                        | simp; exact .unsupported
                         | exact .bind hargs fun st₁ _ h₁ => .exn
                         | skip
+                    case callable _ => exact .bind hargs fun st₁ _ h₁ => .unsupported
                     case ref a =>
                       refine .bind hargs fun st₁ vs h₁ => ?_
                       simp only [Module.heapFree_funs hm, Module.heapFree_topDefFree hm,

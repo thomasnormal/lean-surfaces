@@ -7610,14 +7610,15 @@ faithful, and for what the two independent facts mean). -/
 def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
   ((moduleInit m).2.1, (moduleInit m).2.2.1)
 
-/-! ### The trace clock (pass 6 — docs/memory-model.md §the trace clock)
+/-! ### The trace clock (pass 6 — explicit input boundary)
 
-Time as an INPUT: `World.clock` is a finite trace of opaque integer
-readings, and evaluating exactly `time.time()` pops the next one. The
-admission is decided by the pure `isClockCall` below; everything failing
-it — `time` as a bare value, `time.sleep`, any other attribute, args,
-kwargs, a shadowed or rebound `time` — takes the pre-existing paths
-(poisoned-binding refusal / faithful errors) verbatim. -/
+`World.clock` remains the explicit clock input, but its integer readings
+cannot represent CPython's binary64 result type. The admitted zero-argument
+`time.time()` shape therefore refuses loudly until a binary64 trace is
+modeled. The admission is decided by the pure `isClockCall` below;
+argumented calls retain the faithful arity error without consuming the
+trace, while every other clock-module surface takes the existing poisoned
+binding or attribute-error path. -/
 
 /-- Is this top-level statement the exact benign clock import? -/
 def stmtIsClockImport : Stmt → Bool
@@ -9268,6 +9269,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- symbolic proofs (the recorded H2 finding); the CLASS is
                   -- what the harness compares
                   .exn st (.typeError "'dict' object is not callable")
+          | some (.callable _) =>
+              flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
+              .unsupported "calling a first-class callable value is outside the tier"
           | some v =>
               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -9278,6 +9282,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             | some (some (.ref _)) =>
                 flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError "'dict' object is not callable")
+            | some (some (.callable _)) =>
+                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
+                .unsupported "calling a first-class callable value is outside the tier"
             | some (some v) =>
                 flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -9298,6 +9305,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         Run.withLocals st.locals
                           (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                       | _ => .exn st (.typeError "'dict' object is not callable"))
+               | some (.callable _) =>
+                   flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
+                   .unsupported "calling a first-class callable value is outside the tier"
                | some v =>
                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                    .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -10066,22 +10076,16 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         | .attribute recv attr _ =>
           -- ===== THE TRACE CLOCK (pass 6, docs/memory-model.md §the
           -- trace clock): the EXACT call shape `time.time()` on the
-          -- unshadowed benign-import clock name consumes the next
-          -- reading of the world's trace; an empty trace is the LOUD
-          -- underrun refusal (fuel-independent — a spec error in the
-          -- run's INPUT, never a silent 0). Decided BEFORE the receiver
-          -- evaluates (receiver evaluation is the poisoned refusal);
+          -- unshadowed benign-import clock name is loud until the
+          -- integer trace carries binary64 readings. Decided BEFORE the
+          -- receiver evaluates (receiver evaluation is the poisoned refusal);
           -- everything failing `isClockCall` takes the paths below
           -- verbatim. `time.time(args…)` evaluates the args then raises
           -- CPython's exact arity `TypeError` without consuming the trace. =====
           if isClockCall m st recv attr then
             match args.toList with
             | [] =>
-              match st.world.clock with
-              | [] =>
-                .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
-              | t :: ts =>
-                .ok { st with world := { st.world with clock := ts } } (.int t)
+              .unsupported "time.time() readings are outside the tier until the clock trace carries binary64 values (CPython returns float)"
             | _ :: _ =>
               .exn st (.typeError s!"time.time() takes no arguments ({args.size} given)")
           else

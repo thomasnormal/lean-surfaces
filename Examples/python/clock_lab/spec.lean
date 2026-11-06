@@ -5,28 +5,23 @@ import Examples.python.clock_lab.proof
 # clock_lab — the trace-clock acceptance set
 
 Concrete regressions for THE TRACE CLOCK (docs/memory-model.md §the
-trace clock, pass 6), pinned two ways: record-replay differential rows
-in `harness/cases.json` (the CPython side of each row binds this
-module's `time` name to a stub replaying/recording the SAME integer
-trace the model consumes) and the `#guard` non-vacuity checks here
+trace clock, pass 6), pinned two ways: differential rows in
+`harness/cases.json` (the CPython side receives a deterministic stub while
+the model checks the integer-trace type boundary) and the `#guard`
+non-vacuity checks here
 (`callFunctionClock` — the clock rows have no `#py_check` surface,
 deliberately: `callFunction` is the EMPTY trace).
 
 The claims worth naming, each falsifying a cheaper design:
 
-* **Readings are inputs, not effects.** `read_clock`/`read_twice` pop
-  the trace in order — a frozen-clock or returns-0 stub answers the
-  wrong ints; subtraction on readings is exact.
-* **The dead-clock regime survives consumption.** `dead_clock` pops
-  readings that never bind (`deadline = 1 << 63`, the shipped
-  post-#158 regime) — consuming the trace must not disturb the run.
-* **The armed deadline stops at the exact reading.** `armed(7, …)`
-  under trace `[5, 6, 8]` raises `Stop` at node 12 — the FIRST reading
-  `> 7` — composing the clock pop with the pass-4
-  raise-through-handler path; CPython stops at the same node.
-* **Underrun is a spec error, loudly.** The trace running out refuses
-  with the pinned underrun message — never a silent 0, never a timeout
-  (fuel-independence pinned by two fuels).
+* **Zero-argument reads are loud.** `read_clock`, `read_twice`, `dead_clock`,
+  and `armed` refuse until the explicit trace carries binary64 readings;
+  the old integer result would silently change CPython's return type.
+* **The arity edge remains faithful.** `time.time(1)` evaluates its
+  argument and raises CPython's exact `TypeError` without touching the
+  trace.
+* **The refusal is fuel-independent.** Empty and nonempty integer traces
+  both hit the same type boundary, at two fuels for the armed shape.
 * **The admission has edges.** A LOCAL `time` shadows the clock
   (`shadowed` — no pop, with CPython's faithful `AttributeError`);
   `time.time(1)` raises CPython's exact arity `TypeError` after evaluating
@@ -58,34 +53,30 @@ empty trace), then the clock rows (`callFunctionClock`). -/
 #py_check clock_lab.pure_sum(10) = 55
 #py_check clock_lab.pure_sum(0) = 0
 
-/-! ### happy pops: readings are inputs, consumed in order -/
+/-! ### zero-argument reads refuse until the trace carries binary64 values -/
 
-#guard callFunctionClock clock_lab "read_clock" #[] [123] 4096 ==
-  .ok (.int 123)
-#guard callFunctionClock clock_lab "read_twice" #[] [5, 9] 4096 ==
-  .ok (.tuple #[.int 5, .int 9, .int 4])
+def clockTypeRefusal : String :=
+  "time.time() readings are outside the tier until the clock trace carries binary64 values (CPython returns float)"
 
-/-! ### the dead clock: consumed, never binding (the shipped regime) -/
-
-#guard callFunctionClock clock_lab "dead_clock" #[.int 10] [1, 2] 100000 ==
-  .ok (.tuple #[.int 55, .int 10])
-
-/-! ### the armed deadline: Stop at the exact reading, caught by the
-driver's handler (the pass-4 composition) -/
-
-#guard callFunctionClock clock_lab "armed" #[.int 7, .int 100] [5, 6, 8] 100000 ==
-  .ok (.tuple #[.int (-1), .int 12])
+#guard callFunctionClock clock_lab "read_clock" #[] [123] 4096 matches
+  .unsupported clockTypeRefusal
+#guard callFunctionClock clock_lab "read_twice" #[] [5, 9] 4096 matches
+  .unsupported clockTypeRefusal
+#guard callFunctionClock clock_lab "dead_clock" #[.int 10] [1, 2] 100000 matches
+  .unsupported clockTypeRefusal
+#guard callFunctionClock clock_lab "armed" #[.int 7, .int 100] [5, 6, 8] 100000 matches
+  .unsupported clockTypeRefusal
 
 /-! ### the underrun refusal: loud, message pinned, fuel-independent -/
 
 #guard callFunctionClock clock_lab "read_clock" #[] [] 4096 matches
-  .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+  .unsupported clockTypeRefusal
 #guard callFunctionClock clock_lab "armed" #[.int 7, .int 100] [5] 100000 matches
-  .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+  .unsupported clockTypeRefusal
 #guard callFunctionClock clock_lab "armed" #[.int 7, .int 100] [5] 200000 matches
-  .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+  .unsupported clockTypeRefusal
 
-/-! ### the admission's edges: shadowing kills the pop; args refuse -/
+/-! ### the admission's edges: shadowing bypasses the clock; args stay faithful -/
 
 #guard callFunctionClock clock_lab "shadowed" #[] [123] 4096 matches
   .exn .attributeError

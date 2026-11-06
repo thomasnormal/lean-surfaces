@@ -9057,9 +9057,13 @@ Deleted the exact two-statement rewrites for immediate builtin aliases,
 dead function/class values, immediate generator-expression drains, and direct
 bare re-raises. These source forms now remain represented by their original AST
 statements and reach the existing loud first-class-value, generator, or active
-exception boundaries. Ordinary differential rows remain unchanged; the
-rewrites had no sound semantic theorem and could erase a lookup or exception
-payload that CPython observes.
+bare re-raises. These source forms now remain represented by their original AST
+statements and reach the existing loud first-class-value, generator, or active
+exception boundaries. The callable-value dispatch now preserves argument
+evaluation and refuses after it, rather than fabricating a not-callable
+`TypeError`. Ordinary differential rows remain unchanged; the rewrites had no
+sound semantic theorem and could erase a lookup or exception payload that
+CPython observes.
 
 DECIDED: preserve source statement structure and refuse first-class callable,
 active-exception, and unmodeled generator protocol shapes until those runtime
@@ -9075,3 +9079,19 @@ raises `NameError`. Benign-import deletion keeps its existing narrow no-op path.
 
 DECIDED: definition deletion is loud until definitions become runtime bindings;
 the separate benign-import behavior remains unchanged.
+
+## 2026-11-06-pycomplete-344 — refuse integer clock readings
+
+The trace-clock arm previously returned `.int` values from `World.clock`,
+although CPython's `time.time()` returns a binary64 `float`. That was a
+silent type change for direct results and for any consumer outside the
+integer deadline comparison. Zero-argument `time.time()` now refuses with a
+message naming the missing binary64 trace representation. The existing
+argumented-call path remains an exact positional-only `TypeError` and leaves
+the trace untouched. Clock rows in the acceptance battery now pin the loud
+boundary; the old `read_clock()` path returned `123` where an actual CPython
+call returns a float.
+
+DECIDED: keep `World.clock : List Int` as an explicit future-input boundary,
+but do not interpret its readings as Python values until a binary64 trace is
+modeled. Preserve the arity error independently of that refusal.

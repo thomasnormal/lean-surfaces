@@ -1707,14 +1707,13 @@ model refuses loudly at that exact evaluation, one node in (never a
 directions at lab scale.
 
 AMENDED (pass 6, owner-approved): the refusal wall for the exact call
-`time.time()` is replaced by the TRACE CLOCK — time as an input, a
-clock trace threaded through `World`, popped per call, empty trace a
-loud underrun refusal (docs/memory-model.md §the trace clock below).
-Everything else in this section stands: the poisoned binding remains
-the abstraction for every OTHER impure surface (`time` as a value,
-`time.sleep`, any other module attribute), and no reading is ever
-invented — readings come from the trace or the evaluation refuses.
-The admitted zero-argument call also checks CPython's arity boundary:
+`time.time()` was replaced by an explicit TRACE CLOCK input, but the
+integer trace was later found to change CPython's returned value type.
+Zero-argument reads therefore refuse loudly until that trace carries
+binary64 values. Everything else in this section stands: the poisoned
+binding remains the abstraction for every OTHER impure surface (`time` as a
+value, `time.sleep`, any other module attribute), and no reading is ever
+invented. The identified call still checks CPython's arity boundary:
 `time.time(args…)` evaluates its arguments and then raises the exact
 `TypeError` `time.time() takes no arguments (N given)` without consuming
 the trace.
@@ -2544,60 +2543,32 @@ closed:
 The pass-4 §wall-clock time decision said the wall clock has NO value in
 the model. That stands — refined, not reversed: the wall clock still has
 no value the model INVENTS. What changes is where readings come from:
-**time is an input, not an effect.** `World` gains a CLOCK TRACE — a
-finite list of readings, consumed in order — and evaluating the exact
-call `time.time()` POPS the next reading. The old poisoned-binding
+**time is an explicit input boundary, not an effect.** `World` retains a
+CLOCK TRACE, but the exact call `time.time()` currently refuses because
+the trace has no binary64 reading type. The old poisoned-binding
 refusal remains the abstraction for every OTHER impure surface: `time`
 as a bare value, `time.sleep(…)`, any other attribute of the module, and
 every other unmodelled import keep refusing loudly at evaluation. This
-replaces the "impure builtin refuses on evaluation" wall for exactly one
-call shape, and unblocks deep `search()` stepping past the 2048-node
-frontier.
+keeps the exact call loud until a binary64 trace is modeled; it does not
+unblock clock-dependent `search()` stepping.
 
-**Representation: the trace is `List Int`, readings are OPAQUE integers.**
-The decision and its soundness argument, recorded honestly:
+**Representation: the trace remains `List Int`, but zero-argument reads are
+currently loud.** CPython's `time.time()` returns an IEEE-754 double, while
+the Python tier's clock trace has no binary64 reading type. Returning an
+integer from this call would silently change the value type (for example,
+`read_clock()` returns `float` under CPython), so the interpreter refuses
+the call with `time.time() readings are outside the tier until the clock
+trace carries binary64 values (CPython returns float)`. This is a sound
+refusal for every consumer, including the shipped deadline comparison;
+adding a binary64 trace is a separate semantics item.
 
-* CPython's `time.time()` returns an IEEE-754 double. The model has no
-  float tier anywhere, and a float reading would immediately meet
-  arithmetic whose rounding the model refuses to guess. The shipped
-  file's only in-tier clock consumer is `bound()`'s
-  `time.time() > self.deadline` (line 328) — a single comparison against
-  an int-valued attribute (`1 << 63`, or whatever the driver stored).
-* The trace domain is therefore ℤ, and the RECORD-REPLAY boundary keeps
-  the differential claim exact: the harness's recording clock
-  (CPython side) returns `time.time_ns() // 1000` — an **int** in
-  integer microseconds — and records exactly what it returned. The
-  oracle run itself consumes those integer readings, and the model
-  replays the same list. Both sides see literally the same values, so
-  exact equality is preserved end to end; nothing is quantized AFTER
-  the fact.
-* The claim is scoped, loudly: the model says NOTHING about runs under
-  float readings. `model(tr) = CPython(tr)` for integer traces `tr` —
-  and the shipped comparison site factors through an exact int/int
-  comparison under any integer trace, while CPython's own float-int
-  comparison at that site is also mathematically exact, so the integer
-  restriction loses no behavior OF THAT SITE (both branch outcomes are
-  reachable by integer traces). Extending readings to exact dyadic
-  rationals (every double is one) is sound but pointless until floats
-  exist elsewhere in the tier; that extension is a future recorded
-  decision, not a widening of this one.
-* Microsecond scaling is a HARNESS CONVENTION of record mode (real-clock
-  magnitude, still an int, still under `1 << 63` — the dead-clock regime
-  survives recording); the model semantics is unit-agnostic. Synthetic
-  traces choose their own units, consistently with the deadlines they
-  are compared against.
-
-**Pop semantics.** `World.clock : List Int := []`. Evaluating the
-admitted call shape pops the head: result `.int t`, world's clock := the
-tail. An EMPTY trace is the LOUD refusal "clock trace underrun" —
-fuel-independent, per the loudness doctrine: a trace underrun is a spec
-error in the run's INPUT, never a silent 0, never a timeout. `initWorld`
-seeds `[]` (the pinned file's regime: any reachable `time.time()` under
-an empty trace refuses at the exact consultation point, the pass-5
-frontier pin's behavior with a sharper message). The public boundary
-gains `callFunctionClock m f args clock fuel` — `callFunction` with the
-world's trace seeded; `CallsIn` carries traces through its explicit
-world, as for every world-dependent claim.
+**Trace input.** `World.clock : List Int := []` and
+`callFunctionClock m f args clock fuel` remain the explicit input boundary.
+The trace is not consumed by the refused zero-argument call. An argumented
+`time.time(x)` still evaluates its arguments and raises CPython's exact
+arity `TypeError` without touching the trace; kwargs syntax remains loud at
+its existing boundary. `initWorld` seeds `[]`, so omitting the trace cannot
+silently manufacture a time value.
 
 **Admission — exactly `time.time()`, decided by the pure `isClockCall`.**
 The arm fires in the call-with-attribute-receiver dispatch BEFORE the
@@ -2626,27 +2597,17 @@ faithful errors), verbatim. `time.time(x)` evaluates its arguments and
 then raises CPython's exact arity `TypeError`; the clock trace is untouched.
 `time.time()` under kwargs syntax rides the H6 loud arm unchanged.
 
-**Fragments and meta-theorems.** The clock call is an attribute call
-with attr ≠ `"get"`, so it is ALREADY outside `Expr.heapFree` — the
-fragment is undisturbed and `worldInv` stays true as stated (its
-attribute arm picks up the `isClockCall = false`-by-`rfl` reduction).
-`fuelMono`: the new arm is fuel-free on both sides of the pop. No new
-mutual member, no appended conjuncts.
+**Fragments and meta-theorems.** The clock call remains outside
+`Expr.heapFree`; the refusal has no world effect, and the existing
+`worldInv`/`fuelMono` arguments remain unchanged. No new mutual member or
+proof conjunct is needed.
 
-**Record-replay in the harness.** A `cases.json` case may carry
-`"clock"`: either a literal trace (list of ints — BOTH sides replay it:
-CPython through a per-module stub object bound to the module's `time`
-name, the model through the job's `"clock"` field) or `"record"` (the
-CPython side's stub reads the real clock as integer microseconds,
-records, and returns; the recorded list becomes the model's trace). A
-CPython-side underrun raises a distinctively-named exception that can
-never match anything. Rows without `"clock"` run exactly as before
-(empty trace). Batch jobs gain the optional `"clock"` field
-(`callFunctionClock`); one-shot script mode accepts `--clock i,j,k` and
-seeds the same trace for top-level execution (`tools/leanpy` forwards the
-option to `leanmodels-run --script`). Script-batch jobs carry the optional
-`"clock"` array. Omitting either input keeps the empty-trace behavior, so a
-reachable `time.time()` still raises the loud `clock trace underrun` refusal.
+**Harness input.** A `cases.json` case may still carry `"clock"` and the
+runner still exposes `callFunctionClock` and `--clock`; these inputs are
+retained for the future binary64 trace and for checking that a refused
+read does not mutate the world. Rows that reach zero-argument `time.time()`
+are now explicitly loud. The positional-argument row remains a MATCH for
+the faithful arity `TypeError` and verifies that the trace is untouched.
 
 **Axiom classes over traces (groundwork).** Trace classes are named
 predicates on `List Int` (Logic.lean): `ClockTrace.WallClock` — the
@@ -2654,61 +2615,17 @@ unconstrained class, `True`, so a `∀ tr` theorem IS a WallClock theorem
 (no axioms consumed); `ClockTrace.Monotone` — nondecreasing readings
 (`List.Pairwise (· ≤ ·)`), the class future deadline-abstraction
 theorems will consume ("once expired, always expired" needs it; nothing
-consumes it yet — stated, not spent). The FIRST trace-quantified theorem
-shape: **safety is trace-independent when the run never consults the
-clock** — concretely, the pass-5 stepped-search results hold FOR ALL
-traces (`∀ tr`, the four pinned `(depth, gamma, score, move)` tuples and
-node counts are unchanged with `clock := tr`), provable by `rfl` because
-the sub-2048-node runs never scrutinize the trace, so kernel reduction
-never blocks on the free variable. The recorded CPython trace for those
-steps is EMPTY — CPython never called `time.time()` below the node wall
-— and the `∀ tr` statement is strictly stronger than replaying it.
+consumes it yet — stated, not spent). The trace predicates remain groundwork for a future binary64 clock;
+no deadline-frontier theorem is claimed from integer readings. Runs that
+never consult the clock retain the existing trace-independence statements.
 
-**As-built deltas** are recorded at the end of this section when the
-implementation lands, per the standing discipline. Predicted flips the
-build will make, named up front so they are review points, not
-surprises: exc_lab's `time_live` message pin (poisoned-binding message →
-underrun message — still loud, one message sharper) and the sunfish
-2047-searcher frontier pin's REASON (same `.unsupported` shape,
-underrun instead of poisoned binding), which also gains the armed pair —
-a trace that lets the 2048th node continue to CPython's exact
-`(bound, nodes)`, and one that raises `Stop` at that node.
-
-AS-BUILT (2026-08-11, pass 6). Implemented as designed; the deltas,
-each a narrowing, a mechanical necessity, or a MEASURED correction:
-
-* `isClockCall m st recv attr = (attr == "time") && clockRecvOk m st
-  recv` — the receiver fork is the separate worker `clockRecvOk`, the
-  attr conjunct outside it as designed; the worldInv patch is exactly
-  the predicted `rfl` (`isClockCall m st recv "get" = false`), the
-  fuelMono patch one `split`. The census walks `m.topLevel` with
-  `stmtIsClockImport` and requires `hasGlobal = false` on BOTH
-  `m.functions` and `m.classes` (methods are flattened, but a class
-  BODY carries its own flag).
-* Both predicted pin flips happened verbatim (exc_lab `time_live` →
-  the underrun message; the sunfish frontier pin now PINS that message
-  and gained the armed pair — `clock := [999]` continues to CPython's
-  exact `(0, 2049)`, `clock := [1001]` raises `Stop` at node 2048 with
-  the world retained and the reading consumed, both CPython-derived).
-* **The `rfl` prediction for trace-quantified theorems is FALSIFIED by
-  measurement** — recorded so nobody retries it: the elaborator's
-  free-variable `whnf` does not share work the way closed kernel
-  evaluation does. On clock_lab's TEN-ITERATION `pure_sum(10)`, `rfl`
-  died beyond 4,000,000 heartbeats (and `py_simp` at fuel 512 blew
-  1,000,000 on `isDefEq`). What WORKS is SYMBOLIC EXECUTION at small
-  concrete fuel: `py_simp [clock_lab, callIn, execWhile]` proves
-  `pure_sum_all_traces` (fuel 64) in ~20 s — the world is
-  concrete-except-clock and nothing scrutinizes the free trace.
-  CONSEQUENCE for the capstone shape this section promised: the
-  sunfish stepped-search `∀ tr` statement does NOT land by per-run
-  normalization (a search-sized py_simp storms — the standing pass-4/5
-  finding); it waits for the **CLOCK-ERASURE meta-theorem** — "a run
-  decided `.ok`/`.exn` from the EMPTY trace never consulted the clock,
-  hence runs identically under EVERY trace, preserving it" — the
-  fuelMono-shaped mutual induction, recorded in the backlog as the
-  next milestone. The shipped-file trace claims that DO land now are
-  the concrete armed pair + underrun pins above; the lab-scale
-  `pure_sum_all_traces` is the first trace-quantified theorem.
+**As-built result.** The zero-argument clock arm now returns the pinned
+binary64-type refusal for both empty and nonempty integer traces. The
+positional arity arm remains faithful and does not consume the trace. The
+clock erasure and world-invariance proof surfaces are unchanged because the
+refusal has no world effect. A binary64 trace representation is the next
+separate clock item; no deadline-frontier result is claimed from integer
+readings.
 
 ## Builtin exception handlers on the proof surface (2026-10-10)
 

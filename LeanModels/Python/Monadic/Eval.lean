@@ -190,6 +190,8 @@ inductive CallPlan where
   | preNameError (name : String)
   /-- Arguments evaluate, then the faithful not-callable `TypeError`. -/
   | notCallable (tname : String)
+  /-- Arguments evaluate, then a first-class callable value remains loud. -/
+  | firstClass
   /-- A module-level `def`. -/
   | modFun (qname : String)
   /-- A builtin from `isBuiltinName`'s implemented set. -/
@@ -225,10 +227,12 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- is observable: `x(1//0)` with `x = 5` raises ZeroDivisionError.
       if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
       else .callClosure a
+  | some (.callable _) => .firstClass
   | some v => .notCallable v.typeName
   | Option.none =>
     match lookupG (moduleGlobals m).1 fname with
     | some (some (.ref _)) => .notCallable "dict"
+    | some (some (.callable _)) => .firstClass
     | some (some v) => .notCallable v.typeName
     | some Option.none =>
         -- The poisoned-arm LIVE view: a module-level lambda (an exec-bound
@@ -238,6 +242,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
         | some (.ref a) =>
             if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
             else .callClosure a
+        | some (.callable _) => .firstClass
         | some v => .notCallable v.typeName
         | Option.none =>
             .preRefuse s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
@@ -800,6 +805,7 @@ evaluator: the arguments are values, so nothing here evaluates syntax. -/
 def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
   | .preRefuse msg,   _  => refuse msg
   | .preNameError n,  _  => raisePy (.nameError n)
+  | .firstClass,      _  => refuse "calling a first-class callable value is outside the tier"
   | .notCallable t,   _  => raisePy (.typeError s!"'{t}' object is not callable")
   | .notYetArm arm,   _  => notYet arm
   | .builtin name,    vs => applyBuiltin K m name vs
@@ -1090,10 +1096,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     applyCallPlan K m plan vs
           | .attribute recv attr _ => do
               -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed
-              -- benign-import clock name consumes the next reading of the
-              -- world's trace, and an EMPTY trace is the loud underrun refusal —
-              -- fuel-independent, because it is a spec error in the run's INPUT
-              -- and never a silent 0. Decided BEFORE the receiver evaluates,
+              -- benign-import clock name is loud until the integer trace
+              -- carries binary64 readings. Decided BEFORE the receiver evaluates,
               -- since evaluating the receiver is itself the poisoned refusal.
               -- `time.time(args…)` evaluates the args then raises CPython's
               -- exact arity TypeError without consuming the trace. =====
@@ -1101,12 +1105,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               if isClockCall m st0 recv attr then
                 match args.toList with
                 | [] =>
-                    match st0.world.clock with
-                    | [] =>
-                        refuse "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
-                    | t :: ts => do
-                        set { st0 with world := { st0.world with clock := ts } }
-                        pure (.int t)
+                    refuse "time.time() readings are outside the tier until the clock trace carries binary64 values (CPython returns float)"
                 | _ :: _ =>
                     raisePy (.typeError s!"time.time() takes no arguments ({args.size} given)")
               else do
@@ -1164,6 +1163,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               else match callNamePlan m st.locals st.world.globals fname with
               | .preRefuse msg => refuse msg
               | .preNameError n => raisePy (.nameError n)
+              | .firstClass => do
+                  let _ ← evalOpenCallList (K, m, args.toList)
+                  let _ ← K.kwArgs kwargs.toList
+                  refuse "calling a first-class callable value is outside the tier"
               | .notCallable t => do
                   let _ ← evalOpenCallList (K, m, args.toList)
                   let _ ← K.kwArgs kwargs.toList

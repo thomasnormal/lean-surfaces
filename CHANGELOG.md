@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Refuse zero-argument `time.time()` reads while the trace carries only
+  integers; CPython returns binary64 floats. Positional arity errors remain
+  faithful and do not consume the trace.
+
+- First-class callable aliases now refuse after argument evaluation instead
+  of fabricating a not-callable `TypeError` after the shape-specific alias
+  rewrites were removed.
+
 - Float `round(number, 30)` now uses an exact binary64 ratio scaled by one nonillion, preserving ties-to-even and signed zero.
 
 - Float `round(number, 31)` now uses an exact binary64 ratio scaled by ten nonillion, preserving ties-to-even and signed zero.

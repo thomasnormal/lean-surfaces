@@ -4782,6 +4782,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 | _ => exact PBF.exn hs1 _
                           · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                             exact PBF.exn hs1 _
+                      | callable _ =>
+                          exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                            fun s1 vs _ hs1 => PBF.unsupported
                       | _ =>
                           exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                             fun s1 vs _ hs1 => PBF.exn hs1 _
@@ -4794,9 +4797,13 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                       | some ov =>
                           cases ov with
                           | some gv =>
-                              cases gv <;>
-                                refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
-                                  (fun s1 vs _ hs1 => PBF.exn hs1 _)
+                              cases gv with
+                                  | callable _ =>
+                                      exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => PBF.unsupported
+                                  | _ =>
+                                      refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        (fun s1 vs _ hs1 => PBF.exn hs1 _)
                           | none =>
                               cases Env.lookup st.world.globals fname with
                               | some gv =>
@@ -4823,6 +4830,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             | _ => exact PBF.exn hs1 _
                                       · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                                         exact PBF.exn hs1 _
+                                  | callable _ =>
+                                      exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => PBF.unsupported
                                   | _ =>
                                       exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => PBF.exn hs1 _
@@ -5998,9 +6008,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   | cons _ _ => simp only []; exact PBF.exn hslot _
                   | nil =>
                       simp only []
-                      cases st.world.clock with
-                      | nil => exact PBF.unsupported
-                      | cons t ts => refine PBF.ok ?_ _; exact hslot
+                      exact PBF.unsupported
                 · refine PBF.bind (ihE m st recv hslot) fun s1 r _ hs1 => ?_
                   cases r with
                   | ref b => exact ihAttrCall m s1 b attr args.toList hs1

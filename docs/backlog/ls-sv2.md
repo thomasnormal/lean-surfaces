@@ -3395,3 +3395,14 @@ append forms.
 the exact `toRobMachine_trace` projection; retirement payloads and order are
 preserved without reconstructing either trace, with the carried state boundary
 retained for the append form.
+
+## 2026-11-06-ls-sv2-227 — bridge normalized ROB trace refinement to packet inputs
+
+Added `normalizeRvfiPacketRobTrace_refines_packet` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized ROB retirement capture now
+exposes the ISA trace over the packet machine's architectural input stream,
+including adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** reuse the existing normalized ROB-trace/ROB-input refinement and
+the exact `toRobMachine_inputs` projection; packet-input order and retirement
+payloads are preserved without reconstructing either stream.

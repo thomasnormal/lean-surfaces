@@ -4452,6 +4452,49 @@ theorem normalizeRvfiPacketRobTrace_refines
     _ = trace isa isaState (robInputs machine.toRobMachine state cycles) :=
       rob_trace_refines hrob state isaState start cycles hrel
 
+/- The normalized ROB-trace contract also exposes the packet machine's
+   architectural input projection directly. -/
+theorem normalizeRvfiPacketRobTrace_refines_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    retirements = trace isa isaState
+      (packetInputs machine.toPacketMachine state cycles) := by
+  have htrace := normalizeRvfiPacketRobTrace_refines machine isa rel admit
+    state isaState start cycles retirements hrob hrel hobs
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htrace
+
+/- The packet-input form of the normalized ROB-trace contract composes across
+   adjacent captures while retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTrace_refines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state (first ++ second)) := by
+  have htrace := normalizeRvfiPacketRobTrace_refines_append machine isa rel
+    admit state isaState start first second hrob hrel hfirst hsecond
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htrace
+
 /- A single normalized packet window exposes the packet-facing ISA trace and
    the final state/order relation together, without requiring callers to name
    the intermediate generic ROB projection. -/
@@ -6136,6 +6179,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_append

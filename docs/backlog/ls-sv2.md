@@ -3139,3 +3139,16 @@ witness pins both forms.
 with the generic ROB-input/packet-input cardinality equality; retirement
 payloads, packet boundaries, retirement order, and source-input order are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-206 — certify packet-window ROB-tag retirement cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements_length_packetInputs`
+and its append form to `LeanModels/Refine/RvfiPacket.lean`.  Certified
+packet-window chains now carry equal generic ROB-tag retirement and packet
+input cardinalities through flattening and adjacent retained state boundaries.
+The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten through the existing packet-window certificate and reuse
+the generic ROB-tag retirement/packet-input cardinality bridge; packet
+boundaries, retirement payloads, retirement order, and source-input order are
+not reconstructed.

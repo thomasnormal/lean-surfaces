@@ -9642,3 +9642,23 @@ mutation semantics.
 DECIDED: a narrower proof interpreter must refuse a construct rather than
 returning a value when its stateful implementation is available only in the
 monadic runner.
+
+## 2026-11-06-pycomplete-373 — verify ordered module-definition admission
+
+The audit's forward-definition and redefinition hazards are already covered by
+the structured script admission: `defsReachableBefore` rejects a function body
+that reaches a later definition, and duplicate module function names are
+refused. The long structured `global` declaration also remains exact because
+the AST carries its names directly.
+
+| Measurement | Result |
+|---|---|
+| Forward-definition fixture | loud refusal (`def_table_forward.py`) |
+| Redefinition fixture | loud refusal (`def_table_rebind.py`) |
+| Structured global fixture | CPython/model output `5` |
+| Script corpus | 156 scripts: 141 matched, 15 loud-blocked, 0 failed |
+| Oracle | CPython 3.9.25 |
+
+DECIDED: retain per-name definition ordering and duplicate-name refusal until
+module definitions become runtime bindings; the current table representation
+must never answer a position-sensitive program silently.

@@ -3970,81 +3970,18 @@ truthy in the ordinary tier, so the model agrees with CPython by
 computing the same truthiness. `assert_lab.tuple_test` is the row that
 would catch a well-meaning special case.
 
-## Starred displays and assignment targets (`Starred` — BUILT 2026-08-13; assignment targets 2026-10-21)
+## Starred displays and assignment targets (`Starred`)
 
-`ast.Starred` is three constructs, not one (docs/backlog.md §the tail,
-construct 5). Displays are a lowering, assignment targets use the dedicated
-`Stmt.unpackAssign` statement, and positional call sites now use the same
-synthetic-marker lowering. The display
-lowering costs zero Lean constructors or proof arms; the assignment target
-statement has the ordinary ingestion, interpreter, walker, and observation
-arms for a statement that allocates its starred slice.
+The approved extractor keeps display nodes with starred elements as explicit
+loud boundaries: list/tuple/set displays containing `*` do not become calls of
+`list`, `tuple`, or `set`, and no synthetic display names or shadow census are
+used. This preserves CPython's display semantics at the source boundary until
+native `BUILD_*_UNPACK` cases are modeled. The former lowering was removed
+because it changed the node and could report the wrong receiver/error path.
 
-### The lowering, and why the obvious one is WRONG
-
-    (e1, *a, e2)  ⟶  (e1,) + tuple(a) + (e2,)
-    [e1, *a, e2]  ⟶  list((e1,) + tuple(a) + (e2,))
-    [*a]          ⟶  list(tuple(a))
-    {e1, *a, e2}  ⟶  set(list((e1,) + tuple(a) + (e2,)))
-
-`[*a, 3]` looks like `list(a) + [3]`. It is not. `list(x)` ALLOCATES a
-fresh heap object, so it returns a `.ref`, and `evalBinOp`'s `.ref` arm
-refuses concatenation of heap objects LOUDLY — the obvious lowering
-compiles to a refusal. `tuple(…)` is the vehicle instead: it is the
-IMMEDIATE-value constructor (str / tuple / namedtuple / `listV` / heap
-list snapshot / range / generator all yield a plain `.tuple`), and `+` on
-two immediate tuples is an existing `evalBinOp` arm. So `list(…)` appears
-ONLY on the outside, where a fresh heap list is exactly what CPython
-builds, and never as a concatenation operand.
-
-Consecutive non-starred elements are grouped into ONE tuple display, so
-`[1, *a, 9, *a]` costs three `+`, not five.
-
-**Evaluation order survives**, which is what a lowering most easily
-breaks: `+` associates left and `evalExpr`'s `binOp` arm binds left then
-right, so the operands run in source order — CPython's own.
-`harness/scripts/star_script.py` pins it through stdout
-(`[p(0), *a, p(9)]` prints `eval 0` before `eval 9`), and the same script
-pins that the display is a COPY (`b = [*a]; b.append(7)` leaves `a`
-alone).
-
-**What it does to the fragment**, measured at the definition and not
-inferred: `Expr.heapFree`'s call arm already excludes `list` (it
-allocates) and does NOT exclude `tuple` (it does not), so a lowered LIST
-display leaves the fragment exactly as a comprehension does, and a
-lowered TUPLE display stays inside it exactly as the plain `.tuple` node
-did. Both are pinned in `Examples/python/star_lab/spec.lean`.
-
-Set displays with starred elements use the same fresh-list expansion for
-their element sequence and pass that list to the existing `set(...)`
-constructor. The constructor retains its established hashability and
-value-deduplication checks. A set remains heap-backed and cannot cross the
-public value boundary, so observations such as `len({*a})` are the acceptance
-surface.
-
-### Inherited refusals — the reuse dividend
-
-A dict receiver (`[*d]`, CPython's key iteration) and a set receiver
-refuse through `tuple()`'s existing order doctrine; a generator receiver
-drains under the existing `moduleGenFree` guard. Nothing new decides
-anything.
-
-**One honest MISMATCH, recorded rather than glossed.** `[*5]` is
-`TypeError: Value after * must be an iterable, not int` in CPython, while
-the lowering raises `'int' object is not iterable` from `tuple()`. Same
-exception CLASS, different message. Both harnesses compare the class, so
-the row passes; the message divergence is real and is written down here.
-
-### Synthetic names and ordinary shadowing
-
-The lowering spells the display as calls of two unspellable synthetic names,
-`<star-tuple>` and `<star-list>`. CPython's display never performs a name
-lookup (`BUILD_LIST_UNPACK` is a bytecode), so source bindings named `list` or
-`tuple` cannot change the lowered calls. The names are admitted as builtin
-markers and dispatch directly to the existing tuple/list constructors in both
-interpreters. `Examples/python/star_shadow/star_shadow.py` pins a local
-`list` shadow and an unrelated sibling scope; both displays now match
-CPython.
+Flat starred assignment targets, flat starred `for` targets, and positional
+starred call arguments are separate landed slices below; their dedicated
+statement or unspellable call marker is not a display rewrite.
 
 ### Assignment targets are landed (2026-10-21)
 

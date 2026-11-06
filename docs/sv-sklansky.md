@@ -23,3 +23,32 @@ prove the guard is successful at every reached loop valuation before using the
 branch-specific expansion. Until that theorem is present, the source-shaped
 Sklansky design stays a loud refusal and the prototype is not part of the
 semantic path.
+
+## Proof-facing guard contract
+
+The eventual summary API should expose a guard as a retained branch record,
+not as a Boolean filter over sites. For an outer valuation `σ`, inner
+valuation `σ'`, and reached environment `E'`, the required premise is
+
+```text
+GuardTotal σ' E' c := ∃ v, evalGenGuard E' c = .ok v
+```
+
+The branch site then carries the corresponding implication: `v ≠ 0` selects
+the then-sites and `v = 0` selects the else-sites. The family expansion
+theorem must quantify `GuardTotal` at every reached pair of loop indices before
+rewriting `GenItem.expand2` to a selected branch. An evaluation error stays an
+`Unsupported` result; it is never represented by an empty site list.
+
+The same reached valuation is used for identity and obligations. A branch
+site's static key includes its branch label, while its `SiteId` keeps the
+complete outer and inner index path. Rank, range, coverage,
+driver-disjointness, and printed-equation obligations are all conditional on
+the same guard implication. This prevents a proof from establishing an
+equation for an unreached arm or identifying two arms merely because their
+arithmetic windows coincide.
+
+The implementation should add guard totality to the proof-facing automatic
+obligation bundle and thread it through `fam_expand2` and `Summary.sound`. It
+must not make `LSite.enabled` a filter whose error case returns `[]`; that
+shortcut was the unsound part of the parked prototype.

@@ -1,12 +1,10 @@
 """clock_lab — the TRACE-CLOCK battery (docs/memory-model.md §the trace
 clock).
 
-Time is an INPUT: the model threads a clock trace through the world and
-`time.time()` pops the next reading; an empty trace is the loud underrun
-refusal. The differential rows run under record-replay: the CPython side
-of each row binds this module's `time` name to a stub replaying (or
-recording) the same integer trace the model consumes — both sides see
-literally the same readings.
+Time is an INPUT: the model threads a clock trace through the world, but
+`time.time()` remains loud until the trace carries binary64 readings. The
+differential rows preserve CPython's float result on the oracle side while
+the model receives its current integer trace and refuses the value boundary.
 
 The battery's shape mirrors the shipped file's single in-tier clock
 consumer (`sunfish.py` line 328) at lab modulus: MiniSearcher checks the
@@ -15,7 +13,7 @@ post-#158 dead-clock regime) and raises `Stop` when a reading exceeds
 it — the raise-through-resume-into-handler path of the exceptions tier,
 now reachable through the clock.
 
-Rows: happy pops (`read_clock`, `read_twice` — subtraction on readings),
+Rows: clock-value refusals (`read_clock`, `read_twice`),
 the dead-clock run (`dead_clock`: readings consumed, never binding),
 the armed run (`armed`: Stop mid-loop at the exact reading CPython
 stops), the underrun refusal (short trace), and the admission's edges

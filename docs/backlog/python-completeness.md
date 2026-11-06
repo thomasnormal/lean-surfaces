@@ -9822,3 +9822,19 @@ an admitted trailing/unobserved delete.
 DECIDED: retain a loud refusal for every module `def`/`class`/namedtuple/alias
 deletion until definitions become runtime bindings; the function-body census
 is no longer a soundness gate for definition deletion.
+
+## 2026-11-06-pycomplete-385 — recheck the clock-reading boundary
+
+The clock arm already refuses zero-argument `time.time()` in both interpreters
+because `World.clock : List Int` cannot represent CPython's binary64 result.
+The clock rows and `clock_lab` acceptance notes already expect that loud
+boundary. The remaining audit residue was in `harness/diff_test.py`: its
+record/replay stub returned integer microseconds to CPython, changing the
+program under test and hiding the type mismatch. The oracle now receives a
+binary64 `time.time()` float, while the parallel integer trace is retained only
+for the model's explicit refusal boundary; fixed trace rows convert their
+readings to floats on the oracle side.
+
+DECIDED: keep clock comparisons against the source program's real float result;
+do not reinterpret integer trace readings as Python values until a binary64
+trace representation is implemented.

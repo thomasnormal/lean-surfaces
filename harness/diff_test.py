@@ -34,10 +34,12 @@ side reports ``{"status": "unsupported"}`` (CPython's answer is shown for
 information only).
 
 A case may carry ``"clock"`` (docs/memory-model.md §the trace clock):
-either a list of ints — BOTH sides replay it — or ``"record"`` — the
-CPython side's stub reads the real clock as integer microseconds,
-records, and the model replays the recorded list. The stub is bound to
-the module's ``time`` name per row and restored; a CPython-side underrun
+either a list of numeric readings — CPython replays them as binary64 floats,
+while the model receives the integer trace and currently refuses the value
+boundary — or ``"record"`` — the CPython side's stub reads the real
+`time.time()` float, records it, and the model receives the corresponding
+integer trace. The stub is bound to the module's ``time`` name per row and
+restored; a CPython-side underrun
 raises ``ClockTraceUnderrun`` (distinctively named — never a match).
 Rows without ``"clock"`` run with the empty trace, exactly as before.
 
@@ -117,22 +119,22 @@ class _ReplayClock(object):
     def time(self):
         if not self._readings:
             raise ClockTraceUnderrun()
-        return self._readings.pop(0)
+        return float(self._readings.pop(0))
 
 
 class _RecordingClock(object):
     """A stub bound to the module's `time` name: `.time()` reads the REAL
-    clock as INTEGER MICROSECONDS (`time.time_ns() // 1000` — an int, the
-    recorded representation decision: the oracle run CONSUMES exactly what
-    it records, so the model's replay sees literally the same integers)."""
+    clock as a binary64 float and records a parallel integer trace for the
+    model. The oracle therefore runs the source with the real float value
+    while the model's current trace representation remains `List Int`."""
 
     def __init__(self):
         self.readings = []
 
     def time(self):
         import time as _time
-        r = _time.time_ns() // 1000
-        self.readings.append(r)
+        r = _time.time()
+        self.readings.append(int(r))
         return r
 
 
@@ -226,11 +228,10 @@ def load_module(path):
 def run_cpython_clock(mod, fname, args, clock_spec):
     """The CPython half of record-replay (docs/memory-model.md §the trace
     clock): bind the module's `time` name to a stub for the duration of
-    ONE row, run, and return (result, trace) where `trace` is the exact
-    integer trace the MODEL must replay. `clock_spec` is either a list of
-    ints (both sides replay it) or "record" (the stub reads the real
-    clock as integer microseconds and records — the oracle CONSUMES what
-    it records, so both sides see the same integers)."""
+    ONE row, run, and return (result, trace). `clock_spec` is either a list
+    of numeric readings (CPython receives floats; the model receives the
+    integer trace) or "record" (the stub reads the real CPython float and
+    records an integer trace for the model)."""
     if clock_spec == "record":
         stub = _RecordingClock()
     elif isinstance(clock_spec, list):

@@ -2677,6 +2677,23 @@ def resolvedConstructorStringTranslationWitnessOk : Bool :=
   admitResolvedCXXConstructExpression resolvedConstructorStringTranslation [1] matches
     .ok {value := "0x3b"}
 
+private def resolvedConstructorStringDuplicateTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x74"), ("kind", .string "CXXConstructorDecl"),
+        ("name", .string "S"), ("inner", .array [])],
+      .object [("id", .string "0x74"), ("kind", .string "CXXConstructorDecl"),
+        ("name", .string "S"), ("inner", .array [])],
+      .object [("id", .string "0x75"), ("kind", .string "CXXConstructExpr"),
+        ("ctor", .string "0x74"),
+        ("ctorType", .object [("qualType", .string "void (int)")]),
+        ("inner", .array [])]])]}
+
+def resolvedConstructorStringDuplicateRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXConstructExpression resolvedConstructorStringDuplicateTranslation [2]
+  pure ()
+
 private def resolvedConstructorStringWrongKindTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -3041,6 +3058,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedConstructorKindMismatchRefusal matches .error _
 #guard resolvedConstructorMissingKindRefusal matches .error _
 #guard resolvedConstructorStringTranslationWitnessOk
+#guard resolvedConstructorStringDuplicateRefusal matches .error _
 #guard resolvedConstructorStringWrongKindRefusal matches .error _
 #guard resolvedConstructorTranslationRefusal matches .error _
 #guard resolvedConstructorMalformedHandleRefusal matches .error _

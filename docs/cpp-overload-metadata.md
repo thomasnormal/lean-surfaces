@@ -45,6 +45,9 @@ A string-valued constructor handle resolving to a retained non-constructor
 declaration is also refused; string handles receive the same declaration-kind
 check as structured handles.
 
+A string constructor handle occurring in multiple retained declaration rows is
+also refused; string handles do not bypass the ambiguity check.
+
 A `ctor` handle whose declaration row has a non-constructor kind is also a
 recorded refusal; constructor identity does not trust the handle alone.
 

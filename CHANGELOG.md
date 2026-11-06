@@ -47,6 +47,9 @@
 - Added a recorded refusal for string constructor handles resolving to a
   retained non-constructor declaration.
 
+- Added a recorded refusal for string constructor handles duplicated in
+  declaration evidence.
+
 - Added a recorded refusal for string operator handles resolving to a retained
   non-callable declaration.
 

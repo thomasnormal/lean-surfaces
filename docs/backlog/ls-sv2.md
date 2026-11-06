@@ -1864,3 +1864,16 @@ this direct projected contract.
 **DECIDED:** transport only the state conjunct through the shared
 `toPacketMachine_stateAfter` equality; the trace conjunct and retirement order
 remain exactly those of the existing contract.
+
+## 2026-11-06-ls-sv2-103 — compose projected packet refinement contract
+
+Added `normalizeRvfiPacketRefines_packet_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now compose into one complete contract stated over the generic packet-machine
+state: concatenated retirements equal the ISA trace over concatenated packet
+inputs, and the final packet state is related with the exact combined order
+increment.  The PicoRV32 witness pins this projected append contract.
+
+**DECIDED:** compose through the existing complete packet contract and the
+shared state-after projection; no packet contents, state, or retirement order
+is reconstructed.

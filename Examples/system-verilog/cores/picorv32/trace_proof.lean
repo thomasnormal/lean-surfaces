@@ -481,6 +481,30 @@ theorem pinned_packet_refines_append
     packetSecondCycles hrob hrel pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_refines_packet_append
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (nontrapFirstExpected ++ nontrapSecondExpected =
+      trace rvMachine rvMachine.init
+        (packetInputs pinnedPacketMachine.toPacketMachine
+          pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles))) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles))
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles)))
+        finalOrder ∧
+      finalOrder = 0 +
+        (nontrapFirstExpected ++ nontrapSecondExpected).length) := by
+  exact normalizeRvfiPacketRefines_packet_append pinnedPacketMachine rvMachine
+    rel admit pinnedPacketMachine.init rvMachine.init 0 packetFirstCycles
+    packetSecondCycles hrob hrel pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
+
 theorem pinned_packet_trace_refines_isa
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -1428,6 +1452,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_refines
 #print axioms pinned_packet_refines_packet
 #print axioms pinned_packet_refines_append
+#print axioms pinned_packet_refines_packet_append
 #print axioms pinned_packet_trace_refines_isa
 #print axioms pinned_packet_trace_refines_isa_append
 #print axioms pinned_packet_state_refines

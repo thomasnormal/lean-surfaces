@@ -1700,3 +1700,15 @@ its two singleton packet windows.
 **DECIDED:** compose through the finite window-chain certificate and its
 packet-facing state projection; no tag stream, input order, or final state is
 inferred.
+
+## 2026-11-06-ls-sv2-90 — expose the complete packet-facing chain contract
+
+Added `normalizeRvfiPacketWindows_refines` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now exposes one packet-facing contract containing normalized retirement
+equality with the ISA trace over packet inputs, the final related state, and
+the exact retirement-order increment.  The PicoRV32 witness pins this
+consumer-facing contract over its two certified packet windows.
+
+**DECIDED:** combine the independently reusable packet-facing trace and
+state/order theorems; no tag stream, input order, or final state is inferred.

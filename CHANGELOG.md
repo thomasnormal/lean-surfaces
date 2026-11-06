@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
+
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.
 
 - Completed the payload-blind proof walker for structured `import` and class-definition statement nodes; the umbrella Lean artifact now builds through the Python proof layer.

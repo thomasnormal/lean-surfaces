@@ -899,6 +899,13 @@ def PDesign.instantiateGD2 (d : PDesign) (args : List Int) : Design2 :=
   | .timeout => .errorDesign d.name "generate expansion fuel exhausted"
   | .unsupported msg => .errorDesign d.name msg
 
+/-- The semantic family with the source-preserving `always_comb` alias guard
+    applied at this concrete parameter point.  The unguarded twin remains
+    available for the structural comb proofs; the executable `name.sem`
+    route uses this wrapper so an alias refusal is loud at every point. -/
+def PDesign.instantiateGDAlias2 (d : PDesign) (args : List Int) : Design2 :=
+  (d.instantiateGD2 args).aliasGuard
+
 /-! ## `instantiateH` -/
 
 /-- `Gen2.lean`'s `PDesign.paramEnv2` from an initial environment `envI`
@@ -998,6 +1005,12 @@ def PDesign.instantiateHD2 (d : PDesign) (lib : List PDesign) (args : List Int) 
   | .ok m => m
   | .timeout => .errorDesign d.name "generate expansion fuel exhausted"
   | .unsupported msg => .errorDesign d.name msg
+
+/-- The hierarchical semantic family with the same alias guard as the flat
+    `name.sem` route, after flattening has put all continuous flows in one
+    `Design2`. -/
+def PDesign.instantiateHDAlias2 (d : PDesign) (lib : List PDesign) (args : List Int) : Design2 :=
+  (d.instantiateHD2 lib args).aliasGuard
 
 /-- `PDesign.int32Agrees` for a hierarchical design (the `int32` mode
 reaches every level of the hierarchy). -/

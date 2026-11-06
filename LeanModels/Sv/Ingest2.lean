@@ -1275,17 +1275,18 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
         s!"Module library of the hierarchical design `{envl.top}` (via `load_design_sv2` from `{pathStr}`): the definitions it instantiates, transitively — {lib.map (·.name)}. Each a literal `LeanModels.Sv.PDesign` elaborated alone at its own defaults."
     -- The semantic-tier twin: `name.sem : Nat^n → Design2` (phase 2 —
     -- selects, case, async reset; runs under `run2`). A hierarchical
-    -- envelope flattens through `PDesign.instantiateHD2` (Hier2.lean); an
-    -- instance-free top instantiates through `PDesign.instantiateGD2`,
-    -- `instantiateD2` under the one-driver rule at every parameter point
+    -- envelope flattens through `PDesign.instantiateHDAlias2` (Hier2.lean); an
+    -- instance-free top instantiates through `PDesign.instantiateGDAlias2`,
+    -- `instantiateD2` under the one-driver and always_comb alias guards at
+    -- every parameter point
     -- (2026-10-28, WP2 — `Hier2.lean`, "Drivers").
     let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
     let semBody :=
       if flatTop then
-        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGD2)
+        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2)
           (Lean.mkConst pdName) argsList
       else
-        Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateHD2)
+        Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateHDAlias2)
           (Lean.mkConst pdName) (Lean.mkConst libName) argsList
     let semValue := paramNames.foldr
       (fun p acc => Lean.mkLambda (Name.mkSimple p) .default natTy acc) semBody
@@ -1302,9 +1303,9 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     enableRealizationsForConst semName
     addDocStringCore semName
       (if flatTop then
-        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateGD2 {pdName}` — `instantiateD2` under the one-driver rule, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
+        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateGDAlias2 {pdName}` — `instantiateD2` plus the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
       else
-        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateHD2 {pdName} {libName}` — the module hierarchy flattened, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2`.")
+        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateHDAlias2 {pdName} {libName}` — the module hierarchy flattened with the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2`.")
   liftTermElabM do
     Term.addTermInfo' name (Lean.mkConst funName) (isBinder := true)
 

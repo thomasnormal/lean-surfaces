@@ -1621,6 +1621,30 @@ theorem normalizeRvfiPacketState_refines
   exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start
     hrob state isaState hrel cycles retirements hobs
 
+/- The state/order-only packet-facing projection can state its core state
+   directly through the generic packet-machine view. -/
+theorem normalizeRvfiPacketState_refines_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state cycles)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+      finalOrder = start + retirements.length := by
+  rcases normalizeRvfiPacketState_refines machine isa rel admit state isaState
+      start cycles retirements hrob hrel hobs with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /- The state/order-only packet-facing projection composes across adjacent
    windows with the second window's carried state and retirement boundary. -/
 theorem normalizeRvfiPacketState_refines_append
@@ -1647,6 +1671,37 @@ theorem normalizeRvfiPacketState_refines_append
       finalOrder = start + (firstRetirements ++ secondRetirements).length := by
   exact rvfiPacketStateAfter_refines_normalized_append machine isa rel admit
     start hrob state isaState hrel first second hfirst hsecond
+
+/- The packet-machine state projection also composes across adjacent
+   normalized windows without exposing the internal RVFI state view. -/
+theorem normalizeRvfiPacketState_refines_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+        finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length := by
+  rcases normalizeRvfiPacketState_refines_append machine isa rel admit state
+      isaState start first second hrob hrel hfirst hsecond with
+    ⟨finalOrder, hfinal, horder⟩
+  refine ⟨finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
 
 /- A successful packet normalization fixes the packet input cardinality to
    the number of decoded retirements. -/
@@ -1754,6 +1809,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_append

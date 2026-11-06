@@ -1839,3 +1839,16 @@ packet windows.
 
 **DECIDED:** expose the definitional state-threading equality once and reuse
 it; no packet contents or retirement order are reconstructed at the bridge.
+
+## 2026-11-06-ls-sv2-101 — expose packet-projected state refinement
+
+Added `normalizeRvfiPacketState_refines_packet` and
+`normalizeRvfiPacketState_refines_packet_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The normalized state/order contract can
+now be consumed directly through `packetStateAfter machine.toPacketMachine`,
+for one window or two adjacent windows, while retaining the exact retirement
+order increment.  The PicoRV32 witness pins both projections.
+
+**DECIDED:** derive the packet-state statements only through the reusable
+state-after bridge; no second state relation or packet reconstruction is
+introduced.

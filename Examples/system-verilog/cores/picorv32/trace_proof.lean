@@ -526,6 +526,43 @@ theorem pinned_packet_state_refines_append
     packetSecondCycles hrob hrel pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_packet_state_refines
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    ∃ finalOrder,
+      rel (packetStateAfter pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init packetCycleInputs)
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init packetCycleInputs)) finalOrder ∧
+      finalOrder = 0 + nontrapExpected.length := by
+  exact normalizeRvfiPacketState_refines_packet pinnedPacketMachine rvMachine
+    rel admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
+    nontrapExpected hrob hrel pinned_packet_observations_normalize
+
+theorem pinned_packet_packet_state_refines_append
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    ∃ finalOrder,
+      rel (packetStateAfter pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles))
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles)))
+        finalOrder ∧
+      finalOrder = 0 +
+        (nontrapFirstExpected ++ nontrapSecondExpected).length := by
+  exact normalizeRvfiPacketState_refines_packet_append pinnedPacketMachine
+    rvMachine rel admit pinnedPacketMachine.init rvMachine.init 0
+    packetFirstCycles packetSecondCycles hrob hrel
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
 theorem pinned_packet_inputs_length :
     (packetInputs pinnedPacketMachine.toPacketMachine
       pinnedPacketMachine.init packetCycleInputs).length =
@@ -1373,6 +1410,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_trace_refines_isa_append
 #print axioms pinned_packet_state_refines
 #print axioms pinned_packet_state_refines_append
+#print axioms pinned_packet_packet_state_refines
+#print axioms pinned_packet_packet_state_refines_append
 #print axioms pinned_packet_inputs_length
 #print axioms pinned_packet_inputs_length_append
 #print axioms pinned_cycle_trace_refines_isa

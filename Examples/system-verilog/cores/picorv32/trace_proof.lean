@@ -436,6 +436,27 @@ theorem pinned_packet_refines
     pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs nontrapExpected
     hrob hrel pinned_packet_observations_normalize
 
+theorem pinned_packet_refines_packet
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (nontrapExpected =
+      trace rvMachine rvMachine.init
+        (packetInputs pinnedPacketMachine.toPacketMachine
+          pinnedPacketMachine.init packetCycleInputs)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init packetCycleInputs)
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init packetCycleInputs)) finalOrder ∧
+      finalOrder = 0 + nontrapExpected.length) := by
+  exact normalizeRvfiPacketRefines_packet pinnedPacketMachine rvMachine rel
+    admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
+    nontrapExpected hrob hrel pinned_packet_observations_normalize
+
 theorem pinned_packet_refines_append
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -1405,6 +1426,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_retirements
 #print axioms pinned_packet_rob_tags_inputs
 #print axioms pinned_packet_refines
+#print axioms pinned_packet_refines_packet
 #print axioms pinned_packet_refines_append
 #print axioms pinned_packet_trace_refines_isa
 #print axioms pinned_packet_trace_refines_isa_append

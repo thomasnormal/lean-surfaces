@@ -3540,6 +3540,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-enum-getter-receiver-refusal",
+    "kind": "expression",
+    "corpus": "rung-7 refusal",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "enumGetterReceiverRefusal",
+    "cpp_source": "enum Error { ok = 0, failed = 7 }; struct Owner { Error value = failed; Error read() const { return value; } }; struct Other { Error value = failed; }; bool callable_witness() { Other other; return true; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 7
+  },
+  {
     "id": "expression.member-getter-lvalue-cast-call",
     "kind": "expression",
     "corpus": "rung-7 witness",

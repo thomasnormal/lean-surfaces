@@ -426,6 +426,8 @@ result spelling is rejected before the enum value is read.
 The positive getter-call row composes the matching enum result, receiver, and
 stored field value, while retaining wrong-receiver rejection as a separate
 control.
+That wrong-receiver control is now a recorded differential refusal, with a
+compilable native witness and no fallback to a name-only receiver match.
 
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is

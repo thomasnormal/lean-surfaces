@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for enum getter calls bound to the wrong receiver
+  object, preserving the explicit receiver-handle boundary.
+
 - Added a positive differential witness for enum getter calls, composing the
   matching result and receiver identity with the typed stored field read.
 

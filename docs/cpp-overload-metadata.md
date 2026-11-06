@@ -186,6 +186,9 @@ row.
 An overloaded-operator call whose structured `referencedDecl.id` is numeric is
 also refused; operator identity remains the artifact's string-typed handle.
 
+A structured overloaded-operator `referencedDecl` whose value is a scalar is
+also refused; operator identity is never coerced from a number or Boolean.
+
 A structured operator handle with malformed string `id` is also refused; the
 artifact-local handle parser validates object and string forms uniformly.
 

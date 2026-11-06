@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for scalar overloaded-operator declaration
+  references; frontend identity is never coerced from scalar data.
+
 - Added a positive constructor metadata witness for artifact-local string
   handles, alongside the existing structured-handle witness.
 

@@ -30,6 +30,11 @@
   reaches the interpreter as a call expression, while unsupported cleanup and
   handler forms remain loud.
 
+- Removed the unused starred-display lowering and its shadow census. Starred
+  displays and set/list/dict comprehensions remain explicit loud AST boundaries;
+  landed starred assignment, loop-target, and positional-call slices stay
+  separate.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

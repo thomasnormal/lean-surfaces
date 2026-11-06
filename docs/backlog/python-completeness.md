@@ -9983,3 +9983,24 @@ the existing direct `alias_rebound.py` row continues to match and still prints
 DECIDED: retain copied static alias dispatch only while no later live binding
 can shadow the name; function-valued alias semantics remain a later runtime
 value extension.
+
+
+## 2026-11-06-pycomplete-394 — remove stale display lowering machinery
+
+The audited display and comprehension rewrites are already absent from the
+current extractor path: `Set`, `SetComp`, `DictComp`, `ListComp`, and starred
+load displays emit explicit `Unsupported` nodes. Starred assignment targets,
+starred `for` targets, and positional starred calls remain their separate
+landed slices with dedicated unpack or `<star-arg>` representations. Removed
+the unused `lower_starred_display` implementation and its obsolete builtin
+shadow census; a list-comprehension shadow can no longer be hidden behind a
+synthesized `list` call. Corrected the memory-model section that still claimed
+starred displays were live through calls.
+
+The extractor suite remains green, and the existing starred/list-comprehension
+refusal rows continue to be loud. No interpreter change is needed because the
+source nodes already reach the explicit refusal boundaries.
+
+DECIDED: retain display and comprehension syntax as source-level loud
+boundaries until native display/comprehension cases are modeled; keep the
+landed assignment, loop-target, and positional-call slices separate.

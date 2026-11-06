@@ -96,15 +96,6 @@ ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
-# A LOWERING THAT SYNTHESIZES A NAME OWES A CENSUS — the rule the starred
-# lane's implementation extracted. It spells source that performs NO name
-# lookup as a call of a name
-# the source never wrote, and the interpreter reaches its builtins only
-# AFTER every shadow-resolving arm; so a lexical scope that binds the name
-# would run the lowering through the shadow and be SILENTLY WRONG. The
-# module flag handles module bindings; function conversion temporarily adds
-# each function's own scope to the same flag.
-_MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
 _MODULE_ANNOTATION_TABLE = None
 _MODULE_SAFE_ANNOTATIONS = set()
@@ -115,7 +106,6 @@ _DEAD_IMPORT_NODES = set()
 # fallback keeps direct unit-test calls deterministic as well.
 _SYNTHETIC_NAMES = set()
 
-DISPLAY_LOWERING_NAMES = ("list", "tuple", "set", "dict")
 MODULE_SAFE_ANNOTATION_NAMES = (
     "bool", "bytes", "complex", "dict", "float", "int", "list",
     "object", "set", "str", "tuple", "type")
@@ -190,9 +180,8 @@ def binds_any_name_scope(scope, names):
     """Whether one lexical scope binds one of ``names``.
 
     Unlike ``binds_any_name`` this skips nested function/class bodies.  It is
-    used by starred-display lowering so a local shadow refuses only the
-    function that can observe it; an unrelated function in the same module
-    remains eligible.
+    used by scope-sensitive extractor admissions that need to know whether
+    a local binding is visible; nested function/class bodies are skipped.
     """
     return bool(_scope_binding_names(scope) & set(names))
 
@@ -746,8 +735,6 @@ def convert_expr(node):
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
         if isinstance(node, ast.ListComp):
             return unsupported(node, "ListComp")
-        if isinstance(node, ast.ListComp) and _MODULE_SHADOWS_DISPLAY:
-            return unsupported(node, "ListComp:shadowed")
         # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
         # compiles both into an implicit function taking the already-
         # evaluated outer iterator, differing only in what the function
@@ -831,77 +818,6 @@ def _convert_comprehension(node, g, kind=None, elt=None):
         "ifs": ifs_out,
         "walrus": walrus,
     }
-
-
-def lower_starred_display(node, outer=None):
-    """Lower a starred DISPLAY (docs/memory-model.md §starred displays):
-
-        (e1, *a, e2)  ->  (e1,) + tuple(a) + (e2,)
-        [e1, *a, e2]  ->  list((e1,) + tuple(a) + (e2,))
-        [*a]          ->  list(tuple(a))
-        {*a, e}        ->  set(list(tuple(a) + (e,)))
-
-    Zero new node kinds, so nothing downstream moves. Set displays use the
-    same fresh-list expansion as list displays before the existing `set`
-    constructor deduplicates by the dict-key rules. The obvious lowering
-    `list(a) + [3]` is WRONG: `list(...)` allocates a heap object, and
-    concatenation of heap objects refuses loudly — so `list(...)` appears
-    only on the OUTSIDE, where a fresh list is exactly what CPython
-    produces, and `tuple(...)`, the immediate-value constructor, is what
-    the concatenation ever sees. Evaluation order survives: `+` associates
-    left and the binOp arm binds left before right, so the pieces run in
-    source order, CPython's own.
-
-    Consecutive non-starred elements are grouped into ONE tuple display, so
-    `[1, *a, 9, *a]` costs three `+`, not five.
-
-    Inherited refusals are the reuse dividend and are deliberate: a dict or
-    set receiver refuses through `tuple()`'s order doctrine, a generator
-    receiver drains under the existing `moduleGenFree` guard. One honest
-    mismatch, recorded rather than glossed: `[*5]` is CPython's
-    `Value after * must be an iterable, not int` and the lowering raises
-    `'int' object is not iterable` from `tuple()` — same exception CLASS,
-    different message."""
-    parts = []
-    group = []  # consecutive non-starred elements, flushed as one tuple
-
-    def flush():
-        if group:
-            parts.append({
-                "kind": "Tuple",
-                "span": span(node),
-                "elts": [convert_expr(e) for e in group],
-            })
-            del group[:]
-
-    for e in node.elts:
-        if isinstance(e, ast.Starred):
-            flush()
-            parts.append({
-                "kind": "Call",
-                "span": span(e),
-                "func": {"kind": "Name", "span": span(e), "id": "<star-tuple>"},
-                "args": [convert_expr(e.value)],
-                "keywords": [],
-                "call_unsupported": None,
-            })
-        else:
-            group.append(e)
-    flush()
-    out = parts[0]  # non-empty: the caller found a starred element
-    for p in parts[1:]:
-        out = {"kind": "BinOp", "span": span(node),
-               "left": out, "op": "Add", "right": p}
-    if isinstance(node, ast.List) or outer == "list":
-        out = {
-            "kind": "Call",
-            "span": span(node),
-            "func": {"kind": "Name", "span": span(node), "id": "<star-list>"},
-            "args": [out],
-            "keywords": [],
-            "call_unsupported": None,
-        }
-    return out
 
 
 def convert_param(p, default=None):
@@ -1859,12 +1775,6 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         if not (module_scope and node.name in _DEAD_ASYNC_DEFS):
             return unsupported(node, "AsyncFunctionDef")
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        global _MODULE_SHADOWS_DISPLAY
-        module_shadows_display = _MODULE_SHADOWS_DISPLAY
-        _MODULE_SHADOWS_DISPLAY = (
-            module_shadows_display
-            or binds_any_name_scope(node, DISPLAY_LOWERING_NAMES)
-        )
         a = node.args
         plain = list(a.posonlyargs) + list(a.args)
         reasons = []
@@ -1893,12 +1803,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             reasons.append("**kwargs")
         if node.decorator_list:
             reasons.append("decorators")
-        try:
-            body = _hoist_ann_no_value(
-                convert_stmt_list(node.body, enclosing=node,
-                                  func_scope=True))
-        finally:
-            _MODULE_SHADOWS_DISPLAY = module_shadows_display
+        body = _hoist_ann_no_value(
+            convert_stmt_list(node.body, enclosing=node,
+                              func_scope=True))
         out = {
             "kind": "FunctionDef",
             "span": span(node),
@@ -2816,7 +2723,7 @@ def process_file(source_path, companion_dir, out=None):
     # Module-scope shadow censuses are decided once here. Function conversion
     # temporarily extends the display flag with that function's own lexical
     # bindings before converting its body.
-    global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
+    global _MODULE_ANNOTATIONS_BOUND
     global _MODULE_ANNOTATION_TABLE
     global _MODULE_SAFE_ANNOTATIONS
     global _SYNTHETIC_NAMES, _DEAD_ASYNC_DEFS, _DEAD_IMPORT_NODES
@@ -2912,7 +2819,6 @@ def process_file(source_path, companion_dir, out=None):
             _SYNTHETIC_NAMES.add(item.name)
         elif isinstance(item, ast.arg):
             _SYNTHETIC_NAMES.add(item.arg)
-    _MODULE_SHADOWS_DISPLAY = binds_any_name_scope(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
     _MODULE_ANNOTATION_TABLE = annotation_table_alias(tree)
     _MODULE_SAFE_ANNOTATIONS = {

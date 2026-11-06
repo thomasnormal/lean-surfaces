@@ -2020,3 +2020,14 @@ packet windows.
 
 **DECIDED:** transport the generic `robTags_append` law through the exact
 RVFI-to-ROB state bridge; no tag order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-116 — expose packet ROB tag payload threading
+
+Added `RvfiPacketMachine.toRobMachine_tags_retirements_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Erasing `TaggedCommit` metadata from the
+concatenated ROB tag stream now exposes the two packet traces with the first
+window's retained state threaded into the second.  The PicoRV32 witness pins
+this payload projection over its two packet windows.
+
+**DECIDED:** reuse the existing ROB tag erasure and packet trace bridges; no
+retirement payload or completion order is reconstructed.

@@ -2552,3 +2552,17 @@ witness pins both forms.
 **DECIDED:** take `List.length` of the exact packet-tag retirement projection
 and bridge it through the normalized packet trace equality; retirement order,
 packet boundaries, and payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-160 — certify packet-window tag-retirement cardinality against packet trace
+
+Added `normalizeRvfiPacketWindows_tags_retirements_length_packetTrace` and
+its append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies the exact cardinality of its flattened
+packet-tag retirement projection against the packet machine's retirement
+trace, and adjacent chains compose the bridge while retaining the carried
+state and order boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only after the window certificate supplies carried state
+and normalized retirement boundaries, then bridge the exact tag-retirement
+projection through the packet trace; packet boundaries, retirement order, and
+payloads are not reconstructed.

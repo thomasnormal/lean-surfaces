@@ -901,6 +901,21 @@ theorem normalizeRvfiPacketRobTags_inputs_robInputs_append {State : Type}
           (rvfiPacketStateAfter machine state first) second :=
       RvfiPacketMachine.toRobMachine_inputs_append machine state first second
 
+/- A successful normalized packet capture fixes the generic ROB input
+   cardinality to the decoded retirement count. -/
+theorem normalizeRvfiPacketRobInputs_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robInputs machine.toRobMachine state cycles).length = retirements.length := by
+  have hlen := normalizeRvfiPacketRobTags_length machine state cycles h
+  calc
+    (robInputs machine.toRobMachine state cycles).length =
+        (robTags machine.toRobMachine state cycles).length := by
+      exact (robTags_length_eq_robInputs_length machine.toRobMachine state cycles).symm
+    _ = retirements.length := hlen
+
 /- Normalized packet source-input projections compose across adjacent windows
    with the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
@@ -2384,6 +2399,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append

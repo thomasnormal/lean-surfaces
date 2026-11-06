@@ -2194,3 +2194,14 @@ this normalized append bridge.
 
 **DECIDED:** compose the normalized capture theorem with the exact generic ROB
 input append law; no input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-131 — certify normalized packet ROB input cardinality
+
+Added `normalizeRvfiPacketRobInputs_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now proves that the generic ROB machine's retained input stream has exactly
+the decoded retirement cardinality.  The PicoRV32 witness pins this count
+over the complete packet capture.
+
+**DECIDED:** transport the established normalized packet-input cardinality
+through the exact packet-to-ROB input projection; no input order is inferred.

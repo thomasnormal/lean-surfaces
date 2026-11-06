@@ -1400,3 +1400,16 @@ packet windows.
 **DECIDED:** reuse the normalized trace append certificate as the sole window
 composition boundary; tag order and ISA equality remain jointly observable
 without introducing a completion-order selection.
+
+## 2026-11-06-ls-sv2-66 — expose the complete packet-window refinement contract
+
+Added `normalizeRvfiPacketRobTags_refines_state_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The two-window certificate now exposes
+one conjunction containing global tagged ROB order, tagged retirement equality
+with the ISA trace, the final related packet/ISA state, and the exact carried
+order increment.  The PicoRV32 witness pins this complete result over its
+measured first and second packet windows.
+
+**DECIDED:** keep the tag/ISA stream equality and state/order transport as
+separate proof components internally, then expose their conjunction as the
+consumer-facing packet-window contract.

@@ -731,6 +731,42 @@ theorem normalizeRvfiPacketRobTags_refines_append
     start (first ++ second) (firstRetirements ++ secondRetirements)
     hrob hrel hcombined
 
+/- The complete two-window packet contract combines the tagged ROB/ISA
+   equality with the state-threaded relation and its exact order increment. -/
+theorem normalizeRvfiPacketRobTags_refines_state_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state (first ++ second)) ∧
+      (robTags machine.toRobMachine state (first ++ second)).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state (first ++ second))) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+          finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length) := by
+  constructor
+  · exact normalizeRvfiPacketRobTags_refines_append machine isa rel admit
+      state isaState start first second hrob hrel hfirst hsecond
+  · exact rvfiPacketStateAfter_refines_normalized_append machine isa rel admit
+      start hrob state isaState hrel first second hfirst hsecond
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -836,5 +872,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

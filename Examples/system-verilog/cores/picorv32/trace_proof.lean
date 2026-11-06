@@ -447,6 +447,35 @@ theorem pinned_packet_rob_tags_refines_isa_windows_of
     packetSecondCycles hrob hrel pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_rob_tags_refines_state_windows
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (InOrderTags 0
+        (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+          (packetFirstCycles ++ packetSecondCycles)) ∧
+      (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).map
+          TaggedCommit.retirement =
+        trace rvMachine rvMachine.init
+          (robInputs pinnedPacketMachine.toRobMachine
+            pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles))) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles))
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles)))
+          finalOrder ∧
+      finalOrder = 0 +
+        (nontrapFirstExpected ++ nontrapSecondExpected).length) := by
+  exact normalizeRvfiPacketRobTags_refines_state_append pinnedPacketMachine
+    rvMachine rel admit pinnedPacketMachine.init rvMachine.init 0
+    packetFirstCycles packetSecondCycles hrob hrel
+    pinned_packet_first_window_normalize pinned_packet_second_window_normalize
+
 theorem pinned_packet_state_after_bridge :
     rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
         (packetFirstCycles ++ packetSecondCycles) =
@@ -702,6 +731,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_state_after_refines_normalized
 #print axioms pinned_packet_state_after_refines_normalized_windows
 #print axioms pinned_packet_rob_tags_refines_isa_windows_of
+#print axioms pinned_packet_rob_tags_refines_state_windows
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

@@ -3704,6 +3704,42 @@ theorem normalizeRvfiPacketInputs_length_append {State : Type}
     (start + firstRetirements.length) second secondRetirements hsecond]
   simp only [List.length_append]
 
+/- The normalized packet input stream has the packet machine's exact
+   retirement-trace cardinality. -/
+theorem normalizeRvfiPacketInputs_length_packetTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (packetInputs machine.toPacketMachine state cycles).length =
+      (packetTrace machine.toPacketMachine state cycles).length := by
+  calc
+    (packetInputs machine.toPacketMachine state cycles).length = retirements.length :=
+      normalizeRvfiPacketInputs_length machine state start cycles retirements h
+    _ = (packetTrace machine.toPacketMachine state cycles).length :=
+      (normalizeRvfiPacketTrace_length machine state cycles h).symm
+
+/- The normalized packet input cardinality bridge composes across adjacent
+   captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketInputs_length_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (packetInputs machine.toPacketMachine state (first ++ second)).length =
+      (packetTrace machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketInputs_length_packetTrace machine state
+    (first ++ second) hcombined
+
 /- A certified packet-window chain fixes the packet input cardinality to the
    flattened normalized retirement stream. -/
 theorem normalizeRvfiPacketWindows_inputs_length {State : Type}
@@ -3901,5 +3937,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_inputs_length_append

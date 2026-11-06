@@ -2699,3 +2699,17 @@ both forms.
 after the window certificate supplies its carried state, and compose it across
 chains; packet boundaries, source-input order, and payloads are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-171 — certify normalized packet input cardinality against packet trace
+
+Added `normalizeRvfiPacketInputs_length_packetTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the packet machine's architectural input stream has exactly its
+retirement-trace cardinality, and adjacent captures compose the same bridge
+while retaining the first capture's state boundary.  The PicoRV32 witness
+pins both forms.
+
+**DECIDED:** bridge the exact normalized packet-input cardinality and packet
+trace cardinality through the shared decoded-retirement count; retirement
+order, packet boundaries, source-input order, and payloads are not
+reconstructed.

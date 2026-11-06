@@ -1257,6 +1257,14 @@ def enumProfileEvidenceWitness : Bool :=
 
 #guard enumProfileEvidenceWitness
 
+def enumRepresentationOracleWitness : Bool :=
+  match enumReadRepresentation, enumOracleError .boolean with
+  | some representation, some .booleanUnderlying =>
+      representation.underlying == .unsignedInt
+  | _, _ => false
+
+#guard enumRepresentationOracleWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

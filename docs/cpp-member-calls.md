@@ -66,6 +66,9 @@ and method identity without deriving an ABI offset.
 The enum-profile row then joins that field to structured type evidence and a
 retained enum declaration, counting constants and explicit values while
 preserving an absent fixed-underlying spelling.
+The representation row keeps the next choice explicit: the unsigned
+underlying type is supplied by the caller, and boolean representation is
+rejected rather than inferred from the enumerator list.
 For argument refusals it reports both the retained child-kind shape and the
 recursive child tree, so a future argument tier can be priced against source
 evidence before evaluation semantics are added. The recursive tree preserves

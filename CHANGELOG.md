@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a differential witness for the enum representation oracle: absent
+  fixed-underlying metadata accepts an explicit unsigned choice while boolean
+  representation remains a named refusal.
+
 - Added a probe-backed enum-profile differential witness that retains the enum
   declaration, constant census, and absent fixed-underlying spelling from
   structured type evidence before applying an explicit representation oracle.

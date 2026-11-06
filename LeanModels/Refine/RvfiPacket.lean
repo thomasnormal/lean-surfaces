@@ -1213,6 +1213,40 @@ theorem normalizeRvfiPacketRobTags_retirements_length_append {State : Type}
   apply normalizeRvfiPacketRobTags_retirements_length machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/- The normalized generic-ROB tagged retirement projection has the exact
+   generic ROB retirement-trace cardinality. -/
+theorem normalizeRvfiPacketRobTags_retirements_length_robTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((robTags machine.toRobMachine state cycles).map
+        TaggedCommit.retirement).length =
+      (robTrace machine.toRobMachine state cycles).length := by
+  exact congrArg List.length
+    (normalizeRvfiPacketRobTags_retirements_robTrace machine state cycles h)
+
+/- The normalized generic-ROB tagged retirement cardinality bridge composes
+   across adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTags_retirements_length_robTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement).length =
+      (robTrace machine.toRobMachine state (first ++ second)).length := by
+  apply normalizeRvfiPacketRobTags_retirements_length_robTrace machine state
+    (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
 /- Mapped ROB-tag source-input cardinality composes across adjacent normalized
    packet windows with the same retained-state boundary. -/
 theorem normalizeRvfiPacketRobTags_inputs_length_append {State : Type}
@@ -3401,6 +3435,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs

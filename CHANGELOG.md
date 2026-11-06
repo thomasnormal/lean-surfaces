@@ -3019,3 +3019,5 @@ change is listed here under **Changed** or **Removed**.
 - Python: remove the module-level definition `del` no-op census; deleting a
   static function/class binding is now loud even when a later function body
   reaches that name.
+- Python: carry value-less local annotations as structured AST nodes and remove
+  the old text parser; annotation-local differential rows remain matched.

@@ -9095,3 +9095,25 @@ call returns a float.
 DECIDED: keep `World.clock : List Int` as an explicit future-input boundary,
 but do not interpret its readings as Python values until a binary64 trace is
 modeled. Preserve the arity error independently of that refusal.
+
+## 2026-11-06-pycomplete-345 — carry value-less annotations as AST nodes
+
+Function-local value-less annotations now remain structured as
+`AnnAssignNoValue(name, span)` from the approved extractor through both
+interpreters and all proof walkers. The old `AnnAssign:no-value` text marker
+and its Lean-side `splitOn ":"` parser are gone. Static-local census and
+runtime marker installation use the carried identifier, so branch-hoisted
+annotations still produce CPython's `UnboundLocalError` without reparsing
+source text. The affected `ann_lab`, `dict_lab`, `gen_lab`, and `walrus_lab`
+envelopes were regenerated with CPython 3.9.25; no source hashes were
+hand-edited.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 161 passed |
+| Differential suite | 4188 cases: 0 failed, 104 whitelisted, 4084 matched |
+| Lean builds | `leanmodels-run`, `Monadic.Mono`, and `ann_lab.spec` passed |
+| Legacy marker search | no `AnnAssign:no-value` or `annNoValueName` consumers |
+
+DECIDED: keep the declaration as a first-class AST statement and reserve
+text-keyed ingestion only for the remaining audited constructs.

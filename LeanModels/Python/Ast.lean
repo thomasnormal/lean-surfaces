@@ -262,6 +262,9 @@ inductive Stmt where
   from source text at runtime. -/
   | globalDecl (names : Array String) (span : Span)
   | nonlocalDecl (names : Array String) (span : Span)
+  /-- A function-local value-less annotation (`x: T`).  The extractor
+  carries the plain target name directly; no source text is reparsed. -/
+  | annNoValue (name : String) (span : Span)
   /-- `from module import names` / `from module import *` (schema
   `ImportFrom`, Pass 0 — docs/memory-model.md §import forms (Pass 0)).
   Structured by the EXTRACTOR for exactly the admitted shape (top-level,
@@ -452,7 +455,7 @@ mutual
         names.contains module || stringListMentionsAny names imported.toList
     | .globalDecl names' _ | .nonlocalDecl names' _ =>
         stringListMentionsAny names names'.toList
-    | .pass _ | .brk _ | .cont _ | .unsupported .. => false
+    | .pass _ | .brk _ | .cont _ | .annNoValue .. | .unsupported .. => false
 
   private def stmtListMentionsAny (names : List String) : List Stmt → Bool
     | [] => false

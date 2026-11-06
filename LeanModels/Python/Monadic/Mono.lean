@@ -453,10 +453,14 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
     (motive_2 := fun ss => execOpenList K m ss ⊑ₚ execOpenList K' m ss)
   case case22 =>
     intros
+    simp [execOpen]
+    exact PyLe.refl' _
+  case case23 =>
+    intros
     try dsimp at *
     simp_all [execOpen]
     exact PyLe.refl' _
-  case case23 =>
+  case case24 =>
     intros
     simp_all [execOpen, Bool.and_eq_true, Bool.not_eq_true]
     generalize hctx : findContextClassM m _ = ctx
@@ -477,12 +481,12 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
         | exact truthyM_mono _
         | assumption
         | apply_assumption)
-  case case24 =>
+  case case25 =>
     intros
     try dsimp at *
     simp_all [execOpen]
     exact PyLe.refl' _
-  case case25 =>
+  case case26 =>
     intros
     simp_all only [execOpen]
     mono_with_structural (first

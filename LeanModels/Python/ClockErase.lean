@@ -1204,6 +1204,10 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
     ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure⟩ := ih
   intro m st s h
   cases s with
+  | annNoValue name sp =>
+    simp only [execStmt]
+    exact .of_seed (fun tr => by simp [Run.seedF])
+      (by simp [FrameState.withClock_self h])
   | ret v sp =>
     cases v with
     | none => simp only [execStmt]; exact .ok h _
@@ -1754,21 +1758,13 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
   | pass sp => simp only [execStmt]; exact .ok h _
   | brk sp => simp only [execStmt]; exact .ok h _
   | cont sp => simp only [execStmt]; exact .ok h _
-  | unsupported pyKind txt sp =>
-    by_cases hpy : pyKind = "AnnAssign:no-value"
+  | unsupported pyKind _ sp =>
+    by_cases htype : pyKind = "TypeErrorHandler"
     · subst pyKind
       simp only [execStmt]
-      cases han : annNoValueName txt with
-      | none => exact .unsupported
-      | some id =>
-        refine .of_seed (fun tr => by simp [han, Run.seedF]) ?_
-        simp [han, FrameState.withClock_self h]
-    · by_cases htype : pyKind = "TypeErrorHandler"
-      · subst pyKind
-        simp only [execStmt]
-        exact .ok h _
-      · simp [execStmt, hpy, htype]
-        exact .unsupported
+      exact .ok h _
+    · simp [execStmt, htype]
+      exact .unsupported
 
 
 theorem ceExecAttrCall_succ (ih : CE fuel) : CEExecAttrCall (fuel + 1) := by

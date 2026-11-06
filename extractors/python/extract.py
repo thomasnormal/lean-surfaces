@@ -1731,7 +1731,7 @@ def _hoist_ann_no_value(stmts):
 
     PEP 526 makes the target a static local for the entire function, even
     when its declaration sits in a branch that is not taken.  The runtime
-    records that fact by stepping the retained ``AnnAssign:no-value`` node;
+    records that fact by stepping the retained ``AnnAssignNoValue`` node;
     moving those no-op markers to the entry of this scope preserves the
     declaration's only observable effect while keeping the ordinary control
     tree unchanged.  Nested function scopes are independent and are left
@@ -1758,10 +1758,9 @@ def _hoist_ann_no_value(stmts):
                     if name and name not in marker_names:
                         marker_names.add(name)
                         markers.append({
-                            "kind": "Unsupported",
+                            "kind": "AnnAssignNoValue",
                             "span": value.get("span", {}),
-                            "py_kind": "AnnAssign:no-value",
-                            "text": name + ": <walrus>",
+                            "name": name,
                         })
             for child in value.values():
                 collect_namedexpr(child)
@@ -1773,12 +1772,6 @@ def _hoist_ann_no_value(stmts):
         if not isinstance(stmt, dict):
             return stmt
         kind = stmt.get("kind")
-        if kind == "Unsupported" and stmt.get("py_kind") == "AnnAssign:no-value":
-            name = (stmt.get("text") or "").split(":", 1)[0].strip()
-            if name not in marker_names:
-                marker_names.add(name)
-                markers.append(stmt)
-            return None
         if kind in ("NestedDef", "FunctionDef", "Lambda"):
             return stmt
         collect_namedexpr(stmt)
@@ -1899,6 +1892,10 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
             and isinstance(node.target, ast.Name) and enclosing is not None
             and not _ann_name_used(enclosing, node.target.id)):
         return {"kind": "Pass", "span": span(node)}
+    if (node.value is None and func_scope and node.simple
+            and isinstance(node.target, ast.Name) and enclosing is not None):
+        return {"kind": "AnnAssignNoValue", "span": span(node),
+                "name": node.target.id}
     if node.value is not None and not node.simple:
         # Non-simple targets do not populate ``__annotations__``.  In a
         # function body CPython does not evaluate the annotation at all;

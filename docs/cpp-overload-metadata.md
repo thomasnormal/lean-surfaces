@@ -48,3 +48,7 @@ callee cannot be manufactured when the frontend supplies no callee occurrence.
 A callee handle absent from the artifact declaration table is also a recorded
 refusal; retained AST identity must be backed by corresponding declaration
 evidence.
+
+The overloaded-operator gate has the matching negative control: a retained
+operator callee whose declaration kind is `VarDecl` is refused before any
+operator identity can be accepted.

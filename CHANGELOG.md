@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- CI now cancels superseded runs per ref and bounds the full check with a 180-minute job timeout.
+
 - Python envelope freshness is now a required full-CI and `--python-only` gate; leanpy regression coverage verifies foreign frontend stamps are rejected before execution.
 
 - Added CI-wired regression coverage for leanpy's CPython 3.9 frontend/oracle pinning and the survey's explicit fallback warning.

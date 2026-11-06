@@ -1515,3 +1515,16 @@ over the two singleton windows.
 
 **DECIDED:** derive the flattened append result through chain composition and
 packet-boundary erasure, retaining the established state/order carry.
+
+## 2026-11-06-ls-sv2-75 — expose flattened ROB traces from packet window chains
+
+Added `normalizeRvfiPacketWindows_rob_trace` to
+`LeanModels/Refine/RvfiPacket.lean`.  A finite chain of packet-window
+normalization certificates now exposes the exact flattened `robTrace` equality
+against the flattened retirement windows, erasing packet boundaries only after
+all carried state and order checks have succeeded.  The PicoRV32 witness
+pins this route over its two certified packet windows.
+
+**DECIDED:** derive the ROB trace through the existing flattened observation
+certificate and packet projection theorem; no independent packet scan or
+completion ordering is introduced.

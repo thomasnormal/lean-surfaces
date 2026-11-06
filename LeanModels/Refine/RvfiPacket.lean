@@ -1052,6 +1052,21 @@ theorem normalizeRvfiPacketRobTrace_append {State : Type}
   apply normalizeRvfiPacketRobTrace machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/-- A certified finite packet-window chain exposes the exact flattened
+ROB retirement stream, with packet boundaries erased only after every window
+has supplied its carried normalization certificate. -/
+theorem normalizeRvfiPacketWindows_rob_trace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    robTrace machine.toRobMachine state windows.flatten =
+      retirementWindows.flatten := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketRobTrace machine state windows.flatten hflat
+
 /- A pair of local packetized-RVFI certificates composes through the ROB
    refinement boundary, with the first packet window's exact state feeding the
    second and the concatenated packet inputs driving the ISA trace. -/
@@ -1116,6 +1131,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_stream

@@ -2526,3 +2526,16 @@ The PicoRV32 witness pins both forms.
 **DECIDED:** take `List.length` of the existing exact packet-tag retirement
 projection; retirement order, packet boundaries, and payloads are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-158 — certify packet-window tag-retirement cardinality
+
+Added `normalizeRvfiPacketWindows_tags_retirements_length` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window
+chain now certifies that its flattened packet-tag retirement projection has
+exactly the flattened normalized retirement cardinality, and adjacent chains
+compose the same count while retaining the carried state and order boundary.
+The PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact packet-window tag-retirement
+projection; packet boundaries, retirement order, and payloads are not
+reconstructed.

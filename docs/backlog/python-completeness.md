@@ -9839,6 +9839,27 @@ DECIDED: keep every definition deletion as an explicit AST statement and a
 loud script boundary until definitions become runtime bindings; no ingestion
 rewrite remains.
 
+## 2026-11-06-pycomplete-391 — recheck yield-from delegation identity
+
+The current extractor already emits statement-position `YieldFrom:delegation`
+as a loud structured node. This audit removed the remaining dead ingestion
+lowering in `Json.lean`: `lowerStmt` now recursively lowers the delegate
+expression while retaining `.yieldFromStmt`, and the synthetic
+`<yieldfrom@n>` target helper is gone. The generator stepper's existing
+`yieldFromStmt` refusal therefore covers every delegate uniformly; no
+`for …: yield …` program is synthesized.
+
+Rebuilt `gen_lab`'s envelope and changed its old inlining checks to explicit
+unsupported guards. The empty `yf_live_drive(0)` case still matches because
+CPython and the model both construct a lazy generator and never resume the
+delegation; resumed promotion, filtered, list, and target-scope rows remain
+loud. This preserves the source node and avoids claiming PEP 380's
+send/throw/close propagation or delegation return value.
+
+DECIDED: retain `YieldFrom` as its own AST and runtime boundary until a
+delegation frame models the full PEP 380 protocol; no ingestion inlining
+remains.
+
 ## 2026-11-06-pycomplete-385 — recheck the clock-reading boundary
 
 The clock arm already refuses zero-argument `time.time()` in both interpreters

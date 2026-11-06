@@ -353,9 +353,8 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .error _ => pure (Expr.constant .none span)
         return .yieldStmt value span
     | "YieldFrom" =>
-        -- pass 5: structured always; `lowerGenExps` inlines the admitted
-        -- genexp shape (docs/memory-model.md §yield from), and whatever
-        -- survives un-lowered refuses loudly at execution.
+        -- Structured source node; ingestion retains it and the interpreter
+        -- refuses delegation until a PEP 380 frame is modeled.
         return .yieldFromStmt (← parseExpr (← getField j "value")) span
     | "Raise" =>
         -- exceptions tier: structured in full generality (absent fields
@@ -1055,13 +1054,8 @@ module apart, and the angle brackets make collision with a real Python
 identifier impossible. -/
 def genExpName (n : Nat) : String := s!"{genExpPrefix}{n}>"
 
-/-- The FRESH loop target a non-genexp `yield from` inlines through
-(pass 5+, docs/memory-model.md §yield from). `<`/`>` cannot occur in a
-Python identifier, so the name is unspellable from the source and the
-inlined loop can shadow nothing. -/
-def yieldFromName (n : Nat) : String := s!"<yieldfrom@{n}>"
-
-/-- CPython's own name for the implicit first parameter (the
+/-- `yield from` is retained as a source node; no fresh loop target is
+synthesized by ingestion. CPython's own name for the implicit first parameter (the
 already-evaluated outer iterator). No Python identifier contains `.`. -/
 def genExpArg : String := genExpArgName
 
@@ -1473,61 +1467,11 @@ mutual
     | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
     | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
     | .yieldFromStmt v sp =>
-      (match v with
-       | .genExp elt target iter ifs wb gsp => do
-        -- pass 5 (docs/memory-model.md §yield from): INLINE the
-        -- delegation — `for target in iter: [ifs:] yield elt` — when
-        -- the target binds analyzably and its names occur nowhere else
-        -- in the enclosing body. The FREE names need no admission at
-        -- all: the inlined loop reads the enclosing frame by reference,
-        -- which is exactly what a delegated genexp does (the enclosing
-        -- frame cannot run mid-delegation). Subexpressions lower first,
-        -- as everywhere; an inadmissible shape survives un-lowered and
-        -- refuses loudly at execution.
-        let elt ← lowerExpr ctx elt
-        let iter ← lowerExpr ctx iter
-        let ifs ← lowerExprs ctx ifs
-        match targetBinds target with
-        | some tb =>
-          -- pass 7: a walrus-bearing delegation is NOT inlined (its
-          -- binding would land in the enclosing frame — representable,
-          -- unneeded, refused loudly at evaluation)
-          if tb.all (fun n => !ctx.yfForbidden.contains n) && wb.isEmpty then
-            return .forStmt target iter
-              #[guardWith gsp ifs.toList (.yieldStmt elt gsp)] #[] sp
-          else
-            -- If the genexp target is observed by the enclosing body, it
-            -- cannot be inlined: CPython gives that target a private
-            -- comprehension scope.  Lower the same genexp to a synthesized
-            -- generator and consume it through a fresh loop target instead.
-            -- This preserves the target scope while retaining the existing
-            -- conservative capture admission in `lowerExpr`.
-            let candidate ← lowerExpr ctx (.genExp elt target iter ifs wb gsp)
-            match candidate with
-            | .call .. =>
-                let (n, fns) ← get
-                set (n + 1, fns)
-                let fresh : Expr := .name (yieldFromName n) sp
-                return .forStmt fresh candidate #[.yieldStmt fresh sp] #[] sp
-            | _ => return .yieldFromStmt candidate sp
-        | Option.none =>
-            return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
-       | v => do
-        -- pass 5+ (docs/memory-model.md §yield from): a NON-genexp
-        -- delegate inlines the same way, through a FRESH target no
-        -- Python identifier can spell — so it collides with nothing in
-        -- the enclosing body and needs no `yfForbidden` check at all.
-        -- CPython-exact on this tier's surface: `yield from e` differs
-        -- from `for t in e: yield t` only in `send`/`throw`/`close`
-        -- propagation and in the delegation's RETURN value, and all four
-        -- are already outside the tier (a yield in EXPRESSION position
-        -- is `Expr.unsupported`, and the generator methods refuse). The
-        -- shipped `moves()` ends in `yield from sorted(…)`, a CALL.
-        let v ← lowerExpr ctx v
-        let (n, fns) ← get
-        set (n + 1, fns)
-        let t : Expr := .name (yieldFromName n) sp
-        return .forStmt t v #[.yieldStmt t sp] #[] sp)
+        -- Rule 2 audit: retain delegation as its own source node. PEP 380's
+        -- send/throw/close propagation and delegation return value are not
+        -- reproduced by a synthetic `for` loop; the interpreter therefore
+        -- takes its existing loud boundary for this node.
+        return .yieldFromStmt (← lowerExpr ctx v) sp
     | .raiseStmt exc cause sp =>
         let cause' ← cause.mapM (lowerExpr ctx)
         -- `raise N from None` suppresses chaining, but the tier has no

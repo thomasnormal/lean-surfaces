@@ -226,27 +226,20 @@ fragment (calling one ALLOCATES, and syntax cannot tell). -/
 #guard !moduleGenFree gen_lab
 #guard !gen_lab.heapFree
 
-/-! ### pass 5: `yield from <genexp>` — INLINED at ingestion
-(docs/memory-model.md §yield from). The inlined loop reads the
-enclosing frame by reference — exactly what a delegated genexp does,
-since the enclosing frame cannot run mid-delegation (`yf_live`: the
-rebound loop variable `i` is read live). The admission requires the
-genexp's target to occur nowhere else in the body; `yf_leak` (target
-read after the loop) and `yf_list` (not a genexp) survive un-lowered
-and refuse loudly. -/
+/-! ### `yield from` — retained as a loud delegation node
 
-#py_check gen_lab.yf_promote_drive(1, 2) = "NBRQ"
-#py_check gen_lab.yf_live_drive(3) = 11223
+The approved extractor keeps statement-position delegation as
+`YieldFrom:delegation`; ingestion no longer inlines it into a `for` loop. The
+stepper therefore refuses resumed delegation until PEP 380's send/throw/close
+and return-value protocol is modeled. The zero-length `yf_live_drive` row still
+matches because its generator is never resumed. -/
+
+#guard callFunction gen_lab "yf_promote_drive" #[.int 1, .int 2] 4096 matches .unsupported _
+#guard callFunction gen_lab "yf_live_drive" #[.int 3] 4096 matches .unsupported _
 #py_check gen_lab.yf_live_drive(0) = 0
-#py_check gen_lab.yf_filter_drive(5) = 19
-#py_check gen_lab.yf_filter_drive(0) = -1
-
--- pass 5+ (§yield from a non-genexp delegate): a list delegate inlines
--- through a FRESH target that shadows nothing
-#py_check gen_lab.yf_list_drive(3) = 6
--- the helper-generator fallback keeps the comprehension target private even
--- though the enclosing generator reads its own `x` after delegation
-#py_check gen_lab.yf_leak_drive(3) = 6
+#guard callFunction gen_lab "yf_filter_drive" #[.int 5] 4096 matches .unsupported _
+#guard callFunction gen_lab "yf_list_drive" #[.int 3] 4096 matches .unsupported _
+#guard callFunction gen_lab "yf_leak_drive" #[.int 3] 4096 matches .unsupported _
 
 -- the census: yield-from defs are generators (CPython's scope-local
 -- syntactic rule sees YieldFrom), lowered or not

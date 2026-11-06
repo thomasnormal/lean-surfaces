@@ -16,6 +16,10 @@
   in the AST and reaches the loud static-table boundary. Removed stale
   comments that still described an ingestion rewrite to `pass`.
 
+- Rechecked `yield from`: ingestion now retains the structured delegation node
+  and has no synthetic loop target. Resumed delegation remains loud until a
+  PEP 380 frame models send, throw, close, and the delegation return value.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-357` |  | retain trailing definition deletion nodes | python-completeness |
 | `2026-11-06-pycomplete-356` |  | pin the callable-alias identity boundary | python-completeness |
 | `2026-11-06-pycomplete-355` |  | guard namedtuple table reachability by source order | python-completeness |
 | `2026-11-06-pycomplete-354` |  | land the first monadic-to-trunk refinement edge | python-completeness |

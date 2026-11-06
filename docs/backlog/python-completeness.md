@@ -9336,3 +9336,21 @@ remain a later runtime representation change.
 DECIDED: callable aliases may dispatch through the admitted static call tier,
 but function-object identity remains a loud boundary until aliases become
 runtime values.
+
+## 2026-11-06-pycomplete-357 — retain trailing definition deletion nodes
+
+The ingestion-time trailing-`del` pass is gone. Definition names remain in the
+approved AST through parsing; the script executor's existing static-table arm
+now refuses a deletion of a `def`, class, namedtuple, or alias binding instead
+of silently replacing the statement with `pass`. Ordinary name deletion keeps
+its prior runtime behavior.
+
+| Measurement | Result |
+|---|---|
+| Focused scripts | `del_def_mid_script.py`, `del_trailing_script.py`, and `fmt_script.py` now refuse at the definition deletion |
+| Native differential | 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+| Lean build | Managed `lake build leanmodels-run`: 40 jobs passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: definition deletion is a runtime AST statement and remains loud until
+definition bindings become runtime values.

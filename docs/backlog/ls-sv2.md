@@ -2124,3 +2124,14 @@ append route.
 **DECIDED:** compose the normalized packet trace append theorem through the
 exact packet-to-ROB tag retirement projection; no retirement order or
 completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-125 — expose packet-window ROB tag inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain now
+exposes the packet-facing source-input stream carried by its flattened generic
+ROB tags.  The PicoRV32 chain witness now routes through this reusable
+projection theorem.
+
+**DECIDED:** reuse the exact packet-to-ROB tag-input bridge; the normalization
+certificate supplies the chain boundary but no input order is reconstructed.

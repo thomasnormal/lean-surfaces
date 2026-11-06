@@ -882,8 +882,11 @@ theorem pinned_packet_windows_rob_tags_inputs_chain :
       packetInputs pinnedPacketMachine.toPacketMachine
         pinnedPacketMachine.init
         [packetFirstCycles, packetSecondCycles].flatten := by
-  exact RvfiPacketMachine.toRobMachine_tags_inputs pinnedPacketMachine
-    pinnedPacketMachine.init [packetFirstCycles, packetSecondCycles].flatten
+  exact normalizeRvfiPacketWindows_rob_tags_inputs pinnedPacketMachine
+    pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
 
 theorem pinned_packet_windows_rob_tags_length_chain :
     (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init

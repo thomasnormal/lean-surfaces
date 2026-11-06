@@ -3892,6 +3892,43 @@ theorem normalizeRvfiPacketWindows_rob_trace_length_packetTrace_append
     start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A successful normalized packet capture has equal generic ROB trace and
+   packet-input cardinalities. -/
+theorem normalizeRvfiPacketRobTrace_length_packetInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTrace machine.toRobMachine state cycles).length =
+      (packetInputs machine.toPacketMachine state cycles).length := by
+  calc
+    (robTrace machine.toRobMachine state cycles).length = retirements.length :=
+      normalizeRvfiPacketRobTrace_length machine state cycles h
+    _ = (packetInputs machine.toPacketMachine state cycles).length :=
+      (normalizeRvfiPacketInputs_length machine state start cycles
+        retirements h).symm
+
+/- The normalized ROB-trace/packet-input cardinality bridge composes across
+   adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTrace_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTrace machine.toRobMachine state (first ++ second)).length =
+      (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRobTrace_length_packetInputs machine state
+    (first ++ second) hcombined
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -4062,3 +4099,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_length_packetTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_length_packetTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_packetInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_packetInputs_append

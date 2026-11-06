@@ -38,6 +38,9 @@
 - Added a recorded refusal for string constructor handles resolving to a
   retained non-constructor declaration.
 
+- Added a recorded refusal for string operator handles resolving to a retained
+  non-callable declaration.
+
 - Added a recorded refusal for constructor handles whose structured kind
   contradicts the retained declaration kind.
 

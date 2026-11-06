@@ -90,6 +90,9 @@ using the printed operator name.
 A second positive witness combines that string form with a retained
 `CXXMethodDecl`, covering method identity without executing the operator body.
 
+A string operator handle resolving to a retained non-callable declaration is a
+recorded refusal; string handles cannot bypass the callable-kind check.
+
 A malformed cast wrapper with two children is a recorded refusal; the gate
 requires the exact one-child frontend shape and does not choose one child by
 position.

@@ -29,7 +29,7 @@ private def memD : MemDesign2 := asyncMem.pdesign.instantiateMemD2 [8, 4]
   | .ok [s0, s1, s2] =>
       SvState.showSignal s0 "q" == "00000000" &&
       SvState.showSignal s1 "q" == "00010001" &&
-      SvState.showSignal s2 "q" == "00100010"
+      SvState.showSignal s2 "q" == "00010001"
   | _ => false
 
 end Examples.«system-verilog».seq_mem.proof

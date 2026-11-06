@@ -28,6 +28,9 @@ A structured `ctor` object missing its declaration `id` is separately refused;
 constructor identity requires a complete frontend handle, not just a
 constructor kind tag.
 
+A structured `ctor` object whose `id` is numeric is also refused; artifact
+handles retain Clang's string identity and are never coerced from numbers.
+
 A string-valued `ctor` field with malformed frontend-handle syntax is also a
 recorded refusal; constructor handles must use the artifact-local format.
 

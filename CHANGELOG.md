@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a direct differential witness for structured `this->field` access,
+  retaining owner, field, receiver, and field type evidence before object
+  state or layout is supplied.
+
 - Added a direct differential witness for canonical `CXXMemberCallExpr`
   identity, requiring a noncanonical call occurrence to join one retained
   method declaration handle before invocation.

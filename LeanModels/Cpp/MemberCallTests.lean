@@ -1201,6 +1201,26 @@ def memberCallCanonicalIdentityWitness : Bool :=
 
 #guard memberCallCanonicalIdentityWitness
 
+private def thisFieldAccessProbe : DeclarationProbe :=
+  let base := enumSetterProbeWith (enumSetterRight "0x15")
+  {base with declarations := base.declarations.map (fun row =>
+    if row.id == methodHandle then
+      {row with raw := rawWithFieldOrAppend row.raw "name" (rawText "set")}
+    else row)}
+
+def thisFieldAccessEvidenceWitness : Bool :=
+  match IntegralMemberMethodBody.admit thisFieldAccessProbe methodHandle with
+  | .ok body =>
+      match IntegralMemberThisFieldAccess.admit thisFieldAccessProbe body with
+      | .ok access =>
+          access.owner == ownerHandle && access.field == fieldHandle &&
+            access.name == "_errorID" && access.receiverType == "XMLError" &&
+            access.fieldType == "XMLError" && access.methodName == "set"
+      | .error _ => false
+  | .error _ => false
+
+#guard thisFieldAccessEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

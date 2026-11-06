@@ -60,6 +60,9 @@ state, body execution, overload lookup or native agreement is inferred.
 The differential corpus separately exercises the canonical identity join for
 `Owner::read`: a noncanonical call occurrence must resolve to the one retained
 canonical `CXXMethodDecl` handle before invocation evidence is considered.
+It also exercises the direct `this->field` access admission used by the
+object-state boundary, retaining the owner, field, receiver type, field type,
+and method identity without deriving an ABI offset.
 For argument refusals it reports both the retained child-kind shape and the
 recursive child tree, so a future argument tier can be priced against source
 evidence before evaluation semantics are added. The recursive tree preserves

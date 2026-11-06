@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for constructor handles absent from the artifact's
+  declaration evidence table.
+
 - Added a recorded refusal for constructor metadata with a scalar-valued
   `ctor` field.
 

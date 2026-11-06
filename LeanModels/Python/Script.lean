@@ -519,11 +519,10 @@ def benignImportNames (m : Module) : List String :=
     | .importStmt module _ => if module == "time" then some "time" else Option.none
     | _ => Option.none
 
-/-- A static definition/import binding can be deleted as a no-op when the
-name is never read after the deletion (including by a function that later
-executes). The live frame cannot tombstone position-independent tables, so
-this narrow observation check admits the measured `del f; print(…)` and
-`import time; del time; print(…)` shapes without inventing a stale binding. -/
+/-- A benign static import binding can be deleted as a no-op when the name is
+never read after the deletion (including by a function that later executes).
+Definition and namedtuple table entries are never admitted here: the live
+frame cannot tombstone those position-independent tables. -/
 def scriptStaticDeleteNoop (m : Module) (s : Stmt) (name : String) : Bool :=
   let endLine := (scriptStmtSpan s).endLineno
   let laterRead := m.topLevel.toList.any fun t =>
@@ -916,7 +915,7 @@ mutual
              .unsupported s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
            else if (findFunction m n).isSome || (findClass m n).isSome
                || m.namedtuples.any (·.name == n) then
-             .unsupported s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING or unobserved del is admitted (docs/backlog.md §del RECONCILED)"
+             .unsupported s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry and cannot be tombstoned by this tier (docs/backlog.md §del RECONCILED)"
            else .exn { st with locals := env } (.nameError n))
       | s => execStmt m fuel st s
   termination_by structural fuel

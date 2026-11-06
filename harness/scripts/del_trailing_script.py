@@ -1,7 +1,7 @@
 # the opcode-shaped fallback (docs/backlog.md paragraph "del RECONCILED
 # with the one pipeline"): module-level defs mutating module tables,
-# calls, prints, then a TRAILING `del` of the def names -- rewritten to
-# `pass` at ingestion, so the program runs to exit 0 exactly as CPython.
+# calls and prints, then a TRAILING `del` of the def names. Static definition
+# bindings cannot be tombstoned by the tier, so this remains a loud boundary.
 opmap = {}
 hasname = []
 

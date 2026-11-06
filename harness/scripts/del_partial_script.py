@@ -1,6 +1,6 @@
-# the PARTIAL left-to-right effect at module scope: f (a def name, in
-# trailing position -- dropped at ingestion) and x really go before
-# `nosuch` raises; stdout up to the raise is compared byte-for-byte.
+# the PARTIAL left-to-right effect at module scope: f and x really go before
+# `nosuch` raises under CPython. The model reaches the loud static-definition
+# deletion boundary before it can observe the later NameError.
 def f():
     return 3
 

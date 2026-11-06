@@ -4806,23 +4806,20 @@ publish the frame's locals ARE the module globals and the one pipeline
 keeps them complete, so in `execScriptOne`: a locals HIT removes and
 publishes; a MISS is decided in measured order — deleting the runner-supplied
 `__name__` installs CPython's builtins fallback (`del __name__; print(__name__)`
-prints `builtins`), while other dunder targets remain loud. A benign-import or
-definition name is erased as a no-op when no later top-level or function-global
-read can observe it; an observed static deletion remains loud because the
+prints `builtins`), while other dunder targets remain loud. A benign-import
+name is erased as a no-op when no later top-level or function-global read can
+observe it. Definition and namedtuple deletions are always loud because the
 tables cannot be tombstoned without a stale value. Anything else yields the faithful
 `.exn (.nameError n)` with the partial effect retained. Deletion never consults
 builtins — CPython's `del len` is the same `NameError` (measured), so no
 `isPyBuiltinName` gate.
 
-**The trailing rewrite (ingestion, the aliasing precedent).** In the
-maximal all-`Delete`/`Pass` SUFFIX of the top level, a del target that
-is a `def`/`class`/namedtuple/alias name occurring as a del target
-exactly ONCE module-wide is dropped at ingestion (`delTargets` census,
-nested compounds included; a statement left empty becomes `pass`).
-Sound because the name is certainly bound there and nothing observable
-follows; `del f; del f` keeps both and refuses on the second. This is
-what runs opcode.py's `del def_op, name_op, jrel_op, jabs_op`
-(`del_trailing_script.py` is the opcode-shaped pin).
+**Definition deletion remains a runtime boundary.** The ingestion pass does
+not erase trailing `del` targets. A `def`/`class`/namedtuple/alias name is a
+static table entry, and the script executor refuses before inventing a
+tombstone. `del_trailing_script.py` and the opcode-shaped deletion therefore
+remain loud until definitions become runtime bindings. Only the narrow
+benign-import no-op remains, when no later read can observe the static import.
 
 **Closed-function surface.** A top-level `del` is an exec candidate
 whose attempt always refuses (`initExecStmt` runs with EMPTY locals),
@@ -4839,10 +4836,10 @@ carry the targets — the conservative direction everywhere
 **Battery.** `Examples/python/del_lab` (13 functions, all differential
 — 4 in-tier, 3 census-refused incl. the two stated over-refusals, 3
 runtime-refused, 2 shape-refused, the module global for `del_global`);
-scripts `del_trailing_script` / `del_global_script` /
-`del_never_script` / `del_partial_script` / `del_shell_script` (match)
-and `del_def_mid_script` / `del_dunder_script` / `del_import_script`
-(loud, notes record CPython's side). Pre-registered prediction:
+scripts `del_global_script` / `del_never_script` / `del_shell_script`
+(match) and `del_trailing_script` / `del_partial_script` /
+`del_def_mid_script` / `del_dunder_script` / `del_import_script` (loud,
+notes record CPython's side). Pre-registered prediction:
 **opcode.py does NOT flip** — its next wall is the DYNAMIC
 `%`-formatting refusal at `opname = ['<%r>' % (op,) for op in
 range(256)]`, invisible to the static wall census; the acceptance

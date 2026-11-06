@@ -1977,6 +1977,20 @@ pins this state-threading equality over its two packet windows.
 projection boundary; no packet contents, input order, or completion order is
 reconstructed.
 
+## 2026-11-06-ls-sv2-184 — certify packet-window ROB tag cardinality against packet inputs
+
+The packet-window counterpart was included with the normalized ROB-tag/input
+bridge: `normalizeRvfiPacketWindows_rob_tags_length_packetInputs` and its
+append form are in `LeanModels/Refine/RvfiPacket.lean`, with PicoRV32
+witnesses `pinned_packet_windows_rob_tags_length_packetInputs_chain` and
+`pinned_packet_windows_rob_tags_length_packetInputs_append`.  A certified
+window chain therefore carries the same exact ROB-tag/packet-input cardinality
+through its flattened windows and through adjacent chains.
+
+**DECIDED:** use the existing window certificate and retained state boundary;
+do not reconstruct packet boundaries, tag payloads, retirement order, or
+source-input order.
+
 ## 2026-11-06-ls-sv2-112 — expose packet-to-ROB trace threading
 
 Added `RvfiPacketMachine.toRobMachine_trace_append` to

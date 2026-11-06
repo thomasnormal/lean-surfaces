@@ -1827,3 +1827,15 @@ cardinality over its first and second packet windows.
 **DECIDED:** use the packet input append theorem and the two local normalized
 length certificates; the second window's state remains explicit and no
 padding, truncation, or completion order is inferred.
+
+## 2026-11-06-ls-sv2-100 — expose packet state-after projection
+
+Added `RvfiPacketMachine.toPacketMachine_stateAfter` to
+`LeanModels/Refine/RvfiPacket.lean`.  The packet-machine projection now
+exposes the same retained state as the packetized RVFI view through a reusable
+theorem, and the normalized input-cardinality append proof consumes that
+bridge directly.  The PicoRV32 witness pins the projection over its two
+packet windows.
+
+**DECIDED:** expose the definitional state-threading equality once and reuse
+it; no packet contents or retirement order are reconstructed at the bridge.

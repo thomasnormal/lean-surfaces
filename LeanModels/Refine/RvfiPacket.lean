@@ -422,6 +422,19 @@ theorem RvfiPacketMachine.toRobMachine_stateAfter {State : Type}
             RvfiPacketMachine.toRobMachine, hstep]
           exact ih state'
 
+theorem RvfiPacketMachine.toPacketMachine_stateAfter {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input) :
+    packetStateAfter machine.toPacketMachine state cycles =
+      rvfiPacketStateAfter machine state cycles := by
+  induction cycles generalizing state with
+  | nil => rfl
+  | cons cycleInput cycles ih =>
+      cases hstep : machine.step state cycleInput with
+      | mk state' entries =>
+          simp only [packetStateAfter, rvfiPacketStateAfter,
+            RvfiPacketMachine.toPacketMachine, hstep]
+          exact ih state'
+
 theorem rvfiPacketStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiPacketMachine State) (isa : Machine IsaState)
@@ -1670,19 +1683,8 @@ theorem normalizeRvfiPacketInputs_length_append {State : Type}
       some secondRetirements) :
     (packetInputs machine.toPacketMachine state (first ++ second)).length =
       (firstRetirements ++ secondRetirements).length := by
-  have stateBridge : ∀ (state : State) (cycles : List Input),
-      packetStateAfter machine.toPacketMachine state cycles =
-        rvfiPacketStateAfter machine state cycles := by
-    intro bridgeState cycles
-    induction cycles generalizing bridgeState with
-    | nil => rfl
-    | cons cycleInput cycles ih =>
-        cases hstep : machine.step bridgeState cycleInput with
-        | mk state' entries =>
-            simp only [packetStateAfter, rvfiPacketStateAfter,
-              RvfiPacketMachine.toPacketMachine, hstep]
-            exact ih state'
-  have hstate := stateBridge state first
+  have hstate := RvfiPacketMachine.toPacketMachine_stateAfter
+    machine state first
   rw [packetInputs_append]
   rw [List.length_append]
   rw [normalizeRvfiPacketInputs_length machine state start first
@@ -1699,6 +1701,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_trace
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_stateAfter
+#print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append

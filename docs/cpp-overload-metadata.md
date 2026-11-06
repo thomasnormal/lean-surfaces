@@ -98,6 +98,10 @@ An ordinary call whose structured `referencedDecl.kind` contradicts the
 retained function or method declaration is also refused; the two evidence
 records must agree.
 
+An ordinary call whose structured `referencedDecl` omits `kind` is also
+refused; the call gate does not infer a missing evidence field from the
+declaration table.
+
 An empty overloaded-operator child list is also a recorded refusal; the
 operator gate does not manufacture a selected callee.
 

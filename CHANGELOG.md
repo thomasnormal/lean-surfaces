@@ -23,6 +23,9 @@
 - Added a recorded refusal for ordinary-call handles whose structured kind
   contradicts the retained declaration kind.
 
+- Added a recorded refusal for ordinary-call declaration evidence missing its
+  structured kind field.
+
 - Added a positive overloaded-operator metadata witness for artifact-local
   string declaration handles.
 

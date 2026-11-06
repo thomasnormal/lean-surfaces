@@ -3021,3 +3021,5 @@ change is listed here under **Changed** or **Removed**.
   reaches that name.
 - Python: carry value-less local annotations as structured AST nodes and remove
   the old text parser; annotation-local differential rows remain matched.
+- Python: keep admitted `ImportFrom` nodes structured through ingestion and
+  key benign import handling by module, names, and star fields.

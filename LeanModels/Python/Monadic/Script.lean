@@ -410,6 +410,9 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
             inFrame (inWorld [] (classBodyStmtsAt K m c.body.toList))
           else refuse s!"class {name}: executable class creation is outside the tier"
       | none => refuse s!"internal: class marker {name} has no class table entry"
+  | .importFrom module names star sp =>
+      if (benignImportBindsStructured module names star).isSome then pure .next
+      else execOpen K m (.importFrom module names star sp)
   | .unsupported "Import" text sp =>
       if (benignImportBinds text).isSome then pure .next
       else execOpen K m (.unsupported "Import" text sp)

@@ -9117,3 +9117,24 @@ hand-edited.
 
 DECIDED: keep the declaration as a first-class AST statement and reserve
 text-keyed ingestion only for the remaining audited constructs.
+
+## 2026-11-06-pycomplete-346 — keep structured from-imports structured
+
+The approved extractor's admitted `ImportFrom` nodes now stay as
+`Stmt.importFrom(module, names, star, span)` through ingestion. The former
+Json reconstruction of `from … import …` text and canonicalization back to an
+`Unsupported` marker is removed. A structured benign-import table covers the
+modeled `itertools.count`, `collections.namedtuple`, and `time` forms; script
+and monadic script execution consult that table directly, while Pass 0 still
+raises for non-benign imports before binding. Existing unsupported import
+markers retain their legacy text path until the remaining import audit slice.
+
+| Measurement | Result |
+|---|---|
+| Lean build | `lake build leanmodels-run` passed (40 jobs) |
+| Runner smoke | `ann_lab.py --compare` MATCH under CPython 3.9.25 |
+| Source shape | structured ImportFrom rows no longer become text markers |
+
+DECIDED: use structured fields for admitted imports and reserve text parsing
+for legacy unsupported nodes only; continue with the next text-keyed consumer
+after this slice is committed.

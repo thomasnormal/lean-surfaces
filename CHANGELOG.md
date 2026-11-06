@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for malformed parenthesized ordinary-call callees;
+  wrapper metadata requires exactly one child.
+
 - Added a source-shaped ordinary-call witness for parenthesized callees; the
   metadata gate follows `ImplicitCastExpr` and `ParenExpr` wrappers to the
   retained function declaration.

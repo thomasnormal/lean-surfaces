@@ -118,6 +118,9 @@ A parenthesized ordinary-call callee is retained through Clang's
 source AST nodes to the same `FunctionDecl` handle; it does not strip the
 parentheses by reparsing source text.
 
+A parenthesis wrapper with more than one child is refused; the metadata gate
+never chooses one child from a malformed frontend node.
+
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 

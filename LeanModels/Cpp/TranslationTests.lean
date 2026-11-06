@@ -2757,6 +2757,44 @@ private def resolvedCallParenTranslation : Artifact := {emptyTranslation with
 def resolvedCallParenTranslationWitnessOk : Bool :=
   admitResolvedCallExpression resolvedCallParenTranslation [1] matches .ok {value := "0x2e"}
 
+private def resolvedCallMalformedParenTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"),
+    ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0x33"), ("kind", .string "FunctionDecl"),
+        ("name", .string "g"), ("inner", .array [])
+      ],
+      .object [
+        ("id", .string "0x34"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0x35"), ("kind", .string "ParenExpr"),
+            ("inner", .array [
+              .object [
+                ("id", .string "0x36"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [
+                  ("id", .string "0x33"), ("kind", .string "FunctionDecl")
+                ])
+              ],
+              .object [
+                ("id", .string "0x37"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [
+                  ("id", .string "0x33"), ("kind", .string "FunctionDecl")
+                ])
+              ]
+            ])
+          ]
+        ])
+      ]
+    ])
+  ]}
+
+def resolvedCallMalformedParenRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallMalformedParenTranslation [1]
+  pure ()
+
 private def resolvedCallCastKindMismatchTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -3331,6 +3369,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedCallNonCallableRefusal matches .error _
 #guard resolvedCallCastTranslationWitnessOk
 #guard resolvedCallParenTranslationWitnessOk
+#guard resolvedCallMalformedParenRefusal matches .error _
 #guard resolvedCallCastKindMismatchRefusal matches .error _
 #guard resolvedCallMethodTranslationWitnessOk
 #guard resolvedCallStringNonCallableRefusal matches .error _

@@ -9728,3 +9728,14 @@ fabricated `*` error remains in this path.
 
 DECIDED: this audit finding is complete; retain ordinary `AugAssign` as the
 source-level operation.
+
+## 2026-11-07-pycomplete-379 — expression-yield target boundary
+
+Re-ran the global-target witness. CPython 3.9.25 resumes
+`value = yield 5`, stores the sent `None`, and prints `None`; the extractor
+now emits the structured `YieldAssign:global-or-nonlocal` refusal and leanpy
+stops loudly before dropping the store. The previous wrong answer (`1`) is no
+longer produced.
+
+DECIDED: the verified global/nonlocal dead-target bug is closed by refusal;
+full send-channel semantics remains a later generator item.

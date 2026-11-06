@@ -41,6 +41,10 @@ metadata does not infer a missing evidence field from the declaration table.
 A string-valued `ctor` field with malformed frontend-handle syntax is also a
 recorded refusal; constructor handles must use the artifact-local format.
 
+A string-valued constructor handle resolving to a retained non-constructor
+declaration is also refused; string handles receive the same declaration-kind
+check as structured handles.
+
 A `ctor` handle whose declaration row has a non-constructor kind is also a
 recorded refusal; constructor identity does not trust the handle alone.
 

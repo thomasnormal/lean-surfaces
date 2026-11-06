@@ -1661,3 +1661,16 @@ packet windows.
 
 **DECIDED:** transport the established ROB trace refinement through the exact
 `toRobMachine_inputs` projection; no input stream is reconstructed or reordered.
+
+## 2026-11-06-ls-sv2-87 — compose packet-facing ISA trace equality
+
+Added `normalizeRvfiPacketWindows_trace_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now compose directly to the ISA trace equality over the packet
+machine's architectural input stream, retaining the first chain's state and
+retirement-order boundary.  The PicoRV32 witness pins this append route over
+its two singleton packet windows.
+
+**DECIDED:** compose through the finite window-chain certificate and the
+packet-facing single-chain theorem; no input stream is reconstructed,
+reordered, or inferred.

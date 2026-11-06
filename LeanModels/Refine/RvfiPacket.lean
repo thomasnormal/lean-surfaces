@@ -1164,6 +1164,35 @@ theorem normalizeRvfiPacketWindows_trace_refines {State IsaState : Type}
   rw [machine.toRobMachine_inputs] at htrace
   exact htrace
 
+/-- The packet-facing ISA trace equality composes across two certified window
+chains while retaining the first chain's state and retirement-order boundary.
+-/
+theorem normalizeRvfiPacketWindows_trace_refines_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (firstRetirementWindows ++ secondRetirementWindows).flatten =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten) := by
+  have htrace := normalizeRvfiPacketWindows_trace_refines machine isa rel
+    admit state isaState start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hrob hrel
+    (normalizeRvfiPacketWindows_append machine state start firstWindows
+      secondWindows firstRetirementWindows secondRetirementWindows hfirst hsecond)
+  exact htrace
+
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_append {State : Type}
@@ -1370,6 +1399,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat

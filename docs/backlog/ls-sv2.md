@@ -2397,3 +2397,17 @@ PicoRV32 witness pins both forms.
 **DECIDED:** derive the packet-stream width from the exact generic
 `rvfiPacketTags_length` projection and the normalization filter-map equality;
 packet boundaries and retirement order remain unchanged.
+
+## 2026-11-06-ls-sv2-148 — certify packet-window tag-stream cardinality
+
+Added `normalizeRvfiPacketWindows_tags_length` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now proves that its packet-boundary tagged stream has exactly the flattened
+normalized retirement cardinality, and two certified chains compose the same
+count while retaining the second chain's carried state and order boundary.
+The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only after the window certificate supplies its carried
+state and normalized retirement boundary, then reuse the normalized
+packet-tag width theorem; packet boundaries and retirement order remain
+unchanged.

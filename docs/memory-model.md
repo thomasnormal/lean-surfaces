@@ -267,9 +267,9 @@ cycle DETECTION, never by running out of fuel).
   Boundary `Val.list` snapshots now also support ordinary `list * int` and
   `int * list` through the pure `listValueRepeat` worker. The result is a
   fresh snapshot, so this path does not claim heap aliasing or make general
-  boundary-list `*=` live. The same immutable snapshot is accepted by the
-  length-only repetition worker; heap-backed lists continue through the
-  stateful allocation path. In the narrow alias-free parameter shape
+  boundary-list `*=` live. `len(sequence * count)` evaluates the ordinary
+  repetition before measuring its length; heap-backed lists continue through
+  the stateful allocation path. In the narrow alias-free parameter shape
   `x *= count; return x`, ingestion lowers the augmented statement to the
   pure assignment/binop form, so a boundary list returns the repeated
   snapshot. Other augmented list mutations stay loud until the H2 boundary
@@ -521,15 +521,14 @@ short-circuit to an empty tuple. Positive results that exceed `seqBudget`
 remain loud rather than guessing `MemoryError`. The positive-result bounds are
 fuel-independent.
 
-When the result is consumed immediately by `len`, ingestion lowers the direct
-expression, or the adjacent `result = sequence * count; return len(result)`
-and immutable `*=` shape, to the synthetic `<lenmult>` call. Its worker reads
-the same operand and count protocol but returns `len` directly, so a positive
-tuple result may exceed `seqBudget` without allocating. Index-sized overflow,
-nonpositive counts, empty tuples, and non-integer sequence errors keep the
-ordinary repetition order and messages. Heap-backed list repetition is not
-part of this length-only shortcut; a boundary `Val.list` uses the pure
-snapshot path described in the list section above.
+`len(sequence * count)` evaluates ordinary multiplication before `len`, so a
+positive result must satisfy the same materialization bound as any other
+repetition. Index-sized overflow, nonpositive counts, empty tuples, and
+non-integer sequence errors keep their ordinary order and messages. An
+oversized positive result remains loud because CPython's allocation outcome is
+not represented by the tier. Heap-backed list repetition follows its stateful
+allocation path, while a boundary `Val.list` uses the pure snapshot path
+described in the list section above.
 
 Admitted non-positive counts produce an empty tuple. Positive counts retain
 the structural `List.replicate`/`flatten`/`toArray` implementation, with no
@@ -568,12 +567,11 @@ positive counts/output refuse, never guessing `MemoryError`. These
 bounds do not depend on interpreter fuel. Lone surrogates remain outside
 Lean's `Char` boundary.
 
-The direct `len(sequence * count)` form and its adjacent temporary-assignment
-forms use the synthetic `<lenmult>` worker. It preserves the ordinary
-sequence protocol and index-sized overflow, while returning the code-point
-length before the materialization budget is consulted. Thus a positive string
-whose repeated output exceeds `seqBudget` is still admitted when only its
-length is requested; ordinary repetition retains the materialization bound.
+The direct `len(sequence * count)` form and adjacent temporary-assignment
+forms use ordinary multiplication followed by `len`. The sequence protocol,
+index-sized overflow, and materialization bound are therefore the same as for
+an otherwise identical repetition. A positive string whose repeated output
+exceeds `seqBudget` remains loud even when only its length is requested.
 
 `sequenceMult` preserves the left sequence's multiplication protocol before
 trying the right sequence: `"ab" * (1,)` names `tuple` in its non-integer

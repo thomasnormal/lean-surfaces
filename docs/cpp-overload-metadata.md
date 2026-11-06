@@ -82,6 +82,9 @@ the method branch without executing the receiver or method body.
 A string ordinary-call handle resolving to a retained non-callable declaration
 is a recorded refusal; string handles cannot bypass the call kind check.
 
+A syntactically valid string ordinary-call handle absent from declaration
+evidence is also refused; the string must resolve to one retained declaration.
+
 A positive ordinary-call witness also covers the artifact-local string
 `referencedDecl` form. The string is parsed as a handle and matched against one
 retained declaration row; it is not used for name lookup.

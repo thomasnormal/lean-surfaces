@@ -94,6 +94,9 @@ also refused; string handles do not bypass the ambiguity check.
 A syntactically valid string operator handle absent from declaration evidence is
 also refused; operator identity requires one retained declaration row.
 
+A string operator handle occurring in multiple retained declaration rows is also
+refused; string handles do not bypass the ambiguity check.
+
 A positive ordinary-call witness also covers the artifact-local string
 `referencedDecl` form. The string is parsed as a handle and matched against one
 retained declaration row; it is not used for name lookup.

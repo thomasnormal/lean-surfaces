@@ -52,6 +52,9 @@ evidence.
 An empty overloaded-operator child list is also a recorded refusal; the
 operator gate does not manufacture a selected callee.
 
+A multi-child implicit-cast wrapper around an operator callee is likewise a
+recorded refusal; the gate requires one unambiguous child.
+
 The overloaded-operator gate has the matching negative control: a retained
 operator callee whose declaration kind is `VarDecl` is refused before any
 operator identity can be accepted.

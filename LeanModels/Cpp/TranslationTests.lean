@@ -2236,6 +2236,27 @@ def resolvedOperatorMissingCalleeRefusal : Except String Unit := do
   let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorMissingCalleeTranslation [0]
   pure ()
 
+private def resolvedOperatorMalformedCastTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x1b"), ("kind", .string "CXXMethodDecl"),
+        ("name", .string "operator+"), ("inner", .array [])],
+      .object [("id", .string "0x1c"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [("id", .string "cast"), ("kind", .string "ImplicitCastExpr"),
+            ("inner", .array [
+              .object [("id", .string "0x1d"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [("id", .string "0x1b"),
+                  ("kind", .string "CXXMethodDecl")])],
+              .object [("id", .string "0x1e"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [("id", .string "0x1b"),
+                  ("kind", .string "CXXMethodDecl")])]])]])]])]}
+
+def resolvedOperatorMalformedCastRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorMalformedCastTranslation [1]
+  pure ()
+
 private def resolvedCallTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -2601,6 +2622,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedOperatorNonCallableRefusal matches .error _
 #guard resolvedOperatorMissingDeclarationRefusal matches .error _
 #guard resolvedOperatorMissingCalleeRefusal matches .error _
+#guard resolvedOperatorMalformedCastRefusal matches .error _
 #guard newTranslationWitness matches .ok ()
 #guard admitCXXNewExpression newTranslation [] matches .error _
 #guard admitCXXNewExpression functionTranslation [0] matches .error _

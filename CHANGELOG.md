@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for overloaded-operator callees with malformed
+  multi-child implicit-cast structure.
+
 - Added a recorded refusal for overloaded-operator nodes with no callee child,
   preserving the frontend's missing-identity boundary.
 

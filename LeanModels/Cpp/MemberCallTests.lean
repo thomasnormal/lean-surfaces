@@ -1270,6 +1270,13 @@ def enumFieldValueEvidenceWitness : Bool :=
 
 #guard enumFieldValueEvidenceWitness
 
+def memberMethodBodyEvidenceWitness : Bool :=
+  methodBody.map (fun body =>
+    (body.canonical, body.definition, body.bodyKind)) ==
+    some (methodHandle, h "0x11", "CompoundStmt")
+
+#guard memberMethodBodyEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

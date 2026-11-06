@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a direct differential witness for canonical-to-defining member method
+  body identity, retaining the defining handle and `CompoundStmt` kind before
+  body execution.
+
 - Added a differential witness for object-backed enum field value validation,
   preserving the typed representation for a valid stored value and refusing a
   signed-format mismatch before storage access.

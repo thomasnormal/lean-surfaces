@@ -410,6 +410,10 @@ canonical-to-defining method pair and expose the first object event
 `this-member:_errorID`; no body or object-event refusal occurs. This remains
 telemetry: the live receiver, field state, and variadic body are not executed.
 
+The body relation is independently witnessed in the corpus: a declaration-only
+canonical method must resolve to exactly one defining occurrence with a
+retained `CompoundStmt` body kind before any body walk or object execution.
+
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is
 `XMLError:20:1:<absent>`, and the explicit census oracle selects

@@ -510,6 +510,20 @@ theorem RvfiPacketMachine.toRobMachine_tags_append {State : Type}
           (rvfiPacketStateAfter machine state first) second := by
   rw [robTags_append, machine.toRobMachine_stateAfter]
 
+/- Erasing the generic ROB tags' payloads preserves packet-trace threading
+   across adjacent cycle windows. -/
+theorem RvfiPacketMachine.toRobMachine_tags_retirements_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state first ++
+        packetTrace machine.toPacketMachine
+          (packetStateAfter machine.toPacketMachine state first) second := by
+  rw [robTags_retirements, machine.toRobMachine_trace_append,
+    machine.toRobMachine_trace, machine.toRobMachine_trace]
+  rw [machine.toPacketMachine_stateAfter]
+
 theorem rvfiPacketStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiPacketMachine State) (isa : Machine IsaState)
@@ -2107,6 +2121,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_inputs_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_append
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_retirements_append
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append

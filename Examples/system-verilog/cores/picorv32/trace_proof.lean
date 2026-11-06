@@ -1534,6 +1534,18 @@ theorem pinned_packet_rob_tags_retirements_append_projection :
   exact RvfiPacketMachine.toRobMachine_tags_retirements_append pinnedPacketMachine
     pinnedPacketMachine.init packetFirstCycles packetSecondCycles
 
+theorem pinned_packet_rob_tags_inputs_append_projection :
+    (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).map
+        TaggedCommit.input =
+      packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        packetFirstCycles ++
+        packetInputs pinnedPacketMachine.toPacketMachine
+          (packetStateAfter pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init packetFirstCycles) packetSecondCycles := by
+  exact RvfiPacketMachine.toRobMachine_tags_inputs_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+
 theorem pinned_packet_rob_tags_retirements :
     (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
       packetCycleInputs).map TaggedCommit.retirement = nontrapExpected := by
@@ -1718,6 +1730,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_inputs_append_projection
 #print axioms pinned_packet_rob_tags_append_projection
 #print axioms pinned_packet_rob_tags_retirements_append_projection
+#print axioms pinned_packet_rob_tags_inputs_append_projection
 #print axioms pinned_packet_rob_tags_retirements
 #print axioms pinned_packet_rob_tags_inputs
 #print axioms pinned_packet_refines

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added CI-wired regression coverage for leanpy's CPython 3.9 frontend/oracle pinning and the survey's explicit fallback warning.
+
 - `raise X from cause` now retains its structured cause through ingestion; cause-bearing raises remain loud until exception chaining is modeled.
 
 - Removed builtin-name and synthetic-temporary lowerings for set/list/dict comprehensions, starred displays, starred calls, and starred loop targets; these AST shapes now refuse through explicit boundaries.

@@ -2053,3 +2053,15 @@ the complete packet capture.
 
 **DECIDED:** compose the existing ROB tag erasure with the packet trace bridge;
 no retirement payload or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-119 — certify normalized packet ROB tag cardinality
+
+Added `normalizeRvfiPacketRobTags_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now proves that the generic ROB tag stream has exactly the decoded retirement
+cardinality.  The PicoRV32 witness pins this cardinality over the captured
+packet trace.
+
+**DECIDED:** derive the length equality from the existing packet trace
+projection and `List.length`; no tag order or completion order is
+reconstructed.

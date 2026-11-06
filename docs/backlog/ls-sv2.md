@@ -1480,3 +1480,15 @@ chain.
 **DECIDED:** derive packet-boundary order only from the same flattened
 normalization certificate; no second packet ordering or completion choice is
 introduced.
+
+## 2026-11-06-ls-sv2-72 — compose packet streams across certified chains
+
+Added `normalizeRvfiPacketWindows_tags_stream_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified window
+chains now compose directly at the packet-aware boundary, preserving
+`InOrderPacketStream` for the concatenated cycle packets.  The PicoRV32
+witness exercises this append theorem over the two singleton windows.
+
+**DECIDED:** compose packet-local order through the same state/order-carrying
+window append certificate; the packet stream is never sorted or reconstructed
+from completion order.

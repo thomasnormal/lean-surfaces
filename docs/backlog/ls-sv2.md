@@ -3063,3 +3063,16 @@ adjacent captures.  The PicoRV32 witness pins both forms.
 **DECIDED:** reuse the normalized packet tag-retirement/ROB-trace bridge and
 the generic ROB trace/input length equality; packet boundaries, retirement
 payloads, retirement order, and source-input order are not reconstructed.
+
+## 2026-11-06-ls-sv2-200 — certify packet-window tag-retirement cardinality against ROB inputs
+
+Added `normalizeRvfiPacketWindows_tags_retirements_length_robInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  Certified packet-window
+chains now determine the exact generic ROB-input cardinality of their
+packet-tag retirement projection, including adjacent chains.  The PicoRV32
+witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the normalized packet tag-retirement/ROB-input cardinality bridge;
+packet boundaries, retirement payloads, retirement order, and source-input
+order are not reconstructed.

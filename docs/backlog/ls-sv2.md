@@ -2803,3 +2803,16 @@ state boundary.  The PicoRV32 witness pins both forms.
 reuse the normalized ROB-input/packet-trace cardinality bridge, and retain the
 carried state; packet boundaries, source-input order, retirement payloads, and
 order are not reconstructed.
+
+## 2026-11-06-ls-sv2-179 — certify normalized ROB input cardinality against ROB trace
+
+Added `normalizeRvfiPacketRobInputs_length_robTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the generic ROB input and retirement-trace streams have equal
+cardinality, and adjacent captures compose the same bridge.  The PicoRV32
+witness pins both forms.
+
+**DECIDED:** reuse the exact generic `robTrace_length_eq_robInputs_length`
+projection (symmetrically) and retain the normalized capture parameters;
+retirement payloads, packet boundaries, input order, and completion order are
+not reconstructed.

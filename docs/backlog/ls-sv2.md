@@ -3587,6 +3587,18 @@ adjacent certified chains. The PicoRV32 witness pins both forms.
 apply the exact `toRobMachine_inputs` projection; window boundaries,
 retirement payloads, carried state, and order offsets remain unchanged.
 
+## 2026-11-06-ls-sv2-244 — expose packet-tag ROB-input state refinement
+
+Added `normalizeRvfiPacketTags_refines_rob_state` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet-boundary tag stream
+now combines its `InOrderPacketStream`/ISA equality over generic ROB inputs
+with the final packet-state relation and exact retirement-order endpoint,
+including adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** compose the packet-tag ROB-input projection with the existing
+state-threaded normalization theorem; packet boundaries, retirement payloads,
+state threading, and order offsets remain unchanged.
+
 ## 2026-11-06-ls-sv2-242 — expose normalized packet-tag refinement through ROB inputs
 
 Added `normalizeRvfiPacketTags_refines_rob` and its append form to

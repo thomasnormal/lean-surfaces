@@ -4134,6 +4134,55 @@ theorem normalizeRvfiPacketWindows_tags_retirements_length_robInputs_append
     state start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified packet-window chain fixes the packet-tag retirement
+   cardinality to the packet machine's input cardinality. -/
+theorem normalizeRvfiPacketWindows_tags_retirements_length_packetInputs
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ((rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state windows.flatten).length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  calc
+    ((rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.retirement).length =
+        (packetTrace machine.toPacketMachine state windows.flatten).length :=
+      normalizeRvfiPacketTags_retirements_length_packetTrace machine state
+        windows.flatten hflat
+    _ = (packetInputs machine.toPacketMachine state windows.flatten).length :=
+      (normalizeRvfiPacketInputs_length_packetTrace machine state
+        windows.flatten hflat).symm
+
+/- The packet-window packet-tag retirement/packet-input cardinality bridge
+   composes across two certified chains with the carried state retained. -/
+theorem normalizeRvfiPacketWindows_tags_retirements_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_tags_retirements_length_packetInputs machine
+    state start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- The normalized packet-tag retirement projection has the packet machine's
    input cardinality. -/
 theorem normalizeRvfiPacketTags_retirements_length_packetInputs {State : Type}

@@ -1440,6 +1440,37 @@ theorem pinned_packet_windows_tags_retirements_length_robInputs_append :
         [nontrapSecondExpected] from
         ⟨pinned_packet_second_window_normalize, trivial⟩)
 
+theorem pinned_packet_windows_tags_retirements_length_packetInputs_chain :
+    ((rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      [packetFirstCycles, packetSecondCycles].flatten).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).length := by
+  exact normalizeRvfiPacketWindows_tags_retirements_length_packetInputs
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
+
+theorem pinned_packet_windows_tags_retirements_length_packetInputs_append :
+    ((rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+      ([packetFirstCycles] ++ [packetSecondCycles]).flatten).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length := by
+  apply normalizeRvfiPacketWindows_tags_retirements_length_packetInputs_append
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected]
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
 theorem pinned_packet_windows_tags_inputs :
     (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
       [packetFirstCycles, packetSecondCycles].flatten).flatten.map
@@ -3441,6 +3472,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_tags_retirements_length_robTrace_append
 #print axioms pinned_packet_windows_tags_retirements_length_robInputs_chain
 #print axioms pinned_packet_windows_tags_retirements_length_robInputs_append
+#print axioms pinned_packet_windows_tags_retirements_length_packetInputs_chain
+#print axioms pinned_packet_windows_tags_retirements_length_packetInputs_append
 #print axioms pinned_packet_windows_tags_inputs
 #print axioms pinned_packet_windows_tags_inputs_append
 #print axioms pinned_packet_windows_tags_inputs_length

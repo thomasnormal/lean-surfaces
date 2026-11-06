@@ -3088,3 +3088,16 @@ including adjacent captures.  The PicoRV32 witness pins both forms.
 cardinality through normalized packet-input/packet-trace length equality;
 packet boundaries, retirement payloads, retirement order, and source-input
 order are not reconstructed.
+
+## 2026-11-06-ls-sv2-202 — certify packet-window tag-retirement cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_tags_retirements_length_packetInputs` and
+its append form to `LeanModels/Refine/RvfiPacket.lean`.  Certified
+packet-window chains now determine the exact packet-input cardinality of their
+packet-tag retirement projection, including adjacent chains.  The PicoRV32
+witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the normalized packet tag-retirement/packet-input cardinality bridge;
+packet boundaries, retirement payloads, retirement order, and source-input
+order are not reconstructed.

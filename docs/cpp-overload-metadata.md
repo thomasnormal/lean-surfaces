@@ -31,6 +31,9 @@ constructor kind tag.
 A string-valued `ctor` field with malformed frontend-handle syntax is also a
 recorded refusal; constructor handles must use the artifact-local format.
 
+A `ctor` handle whose declaration row has a non-constructor kind is also a
+recorded refusal; constructor identity does not trust the handle alone.
+
 The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution

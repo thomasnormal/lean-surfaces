@@ -12,6 +12,19 @@ the kernel-facing `LVec.concretizations` enumeration and pointwise
 enumerates both 0 and 1. E execution is unchanged until its refinement route
 is added.
 
+## Parameter-sized unpacked memories on the cycle route
+
+The memory cycle adapter now retains one-rank parameter-sized unpacked arrays
+as source-shaped E memory for both `[N]` and `[0:N-1]` spellings. Constant
+cell reads and writes, genvar-indexed generated writers, plain edge `always`
+and `always_ff`, and active-high/active-low asynchronous reset forms stay
+separate from scalar state and never expand a default-point array. Clocked
+processes fire only on their declared edge; falling-clock rows therefore
+leave the cell unchanged. The `seq_mem` fixtures cover the plain/FF and
+reset/no-reset matrix, and `seq_mem/gen_ff` covers retained genvar writers.
+Nested arrays, dynamic runtime indices, partial cell targets, and hierarchy
+remain loud.
+
 ## Exact signed-32-bit `int` constants at every parameter point
 
 `PDesign.instantiate2` and hierarchical instantiation now evaluate `int`-class

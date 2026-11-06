@@ -167,6 +167,19 @@ class SymbolicArraySelects(unittest.TestCase):
         self.assertEqual(module["decls"][0]["unpacked"][0]["lsb"]["kind"],
                          "Binary")
 
+    def test_parameter_memory_genvar_target_keeps_array_path(self):
+        module = self.extract(
+            "module top #(parameter int N = 4) (input logic [7:0] d);"
+            " logic [7:0] mem [0:N-1];"
+            " for (genvar i = 0; i < N; i++) begin : g"
+            " always_comb mem[i] = d; end endmodule")
+        body = module["generates"][0]["body"][0]["body"]
+        self.assertEqual(body["kind"], "BlockingAssign")
+        self.assertEqual(body["target"]["kind"], "ArraySel")
+        self.assertEqual(body["target"]["name"], "mem")
+        self.assertEqual(strip(body["target"]["indices"]),
+                         [{"kind": "GenvarRef", "name": "i"}])
+
     def test_nested_dynamic_fixed_unpacked_read_expands_to_conditionals(self):
         module = self.extract(
             "module top (input logic i, input logic [1:0] j,"

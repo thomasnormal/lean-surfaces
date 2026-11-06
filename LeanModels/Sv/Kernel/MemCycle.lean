@@ -48,6 +48,136 @@ def memDeclOf? : List PDecl → String → Option PDecl
 def memDeclsOf (d : PDesign) : List PDecl :=
   d.decls.filter fun pd => !pd.unpackedDims.isEmpty
 
+/-! ## Generate labels
+
+Generate bodies keep their source `PProcess` until this adapter is
+instantiated.  Substituting a concrete genvar label here is deliberately
+structural: the resulting `PExpr.arrayElem` remains a memory cell, rather
+than becoming a default-point scalar declaration. -/
+
+def memSubstExpr (vals : List (String × Int)) : PExpr → PExpr
+  | .genvarRef n =>
+      match vals.lookup n with
+      | some v => .int v
+      | none => .genvarRef n
+  | .unary op a => .unary op (memSubstExpr vals a)
+  | .binary op a b => .binary op (memSubstExpr vals a) (memSubstExpr vals b)
+  | .ternary c a b => .ternary (memSubstExpr vals c) (memSubstExpr vals a)
+      (memSubstExpr vals b)
+  | .concat xs => .concat (xs.map (memSubstExpr vals))
+  | .resize w a => .resize w (memSubstExpr vals a)
+  | .signedResize w a => .signedResize w (memSubstExpr vals a)
+  | .squash2 w a => .squash2 w (memSubstExpr vals a)
+  | .sysCall fn a => .sysCall fn (memSubstExpr vals a)
+  | .bitSel a b => .bitSel (memSubstExpr vals a) (memSubstExpr vals b)
+  | .partSel a b c => .partSel (memSubstExpr vals a) (memSubstExpr vals b)
+      (memSubstExpr vals c)
+  | .repl a b => .repl (memSubstExpr vals a) (memSubstExpr vals b)
+  | .reduce op a => .reduce op (memSubstExpr vals a)
+  | .cast s a => .cast s (memSubstExpr vals a)
+  | .arrayElem n xs => .arrayElem n (xs.map (memSubstExpr vals))
+  | .arrayPart n xs mode a b => .arrayPart n (xs.map (memSubstExpr vals)) mode
+      (memSubstExpr vals a) (memSubstExpr vals b)
+  | e => e
+
+def memSubstLhs (vals : List (String × Int)) : PLhs → PLhs
+  | .bitSel n i => .bitSel n (memSubstExpr vals i)
+  | .partSel n a b => .partSel n (memSubstExpr vals a) (memSubstExpr vals b)
+  | .concat xs => .concat (xs.map (memSubstLhs vals))
+  | .arrayElem n xs => .arrayElem n (xs.map (memSubstExpr vals))
+  | .arrayPart n xs mode a b => .arrayPart n (xs.map (memSubstExpr vals)) mode
+      (memSubstExpr vals a) (memSubstExpr vals b)
+  | l => l
+
+mutual
+def memSubstStmt (vals : List (String × Int)) : PStmt → PStmt
+  | .blockingAssign n e => .blockingAssign n (memSubstExpr vals e)
+  | .nbaAssign n e => .nbaAssign n (memSubstExpr vals e)
+  | .ifStmt c t e => .ifStmt (memSubstExpr vals c) (memSubstStmt vals t)
+      (memSubstStmtOpt vals e)
+  | .block xs => .block (memSubstStmtList vals xs)
+  | .forLoop n i c s b => .forLoop n (memSubstExpr vals i) (memSubstExpr vals c)
+      (memSubstExpr vals s) (memSubstStmt vals b)
+  | .blockingAssignL l e => .blockingAssignL (memSubstLhs vals l) (memSubstExpr vals e)
+  | .nbaAssignL l e => .nbaAssignL (memSubstLhs vals l) (memSubstExpr vals e)
+  | .caseStmt s items d mode check =>
+      .caseStmt (memSubstExpr vals s)
+        (memSubstCaseItems vals items) (memSubstStmtOpt vals d) mode check
+  | s => s
+termination_by structural s => s
+
+def memSubstStmtOpt (vals : List (String × Int)) : Option PStmt → Option PStmt
+  | none => none
+  | some s => some (memSubstStmt vals s)
+termination_by structural o => o
+
+def memSubstStmtList (vals : List (String × Int)) : List PStmt → List PStmt
+  | [] => []
+  | s :: ss => memSubstStmt vals s :: memSubstStmtList vals ss
+termination_by structural xs => xs
+
+def memSubstCaseItems (vals : List (String × Int)) :
+    List (List PExpr × PStmt) → List (List PExpr × PStmt)
+  | [] => []
+  | (ps, b) :: rest =>
+      (ps.map (memSubstExpr vals), memSubstStmt vals b) :: memSubstCaseItems vals rest
+termination_by structural xs => xs
+
+def memSubstProcess (vals : List (String × Int)) : PProcess → PProcess
+  | .alwaysFF c b => .alwaysFF c (memSubstStmt vals b)
+  | .alwaysPlain c b => .alwaysPlain c (memSubstStmt vals b)
+  | .alwaysComb b => .alwaysComb (memSubstStmt vals b)
+  | .assign n e => .assign n (memSubstExpr vals e)
+  | .assignL l e => .assignL (memSubstLhs vals l) (memSubstExpr vals e)
+  | .alwaysFFR c r b h => .alwaysFFR c r (memSubstStmt vals b) h
+  | p => p
+termination_by structural p => p
+end
+
+def memBindVals (env : IEnv) (vals : List (String × Int)) : IEnv :=
+  vals.foldl (fun e (n, v) => e.bindVal n v) env
+
+mutual
+def memExpandItem (env : IEnv) (iterFuel : Nat) (vals : List (String × Int)) :
+    GenItem → Res (List PProcess)
+  | .process p => .ok [memSubstProcess vals p]
+  | .unsupported k t => .ok [.unsupported k t]
+  | .inst i => .ok [.unsupported "Instance"
+      s!"module instance '{i.name}' of '{i.module}' outside the memory cycle route"]
+  | .genIf cond thenB elseB =>
+      match evalGenGuard (memBindVals env vals) cond with
+      | .error e => .unsupported s!"generate if: {e}"
+      | .ok v => if v != 0 then memExpandList env iterFuel vals thenB
+                 else memExpandList env iterFuel vals elseB
+  | .genFor _label g initE bound step _rc body =>
+      let env' := memBindVals env vals
+      match evalInt env' initE, stepDelta g step with
+      | .ok i0, .ok δ => do
+          let vs ← genvarSeq env' g bound δ iterFuel i0
+          memExpandIters env iterFuel vals g vs body
+      | .error e, _ => .unsupported s!"generate for: {e}"
+      | _, .error e => .unsupported s!"generate for: {e}"
+  termination_by it => (sizeOf it, 0)
+
+def memExpandList (env : IEnv) (iterFuel : Nat) (vals : List (String × Int)) :
+    List GenItem → Res (List PProcess)
+  | [] => .ok []
+  | it :: rest => do
+      let ps ← memExpandItem env iterFuel vals it
+      let qs ← memExpandList env iterFuel vals rest
+      .ok (ps ++ qs)
+  termination_by xs => (sizeOf xs, 0)
+
+def memExpandIters (env : IEnv) (iterFuel : Nat) (vals : List (String × Int))
+    (g : String) : List Int → List GenItem → Res (List PProcess)
+  | [], _ => .ok []
+  | v :: vs, body => do
+      let ps ← memExpandList env iterFuel ((g, v) :: vals) body
+      let qs ← memExpandIters env iterFuel vals g vs body
+      .ok (ps ++ qs)
+  termination_by vs body => (sizeOf body, vs.length)
+end
+
 def scalarDeclsMem (env : IEnv) : List PDecl → Res (List Decl)
   | [] => .ok []
   | pd :: rest =>
@@ -70,18 +200,17 @@ def scalarDeclsMem (env : IEnv) : List PDecl → Res (List Decl)
                 | .timeout => .timeout
 
 def instantiateMem2 (d : PDesign) (args : List Int)
-    (_iterFuel : Nat := 4096) : Res MemDesign2 := do
+    (iterFuel : Nat := 4096) : Res MemDesign2 := do
   if args.length != d.params.length then
     .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
   let env ← d.paramEnv2 args
-  if !d.generates.isEmpty then
-    .unsupported "memory cycle route does not yet admit generate members"
   if !d.others.isEmpty then
     .unsupported "memory cycle route does not yet admit unsupported module members"
   let decls ← scalarDeclsMem env d.decls
+  let generated ← memExpandList env iterFuel [] d.generates
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
   return { name := d.name, env := envP, decls, memDecls := memDeclsOf d,
-           processes := d.processes }
+           processes := d.processes ++ generated }
 
 def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
   match instantiateMem2 d args (PDesign.surfaceFuel args) with
@@ -249,26 +378,46 @@ def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
   | .assignL _ _ => .unsupported "AssignL:memory cycle route"
   | .unsupported k t => .unsupported s!"{k}: {t}"
 
-def memResetFires (prev cur : SvState) (rstn : String) : Bool :=
-  isNegedge (SvState.bit0 prev rstn) (SvState.bit0 cur rstn)
+def memClockFires (prev cur : SvState) (clock : String) : Bool :=
+  isPosedge (SvState.bit0 prev clock) (SvState.bit0 cur clock)
+
+def memResetFires (prev cur : SvState) (rstn : String) (resetHigh : Bool) : Bool :=
+  if resetHigh then
+    isPosedge (SvState.bit0 prev rstn) (SvState.bit0 cur rstn)
+  else
+    isNegedge (SvState.bit0 prev rstn) (SvState.bit0 cur rstn)
 
 def memStep (d : MemDesign2) (fuel : Nat) (inputs : SvState)
     (prev : MemCycleState) : Res MemCycleState := do
   let st0 := d.applyInputs inputs prev
   let q0 : MemPending := ([], [])
   let (st1, q1) ← if d.processes.any (fun p =>
-      match p with | .alwaysFFR _ rst _ _ => memResetFires prev.scalar st0.scalar rst | _ => false) then
+      match p with
+      | .alwaysFFR _ rst _ high => memResetFires prev.scalar st0.scalar rst high
+      | _ => false) then
       d.processes.foldlM (init := (st0, q0)) fun acc p =>
         match p with
-        | .alwaysFFR _ rst _ _ =>
-            if memResetFires prev.scalar st0.scalar rst then runMemProcess d fuel acc.1 acc.2 p else .ok acc
+        | .alwaysFFR _ rst _ high =>
+            if memResetFires prev.scalar st0.scalar rst high then
+              runMemProcess d fuel acc.1 acc.2 p
+            else .ok acc
         | _ => .ok acc
     else .ok (st0, q0)
   let st1 ← commitMemPending d st1 q1
   let (st2, q2) ← d.processes.foldlM (init := (st1, ([], []))) fun acc p =>
     match p with
-    | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
-        runMemProcess d fuel acc.1 acc.2 p
+    | .alwaysFF clock _ | .alwaysPlain clock _ =>
+        if memClockFires prev.scalar st0.scalar clock then
+          runMemProcess d fuel acc.1 acc.2 p
+        else .ok acc
+    | .alwaysFFR clock rst _ high =>
+        -- A simultaneous reset and clock event is one source event.  The
+        -- reset phase above has already run the body, so do not run it again
+        -- in the edge phase.
+        if memClockFires prev.scalar st0.scalar clock &&
+            !memResetFires prev.scalar st0.scalar rst high then
+          runMemProcess d fuel acc.1 acc.2 p
+        else .ok acc
     | _ => .ok acc
   let st2 ← commitMemPending d st2 q2
   d.processes.foldlM (init := st2) fun st p =>

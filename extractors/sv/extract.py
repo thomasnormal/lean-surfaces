@@ -32048,6 +32048,14 @@ def _sym_cell_index_point_dependent(expression):
             value = current.value
             if (type(value.type.canonicalType).__name__ == "FixedSizeUnpackedArrayType"
                     and _constant_dimension_selector(current.selector) is not None):
+                # Parameter-sized unpacked declarations are retained as one
+                # source-shaped ArraySel path.  Their genvar/parameter labels
+                # must survive to the E memory route; the default-point
+                # refusal below applies only to legacy flat-cell arrays.
+                symbol = getattr(value, "symbol", None)
+                if symbol is not None and _sym_array_point_dependent(None, symbol):
+                    current = value
+                    continue
                 selector = current.selector
                 while (getattr(selector, "syntax", None) is None
                        and type(selector).__name__ == "ConversionExpression"):

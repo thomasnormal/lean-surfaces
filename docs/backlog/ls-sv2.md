@@ -3370,3 +3370,15 @@ the chain and append forms.
 and compose it with the packetized RVFI-to-ROB input bridge; packet boundaries,
 source-input order, and payloads remain exact, with the carried state boundary
 retained.
+
+## 2026-11-06-ls-sv2-225 — bridge normalized ROB trace to packet trace
+
+Added `normalizeRvfiPacketRobTrace_packetTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A successful normalized packet capture
+now identifies the generic ROB retirement trace with the packet-facing
+retirement trace, including adjacent captures. The PicoRV32 witness pins both
+forms.
+
+**DECIDED:** reuse the exact `toRobMachine_trace` projection after carrying
+normalization through the append boundary; retirement payloads and order are
+preserved without reconstructing either trace.

@@ -4248,6 +4248,38 @@ theorem normalizeRvfiPacketRobTrace {State : Type}
   rw [machine.toRobMachine_trace]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- A successful normalized packet capture identifies the generic ROB
+   retirement trace with the packet-facing retirement trace. -/
+theorem normalizeRvfiPacketRobTrace_packetTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (_h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    robTrace machine.toRobMachine state cycles =
+      packetTrace machine.toPacketMachine state cycles := by
+  exact machine.toRobMachine_trace state cycles
+
+/- The normalized ROB/packet retirement-trace bridge composes across adjacent
+   captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketRobTrace_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    robTrace machine.toRobMachine state (first ++ second) =
+      packetTrace machine.toPacketMachine state (first ++ second) := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRobTrace_packetTrace machine state (first ++ second)
+    hcombined
+
 /- A successful normalized packet capture fixes the generic ROB retirement
    trace cardinality to the decoded retirement count. -/
 theorem normalizeRvfiPacketRobTrace_length {State : Type}
@@ -6061,6 +6093,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_length_packetTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

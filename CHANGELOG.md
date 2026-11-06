@@ -12,6 +12,10 @@
   a stale static alias entry; the scalar shadow now reproduces CPython's
   `TypeError`. General function-object values remain outside the tier.
 
+- Rechecked trailing module definition deletion: the `del` statement remains
+  in the AST and reaches the loud static-table boundary. Removed stale
+  comments that still described an ingestion rewrite to `pass`.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

@@ -5357,7 +5357,7 @@ comprehension over `range(256)` (well under `seqBudget`), 119
 and dict through function bodies (the one-pipeline live-view
 resolution), the module-level `hasconst.append(100)` lines, and the
 trailing `del def_op, name_op, jrel_op, jabs_op` (the `del` landing's
-ingestion rewrite).
+retained AST statement and loud static-definition boundary).
 
 * **stdlib sweep: 7 → 8 MATCH / 159 → 158 REFUSE, 0 DIVERGE, flip set
   exactly {`opcode`}.** That is the FULL measured price of this slice:

@@ -255,8 +255,8 @@ inductive Stmt where
   (script surface only): locals ARE the globals under the one pipeline,
   so a hit removes and publishes, and a miss is CPython's faithful
   `NameError` — except dunder, benign-import and definition names, which
-  refuse loudly (docs/backlog.md §del RECONCILED); a TRAILING `del` of
-  definition names is rewritten away at ingestion. -/
+  refuse loudly (docs/backlog.md §del RECONCILED); trailing definition
+  deletes remain AST statements and refuse at the script boundary. -/
   | delStmt (names : Array String) (span : Span)
   /-- Structured lexical declarations from the approved AST.  The names are
   carried directly from `ast.Global`/`ast.Nonlocal`; they are not recovered

@@ -1311,6 +1311,19 @@ theorem normalizeRvfiPacketWindows_rob_tags_retirements {State : Type}
         robTags_retirements machine.toRobMachine state windows.flatten
     _ = retirementWindows.flatten := htrace
 
+/- A certified packet-window chain also exposes the packet-facing source-input
+   stream carried by the generic ROB tags. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (_h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.input =
+      packetInputs machine.toPacketMachine state windows.flatten := by
+  exact RvfiPacketMachine.toRobMachine_tags_inputs machine state windows.flatten
+
 /-- A certified packet-window chain directly exposes its normalized
 retirement payload as the ISA trace over the generic ROB inputs. -/
 theorem normalizeRvfiPacketWindows_rob_trace_refines {State IsaState : Type}
@@ -2294,6 +2307,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length

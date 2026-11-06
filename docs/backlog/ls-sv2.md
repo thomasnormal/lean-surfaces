@@ -2816,3 +2816,16 @@ witness pins both forms.
 projection (symmetrically) and retain the normalized capture parameters;
 retirement payloads, packet boundaries, input order, and completion order are
 not reconstructed.
+
+## 2026-11-06-ls-sv2-180 — certify packet-window ROB input cardinality against ROB trace
+
+Added `normalizeRvfiPacketWindows_robInputs_length_robTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+now certifies equal generic ROB-input and ROB-retirement-trace cardinalities,
+and adjacent chains compose the same bridge while retaining the carried state
+boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** reuse the exact generic `robTrace_length_eq_robInputs_length`
+projection symmetrically after the window certificate supplies its carried
+state; packet boundaries, source-input order, retirement payloads, and
+completion order are not reconstructed.

@@ -4075,6 +4075,40 @@ theorem normalizeRvfiPacketRobInputs_length_robTrace_append
   exact (robTrace_length_eq_robInputs_length machine.toRobMachine state
     (first ++ second)).symm
 
+/- A certified packet-window chain has equal generic ROB-input and generic
+   ROB-trace cardinalities. -/
+theorem normalizeRvfiPacketWindows_robInputs_length_robTrace
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robInputs machine.toRobMachine state windows.flatten).length =
+      (robTrace machine.toRobMachine state windows.flatten).length := by
+  exact (robTrace_length_eq_robInputs_length machine.toRobMachine state
+    windows.flatten).symm
+
+/- The packet-window ROB-input/ROB-trace cardinality bridge composes across
+   two certified chains while retaining the carried state boundary. -/
+theorem normalizeRvfiPacketWindows_robInputs_length_robTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robInputs machine.toRobMachine state
+      (firstWindows ++ secondWindows).flatten).length =
+      (robTrace machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  exact (robTrace_length_eq_robInputs_length machine.toRobMachine state
+    (firstWindows ++ secondWindows).flatten).symm
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -4255,3 +4289,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_robTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_robTrace_append

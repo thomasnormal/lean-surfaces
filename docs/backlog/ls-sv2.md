@@ -2218,3 +2218,14 @@ append count.
 **DECIDED:** compose the normalized trace append certificate through the
 exact packet-to-ROB input projection; no input order or completion order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-133 — certify packet-window ROB input cardinality
+
+Added `normalizeRvfiPacketWindows_robInputs_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now proves that its flattened generic ROB input stream has exactly the
+flattened normalized retirement cardinality.  The PicoRV32 witness pins this
+chain count over its two measured windows.
+
+**DECIDED:** flatten only after the window certificate supplies each carried
+state and retirement boundary, then reuse the single-window ROB-input count.

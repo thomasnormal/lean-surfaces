@@ -9532,3 +9532,22 @@ frontend and oracle, covering 100 digits above the former worker range,
 
 DECIDED: keep one parameterized exact-ratio worker and protect its out-of-range
 and exponent-cutoff behavior with a pinned whole-program differential test.
+
+## 2026-11-06-pycomplete-367 — restore fail-closed refusal taxonomy coverage
+
+The refusal census now classifies every currently whitelisted differential row
+and every loud script witness, including the recent display, generator,
+definition-order, definition-deletion, repetition, and set-table boundaries.
+The taxonomy remains separate from the interpreter's measured `RefusalCause`;
+it now covers the complete inventory instead of silently skipping 103 function
+rows and 14 scripts.
+
+| Measurement | Result |
+|---|---|
+| Refusal inventory tests | 9 passed |
+| Refusal census | 185 rows in 18 classes; 15 scripts in 8 classes; 0 drifts |
+| Python syntax checks | `py_compile` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: a new `expect: unsupported` row must have a taxonomy entry, and the
+census remains fail-closed when any row or script is unclassified.

@@ -3076,3 +3076,15 @@ witness pins both forms.
 reuse the normalized packet tag-retirement/ROB-input cardinality bridge;
 packet boundaries, retirement payloads, retirement order, and source-input
 order are not reconstructed.
+
+## 2026-11-06-ls-sv2-201 — certify normalized packet tag-retirement cardinality against packet inputs
+
+Added `normalizeRvfiPacketTags_retirements_length_packetInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A normalized packet
+tag-retirement projection now certifies the exact packet-input cardinality,
+including adjacent captures.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** bridge the exact normalized packet tag-retirement/packet-trace
+cardinality through normalized packet-input/packet-trace length equality;
+packet boundaries, retirement payloads, retirement order, and source-input
+order are not reconstructed.

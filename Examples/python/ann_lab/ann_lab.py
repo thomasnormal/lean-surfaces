@@ -116,7 +116,8 @@ def ann_novalue_shadows_global(n):
 
 def ann_attr_target(n):
     # A non-simple target (`simple == 0`) gets no `__annotations__` entry but
-    # its annotation is still evaluated before the ordinary store.
+    # function scope skips annotation evaluation and performs the ordinary
+    # subscript store.
     d = {}
     d["k"]: int = n
     return d["k"]

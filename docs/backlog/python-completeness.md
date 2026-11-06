@@ -9739,3 +9739,18 @@ longer produced.
 
 DECIDED: the verified global/nonlocal dead-target bug is closed by refusal;
 full send-channel semantics remains a later generator item.
+
+## 2026-11-06-pycomplete-380 — recheck non-simple annotation scope order
+
+Re-ran the annotated-assignment witnesses against CPython 3.9.25. The
+extractor's current `AnnAssign` path stores the value and target before a
+module-scope annotation expression, while function scope skips that
+annotation entirely. `ann_nonsimple_order.py` therefore prints `val`, `ann`,
+`val`, `1` under both CPython and leanpy; the module annotation, effect, shared
+table, and value fixtures also agree. Corrected stale contract prose and the
+`ann_attr_target` acceptance note that still described annotation-before-store
+behavior.
+
+DECIDED: the reported silent order/scope bug is already closed by the
+structured extractor split; retain direct `AnnAssign` semantics as the later
+rule-2 cleanup.

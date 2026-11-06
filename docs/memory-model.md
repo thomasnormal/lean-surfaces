@@ -214,8 +214,8 @@ cycle DETECTION, never by running out of fuel).
   returning a dict through the boundary, same-size key-set churn
   during iteration, and `iter` over any NON-dict receiver (CPython has a
   distinct iterator type per receiver — each is its own inch).
-  Single-clause dict comprehensions are admitted through the ordered builder;
-  their generated pairs are checked for arity and key hashability.
+  Dict comprehensions remain a loud source-level boundary until their own
+  ordered-builder node is modeled.
 
 ## List semantics (H2 inventory — the in-world half is BUILT)
 
@@ -1288,11 +1288,9 @@ surface, and everything order-revealing is loud.
 order. That retained order is UNOBSERVABLE through the admitted
 readers, which is the design invariant that makes the subset honest.
 
-**Construction** — `set()`, `set(iterable)`, ordinary set displays, and
-single-clause set comprehensions. The
-extractor lowers `{a, b, …}` to `set([a, b, …])`, reusing the same allocator
-and deduplication worker, and lowers `{f(x) for x in xs}` to
-`set(f(x) for x in xs)`, reusing the generator drain. Starred display
+**Construction** — `set()`, `set(iterable)`, and ordinary set displays are modeled. Set
+comprehensions remain a loud source-level boundary; no comprehension is
+rewritten into a call of the name `set`. Starred display
 unpacking and multi-clause/async set comprehensions remain loud.
 Iterable coverage: a str (its code points), a value tuple, a
 namedtuple (class-erased elements), a boundary list, a heap list,
@@ -3711,52 +3709,14 @@ other complex spellings and uses remain loud; a shadowed `print` never reaches
 the rewrite. The `const.complex` row therefore measures a real output match
 without claiming arithmetic, comparison, container, or boundary semantics.
 
-## List comprehensions (2026-08-13)
+## List comprehensions (structured, loud boundary)
 
-`ListComp` was the top in-repo construct on the static ladder and shipped
-as a loud `Unsupported` leaf. It is now live, and almost none of it is
-new machinery.
-
-**The extractor emits the SAME node as a generator expression, under a
-different `kind`.** CPython compiles both into an implicit function over
-the already-evaluated outer iterator, differing only in what that
-function does with each element (yield vs append), so the envelope
-carries the identical fields (`elt`/`target`/`iter`/`ifs`/`walrus`) and
-the identical v0 restriction (ONE `for` clause, not `async`).
-
-**INGESTION desugars `[e for x in it if c]` into `list(e for x in it if
-c)`** (Json.lean, the `yield from` inlining precedent — the envelope
-stays a faithful dump of the real AST and the rewrite is a semantics
-decision recorded here). That is CPython-exact: building the list eagerly
-from the lazy one observes the same effects in the same order, because
-the drain completes before the enclosing frame can run again. It also
-inherits the genexp lowering WHOLE — the capture census, the walrus
-filter, and the `drainOk` gate, which already counted `list` among the
-draining builtins.
-
-**The one new interpreter piece is `list(iterable)`**: `tuple`'s exact
-inventory of iterables (str code points, tuple, namedtuple class-erased,
-boundary list, heap list snapshot, range, generator drain; dict and set
-receivers stay loud on the order doctrine) but it ALLOCATES — CPython's
-`list(x)` is always a NEW object, never an alias. So the call leaves
-`Expr.heapFree` (the `sorted` carve-out again, with the three proof
-obligations moving with it: `worldInv` gains `hlstx`, `fuelMono` gains a
-`bind` arm, `clockErase` gains `case blist` over a new `allocList` leaf
-lemma), and the generator arm can drain WITHOUT the `moduleGenFree` guard
-`tuple` needs, precisely because the call is outside the fragment.
-
-Acceptance: `iter_lab.lc_squares`/`lc_filter`/`lc_capture`/`list_of`/
-`list_empty` (13 differential rows, plus `#guard`s including
-`!(findFunction iter_lab "lc_squares").any FunctionDefn.heapFree`) and
-`harness/scripts/listcomp_script.py`. The old `blocked_comprehension.py`
-telemetry row became that payoff row; what it used to blame the
-comprehension for is now the honest blocker it always had underneath —
-`print` of a LIST, whose `repr` the tier does not guess (CPython quotes
-strings inside containers and not outside them), pinned separately by
-`harness/scripts/print_container.py`.
-
-Measured: in-repo corpus **73/88 MATCH (83.0%)**, 0 DIVERGE; script
-corpus 25 matched / 4 loud; 998 differential cases, 0 failed.
+The approved extractor retains `ListComp` as its own explicit AST kind. The
+current tier does not desugar it into a call of the name `list`; evaluation
+therefore reaches the existing loud `Unsupported` boundary. This preserves the
+source construct and avoids shadowing a user binding named `list`. Generator
+expressions remain a separate synthesized-function slice, while set and dict
+comprehensions are likewise retained as explicit loud nodes.
 
 ## Rendering: `print` of containers (2026-08-13)
 

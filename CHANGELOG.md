@@ -35,6 +35,10 @@
   landed starred assignment, loop-target, and positional-call slices stay
   separate.
 
+- Rechecked general ingestion translations: retired comprehension, starred-display,
+  and raise-cause rewrites remain absent; the remaining dict-view, deletion,
+  with-item, chain, and f-string bridges stay documented as measured debt.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

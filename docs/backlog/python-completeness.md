@@ -10004,3 +10004,27 @@ source nodes already reach the explicit refusal boundaries.
 DECIDED: retain display and comprehension syntax as source-level loud
 boundaries until native display/comprehension cases are modeled; keep the
 landed assignment, loop-target, and positional-call slices separate.
+
+
+## 2026-11-06-pycomplete-395 — recheck general ingestion rewrites
+
+The broad audit row mixes landed, deliberate translations with stale claims.
+Current extraction retains comprehension and starred-display source nodes as
+explicit loud boundaries; list/set/dict comprehensions are not rewritten into
+calls of shadowable builtin names. `raise X from cause` also remains a
+structured `Raise` node with its cause. The architecture and memory-model
+pages were corrected where they still described the retired list-comprehension
+and display lowerings as live.
+
+The remaining Json translations are narrow, documented representation bridges:
+generator expressions use CPython's implicit-function shape; dict views and
+item deletion use unspellable evaluator markers; multi-item `with` and chained
+assignments preserve their measured order through nested/temporary forms; and
+f-string pieces use intrinsic formatted-value nodes plus ordinary concatenation.
+Those are existing semantic debt for future source-node implementations, not
+new admissions. Their focused batteries remain differential and no new wrong
+answer was found in this recheck.
+
+DECIDED: keep retired display/comprehension/cause lowerings removed and retain
+only the measured representation bridges until each construct receives a native
+AST semantic case.

@@ -6482,3 +6482,11 @@ The comb summary's constant-expression path now keeps `$clog2` in the same
 localparams. Concrete guards cover both a positive and a zero result; the
 source-shaped Sklansky generate-family walls remain the named obligations above.
 
+## 2026-11-06 — exact generate-guard parameter lookup
+
+Generate guards now read integer parameters from both the unbounded `vals`
+table and the exact signed-32 `nvals` table. Signed 32-bit bitwise and shift
+guards preserve the operand bit pattern, so parameter-dependent generate-if
+conditions agree across both instantiation paths instead of refusing or
+silently taking a different branch.
+

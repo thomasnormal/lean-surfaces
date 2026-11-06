@@ -1628,19 +1628,30 @@ def guardShift32 (a b : Int) : Except String Int :=
   if b < 0 || 32 ≤ b then .error "invalid shift in generate guard"
   else .ok (guard32 (a * (2 : Int) ^ b.toNat))
 
+def guardLookup (env : IEnv) (n : String) : Option Int :=
+  match env.vals.lookup n with
+  | some v => some v
+  | none => (env.nvals.lookup n).map (·.1)
+
+def guardShr32 (signed : Bool) (a b : Int) : Except String Int :=
+  if b < 0 || 32 ≤ b then .error "invalid shift in generate guard"
+  else
+    let bits := guardBits a
+    let q := bits / (2 : Int) ^ b.toNat
+    if signed && a < 0 then
+      .ok (guard32 (q - (2 : Int) ^ (32 - b.toNat)))
+    else .ok (guard32 q)
+
 /-- Generate guards use the same signed 32-bit integer arithmetic as `int`.
 In particular, bitwise operations preserve the signed operand bit pattern. -/
 def evalGenGuard (env : IEnv) : PExpr → Except String Int
   | .int v => .ok (guard32 v)
   | .paramRef n none =>
-      match env.vals.lookup n with
+      match guardLookup env n with
       | some v => .ok (guard32 v)
-      | none =>
-          match env.nvals.lookup n with
-          | some (v, _, _) => .ok (guard32 v)
-          | none => .error s!"unbound parameter '{n}'"
+      | none => .error s!"unbound parameter '{n}'"
   | .genvarRef n =>
-      match env.vals.lookup n with
+      match guardLookup env n with
       | some v => .ok (guard32 v)
       | none => .error s!"genvar '{n}' outside its loop"
   | .paramRef n (some p) =>
@@ -1676,9 +1687,8 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
       | .m0 .land | .land => .ok (guard32 (b2i (a != 0 && b != 0)))
       | .m0 .lor | .lor => .ok (guard32 (b2i (a != 0 || b != 0)))
       | .m0 (.shl _) | .shl => guardShift32 a b
-      | .m0 (.shr _) | .shr =>
-          if b < 0 || 32 ≤ b then .error "invalid shift in generate guard"
-          else .ok (guard32 (a.tdiv ((2 : Int) ^ b.toNat)))
+      | .m0 (.shr signed) => guardShr32 signed a b
+      | .shr => guardShr32 false a b
       | _ => .error "operator outside generate integer guards"
   | .resize _ a | .signedResize _ a | .squash2 _ a | .cast _ a => evalGenGuard env a
   | .sysCall .clog2 a => do
@@ -1686,6 +1696,13 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
       if v < 0 then .error "$clog2 of a negative value"
       else .ok (guard32 (clog2 v.toNat : Int))
   | _ => .error "expression outside generate integer guards"
+
+#guard (match evalGenGuard { nvals := [("N", (16, 32, true))] } (.paramRef "N" none) with
+  | .ok 16 => true | _ => false)
+#guard (match evalGenGuard { nvals := [("N", (5, 32, true))] }
+    (.binary (.m0 .and)
+      (.binary (.m0 .sub) (.paramRef "N" none) (.int 6)) (.int 1)) with
+  | .ok 1 => true | _ => false)
 
 /-! ## Package constants -/
 

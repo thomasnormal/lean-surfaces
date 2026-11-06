@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/gen_lab/gen_lab.py",
-  "source_sha256": "d9c21c54128036c18ea47368924b201d6247d01ec88114fea06463497131a190",
+  "source_sha256": "a38c91ab503f41851eeabc6693dc212972a66035d464643ef2d455163e500212",
   "module": {
     "kind": "Module",
     "body": [

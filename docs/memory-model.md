@@ -1264,19 +1264,16 @@ recorded `NameError` boundary for a conditional walrus), and the genexp
 filter's hoist. The exact `UnboundLocalError` class is now carried for the
 observed value-less annotation slice.
 
-## `yield from` a non-genexp delegate (pass 5+ — BUILT 2026-08-19)
+## `yield from` delegation (structured, loud boundary — 2026-11-06)
 
-`yield from <expr>` where the delegate is not an admitted genexp now
-inlines too, through a FRESH loop target `<yieldfrom@n>` that no Python
-identifier can spell — so it collides with nothing in the enclosing body
-and needs no `yfForbidden` check at all. `yield from e` differs from
-`for t in e: yield t` only in `send`/`throw`/`close` propagation and in
-the delegation's RETURN value, and all four are already outside the tier
-(a yield in EXPRESSION position is `Expr.unsupported`, and the generator
-methods refuse), so the lowering is exact on this tier's surface. The
-shipped `moves()` ends in `yield from sorted(…)`, a CALL — which the
-statement-level census reported as SUPPORTED while the run refused, so
-this one was found by the smoke, not by counting nodes.
+The approved CPython AST retains statement-position `yield from` as
+`YieldFrom:delegation`. Ingestion keeps the `Stmt.yieldFromStmt` node and does
+not synthesize a `for` loop or a fresh target. PEP 380 gives delegation its own
+send/throw/close propagation and return value; the existing generator stepper
+therefore refuses this node loudly until a delegation frame is modeled. An
+empty delegated path can still match when the generator body is never resumed,
+which is ordinary laziness rather than a partial lowering. Expression-position
+`yield from` remains outside the expression tier as well.
 
 ## Set semantics (bound() arc pass 1 — BUILT 2026-08-10, the honest subset)
 
@@ -2376,48 +2373,13 @@ omitted table mutation or rebinding is observable. A shadowed builtin type name 
 evaluated rather than treated as a pure lookup, so its normal resolution and
 failure behavior remains visible. No interpreter or proof judgment changes.
 
-## `yield from` (pass 5 — the promotion arm returns to gen_moves)
+## `yield from` source identity
 
-#158 rewrote gen_moves's promotion loop as
-`yield from (Move(i, j, prom) for prom in "NBRQ")`. The tier admits
-exactly the statement-position `yield from <genexp>` shape, by
-INLINING at ingestion — no delegation machinery:
-
-    yield from (E for x in IT if C₁ if C₂)     -- statement position
-      ⇢  for x in IT: if C₁: if C₂: yield E
-
-The rewrite is CPython-exact in tier because (1) a genexp's free names
-are read from the enclosing frame at each resume, and during a
-delegation the enclosing frame provably cannot run — the inlined loop
-reads the same frame at the same points, so even REBOUND enclosing
-locals (gen_moves's `i`, `j`) are read identically, with NO capture
-analysis at all (strictly better than the by-value admissions: this is
-by-reference, verbatim); (2) `IT` evaluates once, at the same program
-point (genexp creation = loop start, both at the statement); (3)
-exceptions and exhaustion surface at the same points; (4) everything
-delegation COULD distinguish — `send`/`throw` through the outer
-generator, the inner generator's identity, `.close()` finalization —
-is already loudly out of tier.
-
-What inlining DOES change is the frame: the genexp's target binds in
-the ENCLOSING frame, where CPython gives it its own scope. Admission
-therefore requires the target names to occur NOWHERE else in the
-enclosing function body — not read, not bound, not a nested def's name
-or capture (`yfNames`, a whole-body census that skips yield-from-
-genexp statements' own subtrees). gen_moves's `prom` passes (its only
-occurrences are the genexp's own). Two yield-froms may share a target
-name: each admission ignores ALL yield-from subtrees, and the second
-loop's rebinding is as unobservable as the first's binding. A used-elsewhere
-genexp target is instead lowered through a synthesized helper generator and
-a fresh loop target, preserving the private comprehension scope. Everything
-else stays structured-but-loud: `Stmt.yieldFromStmt` survives
-ingestion un-lowered for a non-genexp iterable (`yield from [1, 2]`) or an
-unanalyzable target, and BOTH executors refuse it with the reason
-(`execStmt` and `genPlan` — never a silent skip). A yield-from in EXPRESSION position (its value is the
-delegation's return value) keeps falling to `Expr.unsupported`, like
-expression-position yield. `Stmt.heapFree` excludes `yieldFromStmt`
-(it only occurs in generator bodies, which already evict the module
-from the fragment; conservative and simple).
+The extractor emits `YieldFrom:delegation` directly from the approved AST and
+records the construct's source span and expression. The ingestion pass retains
+that node while lowering ordinary child expressions; it never rewrites the
+statement into `for …: yield …`. `execStmt` and the generator planner share the
+same loud boundary, so no source form silently claims delegation semantics.
 
 ## The walrus filter (pass 7 — the QS ordering line; BUILT)
 

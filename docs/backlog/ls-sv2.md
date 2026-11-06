@@ -1753,3 +1753,16 @@ windows.
 **DECIDED:** compose through the normalized packet trace append theorem and
 the single-window packet refinement contract; the second window's state and
 retirement boundary remain explicit.
+
+## 2026-11-06-ls-sv2-94 — expose single packet ISA trace equality
+
+Added `normalizeRvfiPacketTrace_refines` to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet capture now exposes
+its retirement payload directly as the ISA trace over the packet machine's
+retained input stream, without requiring consumers to unpack the complete
+state/order contract. The PicoRV32 witness pins this projection over its
+four-cycle packet capture.
+
+**DECIDED:** transport the existing ROB trace refinement through the exact
+`toRobMachine_inputs` equality; the state relation remains available through
+the complete packet contract and no input stream is reconstructed.

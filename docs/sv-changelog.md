@@ -6,7 +6,11 @@
 unknown bits are quantified over all correlated 0/1 concretizations, with
 2-state conversion remaining the IEEE-defined `x`/`z` to 0 boundary. The
 concretization judgment and its refinement theorems are implementation work;
-this packet changes no evaluator or AST.
+this packet changes no evaluator or AST. The first implementation packet adds
+the kernel-facing `LVec.concretizations` enumeration and pointwise
+`LVec.Resolves` relation. Known vectors enumerate once; each `x`/`z` bit
+enumerates both 0 and 1. E execution is unchanged until its refinement route
+is added.
 
 ## Exact signed-32-bit `int` constants at every parameter point
 

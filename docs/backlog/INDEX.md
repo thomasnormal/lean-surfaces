@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**892 entries across 18 lanes.** Regenerate with
+**893 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-ls-sv2-138` |  | compose packet-window trace cardinality | ls-sv2 |
 | `2026-11-06-ls-sv2-137` |  | certify packet-window trace cardinality | ls-sv2 |
 | `2026-11-06-ls-sv2-136` |  | compose packet-window ROB trace cardinality | ls-sv2 |
 | `2026-11-06-ls-sv2-135` |  | certify packet-window ROB trace cardinality | ls-sv2 |

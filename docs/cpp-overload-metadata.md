@@ -128,3 +128,7 @@ also refused; operator identity remains the artifact's string-typed handle.
 An overloaded-operator call whose structured `referencedDecl.kind` contradicts
 the retained function or method declaration is also refused; both evidence
 records must agree.
+
+An overloaded-operator call whose structured `referencedDecl` omits `kind` is
+also refused; operator metadata does not infer a missing evidence field from
+the declaration table.

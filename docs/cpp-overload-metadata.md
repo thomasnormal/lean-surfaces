@@ -101,3 +101,6 @@ recorded refusal; overload metadata requires retained declaration evidence.
 An overloaded-operator handle duplicated in declaration evidence is also
 refused; operator identity requires one unambiguous retained function or method
 row.
+
+An overloaded-operator call whose structured `referencedDecl.id` is numeric is
+also refused; operator identity remains the artifact's string-typed handle.

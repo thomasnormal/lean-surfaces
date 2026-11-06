@@ -3825,6 +3825,81 @@ theorem normalizeRvfiPacketWindows_tags_refines_state_append
     state isaState start firstWindows secondWindows firstRetirementWindows
     secondRetirementWindows hrob hrel hfirst hsecond
 
+/- The packet-window tag/state contract can expose the packet machine's state
+   projection directly at the final boundary. -/
+theorem normalizeRvfiPacketWindows_tags_refines_state_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (InOrderPacketStream start
+        (rvfiPacketTags machine state windows.flatten) ∧
+      (rvfiPacketTags machine state windows.flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state windows.flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten))
+        finalOrder ∧
+      finalOrder = start + retirementWindows.flatten.length) := by
+  rcases normalizeRvfiPacketWindows_tags_refines_state machine isa rel admit
+      state isaState start windows retirementWindows hrob hrel h with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
+/- The packet-window tag/state projection composes across adjacent certified
+   chains, retaining the carried state and retirement-order boundary. -/
+theorem normalizeRvfiPacketWindows_tags_refines_state_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (InOrderPacketStream start
+        (rvfiPacketTags machine state
+          (firstWindows ++ secondWindows).flatten) ∧
+      (rvfiPacketTags machine state
+          (firstWindows ++ secondWindows).flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state
+          (firstWindows ++ secondWindows).flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten))
+        finalOrder ∧
+      finalOrder = start +
+        (firstRetirementWindows ++ secondRetirementWindows).flatten.length) := by
+  rcases normalizeRvfiPacketWindows_tags_refines_state_append machine isa rel
+      admit state isaState start firstWindows secondWindows
+      firstRetirementWindows secondRetirementWindows hrob hrel hfirst hsecond with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /-- The complete packet-facing finite-chain contract combines ISA trace
 equality with the final related state and exact retirement-order increment. -/
 theorem normalizeRvfiPacketWindows_refines
@@ -6954,6 +7029,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_state_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_state_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_state_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state_packet

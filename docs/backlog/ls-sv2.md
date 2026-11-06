@@ -3562,3 +3562,15 @@ PicoRV32 witness pins both single-capture and adjacent-capture forms.
 **DECIDED:** apply the exact `toPacketMachine_stateAfter` projection to the
 existing packet-tag state contract; packet boundaries, retirement payloads,
 and carried order remain unchanged.
+
+## 2026-11-06-ls-sv2-241 — expose normalized packet-window tag state through packet state
+
+Added `normalizeRvfiPacketWindows_tags_refines_state_packet` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`. A certified packet-window tag
+contract now exposes its final relation through `packetStateAfter`, retaining
+packet-boundary order and ISA trace equality over packet inputs. The PicoRV32
+witness pins both the finite chain and adjacent-chain forms.
+
+**DECIDED:** apply the exact `toPacketMachine_stateAfter` projection to the
+existing packet-window tag/state contract; window boundaries, retirement
+payloads, carried state, and order offsets remain unchanged.

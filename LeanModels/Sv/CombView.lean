@@ -724,7 +724,7 @@ def leafRd? (ds : List DeclT) : PExpr → Except String Acc
       | .ident n =>
           match affOf? i with
           | some a => bitAcc? ds n a
-          | none => .error s!"read `{n}[…]` has a non-affine (dynamic or nonlinear) index"
+          | none => .error s!"non-affine genvar-index obligation: read `{n}[…]` has a dynamic or nonlinear index, so the driven window cannot be determined"
       | _ => .error "bit select of a non-identifier base"
   | .partSel b msb lsb =>
       match b with

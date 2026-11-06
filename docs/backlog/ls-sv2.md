@@ -2632,3 +2632,16 @@ PicoRV32 witness pins both forms.
 packet-input equality and use the packet-input append law for the composed
 form; retirement order, packet boundaries, source-input order, and payloads
 are not reconstructed.
+
+## 2026-11-06-ls-sv2-166 — certify packet-window ROB tag-input cardinality against packet inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs_length_packetInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies the exact packet-machine input cardinality of
+its generic ROB tagged source-input projection, and adjacent chains compose the
+same bridge while retaining the carried state and order boundary.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact certified packet-window generic-ROB
+tag-input/packet-input equality; packet boundaries, source-input order, and
+payloads are not reconstructed.

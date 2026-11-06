@@ -1211,6 +1211,18 @@ theorem pinned_packet_windows_rob_tags_inputs_length_robInputs_chain :
     [nontrapFirstExpected, nontrapSecondExpected]
     pinned_packet_windows_certificate
 
+theorem pinned_packet_windows_rob_tags_inputs_length_packetInputs_chain :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).map
+        TaggedCommit.input).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).length := by
+  exact normalizeRvfiPacketWindows_rob_tags_inputs_length_packetInputs
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
+
 theorem pinned_packet_windows_rob_tags_retirements_robTrace_chain :
     (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
         [packetFirstCycles, packetSecondCycles].flatten).map
@@ -1408,6 +1420,25 @@ theorem pinned_packet_windows_rob_tags_inputs_length_robInputs_append :
       (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
         ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length := by
   apply normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs_append
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected]
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
+theorem pinned_packet_windows_rob_tags_inputs_length_packetInputs_append :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).map
+        TaggedCommit.input).length =
+      (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).length := by
+  apply normalizeRvfiPacketWindows_rob_tags_inputs_length_packetInputs_append
     pinnedPacketMachine pinnedPacketMachine.init 0
     [packetFirstCycles] [packetSecondCycles]
     [nontrapFirstExpected] [nontrapSecondExpected]
@@ -2572,7 +2603,9 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_rob_tags_inputs_chain
 #print axioms pinned_packet_windows_rob_tags_inputs_append
 #print axioms pinned_packet_windows_rob_tags_inputs_length_robInputs_chain
+#print axioms pinned_packet_windows_rob_tags_inputs_length_packetInputs_chain
 #print axioms pinned_packet_windows_rob_tags_inputs_length_robInputs_append
+#print axioms pinned_packet_windows_rob_tags_inputs_length_packetInputs_append
 #print axioms pinned_packet_windows_rob_tags_length_chain
 #print axioms pinned_packet_windows_rob_tags_inputs_length_chain
 #print axioms pinned_packet_windows_rob_tags_retirements_length_chain

@@ -69,6 +69,10 @@ A positive ordinary-call witness also covers the artifact-local string
 `referencedDecl` form. The string is parsed as a handle and matched against one
 retained declaration row; it is not used for name lookup.
 
+A positive overloaded-operator witness covers the same artifact-local string
+`referencedDecl` form. Operator metadata parses and validates the handle without
+using the printed operator name.
+
 A malformed cast wrapper with two children is a recorded refusal; the gate
 requires the exact one-child frontend shape and does not choose one child by
 position.

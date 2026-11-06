@@ -2202,6 +2202,18 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-operator-string-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedOperatorStringTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "struct S {}; S operator+(S, S); int f() { return 0; }",
+    "expect": "match",
+    "rung": 8
+  },
+  {
     "id": "translation.resolved-operator-noncallable-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

@@ -20,6 +20,9 @@
 - Added a positive ordinary-call metadata witness for artifact-local string
   declaration handles.
 
+- Added a positive overloaded-operator metadata witness for artifact-local
+  string declaration handles.
+
 - Added a recorded refusal for overloaded-operator handles duplicated in
   artifact declaration evidence.
 

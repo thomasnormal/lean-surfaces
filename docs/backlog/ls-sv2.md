@@ -2462,3 +2462,15 @@ state and order boundary.  The PicoRV32 witness pins both forms.
 **DECIDED:** flatten only after the window certificate supplies its carried
 state and normalized retirement boundary, then reuse the exact packet-input
 append law; packet boundaries and source-input order remain unchanged.
+
+## 2026-11-06-ls-sv2-153 — certify normalized packet tag-input cardinality
+
+Added `normalizeRvfiPacketTags_inputs_length` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now certifies
+that the flattened packet-boundary source-input projection has exactly the
+decoded retirement cardinality, and adjacent captures compose the same count.
+The PicoRV32 witness pins both forms.
+
+**DECIDED:** transport the exact normalized generic ROB-tag input cardinality
+through `toRobMachine_tags`; no packet boundary or source-input order is
+reconstructed.

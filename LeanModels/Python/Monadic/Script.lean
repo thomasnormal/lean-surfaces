@@ -444,7 +444,7 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
             refuse s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
           else if (findFunction m n).isSome || (findClass m n).isSome
               || m.namedtuples.any (·.name == n) then
-            refuse s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING or unobserved del is admitted (docs/backlog.md §del RECONCILED)"
+            refuse s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry and cannot be tombstoned by this tier (docs/backlog.md §del RECONCILED)"
           else do envPut env; raisePy (.nameError n)
   | s => execOpen K m s
 

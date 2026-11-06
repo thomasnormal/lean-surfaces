@@ -9804,3 +9804,21 @@ that still claimed the named-genexp pair was fused at ingestion.
 DECIDED: preserve these source statement pairs and refuse only at the runtime
 state boundary that is actually unmodeled; no exact two-statement rewrite is
 part of the approved ingestion path.
+
+## 2026-11-06-pycomplete-384 — recheck the static definition-delete census
+
+The definition-delete fix is already in current `Script.lean`: its
+`scriptStaticDeleteNoop` predicate explicitly excludes functions, classes, and
+namedtuples, so `moduleGlobalReads` cannot accidentally admit a deleted
+definition even when a function body reaches it. The pinned witnesses agree:
+CPython 3.9.25 raises `NameError` for `del_def_call.py`, `del_partial_script.py`
+and the trailing opcode-shaped delete, while leanpy refuses at the static
+definition entry. Benign-import deletion remains the only static no-op.
+
+Corrected stale executor messages, script comments, and memory-model prose
+that still described trailing definition deletion as rewritten to `pass` or as
+an admitted trailing/unobserved delete.
+
+DECIDED: retain a loud refusal for every module `def`/`class`/namedtuple/alias
+deletion until definitions become runtime bindings; the function-body census
+is no longer a soundness gate for definition deletion.

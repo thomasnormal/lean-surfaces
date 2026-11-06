@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for constructor metadata whose structured `ctor`
+  object lacks its declaration handle.
+
 - Added a recorded refusal for overloaded-operator callees with an unexpected
   AST node kind.
 

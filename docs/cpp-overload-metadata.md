@@ -24,6 +24,10 @@ no `ctor` handle, so that source shape is recorded as a loud refusal rather
 than treating the type spelling as overload identity. Construction,
 conversion, and lifetime execution remain outside this metadata gate.
 
+A structured `ctor` object missing its declaration `id` is separately refused;
+constructor identity requires a complete frontend handle, not just a
+constructor kind tag.
+
 The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution

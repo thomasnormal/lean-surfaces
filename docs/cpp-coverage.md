@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1617 | 0 | 1586 | 0 | 21 | 0 | 10 |
+| 1618 | 0 | 1586 | 0 | 22 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -221,6 +221,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.resolved-operator-unexpected-callee-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-identity` | 3 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `translation.resolved-constructor-identity-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `translation.resolved-constructor-malformed-handle-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-identity` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `translation.resolved-call-noncallable-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-cast-identity` | 3 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |

@@ -2917,3 +2917,15 @@ forms.
 **DECIDED:** reuse the exact `robTags_length_eq_robInputs_length` projection;
 tag payloads, packet boundaries, retirement order, and source-input order are
 not reconstructed.
+
+## 2026-11-06-ls-sv2-188 — certify packet-window ROB tag cardinality against ROB inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_length_robInputs` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+now carries equal generic ROB-tag and generic ROB-input cardinalities through
+flattening and adjacent retained state boundaries.  The PicoRV32 witness pins
+both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the generic ROB-tag/ROB-input cardinality bridge; packet boundaries, tag
+payloads, retirement order, and source-input order are not reconstructed.

@@ -2566,3 +2566,16 @@ state and order boundary.  The PicoRV32 witness pins both forms.
 and normalized retirement boundaries, then bridge the exact tag-retirement
 projection through the packet trace; packet boundaries, retirement order, and
 payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-161 — certify normalized ROB tag-retirement cardinality against ROB trace
+
+Added `normalizeRvfiPacketRobTags_retirements_length_robTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the generic ROB tagged-retirement projection has exactly the
+corresponding ROB retirement-trace cardinality, and adjacent normalized
+captures compose the same bridge while retaining the first capture's state
+boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact normalized generic-ROB
+tag-retirement/ROB-trace equality; retirement order, packet boundaries, and
+payloads are not reconstructed.

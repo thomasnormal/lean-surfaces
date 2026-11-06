@@ -848,6 +848,48 @@ theorem normalizeRvfiPacketRobTags_retirements {State : Type}
   rw [machine.toRobMachine_tags_retirements]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- A normalized packet capture identifies tagged retirement payloads with the
+   generic ROB retirement trace. -/
+theorem normalizeRvfiPacketRobTags_retirements_robTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (_h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.retirement =
+      robTrace machine.toRobMachine state cycles := by
+  exact robTags_retirements machine.toRobMachine state cycles
+
+/- The tagged retirement-to-trace bridge composes across adjacent normalized
+   packet windows, retaining the first window's state for the second. -/
+theorem normalizeRvfiPacketRobTags_retirements_robTrace_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state first ++
+        robTrace machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  calc
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement =
+      robTrace machine.toRobMachine state (first ++ second) :=
+      normalizeRvfiPacketRobTags_retirements_robTrace machine state
+        (first ++ second) hcombined
+    _ = robTrace machine.toRobMachine state first ++
+        robTrace machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second :=
+      RvfiPacketMachine.toRobMachine_trace_append machine state first second
+
 /- A successful normalized packet capture exposes its packet-facing source
    inputs directly through the generic ROB tag stream. -/
 theorem normalizeRvfiPacketRobTags_inputs {State : Type}
@@ -2716,6 +2758,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append

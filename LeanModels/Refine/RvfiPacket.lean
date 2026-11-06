@@ -113,6 +113,52 @@ theorem rvfiPacketObservations_append {State : Type}
           rw [ih state']
           rw [List.append_assoc]
 
+/-- A finite stream of packet windows, each with its carried starting order
+and the state produced by its predecessor.  Mismatched window/retirement
+lists are rejected rather than silently truncated. -/
+def normalizeRvfiPacketWindows {State : Type}
+    (machine : RvfiPacketMachine State) :
+    State → Nat → List (List Input) → List (List Retirement) → Prop
+  | _, _, [], [] => True
+  | state, start, cycles :: rest, retirements :: tails =>
+      normalizeRvfiTrace? start
+          (rvfiPacketObservations machine state cycles) = some retirements ∧
+        normalizeRvfiPacketWindows machine
+          (rvfiPacketStateAfter machine state cycles)
+          (start + retirements.length) rest tails
+  | _, _, [], _ :: _ => False
+  | _, _, _ :: _, [] => False
+
+/-- Window-by-window normalization is exactly normalization of the flattened
+observation stream, with the retirement windows flattened in the same order. -/
+theorem normalizeRvfiPacketWindows_flatten {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input)) (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state windows.flatten) =
+      some retirementWindows.flatten := by
+  induction windows generalizing state start retirementWindows with
+  | nil =>
+      cases retirementWindows with
+      | nil => rfl
+      | cons retirements tails => cases h
+  | cons cycles rest ih =>
+      cases retirementWindows with
+      | nil => cases h
+      | cons retirements tails =>
+          rcases h with ⟨hwindow, htail⟩
+          rw [List.flatten_cons, rvfiPacketObservations_append,
+            normalizeRvfiTrace?_append]
+          simp only [hwindow]
+          have htail' := ih
+            (state := rvfiPacketStateAfter machine state cycles)
+            (start := start + retirements.length)
+            (retirementWindows := tails) htail
+          rw [htail']
+          rfl
+
 /-! ## Normalized packet-window composition -/
 
 /-- The tagged packet emitted at every cycle boundary, including empty
@@ -796,6 +842,36 @@ theorem normalizeRvfiPacketRobTags_refines_state
   · exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start
       hrob state isaState hrel cycles retirements hobs
 
+/-- A finite chain of normalized packet windows supplies the complete
+flattened packet/ISA contract and the final state/order relation. -/
+theorem normalizeRvfiPacketRobTags_refines_windows
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hwindows : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state windows.flatten) ∧
+      (robTags machine.toRobMachine state windows.flatten).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state windows.flatten)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state windows.flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten))
+          finalOrder ∧
+      finalOrder = start + retirementWindows.flatten.length) := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows hwindows
+  exact normalizeRvfiPacketRobTags_refines_state machine isa rel admit state
+    isaState start windows.flatten retirementWindows.flatten hrob hrel hflat
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -903,5 +979,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_flatten
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

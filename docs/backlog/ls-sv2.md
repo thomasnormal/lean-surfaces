@@ -1426,3 +1426,18 @@ the complete four-retirement packet trace.
 **DECIDED:** provide the single-window conjunction directly while retaining
 the existing stream and state theorems as the independently reusable proof
 components.
+
+## 2026-11-06-ls-sv2-68 — generalize packet refinement to finite window chains
+
+Added `normalizeRvfiPacketWindows` and
+`normalizeRvfiPacketWindows_flatten` to `LeanModels/Refine/RvfiPacket.lean`.
+An arbitrary finite list of packet windows now carries its own state and order
+boundaries, rejects mismatched retirement lists, and flattens to one exact
+normalization certificate.  `normalizeRvfiPacketRobTags_refines_windows`
+reuses that certificate to expose the complete tagged ROB/ISA and final
+state/order contract for the whole chain.  The PicoRV32 witness pins the
+two-window chain through the new generic route.
+
+**DECIDED:** represent streamed captures as an inductive window chain and
+flatten only after every local normalization has supplied its carried state
+and order boundary; no completion or packet order is reconstructed.

@@ -415,6 +415,45 @@ theorem pinned_packet_rob_tags_refines_state
     rel admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
     nontrapExpected hrob hrel pinned_packet_observations_normalize
 
+theorem pinned_packet_windows_certificate :
+    normalizeRvfiPacketWindows pinnedPacketMachine pinnedPacketMachine.init 0
+      [packetFirstCycles, packetSecondCycles]
+      [nontrapFirstExpected, nontrapSecondExpected] := by
+  refine ⟨pinned_packet_first_window_normalize, ?_⟩
+  refine ⟨?_, trivial⟩
+  rw [show nontrapFirstExpected.length = 2 by decide]
+  simpa using pinned_packet_second_window_normalize
+
+theorem pinned_packet_windows_chain_refines_state
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    (InOrderTags 0
+        (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+          [packetFirstCycles, packetSecondCycles].flatten) ∧
+      (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten).map
+          TaggedCommit.retirement =
+        trace rvMachine rvMachine.init
+          (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+            [packetFirstCycles, packetSecondCycles].flatten)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten)
+        (machineStateAfter rvMachine rvMachine.init
+          (packetInputs pinnedPacketMachine.toPacketMachine
+            pinnedPacketMachine.init
+            [packetFirstCycles, packetSecondCycles].flatten)) finalOrder ∧
+      finalOrder = 0 +
+        [nontrapFirstExpected, nontrapSecondExpected].flatten.length) := by
+  exact normalizeRvfiPacketRobTags_refines_windows pinnedPacketMachine rvMachine
+    rel admit pinnedPacketMachine.init rvMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected] hrob hrel
+    pinned_packet_windows_certificate
+
 theorem pinned_packet_state_after_refines_normalized
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -758,6 +797,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_state_after_refines_normalized_windows
 #print axioms pinned_packet_rob_tags_refines_isa_windows_of
 #print axioms pinned_packet_rob_tags_refines_state_windows
+#print axioms pinned_packet_windows_certificate
+#print axioms pinned_packet_windows_chain_refines_state
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

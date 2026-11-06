@@ -47,6 +47,20 @@
       "measured": "A continuous next-state assignment may precede an asynchronous-reset always_ff in the same profile; comb settle feeds reset and edge phases, and the mixed cycle matches Icarus."
     },
     {
+      "name": "mixed_comb_profile",
+      "example": "seq_mixed_comb",
+      "top": "mixed_comb_profile",
+      "clock": "clk",
+      "signals": ["d", "q", "n"],
+      "stimulus": [
+        {"d": "0"},
+        {"d": "1"},
+        {"d": "0"},
+        {"d": "1"}
+      ],
+      "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge."
+    },
+    {
       "name": "user_function_eval",
       "example": "seq_function",
       "top": "function_call_eval",

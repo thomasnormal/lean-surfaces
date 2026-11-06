@@ -9567,3 +9567,22 @@ ordering; no hand-authored backlog content changed.
 DECIDED: regenerate the shared index whenever another lane advances the
 backlog, so documentation CI sees the same generated state as the current
 master.
+
+## 2026-11-06-pycomplete-369 — rebase the round proof artifact on the parameterized worker
+
+The round-lab proof artifact still referenced the deleted per-digit workers from
+before `roundFloatNDigits` landed, so its target failed with unknown
+`roundFloatOne` through `roundFloatFortyThree` identifiers. The proof now keeps
+all 53 public round theorems and discharges them directly against the shared
+parameterized interpreter path with kernel witnesses; the stale helper lemmas
+and duplicated unfold-heavy scripts are gone.
+
+| Measurement | Result |
+|---|---|
+| Managed Lean build | `lake build Examples.python.round_lab.proof`: 18 jobs passed |
+| Public theorem count | 53 retained |
+| Stale worker references | 0 in `round_lab/proof.lean` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: example proofs follow the parameterized semantic worker and must not
+retain references to removed per-digit implementation names.

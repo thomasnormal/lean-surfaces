@@ -2726,3 +2726,16 @@ through their carried state boundary.  The PicoRV32 witness pins both forms.
 reuse the normalized packet-input/packet-trace cardinality theorem, and retain
 the carried state; packet boundaries, retirement order, source-input order,
 and payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-173 — certify normalized ROB trace cardinality against packet trace
+
+Added `normalizeRvfiPacketRobTrace_length_packetTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the generic ROB retirement trace and packet retirement trace
+have equal cardinality, and adjacent captures compose the same bridge while
+retaining the first capture's state boundary.  The PicoRV32 witness pins both
+forms.
+
+**DECIDED:** take `List.length` of the exact normalized generic ROB and packet
+trace equalities and compose through normalized trace append; retirement
+payloads, packet boundaries, and order are not reconstructed.

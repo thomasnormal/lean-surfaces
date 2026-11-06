@@ -308,10 +308,17 @@ definition only when that definition ended before the caller's definition;
 recursive self-calls are the one intentional exception.  Duplicate plain
 definition names are refused because the static table cannot reproduce a
 position-sensitive rebind. -/
+def namedtupleReachableBefore (m : Module) : Bool :=
+  m.functions.toList.all fun f =>
+    m.namedtuples.toList.all fun nt =>
+      if (Stmt.allNamesList f.body.toList).contains nt.name then
+        decide (nt.span.endLineno < f.span.lineno)
+      else true
+
 def defsReachableBefore (m : Module) : Bool :=
   let names := m.functions.toList.map FunctionDefn.name
   let duplicate := names.any fun n => names.count n > 1
-  if duplicate then false
+  if duplicate || !namedtupleReachableBefore m then false
   else
     m.functions.toList.all fun f =>
       let locals := f.params.toList.map Param.arg ++ Stmt.assignedNamesList f.body.toList

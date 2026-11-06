@@ -499,6 +499,17 @@ theorem RvfiPacketMachine.toRobMachine_inputs_append {State : Type}
     machine.toRobMachine_inputs, machine.toRobMachine_inputs]
   rw [machine.toPacketMachine_stateAfter]
 
+/- The generic ROB tag projection preserves state threading across adjacent
+   cycle windows. -/
+theorem RvfiPacketMachine.toRobMachine_tags_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    robTags machine.toRobMachine state (first ++ second) =
+      robTags machine.toRobMachine state first ++
+        robTags machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  rw [robTags_append, machine.toRobMachine_stateAfter]
+
 theorem rvfiPacketStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiPacketMachine State) (isa : Machine IsaState)
@@ -2095,6 +2106,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_inputs_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs_append
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_append
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append

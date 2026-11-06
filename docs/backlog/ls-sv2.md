@@ -2009,3 +2009,14 @@ projection over its two packet windows.
 
 **DECIDED:** reuse the generic `packetInputs_append` law at the packetized RVFI
 projection boundary; no input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-115 — expose packet ROB tag threading
+
+Added `RvfiPacketMachine.toRobMachine_tags_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The generic tagged ROB stream now has an
+explicit append law, with the second segment evaluated from the first segment's
+retained RVFI state.  The PicoRV32 witness pins this projection over its two
+packet windows.
+
+**DECIDED:** transport the generic `robTags_append` law through the exact
+RVFI-to-ROB state bridge; no tag order or completion order is reconstructed.

@@ -2291,3 +2291,15 @@ The PicoRV32 witness pins this append count.
 **DECIDED:** compose through the explicit window-chain append certificate and
 the exact packet-to-ROB trace cardinality; no trace payload or order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-139 — expose packet-window retirement trace
+
+Added `normalizeRvfiPacketWindows_trace` and
+`normalizeRvfiPacketWindows_trace_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain now
+exposes its packet-facing retirement payload directly, and two certified
+chains compose that payload with the second chain's carried state and order
+boundary.  The PicoRV32 witnesses pin both forms.
+
+**DECIDED:** erase the generic ROB boundary through the exact
+`toRobMachine_trace` equality; no retirement payload or order is reconstructed.

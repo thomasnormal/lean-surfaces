@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-362` |  | retain explicit raise causes in ingestion | python-completeness |
 | `2026-11-06-pycomplete-361` |  | remove builtin-name display and comprehension lowerings | python-completeness |
 | `2026-11-06-pycomplete-360` |  | remove shape-specific try lowerings | python-completeness |
 | `2026-11-06-pycomplete-359` |  | preserve class-definition statement identity | python-completeness |

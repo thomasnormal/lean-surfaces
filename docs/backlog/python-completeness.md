@@ -9433,3 +9433,19 @@ construct is reached.
 DECIDED: display and comprehension syntax is never represented as a call to a
 shadowable builtin; unsupported display shapes refuse loudly until their own
 semantic cases land.
+
+## 2026-11-06-pycomplete-362 — retain explicit raise causes in ingestion
+
+The ingestion pass no longer erases `raise X from None` by converting its
+cause into the ordinary class-only raise form. The structured `Raise` node
+retains the cause expression; the existing evaluator refuses the cause-bearing
+shape until exception chaining and suppression are modeled explicitly. Added
+rows make the boundary loud rather than silently changing the source program.
+
+| Measurement | Result |
+|---|---|
+| Envelope freshness | FRESH 81, STALE 0 |
+| Native differential | 4196 cases: 0 failed, 183 whitelisted unsupported, 4013 matched |
+| Formatting | `git diff --check` passed |
+
+DECIDED: exception causes remain in the AST and are never erased by ingestion.

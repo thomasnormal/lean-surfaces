@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `raise X from cause` now retains its structured cause through ingestion; cause-bearing raises remain loud until exception chaining is modeled.
+
 - Removed builtin-name and synthetic-temporary lowerings for set/list/dict comprehensions, starred displays, starred calls, and starred loop targets; these AST shapes now refuse through explicit boundaries.
 
 - Removed shape-specific `try`/`finally`/`else` and generator-handler extractor lowerings; structured `Try` nodes now retain loud reasons for unsupported cleanup and generator-frame semantics.

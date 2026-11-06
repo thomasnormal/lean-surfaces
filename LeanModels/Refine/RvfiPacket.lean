@@ -1691,6 +1691,40 @@ theorem normalizeRvfiPacketTags_inputs_length_packetInputs_append
     _ = (packetInputs machine.toPacketMachine state (first ++ second)).length := by
       rw [packetInputs_append]
 
+/- The normalized packet-tag source-input projection has exactly the generic
+   ROB retirement-trace cardinality. -/
+theorem normalizeRvfiPacketTags_inputs_length_robTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((rvfiPacketTags machine state cycles).flatten.map TaggedCommit.input).length =
+      (robTrace machine.toRobMachine state cycles).length := by
+  have hlen := normalizeRvfiPacketRobTags_inputs_length_robTrace machine state
+    cycles h
+  simpa only [machine.toRobMachine_tags, List.length_map] using hlen
+
+/- The packet-tag source-input/ROB-trace cardinality bridge composes across
+   adjacent normalized windows, retaining the first window's state boundary. -/
+theorem normalizeRvfiPacketTags_inputs_length_robTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.input).length =
+      (robTrace machine.toRobMachine state (first ++ second)).length := by
+  have hlen := normalizeRvfiPacketRobTags_inputs_length_robTrace_append
+    machine state first second hfirst hsecond
+  simpa only [machine.toRobMachine_tags, List.length_map] using hlen
+
 /- The normalized packet-tag retirement projection has exactly the decoded
    retirement cardinality. -/
 theorem normalizeRvfiPacketTags_retirements_length {State : Type}
@@ -5374,6 +5408,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_packetInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_packetInputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_robTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_inputs_length_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_robInputs

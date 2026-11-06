@@ -1,0 +1,199 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/scripts/namedtuple_import_order.py",
+  "source_sha256": "8c0105d6dc99f58916207c816e24f332a4e556324e0bd3bd8fc852f179474fb8",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 73
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 73
+          },
+          "value": {
+            "type": "str",
+            "value": "A static namedtuple table must not move its import before the call."
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 24
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 3,
+              "col_offset": 0,
+              "end_lineno": 3,
+              "end_col_offset": 1
+            },
+            "id": "P"
+          }
+        ],
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 3,
+            "col_offset": 4,
+            "end_lineno": 3,
+            "end_col_offset": 24
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 14
+            },
+            "id": "namedtuple"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 3,
+                "col_offset": 15,
+                "end_lineno": 3,
+                "end_col_offset": 18
+              },
+              "value": {
+                "type": "str",
+                "value": "P"
+              }
+            },
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 3,
+                "col_offset": 20,
+                "end_lineno": 3,
+                "end_col_offset": 23
+              },
+              "value": {
+                "type": "str",
+                "value": "x"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "ImportFrom",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 34
+        },
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 5,
+            "col_offset": 0,
+            "end_lineno": 5,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 5,
+              "col_offset": 0,
+              "end_lineno": 5,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 5,
+                "col_offset": 6,
+                "end_lineno": 5,
+                "end_col_offset": 12
+              },
+              "value": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 6,
+                  "end_lineno": 5,
+                  "end_col_offset": 10
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 6,
+                    "end_lineno": 5,
+                    "end_col_offset": 7
+                  },
+                  "id": "P"
+                },
+                "args": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 8,
+                      "end_lineno": 5,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "attr": "x"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

@@ -800,10 +800,21 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
   let unchanged := (topLevel, #[], demoted)
   -- rule 1: the benign import is present
   if !topLevel.any isBenignNtImport then unchanged else
+  -- The import is an ordinary executable statement in CPython.  A static
+  -- table must not make a candidate whose call precedes that statement look
+  -- initialized: CPython raises NameError before reaching the import.  Keep
+  -- the recognition all-or-nothing and require one exact benign import to
+  -- have completed before every plain or namedtuple-base candidate.
+  let ntImportBefore : Span → Bool := fun sp =>
+    topLevel.toList.any fun s =>
+      isBenignNtImport s && decide ((stmtSpanOf s).endLineno < sp.lineno)
   -- candidates, in source order (assign binds and class bases share the
   -- census — a failed census demotes BOTH, all-or-nothing)
   let cands := topLevel.toList.filterMap ntCandidate
   if cands.isEmpty && !classes.any (·.ntBase.isSome) then unchanged else
+  if !cands.all (fun nt => ntImportBefore nt.span)
+      || !classes.toList.all (fun c => c.ntBase.isNone || ntImportBefore c.span) then
+    unchanged else
   -- rule 3a: the census must analyze EVERY top-level statement
   match (topLevel.toList.filter (!isBenignNtImport ·)).mapM stmtBinds with
   | Option.none => unchanged

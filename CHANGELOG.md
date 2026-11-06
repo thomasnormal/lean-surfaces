@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Namedtuple table recognition now requires the structured benign import to
+  precede every candidate. A candidate written before
+  `from collections import namedtuple` stays on the loud runtime path, so
+  ingestion cannot move the import before its CPython execution point.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

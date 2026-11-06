@@ -2283,6 +2283,72 @@ theorem normalizeRvfiPacketTags_refines_state_append
   exact rvfiPacketStateAfter_refines_normalized_append machine isa rel admit
     start hrob state isaState hrel first second hfirst hsecond
 
+/- The packet-boundary tag/state contract can expose the packet machine's
+   state projection directly at the final boundary. -/
+theorem normalizeRvfiPacketTags_refines_state_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (InOrderPacketStream start (rvfiPacketTags machine state cycles) ∧
+      (rvfiPacketTags machine state cycles).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state cycles)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+      finalOrder = start + retirements.length) := by
+  rcases normalizeRvfiPacketTags_refines_state machine isa rel admit state
+      isaState start cycles retirements hrob hrel hobs with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
+/- The packet-boundary tag/state projection composes across adjacent captures,
+   retaining the carried state and retirement-order boundary. -/
+theorem normalizeRvfiPacketTags_refines_state_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (InOrderPacketStream start
+        (rvfiPacketTags machine state (first ++ second)) ∧
+      (rvfiPacketTags machine state (first ++ second)).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second))) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+        finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length) := by
+  rcases normalizeRvfiPacketTags_refines_state_append machine isa rel admit
+      state isaState start first second hrob hrel hfirst hsecond with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /- The normalized ROB-tag retirement contract can expose the packet machine's
    architectural input projection directly. -/
 theorem normalizeRvfiPacketRobTags_refines_packet
@@ -6862,6 +6928,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_refines_state_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_refines_state_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_refines_state_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append

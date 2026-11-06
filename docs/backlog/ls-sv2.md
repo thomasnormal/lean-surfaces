@@ -1552,3 +1552,15 @@ PicoRV32 witness pins the generic ROB tag route over its two-window chain.
 
 **DECIDED:** expose generic ROB tags by definitional projection from the
 packet-aware tags; no second order scan or completion ordering is introduced.
+
+## 2026-11-06-ls-sv2-78 — compose generic ROB tags across window chains
+
+Added `normalizeRvfiPacketWindows_rob_tags_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two certified packet-window chains now
+compose directly to the generic `robTags` order certificate after flattening
+their packet boundaries.  The PicoRV32 witness exercises the append route over
+its two singleton windows.
+
+**DECIDED:** derive the generic tag result through chain certification and the
+packet-to-ROB projection; no independent order scan or completion ordering is
+introduced.

@@ -2346,6 +2346,26 @@ theorem pinned_packet_rob_tags_retirements_length_robTrace_append :
     packetSecondCycles pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_rob_tags_retirements_length_packetTrace :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+      packetCycleInputs).map TaggedCommit.retirement).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        packetCycleInputs).length := by
+  exact normalizeRvfiPacketRobTags_retirements_length_packetTrace
+    pinnedPacketMachine pinnedPacketMachine.init packetCycleInputs
+    pinned_packet_observations_normalize
+
+theorem pinned_packet_rob_tags_retirements_length_packetTrace_append :
+    ((robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).map
+        TaggedCommit.retirement).length =
+      (packetTrace pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
+        (packetFirstCycles ++ packetSecondCycles)).length := by
+  exact normalizeRvfiPacketRobTags_retirements_length_packetTrace_append
+    pinnedPacketMachine pinnedPacketMachine.init packetFirstCycles
+    packetSecondCycles pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
+
 theorem pinned_packet_rob_tags_retirements_normalized :
     (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
       packetCycleInputs).map TaggedCommit.retirement = nontrapExpected := by
@@ -2686,6 +2706,8 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_retirements_length_append
 #print axioms pinned_packet_rob_tags_retirements_length_robTrace
 #print axioms pinned_packet_rob_tags_retirements_length_robTrace_append
+#print axioms pinned_packet_rob_tags_retirements_length_packetTrace
+#print axioms pinned_packet_rob_tags_retirements_length_packetTrace_append
 #print axioms pinned_packet_rob_tags_retirements_normalized
 #print axioms pinned_packet_rob_tags_inputs_normalized
 #print axioms pinned_packet_rob_tags_inputs_length_packetInputs

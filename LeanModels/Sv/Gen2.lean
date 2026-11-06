@@ -706,7 +706,7 @@ theorem evalInt_paramRef_of {n : String} {v : Int} (h : env.vals.lookup n = some
 side condition of the compositional `evalInt_*_of` lemmas below. -/
 theorem isInt_paramRef_of {n : String} {v : Int} (h : env.vals.lookup n = some v) :
     (PExpr.paramRef n none).isInt env = true := by
-  simp only [PExpr.isInt, h, Option.isSome_some]
+  simp [PExpr.isInt, h]
 
 /-- INT-class operands of an INT operator make an INT-class node. -/
 theorem isInt_binary_of {op : SymBinOp} {l r : PExpr} (hop : op.intArith = true)

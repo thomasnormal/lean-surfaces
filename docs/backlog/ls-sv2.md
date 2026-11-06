@@ -1387,3 +1387,16 @@ second packet windows.
 **DECIDED:** compose state/order transport only through the explicit
 normalization append certificate, retaining the first window's state boundary
 and the second window's carried retirement offset.
+
+## 2026-11-06-ls-sv2-65 — compose the packet tag/ISA contract across windows
+
+Added `normalizeRvfiPacketRobTags_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Adjacent normalized packet windows now
+compose the combined contract: the flattened generic ROB tags remain in order
+and their retirement projection equals the ISA trace over the concatenated
+retained inputs.  The PicoRV32 witness pins the result over both measured
+packet windows.
+
+**DECIDED:** reuse the normalized trace append certificate as the sole window
+composition boundary; tag order and ISA equality remain jointly observable
+without introducing a completion-order selection.

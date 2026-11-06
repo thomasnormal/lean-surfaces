@@ -79,6 +79,14 @@ window.
 Verification on 2026-11-06 rebuilt `LeanModels.Sv.CombViewMain` and both
 clean-room fixtures; the named obligations remain stable on the green chain.
 
+The third Sklansky wall is pinned by the clean-room
+`sklansky_guards/clog2_int` fixture: a `localparam int L = $clog2(N + 1)`
+loads through the same 32-bit signed constant class as an `integer` localparam,
+with `int32Agrees` at `N = 16` and `N = 1`. Guarded-family retention itself
+remains behind the named guard-totality obligation; a branch that cannot be
+shown to evaluate at every reached genvar value stays loud rather than being
+dropped from the family.
+
 The SRT clean-room forms are also parsed by the proc-aware summary: its
 `always_comb case` table is retained as a case tree, and a shift by the
 `XS` localparam reaches the shift reader. Generic `sv_structure` proofs of

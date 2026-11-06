@@ -78,7 +78,9 @@
             ]
           }
         ],
-        "exc_name": "BaseException",
+        "exc_names": [
+          "BaseException"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -170,7 +172,9 @@
                 ]
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -231,7 +235,9 @@
             "try_unsupported": null
           }
         ],
-        "exc_name": "BaseException",
+        "exc_names": [
+          "BaseException"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -323,7 +329,9 @@
                 ]
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -384,7 +392,9 @@
             "try_unsupported": null
           }
         ],
-        "exc_name": "BaseException",
+        "exc_names": [
+          "BaseException"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -645,7 +655,9 @@
             "orelse": []
           }
         ],
-        "exc_name": "BaseException",
+        "exc_names": [
+          "BaseException"
+        ],
         "handler": [
           {
             "kind": "Expr",

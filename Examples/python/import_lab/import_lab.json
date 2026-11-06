@@ -55,7 +55,9 @@
             ]
           }
         ],
-        "exc_name": "ImportError",
+        "exc_names": [
+          "ImportError"
+        ],
         "handler": [
           {
             "kind": "Assign",
@@ -303,7 +305,9 @@
                 "names": []
               }
             ],
-            "exc_name": "ModuleNotFoundError",
+            "exc_names": [
+              "ModuleNotFoundError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -375,7 +379,9 @@
                 ]
               }
             ],
-            "exc_name": "ModuleNotFoundError",
+            "exc_names": [
+              "ModuleNotFoundError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -453,7 +459,9 @@
             ]
           }
         ],
-        "exc_name": "ImportError",
+        "exc_names": [
+          "ImportError"
+        ],
         "handler": [
           {
             "kind": "Assign",
@@ -687,7 +695,9 @@
             "star": true
           }
         ],
-        "exc_name": "ImportError",
+        "exc_names": [
+          "ImportError"
+        ],
         "handler": [
           {
             "kind": "Expr",

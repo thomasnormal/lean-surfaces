@@ -413,10 +413,10 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         -- exceptions tier: the v0 single-handler fields plus the
         -- `callUnsupported`-style reason (structured-but-loud).
         let body ← (← (← getField j "body").getArr?).mapM parseStmt
-        let excName := ((← getField j "exc_name").getStr?).toOption.getD ""
+        let excNames ← (← getField j "exc_names").getArr? >>= (·.mapM (·.getStr?))
         let handler ← (← (← getField j "handler").getArr?).mapM parseStmt
         let tu ← getOptStrField j "try_unsupported"
-        return .tryStmt body excName handler tu span
+        return .tryStmt body excNames handler tu span
     | "Pass" => return .pass span
     | "Break" => return .brk span
     | "Continue" => return .cont span
@@ -701,9 +701,11 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
     let bb ← b.toList.mapM (stmtBindsWith imp0)
     let hb ← hnd.toList.mapM (stmtBindsWith imp0)
     return bb.flatten ++ hb.flatten
-  | .importFrom _ names star _ =>
+  | .importFrom module names star _ =>
     if imp0 then some []
-    else if star then Option.none else some names.toList
+    else match benignImportBindsStructured module names star with
+      | some (n, modelled) => some (if modelled then [] else [n])
+      | Option.none => if star then Option.none else some names.toList
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
@@ -767,8 +769,8 @@ mutual
       exprRefs t ++ (m.map exprRefs).getD []
     -- del RECONCILED: a target is a MENTION of the name (conservative)
     | .delStmt ns _ => ns.toList
-    | .tryStmt b excName hnd _ _ =>
-      excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
+    | .tryStmt b excNames hnd _ _ =>
+      excNames.toList ++ (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
     | .withStmt items body _ _ =>
       (items.toList.map fun item =>
         exprRefs item.context ++ (item.target.map exprRefs).getD []).flatten
@@ -1299,7 +1301,7 @@ private partial def stmtNamesXW : Stmt → List String
   | .assertStmt t m _ =>
       exprNamesXW t ++ (m.map exprNamesXW).getD []
   | .tryStmt b en hnd _ _ =>
-      [en] ++ (b.toList.map stmtNamesXW).flatten
+      en.toList ++ (b.toList.map stmtNamesXW).flatten
         ++ (hnd.toList.map stmtNamesXW).flatten
   | .withStmt items body _ _ =>
       (items.toList.map fun item =>

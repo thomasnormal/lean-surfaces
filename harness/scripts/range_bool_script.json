@@ -1371,7 +1371,9 @@
             }
           }
         ],
-        "exc_name": "ValueError",
+        "exc_names": [
+          "ValueError"
+        ],
         "handler": [
           {
             "kind": "Expr",

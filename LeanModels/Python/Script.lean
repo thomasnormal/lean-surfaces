@@ -197,8 +197,8 @@ mutual
     -- del RECONCILED: a target is a mention (so `defsBoundBefore` orders
     -- a surviving `del f` after `def f` ends — refusal above it is loud)
     | .delStmt ns _ => ns.toList
-    | .tryStmt b excName hnd _ _ =>
-      excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
+    | .tryStmt b excNames hnd _ _ =>
+      excNames.toList ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
     | .withStmt items body _ _ =>
       (items.toList.map fun item =>
         item.context.allNames ++ (item.target.map Expr.allNames).getD []).flatten
@@ -770,7 +770,8 @@ mutual
           | .ref a => execScriptForList m fuel st target a 0 body.toList
           | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable")
         else .unsupported "'for … else' is outside the v0 tier"
-      | .tryStmt body excName handler tryUnsupported sp =>
+      | .tryStmt body excNames handler tryUnsupported sp =>
+        let excName := excHandlerPrimary excNames
         -- The `try`/`except` shell (2026-08-13): the admission is
         -- `execStmt`'s verbatim — the same `tryUnsupported` reason, the
         -- same shadowing refusal, the same statically-first handler-class
@@ -782,7 +783,7 @@ mutual
          | some reason =>
            .unsupported s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
          | Option.none =>
-           if excName.isEmpty then
+           if excHandlerBare excNames then
              match execScriptStmts m fuel st body.toList with
              | .ok st' flow => .ok st' flow
              | .exn st' _ => execScriptStmts m fuel st' handler.toList

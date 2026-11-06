@@ -542,7 +542,9 @@
             }
           }
         ],
-        "exc_name": "AttributeError",
+        "exc_names": [
+          "AttributeError"
+        ],
         "handler": [
           {
             "kind": "Expr",

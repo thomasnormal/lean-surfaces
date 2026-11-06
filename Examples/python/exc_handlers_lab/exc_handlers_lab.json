@@ -157,7 +157,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -251,7 +253,9 @@
                 }
               }
             ],
-            "exc_name": "Exception",
+            "exc_names": [
+              "Exception"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -361,7 +365,9 @@
                 }
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -468,7 +474,9 @@
                 }
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -572,7 +580,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -709,7 +719,9 @@
                 }
               }
             ],
-            "exc_name": "IndexError",
+            "exc_names": [
+              "IndexError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -879,7 +891,9 @@
                 }
               }
             ],
-            "exc_name": "KeyError",
+            "exc_names": [
+              "KeyError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -960,7 +974,9 @@
                 }
               }
             ],
-            "exc_name": "NameError",
+            "exc_names": [
+              "NameError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1084,7 +1100,9 @@
                 }
               }
             ],
-            "exc_name": "AttributeError",
+            "exc_names": [
+              "AttributeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1187,7 +1205,9 @@
                 }
               }
             ],
-            "exc_name": "AssertionError",
+            "exc_names": [
+              "AssertionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1397,7 +1417,9 @@
                 }
               }
             ],
-            "exc_name": "StopIteration",
+            "exc_names": [
+              "StopIteration"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1658,7 +1680,9 @@
                 }
               }
             ],
-            "exc_name": "RuntimeError",
+            "exc_names": [
+              "RuntimeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1919,7 +1943,9 @@
                 }
               }
             ],
-            "exc_name": "RecursionError",
+            "exc_names": [
+              "RecursionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1990,7 +2016,9 @@
                 }
               }
             ],
-            "exc_name": "Exception",
+            "exc_names": [
+              "Exception"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2087,7 +2115,9 @@
                 }
               }
             ],
-            "exc_name": "Exception",
+            "exc_names": [
+              "Exception"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2184,7 +2214,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2265,7 +2297,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2467,7 +2501,9 @@
                     }
                   }
                 ],
-                "exc_name": "TypeError",
+                "exc_names": [
+                  "TypeError"
+                ],
                 "handler": [
                   {
                     "kind": "Expr",
@@ -2528,7 +2564,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -2847,7 +2885,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -3107,7 +3147,9 @@
                 }
               }
             ],
-            "exc_name": "IndexError",
+            "exc_names": [
+              "IndexError"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -3256,7 +3298,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3385,7 +3429,9 @@
                     }
                   }
                 ],
-                "exc_name": "TypeError",
+                "exc_names": [
+                  "TypeError"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -3436,7 +3482,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3533,7 +3581,9 @@
                 }
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3627,7 +3677,10 @@
                 }
               }
             ],
-            "exc_name": "TypeError|ZeroDivisionError",
+            "exc_names": [
+              "TypeError",
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3734,7 +3787,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3842,7 +3897,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -3973,7 +4030,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4104,7 +4163,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4201,7 +4262,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4371,7 +4434,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4468,7 +4533,9 @@
                 }
               }
             ],
-            "exc_name": "BaseException",
+            "exc_names": [
+              "BaseException"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4565,7 +4632,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4658,7 +4727,9 @@
                 }
               }
             ],
-            "exc_name": "LookupError",
+            "exc_names": [
+              "LookupError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4812,7 +4883,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5079,7 +5152,9 @@
                     }
                   }
                 ],
-                "exc_name": "TypeError",
+                "exc_names": [
+                  "TypeError"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -5107,7 +5182,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5204,7 +5281,7 @@
                 }
               }
             ],
-            "exc_name": "",
+            "exc_names": [],
             "handler": [
               {
                 "kind": "Return",

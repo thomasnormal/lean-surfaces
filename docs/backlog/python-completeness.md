@@ -9138,3 +9138,28 @@ markers retain their legacy text path until the remaining import audit slice.
 DECIDED: use structured fields for admitted imports and reserve text parsing
 for legacy unsupported nodes only; continue with the next text-keyed consumer
 after this slice is committed.
+
+## 2026-11-06-pycomplete-347 — carry exception-handler names as AST arrays
+
+`Try` now carries `exc_names : Array String` from the approved AST envelope.
+The extractor no longer joins tuple handler names with `|`, and ingestion,
+script execution, the monadic runner, clock-erasure, payload-blind proofs, and
+the observation proofs consume the array directly. Singleton handlers use a
+primary-name helper for the existing class-resolution and error wording;
+tuple matching iterates the carried names. The bare-handler case is represented
+by an empty array, so no encoded text is parsed at runtime.
+
+All 34 tracked envelopes containing exception handlers were regenerated with
+CPython 3.9.25 and no longer contain `exc_name`; their structured `exc_names`
+arrays preserve source order.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 161 passed |
+| Native differential | 4188 cases: 0 failed, 104 whitelisted, 4084 matched |
+| Proof differential | 1 pre-existing `uses_nonlocal(4)` mismatch; 217 refused, 3970 matched |
+| Lean builds | `lake build LeanModels.Python.Obs` and `lake build leanmodels-run` passed |
+| Legacy field search | zero `exc_name` envelope fields and zero `excHandlerNamesAux` consumers |
+
+DECIDED: preserve handler names as structured arrays and keep the empty-array
+bare-handler convention; no delimiter encoding remains in the exception tier.

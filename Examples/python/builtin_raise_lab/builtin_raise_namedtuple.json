@@ -409,7 +409,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -654,7 +656,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -896,7 +900,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -977,7 +983,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1157,7 +1165,9 @@
                     }
                   }
                 ],
-                "exc_name": "ValueError",
+                "exc_names": [
+                  "ValueError"
+                ],
                 "handler": [
                   {
                     "kind": "Expr",
@@ -1218,7 +1228,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Expr",

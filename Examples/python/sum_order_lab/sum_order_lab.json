@@ -1400,7 +1400,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1602,7 +1604,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1981,7 +1985,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",

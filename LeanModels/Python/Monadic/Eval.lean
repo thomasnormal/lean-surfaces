@@ -1895,7 +1895,8 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       match delNames st.locals names.toList with
       | (env, Option.none) => do envPut env; pure .next
       | (_, some n) => raisePy (.unboundLocalError n)
-  | .tryStmt body excName handler tryUnsupported _ =>
+  | .tryStmt body excNames handler tryUnsupported _ =>
+      let excName := excHandlerPrimary excNames
       -- THE SUBSTRATE EARNS ITS KEEP HERE. `tryCatch` on `ExceptT PyErr …`
       -- catches exactly the LANGUAGE's raise and lets `Loud` — the model giving
       -- up — propagate untouched, which is the trunk's hand-written fork over
@@ -1908,11 +1909,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           refuse s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
       | Option.none => do
         let st ← get
-        if excName.isEmpty then
+        if excHandlerBare excNames then
           tryCatch (execOpenList K m body.toList) (fun _ =>
             execOpenList K m handler.toList)
-        else if excHandlerTuple excName then
-          let names := excHandlerNames excName
+        else if excHandlerTuple excNames then
+          let names := excHandlerNames excNames
           if names.any (fun name =>
               (Env.lookup st.locals name).isSome
                 || (lookupG (moduleGlobals m).1 name).isSome
@@ -2752,7 +2753,7 @@ the handler. That is the RETAINED-STATE covenant, and it is the layer order:
 #guard (match toRun (execOpen KE excModule
           (.tryStmt #[ .assign #[.name "seen" sp0] (.constant (.int 1) sp0) sp0,
                        .raiseStmt (some (.name "Stop" sp0)) Option.none sp0 ]
-             "Stop"
+             #["Stop"]
              #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
              Option.none sp0)) stE with
         | .ok s _ => Env.lookup s.locals "seen" == some (.int 1)
@@ -2765,7 +2766,7 @@ property that keeps a MODEL gap from masquerading as PYTHON behaviour: an
 on `ExceptT PyErr …` gives it for free, because `Loud` lives below that layer. -/
 #guard (match toRun (execOpen KE excModule
           (.tryStmt #[ .globalDecl #["x"] sp0 ]
-             "Stop"
+             #["Stop"]
              #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
              Option.none sp0)) stE with
         | .unsupported _ => false
@@ -2774,7 +2775,7 @@ on `ExceptT PyErr …` gives it for free, because `Loud` lives below that layer.
 /- 3. A NON-matching exception propagates rather than being caught. -/
 #guard (match toRun (execOpen KE excModule
           (.tryStmt #[ .exprStmt (.name "nope" sp0) sp0 ]
-             "Stop"
+             #["Stop"]
              #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
              Option.none sp0)) stE with
         | .exn _ e => e == .nameError "nope"

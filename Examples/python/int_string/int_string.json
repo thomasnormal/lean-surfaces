@@ -1887,7 +1887,9 @@
                 }
               }
             ],
-            "exc_name": "TypeError",
+            "exc_names": [
+              "TypeError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -2140,7 +2142,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",

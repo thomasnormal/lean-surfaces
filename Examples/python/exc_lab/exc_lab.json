@@ -214,7 +214,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -485,7 +487,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Expr",
@@ -787,7 +791,9 @@
                 }
               }
             ],
-            "exc_name": "Other",
+            "exc_names": [
+              "Other"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -887,7 +893,9 @@
                     }
                   }
                 ],
-                "exc_name": "Other",
+                "exc_names": [
+                  "Other"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -925,7 +933,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1217,7 +1227,9 @@
                     }
                   }
                 ],
-                "exc_name": "Stop",
+                "exc_names": [
+                  "Stop"
+                ],
                 "handler": [
                   {
                     "kind": "Break",
@@ -1519,7 +1531,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -1943,7 +1957,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Assign",
@@ -2283,7 +2299,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Pass",
@@ -2514,7 +2532,9 @@
                 "orelse": []
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Assign",
@@ -3264,7 +3284,9 @@
                     "orelse": []
                   }
                 ],
-                "exc_name": "Stop",
+                "exc_names": [
+                  "Stop"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -4609,7 +4631,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -4834,7 +4858,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5047,7 +5073,9 @@
                 }
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5195,7 +5223,7 @@
                 }
               }
             ],
-            "exc_name": "",
+            "exc_names": [],
             "handler": [
               {
                 "kind": "Return",
@@ -5295,7 +5323,9 @@
                     }
                   }
                 ],
-                "exc_name": "Stop",
+                "exc_names": [
+                  "Stop"
+                ],
                 "handler": [
                   {
                     "kind": "Return",
@@ -5323,7 +5353,9 @@
                 "try_unsupported": null
               }
             ],
-            "exc_name": "Other",
+            "exc_names": [
+              "Other"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5404,7 +5436,10 @@
                 }
               }
             ],
-            "exc_name": "Stop|Other",
+            "exc_names": [
+              "Stop",
+              "Other"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5485,7 +5520,9 @@
                 }
               }
             ],
-            "exc_name": "Exception",
+            "exc_names": [
+              "Exception"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5589,7 +5626,9 @@
                 }
               }
             ],
-            "exc_name": "ZeroDivisionError",
+            "exc_names": [
+              "ZeroDivisionError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -5750,7 +5789,9 @@
                 }
               }
             ],
-            "exc_name": "Stop",
+            "exc_names": [
+              "Stop"
+            ],
             "handler": [
               {
                 "kind": "Raise",
@@ -6320,7 +6361,9 @@
                 }
               }
             ],
-            "exc_name": "ArithmeticError",
+            "exc_names": [
+              "ArithmeticError"
+            ],
             "handler": [
               {
                 "kind": "Return",
@@ -6547,7 +6590,9 @@
                 }
               }
             ],
-            "exc_name": "ValueError",
+            "exc_names": [
+              "ValueError"
+            ],
             "handler": [
               {
                 "kind": "Return",

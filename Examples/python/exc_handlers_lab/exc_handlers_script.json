@@ -221,7 +221,9 @@
             }
           }
         ],
-        "exc_name": "TypeError",
+        "exc_names": [
+          "TypeError"
+        ],
         "handler": [
           {
             "kind": "Assign",

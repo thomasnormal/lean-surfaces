@@ -4413,13 +4413,14 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                       refine PBF.bind (PBF.liftRes enteredInvariant _)
                         fun bodyState environment _ bodyInvariant => ?_
                       exact finishBlind { bodyState with locals := environment } bodyInvariant
-  | tryStmt body excName handler tryUnsupported sp =>
+  | tryStmt body excNames handler tryUnsupported sp =>
+      let excName := excHandlerPrimary excNames
       simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
         World.swapAt_globals]
       cases tryUnsupported with
       | some reason => exact PBF.unsupported
       | none =>
-          refine PBF.ite (c := excName.isEmpty = true) (fun _ => ?_) (fun _ => ?_)
+          refine PBF.ite (c := excHandlerBare excNames = true) (fun _ => ?_) (fun _ => ?_)
           · cases hrun : execStmts m fuel st body.toList with
             | ok st' flow =>
                 obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).1 st' flow hrun
@@ -4432,9 +4433,9 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 exact ihSs m st' handler.toList hslot'
             | timeout => exact PBF.timeout
             | unsupported msg => exact PBF.unsupported
-          · refine PBF.ite (c := excHandlerTuple excName = true)
+          · refine PBF.ite (c := excHandlerTuple excNames = true)
               (fun _ => ?_) (fun _ => ?_)
-            · let names := excHandlerNames excName
+            · let names := excHandlerNames excNames
               refine PBF.ite (c := names.any (fun name =>
                   (Env.lookup (st.swapAt pa o).locals name).isSome
                     || (lookupG (moduleGlobals m).1 name).isSome

@@ -768,7 +768,7 @@ class ExtractorTests(unittest.TestCase):
             "try:\n    1 // 0\n"
             "except (TypeError, ZeroDivisionError):\n    pass\n"
         )["module"]["body"][0]
-        self.assertEqual(stmt["exc_name"], "TypeError|ZeroDivisionError")
+        self.assertEqual(stmt["exc_names"], ["TypeError", "ZeroDivisionError"])
         self.assertIsNone(stmt["try_unsupported"])
 
     def test_noop_finally_lowers_to_body(self):

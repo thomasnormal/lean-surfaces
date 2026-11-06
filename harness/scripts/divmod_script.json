@@ -1528,7 +1528,9 @@
             }
           }
         ],
-        "exc_name": "TypeError",
+        "exc_names": [
+          "TypeError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -1656,7 +1658,9 @@
             }
           }
         ],
-        "exc_name": "TypeError",
+        "exc_names": [
+          "TypeError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -1856,7 +1860,9 @@
             }
           }
         ],
-        "exc_name": "TypeError",
+        "exc_names": [
+          "TypeError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -2056,7 +2062,9 @@
             }
           }
         ],
-        "exc_name": "ZeroDivisionError",
+        "exc_names": [
+          "ZeroDivisionError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -2184,7 +2192,9 @@
             }
           }
         ],
-        "exc_name": "ZeroDivisionError",
+        "exc_names": [
+          "ZeroDivisionError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -2348,7 +2358,9 @@
             }
           }
         ],
-        "exc_name": "ZeroDivisionError",
+        "exc_names": [
+          "ZeroDivisionError"
+        ],
         "handler": [
           {
             "kind": "Expr",
@@ -2466,7 +2478,9 @@
             }
           }
         ],
-        "exc_name": "ZeroDivisionError",
+        "exc_names": [
+          "ZeroDivisionError"
+        ],
         "handler": [
           {
             "kind": "Expr",

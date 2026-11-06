@@ -323,7 +323,8 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
           | .ref a => S.forList target a 0 body.toList
           | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
       else refuse "'for … else' is outside the v0 tier"
-  | .tryStmt body excName handler tryUnsupported _ =>
+  | .tryStmt body excNames handler tryUnsupported _ =>
+      let excName := excHandlerPrimary excNames
       -- The admission is the interpreter's verbatim; only the body and handler
       -- statements move to the publishing loop.
       match tryUnsupported with
@@ -331,10 +332,10 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
           refuse s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
       | Option.none => do
         let st ← get
-        if excName.isEmpty then
+        if excHandlerBare excNames then
           tryCatch (S.stmts body.toList) (fun _ => S.stmts handler.toList)
-        else if excHandlerTuple excName then
-          let names := excHandlerNames excName
+        else if excHandlerTuple excNames then
+          let names := excHandlerNames excNames
           if names.any (fun name =>
               (Env.lookup st.locals name).isSome
                 || (lookupG (moduleGlobals m).1 name).isSome

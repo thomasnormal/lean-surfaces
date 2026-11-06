@@ -232,7 +232,7 @@ inductive Stmt where
   Other names refuse before the body runs (statically-first admission).
   Locally bound handler names remain loud under the static-locals census,
   except for the admitted dynamic `TypeError` slice. -/
-  | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
+  | tryStmt (body : Array Stmt) (excNames : Array String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
   /-- `with` (the context-manager tier): items are evaluated left to right,
   each `__enter__` result is assigned before the body, and `__exit__` runs
@@ -301,8 +301,8 @@ mutual
     | .forStmt _ _ body orelse _ =>
         Stmt.hasTypeErrorHandlerList body.toList ||
           Stmt.hasTypeErrorHandlerList orelse.toList
-    | .tryStmt body excName handler _ _ =>
-        (excName == "TypeError") ||
+    | .tryStmt body excNames handler _ _ =>
+        (excNames.contains "TypeError") ||
           Stmt.hasTypeErrorHandlerList body.toList ||
           Stmt.hasTypeErrorHandlerList handler.toList
     | .withStmt _ body _ _ => Stmt.hasTypeErrorHandlerList body.toList
@@ -443,8 +443,8 @@ mutual
           || (match msg with
           | some value => exprMentionsAny names value
           | none => false)
-    | .tryStmt body excName handler _ _ =>
-        names.contains excName
+    | .tryStmt body excNames handler _ _ =>
+        excNames.toList.any (names.contains ·)
           || stmtListMentionsAny names body.toList
           || stmtListMentionsAny names handler.toList
     | .withStmt items body _ _ =>

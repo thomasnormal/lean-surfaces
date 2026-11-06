@@ -443,6 +443,19 @@ theorem RvfiPacketMachine.toPacketMachine_stateAfter_append {State : Type}
         (packetStateAfter machine.toPacketMachine state first) second := by
   exact packetStateAfter_append machine.toPacketMachine state first second
 
+/- The generic ROB input projection preserves packet input threading across
+   adjacent cycle windows. -/
+theorem RvfiPacketMachine.toRobMachine_inputs_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    robInputs machine.toRobMachine state (first ++ second) =
+      robInputs machine.toRobMachine state first ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  rw [machine.toRobMachine_inputs, packetInputs_append,
+    machine.toRobMachine_inputs, machine.toRobMachine_inputs]
+  rw [machine.toPacketMachine_stateAfter]
+
 theorem rvfiPacketStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiPacketMachine State) (isa : Machine IsaState)
@@ -2034,6 +2047,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_stateAfter
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter_append
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs_append
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append

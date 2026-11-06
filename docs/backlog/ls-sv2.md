@@ -1610,3 +1610,15 @@ The PicoRV32 witness pins this cardinality over its two-window capture.
 
 **DECIDED:** derive cardinality from the certified retirement payload equality;
 no truncation, padding, or inferred completion order is introduced.
+
+## 2026-11-06-ls-sv2-83 — certify ROB tag input cardinality
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain now
+proves that the mapped source inputs of its flattened generic ROB tags have the
+same cardinality as the normalized retirement windows.  The PicoRV32 witness
+pins this input-count contract over its two-window capture.
+
+**DECIDED:** derive input cardinality from the tag cardinality theorem and
+`List.length_map`; the packet input stream remains explicitly threaded and no
+padding, truncation, or completion order is inferred.

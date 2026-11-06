@@ -3537,3 +3537,16 @@ single-capture and adjacent-capture forms.
 **DECIDED:** compose the existing packet-tag refinement with the normalized
 packet-state theorem, preserving exact packet inputs, state threading, and
 retirement-order offsets without introducing a second state or trace model.
+
+## 2026-11-06-ls-sv2-239 — expose normalized packet-window tag state refinement
+
+Added `normalizeRvfiPacketWindows_tags_refines_state` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A certified finite packet-window chain
+now combines its packet-boundary order/ISA trace contract with the final
+machine-state relation and exact normalized retirement-order endpoint. The
+PicoRV32 witness pins both the chain and adjacent-chain forms.
+
+**DECIDED:** compose the existing packet-window tag refinement with the
+state/order transport, retaining the original window boundaries, carried
+state, and packet-input projection without introducing a second trace or
+state model.

@@ -128,6 +128,13 @@ The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
 
+F1 requires a known sampled decision for the finite boolean contract. If an
+ordinary E expression, negation, `$past`, or `$stable` reads an unknown sampled
+value (including the default sample before the beginning of a trace), the
+contract returns a named `SVA:` error instead of taking the simulator's
+x-optimistic false branch. `$rose` and `$fell` retain their sampled-value edge
+definition, including the default unknown previous sample.
+
 #### Downstream clean-room wall audit
 
 The first downstream clean-room repros put the remaining target blockers in

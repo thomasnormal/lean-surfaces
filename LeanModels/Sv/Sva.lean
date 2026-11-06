@@ -147,29 +147,38 @@ def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Excep
   | .expr value => do
       match (← exprLogicAt trace index value) with
       | some .l1 => .ok true
-      | some .l0 | some .lx | some .lz | none => .ok false
+      | some .l0 => .ok false
+      | some .lx | some .lz =>
+          .error "SVA: boolean expression evaluated to unknown; require a known sampled decision"
+      | none => .ok false
   | .not (.signal name) => do
       match (← logicAt trace index name) with
       | some .l0 => .ok true
       | some .l1 => .ok false
-      | some .lx | some .lz | none => .ok false
+      | some .lx | some .lz =>
+          .error "SVA: negation operand evaluated to unknown; require a known sampled decision"
+      | none => .ok false
   | .not arg => return !(← arg.evalChecked trace index)
   | .and left right => return (← left.evalChecked trace index) && (← right.evalChecked trace index)
   | .or left right => return (← left.evalChecked trace index) || (← right.evalChecked trace index)
   | .past cycles arg =>
-      if cycles ≤ index then arg.evalChecked trace (index - cycles) else .ok false
+      if cycles ≤ index then arg.evalChecked trace (index - cycles)
+      else .error "SVA: $past reads the default unknown sampled value"
   | .rose name => edgeValue svaRose trace index name
   | .fell name => edgeValue svaFell trace index name
   | .roseExpr value => edgeExprValue svaRose trace index value
   | .fellExpr value => edgeExprValue svaFell trace index value
   | .stableExpr value =>
-      if index == 0 then .ok false
+      if index == 0 then
+        .error "SVA: $stable reads the default unknown sampled value"
       else do
         let previous ← exprLogicAt trace (index - 1) value
         let current ← exprLogicAt trace index value
-        return match previous, current with
-        | some old, some new => old == new && old.isKnown
-        | _, _ => false
+        match previous, current with
+        | some old, some new =>
+            if old.isKnown && new.isKnown then .ok (old == new)
+            else .error "SVA: $stable reads an unknown sampled value"
+        | _, _ => .ok false
   | .stable name =>
       if index == 0 then .ok false
       else do
@@ -309,12 +318,22 @@ private def svaCover : SvaCheck :=
     property := .always (.range 0 1 (.atom (.rose "a"))) }
 
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption == some true
-#guard (SvaCheck.evalRegion svaTrace svaPast).toOption == some true
+#guard (SvaCheck.evalRegion svaTrace svaPast).toOption.isNone
 #guard (SvaCheck.evalRegion svaTrace svaCover).toOption == some true
-#guard (SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a"))).toOption == some false
+#guard match SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a")) with
+  | .error _ => true
+  | .ok _ => false
 #guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .l0 .l0, svaState .l0 .lx .l0] 1 (.rose "a")).toOption == some false
 #guard (SvaBool.evalChecked [svaState .l0 .l1 .l0, svaState .l0 .lx .l0] 1 (.fell "a")).toOption == some false
+#guard match SvaBool.evalChecked [svaState .l0 .l1 .l0] 0
+  (.past 1 (.expr (.ident "a"))) with
+  | .error _ => true
+  | .ok _ => false
+#guard match SvaBool.evalChecked [svaState .l0 .lx .l0] 0
+  (.stableExpr (.ident "a")) with
+  | .error _ => true
+  | .ok _ => false
 #guard (SvaSeq.matches [svaState .l1 .l1 .l0] 0 (.delay 1 (.atom (.signal "a")))).toOption == some false
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption ==
   (SvaCheck.evalRegion svaTraceFinalChanged svaImplication).toOption

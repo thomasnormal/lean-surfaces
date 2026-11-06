@@ -1686,3 +1686,17 @@ this state/order contract over its two certified packet windows.
 
 **DECIDED:** project the state/order component of the existing complete
 window-chain contract; no tag stream, input order, or final state is inferred.
+
+## 2026-11-06-ls-sv2-89 — compose packet-chain state refinement
+
+Added `normalizeRvfiPacketWindows_refines_state_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+window chains now compose directly to the final packet/ISA related state and
+exact order increment over the packet machine's architectural input stream,
+with the second chain starting from the first chain's retained state and
+retirement-order boundary.  The PicoRV32 witness pins this append route over
+its two singleton packet windows.
+
+**DECIDED:** compose through the finite window-chain certificate and its
+packet-facing state projection; no tag stream, input order, or final state is
+inferred.

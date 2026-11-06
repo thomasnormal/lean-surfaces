@@ -1216,6 +1216,38 @@ theorem normalizeRvfiPacketWindows_refines_state
     rel admit state isaState start windows retirementWindows hrob hrel h
   exact hcontract.2
 
+/-- The packet-chain state/order refinement composes across two certified
+window chains with the second chain's carried state and order boundary. -/
+theorem normalizeRvfiPacketWindows_refines_state_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state
+        (firstWindows ++ secondWindows).flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten)) finalOrder ∧
+      finalOrder = start +
+        (firstRetirementWindows ++ secondRetirementWindows).flatten.length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_refines_state machine isa rel admit state
+    isaState start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
+
 /-- ROB retirement payload equality composes across two independently
 certified packet-window chains. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_append {State : Type}
@@ -1424,6 +1456,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat

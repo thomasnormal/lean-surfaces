@@ -717,6 +717,28 @@ def IEnv.enumMember (env : IEnv) (name member : String) (pkg : Option String) : 
 def IEnv.bindNVal (env : IEnv) (n : String) (v : Int) (w : Nat) (s : Bool) : IEnv :=
   { env with nvals := (n, (v, w, s)) :: env.nvals }
 
+/-- Integer-class lookup for proof-facing views: a loop binding in `vals`
+shadows the exact signed-32 parameter/localparam slice in `nvals`. -/
+def IEnv.intVal? (env : IEnv) (n : String) : Option Int :=
+  match env.vals.lookup n with
+  | some v => some v
+  | none =>
+      match env.nvals.lookup n with
+      | some (v, 32, true) => some v
+      | _ => none
+
+@[simp] theorem IEnv.intVal?_bindVal_self (env : IEnv) (n : String) (v : Int) :
+    IEnv.intVal? (env.bindVal n v) n = some v := by
+  simp [IEnv.intVal?, IEnv.bindVal]
+
+theorem IEnv.intVal?_bindVal_ne {env : IEnv} {g n : String} (v : Int) (h : n ≠ g) :
+    IEnv.intVal? (env.bindVal g v) n = IEnv.intVal? env n := by
+  simp [IEnv.intVal?, IEnv.bindVal, List.lookup, beq_false_of_ne h]
+
+#guard IEnv.intVal? ({ nvals := [("N", (16, 32, true))] } : IEnv) "N" == some 16
+#guard IEnv.intVal? (({ nvals := [("N", (16, 32, true))] } : IEnv).bindVal "i" 3) "N" == some 16
+#guard IEnv.intVal? (({ nvals := [("N", (16, 32, true))] } : IEnv).bindVal "N" 3) "N" == some 3
+
 /-! ## Constant tier: `evalInt` -/
 
 private def b2i (b : Bool) : Int := if b then 1 else 0
@@ -1491,7 +1513,10 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .genvarRef n =>
       match env.vals.lookup n with
       | some v => .ok v
-      | none => .error s!"genvar '{n}' outside its loop"
+      | none =>
+          match env.nvals.lookup n with
+          | some (v, _, _) => .ok v
+          | none => .error s!"genvar '{n}' outside its loop"
   | .enumRef ty mem pkg =>
       match env.enumMember ty mem pkg with
       | some v =>

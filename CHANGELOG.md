@@ -20,6 +20,11 @@
   and has no synthetic loop target. Resumed delegation remains loud until a
   PEP 380 frame models send, throw, close, and the delegation return value.
 
+- Rechecked class ingestion: source-order `.classDef` markers and retained
+  class bodies preserve creation effects, while qualified method indexing
+  remains the deliberate dispatch representation. Unsupported creation stays
+  loud until runtime class namespaces and class objects are modeled.
+
 - Clarified that global declarations stay structured from the CPython AST through scope setup; the stale source-text comment is gone.
 
 - Repaired tuple and string repetition proof recipes after removing the

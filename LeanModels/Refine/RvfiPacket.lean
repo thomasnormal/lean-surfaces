@@ -3689,6 +3689,62 @@ theorem normalizeRvfiPacketWindows_tags_refines_append
     isaState start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
 
+/- A certified packet-window tag contract also exposes the generic ROB input
+   projection directly, while retaining packet boundaries. -/
+theorem normalizeRvfiPacketWindows_tags_refines_rob
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    InOrderPacketStream start
+      (rvfiPacketTags machine state windows.flatten) ∧
+      (rvfiPacketTags machine state windows.flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state windows.flatten) := by
+  have htags := normalizeRvfiPacketWindows_tags_refines machine isa rel admit
+    state isaState start windows retirementWindows hrob hrel h
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
+/- The certified packet-window generic-ROB-input contract composes across
+   adjacent chains, retaining their carried state and order boundary. -/
+theorem normalizeRvfiPacketWindows_tags_refines_rob_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    InOrderPacketStream start
+      (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten) ∧
+      (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state
+            (firstWindows ++ secondWindows).flatten) := by
+  have htags := normalizeRvfiPacketWindows_tags_refines_append machine isa
+    rel admit state isaState start firstWindows secondWindows
+    firstRetirementWindows secondRetirementWindows hrob hrel hfirst hsecond
+  refine ⟨htags.1, ?_⟩
+  simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags.2
+
 /-- A certified finite packet-window chain also supplies the final related
 state and its exact normalized retirement-order increment. -/
 theorem normalizeRvfiPacketWindows_refines_state

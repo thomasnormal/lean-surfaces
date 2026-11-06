@@ -4134,6 +4134,47 @@ theorem normalizeRvfiPacketWindows_tags_retirements_length_robInputs_append
     state start (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- The normalized packet-tag retirement projection has the packet machine's
+   input cardinality. -/
+theorem normalizeRvfiPacketTags_retirements_length_packetInputs {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    ((rvfiPacketTags machine state cycles).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state cycles).length := by
+  calc
+    ((rvfiPacketTags machine state cycles).flatten.map
+        TaggedCommit.retirement).length =
+        (packetTrace machine.toPacketMachine state cycles).length :=
+      normalizeRvfiPacketTags_retirements_length_packetTrace machine state
+        cycles h
+    _ = (packetInputs machine.toPacketMachine state cycles).length :=
+      (normalizeRvfiPacketInputs_length_packetTrace machine state cycles h).symm
+
+/- The normalized packet-tag retirement/packet-input cardinality bridge
+   composes across adjacent captures, retaining the first capture's boundary. -/
+theorem normalizeRvfiPacketTags_retirements_length_packetInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((rvfiPacketTags machine state (first ++ second)).flatten.map
+        TaggedCommit.retirement).length =
+      (packetInputs machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketTags_retirements_length_packetInputs machine state
+    (first ++ second) hcombined
+
 /- A successful normalized packet capture has equal generic ROB trace and
    packet-input cardinalities. -/
 theorem normalizeRvfiPacketRobTrace_length_packetInputs {State : Type}

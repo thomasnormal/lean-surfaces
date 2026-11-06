@@ -1987,3 +1987,14 @@ projection over its two packet windows.
 
 **DECIDED:** transport the generic `robTrace_append` law through the exact
 RVFI-to-ROB state bridge; no retirement order or packet contents are inferred.
+
+## 2026-11-06-ls-sv2-113 — expose packet trace threading
+
+Added `RvfiPacketMachine.toPacketMachine_trace_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The packet-facing retirement trace now
+has an explicit append law, with the second segment evaluated from the first
+segment's retained packet state.  The PicoRV32 witness pins this trace
+projection over its two packet windows.
+
+**DECIDED:** reuse the generic `packetTrace_append` law at the packetized RVFI
+projection boundary; no retirement order or packet contents are reconstructed.

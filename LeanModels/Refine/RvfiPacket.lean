@@ -2230,6 +2230,73 @@ theorem normalizeRvfiPacketRobTags_refines_state
   · exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start
       hrob state isaState hrel cycles retirements hobs
 
+/- The normalized ROB-tag state contract can expose the packet machine's
+   state projection directly at the final boundary. -/
+theorem normalizeRvfiPacketRobTags_refines_state_packet
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state cycles) ∧
+      (robTags machine.toRobMachine state cycles).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state cycles)) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state cycles)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+      finalOrder = start + retirements.length) := by
+  rcases normalizeRvfiPacketRobTags_refines_state machine isa rel admit state
+      isaState start cycles retirements hrob hrel hobs with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
+/- The packet-facing normalized ROB-tag state contract composes across
+   adjacent captures with the carried state and order boundary. -/
+theorem normalizeRvfiPacketRobTags_refines_state_packet_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state (first ++ second)) ∧
+      (robTags machine.toRobMachine state (first ++ second)).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state (first ++ second))) ∧
+    (∃ finalOrder,
+      rel (packetStateAfter machine.toPacketMachine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+          finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length) := by
+  rcases normalizeRvfiPacketRobTags_refines_state_append machine isa rel admit
+      state isaState start first second hrob hrel hfirst hsecond with
+    ⟨htags, finalOrder, hfinal, horder⟩
+  refine ⟨htags, finalOrder, ?_, horder⟩
+  rw [RvfiPacketMachine.toPacketMachine_stateAfter]
+  exact hfinal
+
 /-- A finite chain of normalized packet windows supplies the complete
 flattened packet/ISA contract and the final state/order relation. -/
 theorem normalizeRvfiPacketRobTags_refines_windows
@@ -6409,6 +6476,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_packet
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_flatten
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows

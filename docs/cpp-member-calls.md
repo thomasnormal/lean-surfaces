@@ -63,6 +63,9 @@ canonical `CXXMethodDecl` handle before invocation evidence is considered.
 It also exercises the direct `this->field` access admission used by the
 object-state boundary, retaining the owner, field, receiver type, field type,
 and method identity without deriving an ABI offset.
+The enum-profile row then joins that field to structured type evidence and a
+retained enum declaration, counting constants and explicit values while
+preserving an absent fixed-underlying spelling.
 For argument refusals it reports both the retained child-kind shape and the
 recursive child tree, so a future argument tier can be priced against source
 evidence before evaluation semantics are added. The recursive tree preserves

@@ -3432,6 +3432,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-enum-profile-evidence",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "enumProfileEvidenceWitness",
+    "cpp_source": "enum Error { ok = 0, failed }; struct Owner { Error value = ok; void set(Error value) { this->value = value; } }; bool callable_witness() { Owner owner; owner.set(failed); return true; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.member-getter-lvalue-cast-call",
     "kind": "expression",
     "corpus": "rung-7 witness",

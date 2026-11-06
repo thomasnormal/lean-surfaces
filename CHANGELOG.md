@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a probe-backed enum-profile differential witness that retains the enum
+  declaration, constant census, and absent fixed-underlying spelling from
+  structured type evidence before applying an explicit representation oracle.
+
 - Added a direct differential witness for structured `this->field` access,
   retaining owner, field, receiver, and field type evidence before object
   state or layout is supplied.

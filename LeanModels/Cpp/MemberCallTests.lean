@@ -1221,6 +1221,42 @@ def thisFieldAccessEvidenceWitness : Bool :=
 
 #guard thisFieldAccessEvidenceWitness
 
+private def enumProfileProbe : DeclarationProbe :=
+  let enumNode := rawObject [
+    ("kind", rawText "EnumDecl"), ("id", rawText "0x13"),
+    ("name", rawText "XMLError"),
+    ("inner", .array [
+      rawObject [("kind", rawText "EnumConstantDecl"), ("id", rawText "0x16"),
+        ("name", rawText "ok"), ("value", rawText "0")],
+      rawObject [("kind", rawText "EnumConstantDecl"), ("id", rawText "0x17"),
+        ("name", rawText "failed")]])]
+  {ast := rawObject [("kind", rawText "TranslationUnitDecl"),
+      ("inner", .array [enumNode, enumSetterAst (enumSetterRight "0x15")])],
+    metadata := rawObject [
+      ("type_evidence_api", rawText "Clang::QualType structured type projection v1"),
+      ("type_evidence", .array [rawObject [
+        ("type_api", rawText "Clang::QualType structured type projection v1"),
+        ("occurrence", rawText fieldHandle.value),
+        ("canonical", rawText fieldHandle.value),
+        ("type", rawObject [("kind", rawText "enumeration"),
+          ("declaration", rawText "0x13")])]])],
+    declarations := [
+      enumSetterFieldRow,
+      {declarationRow "0x13" "EnumDecl" "0x13" with
+        raw := enumNode},
+      {declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value with
+        raw := enumSetterProfileRaw}]}
+
+def enumProfileEvidenceWitness : Bool :=
+  match IntegralMemberEnumProfile.admit enumProfileProbe enumReadAccess with
+  | .ok profile =>
+      profile.field == fieldHandle && profile.enum == h "0x13" &&
+        profile.name == "XMLError" && profile.constantCount == 2 &&
+        profile.explicitValueCount == 1 && profile.underlyingType.isNone
+  | .error _ => false
+
+#guard enumProfileEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

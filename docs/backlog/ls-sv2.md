@@ -1815,3 +1815,15 @@ cardinality over its four-cycle packet capture.
 **DECIDED:** derive the length through the exact packet-to-ROB input
 projection and the generic ROB trace-length theorem; no padding, truncation,
 or inferred completion order is introduced.
+
+## 2026-11-06-ls-sv2-99 — compose normalized packet input cardinality
+
+Added `normalizeRvfiPacketInputs_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`. Adjacent normalized packet windows now
+compose directly to the exact combined cardinality of their retained packet
+inputs and retirement payloads. The PicoRV32 witness pins this append
+cardinality over its first and second packet windows.
+
+**DECIDED:** use the packet input append theorem and the two local normalized
+length certificates; the second window's state remains explicit and no
+padding, truncation, or completion order is inferred.

@@ -1655,6 +1655,44 @@ theorem normalizeRvfiPacketInputs_length {State : Type}
       rw [machine.toRobMachine_inputs]
     _ = retirements.length := hlength
 
+/- Input cardinality composes across adjacent normalized packet windows with
+   the second window's retained state made explicit. -/
+theorem normalizeRvfiPacketInputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (packetInputs machine.toPacketMachine state (first ++ second)).length =
+      (firstRetirements ++ secondRetirements).length := by
+  have stateBridge : ∀ (state : State) (cycles : List Input),
+      packetStateAfter machine.toPacketMachine state cycles =
+        rvfiPacketStateAfter machine state cycles := by
+    intro bridgeState cycles
+    induction cycles generalizing bridgeState with
+    | nil => rfl
+    | cons cycleInput cycles ih =>
+        cases hstep : machine.step bridgeState cycleInput with
+        | mk state' entries =>
+            simp only [packetStateAfter, rvfiPacketStateAfter,
+              RvfiPacketMachine.toPacketMachine, hstep]
+            exact ih state'
+  have hstate := stateBridge state first
+  rw [packetInputs_append]
+  rw [List.length_append]
+  rw [normalizeRvfiPacketInputs_length machine state start first
+    firstRetirements hfirst]
+  rw [hstate]
+  rw [normalizeRvfiPacketInputs_length machine
+    (rvfiPacketStateAfter machine state first)
+    (start + firstRetirements.length) second secondRetirements hsecond]
+  simp only [List.length_append]
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -1715,3 +1753,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_append

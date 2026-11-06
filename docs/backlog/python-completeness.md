@@ -9393,3 +9393,22 @@ class bodies are no longer represented by a name-text `Unsupported` node.
 DECIDED: class statements stay structured through ingestion and execution;
 method flattening remains a dispatch index until full runtime class namespaces
 are implemented.
+
+## 2026-11-06-pycomplete-360 — remove shape-specific try lowerings
+
+The extractor no longer rewrites two-handler tries, generator `except Stop`
+shapes, effectful `finally` returns, no-op finalizers, or try-`else` suites
+into nested tries, bare yields, reordered statements, or synthetic flags. The
+compact envelope keeps the structured `Try` body and handler and records the
+unsupported `else`/`finally`/generator-frame reason, so the existing executor
+refuses before silently changing control flow.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 161 passed |
+| Native differential | 4196 cases: 0 failed, 113 whitelisted unsupported, 4083 matched |
+| Formatting | `git diff --check` passed |
+
+DECIDED: try control flow remains a structured AST boundary; no exact-source
+shape is lowered into another program until full handler and cleanup state is
+modeled.

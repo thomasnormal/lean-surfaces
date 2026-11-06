@@ -85,6 +85,9 @@ is a recorded refusal; string handles cannot bypass the call kind check.
 A syntactically valid string ordinary-call handle absent from declaration
 evidence is also refused; the string must resolve to one retained declaration.
 
+A syntactically valid string operator handle absent from declaration evidence is
+also refused; operator identity requires one retained declaration row.
+
 A positive ordinary-call witness also covers the artifact-local string
 `referencedDecl` form. The string is parsed as a handle and matched against one
 retained declaration row; it is not used for name lookup.

@@ -324,6 +324,34 @@ theorem rob_trace_refines {CoreState IsaState : Type}
       rw [tagged_packet_refines_trace_append hpacket,
         ih coreState' isaState' order' hrel']
 
+/-- A packet-level ROB refinement certificate also certifies the flattened
+tag stream's global order.  The packet relation supplies the local prefix;
+the threaded order equation supplies the boundary for the tail. -/
+theorem robTags_in_order_of_refines {CoreState IsaState : Type}
+    {core : RobMachine CoreState} {isa : Machine IsaState}
+    {rel : CoreState → IsaState → Nat → Prop} {start : Nat}
+    {admit : Input → Prop}
+    (h : RobStepRefines core isa rel start admit) :
+    ∀ (coreState : CoreState) (isaState : IsaState) (order : Nat)
+      (cycles : List Input),
+      rel coreState isaState order →
+      InOrderTags order (robTags core coreState cycles) := by
+  intro coreState isaState order cycles hrel
+  induction cycles generalizing coreState isaState order with
+  | nil => rfl
+  | cons cycleInput rest ih =>
+      have hs := h.2 coreState isaState order cycleInput hrel
+      rcases hC : core.step coreState cycleInput with ⟨coreState', packet⟩
+      simp only [robTags, hC]
+      simp only [hC] at hs
+      rcases hs with ⟨isaState', order', hrel', horder', hpacket⟩
+      have htail := ih coreState' isaState' order' hrel'
+      have htail' :
+          InOrderTags (order + packet.length)
+            (robTags core coreState' rest) := by
+        simpa [horder'] using htail
+      exact inOrderTags_append hpacket.1 htail'
+
 theorem robStateAfter_refines {CoreState IsaState : Type}
     {core : RobMachine CoreState} {isa : Machine IsaState}
     {rel : CoreState → IsaState → Nat → Prop} {start : Nat}
@@ -359,6 +387,7 @@ theorem robStateAfter_refines {CoreState IsaState : Type}
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rob_trace_refines
+#print axioms LeanModels.Refine.robTags_in_order_of_refines
 #print axioms LeanModels.Refine.tagged_packet_refines_state
 #print axioms LeanModels.Refine.robStateAfter_refines
 #print axioms LeanModels.Refine.robTags_append

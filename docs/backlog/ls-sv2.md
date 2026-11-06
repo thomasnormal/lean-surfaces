@@ -1337,3 +1337,15 @@ equalities for the packetized four-retirement stream.
 **DECIDED:** keep tag metadata as an observational refinement layer whose
 retirement and input erasures are definitionally aligned with the ROB
 architectural projections.
+
+## 2026-11-06-ls-sv2-61 — derive global ROB tag order from refinement
+
+Added `robTags_in_order_of_refines` to `LeanModels/Refine/Rob.lean`.  A
+`RobStepRefines` certificate now inductively lifts each packet's local
+`InOrderTags` proof across the threaded order boundary to the complete
+flattened stream.  The PicoRV32 trace witness exposes the result as a
+parameterized theorem over its eventual core relation and admission predicate.
+
+**DECIDED:** retain order as a proof obligation of the ROB refinement
+relation; the flattened tag stream is certified by the same relation rather
+than by a second scheduling or completion-order choice.

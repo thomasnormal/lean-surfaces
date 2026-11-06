@@ -20,6 +20,9 @@
 - Added a positive ordinary-call metadata witness for artifact-local string
   declaration handles.
 
+- Added a recorded refusal for malformed ordinary-call string declaration
+  handles.
+
 - Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
   identity.
 

@@ -2555,6 +2555,21 @@ def resolvedCallStringTranslationWitnessOk : Bool :=
   admitResolvedCallExpression resolvedCallStringTranslation [1] matches
     .ok {value := "0x4a"}
 
+private def resolvedCallMalformedStringTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0x7c"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0x7d"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .string "not-a-frontend-handle")]])]])]}
+
+def resolvedCallMalformedStringRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallMalformedStringTranslation [0]
+  pure ()
+
 private def resolvedCallCastTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -3119,6 +3134,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedCallKindMismatchRefusal matches .error _
 #guard resolvedCallMissingKindRefusal matches .error _
 #guard resolvedCallStringTranslationWitnessOk
+#guard resolvedCallMalformedStringRefusal matches .error _
 #guard resolvedCallMalformedCastRefusal matches .error _
 #guard resolvedCallMissingCalleeRefusal matches .error _
 #guard resolvedCallMissingDeclarationRefusal matches .error _

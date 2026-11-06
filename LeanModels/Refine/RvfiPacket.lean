@@ -1963,6 +1963,43 @@ theorem normalizeRvfiPacketWindows_trace_length_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified packet-window chain exposes its packet-facing retirement
+   payload after the generic ROB boundary is erased. -/
+theorem normalizeRvfiPacketWindows_trace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    packetTrace machine.toPacketMachine state windows.flatten =
+      retirementWindows.flatten := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  have htrace := normalizeRvfiPacketTrace machine state windows.flatten hflat
+  exact htrace
+
+/- Packet-facing retirement payloads compose across adjacent certified
+   packet-window chains, retaining the second chain's carried boundary. -/
+theorem normalizeRvfiPacketWindows_trace_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    packetTrace machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_trace machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- Generic ROB input cardinality composes across adjacent certified packet
    window chains, retaining the second chain's carried state and order. -/
 theorem normalizeRvfiPacketWindows_robInputs_length_append {State : Type}

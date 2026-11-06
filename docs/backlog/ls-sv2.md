@@ -3382,3 +3382,16 @@ forms.
 **DECIDED:** reuse the exact `toRobMachine_trace` projection after carrying
 normalization through the append boundary; retirement payloads and order are
 preserved without reconstructing either trace.
+
+## 2026-11-06-ls-sv2-226 — bridge packet-window ROB trace to packet trace
+
+Added `normalizeRvfiPacketWindows_rob_trace_packetTrace` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. Certified packet-window chains now
+identify the generic ROB retirement trace with the packet-facing retirement
+trace, including adjacent chains. The PicoRV32 witness pins the chain and
+append forms.
+
+**DECIDED:** flatten through the existing packet-window certificate and reuse
+the exact `toRobMachine_trace` projection; retirement payloads and order are
+preserved without reconstructing either trace, with the carried state boundary
+retained for the append form.

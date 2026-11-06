@@ -2205,3 +2205,16 @@ over the complete packet capture.
 
 **DECIDED:** transport the established normalized packet-input cardinality
 through the exact packet-to-ROB input projection; no input order is inferred.
+
+## 2026-11-06-ls-sv2-132 — compose normalized packet ROB input cardinality
+
+Added `normalizeRvfiPacketRobInputs_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now prove directly that the concatenated generic ROB input stream has the
+concatenated decoded retirement cardinality, with the second window evaluated
+from the first window's retained state.  The PicoRV32 witness pins this
+append count.
+
+**DECIDED:** compose the normalized trace append certificate through the
+exact packet-to-ROB input projection; no input order or completion order is
+reconstructed.

@@ -916,6 +916,26 @@ theorem normalizeRvfiPacketRobInputs_length {State : Type}
       exact (robTags_length_eq_robInputs_length machine.toRobMachine state cycles).symm
     _ = retirements.length := hlen
 
+/- Generic ROB input cardinality composes across adjacent normalized packet
+   windows, retaining the second window's carried state and order boundary. -/
+theorem normalizeRvfiPacketRobInputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robInputs machine.toRobMachine state (first ++ second)).length =
+      (firstRetirements ++ secondRetirements).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRobInputs_length machine state (first ++ second)
+    hcombined
+
 /- Normalized packet source-input projections compose across adjacent windows
    with the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
@@ -2400,6 +2420,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append

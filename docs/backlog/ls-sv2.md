@@ -2990,3 +2990,16 @@ adjacent captures.  The PicoRV32 witness pins both forms.
 **DECIDED:** bridge through the exact normalized ROB-trace/packet-trace
 cardinality equality; packet boundaries, tag payloads, retirement order, and
 source-input order are not reconstructed.
+
+## 2026-11-06-ls-sv2-194 — certify packet-window tag-stream cardinality against ROB trace
+
+Added `normalizeRvfiPacketWindows_tags_length_robTrace` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`.  Certified packet-window chains now
+determine the exact generic ROB retirement-trace cardinality of their
+packet-boundary tag stream, including adjacent chains.  The PicoRV32 witness
+pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate and
+reuse the normalized packet tag-stream/ROB-trace cardinality bridge; packet
+boundaries, tag payloads, retirement order, and source-input order are not
+reconstructed.

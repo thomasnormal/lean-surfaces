@@ -159,6 +159,44 @@ theorem normalizeRvfiPacketWindows_flatten {State : Type}
           rw [htail']
           rfl
 
+/-- Independently certified window chains compose when the second chain is
+started from the first chain's retained state and retirement-order boundary. -/
+theorem normalizeRvfiPacketWindows_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    normalizeRvfiPacketWindows machine state start
+      (firstWindows ++ secondWindows)
+      (firstRetirementWindows ++ secondRetirementWindows) := by
+  induction firstWindows generalizing state start firstRetirementWindows with
+  | nil =>
+      cases firstRetirementWindows with
+      | nil => simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using hsecond
+      | cons retirementWindow retirementWindows => cases hfirst
+  | cons cycles rest ih =>
+      cases firstRetirementWindows with
+      | nil => cases hfirst
+      | cons retirementWindow retirementWindows =>
+          rcases hfirst with ⟨hwindow, htail⟩
+          have hstate :
+              rvfiPacketStateAfter machine state (cycles :: rest).flatten =
+                rvfiPacketStateAfter machine
+                  (rvfiPacketStateAfter machine state cycles) rest.flatten := by
+            rw [List.flatten_cons, rvfiPacketStateAfter_append]
+          rw [hstate] at hsecond
+          constructor
+          · exact hwindow
+          · apply ih (state := rvfiPacketStateAfter machine state cycles)
+              (start := start + retirementWindow.length)
+              (firstRetirementWindows := retirementWindows) htail
+            simpa [List.flatten_cons, List.length_append, Nat.add_assoc] using hsecond
+
 /-! ## Normalized packet-window composition -/
 
 /-- The tagged packet emitted at every cycle boundary, including empty
@@ -980,6 +1018,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_flatten
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

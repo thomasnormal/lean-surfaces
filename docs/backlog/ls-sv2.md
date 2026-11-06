@@ -1441,3 +1441,16 @@ two-window chain through the new generic route.
 **DECIDED:** represent streamed captures as an inductive window chain and
 flatten only after every local normalization has supplied its carried state
 and order boundary; no completion or packet order is reconstructed.
+
+## 2026-11-06-ls-sv2-69 — compose independently certified packet window chains
+
+Added `normalizeRvfiPacketWindows_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently normalized finite
+window chains now compose when the second starts from the first chain's
+retained state and flattened retirement count.  The PicoRV32 witness proves
+the same two-window certificate through the append theorem, alongside the
+direct chain proof.
+
+**DECIDED:** make chain composition explicit at the window-certificate
+boundary; the append theorem carries state and order rather than inferring
+either from flattened observations.

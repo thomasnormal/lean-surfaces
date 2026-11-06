@@ -424,6 +424,22 @@ theorem pinned_packet_windows_certificate :
   rw [show nontrapFirstExpected.length = 2 by decide]
   simpa using pinned_packet_second_window_normalize
 
+theorem pinned_packet_windows_certificate_append :
+    normalizeRvfiPacketWindows pinnedPacketMachine pinnedPacketMachine.init 0
+      ([packetFirstCycles] ++ [packetSecondCycles])
+      ([nontrapFirstExpected] ++ [nontrapSecondExpected]) := by
+  apply normalizeRvfiPacketWindows_append pinnedPacketMachine
+    pinnedPacketMachine.init 0 [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected]
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
 theorem pinned_packet_windows_chain_refines_state
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -798,6 +814,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_rob_tags_refines_isa_windows_of
 #print axioms pinned_packet_rob_tags_refines_state_windows
 #print axioms pinned_packet_windows_certificate
+#print axioms pinned_packet_windows_certificate_append
 #print axioms pinned_packet_windows_chain_refines_state
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags

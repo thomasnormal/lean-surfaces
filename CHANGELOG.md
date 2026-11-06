@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a direct-dot enum getter witness, retaining the `Owner` receiver shape
+  separately from the arrow getter's `Owner *` evidence.
+
 - Added a recorded refusal for enum getter calls bound to the wrong receiver
   object, preserving the explicit receiver-handle boundary.
 

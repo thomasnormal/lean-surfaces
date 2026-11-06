@@ -862,6 +862,20 @@ private def enumCallReceiverError : Option IntegralMemberEnumCallError :=
       | .error reason => some reason
       | .ok _ => none
 
+private def enumCallDotObserved : Option Int :=
+  match IntegralMemberCallSyntax.admit (rawCallDotWithResult methodHandle.value
+      receiverHandle.value "read" "XMLError") with
+  | .error _ => none
+  | .ok callSyntax =>
+      let dotAccess := {enumCallAccess with receiverType := "Owner"}
+      match IntegralMemberEnumCall.bind callSyntax dotAccess enumCallRepresentation
+          receiverHandle enumProjection with
+      | .error _ => none
+      | .ok call =>
+          match call.invoke with
+          | .ok (_, value) => some value.value.value
+          | .error _ => none
+
 
 private def observed (raw : Raw) : Option Int :=
   match IntegralMemberCallSyntax.admit raw with
@@ -1302,6 +1316,11 @@ def enumGetterCallEvidenceWitness : Bool :=
   enumCallObserved == some 7 && enumCallReceiverError == some .receiverMismatch
 
 #guard enumGetterCallEvidenceWitness
+
+def enumGetterDotCallEvidenceWitness : Bool :=
+  enumCallDotObserved == some 7
+
+#guard enumGetterDotCallEvidenceWitness
 
 def enumGetterReceiverRefusal : Bool :=
   !(enumCallReceiverError == some .receiverMismatch)

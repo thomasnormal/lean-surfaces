@@ -2089,3 +2089,14 @@ append route.
 **DECIDED:** compose the existing normalized trace append theorem with the
 flat ROB-tag cardinality projection; no tag order or completion order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-122 — compose normalized packet ROB tag input cardinality
+
+Added `normalizeRvfiPacketRobTags_inputs_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent normalized packet windows
+now prove directly that the mapped source-input stream of the concatenated
+generic ROB tags has the concatenated decoded retirement cardinality.  The
+PicoRV32 witness pins this direct append route.
+
+**DECIDED:** derive mapped-input cardinality from the flat tag append result
+and `List.length_map`; no input order or completion order is reconstructed.

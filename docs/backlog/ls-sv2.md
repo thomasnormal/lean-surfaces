@@ -1951,3 +1951,16 @@ PicoRV32 witness pins this append cardinality over its two singleton windows.
 **DECIDED:** compose through the existing finite-window certificate and the
 single-chain mapped-input cardinality theorem; the packet input stream and
 retirement order remain explicit, with no padding or completion order inferred.
+
+## 2026-11-06-ls-sv2-110 — expose packet-to-ROB input threading
+
+Added `RvfiPacketMachine.toRobMachine_inputs_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The generic ROB input projection now has
+an explicit append law: concatenated cycle windows produce concatenated ROB
+inputs, with the second window evaluated from the first window's retained
+packet state.  The PicoRV32 witness pins this state-threaded input projection
+over its two packet windows.
+
+**DECIDED:** transport the packet machine's existing `packetInputs_append`
+law through the exact `toRobMachine_inputs` bridge and the retained RVFI state;
+no input order or completion order is reconstructed.

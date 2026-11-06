@@ -416,6 +416,9 @@ retained `CompoundStmt` body kind before any body walk or object execution.
 The enum field-read row composes the typed field and representation with the
 explicit receiver projection, accepting the valid stored cell and rejecting a
 wrong receiver object before returning a value.
+The corresponding write row checks in-place mutation through the same
+projection and rejects both a wrong receiver and a read-only snapshot before
+storage is changed.
 
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is

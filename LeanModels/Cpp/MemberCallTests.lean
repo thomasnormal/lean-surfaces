@@ -1282,6 +1282,11 @@ def enumFieldReadEvidenceWitness : Bool :=
 
 #guard enumFieldReadEvidenceWitness
 
+def enumFieldWriteEvidenceWitness : Bool :=
+  enumWriteAccepted && enumWriteWrongProjection && enumWriteReadOnly
+
+#guard enumFieldWriteEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

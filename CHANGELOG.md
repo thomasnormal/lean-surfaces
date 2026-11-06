@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a differential witness for enum field writes through an explicit
+  projection, including wrong-receiver and read-only rejection before storage
+  mutation.
+
 - Added a differential witness for enum field reads through an explicit object
   projection, including rejection of a wrong receiver object before value
   transport.

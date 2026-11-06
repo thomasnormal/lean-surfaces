@@ -9717,3 +9717,14 @@ rows remain admitted through the existing `list(<genexp>)` tier.
 
 DECIDED: the verified silent wrong-answer row is now a loud refusal. Retain
 the source-node lowering as a later rule-2 cleanup.
+
+## 2026-11-07-pycomplete-378 — augmented-repeat rewrite recheck
+
+The previously reported `lowerBoundaryAugRepeat` rewrite is absent from the
+current extractor and ingestion. The pinned aliasing witness
+`list_aug_repeat_script.py` matches CPython 3.9.25 (`True [1, 2, 1, 2]`) in
+leanpy, preserving in-place list mutation and alias identity. No rewrite or
+fabricated `*` error remains in this path.
+
+DECIDED: this audit finding is complete; retain ordinary `AugAssign` as the
+source-level operation.

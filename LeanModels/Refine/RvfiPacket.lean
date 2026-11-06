@@ -592,6 +592,41 @@ theorem normalizeRvfiPacketRobTags_append {State : Type}
     machine state first
   simpa [hfirstLength, hstate] using hsecondTags
 
+/-- A normalized packetized RVFI stream and a ROB refinement certificate
+jointly establish both global tag order and the ISA equality of its tagged
+retirements. -/
+theorem normalizeRvfiPacketRobTags_refines
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    InOrderTags start (robTags machine.toRobMachine state cycles) ∧
+      (robTags machine.toRobMachine state cycles).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state cycles) := by
+  constructor
+  · exact normalizeRvfiPacketRobTags machine state cycles hobs
+  · have htrace :
+        robTrace machine.toRobMachine state cycles = retirements := by
+      rw [machine.toRobMachine_trace]
+      exact normalizeRvfiPacketTrace machine state cycles hobs
+    calc
+      (robTags machine.toRobMachine state cycles).map
+          TaggedCommit.retirement =
+          robTrace machine.toRobMachine state cycles :=
+        robTags_retirements machine.toRobMachine state cycles
+      _ = retirements := htrace
+      _ = trace isa isaState
+          (robInputs machine.toRobMachine state cycles) :=
+        htrace.symm.trans
+          (rob_trace_refines hrob state isaState start cycles hrel)
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -693,5 +728,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

@@ -1349,3 +1349,16 @@ parameterized theorem over its eventual core relation and admission predicate.
 **DECIDED:** retain order as a proof obligation of the ROB refinement
 relation; the flattened tag stream is certified by the same relation rather
 than by a second scheduling or completion-order choice.
+
+## 2026-11-06-ls-sv2-62 — compose normalized packet tags with ISA refinement
+
+Added `normalizeRvfiPacketRobTags_refines` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful packet normalization and a
+`RobStepRefines` certificate now jointly state global `InOrderTags` and the
+equality of the tagged retirement projection with the ISA trace over retained
+ROB inputs.  The PicoRV32 witness exposes the combined theorem over its
+abstract relation and admission predicate.
+
+**DECIDED:** keep tag-order admission and architectural refinement as separate
+proof components while providing one conjunction for consumers that need the
+complete tagged retirement contract.

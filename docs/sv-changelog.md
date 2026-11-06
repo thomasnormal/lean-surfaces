@@ -56,6 +56,13 @@ window.
 Verification on 2026-11-06 rebuilt `LeanModels.Sv.CombViewMain` and both
 clean-room fixtures; the named obligations remain stable on the green chain.
 
+The SRT clean-room forms are also parsed by the proc-aware summary: its
+`always_comb case` table is retained as a case tree, and a shift by the
+`XS` localparam reaches the shift reader. Generic `sv_structure` proofs of
+the parameterized rows currently stop earlier at the named environment-value
+obligation; the corresponding `CombViewTactic` parameter-environment slice
+is owned by the integration lane.
+
 ## Straight-line automatic functions with local case
 
 Pure automatic input-only functions may now contain local declarations, a

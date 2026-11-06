@@ -668,6 +668,38 @@ theorem rvfiPacketStateAfter_refines_normalized
         (packetInputs machine.toPacketMachine state cycles).length := horder
     _ = start + retirements.length := by rw [hpacketLength]
 
+/-- The normalized packet state/order transport composes across two adjacent
+windows, with the second normalization starting at the first retirement
+count. -/
+theorem rvfiPacketStateAfter_refines_normalized_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (start : Nat)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (state : State) (isaState : IsaState)
+    (hrel : rel state isaState start)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+          finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start hrob
+    state isaState hrel (first ++ second)
+    (firstRetirements ++ secondRetirements) hcombined
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -771,5 +803,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized
+#print axioms LeanModels.Refine.rvfiPacketStateAfter_refines_normalized_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

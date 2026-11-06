@@ -1374,3 +1374,16 @@ PicoRV32 witness exposes the resulting existential state/order theorem.
 **DECIDED:** derive the final order increment from the packet adapter's exact
 retained-input length and the normalized retirement stream; no packet or
 completion order is inferred from an unvalidated observation.
+
+## 2026-11-06-ls-sv2-64 — compose normalized packet state across windows
+
+Added `rvfiPacketStateAfter_refines_normalized_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two adjacent packet normalization
+certificates now compose through the state-threaded packet/ISA relation, with
+the final order equal to the starting order plus the concatenated retirement
+count.  The PicoRV32 witness pins the result over its measured first and
+second packet windows.
+
+**DECIDED:** compose state/order transport only through the explicit
+normalization append certificate, retaining the first window's state boundary
+and the second window's carried retirement offset.

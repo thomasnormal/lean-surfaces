@@ -26,6 +26,9 @@
 - Added a recorded refusal for string ordinary-call handles resolving to a
   retained non-callable declaration.
 
+- Added a recorded refusal for string ordinary-call handles duplicated in
+  declaration evidence.
+
 - Added a recorded refusal for string ordinary-call handles absent from
   declaration evidence.
 

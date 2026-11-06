@@ -88,6 +88,9 @@ is a recorded refusal; string handles cannot bypass the call kind check.
 A syntactically valid string ordinary-call handle absent from declaration
 evidence is also refused; the string must resolve to one retained declaration.
 
+A string ordinary-call handle occurring in multiple retained declaration rows is
+also refused; string handles do not bypass the ambiguity check.
+
 A syntactically valid string operator handle absent from declaration evidence is
 also refused; operator identity requires one retained declaration row.
 

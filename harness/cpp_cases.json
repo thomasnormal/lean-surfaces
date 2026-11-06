@@ -2382,6 +2382,17 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-string-duplicate-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallStringDuplicateRefusal",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.resolved-call-string-missing-declaration-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

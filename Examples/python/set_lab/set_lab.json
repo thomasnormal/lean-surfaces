@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/set_lab/set_lab.py",
-  "source_sha256": "f058e175b73a90c6dcb075e4c3b9988552b93e9579ac7b8e65a833810a988b39",
+  "source_sha256": "79e1eb3d66a347c32ea2741e8fb2f58355e3f845f451523ee85df766ee139197",
   "module": {
     "kind": "Module",
     "body": [

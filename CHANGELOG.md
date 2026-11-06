@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refreshed the set-lab envelope and generated Python coverage page after the audit-row and explicit refusal updates.
+
 - Rebased the round-lab proof artifact on the parameterized float-round worker; all 53 round theorems build without deleted per-digit helper references.
 
 - Refreshed the generated backlog index after cross-lane entries landed, restoring documentation freshness.

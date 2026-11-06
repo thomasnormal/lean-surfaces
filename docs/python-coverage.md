@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 4188 | 4174 | 0 | 14 |
+| 4199 | 4014 | 0 | 185 |
 
-Of the 4174 rows the model decides, 4174 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 4014 rows the model decides, 4014 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 4188 | 4059 | 0 | 129 |
+| 4199 | 3900 | 1 | 298 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-145 witnesses: 145 MATCH.
+145 witnesses: 137 MATCH, 8 REFUSE.
 
 ### `stmt`
 
@@ -74,14 +74,14 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Lambda` | MATCH | module-scope single-target lambda only |
 | `IfExp` | MATCH |  |
 | `Dict` | MATCH |  |
-| `Set` | MATCH | lowered to set(list) at ingestion; order remains unobservable |
-| `ListComp` | MATCH | desugared to list(genexp) at ingestion |
-| `SetComp` | MATCH | lowered to set(generator) at ingestion |
-| `DictComp` | MATCH | lowered to dict(generator) at ingestion |
+| `Set` | REFUSE | unsupported expression 'Set:display' |
+| `ListComp` | REFUSE | unsupported expression 'ListComp' |
+| `SetComp` | REFUSE | unsupported expression 'SetComp' |
+| `DictComp` | REFUSE | unsupported expression 'DictComp' |
 | `GeneratorExp` | MATCH | lowered to a synthesized generator function |
 | `Await` | MATCH | dead async definition is never observed |
 | `Yield` | MATCH | statement position only |
-| `YieldFrom` | MATCH | inlined at ingestion |
+| `YieldFrom` | REFUSE | unsupported statement 'YieldFrom:delegation' |
 | `Compare` | MATCH |  |
 | `Call` | MATCH |  |
 | `JoinedStr` | MATCH | intrinsic str/repr replacement fields; nonempty specs remain a gap |
@@ -92,7 +92,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Constant` | MATCH | the int/str/bool/None inventory |
 | `Attribute` | MATCH |  |
 | `Subscript` | MATCH |  |
-| `Starred` | MATCH | display position only |
+| `Starred` | REFUSE | unsupported expression 'Starred:display' |
 | `Name` | MATCH |  |
 | `List` | MATCH |  |
 | `Tuple` | MATCH |  |
@@ -108,7 +108,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `sorted` | MATCH | landed by §L53 rung 3b |
 | `sum` | MATCH | landed by §L53 rung 3b |
 | `max` | MATCH | landed by §L53 rung 3b |
-| `star` | MATCH | landed by §L53 rung 3b |
+| `star` | REFUSE | unsupported expression 'Starred:display' |
 | `for-in-function` | MATCH | the cursor at FUNCTION scope — execGen's arm, and it exercises `break` and `continue` through the new frame (… |
 | `for-keys` | MATCH | `for k in d.keys()` at function scope — inch 3c-i-a |
 | `for-values` | MATCH | `for v in d.values()` — the VALUES view, whose element is the value, not the key |
@@ -116,7 +116,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `items-consumed` | MATCH | the ITEMS view, consumed immediately — inch 3c-i-b |
 | `view-escapes` | MATCH | 3c-ii: the first-class `Obj.dictView` retains the dictionary address, so the later insertion is visible when … |
 | `values-identity-eq` | MATCH | THE TRAP, measured: CPython answers FALSE. A values view defines no equality, so it compares by IDENTITY — wh… |
-| `keys-set-algebra` | MATCH | key-view/set intersection allocates a fresh heap set; `sorted` makes the set's hash iteration order unobserva… |
+| `keys-set-algebra` | REFUSE | unsupported expression 'Set:display' |
 | `enumerate` | MATCH | the key cursor with an index — inch 3c-i-c |
 | `enumerate-start` | MATCH | the START is an `int`, not a `Nat`: CPython counts from a negative start as readily as a positive one — inch … |
 | `enumerate-escapes` | MATCH | THE RULED DELTA (2026-08-23-pycomplete-13 (c)): binding an enumerate and then GROWING the dict is SILENT in C… |

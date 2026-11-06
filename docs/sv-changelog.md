@@ -6467,3 +6467,11 @@ guarded generate families. The guarded-family prototype remains parked until
 that premise is threaded through `AutoObl` and `Summary.sound`; failed guard
 evaluation is never treated as an empty family.
 
+## 2026-11-06 — F1 unknown sampled decisions are loud
+
+The finite SVA evaluator now refuses ordinary boolean expressions, negations,
+`$past`, and `$stable` when their sampled value is unknown, including the
+default sample before the trace begins. This prevents simulator-style
+x-optimism (`!x` becoming true) in the E contract. `$rose` and `$fell` keep
+their sampled-value edge semantics.
+

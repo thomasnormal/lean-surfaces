@@ -507,6 +507,16 @@ theorem pinned_packet_windows_chain_refines_state_append
         [nontrapSecondExpected] from
         ⟨pinned_packet_second_window_normalize, trivial⟩)
 
+theorem pinned_packet_windows_tags_stream :
+    InOrderPacketStream 0
+      (rvfiPacketTags pinnedPacketMachine pinnedPacketMachine.init
+        [packetFirstCycles, packetSecondCycles].flatten) := by
+  exact normalizeRvfiPacketWindows_tags_stream pinnedPacketMachine
+    pinnedPacketMachine.init 0
+    [packetFirstCycles, packetSecondCycles]
+    [nontrapFirstExpected, nontrapSecondExpected]
+    pinned_packet_windows_certificate
+
 theorem pinned_packet_state_after_refines_normalized
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -854,6 +864,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_certificate_append
 #print axioms pinned_packet_windows_chain_refines_state
 #print axioms pinned_packet_windows_chain_refines_state_append
+#print axioms pinned_packet_windows_tags_stream
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

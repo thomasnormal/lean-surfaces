@@ -1467,3 +1467,16 @@ the two singleton window chains.
 **DECIDED:** reuse the local chain append certificate as the sole composition
 step, then apply the generic flattened refinement theorem once at the combined
 boundary.
+
+## 2026-11-06-ls-sv2-71 — preserve packet boundaries across window chains
+
+Added `normalizeRvfiPacketWindows_tags_stream` to
+`LeanModels/Refine/RvfiPacket.lean`.  A finite chain certificate now also
+proves `InOrderPacketStream` for the flattened cycle packets, preserving
+packet-local order boundaries alongside the generic flattened ROB contract.
+The PicoRV32 witness pins this packet-aware stream result over its two-window
+chain.
+
+**DECIDED:** derive packet-boundary order only from the same flattened
+normalization certificate; no second packet ordering or completion choice is
+introduced.

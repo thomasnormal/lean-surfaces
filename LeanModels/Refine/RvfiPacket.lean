@@ -1324,6 +1324,29 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs {State : Type}
       packetInputs machine.toPacketMachine state windows.flatten := by
   exact RvfiPacketMachine.toRobMachine_tags_inputs machine state windows.flatten
 
+/- The packet-window ROB-tag input projection composes across adjacent
+   certified chains with the second chain's carried state retained. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map TaggedCommit.input =
+      packetInputs machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_inputs machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /-- A certified packet-window chain directly exposes its normalized
 retirement payload as the ISA trace over the generic ROB inputs. -/
 theorem normalizeRvfiPacketWindows_rob_trace_refines {State IsaState : Type}
@@ -2308,6 +2331,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length

@@ -431,19 +431,7 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         let star := match j.getObjVal? "star" with
           | .ok (.bool b) => b
           | _ => false
-        -- The whitelist collision CANONICALIZED (one table — Ast.lean —
-        -- one rewrite site): a structured row whose reconstructed text
-        -- hits `benignImportBinds` is rewritten back to the legacy
-        -- Unsupported node, so all five text-keyed consumers (the
-        -- namedtuple census's `isBenignNtImport`/`importBinds`,
-        -- `scriptImports`, `Stmt.g1Binds`, the survey's benign rows)
-        -- see today's shape unchanged.
-        let text := s!"from {module} import "
-          ++ (if star then "*" else String.intercalate ", " names.toList)
-        if (benignImportBinds text).isSome then
-          return .unsupported "ImportFrom" text span
-        else
-          return .importFrom module names star span
+        return .importFrom module names star span
     | "AnnAssignNoValue" =>
         return .annNoValue (← (← getField j "name").getStr?) span
     | "Unsupported" =>
@@ -519,8 +507,8 @@ only under conditions that make it provably faithful, ALL-OR-NOTHING per
 module; anything else leaves the module byte-identical (the assign stays
 an ordinary statement → poisoned G1 binding → loud, never wrong):
 
-1. the EXACT benign import `from collections import namedtuple` is
-   present (as the extractor's `Unsupported "ImportFrom"` text);
+1. the EXACT structured benign import `from collections import namedtuple` is
+   present;
 2. every candidate `X = namedtuple("T", <fields>)` has a valid typename
    and validated field names (CPython's identifier/keyword/underscore/
    duplicate rules — an invalid spec fails the CPython import itself, so
@@ -621,6 +609,8 @@ private def ntCandidate : Stmt → Option NamedTupleDefn
 recognition absorbs — the `namedtuple` row of the shared exact-import
 whitelist (`benignImportBinds`, Ast.lean; G1 reads the same table). -/
 private def isBenignNtImport : Stmt → Bool
+  | .importFrom module names star _ =>
+    (benignImportBindsStructured module names star).map Prod.fst == some "namedtuple"
   | .unsupported "ImportFrom" text _ =>
     (benignImportBinds text).map Prod.fst == some "namedtuple"
   | _ => false

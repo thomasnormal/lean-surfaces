@@ -670,6 +670,19 @@ def benignImportBinds : String → Option (String × Bool)
   | "from collections import namedtuple" => some ("namedtuple", false)
   | _ => Option.none
 
+/-- The same narrow whitelist keyed by the structured approved AST fields.
+This is the path used by `ImportFrom`; the text table above remains only for
+legacy unsupported import markers. -/
+def benignImportBindsStructured (module : String) (names : Array String)
+    (star : Bool) : Option (String × Bool) :=
+  if module == "time" && !star && names.isEmpty then
+    some ("time", false)
+  else if module == "itertools" && !star && names == #["count"] then
+    some ("count", true)
+  else if module == "collections" && !star && names == #["namedtuple"] then
+    some ("namedtuple", false)
+  else Option.none
+
 /-! ## Core value / result types (DESIGN.md, normative) -/
 
 /-- The integer object retained by a public `range` value, including bool

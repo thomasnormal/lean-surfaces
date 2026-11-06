@@ -442,20 +442,15 @@ clock's `moduleClockOk` census); the executor skips a whitelisted import
 and refuses any other one loudly.
 
 Pass 0 (docs/memory-model.md §import forms): a STRUCTURED
-`Stmt.importFrom` is deliberately NOT kept in the view. Keeping it
-would poison its names in the static table (`Stmt.g1Binds`
-over-reports), and a poisoned entry REFUSES the read instead of
-consulting the live view — which would break the guarded fallback's
-whole point (quopri's handler binds `a2b_qp = None` as a live global,
-and later top-level reads must resolve through `World.globals`). This
-opens no clock hole: in Pass 0 an `importFrom` NEVER binds (it raises
-before any binding; the handler's rebinds land in the live view, which
-`clockRecvOk` already consults), and program mode's `moduleClockOk`
-census runs over the REAL top level, where the new `g1Binds` arms make
-`from x import time` and any top-level star import fail it. -/
+Structured `Stmt.importFrom` rows are retained in the view so the benign
+import table remains visible to script resolution. Pass 0 imports still
+raise before binding; their static census over-reports names in the safe
+direction, while benign rows are skipped by the script executor and their
+modeled names are resolved through the same single table. -/
 def scriptImports (m : Module) : List Stmt :=
   m.topLevel.toList.filter fun s =>
     match s with
+    | .importFrom .. => true
     | .unsupported "Import" _ _ | .unsupported "ImportFrom" _ _ => true
     | _ => false
 
@@ -510,6 +505,8 @@ because the static table cannot be tombstoned without a stale binding.
 def benignImportNames (m : Module) : List String :=
   m.topLevel.toList.filterMap fun s =>
     match s with
+    | .importFrom module names star _ =>
+      (benignImportBindsStructured module names star).map Prod.fst
     | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
       (benignImportBinds text).map Prod.fst
     | _ => Option.none
@@ -867,6 +864,9 @@ mutual
           else
             .unsupported s!"class {name}: executable class creation is outside the tier"
         | none => .unsupported s!"internal: class marker {name} has no class table entry"
+      | .importFrom module names star sp =>
+        if (benignImportBindsStructured module names star).isSome then .ok st .next
+        else execStmt m fuel st (.importFrom module names star sp)
       | .unsupported "Import" text sp =>
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "Import" text sp)

@@ -854,6 +854,26 @@ theorem normalizeRvfiPacketRobTags_length_append {State : Type}
   apply normalizeRvfiPacketRobTags_length machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/- Mapped ROB-tag source-input cardinality composes across adjacent normalized
+   packet windows with the same retained-state boundary. -/
+theorem normalizeRvfiPacketRobTags_inputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    ((robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input).length =
+      (firstRetirements ++ secondRetirements).length := by
+  have hlen := normalizeRvfiPacketRobTags_length_append machine state first
+    second hfirst hsecond
+  simpa only [List.length_map] using hlen
+
 /-- A normalized packetized RVFI stream and a ROB refinement certificate
 jointly establish both global tag order and the ISA equality of its tagged
 retirements. -/
@@ -2211,6 +2231,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines

@@ -4005,6 +4005,46 @@ theorem normalizeRvfiPacketRobInputs_length_packetTrace_append
   exact normalizeRvfiPacketRobInputs_length_packetTrace machine state
     (first ++ second) hcombined
 
+/- A certified packet-window chain has equal generic ROB-input and packet
+   retirement-trace cardinalities. -/
+theorem normalizeRvfiPacketWindows_robInputs_length_packetTrace
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robInputs machine.toRobMachine state windows.flatten).length =
+      (packetTrace machine.toPacketMachine state windows.flatten).length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketRobInputs_length_packetTrace machine state
+    windows.flatten hflat
+
+/- The packet-window ROB-input/packet-trace cardinality bridge composes
+   across two certified chains with the carried state boundary retained. -/
+theorem normalizeRvfiPacketWindows_robInputs_length_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robInputs machine.toRobMachine state
+      (firstWindows ++ secondWindows).flatten).length =
+      (packetTrace machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_robInputs_length_packetTrace machine state
+    start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -4181,3 +4221,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_length_packetInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_packetTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobInputs_length_packetTrace_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_robInputs_length_packetTrace_append

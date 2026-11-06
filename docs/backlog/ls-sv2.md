@@ -2790,3 +2790,16 @@ retained state boundary.  The PicoRV32 witness pins both forms.
 trace cardinalities and compose through normalized trace append; packet
 boundaries, source-input order, retirement payloads, and order are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-178 — certify packet-window ROB input cardinality against packet trace
+
+Added `normalizeRvfiPacketWindows_robInputs_length_packetTrace` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window
+chain now certifies equal generic ROB-input and packet-retirement-trace
+cardinalities, and adjacent chains compose the bridge through their carried
+state boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate,
+reuse the normalized ROB-input/packet-trace cardinality bridge, and retain the
+carried state; packet boundaries, source-input order, retirement payloads, and
+order are not reconstructed.

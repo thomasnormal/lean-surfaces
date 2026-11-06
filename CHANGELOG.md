@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the first `twinAgrees` refinement lemmas: monadic pure-worker lifts and binary operators are proved equal to the theorem interpreter's `Run.liftRes` path.
+
 - Removed the unused exception-handler name delimiter encoder; handler semantics now retain structured name arrays end to end.
 
 - Plain `import time` is now a structured AST statement; import admission and the clock census no longer parse source-text whitelist strings, while richer imports remain loud.

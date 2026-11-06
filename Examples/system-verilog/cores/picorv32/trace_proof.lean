@@ -474,6 +474,21 @@ theorem pinned_packet_trace_refines_isa
     admit pinnedPacketMachine.init rvMachine.init 0 packetCycleInputs
     nontrapExpected hrob hrel pinned_packet_observations_normalize
 
+theorem pinned_packet_trace_refines_isa_append
+    {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
+    {admit : Input → Prop}
+    (hrob : RobStepRefines pinnedPacketMachine.toRobMachine rvMachine
+      rel 0 admit)
+    (hrel : rel pinnedPacketMachine.init rvMachine.init 0) :
+    nontrapFirstExpected ++ nontrapSecondExpected =
+      trace rvMachine rvMachine.init
+        (packetInputs pinnedPacketMachine.toPacketMachine
+          pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles)) := by
+  exact normalizeRvfiPacketTrace_refines_append pinnedPacketMachine rvMachine
+    rel admit pinnedPacketMachine.init rvMachine.init 0 packetFirstCycles
+    packetSecondCycles hrob hrel pinned_packet_first_window_normalize
+    pinned_packet_second_window_normalize
+
 theorem pinned_packet_windows_certificate :
     normalizeRvfiPacketWindows pinnedPacketMachine pinnedPacketMachine.init 0
       [packetFirstCycles, packetSecondCycles]
@@ -1293,6 +1308,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_refines
 #print axioms pinned_packet_refines_append
 #print axioms pinned_packet_trace_refines_isa
+#print axioms pinned_packet_trace_refines_isa_append
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_stateful_memory_arch

@@ -1766,3 +1766,15 @@ four-cycle packet capture.
 **DECIDED:** transport the existing ROB trace refinement through the exact
 `toRobMachine_inputs` equality; the state relation remains available through
 the complete packet contract and no input stream is reconstructed.
+
+## 2026-11-06-ls-sv2-95 — compose single packet ISA trace equality
+
+Added `normalizeRvfiPacketTrace_refines_append` to
+`LeanModels/Refine/RvfiPacket.lean`. Two adjacent normalized packet windows
+now compose directly to the packet-facing ISA trace equality over their
+concatenated retained inputs. The PicoRV32 witness pins this append route over
+its first and second packet windows.
+
+**DECIDED:** compose through the normalized packet trace append certificate
+and the trace-only packet projection; the carried state and retirement offset
+remain explicit at the normalization boundary.

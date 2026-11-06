@@ -1561,6 +1561,33 @@ theorem normalizeRvfiPacketTrace_refines
     state isaState start cycles retirements hrob hrel hobs
   simpa only [RvfiPacketMachine.toRobMachine_inputs] using htrace
 
+/- The trace-only packet-facing projection composes across adjacent windows
+   using the same carried normalization boundary as the complete contract. -/
+theorem normalizeRvfiPacketTrace_refines_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state (first ++ second)) := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketTrace_refines machine isa rel admit state isaState
+    start (first ++ second) (firstRetirements ++ secondRetirements)
+    hrob hrel hcombined
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -1617,3 +1644,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines_append

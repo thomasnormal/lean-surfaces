@@ -28,7 +28,7 @@ EXIT STATUS (the runner boundary, docs/memory-model.md §effects):
 never guesses a value for a construct it does not model.
 
 ``--compare`` additionally runs the same file under CPython
-(``$LEANPY_CPYTHON`` or ``python3``) and reports MATCH / LOUD / MISMATCH
+(``$LEANPY_CPYTHON`` or the pinned ``python3.9``) and reports MATCH / LOUD / MISMATCH
 on stderr, comparing stdout, exit code, and exception class when both runs
 raise. This is the whole-program differential — the typed-call version is
 ``tools/lean-python --compare``.
@@ -57,9 +57,34 @@ import re
 import subprocess
 import sys
 import tempfile
+from shutil import which
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(REPO_ROOT, ".lake", "build", "bin", "leanmodels-run")
+PINNED_FRONTEND = "python3.9"
+
+
+def _reexec_under_pinned_frontend():
+    """Parse envelopes with the pinned CPython 3.9 AST frontend."""
+    if os.environ.get("LEANPY_NO_REEXEC"):
+        return
+    want = os.environ.get("LEANPY_FRONTEND") or PINNED_FRONTEND
+    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_FRONTEND"):
+        return
+    exe = which(want)
+    if exe is None:
+        sys.stderr.write("leanpy: WARNING pinned frontend %r is not installed; "
+                         "extracting with %s instead\n" %
+                         (want, sys.version.split()[0]))
+        return
+    if os.path.realpath(exe) == os.path.realpath(sys.executable):
+        return
+    os.environ["LEANPY_NO_REEXEC"] = "1"
+    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+
+
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
 
 
 def default_cache():
@@ -319,7 +344,20 @@ def main(argv=None):
     lean = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
     sys.stdout.write(lean.stdout)
     sys.stderr.write(lean.stderr)
-    cpython = os.environ.get("LEANPY_CPYTHON", "python3")
+    cpython = os.environ.get("LEANPY_CPYTHON") or PINNED_FRONTEND
+    if which(cpython) is None:
+        fallback = which("python3")
+        if fallback is None:
+            sys.stderr.write("leanpy: no CPython oracle is installed\n")
+            return 2
+        sys.stderr.write("leanpy: WARNING pinned oracle %r is not installed; "
+                         "using %s instead\n" % (cpython, fallback))
+        cpython = fallback
+    oracle_version = subprocess.run([cpython, "-VV"], capture_output=True,
+                                    text=True)
+    sys.stderr.write("leanpy: frontend %s; oracle %s\n" %
+                     (sys.version.split()[0],
+                      (oracle_version.stdout or oracle_version.stderr).strip()))
     ref = subprocess.run([cpython, os.path.abspath(opts.file)],
                          cwd=REPO_ROOT, capture_output=True, text=True)
     if lean.returncode in (3, 4):

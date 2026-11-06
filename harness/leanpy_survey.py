@@ -332,9 +332,15 @@ def default_oracle():
     for cand in ("python3.9", "python3"):
         try:
             if subprocess.run([cand, "-c", ""], capture_output=True).returncode == 0:
+                if cand != "python3.9":
+                    print("leanpy_survey.py: WARNING pinned oracle 'python3.9' "
+                          "is not installed; using %s instead" % cand,
+                          file=sys.stderr)
                 return cand
         except OSError:
             continue
+    print("leanpy_survey.py: WARNING neither pinned oracle nor python3 is "
+          "available; using %s" % sys.executable, file=sys.stderr)
     return sys.executable
 
 

@@ -9163,3 +9163,22 @@ arrays preserve source order.
 
 DECIDED: preserve handler names as structured arrays and keep the empty-array
 bare-handler convention; no delimiter encoding remains in the exception tier.
+
+## 2026-11-06-pycomplete-348 — pin leanpy's oracle and frontend
+
+`tools/leanpy` now re-executes under CPython 3.9.25 by default so its approved
+AST frontend is pinned, with `LEANPY_FRONTEND` and `LEANPY_NO_REEXEC` retaining
+the explicit override and diagnostic escape hatch. `--compare` defaults its
+oracle to `python3.9`, warns when that pin is unavailable before falling back
+to `python3`, and prints both frontend and oracle versions. The survey already
+re-executes its frontend; its oracle fallback now emits the same explicit
+warning instead of silently changing the reference implementation.
+
+| Measurement | Result |
+|---|---|
+| Runner smoke | `python3 tools/leanpy Examples/python/ann_lab/ann_lab.py --compare` printed frontend 3.9.25, oracle 3.9.25, and MATCH |
+| Survey smoke | `leanpy_survey.py --limit 1 --no-cpython` completed and emitted telemetry |
+| Python syntax checks | `py_compile` passed for both tools |
+
+DECIDED: keep CPython 3.9 as the default at both ends of the whole-program
+comparison; alternate interpreters require an explicit environment or flag.

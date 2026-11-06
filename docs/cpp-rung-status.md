@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 24 | 0 | 0 |
-| differential calls | 1662 | 0 | 1593 | 0 | 59 | 0 | 10 |
+| differential calls | 1663 | 0 | 1593 | 0 | 60 | 0 | 10 |
 
-The corpus includes 48 compile-only translation rows, 43 rung-1 lifetime rows, 2 rung-2 scalar checks, 225 rung-3 expression checks, 1075 rung-4 statement checks, 42 rung-7 member-expression checks, and 227 callable rows. Hand-built rows are `WITNESS`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace source-derived callable `ORACLE` rows with compiled calls.
+The corpus includes 48 compile-only translation rows, 43 rung-1 lifetime rows, 2 rung-2 scalar checks, 225 rung-3 expression checks, 1075 rung-4 statement checks, 42 rung-7 member-expression checks, and 228 callable rows. Hand-built rows are `WITNESS`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace source-derived callable `ORACLE` rows with compiled calls.

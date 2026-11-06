@@ -3429,3 +3429,15 @@ capture forms.
 **DECIDED:** compose the existing normalized ROB-trace/ISA equality with the
 state-threaded packet transport lemma; the exact ROB input boundary and
 retirement order remain explicit, with no new state reconstruction.
+
+## 2026-11-06-ls-sv2-230 — combine packet-window ROB trace refinement with state transport
+
+Added `normalizeRvfiPacketWindows_rob_trace_refines_state` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. Certified packet-window chains now
+expose both the ISA trace over generic ROB inputs and the final packet-machine
+state/order relation. The PicoRV32 witness pins the chain and adjacent-chain
+forms.
+
+**DECIDED:** compose the packet-window ROB-trace/ISA equality with the existing
+flattened state transport through the normalization certificate; the generic
+ROB input boundary and carried retirement order stay explicit.

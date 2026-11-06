@@ -1964,3 +1964,15 @@ over its two packet windows.
 **DECIDED:** transport the packet machine's existing `packetInputs_append`
 law through the exact `toRobMachine_inputs` bridge and the retained RVFI state;
 no input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-111 — expose packet-to-ROB state threading
+
+Added `RvfiPacketMachine.toRobMachine_stateAfter_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The generic ROB projection now exposes
+the state-after append law directly, preserving the first window's retained
+ROB state as the starting state for the second window.  The PicoRV32 witness
+pins this state-threading equality over its two packet windows.
+
+**DECIDED:** reuse the generic ROB state append theorem at the packet
+projection boundary; no packet contents, input order, or completion order is
+reconstructed.

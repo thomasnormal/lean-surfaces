@@ -42,6 +42,41 @@ It maps `x`/`z` to 0 as specified by IEEE 1800 §6.11; after that conversion the
 stored bit is known. A formal or simulator result that disagrees with this
 conversion is a consumer boundary, never a reason to change E.
 
+## Other open choices use the same relation
+
+The resolution relation is also the accounting rule for the remaining choices
+in the tier:
+
+* an unspecified or implementation-dependent result contributes every result
+  allowed by the LRM, with the witness retained after it is stored;
+* active-region races and process order are quantified by the existing schedule
+  oracle, independently of the bit concretization;
+* a qualified-case violation contributes the permitted violation outcome and
+  never silently becomes an ordinary case;
+* an out-of-range or unknown select contributes the result of each resolved
+  index (an ignored write or an unknown read where the LRM requires it).
+
+These are separate axes of choice. A proof quantifies over their product, while
+preserving correlations within each run.
+
+## Clocks and asynchronous inputs
+
+Multiple clocks are an environment and scheduling choice, not a preferred
+clock ratio. For every admissible edge timeline—including coincident edges,
+arbitrary relative rates, and a stopped clock—the E relation includes every
+active-region order left open by IEEE 1800 §4.7. At a coincident edge, the
+defined sampling and NBA rules remain those of E; only an order the LRM leaves
+open is varied.
+
+Asynchronous inputs are likewise quantified over every admissible arrival time
+and value. A transition that arrives between clock edges, at an edge, or in the
+same time slot as another transition is a distinct environment choice when the
+LRM permits it. There is no metastability result in this model: if the standard
+defines the sampled value, E uses it; if it leaves the outcome open, the
+resolution relation retains every permitted outcome. Derived cycle views and
+contracts must refine this full relation rather than select one convenient
+clock or arrival schedule.
+
 ## Refinement obligations
 
 The implementation will introduce an explicit concretization/resolution

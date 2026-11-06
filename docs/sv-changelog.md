@@ -6490,3 +6490,10 @@ guards preserve the operand bit pattern, so parameter-dependent generate-if
 conditions agree across both instantiation paths instead of refusing or
 silently taking a different branch.
 
+## 2026-11-06 — x-resolution timing design
+
+The x-resolution design note now records the remaining open-choice axes and
+requires the E relation to quantify over multiple-clock schedules, coincident
+edges, stopped clocks, and asynchronous input arrival times while preserving
+the defined sampling and NBA rules.
+

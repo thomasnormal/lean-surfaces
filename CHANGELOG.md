@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for ordinary calls whose retained callee handle has
+  no matching declaration evidence in the artifact.
+
 - Added a recorded refusal for ordinary `CallExpr` nodes with no callee child,
   preserving the frontend's missing-identity boundary.
 

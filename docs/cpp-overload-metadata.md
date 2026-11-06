@@ -44,3 +44,7 @@ position.
 
 An empty `CallExpr` child list is likewise a recorded refusal; a selected
 callee cannot be manufactured when the frontend supplies no callee occurrence.
+
+A callee handle absent from the artifact declaration table is also a recorded
+refusal; retained AST identity must be backed by corresponding declaration
+evidence.

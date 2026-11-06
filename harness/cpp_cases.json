@@ -2237,6 +2237,17 @@
     "rung": 7
   },
   {
+    "id": "translation.resolved-call-noncallable-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallNonCallableRefusal",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

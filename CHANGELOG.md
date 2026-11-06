@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for ordinary `CallExpr` identity when the retained
+  declaration handle is a non-callable `VarDecl`.
+
 - Added a pointer-valued member-field receiver witness, retaining field/base
   handles and field name before any chained-call value or execution semantics.
 

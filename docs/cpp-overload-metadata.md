@@ -28,3 +28,8 @@ The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution
 or object construction has been executed.
+
+Ordinary `CallExpr` identity has the corresponding negative control: a
+retained declaration handle whose structured kind is `VarDecl` is refused even
+when the separate native source witness is well-formed. The gate never turns a
+non-callable declaration into a callable by name.

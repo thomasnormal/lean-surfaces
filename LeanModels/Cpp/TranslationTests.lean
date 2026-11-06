@@ -2209,6 +2209,21 @@ private def resolvedCallTranslation : Artifact := {emptyTranslation with
 def resolvedCallTranslationWitnessOk : Bool :=
   admitResolvedCallExpression resolvedCallTranslation [1] matches .ok {value := "0x21"}
 
+private def resolvedCallNonCallableTranslation : Artifact := {emptyTranslation with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "0x24"), ("kind", .string "VarDecl"),
+        ("name", .string "g"), ("inner", .array [])],
+      .object [("id", .string "0x25"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [("id", .string "0x26"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [("id", .string "0x24"),
+              ("kind", .string "VarDecl")])]])]])]}
+
+def resolvedCallNonCallableRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallNonCallableTranslation [1]
+  pure ()
+
 private def resolvedConstructorTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -2478,6 +2493,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard admitCXXConstructExpression functionTranslation [0] matches .error _
 #guard resolvedConstructorTranslationWitnessOk
 #guard resolvedConstructorTranslationRefusal matches .error _
+#guard resolvedCallNonCallableRefusal matches .error _
 #guard newTranslationWitness matches .ok ()
 #guard admitCXXNewExpression newTranslation [] matches .error _
 #guard admitCXXNewExpression functionTranslation [0] matches .error _

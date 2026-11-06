@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for enum getter calls whose retained result spelling
+  does not match the witnessed enum type.
+
 - Added a differential witness for the enum setter-call wrapper, checking
   canonical method/receiver identity, `void` result, argument representation,
   and projection before field mutation.

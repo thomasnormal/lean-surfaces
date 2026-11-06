@@ -2471,7 +2471,7 @@ the default's type (`PParam.defaultConstType`) and the argument list for
 `instantiate`/`instantiate2`, defaults converted to their bound type (the
 `defaultArgs` rule). At the all-default point this is the design slang
 elaborated the envelope's `resolved` metadata at. -/
-def PDesign.atPoint (d : PDesign) (given : List (Option Int)) :
+def PDesign.atPoint (d : PDesign) («given» : List (Option Int)) :
     Except String (PDesign × List Int) := do
   let envP ← match bindPackageParams {} d.packageParams with
     | .ok e => .ok e

@@ -430,9 +430,9 @@ private def splitClock : List String → Except String (List String × Option (L
     | [] => .error "--clock expects a comma-separated list of integers"
     | spec :: rest' => do
       let readings ←
-        if spec.trim.isEmpty then .ok ([] : List Int)
+        if spec.trimAscii.copy.isEmpty then .ok ([] : List Int)
         else (spec.splitOn ",").mapM fun r =>
-          match r.trim.toInt? with
+          match r.trimAscii.copy.toInt? with
           | some n => .ok n
           | Option.none => .error s!"--clock readings must be integers, got '{r}'"
       let (pos, later) ← splitClock rest'
@@ -598,7 +598,7 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
       let mut cache : List (String × Module) := []
       let mut hadError := false
       for line in contents.splitOn "\n" do
-        if line.trim.isEmpty then
+        if line.trimAscii.copy.isEmpty then
           continue
         -- Resolve the job to either a module+call or a runner error.
         let outcome : Except String (Module × BatchJob) ← do
@@ -714,7 +714,7 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
       let stdout ← IO.getStdout
       let mut hadError := false
       for line in contents.splitOn "\n" do
-        if line.trim.isEmpty then
+        if line.trimAscii.copy.isEmpty then
           continue
         -- a runner error keeps the job's PATH whenever the line parsed, so a
         -- survey attributes the failure to the file instead of losing it

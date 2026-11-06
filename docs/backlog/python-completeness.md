@@ -9586,3 +9586,22 @@ and duplicated unfold-heavy scripts are gone.
 
 DECIDED: example proofs follow the parameterized semantic worker and must not
 retain references to removed per-digit implementation names.
+
+## 2026-11-06-pycomplete-370 — refresh envelope and coverage artifacts after audit rows
+
+The scoped Python acceptance run found two repository-owned stale artifacts.
+The `set_lab` envelope now matches its source after the set-table audit rows,
+and the generated coverage page now reports the current 4199-row battery,
+including the explicit refusals for displays, comprehensions, starred syntax,
+and yield delegation.
+
+| Measurement | Result |
+|---|---|
+| Python envelope freshness | FRESH 81, STALE 0 |
+| Coverage page | `coverage_page.py --check`: fresh |
+| Documentation check | 89 marked blocks passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: regenerate committed envelopes and coverage summaries whenever a
+battery or ingestion boundary changes; stale generated artifacts fail the
+acceptance gate.

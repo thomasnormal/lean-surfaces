@@ -260,7 +260,7 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr_first", "args": [[5]], "expect": "match", "note": "An attribute-first chain names the RHS once in a synthetic temporary before left-to-right stores."},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned", "args": [[5], [2], [0]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned_param", "args": [[4], [0]], "expect": "match"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_assigned_lazy", "args": [[3]], "expect": "match", "note": "A named genexp is fused into the immediately draining return, so its body-assigned capture is observed before the enclosing frame can run again."},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_assigned_lazy", "args": [[3]], "expect": "match", "note": "The lowered generator carries the body-assigned capture through a shared cell; the named assignment remains in the source statement sequence."},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_assigned_rebound_still_loud", "args": [[3]], "expect": "match", "note": "The generator expression captures the assigned local through a shared cell, so rebinding it before `all(g)` is observed exactly."},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_unbound", "args": [[1]], "expect": "match", "note": "The shared cell remains empty when the conditional bind does not run, so the generator raises the faithful NameError on its first element."},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "yf_promote_drive", "args": [[1, 2], [84, 21]], "expect": "unsupported"},

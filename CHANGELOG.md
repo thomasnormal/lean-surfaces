@@ -11,6 +11,10 @@
 - Corrected the set iteration example and documentation to match the bounded
   nonnegative integer hash subset; negative integer iteration remains loud.
 
+- Synchronized generator-capture documentation with the removal of
+  shape-specific ingestion rewrites; named generator assignments now remain
+  in the AST and body captures use shared cells.
+
 - Verified the ordered module-definition admission against the forward-reach and redefinition fixtures; the script corpus keeps both hazards loud while the structured long-global row matches CPython.
 
 - Kept `nonlocal` loud in the proof interpreter instead of returning a stale cell value; the monadic runner remains the executable cell implementation.

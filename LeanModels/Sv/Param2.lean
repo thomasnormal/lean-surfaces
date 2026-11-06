@@ -2245,4 +2245,13 @@ private def loopDec : PExpr := .unary .dec (.genvarRef "i")
 private def int32GuardEnv : IEnv := { nvals := [("N", (16, 32, true))] }
 #guard (evalGenGuard int32GuardEnv (.binary (.m0 .eq) (.paramRef "N" none) (.int 16))).toOption == some 1
 
+/-! Regression guards for the exact INT generate path: an INT parameter is
+bound in `nvals`, and bitwise operations use its signed 32-bit bit pattern
+(`-1 & 1 = 1`), rather than the unbounded `vals`/`Nat` interpretation. -/
+private def int32BitGuardEnv : IEnv := { nvals := [("N", (5, 32, true))] }
+#guard (evalGenGuard int32GuardEnv (.paramRef "N" none)).toOption == some 16
+#guard (evalGenGuard int32BitGuardEnv
+    (.binary (.m0 .and)
+      (.binary (.m0 .sub) (.paramRef "N" none) (.int 6)) (.int 1))).toOption == some 1
+
 end LeanModels.Sv

@@ -9706,3 +9706,14 @@ outer-source fixture now performs creation-time iteration and raises the same
 DECIDED: the reported silent capture bug is closed by the structured census
 and loud refusal boundary, and the creation-time iterator case is complete.
 Retain the broader generator-expression lowering as a later rule-2 debt.
+
+## 2026-11-07-pycomplete-377 — list-comprehension shadow boundary
+
+Re-ran the shadowing witness. CPython 3.9.25 prints `[1, 2]` even though the
+module and local scope bind `list`; the current extractor marks the
+comprehension `ListComp:shadowed`, and leanpy refuses it before the shadow can
+be resolved as a synthesized ordinary call. The unshadowed list-comprehension
+rows remain admitted through the existing `list(<genexp>)` tier.
+
+DECIDED: the verified silent wrong-answer row is now a loud refusal. Retain
+the source-node lowering as a later rule-2 cleanup.

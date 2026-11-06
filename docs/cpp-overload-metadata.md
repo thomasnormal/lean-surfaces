@@ -79,6 +79,9 @@ The positive ordinary-call corpus also covers the one-child implicit-cast path,
 confirming that the retained function handle survives the frontend wrapper
 without string lookup or conversion inference.
 
+The cast path also validates structured declaration kind recursively; a
+contradictory kind below a one-child `ImplicitCastExpr` is a recorded refusal.
+
 A positive ordinary-call witness also retains a `CXXMethodDecl` handle, covering
 the method branch without executing the receiver or method body.
 

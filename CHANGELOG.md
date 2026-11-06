@@ -29,6 +29,9 @@
 - Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
   identity.
 
+- Added a recorded refusal for contradictory ordinary-call declaration kind
+  evidence below an implicit-cast wrapper.
+
 - Added a recorded refusal for string ordinary-call handles resolving to a
   retained non-callable declaration.
 

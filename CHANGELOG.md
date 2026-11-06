@@ -26,6 +26,9 @@
 - Added a recorded refusal for structured ordinary-call declaration evidence
   missing its `id` field.
 
+- Added a recorded refusal for structured ordinary-call handles with malformed
+  string ids.
+
 - Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
   identity.
 

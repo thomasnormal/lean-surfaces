@@ -113,6 +113,9 @@ does not normalize arbitrary text into an artifact identity.
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 
+A structured ordinary-call handle with malformed string `id` is also refused;
+the artifact-local handle parser validates object and string forms uniformly.
+
 A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.

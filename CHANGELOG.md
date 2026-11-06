@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for overloaded-operator identity when the retained
+  callee handle has no matching declaration evidence.
+
 - Added a recorded refusal for overloaded-operator identity with a retained
   non-callable `VarDecl` callee.
 

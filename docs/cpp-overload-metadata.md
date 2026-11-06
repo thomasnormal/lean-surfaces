@@ -52,3 +52,6 @@ evidence.
 The overloaded-operator gate has the matching negative control: a retained
 operator callee whose declaration kind is `VarDecl` is refused before any
 operator identity can be accepted.
+
+An operator callee handle absent from the artifact declaration table is also a
+recorded refusal; overload metadata requires retained declaration evidence.

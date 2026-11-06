@@ -2260,6 +2260,17 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-malformed-cast-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallMalformedCastRefusal",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

@@ -37,3 +37,7 @@ non-callable declaration into a callable by name.
 The positive ordinary-call corpus also covers the one-child implicit-cast path,
 confirming that the retained function handle survives the frontend wrapper
 without string lookup or conversion inference.
+
+A malformed cast wrapper with two children is a recorded refusal; the gate
+requires the exact one-child frontend shape and does not choose one child by
+position.

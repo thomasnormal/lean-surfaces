@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for ordinary-call callee casts with malformed
+  multi-child structure; the identity gate requires exactly one cast child.
+
 - Added a positive ordinary-call identity witness through a one-child
   `ImplicitCastExpr`, retaining the selected function handle recursively.
 

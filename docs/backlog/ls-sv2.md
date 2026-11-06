@@ -2539,3 +2539,16 @@ The PicoRV32 witness pins both forms.
 **DECIDED:** take `List.length` of the exact packet-window tag-retirement
 projection; packet boundaries, retirement order, and payloads are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-159 — certify normalized packet tag-retirement cardinality against packet trace
+
+Added `normalizeRvfiPacketTags_retirements_length_packetTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A normalized packet-tag
+retirement projection now certifies the exact cardinality of the packet
+machine's retirement trace, and adjacent normalized captures compose the same
+bridge while retaining the first capture's state for the second.  The PicoRV32
+witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact packet-tag retirement projection
+and bridge it through the normalized packet trace equality; retirement order,
+packet boundaries, and payloads are not reconstructed.

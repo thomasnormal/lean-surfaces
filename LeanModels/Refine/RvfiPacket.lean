@@ -2295,6 +2295,17 @@ theorem normalizeRvfiPacketRobTrace {State : Type}
   rw [machine.toRobMachine_trace]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- A successful normalized packet capture fixes the generic ROB retirement
+   trace cardinality to the decoded retirement count. -/
+theorem normalizeRvfiPacketRobTrace_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTrace machine.toRobMachine state cycles).length = retirements.length := by
+  have htrace := normalizeRvfiPacketRobTrace machine state cycles h
+  simpa using congrArg List.length htrace
+
 /-- The state-threaded normalization composition also gives the ROB-projected
 retirement stream for the concatenated windows. -/
 theorem normalizeRvfiPacketRobTrace_append {State : Type}
@@ -2311,6 +2322,24 @@ theorem normalizeRvfiPacketRobTrace_append {State : Type}
     robTrace machine.toRobMachine state (first ++ second) =
       firstRetirements ++ secondRetirements := by
   apply normalizeRvfiPacketRobTrace machine state (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
+
+/- Generic ROB trace cardinality composes across adjacent normalized packet
+   windows, with the second window evaluated from the first retained state. -/
+theorem normalizeRvfiPacketRobTrace_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTrace machine.toRobMachine state (first ++ second)).length =
+      (firstRetirements ++ secondRetirements).length := by
+  apply normalizeRvfiPacketRobTrace_length machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
 /-- A certified finite packet-window chain exposes the exact flattened
@@ -2848,6 +2877,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_robTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_robTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines_packet

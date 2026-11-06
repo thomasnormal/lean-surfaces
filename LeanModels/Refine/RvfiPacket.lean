@@ -2714,6 +2714,48 @@ theorem normalizeRvfiPacketWindows_rob_tags_retirements {State : Type}
         robTags_retirements machine.toRobMachine state windows.flatten
     _ = retirementWindows.flatten := htrace
 
+/- A certified packet-window chain identifies generic ROB-tag retirement
+   payloads with the packet machine's retirement trace. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_packetTrace
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state windows.flatten := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketRobTags_retirements_packetTrace machine state
+    windows.flatten hflat
+
+/- The packet-window generic ROB-tag retirement/packet-trace bridge composes
+   across two certified chains with the carried state boundary. -/
+theorem normalizeRvfiPacketWindows_rob_tags_retirements_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state
+        (firstWindows ++ secondWindows).flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_retirements_packetTrace machine
+    state start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- A certified packet-window chain also exposes the packet-facing source-input
    stream carried by the generic ROB tags. -/
 theorem normalizeRvfiPacketWindows_rob_tags_inputs {State : Type}
@@ -5875,6 +5917,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs

@@ -3322,3 +3322,14 @@ witness pins the chain and append forms.
 **DECIDED:** flatten through the existing packet-window certificate and reuse
 the normalized packet-tag retirement/ROB-trace payload bridge; retirement
 order and payloads remain exact, with the carried state boundary retained.
+
+## 2026-11-06-ls-sv2-221 — bridge normalized ROB-tag retirements to packet trace
+
+Added `normalizeRvfiPacketRobTags_retirements_packetTrace` and its append form
+to `LeanModels/Refine/RvfiPacket.lean`. A normalized generic ROB-tag
+retirement projection now identifies the exact packet-machine retirement trace,
+including adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** compose the existing normalized ROB-tag retirement payload and
+packet-trace equalities; retirement order and payloads remain exact, and no new
+packet reconstruction is introduced.

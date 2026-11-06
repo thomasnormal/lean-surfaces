@@ -1098,6 +1098,44 @@ theorem normalizeRvfiPacketRobTags_retirements {State : Type}
   rw [machine.toRobMachine_tags_retirements]
   exact normalizeRvfiPacketTrace machine state cycles h
 
+/- The normalized generic-ROB tagged retirement projection is exactly the
+   packet machine's retirement trace. -/
+theorem normalizeRvfiPacketRobTags_retirements_packetTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state cycles := by
+  calc
+    (robTags machine.toRobMachine state cycles).map TaggedCommit.retirement =
+        retirements := normalizeRvfiPacketRobTags_retirements machine state cycles h
+    _ = packetTrace machine.toPacketMachine state cycles :=
+      (normalizeRvfiPacketTrace machine state cycles h).symm
+
+/- The normalized generic-ROB tagged retirement/packet-trace projection
+   composes across adjacent captures, retaining the first capture's state
+   boundary. -/
+theorem normalizeRvfiPacketRobTags_retirements_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.retirement =
+      packetTrace machine.toPacketMachine state (first ++ second) := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRobTags_retirements_packetTrace machine state
+    (first ++ second) hcombined
+
 /- A successful normalized packet capture fixes the tagged retirement
    payload's cardinality to the decoded retirement count. -/
 theorem normalizeRvfiPacketRobTags_retirements_length {State : Type}
@@ -5748,6 +5786,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_length_robTrace

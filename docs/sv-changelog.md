@@ -6450,3 +6450,12 @@ The clean-room `sklansky_guards` and `sklansky_guards/nonaffine` rows pin these
 messages. Guarded-family retention is not admitted until its proof path carries
 guard totality through the generated family and preserves branch-selected site
 identities; no branch is dropped on a failed evaluation.
+
+## Always-comb alias guard in semantic families
+
+The generated `name.sem` family now uses an alias-guarded instantiation wrapper
+at every concrete parameter point, including flattened hierarchy. The original
+unguarded instantiation remains available to the structural proof route; the
+executable semantic family turns an unsafe `always_comb` copy into the named
+`AlwaysComb:alias-read` process. Width-parametric guard rows cover two distinct
+concrete widths, so the refusal is not limited to the default elaboration.

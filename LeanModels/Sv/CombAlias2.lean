@@ -153,6 +153,11 @@ private def aliasDecls : Array Decl :=
 private def mk (ps : List Process2) : Design2 :=
   { name := "pin", decls := aliasDecls, processes := ps.toArray }
 
+private def mkW (w : Nat) (ps : List Process2) : Design2 :=
+  { name := s!"pin_w{w}"
+    decls := #[dcl "a" w true, dcl "y" w false true, dcl "t" w, dcl "w" w]
+    processes := ps.toArray }
+
 private def isAliasRefused : Process2 → Bool
   | .unsupported "AlwaysComb:alias-read" _ => true
   | _ => false
@@ -163,6 +168,8 @@ private def assignVW : Process2 := .assign (.ident "v") (id' "w")
 -- `assign w = t; always_comb begin y = w; t = a; end` (acg_alias_assign): refused, on all of `w`.
 #guard ((mk [assignWT, .alwaysComb (blk [ba "y" (id' "w"), ba "t" (id' "a")])]).aliasReport.isSome)
 #guard isAliasRefused (mk [assignWT, .alwaysComb (blk [ba "y" (id' "w"), ba "t" (id' "a")])]).aliasGuard.processes[1]!
+#guard (mkW 2 [assignWT, .alwaysComb (blk [ba "y" (id' "w"), ba "t" (id' "a")])]).aliasReport.isSome
+#guard (mkW 7 [assignWT, .alwaysComb (blk [ba "y" (id' "w"), ba "t" (id' "a")])]).aliasReport.isSome
 -- write then read (admitted): `t = a; y = w;`
 #guard (mk [assignWT, .alwaysComb (blk [ba "t" (id' "a"), ba "y" (id' "w")])]).aliasAdmits
 -- the copy through a SEPARATE always_comb is not an `assign`: admitted.

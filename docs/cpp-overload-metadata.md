@@ -45,6 +45,10 @@ object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution
 or object construction has been executed.
 
+A positive witness also covers Clang's artifact-local string handle form. The
+string is parsed as a handle and checked against the retained declaration row;
+it is never treated as a constructor name for lookup.
+
 Ordinary `CallExpr` identity has the corresponding negative control: a
 retained declaration handle whose structured kind is `VarDecl` is refused even
 when the separate native source witness is well-formed. The gate never turns a

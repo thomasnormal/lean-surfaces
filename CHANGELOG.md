@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a positive constructor metadata witness for artifact-local string
+  handles, alongside the existing structured-handle witness.
+
 - Added a recorded refusal for constructor handles absent from the artifact's
   declaration evidence table.
 

@@ -572,6 +572,17 @@ theorem normalizeRvfiPacketTrace {State : Type}
   rw [machine.toPacketMachine_trace]
   exact normalizeRvfiTrace?_filterMap h
 
+/- A successful normalized packet capture fixes the packet retirement trace
+   cardinality to the decoded retirement count. -/
+theorem normalizeRvfiPacketTrace_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (packetTrace machine.toPacketMachine state cycles).length = retirements.length := by
+  have htrace := normalizeRvfiPacketTrace machine state cycles h
+  simpa using congrArg List.length htrace
+
 /-- Two successful packet-window certificates compose at the carried RVFI
 order.  The state transition between windows is explicit, and the second
 window starts after the first window's retirement count. -/
@@ -591,6 +602,24 @@ theorem normalizeRvfiPacketTrace_append {State : Type}
       some (firstRetirements ++ secondRetirements) := by
   rw [rvfiPacketObservations_append, normalizeRvfiTrace?_append]
   simp [hfirst, hsecond]
+
+/- Packet retirement-trace cardinality composes across adjacent normalized
+   windows, with the second window evaluated from the first retained state. -/
+theorem normalizeRvfiPacketTrace_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (packetTrace machine.toPacketMachine state (first ++ second)).length =
+      (firstRetirements ++ secondRetirements).length := by
+  apply normalizeRvfiPacketTrace_length machine state (first ++ second)
+  exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
 /-- A normalized packet's decoded commit tags are the consecutive prefix at
 the supplied starting order.  Bubbles do not enter the packet, while a
@@ -2802,6 +2831,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketTrace_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketTrace_length_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace

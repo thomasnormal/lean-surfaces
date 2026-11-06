@@ -2100,3 +2100,15 @@ PicoRV32 witness pins this direct append route.
 
 **DECIDED:** derive mapped-input cardinality from the flat tag append result
 and `List.length_map`; no input order or completion order is reconstructed.
+
+## 2026-11-06-ls-sv2-123 — expose normalized packet ROB tag retirements
+
+Added `normalizeRvfiPacketRobTags_retirements` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now exposes its decoded retirement payload directly through the generic ROB
+tag stream.  The PicoRV32 witness pins this normalized payload projection
+over the complete packet capture.
+
+**DECIDED:** reuse the exact packet-to-ROB tag retirement bridge and the
+normalized packet trace theorem; no retirement order or completion order is
+reconstructed.

@@ -31,6 +31,10 @@ constructor kind tag.
 A structured `ctor` object whose `id` is numeric is also refused; artifact
 handles retain Clang's string identity and are never coerced from numbers.
 
+A structured `ctor` object whose declared kind disagrees with the retained
+constructor declaration is also refused; both pieces of frontend evidence must
+agree.
+
 A string-valued `ctor` field with malformed frontend-handle syntax is also a
 recorded refusal; constructor handles must use the artifact-local format.
 

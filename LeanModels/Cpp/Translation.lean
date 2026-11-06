@@ -696,7 +696,12 @@ def admitResolvedCXXConstructExpression (artifact : Artifact) (path : List Nat) 
   let some selected := raw.field "ctor"
     | throw "translation: construct expression has no selected constructor declaration handle"
   let handle ← match selected with
-    | .object reference => evidenceHandle (.object reference) "id"
+    | .object reference =>
+        let some kind := Raw.text (.object reference) "kind"
+          | throw "translation: selected constructor handle has no declaration kind"
+        unless kind == "CXXConstructorDecl" do
+          throw "translation: selected constructor handle has unexpected declaration kind"
+        evidenceHandle (.object reference) "id"
     | .string value => parseFrontendHandle value
     | _ => throw "translation: selected constructor handle is malformed"
   let declarations := artifact.declarations.filter (·.id == handle.value)

@@ -23,6 +23,9 @@
 - Added a positive overloaded-operator metadata witness for artifact-local
   string declaration handles.
 
+- Added a recorded refusal for constructor handles whose structured kind
+  contradicts the retained declaration kind.
+
 - Added a recorded refusal for overloaded-operator handles duplicated in
   artifact declaration evidence.
 

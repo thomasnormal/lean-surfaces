@@ -622,6 +622,24 @@ theorem pinned_packet_windows_rob_tags_retirements_chain :
     [nontrapFirstExpected, nontrapSecondExpected]
     pinned_packet_windows_certificate
 
+theorem pinned_packet_windows_rob_tags_retirements_append :
+    (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        ([packetFirstCycles] ++ [packetSecondCycles]).flatten).map
+        TaggedCommit.retirement =
+      ([nontrapFirstExpected] ++ [nontrapSecondExpected]).flatten := by
+  apply normalizeRvfiPacketWindows_rob_tags_retirements_append
+    pinnedPacketMachine pinnedPacketMachine.init 0
+    [packetFirstCycles] [packetSecondCycles]
+    [nontrapFirstExpected] [nontrapSecondExpected]
+  · exact ⟨pinned_packet_first_window_normalize, trivial⟩
+  · rw [show ([nontrapFirstExpected] : List (List Retirement)).flatten.length = 2 by decide]
+    simpa [normalizeRvfiPacketWindows, rvfiPacketStateAfter] using
+      (show normalizeRvfiPacketWindows pinnedPacketMachine
+        (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
+          packetFirstCycles) 2 [packetSecondCycles]
+        [nontrapSecondExpected] from
+        ⟨pinned_packet_second_window_normalize, trivial⟩)
+
 theorem pinned_packet_state_after_refines_normalized
     {rel : List (List RvfiPacketEntry) → ArchState → Nat → Prop}
     {admit : Input → Prop}
@@ -978,6 +996,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_rob_tags_chain
 #print axioms pinned_packet_windows_rob_tags_append
 #print axioms pinned_packet_windows_rob_tags_retirements_chain
+#print axioms pinned_packet_windows_rob_tags_retirements_append
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream

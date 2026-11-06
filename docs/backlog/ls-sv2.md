@@ -1576,3 +1576,15 @@ PicoRV32 witness pins this payload projection over its two-window chain.
 **DECIDED:** derive payload equality through the existing ROB tag erasure and
 flattened ROB trace bridge; no independent retirement extraction or completion
 ordering is introduced.
+
+## 2026-11-06-ls-sv2-80 — compose ROB retirement payloads across chains
+
+Added `normalizeRvfiPacketWindows_rob_tags_retirements_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet-window
+chains now compose directly to equality between the flattened generic ROB
+retirement payloads and the concatenated retirement windows.  The PicoRV32
+witness exercises this append route over its two singleton windows.
+
+**DECIDED:** compose through the finite-window certificate and the existing ROB
+payload projection; no independent retirement extraction or completion order is
+introduced.

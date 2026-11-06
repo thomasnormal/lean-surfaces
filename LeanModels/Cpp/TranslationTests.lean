@@ -2275,6 +2275,43 @@ def resolvedOperatorParenTranslationWitnessOk : Bool :=
   admitResolvedCXXOperatorCallExpression resolvedOperatorParenTranslation [1] matches
     .ok {value := "0x74"}
 
+private def resolvedOperatorMalformedParenTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0x78"), ("kind", .string "FunctionDecl"),
+        ("name", .string "operator+"), ("inner", .array [])
+      ],
+      .object [
+        ("id", .string "0x79"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0x7a"), ("kind", .string "ParenExpr"),
+            ("inner", .array [
+              .object [
+                ("id", .string "0x7b"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [
+                  ("id", .string "0x78"), ("kind", .string "FunctionDecl")
+                ])
+              ],
+              .object [
+                ("id", .string "0x7c"), ("kind", .string "DeclRefExpr"),
+                ("referencedDecl", .object [
+                  ("id", .string "0x78"), ("kind", .string "FunctionDecl")
+                ])
+              ]
+            ])
+          ]
+        ])
+      ]
+    ])
+  ]}
+
+def resolvedOperatorMalformedParenRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorMalformedParenTranslation [1]
+  pure ()
+
 private def resolvedOperatorMalformedStringTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -3423,6 +3460,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedOperatorMissingKindRefusal matches .error _
 #guard resolvedOperatorStringTranslationWitnessOk
 #guard resolvedOperatorParenTranslationWitnessOk
+#guard resolvedOperatorMalformedParenRefusal matches .error _
 #guard resolvedOperatorMalformedStringRefusal matches .error _
 #guard resolvedOperatorMethodStringTranslationWitnessOk
 #guard resolvedOperatorCastKindMismatchRefusal matches .error _

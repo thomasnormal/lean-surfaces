@@ -138,6 +138,9 @@ A parenthesized overloaded-operator callee is also followed through its
 one-child `ParenExpr` wrapper. The selected `FunctionDecl` identity remains the
 structured frontend handle.
 
+A parenthesis wrapper with more than one child is refused; operator metadata
+never chooses one child from malformed frontend data.
+
 A malformed string operator handle is a recorded refusal; operator metadata does
 not normalize arbitrary text into an artifact identity.
 

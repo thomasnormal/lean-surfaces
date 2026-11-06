@@ -2618,3 +2618,17 @@ PicoRV32 witness pins both forms.
 **DECIDED:** take `List.length` of the exact packet-window generic-ROB
 tag-input/ROB-input equality; packet boundaries, source-input order, and
 payloads are not reconstructed.
+
+## 2026-11-06-ls-sv2-165 — certify normalized ROB tag-input cardinality against packet inputs
+
+Added `normalizeRvfiPacketRobTags_inputs_length_packetInputs` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies that the generic ROB tagged source-input projection has exactly the
+packet machine's input cardinality, and adjacent normalized captures compose
+the same bridge while retaining the first capture's state boundary.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact normalized generic-ROB tag-input/
+packet-input equality and use the packet-input append law for the composed
+form; retirement order, packet boundaries, source-input order, and payloads
+are not reconstructed.

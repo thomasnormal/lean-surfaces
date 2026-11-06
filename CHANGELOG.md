@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a positive differential witness for constructor identity when Clang
+  supplies a structured `CXXConstructorDecl` handle, alongside the real
+  `ctorType`-only refusal.
+
 - C++ member-call coverage now pins the enum parameter join to one structured
   `ParmVarDecl`, retaining its handle, name, spelling, and ordinal before
   argument binding.

@@ -23,3 +23,8 @@ their Clang declaration identity while name lookup and invocation remain loud.
 no `ctor` handle, so that source shape is recorded as a loud refusal rather
 than treating the type spelling as overload identity. Construction,
 conversion, and lifetime execution remain outside this metadata gate.
+
+The positive kernel witness and differential row use a structured `ctor`
+object with a retained `CXXConstructorDecl` handle. They demonstrate the
+accepted evidence shape without claiming that constructor overload resolution
+or object construction has been executed.

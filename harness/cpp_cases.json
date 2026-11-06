@@ -2225,6 +2225,18 @@
     "rung": 7
   },
   {
+    "id": "translation.resolved-constructor-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedConstructorTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "struct S { S(int); }; S::S(int) {} int f() { S value(1); return 0; }",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

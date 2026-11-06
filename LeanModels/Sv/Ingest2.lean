@@ -229,7 +229,12 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
             | none | some (Json.bool false) => return .lit v
             | some _ => throw "field 'signed' is not a bool"
         | none => throw s!"invalid 4-state digit string {bits.quote}"
-    | "Ident" => return .ident (← getStrField j "name")
+    | "Ident" =>
+        let e := .ident (← getStrField j "name")
+        match getOptField j "signed" with
+        | none | some (Json.bool false) => return e
+        | some (Json.bool true) => return .cast true e
+        | some _ => throw "field 'signed' is not a bool"
     | "ParamRef" => return .paramRef (← getStrField j "name") (getOptStr j "from_package")
     | "GenvarRef" => return .genvarRef (← getStrField j "name")
     | "EnumRef" =>
@@ -440,6 +445,11 @@ partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
   | _ =>
       match ← parsePExpr j with
       | .ident n => return .ok (.ident n)
+      -- Slang annotates a declaration-signed identifier in a target with
+      -- `signed: true`, which `parsePExpr` retains as a root cast marker.
+      -- Signedness is irrelevant to the destination name; unwrap that
+      -- marker here so a whole-signal assignment remains a valid target.
+      | .cast _ (.ident n) => return .ok (.ident n)
       | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
       | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
       | .arrayElem n is => return .ok (.arrayElem n is)

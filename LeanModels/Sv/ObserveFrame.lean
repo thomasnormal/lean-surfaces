@@ -127,10 +127,10 @@ theorem resolveLhs2_writes {fuel : Nat} {st : SvState} {t : Lhs2} {m : String}
         cases SvState.lookup st n with
         | none => simp
         | some old =>
-            cases iv.toNat? with
-            | none => simp; exact fun h _ => h.symm
+            cases hidx : indexInt? idx iv with
+            | none => simp [hidx]; exact fun h _ => h.symm
             | some i =>
-                simp only
+                simp [hidx]
                 split <;> simp <;> exact fun h _ => h.symm
       subst hmn
       simp [Lhs2.writesName]

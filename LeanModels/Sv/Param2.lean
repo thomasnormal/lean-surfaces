@@ -1004,7 +1004,11 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
                   if 0 ≤ i then .slice base' (i.toNat * ew) ew
                   else .unsupported "BitSel:index" "negative constant index"
               | .error _ =>
-                  .index base' (instExpr2 env elems (selfWidth2 env elems idx) idx) ew
+                  let iw := selfWidth2 env elems idx
+                  let lowered := instExpr2 env elems iw idx
+                  let idx' := if idx.signedCast then
+                    .resizeSigned (iw.getD 0) lowered else lowered
+                  .index base' idx' ew
   | .partSel base msb lsb =>
       match evalInt env (.partSel base msb lsb) with
       | .ok v =>  -- parameter-based part select: a constant
@@ -1166,6 +1170,14 @@ def fitExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat)
       else instExpr2 env elems ctx e
 end
 
+/-! A select index keeps the signedness of a source declaration or an
+explicit `$signed` cast.  The wrapper is width-preserving; it is a marker for
+the dynamic-select evaluator, not a second value representation. -/
+def instIndex2 (env : IEnv) (elems : List (String × Nat)) (idx : PExpr) : Expr2 :=
+  let iw := selfWidth2 env elems idx
+  let lowered := instExpr2 env elems iw idx
+  if idx.signedCast then .resizeSigned (iw.getD 0) lowered else lowered
+
 /-! ## Targets, statements, processes -/
 
 /-- Lower an assignment target: `(Lhs2, context width for the RHS)`.
@@ -1186,7 +1198,7 @@ def instLhsLeaf2 (env : IEnv) (elems : List (String × Nat)) :
               if 0 ≤ i then .ok (.slice n (i.toNat * ew) ew, ew)
               else .error "negative constant index"
           | .error _ =>
-              .ok (.index n (instExpr2 env elems (selfWidth2 env elems idx) idx) ew, ew)
+              .ok (.index n (instIndex2 env elems idx) ew, ew)
   | .partSel n msb lsb =>
       match elems.lookup n, evalInt env msb, evalInt env lsb with
       | some ew, .ok m, .ok l =>

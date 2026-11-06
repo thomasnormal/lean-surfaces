@@ -1161,7 +1161,7 @@ private theorem evalPure2_index_ident_congr {st st' : SvState} {n : String} {c :
     simp only [hu, hu', Option.map_none, Option.map_some, reduceCtorEq, Option.some.injEq,
       Prod.mk.injEq] at h
   · simp [readSignal, hu, hu']
-  · simp [readSignal, hu, hu', hk, h.1, h.2]
+  · simp [readSignal, indexInt?, Expr2.indexSigned, hu, hu', hk, h.1, h.2]
 
 private theorem congr_reads_aux (st st' : SvState) : ∀ n : Nat,
     (∀ e : Expr2, e.size < n → (∀ r ∈ e.reads, r.agree st st') →
@@ -1441,8 +1441,10 @@ theorem resolveLhs2_of_window? {d : Design2} {fuel : Nat} (hf : 0 < fuel) {st : 
           simp only [Lhs2.window?, Option.map_eq_some_iff, Prod.mk.injEq] at ht
           obtain ⟨k, hk, rfl, rfl, rfl⟩ := ht
           have hr : (k + 1) * elemW ≤ old.width := by rw [Nat.succ_mul]; omega
+          have hr' : (k + 1 : Int) * (elemW : Int) ≤ (old.width : Int) := by
+            exact_mod_cast hr
           have hlit : evalExpr2 (f + 1) st (.lit c) = .ok c := rfl
-          simp [resolveLhs2, hold, hk, hr, hlit]
+          simp [resolveLhs2, indexInt?, Expr2.indexSigned, hold, hk, hr, hr', hlit]
       | _ => simp [Lhs2.window?] at ht
   | concat parts => simp [Lhs2.window?] at ht
 

@@ -138,7 +138,8 @@ def rippleDecls (N : Nat) : List Decl :=
 /-! ## The stages at symbolic `N` -/
 
 /-- The declaration scope: `N` bound, its declared type `int` 32 bits. -/
-def rippleScope (N : Int) : IEnv := { vals := [("N", N)], pwidths := [("N", 32)] }
+def rippleScope (N : Int) : IEnv :=
+  { int32 := true, vals := [("N", N)], pwidths := [("N", 32)] }
 
 /-- The parameter environment (with the evaluated packed-array geometry). -/
 def rippleEnv (N : Int) : IEnv :=
@@ -158,7 +159,7 @@ def rippleElems : List (String × Nat) :=
   [("a", 1), ("b", 1), ("cin", 1), ("s", 1), ("cout", 1), ("c", 1)]
 
 theorem ripple_paramEnvH (N : Int) :
-    ripple_fa.pdesign.paramEnvH {} [N] = .ok (rippleEnv N) := rfl
+    ripple_fa.pdesign.paramEnvH { int32 := true } [N] = .ok (rippleEnv N) := rfl
 
 theorem ripple_decls (N : Int) :
     buildDecls (rippleEnv N) ripple_fa.pdesign.decls =

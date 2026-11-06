@@ -100,6 +100,38 @@
       "measured": "A one-rank parameter-sized unpacked memory stays source-shaped in E: reset and sequential cell writes commit through MemState, and q observes mem[0]."
     },
     {
+      "name": "signed_index_read",
+      "example": "sem2/signed_index/a1",
+      "file": "a1_signed_idx",
+      "top": "cnt",
+      "clock": "clk",
+      "signals": ["q"],
+      "stimulus": [
+        {"rst": "1", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"}
+      ],
+      "measured": "A signed 2-bit dynamic read uses two's-complement indexing: 2'b10 is -2 and produces an all-x read, rather than reading element 2."
+    },
+    {
+      "name": "signed_index_write",
+      "example": "sem2/signed_index/c1",
+      "file": "c1_signed_wridx",
+      "top": "cnt",
+      "clock": "clk",
+      "signals": ["q"],
+      "stimulus": [
+        {"rst": "1", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"},
+        {"rst": "0", "en": "0"}
+      ],
+      "measured": "A signed negative dynamic write is out of range and is a no-op; it must not be treated as unsigned element 2."
+    },
+    {
       "name": "always_ff_loop",
       "example": "sem2/always_ff_loop",
       "top": "always_ff_loop",

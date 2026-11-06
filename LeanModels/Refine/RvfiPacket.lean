@@ -2247,7 +2247,7 @@ theorem normalizeRvfiPacketRobTags_refines_state_packet
       (robTags machine.toRobMachine state cycles).map
           TaggedCommit.retirement =
         trace isa isaState
-          (robInputs machine.toRobMachine state cycles)) ∧
+          (packetInputs machine.toPacketMachine state cycles)) ∧
     (∃ finalOrder,
       rel (packetStateAfter machine.toPacketMachine state cycles)
         (machineStateAfter isa isaState
@@ -2256,7 +2256,8 @@ theorem normalizeRvfiPacketRobTags_refines_state_packet
   rcases normalizeRvfiPacketRobTags_refines_state machine isa rel admit state
       isaState start cycles retirements hrob hrel hobs with
     ⟨htags, finalOrder, hfinal, horder⟩
-  refine ⟨htags, finalOrder, ?_, horder⟩
+  refine ⟨?_, finalOrder, ?_, horder⟩
+  · simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags
   rw [RvfiPacketMachine.toPacketMachine_stateAfter]
   exact hfinal
 
@@ -2283,7 +2284,7 @@ theorem normalizeRvfiPacketRobTags_refines_state_packet_append
       (robTags machine.toRobMachine state (first ++ second)).map
           TaggedCommit.retirement =
         trace isa isaState
-          (robInputs machine.toRobMachine state (first ++ second))) ∧
+          (packetInputs machine.toPacketMachine state (first ++ second))) ∧
     (∃ finalOrder,
       rel (packetStateAfter machine.toPacketMachine state (first ++ second))
         (machineStateAfter isa isaState
@@ -2293,7 +2294,8 @@ theorem normalizeRvfiPacketRobTags_refines_state_packet_append
   rcases normalizeRvfiPacketRobTags_refines_state_append machine isa rel admit
       state isaState start first second hrob hrel hfirst hsecond with
     ⟨htags, finalOrder, hfinal, horder⟩
-  refine ⟨htags, finalOrder, ?_, horder⟩
+  refine ⟨?_, finalOrder, ?_, horder⟩
+  · simpa only [RvfiPacketMachine.toRobMachine_inputs] using htags
   rw [RvfiPacketMachine.toPacketMachine_stateAfter]
   exact hfinal
 

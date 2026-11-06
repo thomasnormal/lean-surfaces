@@ -425,7 +425,7 @@ theorem pinned_packet_rob_tags_refines_state
       (robTags pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
         packetCycleInputs).map TaggedCommit.retirement =
       trace rvMachine rvMachine.init
-        (robInputs pinnedPacketMachine.toRobMachine pinnedPacketMachine.init
+        (packetInputs pinnedPacketMachine.toPacketMachine pinnedPacketMachine.init
           packetCycleInputs)) ∧
     (∃ finalOrder,
       rel (rvfiPacketStateAfter pinnedPacketMachine pinnedPacketMachine.init
@@ -477,7 +477,7 @@ theorem pinned_packet_rob_tags_refines_state_packet_append
         (packetFirstCycles ++ packetSecondCycles)).map
           TaggedCommit.retirement =
         trace rvMachine rvMachine.init
-          (robInputs pinnedPacketMachine.toRobMachine
+          (packetInputs pinnedPacketMachine.toPacketMachine
             pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles))) ∧
     (∃ finalOrder,
       rel (packetStateAfter pinnedPacketMachine.toPacketMachine

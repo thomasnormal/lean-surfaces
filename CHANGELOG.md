@@ -14,6 +14,9 @@
 - Added a recorded refusal for ordinary-call handles duplicated in artifact
   declaration evidence.
 
+- Added a recorded refusal for ordinary-call declaration handles with numeric
+  ids; frontend identity remains string-typed.
+
 - Added a recorded refusal for overloaded-operator handles duplicated in
   artifact declaration evidence.
 

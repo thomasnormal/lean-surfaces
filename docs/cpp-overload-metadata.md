@@ -79,6 +79,9 @@ evidence.
 An ordinary call handle duplicated in declaration evidence is also refused;
 the call gate requires one unambiguous retained function or method row.
 
+An ordinary call whose structured `referencedDecl.id` is numeric is also
+refused; declaration identity remains the artifact's string-typed handle.
+
 An empty overloaded-operator child list is also a recorded refusal; the
 operator gate does not manufacture a selected callee.
 

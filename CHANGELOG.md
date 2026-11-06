@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Namedtuple table resolution now requires the definition to precede every function body that reaches it; unsafe forward reachability refuses instead of using a position-independent static table.
+
 - Added the first `twinAgrees` refinement lemmas: monadic pure-worker lifts and binary operators are proved equal to the theorem interpreter's `Run.liftRes` path.
 
 - Removed the unused exception-handler name delimiter encoder; handler semantics now retain structured name arrays end to end.

@@ -9297,3 +9297,24 @@ adequacy edge remains a separate architectural surface.
 
 DECIDED: every new monadic primitive must expose a `twinAgrees` theorem at the
 shared-worker boundary before the control adequacy edge is extended.
+
+## 2026-11-06-pycomplete-355 — guard namedtuple table reachability by source order
+
+The existing value-like namedtuple tier remains available for definitions bound
+before their consumers, but its static table is now guarded by the same
+source-order admission used for module functions. If a function body reaches a
+recognized namedtuple before the assignment statement that creates it, script
+execution refuses with the position-independent-definition diagnostic instead
+of answering through the static table. The general runtime namedtuple builtin
+remains a later extension; no new ingestion rewrite was added.
+
+| Measurement | Result |
+|---|---|
+| Forward-definition witness | `tools/leanpy /tmp/nt_forward.py` refuses; CPython 3.9 raises `NameError` |
+| Native differential | 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+| Lean build | Managed `lake build leanmodels-run`: 40 jobs passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: static namedtuple tables require source-order admission; unsafe
+position-independent reachability is loud until runtime class construction is
+modeled.

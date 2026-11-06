@@ -160,3 +160,7 @@ def next_alias(value):
 def print_alias(value):
     f = print
     return f(value)
+
+
+def identity_alias():
+    return scale2 is scale

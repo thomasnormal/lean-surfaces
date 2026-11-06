@@ -9318,3 +9318,21 @@ remains a later extension; no new ingestion rewrite was added.
 DECIDED: static namedtuple tables require source-order admission; unsafe
 position-independent reachability is loud until runtime class construction is
 modeled.
+
+## 2026-11-06-pycomplete-356 — pin the callable-alias identity boundary
+
+The module-level alias tier now carries a differential witness for function-object
+identity (`scale2 is scale`). The copied static call-table path refuses this
+observation rather than manufacturing an identity result; ordinary admitted
+alias calls remain covered by the existing rows. First-class function values
+remain a later runtime representation change.
+
+| Measurement | Result |
+|---|---|
+| Added row | `alias_lab.identity_alias()` is explicitly unsupported |
+| Native differential | 4196 cases: 0 failed, 106 whitelisted unsupported, 4090 matched |
+| Formatting | `git diff --check` passed |
+
+DECIDED: callable aliases may dispatch through the admitted static call tier,
+but function-object identity remains a loud boundary until aliases become
+runtime values.

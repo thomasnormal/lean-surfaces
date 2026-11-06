@@ -202,7 +202,7 @@ def main (args : List String) : IO UInt32 := do
     let mut tally : Tally := {}
     let mut first : Option (String × Verdict) := none
     for line in listing.splitOn "\n" do
-      let path := line.trim
+      let path := line.trimAscii.copy
       if path.isEmpty then continue
       let v ←
         match ← (IO.FS.readFile ⟨path⟩).toBaseIO with

@@ -182,6 +182,18 @@ theorem bindσ_ne {g n : String} (h : n ≠ g) (i : Int) (σ : String → Int) :
 def Agrees (σ : String → Int) (E : IEnv) (ns : List String) : Prop :=
   ∀ n ∈ ns, E.vals.lookup n = some (σ n)
 
+/-- Every named constant used by the affine view is representable by the
+exact signed-32 `int` instantiation.  This is the refinement premise that
+lets the view's affine arithmetic agree with `evalIntExact`; it is kept
+separate from `Agrees` so existing non-parametric proofs retain their shape.
+-/
+def IntRange (σ : String → Int) (ns : List String) : Prop :=
+  ∀ n ∈ ns, -2147483648 ≤ σ n ∧ σ n < 2147483648
+
+theorem IntRange.mono {σ : String → Int} {ns ms : List String}
+    (h : IntRange σ ns) (hs : ∀ n ∈ ms, n ∈ ns) : IntRange σ ms :=
+  fun n hn => h n (hs n hn)
+
 theorem Agrees.bindVal {σ : String → Int} {E : IEnv} {ns : List String} (h : Agrees σ E ns)
     (g : String) (i : Int) : Agrees (bindσ g i σ) (E.bindVal g i) (g :: ns) := by
   intro n hn

@@ -2411,3 +2411,16 @@ The PicoRV32 witness pins both forms.
 state and normalized retirement boundary, then reuse the normalized
 packet-tag width theorem; packet boundaries and retirement order remain
 unchanged.
+
+## 2026-11-06-ls-sv2-149 — expose normalized packet tag retirements
+
+Added `normalizeRvfiPacketTags_retirements` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now exposes its decoded retirement payload directly from the flattened
+packet-boundary tag stream, and adjacent captures compose the same payload
+with the first capture's state feeding the second.  The PicoRV32 witness pins
+both forms.
+
+**DECIDED:** reuse the exact packet-tag flattening and generic ROB erasure
+bridges, then apply the normalized packet trace equality; no retirement order
+or packet boundary is reconstructed.

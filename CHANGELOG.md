@@ -29,6 +29,9 @@
 - Added a recorded refusal for structured ordinary-call handles with malformed
   string ids.
 
+- Added a recorded refusal for scalar ordinary-call declaration references;
+  frontend identity is never coerced from scalar data.
+
 - Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
   identity.
 

@@ -2481,6 +2481,17 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-scalar-reference-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallScalarReferenceRefusal",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.resolved-call-malformed-object-handle-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

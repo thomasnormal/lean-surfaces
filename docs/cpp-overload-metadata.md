@@ -119,6 +119,9 @@ the call gate requires a complete retained handle.
 A structured ordinary-call handle with malformed string `id` is also refused;
 the artifact-local handle parser validates object and string forms uniformly.
 
+A scalar ordinary-call `referencedDecl` value is also refused; declaration
+identity is never coerced from a number or Boolean.
+
 A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.

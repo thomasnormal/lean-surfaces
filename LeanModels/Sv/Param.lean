@@ -735,6 +735,33 @@ theorem IEnv.intVal?_bindVal_ne {env : IEnv} {g n : String} (v : Int) (h : n ≠
     IEnv.intVal? (env.bindVal g v) n = IEnv.intVal? env n := by
   simp [IEnv.intVal?, IEnv.bindVal, List.lookup, beq_false_of_ne h]
 
+theorem IEnv.intVal?_cases {env : IEnv} {n : String} {v : Int}
+    (h : IEnv.intVal? env n = some v) :
+    env.vals.lookup n = some v ∨
+      ∃ w s, env.nvals.lookup n = some (v, w, s) ∧ w = 32 ∧ s = true := by
+  unfold IEnv.intVal? at h
+  cases hv : env.vals.lookup n with
+  | some x =>
+      left
+      have hx : x = v := by simpa [hv] using h
+      rw [← hx]
+  | none =>
+      right
+      cases hn : env.nvals.lookup n with
+      | none => simp [hv, hn] at h
+      | some q =>
+          obtain ⟨x, w, s⟩ := q
+          by_cases hw : w = 32
+          · subst w
+            by_cases hs : s = true
+            · subst s
+              have hx : x = v := by simpa [hv, hn] using h
+              subst x
+              refine ⟨32, true, ?_, rfl, rfl⟩
+              rfl
+            · simp [hv, hn, hs] at h
+          · simp [hv, hn, hw] at h
+
 #guard IEnv.intVal? ({ nvals := [("N", (16, 32, true))] } : IEnv) "N" == some 16
 #guard IEnv.intVal? (({ nvals := [("N", (16, 32, true))] } : IEnv).bindVal "i" 3) "N" == some 16
 #guard IEnv.intVal? (({ nvals := [("N", (16, 32, true))] } : IEnv).bindVal "N" 3) "N" == some 3

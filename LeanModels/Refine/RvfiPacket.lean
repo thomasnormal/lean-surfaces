@@ -808,6 +808,22 @@ theorem normalizeRvfiPacketRobTags_append {State : Type}
     machine state first
   simpa [hfirstLength, hstate] using hsecondTags
 
+/- A successful normalized packet capture fixes the flattened generic ROB tag
+   cardinality to the decoded retirement count. -/
+theorem normalizeRvfiPacketRobTags_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (robTags machine.toRobMachine state cycles).length = retirements.length := by
+  have htrace :
+      (robTags machine.toRobMachine state cycles).map TaggedCommit.retirement =
+        retirements := by
+    rw [machine.toRobMachine_tags_retirements]
+    exact normalizeRvfiPacketTrace machine state cycles h
+  have hlength := congrArg List.length htrace
+  simpa using hlength
+
 /-- A normalized packetized RVFI stream and a ROB refinement certificate
 jointly establish both global tag order and the ISA equality of its tagged
 retirements. -/
@@ -2162,6 +2178,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_retirements
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_tags_inputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines

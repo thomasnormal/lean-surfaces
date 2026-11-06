@@ -3251,3 +3251,14 @@ The PicoRV32 witness pins the chain and append forms.
 the normalized packet-tag input/packet-trace cardinality bridge; packet
 boundaries, tag payloads, retirement order, and source-input order are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-215 — certify normalized packet-tag input cardinality against ROB inputs
+
+Added `normalizeRvfiPacketTags_inputs_length_robInputs` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet-tag source-input
+projection now certifies equal cardinality for generic ROB inputs, including
+adjacent captures.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** reuse the normalized generic ROB-tag input/ROB-input cardinality
+bridge after the packet-tag projection; packet boundaries, tag payloads,
+retirement order, and source-input order are not reconstructed.

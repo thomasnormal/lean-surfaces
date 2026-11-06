@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- C++ member-call coverage now exercises enum argument value validation with
+  an explicit representation oracle and underlying value, preserving the enum
+  tag without manufacturing an enumerator or invoking the setter.
+
 - C++ member-call coverage now includes the structured enum setter profile
   linking method, field, receiver, and parameter evidence before any object
   state is supplied.

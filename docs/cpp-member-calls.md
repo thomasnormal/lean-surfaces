@@ -342,6 +342,11 @@ enum value. The four-row setter differential now uses this source-argument
 evaluation path; the matching Clang 21.1.8 oracle is still an explicit
 skip when unavailable.
 
+The differential corpus also includes the successful `failed` value witness;
+its native source call is checked separately, while Lean requires the explicit
+unsigned representation and underlying integral value before preserving the
+enum tag.
+
 `IntegralMemberEnumArgument.parameter` closes the declaration side of that
 boundary. Given a canonical method handle, ordinal, and the same enum
 representation, it joins the structured parameter-type list to exactly one

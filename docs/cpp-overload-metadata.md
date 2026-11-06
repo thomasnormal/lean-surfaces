@@ -34,6 +34,9 @@ recorded refusal; constructor handles must use the artifact-local format.
 A `ctor` handle whose declaration row has a non-constructor kind is also a
 recorded refusal; constructor identity does not trust the handle alone.
 
+A scalar-valued `ctor` field is also a recorded refusal; selected constructor
+evidence must be an object or a valid handle string.
+
 The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution

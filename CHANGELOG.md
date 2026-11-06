@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for constructor metadata with a scalar-valued
+  `ctor` field.
+
 - Added a recorded refusal for constructor handles backed by a non-constructor
   declaration kind.
 

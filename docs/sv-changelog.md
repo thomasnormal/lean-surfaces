@@ -6415,3 +6415,9 @@ Generate-if and generate-for guard arithmetic now uses signed 32-bit `int`
 semantics, including the sign bit of `&`, `|`, and `^` operands, with typed
 parameters read from `nvals`. Unsupported guard operators remain loud. The
 clean-room `guard_correctness/add_gg2` fixture pins the signed-bitwise case.
+
+The regression guard now also checks the INT lookup itself (`N` is bound in
+`nvals`) and the `((N - 6) & 1) != 0` case at `N = 5`. The
+`only_n16`, `add_gg2`, and `add_int32` fixtures all build with their
+`int32Agrees` checks, so parameter-dependent generate branches no longer fail
+just because the exact path uses the typed-value table.

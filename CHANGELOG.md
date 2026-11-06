@@ -20,6 +20,9 @@
 - Added a positive ordinary-call metadata witness for artifact-local string
   declaration handles.
 
+- Added a positive ordinary-call metadata witness for retained `CXXMethodDecl`
+  identity.
+
 - Added a recorded refusal for ordinary-call handles whose structured kind
   contradicts the retained declaration kind.
 

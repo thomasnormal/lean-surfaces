@@ -1803,3 +1803,15 @@ route over its first and second packet windows.
 **DECIDED:** compose through the existing normalized state transport append
 theorem; both window state transitions and the carried retirement offset stay
 explicit.
+
+## 2026-11-06-ls-sv2-98 — certify normalized packet input cardinality
+
+Added `normalizeRvfiPacketInputs_length` to
+`LeanModels/Refine/RvfiPacket.lean`. A successful packet normalization now
+proves that the packet machine's retained architectural input stream has
+exactly the normalized retirement cardinality. The PicoRV32 witness pins this
+cardinality over its four-cycle packet capture.
+
+**DECIDED:** derive the length through the exact packet-to-ROB input
+projection and the generic ROB trace-length theorem; no padding, truncation,
+or inferred completion order is introduced.

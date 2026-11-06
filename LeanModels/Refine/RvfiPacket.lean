@@ -1635,6 +1635,26 @@ theorem normalizeRvfiPacketState_refines_append
   exact rvfiPacketStateAfter_refines_normalized_append machine isa rel admit
     start hrob state isaState hrel first second hfirst hsecond
 
+/- A successful packet normalization fixes the packet input cardinality to
+   the number of decoded retirements. -/
+theorem normalizeRvfiPacketInputs_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (packetInputs machine.toPacketMachine state cycles).length =
+      retirements.length := by
+  have htrace : robTrace machine.toRobMachine state cycles = retirements := by
+    rw [machine.toRobMachine_trace]
+    exact normalizeRvfiPacketTrace machine state cycles hobs
+  have hlength := congrArg List.length htrace
+  rw [robTrace_length_eq_robInputs_length] at hlength
+  calc
+    (packetInputs machine.toPacketMachine state cycles).length =
+        (robInputs machine.toRobMachine state cycles).length := by
+      rw [machine.toRobMachine_inputs]
+    _ = retirements.length := hlength
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -1694,3 +1714,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length

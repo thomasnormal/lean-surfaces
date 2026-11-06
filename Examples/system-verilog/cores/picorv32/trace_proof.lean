@@ -526,6 +526,14 @@ theorem pinned_packet_state_refines_append
     packetSecondCycles hrob hrel pinned_packet_first_window_normalize
     pinned_packet_second_window_normalize
 
+theorem pinned_packet_inputs_length :
+    (packetInputs pinnedPacketMachine.toPacketMachine
+      pinnedPacketMachine.init packetCycleInputs).length =
+      nontrapExpected.length := by
+  exact normalizeRvfiPacketInputs_length pinnedPacketMachine
+    pinnedPacketMachine.init 0 packetCycleInputs nontrapExpected
+    pinned_packet_observations_normalize
+
 theorem pinned_packet_windows_certificate :
     normalizeRvfiPacketWindows pinnedPacketMachine pinnedPacketMachine.init 0
       [packetFirstCycles, packetSecondCycles]
@@ -1348,6 +1356,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_trace_refines_isa_append
 #print axioms pinned_packet_state_refines
 #print axioms pinned_packet_state_refines_append
+#print axioms pinned_packet_inputs_length
 #print axioms pinned_cycle_trace_refines_isa
 #print axioms pinned_stateful_memory_trace
 #print axioms pinned_stateful_memory_arch

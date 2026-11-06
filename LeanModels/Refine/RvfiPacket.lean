@@ -650,6 +650,42 @@ theorem normalizeRvfiPacketTags_length_append {State : Type}
   apply normalizeRvfiPacketTags_length machine state (first ++ second)
   exact normalizeRvfiPacketTrace_append machine state first second hfirst hsecond
 
+/- A successful normalized packet capture has equal packet-boundary tag-stream
+   and packet retirement-trace cardinalities. -/
+theorem normalizeRvfiPacketTags_length_packetTrace {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (cycles : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    packetStreamLength (rvfiPacketTags machine state cycles) =
+      (packetTrace machine.toPacketMachine state cycles).length := by
+  calc
+    packetStreamLength (rvfiPacketTags machine state cycles) = retirements.length :=
+      normalizeRvfiPacketTags_length machine state cycles h
+    _ = (packetTrace machine.toPacketMachine state cycles).length :=
+      (normalizeRvfiPacketTrace_length machine state cycles h).symm
+
+/- The normalized packet tag-stream/packet-trace cardinality bridge composes
+   across adjacent captures, retaining the first capture's state boundary. -/
+theorem normalizeRvfiPacketTags_length_packetTrace_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    packetStreamLength (rvfiPacketTags machine state (first ++ second)) =
+      (packetTrace machine.toPacketMachine state (first ++ second)).length := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketTags_length_packetTrace machine state
+    (first ++ second) hcombined
+
 /-- A normalized packet's decoded commit tags are the consecutive prefix at
 the supplied starting order.  Bubbles do not enter the packet, while a
 retirement row contributes exactly the tag checked by normalization. -/
@@ -4431,6 +4467,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketTags_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_length_packetTrace
+#print axioms LeanModels.Refine.normalizeRvfiPacketTags_length_packetTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_append

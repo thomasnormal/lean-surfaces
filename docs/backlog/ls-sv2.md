@@ -2374,3 +2374,14 @@ PicoRV32 witness pins both forms.
 
 **DECIDED:** derive the count from the exact normalized ROB trace equality and
 `List.length`; no retirement order or payload is reconstructed.
+
+## 2026-11-06-ls-sv2-146 — certify normalized packet trace cardinality
+
+Added `normalizeRvfiPacketTrace_length` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now proves
+that the packet-facing retirement trace has exactly the decoded retirement
+cardinality, and adjacent normalized captures compose the same count.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** derive the count from the exact normalized packet trace equality
+and `List.length`; no retirement order or payload is reconstructed.

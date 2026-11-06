@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a positive differential witness for enum getter calls, composing the
+  matching result and receiver identity with the typed stored field read.
+
 - Added a recorded refusal for enum getter calls whose retained result spelling
   does not match the witnessed enum type.
 

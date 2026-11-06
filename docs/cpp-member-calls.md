@@ -423,6 +423,9 @@ The setter-call row composes that write with canonical method/receiver identity,
 the `void` result, and exact enum argument representation before delegation.
 The getter result refusal row pins the opposite boundary: a retained non-enum
 result spelling is rejected before the enum value is read.
+The positive getter-call row composes the matching enum result, receiver, and
+stored field value, while retaining wrong-receiver rejection as a separate
+control.
 
 Typing that event succeeds for all 23 body witnesses: the field access is
 `_errorID:XMLError:XMLError`, its enum profile is

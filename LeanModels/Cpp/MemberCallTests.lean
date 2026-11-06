@@ -1298,6 +1298,11 @@ def enumGetterResultRefusal : Bool :=
 
 #guard !enumGetterResultRefusal
 
+def enumGetterCallEvidenceWitness : Bool :=
+  enumCallObserved == some 7 && enumCallReceiverError == some .receiverMismatch
+
+#guard enumGetterCallEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

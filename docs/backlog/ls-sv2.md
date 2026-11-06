@@ -2352,3 +2352,14 @@ retained state feeding the second.  The PicoRV32 witness pins both forms.
 **DECIDED:** reuse the exact `robTags_retirements` erasure and the packetized
 ROB trace append law; normalization supplies validity but does not reconstruct
 or reorder retirements.
+
+## 2026-11-06-ls-sv2-144 — certify normalized tag retirement cardinality
+
+Added `normalizeRvfiPacketRobTags_retirements_length` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now proves
+that the mapped tagged retirement payload has exactly the decoded retirement
+cardinality, and adjacent normalized captures compose the same count.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** derive the count from the exact normalized tagged-retirement
+equality and `List.length`; no retirement order or payload is reconstructed.

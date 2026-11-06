@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Statement-position `yield from` now remains a structured `YieldFrom:delegation` refusal instead of being inlined into a synthetic `for` loop; helper-driven generator rows retain their admitted behavior.
+
 - Trailing `del` statements targeting static definitions are preserved in the AST and refuse at script execution instead of being rewritten to `pass`.
 
 - Added a differential witness for callable-alias identity; `alias is target` now remains an explicit loud boundary while admitted alias calls keep their existing tier.

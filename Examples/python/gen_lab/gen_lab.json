@@ -7479,88 +7479,15 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "YieldFrom",
+            "kind": "Unsupported",
             "span": {
               "lineno": 330,
               "col_offset": 4,
               "end_lineno": 330,
               "end_col_offset": 48
             },
-            "value": {
-              "kind": "GeneratorExp",
-              "span": {
-                "lineno": 330,
-                "col_offset": 15,
-                "end_lineno": 330,
-                "end_col_offset": 48
-              },
-              "elt": {
-                "kind": "Tuple",
-                "span": {
-                  "lineno": 330,
-                  "col_offset": 16,
-                  "end_lineno": 330,
-                  "end_col_offset": 28
-                },
-                "elts": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 330,
-                      "col_offset": 17,
-                      "end_lineno": 330,
-                      "end_col_offset": 18
-                    },
-                    "id": "i"
-                  },
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 330,
-                      "col_offset": 20,
-                      "end_lineno": 330,
-                      "end_col_offset": 21
-                    },
-                    "id": "j"
-                  },
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 330,
-                      "col_offset": 23,
-                      "end_lineno": 330,
-                      "end_col_offset": 27
-                    },
-                    "id": "prom"
-                  }
-                ]
-              },
-              "target": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 330,
-                  "col_offset": 33,
-                  "end_lineno": 330,
-                  "end_col_offset": 37
-                },
-                "id": "prom"
-              },
-              "iter": {
-                "kind": "Constant",
-                "span": {
-                  "lineno": 330,
-                  "col_offset": 41,
-                  "end_lineno": 330,
-                  "end_col_offset": 47
-                },
-                "value": {
-                  "type": "str",
-                  "value": "NBRQ"
-                }
-              },
-              "ifs": [],
-              "walrus": []
-            }
+            "py_kind": "YieldFrom:delegation",
+            "text": "yield from ((i, j, prom) for prom in 'NBRQ')"
           }
         ],
         "is_generator": true
@@ -7866,101 +7793,15 @@
             },
             "body": [
               {
-                "kind": "YieldFrom",
+                "kind": "Unsupported",
                 "span": {
                   "lineno": 344,
                   "col_offset": 8,
                   "end_lineno": 344,
                   "end_col_offset": 45
                 },
-                "value": {
-                  "kind": "GeneratorExp",
-                  "span": {
-                    "lineno": 344,
-                    "col_offset": 19,
-                    "end_lineno": 344,
-                    "end_col_offset": 45
-                  },
-                  "elt": {
-                    "kind": "Tuple",
-                    "span": {
-                      "lineno": 344,
-                      "col_offset": 20,
-                      "end_lineno": 344,
-                      "end_col_offset": 26
-                    },
-                    "elts": [
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 344,
-                          "col_offset": 21,
-                          "end_lineno": 344,
-                          "end_col_offset": 22
-                        },
-                        "id": "i"
-                      },
-                      {
-                        "kind": "Name",
-                        "span": {
-                          "lineno": 344,
-                          "col_offset": 24,
-                          "end_lineno": 344,
-                          "end_col_offset": 25
-                        },
-                        "id": "k"
-                      }
-                    ]
-                  },
-                  "target": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 344,
-                      "col_offset": 31,
-                      "end_lineno": 344,
-                      "end_col_offset": 32
-                    },
-                    "id": "k"
-                  },
-                  "iter": {
-                    "kind": "Call",
-                    "span": {
-                      "lineno": 344,
-                      "col_offset": 36,
-                      "end_lineno": 344,
-                      "end_col_offset": 44
-                    },
-                    "func": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 344,
-                        "col_offset": 36,
-                        "end_lineno": 344,
-                        "end_col_offset": 41
-                      },
-                      "id": "range"
-                    },
-                    "args": [
-                      {
-                        "kind": "Constant",
-                        "span": {
-                          "lineno": 344,
-                          "col_offset": 42,
-                          "end_lineno": 344,
-                          "end_col_offset": 43
-                        },
-                        "value": {
-                          "type": "int",
-                          "repr": "2"
-                        }
-                      }
-                    ],
-                    "keywords": [],
-                    "call_unsupported": null
-                  },
-                  "ifs": [],
-                  "walrus": []
-                }
+                "py_kind": "YieldFrom:delegation",
+                "text": "yield from ((i, k) for k in range(2))"
               }
             ],
             "orelse": []
@@ -8263,158 +8104,15 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "YieldFrom",
+            "kind": "Unsupported",
             "span": {
               "lineno": 356,
               "col_offset": 4,
               "end_lineno": 356,
               "end_col_offset": 54
             },
-            "value": {
-              "kind": "GeneratorExp",
-              "span": {
-                "lineno": 356,
-                "col_offset": 15,
-                "end_lineno": 356,
-                "end_col_offset": 54
-              },
-              "elt": {
-                "kind": "BinOp",
-                "span": {
-                  "lineno": 356,
-                  "col_offset": 16,
-                  "end_lineno": 356,
-                  "end_col_offset": 21
-                },
-                "left": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 356,
-                    "col_offset": 16,
-                    "end_lineno": 356,
-                    "end_col_offset": 17
-                  },
-                  "id": "x"
-                },
-                "op": "Mult",
-                "right": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 356,
-                    "col_offset": 20,
-                    "end_lineno": 356,
-                    "end_col_offset": 21
-                  },
-                  "id": "x"
-                }
-              },
-              "target": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 356,
-                  "col_offset": 26,
-                  "end_lineno": 356,
-                  "end_col_offset": 27
-                },
-                "id": "x"
-              },
-              "iter": {
-                "kind": "Call",
-                "span": {
-                  "lineno": 356,
-                  "col_offset": 31,
-                  "end_lineno": 356,
-                  "end_col_offset": 39
-                },
-                "func": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 356,
-                    "col_offset": 31,
-                    "end_lineno": 356,
-                    "end_col_offset": 36
-                  },
-                  "id": "range"
-                },
-                "args": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 356,
-                      "col_offset": 37,
-                      "end_lineno": 356,
-                      "end_col_offset": 38
-                    },
-                    "id": "n"
-                  }
-                ],
-                "keywords": [],
-                "call_unsupported": null
-              },
-              "ifs": [
-                {
-                  "kind": "Compare",
-                  "span": {
-                    "lineno": 356,
-                    "col_offset": 43,
-                    "end_lineno": 356,
-                    "end_col_offset": 53
-                  },
-                  "left": {
-                    "kind": "BinOp",
-                    "span": {
-                      "lineno": 356,
-                      "col_offset": 43,
-                      "end_lineno": 356,
-                      "end_col_offset": 48
-                    },
-                    "left": {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 356,
-                        "col_offset": 43,
-                        "end_lineno": 356,
-                        "end_col_offset": 44
-                      },
-                      "id": "x"
-                    },
-                    "op": "Mod",
-                    "right": {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 356,
-                        "col_offset": 47,
-                        "end_lineno": 356,
-                        "end_col_offset": 48
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "2"
-                      }
-                    }
-                  },
-                  "ops": [
-                    "Eq"
-                  ],
-                  "comparators": [
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 356,
-                        "col_offset": 52,
-                        "end_lineno": 356,
-                        "end_col_offset": 53
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "0"
-                      }
-                    }
-                  ]
-                }
-              ],
-              "walrus": []
-            }
+            "py_kind": "YieldFrom:delegation",
+            "text": "yield from (x * x for x in range(n) if x % 2 == 0)"
           },
           {
             "kind": "Yield",
@@ -8638,60 +8336,15 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "YieldFrom",
+            "kind": "Unsupported",
             "span": {
               "lineno": 370,
               "col_offset": 4,
               "end_lineno": 370,
               "end_col_offset": 24
             },
-            "value": {
-              "kind": "List",
-              "span": {
-                "lineno": 370,
-                "col_offset": 15,
-                "end_lineno": 370,
-                "end_col_offset": 24
-              },
-              "elts": [
-                {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 370,
-                    "col_offset": 16,
-                    "end_lineno": 370,
-                    "end_col_offset": 17
-                  },
-                  "value": {
-                    "type": "int",
-                    "repr": "1"
-                  }
-                },
-                {
-                  "kind": "Constant",
-                  "span": {
-                    "lineno": 370,
-                    "col_offset": 19,
-                    "end_lineno": 370,
-                    "end_col_offset": 20
-                  },
-                  "value": {
-                    "type": "int",
-                    "repr": "2"
-                  }
-                },
-                {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 370,
-                    "col_offset": 22,
-                    "end_lineno": 370,
-                    "end_col_offset": 23
-                  },
-                  "id": "n"
-                }
-              ]
-            }
+            "py_kind": "YieldFrom:delegation",
+            "text": "yield from [1, 2, n]"
           }
         ],
         "is_generator": true
@@ -8841,77 +8494,15 @@
             }
           },
           {
-            "kind": "YieldFrom",
+            "kind": "Unsupported",
             "span": {
               "lineno": 381,
               "col_offset": 4,
               "end_lineno": 381,
               "end_col_offset": 36
             },
-            "value": {
-              "kind": "GeneratorExp",
-              "span": {
-                "lineno": 381,
-                "col_offset": 15,
-                "end_lineno": 381,
-                "end_col_offset": 36
-              },
-              "elt": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 381,
-                  "col_offset": 16,
-                  "end_lineno": 381,
-                  "end_col_offset": 17
-                },
-                "id": "x"
-              },
-              "target": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 381,
-                  "col_offset": 22,
-                  "end_lineno": 381,
-                  "end_col_offset": 23
-                },
-                "id": "x"
-              },
-              "iter": {
-                "kind": "Call",
-                "span": {
-                  "lineno": 381,
-                  "col_offset": 27,
-                  "end_lineno": 381,
-                  "end_col_offset": 35
-                },
-                "func": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 381,
-                    "col_offset": 27,
-                    "end_lineno": 381,
-                    "end_col_offset": 32
-                  },
-                  "id": "range"
-                },
-                "args": [
-                  {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 381,
-                      "col_offset": 33,
-                      "end_lineno": 381,
-                      "end_col_offset": 34
-                    },
-                    "id": "n"
-                  }
-                ],
-                "keywords": [],
-                "call_unsupported": null
-              },
-              "ifs": [],
-              "walrus": []
-            }
+            "py_kind": "YieldFrom:delegation",
+            "text": "yield from (x for x in range(n))"
           },
           {
             "kind": "Yield",

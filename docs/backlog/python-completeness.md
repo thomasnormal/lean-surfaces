@@ -9354,3 +9354,22 @@ its prior runtime behavior.
 
 DECIDED: definition deletion is a runtime AST statement and remains loud until
 definition bindings become runtime values.
+
+## 2026-11-06-pycomplete-358 — retain yield-from nodes and refuse delegation
+
+Statement-position `yield from` is no longer admitted through the extractor's
+compiler-style inlining path. The approved AST carries it as an explicit loud
+`YieldFrom:delegation` node; generator helpers that merely consume another
+function's already-admitted body retain their existing behavior. This avoids
+claiming send/throw/close and delegation-return semantics from a synthetic
+`for` loop.
+
+| Measurement | Result |
+|---|---|
+| Differential witness rows | Direct delegation drivers are explicitly unsupported; helper-driven `yf_live_drive` remains matched |
+| Extractor tests | 161 passed |
+| Native differential | 4196 cases: 0 failed, 112 whitelisted unsupported, 4084 matched |
+| Formatting | `git diff --check` passed |
+
+DECIDED: delegation stays a first-class AST boundary and refuses until a real
+PEP 380 delegation frame is implemented.

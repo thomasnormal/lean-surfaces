@@ -1,5 +1,15 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Alias-flow core split
+
+The `always_comb` continuous-copy alias walk now lives in the lower-level
+`CombAliasCore` module. Parameter instantiation can import the source-shaped
+flow and path checks without importing hierarchy, while `CombAlias2` keeps
+its hierarchy adapter and parameter-point reporting. Existing guard behavior
+and refusal messages are unchanged; wiring the guard into every semantic
+family point remains a follow-up that must carry the corresponding refinement
+lemmas.
+
 ## Unknown-bit resolution design
 
 `docs/sv-x-resolution.md` records the owner-approved E design for `x`/`z`:

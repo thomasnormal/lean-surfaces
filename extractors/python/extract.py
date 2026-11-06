@@ -2739,8 +2739,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # section "yield from") and everything un-lowered refuses loudly
         # at execution. Expression-position `yield from` (a delegation
         # RESULT consumer) keeps falling through to Unsupported below.
-        return {"kind": "YieldFrom", "span": span(node),
-                "value": convert_expr(node.value.value)}
+        return unsupported(node, "YieldFrom:delegation")
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.Yield):
         # H4: `yield e` in STATEMENT position -- the only yield the tier

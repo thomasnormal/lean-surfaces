@@ -2713,3 +2713,16 @@ pins both forms.
 trace cardinality through the shared decoded-retirement count; retirement
 order, packet boundaries, source-input order, and payloads are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-172 — certify packet-window input cardinality against packet trace
+
+Added `normalizeRvfiPacketWindows_inputs_length_packetTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  A certified packet-window chain
+now determines that its packet input stream has exactly the packet-machine
+retirement-trace cardinality, and adjacent chains compose the same bridge
+through their carried state boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only through the existing packet-window certificate,
+reuse the normalized packet-input/packet-trace cardinality theorem, and retain
+the carried state; packet boundaries, retirement order, source-input order,
+and payloads are not reconstructed.

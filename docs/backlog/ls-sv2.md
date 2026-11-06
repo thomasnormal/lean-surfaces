@@ -2979,3 +2979,14 @@ forms.
 reuse the normalized packet tag-stream/packet-input cardinality bridge;
 packet boundaries, tag payloads, retirement order, and source-input order are
 not reconstructed.
+
+## 2026-11-06-ls-sv2-193 — certify packet tag-stream cardinality against ROB trace
+
+Added `normalizeRvfiPacketTags_length_robTrace` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet tag stream now
+certifies the exact generic ROB retirement-trace cardinality, including
+adjacent captures.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** bridge through the exact normalized ROB-trace/packet-trace
+cardinality equality; packet boundaries, tag payloads, retirement order, and
+source-input order are not reconstructed.

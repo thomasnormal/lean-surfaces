@@ -9860,6 +9860,26 @@ DECIDED: retain `YieldFrom` as its own AST and runtime boundary until a
 delegation frame models the full PEP 380 protocol; no ingestion inlining
 remains.
 
+## 2026-11-06-pycomplete-392 — recheck class method indexing boundary
+
+The audited class shape is already split into two explicit pieces. Ingestion
+retains a source-order `.classDef` marker and the parsed non-method class body
+on `ClassDefn`; method bodies are indexed under unspellable qualified names
+`C.m` and instance dispatch supplies `self` before calling the ordinary
+`callIn` path. Script and monadic class markers both run or skip creation from
+the structured `creationPure`/`creationExecutable` flags, so the old
+name-text `Unsupported "ClassDef"` marker and silent class-body drop are gone.
+
+The pinned class scripts (`class_script.py`, `cls_effect_script.py`, and
+`cls_data_script.py`) all match CPython 3.9.25. The class census controls remain
+green; decorated or otherwise unsupported creation stays loud. A real runtime
+class namespace and first-class class object are still outside this slice, so
+qualified method indexing remains an intentional dispatch representation.
+
+DECIDED: keep the structured class marker and qualified method index as the
+current exact boundary; defer full runtime class objects/namespaces rather than
+silently extending the flattened representation.
+
 ## 2026-11-06-pycomplete-385 — recheck the clock-reading boundary
 
 The clock arm already refuses zero-argument `time.time()` in both interpreters

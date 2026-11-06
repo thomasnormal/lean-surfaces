@@ -9786,3 +9786,21 @@ unsupported guard and corrected the documentation.
 DECIDED: keep set iteration limited to the modeled nonnegative integer/bool
 table; negative hashes, copies, and intersections remain loud until their
 CPython table transitions are represented.
+
+## 2026-11-06-pycomplete-383 — recheck removal of shape-specific ingestion rewrites
+
+The four audit passes named in this item are absent from current `Json.lean`:
+immediate builtin aliases, dead function/class values, immediate named-genexp
+drains, and direct bare-reraise lowering. The source AST retains those
+statement pairs and reaches the existing first-class-value, generator-cell, or
+active-exception boundaries. The focused three-row differential for
+`gen_assigned_lazy`, `gen_assigned_rebound_still_loud`, and `drain_unbound`
+matches CPython 3.9.25, including shared-cell rebinding and the free-variable
+`NameError` case.
+
+Corrected the stale generator comment, acceptance note, and memory-model text
+that still claimed the named-genexp pair was fused at ingestion.
+
+DECIDED: preserve these source statement pairs and refuse only at the runtime
+state boundary that is actually unmodeled; no exact two-statement rewrite is
+part of the approved ingestion path.

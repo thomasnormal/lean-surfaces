@@ -2171,3 +2171,14 @@ normalized append projection.
 **DECIDED:** compose through the normalized packet trace append theorem and
 the exact packet-to-ROB tag-input bridge; no input order or completion order
 is reconstructed.
+
+## 2026-11-06-ls-sv2-129 — connect normalized packet ROB tag inputs to ROB inputs
+
+Added `normalizeRvfiPacketRobTags_inputs_robInputs` to
+`LeanModels/Refine/RvfiPacket.lean`.  A successful normalized packet capture
+now exposes the source-input stream of its generic ROB tags directly as the
+generic ROB machine's `robInputs` projection.  The PicoRV32 witness pins this
+bridge over the complete packet capture.
+
+**DECIDED:** reuse the exact `robTags_inputs` erasure theorem; normalization
+certifies the capture but does not alter or reorder the generic ROB inputs.

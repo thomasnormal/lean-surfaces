@@ -870,6 +870,37 @@ theorem normalizeRvfiPacketRobTags_inputs_robInputs {State : Type}
       robInputs machine.toRobMachine state cycles := by
   exact robTags_inputs machine.toRobMachine state cycles
 
+/- The normalized source-input projection also composes through the generic
+   ROB input append law, with the second window retaining the first state. -/
+theorem normalizeRvfiPacketRobTags_inputs_robInputs_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input =
+      robInputs machine.toRobMachine state first ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  calc
+    (robTags machine.toRobMachine state (first ++ second)).map
+        TaggedCommit.input =
+        robInputs machine.toRobMachine state (first ++ second) :=
+      normalizeRvfiPacketRobTags_inputs_robInputs machine state
+        (first ++ second) hcombined
+    _ = robInputs machine.toRobMachine state first ++
+        robInputs machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second :=
+      RvfiPacketMachine.toRobMachine_inputs_append machine state first second
+
 /- Normalized packet source-input projections compose across adjacent windows
    with the second window evaluated from the first window's retained state. -/
 theorem normalizeRvfiPacketRobTags_inputs_append {State : Type}
@@ -2352,6 +2383,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_inputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_length_append

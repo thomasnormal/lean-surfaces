@@ -3466,3 +3466,15 @@ and adjacent-chain forms.
 the exact packet-machine input and state projections; packet boundaries and
 the carried retirement order remain unchanged.
 
+
+## 2026-11-06-ls-sv2-233 — expose normalized ROB-tag state refinement through packet state
+
+Added `normalizeRvfiPacketRobTags_refines_state_packet` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized generic ROB-tag capture now
+states its in-order tagged retirement/ISA equality together with the final
+relation directly through packet state and packet inputs. The PicoRV32 witness
+pins both the single capture and adjacent capture forms.
+
+**DECIDED:** transport the existing normalized ROB-tag state contract through
+exact packet-machine projections; tagged retirement order and the carried
+state/order boundary remain unchanged.

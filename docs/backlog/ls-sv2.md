@@ -3441,3 +3441,15 @@ forms.
 **DECIDED:** compose the packet-window ROB-trace/ISA equality with the existing
 flattened state transport through the normalization certificate; the generic
 ROB input boundary and carried retirement order stay explicit.
+
+## 2026-11-06-ls-sv2-231 — expose normalized ROB trace state refinement through packet state
+
+Added `normalizeRvfiPacketRobTrace_refines_state_packet` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized ROB retirement capture now
+states both its ISA trace equality and final relation directly through the
+packet machine's input and state projections. The PicoRV32 witness pins both
+single-window and adjacent-capture forms.
+
+**DECIDED:** transport the already-proved generic ROB trace/state contract
+through the exact packet-machine projections; no new state or trace
+reconstruction was introduced.

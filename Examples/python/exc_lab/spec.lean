@@ -102,7 +102,7 @@ live-clock battery is `clock_lab`). -/
 #py_check exc_lab.else_skips_on_exception(2) = 5
 #py_check exc_lab.else_skips_on_exception(0) = 7
 #guard callFunction exc_lab "time_live" #[.int 5] 4096
-  matches .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+  matches .unsupported "time.time() readings are outside the tier until the clock trace carries binary64 values (CPython returns float)"
 
 /-! ### the refusal battery (raw `#guard`: `unsupported` has no surface
 form — deliberate). Every remaining deviation from the retained shape is

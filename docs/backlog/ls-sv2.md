@@ -2605,3 +2605,16 @@ PicoRV32 witness pins both forms.
 **DECIDED:** take `List.length` of the exact normalized generic-ROB tag-input/
 ROB-input equality; retirement order, packet boundaries, and payloads are not
 reconstructed.
+
+## 2026-11-06-ls-sv2-164 — certify packet-window ROB tag-input cardinality against ROB inputs
+
+Added `normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs` and its
+append form to `LeanModels/Refine/RvfiPacket.lean`.  A certified finite
+packet-window chain now certifies the exact cardinality of its generic ROB
+tagged source-input projection against `robInputs`, and adjacent chains
+compose the bridge while retaining the carried state and order boundary.  The
+PicoRV32 witness pins both forms.
+
+**DECIDED:** take `List.length` of the exact packet-window generic-ROB
+tag-input/ROB-input equality; packet boundaries, source-input order, and
+payloads are not reconstructed.

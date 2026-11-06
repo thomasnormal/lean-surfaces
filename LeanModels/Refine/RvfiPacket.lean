@@ -2869,6 +2869,47 @@ theorem normalizeRvfiPacketWindows_rob_tags_inputs_robInputs_append
         RvfiPacketMachine.toRobMachine_inputs_append machine state
           firstWindows.flatten secondWindows.flatten
 
+/- A certified finite packet-window chain fixes the generic ROB tagged
+   source-input cardinality to the generic ROB input cardinality. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    ((robTags machine.toRobMachine state windows.flatten).map
+        TaggedCommit.input).length =
+      (robInputs machine.toRobMachine state windows.flatten).length := by
+  exact congrArg List.length
+    (normalizeRvfiPacketWindows_rob_tags_inputs_robInputs machine state start
+      windows retirementWindows h)
+
+/- The packet-window generic ROB tagged-input cardinality bridge composes
+   across two certified chains with the carried state boundary. -/
+theorem normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs_append
+    {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    ((robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+        TaggedCommit.input).length =
+      (robInputs machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs
+    machine state start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /- A certified packet-window chain identifies tagged retirement payloads with
    the generic ROB retirement trace. -/
 theorem normalizeRvfiPacketWindows_rob_tags_retirements_robTrace
@@ -3577,6 +3618,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length_robInputs_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length

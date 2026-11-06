@@ -4519,8 +4519,8 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 (findFunction m excName).isSome) = true)
                           (fun _ => PBF.exn hslot' _) (fun _ => ?_)
                         by_cases hc : (builtinExcCatches excName e || userExcCatches m excName e) = true
-                        · simp only [if_pos hc]; exact ihSs m st' handler.toList hslot'
-                        · simp only [if_neg hc]; exact PBF.exn hslot' _
+                        · exact ihSs m st' handler.toList hslot'
+                        · exact PBF.exn hslot' _
                     | timeout => exact PBF.timeout
                     | unsupported msg => exact PBF.unsupported
                   · refine PBF.ite (c := refusedAncestorExc.contains excName = true)

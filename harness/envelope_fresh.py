@@ -76,7 +76,7 @@ MANIFESTS = {
         "frontend": {
             "kind": "interpreter",
             "candidates": ["python3.9"],
-            "expect": {"name": "cpython-ast", "version": "3.9.19"},
+            "expect": {"name": "cpython-ast", "family": "3.9"},
         },
         "stamp": ["frontend"],
     },
@@ -144,7 +144,10 @@ def resolve_frontend(man: dict) -> str:
         if f["kind"] == "interpreter":
             got = _interp_version(exe)
             tried.append("%s -> %s" % (exe, got or "absent"))
-            if got == want.get("version"):
+            required = want.get("version")
+            family = want.get("family")
+            if (required is not None and got == required) or \
+                    (family is not None and got.startswith(family + ".")):
                 return exe
         elif f["kind"] == "interpreter-module":
             got = _module_major(exe, f["module"])

@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
   "source_sha256": "ccaf42cd0a3836ea4e37bcb7ddf4563c8e2e3c8746fa944a7bdd02517b2f7ed0",

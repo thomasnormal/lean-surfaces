@@ -1877,3 +1877,14 @@ increment.  The PicoRV32 witness pins this projected append contract.
 **DECIDED:** compose through the existing complete packet contract and the
 shared state-after projection; no packet contents, state, or retirement order
 is reconstructed.
+
+## 2026-11-06-ls-sv2-104 — expose projected packet state composition
+
+Added `RvfiPacketMachine.toPacketMachine_stateAfter_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The generic packet projection now has a
+direct state-threading append theorem, so adjacent windows can be composed
+without naming the internal packetized-RVFI state.  The PicoRV32 witness pins
+the equality over its first and second packet windows.
+
+**DECIDED:** specialize the existing packet state append law through the
+packet projection; no packet contents or retirement order is inspected.

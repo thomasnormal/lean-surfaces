@@ -435,6 +435,14 @@ theorem RvfiPacketMachine.toPacketMachine_stateAfter {State : Type}
             RvfiPacketMachine.toPacketMachine, hstep]
           exact ih state'
 
+theorem RvfiPacketMachine.toPacketMachine_stateAfter_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    packetStateAfter machine.toPacketMachine state (first ++ second) =
+      packetStateAfter machine.toPacketMachine
+        (packetStateAfter machine.toPacketMachine state first) second := by
+  exact packetStateAfter_append machine.toPacketMachine state first second
+
 theorem rvfiPacketStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiPacketMachine State) (isa : Machine IsaState)
@@ -1817,6 +1825,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_stateAfter
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter
+#print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append
 #print axioms LeanModels.Refine.rvfiPacketObservations_append

@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1600 | 0 | 1580 | 0 | 10 | 0 | 10 |
+| 1601 | 0 | 1581 | 0 | 10 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -325,6 +325,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.member-method-body-evidence` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `expression.member-enum-field-read-evidence` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `expression.member-enum-field-write-evidence` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
+| `expression.member-enum-setter-call-evidence` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `expression.member-getter-lvalue-cast-call` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `expression.member-getter-string-handle-call` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `expression.member-getter-bool-conversion-call` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a differential witness for the enum setter-call wrapper, checking
+  canonical method/receiver identity, `void` result, argument representation,
+  and projection before field mutation.
+
 - Added a differential witness for enum field writes through an explicit
   projection, including wrong-receiver and read-only rejection before storage
   mutation.

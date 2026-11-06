@@ -1287,6 +1287,12 @@ def enumFieldWriteEvidenceWitness : Bool :=
 
 #guard enumFieldWriteEvidenceWitness
 
+def enumSetterCallEvidenceWitness : Bool :=
+  enumSetterCallObserved == some 9 &&
+    enumSetterCallResultError == some .resultTypeMismatch
+
+#guard enumSetterCallEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

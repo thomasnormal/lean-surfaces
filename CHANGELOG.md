@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a differential witness for object-backed enum field value validation,
+  preserving the typed representation for a valid stored value and refusing a
+  signed-format mismatch before storage access.
+
 - Added a differential witness for the enum representation oracle: absent
   fixed-underlying metadata accepts an explicit unsigned choice while boolean
   representation remains a named refusal.

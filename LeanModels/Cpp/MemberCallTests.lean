@@ -1265,6 +1265,11 @@ def enumRepresentationOracleWitness : Bool :=
 
 #guard enumRepresentationOracleWitness
 
+def enumFieldValueEvidenceWitness : Bool :=
+  enumValueAccepted && enumValueWrongFormat
+
+#guard enumFieldValueEvidenceWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

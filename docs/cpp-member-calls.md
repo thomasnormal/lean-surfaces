@@ -69,6 +69,9 @@ preserving an absent fixed-underlying spelling.
 The representation row keeps the next choice explicit: the unsigned
 underlying type is supplied by the caller, and boolean representation is
 rejected rather than inferred from the enumerator list.
+The field-value row then validates a supplied unsigned stored value and keeps
+the enum representation tag; a signed-format value refuses before any read or
+write is attempted.
 For argument refusals it reports both the retained child-kind shape and the
 recursive child tree, so a future argument tier can be priced against source
 evidence before evaluation semantics are added. The recursive tree preserves

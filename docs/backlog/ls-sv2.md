@@ -3286,3 +3286,16 @@ adjacent captures.  The PicoRV32 witness pins both forms.
 **DECIDED:** compose the existing normalized packet-tag retirement payload and
 packet-trace equalities; retirement order and payloads are preserved exactly,
 and no new packet reconstruction is introduced.
+
+## 2026-11-06-ls-sv2-218 — bridge packet-window packet-tag retirements to packet trace
+
+Added `normalizeRvfiPacketWindows_tags_retirements_packetTrace` and its append
+form to `LeanModels/Refine/RvfiPacket.lean`.  Certified packet-window chains
+now identify the exact packet-machine retirement trace of their flattened
+packet-tag retirement projection, including adjacent chains.  The PicoRV32
+witness pins the chain and append forms.
+
+**DECIDED:** flatten through the existing packet-window certificate and reuse
+the normalized packet-tag retirement/packet-trace payload bridge; retirement
+order and payloads are preserved exactly, with the carried state boundary
+retained.

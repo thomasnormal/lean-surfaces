@@ -3525,3 +3525,15 @@ inputs, including adjacent chains. The PicoRV32 witness pins both forms.
 **DECIDED:** compose the exact window tag-stream and normalized trace bridges;
 retain packet boundaries and carried state/order offsets without adding a
 second ROB reconstruction or packet-facing alias.
+
+## 2026-11-06-ls-sv2-238 — expose normalized packet-tag state refinement
+
+Added `normalizeRvfiPacketTags_refines_state` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet-boundary tag stream
+now carries its in-order/ISA trace contract together with the final machine
+state relation and retirement-order endpoint. The PicoRV32 witness pins both
+single-capture and adjacent-capture forms.
+
+**DECIDED:** compose the existing packet-tag refinement with the normalized
+packet-state theorem, preserving exact packet inputs, state threading, and
+retirement-order offsets without introducing a second state or trace model.

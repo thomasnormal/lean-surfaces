@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added an overloaded-operator identity witness through a one-child `ParenExpr`
+  callee wrapper.
+
 - Added a recorded refusal for malformed parenthesized ordinary-call callees;
   wrapper metadata requires exactly one child.
 

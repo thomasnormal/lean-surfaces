@@ -2236,6 +2236,18 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-operator-parenthesized-callee-identity",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedOperatorParenTranslationWitnessOk",
+    "render": "bool",
+    "cpp_source": "struct S {}; S operator+(S, S); int f(S a, S b) { return 0; }",
+    "expect": "match",
+    "rung": 8
+  },
+  {
     "id": "translation.resolved-operator-malformed-string-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

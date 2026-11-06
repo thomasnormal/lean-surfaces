@@ -134,6 +134,10 @@ A positive overloaded-operator witness covers the same artifact-local string
 `referencedDecl` form. Operator metadata parses and validates the handle without
 using the printed operator name.
 
+A parenthesized overloaded-operator callee is also followed through its
+one-child `ParenExpr` wrapper. The selected `FunctionDecl` identity remains the
+structured frontend handle.
+
 A malformed string operator handle is a recorded refusal; operator metadata does
 not normalize arbitrary text into an artifact identity.
 

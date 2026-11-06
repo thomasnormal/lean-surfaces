@@ -910,6 +910,47 @@ theorem normalizeRvfiPacketRobTags_refines_windows
   exact normalizeRvfiPacketRobTags_refines_state machine isa rel admit state
     isaState start windows.flatten retirementWindows.flatten hrob hrel hflat
 
+/-- The complete refinement contract composes directly across two certified
+window chains; the local append theorem supplies the only boundary proof. -/
+theorem normalizeRvfiPacketRobTags_refines_windows_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (InOrderTags start
+        (robTags machine.toRobMachine state
+          (firstWindows ++ secondWindows).flatten) ∧
+      (robTags machine.toRobMachine state
+        (firstWindows ++ secondWindows).flatten).map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (robInputs machine.toRobMachine state
+            (firstWindows ++ secondWindows).flatten)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state
+          (firstWindows ++ secondWindows).flatten)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten)) finalOrder ∧
+      finalOrder = start +
+        (firstRetirementWindows ++ secondRetirementWindows).flatten.length) := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketRobTags_refines_windows machine isa rel admit state
+    isaState start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
+
 /-- A successful flattened RVFI certificate also supplies the tagged ROB
 retirement stream. -/
 theorem normalizeRvfiPacketRobTrace {State : Type}
@@ -1020,5 +1061,6 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_flatten
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows
+#print axioms LeanModels.Refine.normalizeRvfiPacketRobTags_refines_windows_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines

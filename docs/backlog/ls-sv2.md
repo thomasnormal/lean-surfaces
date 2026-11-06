@@ -1454,3 +1454,16 @@ direct chain proof.
 **DECIDED:** make chain composition explicit at the window-certificate
 boundary; the append theorem carries state and order rather than inferring
 either from flattened observations.
+
+## 2026-11-06-ls-sv2-70 — lift window-chain append through ISA refinement
+
+Added `normalizeRvfiPacketRobTags_refines_windows_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  Two independently certified packet
+chains now compose directly into the complete contract: global tagged ROB
+order, ISA retirement equality, final related state, and exact flattened
+retirement order.  The PicoRV32 witness exercises the full append route over
+the two singleton window chains.
+
+**DECIDED:** reuse the local chain append certificate as the sole composition
+step, then apply the generic flattened refinement theorem once at the combined
+boundary.

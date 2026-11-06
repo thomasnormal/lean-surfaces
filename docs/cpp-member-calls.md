@@ -57,6 +57,9 @@ performs both syntax admission and this canonical resolution in one operation.
 retained `CXXMemberCallExpr` in a complete probe and emits an auditable JSON
 admission/refusal census. It is bounded and read-only: no receiver, object
 state, body execution, overload lookup or native agreement is inferred.
+The differential corpus separately exercises the canonical identity join for
+`Owner::read`: a noncanonical call occurrence must resolve to the one retained
+canonical `CXXMethodDecl` handle before invocation evidence is considered.
 For argument refusals it reports both the retained child-kind shape and the
 recursive child tree, so a future argument tier can be priced against source
 evidence before evaluation semantics are added. The recursive tree preserves

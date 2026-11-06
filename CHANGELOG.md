@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a direct differential witness for canonical `CXXMemberCallExpr`
+  identity, requiring a noncanonical call occurrence to join one retained
+  method declaration handle before invocation.
+
 - Added a positive differential witness for constructor identity when Clang
   supplies a structured `CXXConstructorDecl` handle, alongside the real
   `ctorType`-only refusal.

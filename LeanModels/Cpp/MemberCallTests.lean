@@ -1196,6 +1196,11 @@ def enumParameterEvidenceWitness : Bool :=
 
 #guard enumParameterEvidenceWitness
 
+def memberCallCanonicalIdentityWitness : Bool :=
+  resolvedCanonicalHandle canonicalProbe.declarations == some (h "0xc0")
+
+#guard memberCallCanonicalIdentityWitness
+
 def memberGetterLValueCastWitness : Bool :=
   observedCast == some 7
 

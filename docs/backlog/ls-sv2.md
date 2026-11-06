@@ -2954,3 +2954,15 @@ forms.
 reuse the normalized packet tag-stream/packet-trace cardinality bridge;
 packet boundaries, tag payloads, retirement order, and source-input order are
 not reconstructed.
+
+## 2026-11-06-ls-sv2-191 — certify normalized packet tag-stream cardinality against packet inputs
+
+Added `normalizeRvfiPacketTags_length_packetInputs` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet capture now
+certifies equal cardinality for the packet-boundary tag stream and packet
+input stream, including adjacent captures.  The PicoRV32 witness pins both
+forms.
+
+**DECIDED:** bridge through the exact normalized packet-trace/input
+cardinality equality; packet boundaries, tag payloads, retirement order, and
+source-input order are not reconstructed.

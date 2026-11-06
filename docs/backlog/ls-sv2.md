@@ -2424,3 +2424,16 @@ both forms.
 **DECIDED:** reuse the exact packet-tag flattening and generic ROB erasure
 bridges, then apply the normalized packet trace equality; no retirement order
 or packet boundary is reconstructed.
+
+## 2026-11-06-ls-sv2-150 — expose packet-window tag retirements
+
+Added `normalizeRvfiPacketWindows_tags_retirements` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now exposes its flattened packet-boundary tag retirement payload as the
+flattened normalized retirement windows, and two certified chains compose the
+same payload while retaining the second chain's carried state and order
+boundary.  The PicoRV32 witness pins both forms.
+
+**DECIDED:** flatten only after the window certificate supplies its carried
+state and normalized retirement boundary, then reuse the normalized packet-tag
+retirement projection; no retirement order or packet boundary is reconstructed.

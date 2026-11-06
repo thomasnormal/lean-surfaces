@@ -1538,6 +1538,43 @@ theorem normalizeRvfiPacketWindows_tags_length_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified finite packet-window chain exposes its decoded retirement
+   payload directly from the flattened packet-boundary tag stream. -/
+theorem normalizeRvfiPacketWindows_tags_retirements {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (rvfiPacketTags machine state windows.flatten).flatten.map
+        TaggedCommit.retirement = retirementWindows.flatten := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketTags_retirements machine state windows.flatten hflat
+
+/- Packet-window tag retirement payloads compose across two certified chains,
+   retaining the second chain's carried state and order boundary. -/
+theorem normalizeRvfiPacketWindows_tags_retirements_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+        TaggedCommit.retirement =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_tags_retirements machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 /-- Erasing the packet boundaries from a certified window chain preserves the
 same global consecutive tag prefix. -/
 theorem normalizeRvfiPacketWindows_tags_flat {State : Type}
@@ -2993,6 +3030,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_stream_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_retirements
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_retirements_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_flat_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags

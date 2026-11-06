@@ -3501,3 +3501,15 @@ adjacent captures. The PicoRV32 witness pins both forms.
 **DECIDED:** reuse the existing ROB-tag order/refinement proof and apply the
 exact `toRobMachine_inputs` projection; tagged retirement order and payloads
 remain unchanged.
+
+## 2026-11-06-ls-sv2-236 — expose normalized packet-tag refinement
+
+Added `normalizeRvfiPacketTags_refines` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A normalized packet-boundary tag stream
+now retains its `InOrderPacketStream` certificate while its flattened
+retirement payload equals the ISA trace over packet-machine inputs, including
+adjacent captures. The PicoRV32 witness pins both forms.
+
+**DECIDED:** preserve packet boundaries for consumers that need per-cycle
+commit widths, then use the exact ROB-tag and input projections for the ISA
+trace; no new `_packet` alias or packet reconstruction was introduced.

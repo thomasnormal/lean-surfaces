@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-06-pycomplete-359` |  | preserve class-definition statement identity | python-completeness |
 | `2026-11-06-pycomplete-358` |  | retain yield-from nodes and refuse delegation | python-completeness |
 | `2026-11-06-pycomplete-357` |  | retain trailing definition deletion nodes | python-completeness |
 | `2026-11-06-pycomplete-356` |  | pin the callable-alias identity boundary | python-completeness |

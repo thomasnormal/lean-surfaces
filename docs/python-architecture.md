@@ -25,7 +25,7 @@ construct's semantics decision), and [spec-surface.md](spec-surface.md)
    during Lean elaboration (`LeanModels/Python/Json.lean`). It produces
    `foo : Module`, a literal AST term that proofs can unfold. Ingestion
    also lowers a few constructs the same way CPython's compiler does:
-   methods are flattened into `"Class.method"` functions, list
+   class definitions remain structured source-order statements, with method bodies indexed for dispatch; list
    comprehensions become `list(<genexpr>)`, generator expressions become
    synthesized generator functions, and dict views and `del d[k]` become
    synthetic builtins such as `<dictkeys>`. It also recognises

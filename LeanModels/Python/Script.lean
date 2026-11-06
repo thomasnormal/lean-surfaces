@@ -207,6 +207,7 @@ mutual
     -- bound names are the binding censuses' business, `Stmt.g1Binds`)
     | .importFrom .. => []
     | .importStmt module _ => [module]
+    | .classDef name _ => [name]
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 
@@ -282,7 +283,7 @@ def scriptStmtSpan : Stmt → Span
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp
-  | .importFrom _ _ _ sp | .importStmt _ sp | .delStmt _ sp
+  | .importFrom _ _ _ sp | .importStmt _ sp | .classDef _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The last line at which the module's `def` / `class` / recognized
@@ -862,7 +863,7 @@ mutual
                     | e => .exn st' e)
                  | .timeout => .timeout
                  | .unsupported msg => .unsupported msg)
-      | .unsupported "ClassDef" name sp =>
+      | .classDef name sp =>
         match findClass m name with
         | some (_, c) =>
           if c.creationPure then

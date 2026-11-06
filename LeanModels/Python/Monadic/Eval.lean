@@ -1505,6 +1505,7 @@ mutual
 /-- Execute one statement. Structural on `Stmt`; `while` and the `for` cursors
 go out through `K` because their recursion is not structural. -/
 def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
+  | .classDef name _ => refuse s!"class {name} is only admitted at module scope"
   | .annNoValue id _ => do
       modify fun st => { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none }
       pure .next

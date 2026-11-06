@@ -1404,6 +1404,8 @@ theorem fuelMono (fuel : Nat) :
       | succ k =>
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         cases s with
+        | classDef name _ =>
+          simp only [execStmt]; exact Run.le_refl _
         | annNoValue _ _ =>
           simp only [execStmt]; exact Run.le_refl _
         | importStmt _ _ =>
@@ -3247,6 +3249,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     -- execStmt
     · intro st s hfree
       cases s with
+      | classDef name _ =>
+        simp only [execStmt]
+        exact .unsupported
       | annNoValue _ _ =>
         simp only [execStmt]
         exact .okF rfl _

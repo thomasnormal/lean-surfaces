@@ -9366,10 +9366,30 @@ claiming send/throw/close and delegation-return semantics from a synthetic
 
 | Measurement | Result |
 |---|---|
-| Differential witness rows | Direct delegation drivers are explicitly unsupported; helper-driven `yf_live_drive` remains matched |
+| Differential witness rows | Direct delegation drivers are explicitly unsupported; the `yf_live_drive` row is now explicitly unsupported |
 | Extractor tests | 161 passed |
-| Native differential | 4196 cases: 0 failed, 112 whitelisted unsupported, 4084 matched |
+| Native differential | 4196 cases: 0 failed, 113 whitelisted unsupported, 4083 matched |
 | Formatting | `git diff --check` passed |
 
 DECIDED: delegation stays a first-class AST boundary and refuses until a real
 PEP 380 delegation frame is implemented.
+
+## 2026-11-06-pycomplete-359 — preserve class-definition statement identity
+
+Class definitions now have a structured `.classDef` statement marker in the
+embedded AST. The parsed `ClassDefn` body and qualified method dispatch table
+remain available, while script and monadic execution handle the structured
+marker explicitly. This preserves the class statement's source-order identity
+and keeps unsupported class execution loud at the existing module boundary;
+class bodies are no longer represented by a name-text `Unsupported` node.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 161 passed |
+| Native differential | 4196 cases: 0 failed, 113 whitelisted unsupported, 4083 matched |
+| Lean build | Managed `lake build leanmodels-run`: 40 jobs passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: class statements stay structured through ingestion and execution;
+method flattening remains a dispatch index until full runtime class namespaces
+are implemented.

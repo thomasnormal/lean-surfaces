@@ -385,6 +385,7 @@ def Stmt.kindName : Stmt → String
   | .withStmt .. => "With"
   | .importFrom .. => "ImportFrom"
   | .importStmt .. => "Import"
+  | .classDef .. => "ClassDef"
   | .delStmt .. => "Delete"
   | .globalDecl .. => "Global"
   | .nonlocalDecl .. => "Nonlocal"
@@ -6785,7 +6786,7 @@ mutual
     -- a marker so script mode can execute creation at the right source
     -- position; the marker still binds its class name for static poisoning
     -- and clock/module-init analyses.
-    | .unsupported "ClassDef" name _ => some [name]
+    | .classDef name _ => some [name]
     | .forStmt t _ b o _ =>
       match targetBindsG t, Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
       | some a, some c, some d => some (a ++ c ++ d)
@@ -6989,7 +6990,7 @@ def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable diverged : Bool)
   -- function calls do not execute class creation, so module initialization
   -- treats the marker as a definition-only no-op; script mode handles the
   -- marker in its own executor.
-  | .unsupported "ClassDef" _ _ => (h, acc, analysable, diverged)
+  | .classDef _ _ => (h, acc, analysable, diverged)
   -- a bare expression binds nothing; `globalsDirty` records that it can
   -- still STORE (and the recorded call-mutation gap in the section
   -- comment above)
@@ -8004,6 +8005,7 @@ mutual
   def Stmt.heapFree : Stmt → Bool
     | .annNoValue .. => true
     | .importStmt .. => true
+    | .classDef .. => false
     | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
     | .unpackAssign .. => false
@@ -8176,6 +8178,7 @@ mutual
   def Stmt.genAllocFree : Stmt → Bool
     | .annNoValue .. => true
     | .importStmt .. => true
+    | .classDef .. => false
     | .ret Option.none _ => true
     | .ret (some e) _ => e.genAllocFree
     | .assign tgts v _ => Expr.genAllocFreeList tgts.toList && v.genAllocFree
@@ -10020,6 +10023,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
     match s with
     | .annNoValue id _ =>
         .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
+    | .classDef name _ => .unsupported s!"class {name} is only admitted at module scope"
     | .ret Option.none _ => .ok st (.ret .none)
     | .ret (some e) _ =>
         evalExpr m fuel st e ⤳ fun st v =>
@@ -11153,7 +11157,7 @@ def initFoldStep (h : Heap) (acc : GlobalsAcc) (s : Stmt) :
   | .pass _ => some (h, acc)
   -- See `globalsStep`: class creation is a script-mode effect, while the
   -- closed function boundary keeps its module-init world unchanged.
-  | .unsupported "ClassDef" _ _ => some (h, acc)
+  | .classDef _ _ => some (h, acc)
   | .exprStmt (.constant ..) _ => some (h, acc)
   | _ => Option.none
 
@@ -11377,7 +11381,7 @@ mutual
         hnd.toList.any (proofCellDrainStmt genName)
     | .withStmt items body _ _ => items.toList.any (fun i => proofCellDrainExpr genName i.context ||
         (i.target.map (proofCellDrainExpr genName)).getD false) || body.toList.any (proofCellDrainStmt genName)
-    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .importStmt .. | .delStmt .. | .globalDecl .. | .nonlocalDecl .. | .unsupported .. => false
+    | .defStmt .. | .ret none _ | .pass _ | .brk _ | .cont _ | .importFrom .. | .importStmt .. | .classDef .. | .delStmt .. | .globalDecl .. | .nonlocalDecl .. | .unsupported .. => false
 
 end
 

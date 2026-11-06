@@ -1922,6 +1922,25 @@ theorem normalizeRvfiPacketWindows_rob_trace_length_append {State : Type}
     (firstWindows ++ secondWindows)
     (firstRetirementWindows ++ secondRetirementWindows) hcombined
 
+/- A certified packet-window chain's packet-facing retirement trace has
+   exactly the flattened normalized retirement cardinality. -/
+theorem normalizeRvfiPacketWindows_trace_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (packetTrace machine.toPacketMachine state windows.flatten).length =
+      retirementWindows.flatten.length := by
+  calc
+    (packetTrace machine.toPacketMachine state windows.flatten).length =
+        (robTrace machine.toRobMachine state windows.flatten).length :=
+      congrArg List.length
+        (machine.toRobMachine_trace state windows.flatten).symm
+    _ = retirementWindows.flatten.length :=
+      normalizeRvfiPacketWindows_rob_trace_length machine state start windows
+        retirementWindows h
+
 /- Generic ROB input cardinality composes across adjacent certified packet
    window chains, retaining the second chain's carried state and order. -/
 theorem normalizeRvfiPacketWindows_robInputs_length_append {State : Type}

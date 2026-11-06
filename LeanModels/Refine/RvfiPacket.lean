@@ -3445,6 +3445,71 @@ theorem normalizeRvfiPacketWindows_trace_refines_append
       secondWindows firstRetirementWindows secondRetirementWindows hfirst hsecond)
   exact htrace
 
+/- A certified packet-window chain preserves packet boundaries while its
+   flattened packet-tag retirements refine the ISA over packet inputs. -/
+theorem normalizeRvfiPacketWindows_tags_refines
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    InOrderPacketStream start
+      (rvfiPacketTags machine state windows.flatten) ∧
+      (rvfiPacketTags machine state windows.flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten) := by
+  constructor
+  · exact normalizeRvfiPacketWindows_tags_stream machine state start windows
+      retirementWindows h
+  · calc
+      (rvfiPacketTags machine state windows.flatten).flatten.map
+          TaggedCommit.retirement = retirementWindows.flatten :=
+        normalizeRvfiPacketWindows_tags_retirements machine state start windows
+          retirementWindows h
+      _ = trace isa isaState
+          (packetInputs machine.toPacketMachine state windows.flatten) :=
+        normalizeRvfiPacketWindows_trace_refines machine isa rel admit state
+          isaState start windows retirementWindows hrob hrel h
+
+/- The packet-preserving finite-window tag/ISA contract composes across
+   adjacent certified chains with the carried state and order boundary. -/
+theorem normalizeRvfiPacketWindows_tags_refines_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    InOrderPacketStream start
+      (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten) ∧
+      (rvfiPacketTags machine state
+        (firstWindows ++ secondWindows).flatten).flatten.map
+          TaggedCommit.retirement =
+        trace isa isaState
+          (packetInputs machine.toPacketMachine state
+            (firstWindows ++ secondWindows).flatten) := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_tags_refines machine isa rel admit state
+    isaState start (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hrob hrel hcombined
+
 /-- A certified finite packet-window chain also supplies the final related
 state and its exact normalized retirement-order increment. -/
 theorem normalizeRvfiPacketWindows_refines_state
@@ -6681,6 +6746,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_state_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_state_packet
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_trace_refines_state_packet_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_tags_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_trace_refines_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_refines_state_packet

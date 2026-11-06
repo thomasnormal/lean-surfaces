@@ -3513,3 +3513,15 @@ adjacent captures. The PicoRV32 witness pins both forms.
 **DECIDED:** preserve packet boundaries for consumers that need per-cycle
 commit widths, then use the exact ROB-tag and input projections for the ISA
 trace; no new `_packet` alias or packet reconstruction was introduced.
+
+## 2026-11-06-ls-sv2-237 — expose normalized packet-window tag refinement
+
+Added `normalizeRvfiPacketWindows_tags_refines` and its append form to
+`LeanModels/Refine/RvfiPacket.lean`. A finite normalized packet-window chain
+now preserves its `InOrderPacketStream` boundary certificate while its
+flattened packet-tag retirement payload equals the ISA trace over packet
+inputs, including adjacent chains. The PicoRV32 witness pins both forms.
+
+**DECIDED:** compose the exact window tag-stream and normalized trace bridges;
+retain packet boundaries and carried state/order offsets without adding a
+second ROB reconstruction or packet-facing alias.

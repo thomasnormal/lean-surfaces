@@ -6459,3 +6459,11 @@ unguarded instantiation remains available to the structural proof route; the
 executable semantic family turns an unsafe `always_comb` copy into the named
 `AlwaysComb:alias-read` process. Width-parametric guard rows cover two distinct
 concrete widths, so the refusal is not limited to the default elaboration.
+## 2026-11-06 — Sklansky guarded-family contract
+
+The Sklansky design note now specifies the proof-facing `GuardTotal`
+obligation, branch-qualified identities, and the required error behavior for
+guarded generate families. The guarded-family prototype remains parked until
+that premise is threaded through `AutoObl` and `Summary.sound`; failed guard
+evaluation is never treated as an empty family.
+

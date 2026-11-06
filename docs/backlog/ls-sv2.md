@@ -1725,3 +1725,17 @@ witness pins this append route over its two singleton packet windows.
 **DECIDED:** compose through `normalizeRvfiPacketWindows_append` and the
 single-chain packet-facing contract; no tag stream, input order, or final
 state is inferred.
+
+## 2026-11-06-ls-sv2-92 — expose the single packet refinement contract
+
+Added `normalizeRvfiPacketRefines` to `LeanModels/Refine/RvfiPacket.lean`.
+A single normalized packet window now exposes one direct packet-facing
+contract: its retirement payload equals the ISA trace over `packetInputs`, and
+the retained packet state is related to the ISA state with the exact
+retirement-order increment. The PicoRV32 witness pins this direct contract
+over its four-cycle packet capture.
+
+**DECIDED:** combine the existing packet ROB trace refinement with the
+normalized state/order theorem, then transport inputs through the exact
+`toRobMachine_inputs` projection; no input stream is reconstructed or
+reordered.

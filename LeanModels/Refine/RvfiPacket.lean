@@ -1483,6 +1483,33 @@ theorem normalizeRvfiPacketRobTrace_refines
     _ = trace isa isaState (robInputs machine.toRobMachine state cycles) :=
       rob_trace_refines hrob state isaState start cycles hrel
 
+/- A single normalized packet window exposes the packet-facing ISA trace and
+   the final state/order relation together, without requiring callers to name
+   the intermediate generic ROB projection. -/
+theorem normalizeRvfiPacketRefines
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (cycles : List Input) (retirements : List Retirement)
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hobs : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state cycles) = some retirements) :
+    (retirements = trace isa isaState
+      (packetInputs machine.toPacketMachine state cycles)) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state cycles)
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state cycles)) finalOrder ∧
+      finalOrder = start + retirements.length) := by
+  constructor
+  · have htrace := normalizeRvfiPacketRobTrace_refines machine isa rel admit
+      state isaState start cycles retirements hrob hrel hobs
+    simpa only [RvfiPacketMachine.toRobMachine_inputs] using htrace
+  · exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start
+      hrob state isaState hrel cycles retirements hobs
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -1536,3 +1563,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketWindows_rob_tags_inputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
+#print axioms LeanModels.Refine.normalizeRvfiPacketRefines

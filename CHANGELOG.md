@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for constructor metadata with malformed
+  string-valued frontend-handle syntax.
+
 - Added a recorded refusal for constructor metadata whose structured `ctor`
   object lacks its declaration handle.
 

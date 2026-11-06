@@ -28,6 +28,9 @@ A structured `ctor` object missing its declaration `id` is separately refused;
 constructor identity requires a complete frontend handle, not just a
 constructor kind tag.
 
+A string-valued `ctor` field with malformed frontend-handle syntax is also a
+recorded refusal; constructor handles must use the artifact-local format.
+
 The positive kernel witness and differential row use a structured `ctor`
 object with a retained `CXXConstructorDecl` handle. They demonstrate the
 accepted evidence shape without claiming that constructor overload resolution

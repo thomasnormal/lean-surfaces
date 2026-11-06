@@ -1914,3 +1914,16 @@ PicoRV32 witness pins both projected state refinements.
 **DECIDED:** transport only the state/order conjunct through the shared
 state-after bridge; trace equality and retirement payloads remain in the
 complete window contract.
+
+## 2026-11-06-ls-sv2-107 — certify projected packet-window input cardinality
+
+Added `normalizeRvfiPacketWindows_inputs_length` and
+`normalizeRvfiPacketWindows_inputs_length_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  A normalized packet-window chain now
+proves that its packet-facing architectural input stream has exactly the
+flattened retirement cardinality, directly and across two adjacent chains.
+The PicoRV32 witness pins both packet-input cardinality projections.
+
+**DECIDED:** derive the window result from the flattened normalization and the
+existing packet input-length theorem; the carried state, packet boundaries,
+and retirement order remain explicit at the window append boundary.

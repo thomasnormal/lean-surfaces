@@ -1945,6 +1945,43 @@ theorem normalizeRvfiPacketInputs_length_append {State : Type}
     (start + firstRetirements.length) second secondRetirements hsecond]
   simp only [List.length_append]
 
+/- A certified packet-window chain fixes the packet input cardinality to the
+   flattened normalized retirement stream. -/
+theorem normalizeRvfiPacketWindows_inputs_length {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (windows : List (List Input))
+    (retirementWindows : List (List Retirement))
+    (h : normalizeRvfiPacketWindows machine state start windows
+      retirementWindows) :
+    (packetInputs machine.toPacketMachine state windows.flatten).length =
+      retirementWindows.flatten.length := by
+  have hflat := normalizeRvfiPacketWindows_flatten machine state start
+    windows retirementWindows h
+  exact normalizeRvfiPacketInputs_length machine state start windows.flatten
+    retirementWindows.flatten hflat
+
+/- Packet input cardinality composes across adjacent normalized window chains,
+   with the second chain's carried state and order boundary retained. -/
+theorem normalizeRvfiPacketWindows_inputs_length_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State) (start : Nat)
+    (firstWindows secondWindows : List (List Input))
+    (firstRetirementWindows secondRetirementWindows : List (List Retirement))
+    (hfirst : normalizeRvfiPacketWindows machine state start firstWindows
+      firstRetirementWindows)
+    (hsecond : normalizeRvfiPacketWindows machine
+      (rvfiPacketStateAfter machine state firstWindows.flatten)
+      (start + firstRetirementWindows.flatten.length) secondWindows
+      secondRetirementWindows) :
+    (packetInputs machine.toPacketMachine state
+      (firstWindows ++ secondWindows).flatten).length =
+      (firstRetirementWindows ++ secondRetirementWindows).flatten.length := by
+  have hcombined := normalizeRvfiPacketWindows_append machine state start
+    firstWindows secondWindows firstRetirementWindows secondRetirementWindows
+    hfirst hsecond
+  exact normalizeRvfiPacketWindows_inputs_length machine state start
+    (firstWindows ++ secondWindows)
+    (firstRetirementWindows ++ secondRetirementWindows) hcombined
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -2016,3 +2053,5 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketState_refines_packet_append
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length
 #print axioms LeanModels.Refine.normalizeRvfiPacketInputs_length_append
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_inputs_length
+#print axioms LeanModels.Refine.normalizeRvfiPacketWindows_inputs_length_append

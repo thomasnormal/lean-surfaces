@@ -1599,3 +1599,14 @@ pins this input bridge over the certified two-window capture.
 
 **DECIDED:** retain the packet machine's explicit input threading as the sole
 source of ROB inputs; no input order or completion order is inferred.
+
+## 2026-11-06-ls-sv2-82 — certify ROB tag cardinality for packet chains
+
+Added `normalizeRvfiPacketWindows_rob_tags_length` to
+`LeanModels/Refine/RvfiPacket.lean`.  A certified finite packet-window chain
+now proves that the flattened generic ROB tag count equals the flattened
+normalized retirement count, making the exact carried order increment explicit.
+The PicoRV32 witness pins this cardinality over its two-window capture.
+
+**DECIDED:** derive cardinality from the certified retirement payload equality;
+no truncation, padding, or inferred completion order is introduced.

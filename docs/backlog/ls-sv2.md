@@ -1739,3 +1739,17 @@ over its four-cycle packet capture.
 normalized state/order theorem, then transport inputs through the exact
 `toRobMachine_inputs` projection; no input stream is reconstructed or
 reordered.
+
+## 2026-11-06-ls-sv2-93 — compose the single packet refinement contract
+
+Added `normalizeRvfiPacketRefines_append` to
+`LeanModels/Refine/RvfiPacket.lean`. Two adjacent normalized packet windows
+now compose directly to the packet-facing contract: concatenated retirements
+equal the ISA trace over concatenated packet inputs, and the retained final
+packet state is related to the ISA state with the exact combined order
+increment. The PicoRV32 witness pins this append route over its two packet
+windows.
+
+**DECIDED:** compose through the normalized packet trace append theorem and
+the single-window packet refinement contract; the second window's state and
+retirement boundary remain explicit.

@@ -1510,6 +1510,39 @@ theorem normalizeRvfiPacketRefines
   · exact rvfiPacketStateAfter_refines_normalized machine isa rel admit start
       hrob state isaState hrel cycles retirements hobs
 
+/- The direct packet-facing contract composes across two adjacent normalized
+   windows, with the second window starting from the first one's state and
+   retirement-order boundary. -/
+theorem normalizeRvfiPacketRefines_append
+    {State IsaState : Type}
+    (machine : RvfiPacketMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Nat → Prop) (admit : Input → Prop)
+    (state : State) (isaState : IsaState) (start : Nat)
+    (first second : List Input)
+    {firstRetirements secondRetirements : List Retirement}
+    (hrob : RobStepRefines machine.toRobMachine isa rel start admit)
+    (hrel : rel state isaState start)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiPacketObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiPacketObservations machine
+          (rvfiPacketStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (packetInputs machine.toPacketMachine state (first ++ second))) ∧
+    (∃ finalOrder,
+      rel (rvfiPacketStateAfter machine state (first ++ second))
+        (machineStateAfter isa isaState
+          (packetInputs machine.toPacketMachine state (first ++ second)))
+          finalOrder ∧
+      finalOrder = start + (firstRetirements ++ secondRetirements).length) := by
+  have hcombined := normalizeRvfiPacketTrace_append machine state first second
+    hfirst hsecond
+  exact normalizeRvfiPacketRefines machine isa rel admit state isaState start
+    (first ++ second) (firstRetirements ++ secondRetirements) hrob hrel hcombined
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_trace
@@ -1564,3 +1597,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace
 #print axioms LeanModels.Refine.normalizeRvfiPacketRobTrace_refines
 #print axioms LeanModels.Refine.normalizeRvfiPacketRefines
+#print axioms LeanModels.Refine.normalizeRvfiPacketRefines_append

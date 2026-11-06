@@ -1166,6 +1166,15 @@ theorem pinned_packet_to_packet_state_after_bridge :
   exact RvfiPacketMachine.toPacketMachine_stateAfter pinnedPacketMachine
     pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles)
 
+theorem pinned_packet_to_packet_state_after_append :
+    packetStateAfter pinnedPacketMachine.toPacketMachine
+        pinnedPacketMachine.init (packetFirstCycles ++ packetSecondCycles) =
+      packetStateAfter pinnedPacketMachine.toPacketMachine
+        (packetStateAfter pinnedPacketMachine.toPacketMachine
+          pinnedPacketMachine.init packetFirstCycles) packetSecondCycles := by
+  exact RvfiPacketMachine.toPacketMachine_stateAfter_append pinnedPacketMachine
+    pinnedPacketMachine.init packetFirstCycles packetSecondCycles
+
 theorem pinned_packet_first_tags :
     InOrderTags 0
         ((packetRows[0]!).filterMap RvfiPacketEntry.toTaggedCommit?) := by
@@ -1441,6 +1450,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_packet_windows_refines_append
 #print axioms pinned_packet_state_after_bridge
 #print axioms pinned_packet_to_packet_state_after_bridge
+#print axioms pinned_packet_to_packet_state_after_append
 #print axioms pinned_packet_first_tags
 #print axioms pinned_packet_tags_stream
 #print axioms pinned_packet_trace

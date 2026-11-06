@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Class definitions now retain a structured `.classDef` statement marker through ingestion and execution; qualified method indexing remains available while unsupported class execution stays loud.
+
 - Statement-position `yield from` now remains a structured `YieldFrom:delegation` refusal instead of being inlined into a synthetic `for` loop; helper-driven generator rows retain their admitted behavior.
 
 - Trailing `del` statements targeting static definitions are preserved in the AST and refuse at script execution instead of being rewritten to `pass`.

@@ -475,7 +475,7 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "ClassDef" =>
         -- Nested `class` (module-level ones are split out by `parseModule`).
         let name := ((← getField j "name").getStr?).toOption.getD ""
-        return .unsupported "ClassDef" name span
+        return .classDef name span
     | other => throw s!"unknown statement kind {other.quote}"
 
 /-- Parse a module-level `FunctionDef` node into a `FunctionDefn`.
@@ -670,7 +670,7 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   -- marker so script execution can run their creation body at the class
   -- statement.  The marker still binds its class name for the static
   -- binding/exception/namedtuple censuses.
-  | .unsupported "ClassDef" name _ => some [name]
+  | .classDef name _ => some [name]
   -- exceptions tier: `raise` binds nothing; a try can bind whatever its
   -- body and handler can (over-approximation, the safe direction)
   | .raiseStmt .. => some []
@@ -766,6 +766,7 @@ mutual
     -- Pass 0: an import references no in-module names
     | .importFrom .. => []
     | .importStmt module _ => [module]
+    | .classDef name _ => [name]
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -780,7 +781,7 @@ private def stmtSpanOf : Stmt → Span
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .withStmt _ _ _ sp
-  | .importFrom _ _ _ sp | .importStmt _ sp | .delStmt _ sp
+  | .importFrom _ _ _ sp | .importStmt _ sp | .classDef _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -1142,6 +1143,7 @@ private partial def yfNames : Stmt → List String
   | .yieldFromStmt v _ => exprRefs v
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
   | .importStmt module _ => [module]
+  | .classDef name _ => [name]
   | .ret (some e) _ => exprRefs e
   | .assign ts v _ =>
       (ts.toList.map exprRefs).flatten
@@ -1273,6 +1275,7 @@ target expressions themselves — a target `Name` IS a name). -/
 private partial def stmtNamesXW : Stmt → List String
   | .globalDecl names _ | .nonlocalDecl names _ => names.toList
   | .importStmt module _ => [module]
+  | .classDef name _ => [name]
   | .annNoValue name _ => [name]
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
   | .ret (some e) _ => exprNamesXW e
@@ -1442,7 +1445,7 @@ mutual
       StateM (Nat × Array FunctionDefn) Stmt := do
     match s with
     -- Pass 0: `importFrom` carries no expression, nothing to lower
-    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .globalDecl .. | .nonlocalDecl .. | .annNoValue .. | .importFrom .. | .importStmt ..
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .globalDecl .. | .nonlocalDecl .. | .annNoValue .. | .importFrom .. | .importStmt .. | .classDef ..
     | .unsupported .. => return s
     | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
     | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp
@@ -1793,7 +1796,7 @@ def parseModule (j : Json) : Except String Module :=
                 else { c with ok := false, creationPure := false }
               | Option.none => { c with ok := false, creationPure := false }
           | Option.none => c
-        let classStmt := .unsupported "ClassDef" c.name c.span
+        let classStmt := .classDef c.name c.span
         classes := classes.push c
         functions := functions ++ fns
         topLevel := topLevel.push classStmt

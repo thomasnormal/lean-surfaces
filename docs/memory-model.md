@@ -5409,7 +5409,7 @@ forms remain loud.
 
 Ingestion retains non-method class-body statements in `ClassDefn.body` and
 keeps method definitions in the existing flattened `Module.functions` table.
-`parseModule` inserts an in-position `.unsupported "ClassDef"` marker into
+`parseModule` inserts an in-position structured `.classDef` marker into
 `Module.topLevel`, so class creation runs at the source location rather than
 being silently removed. The marker resolves the class by its last-wins table
 entry and reports an internal error if ingestion produced an inconsistent

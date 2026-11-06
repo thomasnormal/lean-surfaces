@@ -403,7 +403,7 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
                   | e => raisePy e)
   | .withStmt items body withUnsupported sp =>
       scriptWithAt S K m items body withUnsupported sp
-  | .unsupported "ClassDef" name _ =>
+  | .classDef name _ =>
       match findClass m name with
       | some (_, c) =>
           if c.creationPure then pure .next

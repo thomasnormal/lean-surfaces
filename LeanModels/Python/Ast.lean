@@ -286,6 +286,9 @@ inductive Stmt where
   carries the module name structurally; richer import lists and aliases remain
   `unsupported` rather than being recovered from source text. -/
   | importStmt (module : String) (span : Span)
+  /-- Structured class-definition marker. The class table carries the parsed
+  body and methods; this node preserves the source-order statement identity. -/
+  | classDef (name : String) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)
@@ -457,6 +460,7 @@ mutual
     | .importFrom module imported _ _ =>
         names.contains module || stringListMentionsAny names imported.toList
     | .importStmt module _ => names.contains module
+    | .classDef name _ => names.contains name
     | .globalDecl names' _ | .nonlocalDecl names' _ =>
         stringListMentionsAny names names'.toList
     | .pass _ | .brk _ | .cont _ | .annNoValue .. | .unsupported .. => false

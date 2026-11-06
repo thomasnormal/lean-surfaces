@@ -1976,3 +1976,14 @@ pins this state-threading equality over its two packet windows.
 **DECIDED:** reuse the generic ROB state append theorem at the packet
 projection boundary; no packet contents, input order, or completion order is
 reconstructed.
+
+## 2026-11-06-ls-sv2-112 — expose packet-to-ROB trace threading
+
+Added `RvfiPacketMachine.toRobMachine_trace_append` to
+`LeanModels/Refine/RvfiPacket.lean`.  The generic ROB retirement trace now has
+an explicit append law whose second segment starts from the first segment's
+retained packet state.  The PicoRV32 witness pins this state-threaded trace
+projection over its two packet windows.
+
+**DECIDED:** transport the generic `robTrace_append` law through the exact
+RVFI-to-ROB state bridge; no retirement order or packet contents are inferred.

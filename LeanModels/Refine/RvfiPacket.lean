@@ -453,6 +453,17 @@ theorem RvfiPacketMachine.toRobMachine_stateAfter_append {State : Type}
         (robStateAfter machine.toRobMachine state first) second := by
   exact robStateAfter_append machine.toRobMachine state first second
 
+/- The generic ROB retirement trace preserves state threading across adjacent
+   cycle windows. -/
+theorem RvfiPacketMachine.toRobMachine_trace_append {State : Type}
+    (machine : RvfiPacketMachine State) (state : State)
+    (first second : List Input) :
+    robTrace machine.toRobMachine state (first ++ second) =
+      robTrace machine.toRobMachine state first ++
+        robTrace machine.toRobMachine
+          (rvfiPacketStateAfter machine state first) second := by
+  rw [robTrace_append, machine.toRobMachine_stateAfter]
+
 /- The generic ROB input projection preserves packet input threading across
    adjacent cycle windows. -/
 theorem RvfiPacketMachine.toRobMachine_inputs_append {State : Type}
@@ -2058,6 +2069,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter
 #print axioms LeanModels.Refine.RvfiPacketMachine.toPacketMachine_stateAfter_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_stateAfter_append
+#print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_trace_append
 #print axioms LeanModels.Refine.RvfiPacketMachine.toRobMachine_inputs_append
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_refines
 #print axioms LeanModels.Refine.rvfiPacketStateAfter_append

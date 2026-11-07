@@ -10622,3 +10622,23 @@ refuses when the frontend is absent or mismatched.
 
 DECIDED: retain family-level CPython 3.9 admission and make freshness a required
 check before committed envelopes enter the theorem or runner surfaces.
+
+## 2026-11-07-pycomplete-428 — recheck differential edge coverage
+
+The edge-coverage audit is represented in the current pinned battery. Rows cover
+negative set hashes, dictionary-source/copy/intersection construction,
+creation-time non-iterable genexps, recursion-limit depth, list-comprehension
+shadowing, long structured globals, oversized repetition, annotated-assignment
+ordering, and dead global-yield targets. The newly loud wide `set(dict)` path
+also updates its order-blind length control to an explicit whitelist rather
+than leaving a hidden mismatch.
+
+| Measurement | Result |
+|---|---|
+| Full runner differential | 4,202 expanded cases: 4,013 MATCH, 189 whitelisted loud, 0 failures |
+| Dict/set focused differential | 167 cases: 159 MATCH, 8 whitelisted loud, 0 failures |
+| Frontend | CPython 3.9.25 for extraction and oracle |
+| Semantic change | one expected row moved to loud after the dict-source set boundary |
+
+DECIDED: keep every measured edge as a differential row or explicit loud
+whitelist; do not infer agreement from a coincidental hash/order case.

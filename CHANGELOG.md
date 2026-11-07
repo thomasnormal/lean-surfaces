@@ -103,6 +103,11 @@
   foreign frontend families, and the committed corpus is fresh under CPython
   3.9 with the gate's refusal/self-test paths intact.
 
+- Rechecked differential edge coverage: the pinned 4,202-case battery now
+  carries negative-hash, dict-source, copy/intersection, generator-creation,
+  recursion, scoping, annotation, and oversized-materialization witnesses with
+  zero failures.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

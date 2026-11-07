@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/dict_lab/dict_lab.py",
-  "source_sha256": "db89b9d9c6f8683d6133527cc18fa86d10f0556bf5bfc5df1eb03a6b9ad37874",
+  "source_sha256": "1020990ff8854303e20e1c5cbf6c106f9bf0d242f71a59f51949c7982cacf415",
   "module": {
     "kind": "Module",
     "body": [

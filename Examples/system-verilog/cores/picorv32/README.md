@@ -121,6 +121,16 @@ not normalize to a semantic retirement.  The pinned five-row list produces
 `some expected`; a two-row list with the second order changed to 3 produces
 `none`, so the boundary never sorts or silently drops an out-of-order commit.
 
+The reusable raw `ADDI` contract in `LeanModels.Refine.RvfiAddi` keeps the
+wire-level facts alongside the semantic equality: the fetched 32-bit word must
+decode as `ADDI`, `pcWdata` is exactly `pcRdata + 4`, the `rs1` read and `rd`
+writeback carry the ISA values, trap and data-memory masks are clear, and the
+row's `toRetirement?` is the corresponding `addiRetirement`.  The concrete
+reset-state witness [`rvfi_addi_boundary.lean`](rvfi_addi_boundary.lean)
+applies this predicate to PicoRV32's measured `addi x1, x0, 5` row and also
+checks x0 and memory preservation.  It remains a boundary certificate for the
+measured stream; the symbolic RTL proof still waits on the generic loader wall.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

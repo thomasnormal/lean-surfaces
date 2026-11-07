@@ -142,7 +142,7 @@
                 "end_lineno": 10,
                 "end_col_offset": 30
               },
-              "py_kind": "ListComp:shadowed",
+              "py_kind": "ListComp",
               "text": "[y for y in (1, 2)]"
             }
           }

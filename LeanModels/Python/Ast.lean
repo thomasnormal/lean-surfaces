@@ -1158,10 +1158,10 @@ A dict view in CONSUMING-ARGUMENT position is rewritten at ingestion to a
 synthetic builtin over the receiver: `list(d.keys())` ⇢ `list(<dictkeys>(d))`.
 
 **This is the THIRD place a construct's meaning is decided** — after the
-extractor and the interpreter — and it is the same mechanism `ListComp` and
-`yield from <genexp>` already use (docs/memory-model.md §list comprehensions,
-§yield from). A capability audit that reads only the extractor and the
-evaluator will not see it, which is why it is named here and in
+extractor and the interpreter — and it is the same mechanism `yield from
+<genexp>` uses (docs/memory-model.md §yield from). `ListComp` is deliberately
+retained as a loud source-level boundary, so a capability audit that reads
+only the extractor and evaluator will still catch it here and in
 docs/backlog/python-completeness.md.
 
 Why ingestion and not the evaluator: fusion needs the RECEIVER, and the

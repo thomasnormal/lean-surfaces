@@ -46,6 +46,7 @@ inductive SvaBool where
   | or (left right : SvaBool)
   | isUnknown (value : Expr2)
   | oneHot0 (value : Expr2)
+  | valueCmp (op : BinOp) (left right : SvaValue)
   | caseEq (left right : SvaBool)
   | past (cycles : Nat) (arg : SvaBool)
   | rose (name : String)
@@ -207,6 +208,10 @@ def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except 
       return some (if v.allKnown then
         if ones ≤ 1 then .l1 else .l0
       else if ones > 1 then .l0 else .lx)
+  | .valueCmp op left right => do
+      let some l ← left.eval trace index | .ok none
+      let some r ← right.eval trace index | .ok none
+      return some (boolLogic (evalBinOp op l r))
   | .lit value => .ok (some (if value then .l1 else .l0))
   | .signal name => return (← signalAt trace index name).map boolLogic
   | .expr value => return (← exprAt trace index value).map boolLogic

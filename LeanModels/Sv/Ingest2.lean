@@ -346,6 +346,14 @@ partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
           (← parsePExpr (← getField j "expr")))
     | "SvaOneHot0" => return (PSvaBool.oneHot0
           (← parsePExpr (← getField j "expr")))
+    | "SvaValueCmp" =>
+        let sop ← parseSymBinOp (← getStrField j "op")
+        let op ← match sop with
+          | .m0 b => pure b
+          | _ => throw "SVA value comparison requires an ordinary comparison"
+        return (PSvaBool.valueCmp op
+          (← parsePSvaValue (← getField j "left"))
+          (← parsePSvaValue (← getField j "right")))
     | "SvaPast" =>
         let cycles ← getNatField j "cycles"
         let e ← parsePExpr (← getField j "expr")

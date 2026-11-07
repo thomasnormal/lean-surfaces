@@ -32,6 +32,10 @@ and other system calls remain loud.
 known-one count rule. The `sem2/sva_onehot0` witness and Verilator row cover
 the form; the arbiter property-expression census falls from 3 to 2.
 
+Finite sampled order comparisons now retain temporal operands as
+`SvaValueCmp`. The `sem2/sva_past_cmp` witness and Verilator row cover
+`a > $past(b)`; the arbiter property-expression census falls from 2 to 1.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

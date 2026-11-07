@@ -4182,3 +4182,21 @@ changed.
 **DECIDED:** expose one exhaustive raw-cycle boundary for loaded-core
 invariants while retaining the two branch-specific projections as the
 implementation and proof obligations.
+
+## 2026-11-07-ls-sv2-270 — construct strict RVFI refinement from cycle cases
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_of_step` to `LeanModels/Refine/Rvfi.lean`.  A
+loaded-core invariant may now provide the initial relation and one exhaustive
+per-cycle valid/invalid case split; the constructor turns a valid row's
+well-formed concrete retirement into the strict contract's existential
+`toRetirement?` witness and carries invalid rows as ISA stutters.  This is the
+introduction dual of `rvfiCycleStepRefines_step`, so the invariant proof need
+not rebuild the optional-adapter plumbing.  Updated the PicoRV32 README and
+backlog/index.  No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** make the strict RVFI contract consumable in both directions:
+loaded-core proofs can establish it from a single total case split, and later
+trace/state theorems can still use the named branch projections.

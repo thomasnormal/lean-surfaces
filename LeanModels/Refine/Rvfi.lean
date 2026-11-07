@@ -518,6 +518,35 @@ theorem rvfiCycleStepRefines_step
       | false => rfl
       | true => exact False.elim (hv hvalue), by simpa [hstep] using hs⟩
 
+/-! The branch projection is also an introduction rule.  A core invariant can
+prove one exhaustive valid/invalid case split per cycle and let this theorem
+package the valid row's concrete retirement into the strict contract's
+existential form. -/
+theorem rvfiCycleStepRefines_of_step
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (hinit : rel machine.init isa.init)
+    (hstep : ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
+      let (state', observation) := machine.step state input
+      let (isaState', isaRetirement) := isa.step isaState input
+      (observation.valid = true ∧ observation.wellFormed ∧
+          rel state' isaState' ∧ observation.toRetirement = isaRetirement) ∨
+        (observation.valid = false ∧ rel state' isaState)) :
+    RvfiCycleStepRefines machine isa rel admit := by
+  constructor
+  · exact hinit
+  · intro state isaState input hrel hadmit
+    rcases hstep state isaState input hrel hadmit with hvalid | hinvalid
+    · rcases hvalid with ⟨hvalid, hwell, hrel', hto⟩
+      simp only [hvalid]
+      exact ⟨_, RvfiObservation.toRetirement?_eq_some _ hvalid hwell,
+        hrel', hto⟩
+    · rcases hinvalid with ⟨hinvalid, hrel'⟩
+      simp only [hinvalid]
+      exact hrel'
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -1056,6 +1085,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_step
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines

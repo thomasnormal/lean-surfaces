@@ -313,6 +313,17 @@
       "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted."
     },
     {
+      "name": "unpacked_memory_netz",
+      "example": "sem2/unpacked_memory_netz",
+      "top": "unpacked_memory_netz",
+      "memory": true,
+      "params": {"N": 4},
+      "signals": ["q"],
+      "clock": "clk",
+      "stimulus": [{"d": "00000000"}, {"d": "10100101"}],
+      "measured": "2026-11-07: an undriven four-state wire is retained as a net declaration and initializes to z in the memory route; partially driven/resolved nets remain loud."
+    },
+    {
       "name": "signed_index_read",
       "example": "sem2/signed_index/a1",
       "file": "a1_signed_idx",

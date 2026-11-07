@@ -91,6 +91,10 @@ The PicoRV32 R2 item is now started from the re-probe's generic walls. A
 source-shaped `always_comb` memory read is admitted after the sequential
 `MemState` commit; `sem2/unpacked_memory_comb` covers this exact form. The
 memory route still refuses unsupported module members such as `net-z` wires.
+The generic undriven-wire boundary is now source-shaped: a plain four-state
+`wire` with no driver is retained as a net declaration and initializes to z in
+the memory route. `sem2/unpacked_memory_netz` guards this behavior; partially
+driven or multiply driven nets remain named refusals.
 
 ### Initial ROM loading remains an explicit F4 boundary
 

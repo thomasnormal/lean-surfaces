@@ -811,7 +811,7 @@ def applyInputs2 (d : Design2) (inputs : SvState) (st : SvState) : SvState :=
 
 def initState2 (d : Design2) : SvState :=
   d.decls.toList.map fun dc =>
-    let value := dc.init.getD (LVec.xVec dc.width)
+    let value := dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)
     (dc.name, if dc.twoState then value.toTwoState else value)
 
 /-- One clock cycle of the semantic tier — the M0 five sub-steps with the

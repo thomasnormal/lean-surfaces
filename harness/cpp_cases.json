@@ -5260,6 +5260,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-integral-literal-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIntegralLiteralAgreement",
+    "cpp_source": "int literal_witness(int value) { return 7; } bool callable_witness() { return literal_witness(0) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

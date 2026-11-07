@@ -214,6 +214,14 @@ def callableIncrementOperatorAgreement : Bool :=
 
 #guard callableIncrementOperatorAgreement
 
+def callableIntegralLiteralAgreement : Bool :=
+  integralLiteralOfEvidence .lp64 intType 7 matches .ok ⟨.signed 32, 7⟩ &&
+    integralLiteralOfEvidence .lp64 (.qualified true false intType) 7
+      matches .ok ⟨.signed 32, 7⟩ &&
+    integralLiteralOfEvidence .lp64 (.record (handle "0x99")) 7 matches .error _
+
+#guard callableIntegralLiteralAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

@@ -30,6 +30,9 @@ object-frame evaluators.
 The pure `++`/`--` operator decoding is shared, while each evaluator retains
 its own state update path.
 
+Typed integer-literal construction is shared before each evaluator applies its
+own invalid-value and error handling.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

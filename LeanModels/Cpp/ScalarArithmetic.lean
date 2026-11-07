@@ -20,6 +20,11 @@ def integralConvertOfEvidence (profile : TargetProfile) (type : CppTypeEvidence)
   let format ← integralFormatOfEvidence profile type
   pure (integralConvert format value)
 
+def integralLiteralOfEvidence (profile : TargetProfile) (type : CppTypeEvidence)
+    (value : Nat) : Except TypeResolutionError IntegralValue := do
+  let format ← integralFormatOfEvidence profile type
+  pure {format, value := Int.ofNat value}
+
 def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
   | .ok value => .ok (map value)

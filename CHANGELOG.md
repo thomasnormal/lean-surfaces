@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized `IntegralResult` map and bind propagation in `ScalarArithmetic`
+  for both callable evaluators and added a success/undefined witness.
+
 - Centralized compound-assignment operator spelling decoding in
   `ScalarArithmetic` for both callable evaluators and added an agreement
   witness.

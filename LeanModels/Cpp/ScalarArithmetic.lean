@@ -61,9 +61,15 @@ def integralCompoundBinaryOfString : String → Option IntegralBinary
   | ">>=" => some .shiftRight
   | _ => none
 
-private def mapIntegralResult (result : IntegralResult IntegralValue)
-    (continuation : IntegralValue → IntegralResult IntegralValue) :
-    IntegralResult IntegralValue :=
+def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
+  match result with
+  | .ok value => .ok (map value)
+  | .invalid reason => .invalid reason
+  | .undefined reason => .undefined reason
+  | .unsupported reason => .unsupported reason
+
+def bindIntegralResultValue (result : IntegralResult α)
+    (continuation : α → IntegralResult β) : IntegralResult β :=
   match result with
   | .ok value => continuation value
   | .invalid reason => .invalid reason
@@ -82,8 +88,8 @@ def integralBinaryUsual (profile : TargetProfile) (operation : IntegralBinary)
     | .ok leftPromoted, .ok rightPromoted =>
         match profile.format leftPromoted, profile.format rightPromoted with
         | .ok leftFormat, .ok rightFormat =>
-            mapIntegralResult (integralConvert leftFormat left) fun left =>
-              mapIntegralResult (integralConvert rightFormat right) fun right =>
+            bindIntegralResultValue (integralConvert leftFormat left) fun left =>
+              bindIntegralResultValue (integralConvert rightFormat right) fun right =>
                 integralBinary operation left right
         | _, _ => .unsupported .unresolvedArithmeticConversions
     | _, _ => .unsupported .unresolvedArithmeticConversions
@@ -91,8 +97,8 @@ def integralBinaryUsual (profile : TargetProfile) (operation : IntegralBinary)
     match resolveArithmeticFormats profile leftType rightType with
     | .error _ => .unsupported .unresolvedArithmeticConversions
     | .ok (_, format) =>
-        mapIntegralResult (integralConvert format left) fun left =>
-          mapIntegralResult (integralConvert format right) fun right =>
+        bindIntegralResultValue (integralConvert format left) fun left =>
+          bindIntegralResultValue (integralConvert format right) fun right =>
             integralBinary operation left right
 
 def integralSizeBytes (profile : TargetProfile) (type : CppIntType) :

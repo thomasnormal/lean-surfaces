@@ -162,6 +162,11 @@ expressions now map to the existing four-state boolean layer. The clean-room
 Verilator differential row. The pinned VIP census falls to 15 residual nodes;
 the four remaining invocation nodes are `$past` values nested inside arithmetic
 comparisons and remain the next expression wall.
+The finite value route now retains `$past` inside equality and arithmetic
+expressions, with previous-sample lookup performed before the arithmetic fold.
+The clean-room `sem2/sva_past_value` witness and Verilator row cover both
+`depth == $past(depth)` and `depth == $past(depth) + 1`; the VIP census falls to
+11 residual nodes, all outside this finite value fragment.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

@@ -157,6 +157,8 @@ the corresponding well-formed retirement or stutter relation.
 Its dual constructor `rvfiCycleStepRefines_of_step` packages the same
 exhaustive case split into the strict contract, including the valid row's
 existential optional-retirement witness.
+The equivalence `rvfiCycleStepRefines_iff_step` exposes this case split as the
+canonical packed-field statement of the strict contract.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.

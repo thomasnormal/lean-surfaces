@@ -1,10 +1,10 @@
-"""WP-PROC follow-up 1 (2026-11-01): a drive strength on a continuous assignment is refused loudly in symbolic mode.
+"""WP-PROC follow-up 1 (2026-11-01): a drive strength on a continuous assignment is refused loudly in both modes.
 
-`_continuous_assignment_has_strength` reads source bytes that only the M0 path loads, so the symbolic extractor read
-`assign (strong0, highz1) y = a;` as a plain assignment. No reading of the text is shared by the tools: Yosys cannot
+The extractor uses Slang's syntax tree in both modes, so `assign (strong0, highz1) y = a;` is never lowered to a plain
+assignment. No reading of the strength is shared by the tools: Yosys cannot
 read a strength on `assign` (syntax error), Verilator calls it unsupported, Icarus applies it (z where a highz term is
 driven) and Xcelium ignores it on a variable (CAVSTR). The node is `ContinuousAssignSymbol:strength`, decided from the
-syntax tree (`lower_proc.has_strength`); the M0 path keeps its own handling.
+syntax tree (`lower_proc.has_strength`).
 """
 import json
 import tempfile

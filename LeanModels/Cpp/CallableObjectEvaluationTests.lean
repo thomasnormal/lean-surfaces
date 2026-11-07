@@ -182,6 +182,13 @@ def callableIntegralConversionEvidenceAgreement : Bool :=
 
 #guard callableIntegralConversionEvidenceAgreement
 
+def callableCompoundOperatorAgreement : Bool :=
+  integralCompoundBinaryOfString "+=" == some .add &&
+    integralCompoundBinaryOfString "<<=" == some .shiftLeft &&
+    integralCompoundBinaryOfString "?=" == none
+
+#guard callableCompoundOperatorAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

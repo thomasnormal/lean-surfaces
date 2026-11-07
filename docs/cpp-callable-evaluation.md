@@ -18,6 +18,9 @@ unsupported target-profile outcomes.
 Evidence-to-value conversion uses the same shared wrapper before each
 evaluator applies its own error mapping.
 
+Compound-assignment spellings use a shared mapping as well; unknown spellings
+remain unsupported in both layers.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

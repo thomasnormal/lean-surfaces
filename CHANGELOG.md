@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized compound-assignment operator decoding in `ScalarArithmetic` for
+  both callable evaluators and added a representative agreement witness.
+
 - Centralized evidence-to-value conversion in `ScalarArithmetic` for both
   callable evaluators and added a witness for builtin, qualified, and
   unsupported evidence.

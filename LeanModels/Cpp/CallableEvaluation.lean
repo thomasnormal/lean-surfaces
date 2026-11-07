@@ -449,9 +449,7 @@ mutual
               | .error error => throw error
           | result => pure (.failed result afterExpression)
       | .compoundAssign operator declaration expression => do
-          let some arithmeticOperator := compoundAssignmentOperator? operator
-            | throw (.unsupportedOperator operator)
-          let some operation := integralBinaryOfString arithmeticOperator
+          let some operation := integralCompoundBinaryOfString operator
             | throw (.unsupportedOperator operator)
           let (result, afterExpression) ← evaluateTyped fuel profile parameters arguments expression
           match result with

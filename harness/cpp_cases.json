@@ -5212,6 +5212,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-compound-operator-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableCompoundOperatorAgreement",
+    "cpp_source": "int compound_witness(int value) { value += 1; return value; } bool callable_witness() { return compound_witness(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

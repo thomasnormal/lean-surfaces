@@ -3991,3 +3991,23 @@ axiom report contains only the existing `propext`/`Quot.sound` boundary.
 **DECIDED:** make raw RVFI validity a proof obligation at the loaded-core
 boundary and retain the optional adapter only as a derived view.  No RTL,
 loader, or `LeanModels/Sv/**` file changed.
+
+## 2026-11-07-ls-sv2-260 — transport trace and state directly from strict RVFI refinement
+
+The inboxes were reread before this item.  The owner lane still has the
+generated-member memory-route refusal, and its CombView migration remains
+outside this lane.
+
+Added `rvfiCycleStepRefines_trace_refines` and
+`rvfiCycleStepRefines_stateAfter_refines` to `LeanModels/Refine/Rvfi.lean`.
+They consume the strict raw packed-cycle contract from item 259 and expose,
+respectively, the finite retirement trace equality and the retained
+post-window relation.  Both wrappers derive the existing generic cycle
+theorems through `rvfiCycleStepRefines_toCycleStepRefines`, so a core proof can
+start with raw RVFI validity and then use trace/state transport without a
+second hand-written adapter step.  The new theorem reports contain only the
+existing `propext`/`Quot.sound` boundary.
+
+**DECIDED:** make the strict raw contract the single entry point for the
+loaded-core trace and state obligations; keep the optional adapter as an
+internal derivation.  No RTL, loader, or `LeanModels/Sv/**` file changed.

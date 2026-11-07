@@ -8523,8 +8523,62 @@ caller's `World` — aliasing across calls, callee mutations visible to the
 caller. The public `callFunction` wrapper below the block is thaw ∘
 fresh-world ∘ `callIn` ∘ deep-freeze, signature unchanged. -/
 
+def listCompValues (h : Heap) : RVal → Res (List RVal)
+  | .str s => .ok (strCharVals s)
+  | .bytes xs => .ok (bytesIntVals xs)
+  | .tuple xs => .ok xs.toList
+  | .ntuple _ _ xs => .ok xs.toList
+  | .listV xs => .ok xs.toList
+  | .rangeV lo hi step => rangeVals lo.toInt hi.toInt step.toInt
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.list xs) => .ok xs.toList
+      | some (.generator ..) => .unsupported "list comprehension over a generator requires lazy stepping (outside the one-generator slice)"
+      | some (.dict ..) => .unsupported "list comprehension over a dict is outside the tier"
+      | some (.dictView ..) => .unsupported "list comprehension over a dictionary view is outside the tier"
+      | some (.pyset ..) => .unsupported "list comprehension over a set is outside the tier"
+      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
+      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+      | some (.cell _) => .unsupported cellInternal
+      | none => .unsupported danglingMsg
+  | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+
 open scoped Run in
 mutual
+
+def evalListCompIfs (m : Module) (fuel : Nat) (st : FrameState)
+    (ifs : List Expr) : Run FrameState Bool :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match ifs with
+    | [] => .ok st true
+    | test :: rest =>
+      evalExpr m fuel st test ⤳ fun st tv =>
+      Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st keep =>
+      if keep then evalListCompIfs m fuel st rest else .ok st false
+  termination_by structural fuel
+
+def evalListCompStep (m : Module) (fuel : Nat) (st : FrameState) (saved : Env)
+    (elt target : Expr) (ifs : List Expr) (xs acc : List RVal) :
+    Run FrameState RVal :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match xs with
+    | [] =>
+      let st' := { st with world :=
+        { st.world with heap := st.world.heap.push (.list acc.reverse.toArray) } }
+      .ok { st' with locals := saved } (.ref st.world.heap.size)
+    | x :: rest =>
+      Run.liftRes st (assignToH st.world.heap st.locals target x) ⤳ fun st env =>
+      evalListCompIfs m fuel { st with locals := env } ifs ⤳ fun st keep =>
+      if keep then
+        evalExpr m fuel st elt ⤳ fun st v =>
+        evalListCompStep m fuel st saved elt target ifs rest (v :: acc)
+      else
+        evalListCompStep m fuel st saved elt target ifs rest acc
+  termination_by structural fuel
 
 /-- Evaluate an expression. Since H1 expressions thread the frame state
 (calls mutate the shared world once the dict tier lands; in stage H1-1 the
@@ -9855,8 +9909,16 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         -- (`lowerGenExps`, Json.lean); one that survives to evaluation is
         -- a shape the lowering refused — loud, never a guess.
         .unsupported "this generator expression is outside the tier (ingestion could not lower it to a generator function; docs/memory-model.md §generator semantics)"
-    | .listComp .. =>
-        .unsupported "list comprehension semantics are outside the tier"
+    | .listComp elt target iter ifs walrus _ =>
+        if !walrus.isEmpty then
+          .unsupported "list comprehension walrus bindings are outside the tier"
+        else
+          evalExpr m fuel st iter ⤳ fun st src =>
+          match listCompValues st.world.heap src with
+          | .unsupported msg => .unsupported msg
+          | .exn e => .exn st e
+          | .timeout => .timeout
+          | .ok xs => evalListCompStep m fuel st st.locals elt target ifs.toList xs []
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
   termination_by structural fuel
 
@@ -11112,49 +11174,6 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
   termination_by structural fuel
 
 end
-
-/-! ## Proof-side ListComp stepping
-
-The proof interpreter's AST arm remains loud while its transport proofs are
-being added.  These helpers live after the main mutual block deliberately:
-`evalExpr` is now an ordinary constant, so the comprehension walk can recurse
-on its own fuel without changing the main recursion knot. -/
-
-open scoped Run in
-def evalListCompIfs (m : Module) (fuel : Nat) (st : FrameState)
-    (ifs : List Expr) : Run FrameState Bool :=
-  match fuel with
-  | 0 => .timeout
-  | fuel + 1 =>
-    match ifs with
-    | [] => .ok st true
-    | test :: rest =>
-      evalExpr m fuel st test ⤳ fun st tv =>
-      Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st keep =>
-      if keep then evalListCompIfs m fuel st rest else .ok st false
-  termination_by structural fuel
-
-open scoped Run in
-def evalListCompStep (m : Module) (fuel : Nat) (st : FrameState) (saved : Env)
-    (elt target : Expr) (ifs : List Expr) (xs acc : List RVal) :
-    Run FrameState RVal :=
-  match fuel with
-  | 0 => .timeout
-  | fuel + 1 =>
-    match xs with
-    | [] =>
-      let st' := { st with world :=
-        { st.world with heap := st.world.heap.push (.list acc.reverse.toArray) } }
-      .ok { st' with locals := saved } (.ref st.world.heap.size)
-    | x :: rest =>
-      Run.liftRes st (assignToH st.world.heap st.locals target x) ⤳ fun st env =>
-      evalListCompIfs m fuel { st with locals := env } ifs ⤳ fun st keep =>
-      if keep then
-        evalExpr m fuel st elt ⤳ fun st v =>
-        evalListCompStep m fuel st saved elt target ifs rest (v :: acc)
-      else
-        evalListCompStep m fuel st saved elt target ifs rest acc
-  termination_by structural fuel
 
 /-! ## The public boundary (docs/memory-model.md v2, call layering) -/
 

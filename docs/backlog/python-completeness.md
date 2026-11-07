@@ -11164,3 +11164,22 @@ surfaces are updated.
 DECIDED: item complete. Before the next item I will reread the inbox and use
 the new `fuelMono` projections to replace the proof interpreter's ListComp arm,
 then repair the remaining proof consumers.
+
+## 2026-11-07-pycomplete-457 — enable proof-interpreter ListComp
+
+The proof interpreter's `evalExpr` ListComp arm now evaluates the ordinary
+one-generator slice through `listCompValues` and the fuel-threaded stepper.
+Walrus filters remain loud, generator sources remain loud, and the same
+heap-list/string/tuple/range inventory is used as the monadic surface. The
+`Obs` ListComp induction case uses the appended `fuelMono` helper projection,
+so the proof theorem surface now tracks the live evaluator.
+
+| Measurement | Result |
+|---|---|
+| Full runner build | `lake build leanmodels-run` passes all 40 jobs |
+| Proof differential slice | 18 rows: 16 matches, 2 refusals, 0 failures |
+| Semantic change | proof interpreter ordinary ListComp is live; nested generator and walrus boundaries remain loud |
+
+DECIDED: item complete. Before the next item I will reread the inbox and
+transport this new AST arm through `PayloadBlind` and `ClockErase`, then run
+the full proof and monadic checks.

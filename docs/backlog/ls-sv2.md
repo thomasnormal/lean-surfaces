@@ -3855,3 +3855,22 @@ existing `propext`/`Quot.sound` boundary and no `sorryAx`.
 state equation and the raw predicate; the eventual core invariant must relate
 PicoRV32's returned bus data to this `loadVal` result.  No RTL, loader, or
 `LeanModels/Sv/**` file changed.
+
+## 2026-11-07-ls-sv2-253 — certify the stateful ADDI/SW/LW prefix
+
+The inboxes were reread before this item.  The owner lane still has the
+generated-member memory-route refusal, so this item composes the owned
+stateful-memory adapter with the measured three-instruction prefix.
+
+Added `rvfi_prefix_boundary.lean`, which evaluates the first `ADDI`, `SW`,
+and `LW` rows through `rvMemoryMachineWith` from reset and proves the concrete
+post-prefix state (`pc = 12`, `x2 = 5`, `x0 = 0`).  It also proves pointwise
+that the threaded byte memory equals `memFive` (the view used by the measured
+load and later `ADDI`).  This turns the previously abstract stateful-memory
+equivalence into a concrete state relation without assuming a loaded RTL
+invariant or changing the core source.
+
+**DECIDED:** use the stateful memory machine for the prefix relation so the
+future PicoRV32 invariant can connect its architectural memory to the same
+`storeVal`/`loadVal` state before applying the ADDI boundary.  No RTL, loader,
+or `LeanModels/Sv/**` file changed.

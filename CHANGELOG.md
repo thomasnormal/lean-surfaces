@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized typed integer-literal construction in `ScalarArithmetic` for
+  both callable evaluators and added an agreement witness.
+
 - Centralized `++`/`--` increment operator spelling decoding in
   `ScalarArithmetic` for both callable evaluators and added an agreement
   witness.

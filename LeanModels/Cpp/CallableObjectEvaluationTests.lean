@@ -40427,4 +40427,12 @@ def callableSharedIncrementOperatorAgreementWitness : Bool :=
 
 #guard callableSharedIncrementOperatorAgreementWitness
 
+def callableSharedLiteralAgreementWitness : Bool :=
+  integralLiteralOfEvidence .lp64 intType 7 matches .ok ⟨.signed 32, 7⟩ &&
+    integralLiteralOfEvidence .lp64 (.qualified true false intType) 7
+      matches .ok ⟨.signed 32, 7⟩ &&
+    integralLiteralOfEvidence .lp64 (.record (handle "0x99")) 7 matches .error _
+
+#guard callableSharedLiteralAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

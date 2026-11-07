@@ -182,3 +182,9 @@ The stateful-machine bridges `rvMemoryMachineWith_alu_program_state_append`
 and `rvMemoryMachineWith_alu_program_trace_append` expose the corresponding
 `machineStateAfter` and retirement-trace splits directly, with the first
 segment's threaded state feeding the second.
+
+`LeanModels.Refine.RvfiMemProgram` starts the corresponding memory-program
+surface.  `MemInstruction` retains a generic RV32I load/store operation and
+decoder proof; its input, state, and retirement folds thread the byte memory
+through mixed programs.  The stateful-machine equations and append bridges
+reuse the existing `memNext`, `memAfter`, and `Rv32iBoundary.mem` semantics.

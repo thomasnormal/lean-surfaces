@@ -665,6 +665,13 @@ The stateful-machine bridges
 the first segment's threaded memory-machine state is the second segment's
 starting state.
 
+The next generic surface is
+`LeanModels.Refine.RvfiMemProgram`.  It retains each memory instruction's
+decoder proof and threads the exact byte memory through mixed loads and
+stores, with state, retirement, and append equations for the existing
+`rvMemoryMachineWith` semantics.  A raw memory RVFI certificate will consume
+this surface once the loaded-core invariant reaches the memory family.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

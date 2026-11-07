@@ -5759,6 +5759,37 @@ arbitrary bubbles and retirement order remain explicit.  PicoRV32 remains
 parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
 
+## 2026-11-07-ls-sv2-332 — add symbolic RV32I memory-program folds
+
+The inbox and goal file were reread after item 331 was pushed.  The ALU
+program surface is compositional; the next RV32I family needed a state fold
+that carries stores into later loads without changing the existing memory
+semantics.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiMemProgram.lean` and imported it from
+the refinement umbrella.  `MemInstruction` retains a fetched word, generic
+`MemOp`, operands, and its decoder proof.  `memProgramInputs`,
+`memProgramState`, and `memProgramRetirements` thread the exact byte memory
+through mixed load/store lists and expose append laws.  Added the
+profile-parametric one-step, state, trace, and stateful-machine append bridges
+to `rvMemoryMachineWith`, reusing `memNext`, `memAfter`, and
+`Rv32iBoundary.mem`'s existing semantics.  Updated both core READMEs and
+regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiMemProgram.lean` passes and
+all eight new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new
+axiom was introduced.  The umbrella refinement build, focused PicoRV32
+boundary compile, docs check, backlog-index check, and `git diff --check` are
+the validation gates for this item.
+
+**JUDGED / DECIDED:** The reusable refinement surface now has exact
+state-threaded input, architectural, memory, and retirement folds for every
+decoded RV32I load/store shape.  The future raw memory certificate can consume
+these folds directly; PicoRV32 remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.
+
 ## 2026-11-07-ls-sv2-331 — expose stateful ALU program append bridges
 
 The inbox and goal file were reread after item 330 was pushed.  Raw ALU

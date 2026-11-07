@@ -167,3 +167,6 @@ symbolic ADDI inputs before applying the same trace theorem.
 The companion `LeanModels.Refine.RvfiAluProgram` certificate lifts this
 surface to arbitrary decoded RV32I ALU instructions, including register,
 immediate, pc-based, and upper-immediate operand shapes.
+Its `AluRvfiCycleTrace` extension retains actual cycle-step equalities and
+retiring inputs, then normalizes the machine's own cycle stream to the same
+stateful ALU trace.

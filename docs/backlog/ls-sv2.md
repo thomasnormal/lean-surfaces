@@ -5670,3 +5670,31 @@ compile, docs check, backlog-index check, and `git diff --check` also pass.
 RV32I ALU retirement shape, while the real-core instantiation remains blocked
 at PicoRV32's existing unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
+
+## 2026-11-07-ls-sv2-328 — tie the symbolic ALU certificate to cycle inputs
+
+The inbox and goal file were reread after item 327 was pushed.  The ALU
+program certificate covers every RV32I ALU operand shape, but its raw trace
+certificate did not yet retain the cycle input that produced each observation.
+
+**CHANGED:** Extended `LeanModels/Refine/RvfiAluProgram.lean` with the
+machine-parameterized inductive `AluRvfiCycleTrace`.  Its constructors retain
+actual `RvfiCycleMachine.step` equalities and core state, allow arbitrary
+bubble inputs, and require each retiring input to equal its corresponding
+`aluProgramInput` while carrying the indexed `Rv32iBoundary.alu` witness.
+Added `AluRvfiCycleTrace.normalize`, `retireInputs_eq`, and `trace_refines` to
+connect packed observations and the adapter's retained inputs to the exact
+stateful ALU trace.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAluProgram.lean` passes and
+all three new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` also pass.
+
+**JUDGED / DECIDED:** A loaded-core ALU invariant can now consume the actual
+cycle machine and its inputs, not a reconstructed observation schedule, for
+any ALU program and bubble placement.  PicoRV32 remains parked at its existing
+unpacked `cpuregs` and unsupported-member/net-z loader walls.

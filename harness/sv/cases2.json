@@ -167,6 +167,16 @@
       "measured": "2026-11-07: dynamic packed element selects in SVA preserve the existing BitSel/Expr2.index path and sampled four-state out-of-range behavior."
     },
     {
+      "name": "sva_past_logic",
+      "example": "sem2/sva_past_logic",
+      "top": "sva_past_logic",
+      "clock": "clk",
+      "signals": ["a", "b", "q"],
+      "stimulus": [{"a": "0", "b": "0"}, {"a": "1", "b": "1"}, {"a": "1", "b": "0"}, {"a": "1", "b": "1"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: boolean conjunction retains a nested finite $past operand as structured SVA logic."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

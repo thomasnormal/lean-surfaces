@@ -82,6 +82,9 @@ def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → E
       let ctx := (svaValueWidth env elems left).orElse (fun _ => svaValueWidth env elems right)
       .ok (.valueEq (instantiateValueAt env elems ctx left)
         (instantiateValueAt env elems ctx right))
+  | .not arg => .not <$> instantiateBool env elems arg
+  | .and left right => .and <$> instantiateBool env elems left <*> instantiateBool env elems right
+  | .or left right => .or <$> instantiateBool env elems left <*> instantiateBool env elems right
   | .past cycles value => .ok (.past cycles (.expr (instantiateExpr env elems value)))
   | .rose value => .ok (.roseExpr (instantiateExpr env elems value))
   | .fell value => .ok (.fellExpr (instantiateExpr env elems value))

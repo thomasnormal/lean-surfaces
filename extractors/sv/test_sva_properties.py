@@ -73,11 +73,8 @@ endmodule
             prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
         implication = prop["ast"]["property"]
         self.assertEqual(implication["kind"], "SvaImplication")
-        self.assertEqual(implication["antecedent"]["test"]["expr"]["kind"],
-                         "Binary")
-        self.assertEqual(implication["antecedent"]["test"]["expr"]["op"], "&&")
-        self.assertEqual(implication["consequent"]["test"]["expr"]["kind"],
-                         "Binary")
+        self.assertEqual(implication["antecedent"]["test"]["kind"], "SvaAnd")
+        self.assertEqual(implication["consequent"]["test"]["kind"], "SvaOr")
 
     def test_qualified_signal_path_stays_one_observation_key(self):
         source = """module leaf(input logic a, output logic flag);

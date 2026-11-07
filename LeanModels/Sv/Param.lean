@@ -555,6 +555,9 @@ deriving Repr, BEq, Inhabited
 inductive PSvaBool where
   | expr (value : PExpr)
   | valueEq (left right : PSvaValue)
+  | not (arg : PSvaBool)
+  | and (left right : PSvaBool)
+  | or (left right : PSvaBool)
   | past (cycles : Nat) (value : PExpr)
   | rose (value : PExpr)
   | fell (value : PExpr)

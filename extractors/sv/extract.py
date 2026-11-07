@@ -26416,6 +26416,15 @@ def _sva_has_past(node):
 
 def _sva_bool(node):
     node = _sva_unwrap(node)
+    if isinstance(node, dict) and node.get("kind") in (
+            "LogicalAndExpression", "LogicalOrExpression"):
+        return {
+            "kind": "SvaAnd" if node["kind"] == "LogicalAndExpression" else "SvaOr",
+            "left": _sva_bool(node.get("left")),
+            "right": _sva_bool(node.get("right")),
+        }
+    if isinstance(node, dict) and node.get("kind") == "UnaryLogicalNotExpression":
+        return {"kind": "SvaNot", "arg": _sva_bool(node.get("operand"))}
     if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
         left = node.get("left", {})
         name = left.get("systemIdentifier", {}).get("text", "")

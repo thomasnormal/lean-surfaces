@@ -18,6 +18,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 The `sem2/sva_select` witness covers the sampled selector form; nested
 temporal calls and shifts remain named boundaries.
 
+Finite SVA boolean conjunction, disjunction, and negation now recurse through
+structured leaves, preserving nested `$past` sampling. The
+`sem2/sva_past_logic` witness and its Verilator row cover the conjunction form;
+the `prim_arbiter_ppc` property-expression census falls from 9 to 7, with
+system calls and a shift remaining loud.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

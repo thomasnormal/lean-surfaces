@@ -337,6 +337,11 @@ partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
     | "SvaValueEq" =>
         return .valueEq (← parsePSvaValue (← getField j "left"))
           (← parsePSvaValue (← getField j "right"))
+    | "SvaNot" => return (PSvaBool.not (← parsePSvaBool (← getField j "arg")))
+    | "SvaAnd" => return (PSvaBool.and (← parsePSvaBool (← getField j "left"))
+          (← parsePSvaBool (← getField j "right")))
+    | "SvaOr" => return (PSvaBool.or (← parsePSvaBool (← getField j "left"))
+          (← parsePSvaBool (← getField j "right")))
     | "SvaPast" =>
         let cycles ← getNatField j "cycles"
         let e ← parsePExpr (← getField j "expr")

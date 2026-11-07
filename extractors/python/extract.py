@@ -735,14 +735,6 @@ def convert_expr(node):
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
         if isinstance(node, ast.ListComp):
             return unsupported(node, "ListComp")
-        # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
-        # compiles both into an implicit function taking the already-
-        # evaluated outer iterator, differing only in what the function
-        # does with each element (yield vs append) -- so the envelope
-        # carries the same fields under a different `kind`, and INGESTION
-        # (Json.lean) desugars `[e for x in it if c]` into
-        # `list(e for x in it if c)`, which is CPython-exact and reuses
-        # the genexp lowering and its capture census verbatim.
         # H4: a generator EXPRESSION is structured only in the v0 shape --
         # ONE `for` clause, not `async`. CPython compiles every genexp into
         # an implicit generator FUNCTION whose first argument is the

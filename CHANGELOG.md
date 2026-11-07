@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Closed the stale JSON list-comprehension lowering path; `ListComp` remains an explicit loud boundary and no longer becomes a shadowable `list` call.
+
 - Repaired payload-blind proofs for zero-argument user and admitted builtin exception constructors; runtime behavior is unchanged.
 
 - Refreshed the generated Python coverage page after the current differential battery moved from one divergence to zero.

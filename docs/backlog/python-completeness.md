@@ -10080,3 +10080,24 @@ maintenance only; runtime semantics and refusal boundaries are unchanged.
 DECIDED: keep payload-blind branches aligned with the exact `Run.exn` shape;
 zero-argument admitted exception construction remains a decided exception, not
 a refusal.
+
+## 2026-11-07-pycomplete-399 — close the stale list-comprehension lowering path
+
+The approved extractor already emits `ListComp` as a loud `Unsupported` leaf,
+but `Json.parseExpr` still recognized a legacy `ListComp` envelope and lowered
+it to a call of the shadowable builtin name `list`. Removed that ingestion
+rewrite: the parser now preserves the construct as an explicit loud boundary,
+while `GeneratorExp` retains its existing admitted lowering. Regenerated the
+two script envelopes that still carried the retired `ListComp` payload, and
+added parser and extractor regression checks.
+
+| Measurement | Result |
+|---|---|
+| Python parser tests | managed `lake build LeanModels.Python.Tests`: 9 jobs passed |
+| Extractor tests | 162 passed |
+| Script witnesses | both list-comprehension scripts refuse with `unsupported expression 'ListComp'`; CPython 3.9.25 remains the oracle |
+| Pin/freshness checks | `tools/test_leanpy.py` 11 passed; Python envelopes FRESH 81, STALE 0 |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep `ListComp` source-level and loud until a native comprehension
+node and evaluator exist; ingestion no longer invents a builtin lookup.

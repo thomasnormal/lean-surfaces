@@ -19,6 +19,13 @@ namespace LeanModels.Python.Tests
 
 private def sp : Span := default
 
+private def spJson : Lean.Json := Lean.Json.mkObj
+  [("lineno", Lean.toJson (0 : Nat)), ("col_offset", Lean.toJson (0 : Nat)),
+   ("end_lineno", Lean.toJson (0 : Nat)), ("end_col_offset", Lean.toJson (0 : Nat))]
+
+#guard parseExpr (Lean.Json.mkObj [("kind", Lean.toJson "ListComp"), ("span", spJson)])
+  matches .ok (.unsupported "ListComp" _ _)
+
 #guard parseBinOpName "Div" matches .ok .div
 #guard typeNamePrefix (String.mk (List.replicate 250 'N')) 200 ==
   String.mk (List.replicate 200 'N')

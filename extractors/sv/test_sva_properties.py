@@ -99,6 +99,24 @@ endmodule
         self.assertEqual(expr["left"], {"kind": "Ident", "name": "u.flag"})
         self.assertEqual(expr["right"], {"kind": "Ident", "name": "a"})
 
+    def test_reduction_expression_uses_existing_reduce_vocabulary(self):
+        source = """module top(input logic clk, input logic [3:0] a, output logic q);
+  assign q = |a;
+  assert property (@(posedge clk) (|a) == q);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "reduce.sv"
+            out = Path(directory) / "reduce.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        expr = prop["ast"]["property"]["body"]["test"]["expr"]
+        self.assertEqual(expr["left"], {
+            "kind": "Reduce", "op": "|",
+            "operand": {"kind": "Ident", "name": "a"},
+        })
+
 
 if __name__ == "__main__":
     unittest.main()

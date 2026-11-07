@@ -176,6 +176,11 @@ instance/generate spelling as one observation key (for example
 `u.g.flag`). The clean-room `sem2/sva_scoped` witness and Verilator row cover
 the path form; the VIP census falls to 9 residual nodes, with the remaining
 walls outside the finite SVA value fragment.
+Reduction operators in finite SVA expressions now use the existing `PExpr`
+`Reduce` vocabulary, preserving four-state reduction semantics. The clean-room
+`sem2/sva_reduce` witness and Verilator row cover reduction-OR; on the pinned
+`prim_arbiter_ppc` set, property-expression refusals fall from 20 to 12 across
+all 15 retained properties.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

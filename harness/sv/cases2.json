@@ -147,6 +147,16 @@
       "measured": "2026-11-07: qualified SVA signal paths retain their elaborated instance/generate spelling as one observation key in the E contract."
     },
     {
+      "name": "sva_reduce",
+      "example": "sem2/sva_reduce",
+      "top": "sva_reduce",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [{"a": "0000"}, {"a": "0101"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: reduction operators in finite SVA expressions retain the existing PExpr Reduce vocabulary and evaluate with four-state reduction semantics."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

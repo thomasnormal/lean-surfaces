@@ -11044,3 +11044,25 @@ rounding. The earlier one-definition-per-digit chain is absent.
 
 DECIDED: keep the parameterized worker and extend its boundary rows when
 CPython cutoff behavior changes; do not unroll new digit cases.
+
+## 2026-11-07-pycomplete-451 — choose the next completeness milestone
+
+The current measured frontier has `ListComp` as the next practical language
+construct. The approved extractor and JSON layer already retain the node
+structurally, and the interpreters already provide the required ingredients:
+left-to-right expression evaluation, target assignment, truthiness filters,
+heap-list allocation, and the list/tuple/string/range/dict iterator inventory.
+The remaining work is a native expression evaluator in both surfaces plus its
+payload-blindness, clock-erasure, and fuel proofs. Walrus filters and starred
+display forms remain separate loud boundaries.
+
+| Measurement | Result |
+|---|---|
+| Grammar witness | `ListComp`: explicit `unsupported expression 'ListComp'` |
+| Existing seam | `Expr.listComp` is structured; no user-shadowable `list` lowering remains |
+| Related primitives | heap list allocation and iterator cursors are already live |
+| Semantic change | none; milestone selection and seam inventory only |
+
+DECIDED: implement native `ListComp` next, starting with one generator and
+ordinary target/filter expressions, then add its proof transport before
+widening to nested generators or walrus capture.

@@ -4261,7 +4261,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   simp [hfc]
                                   refine PBF.ite (fun _ => ?_) (fun _ => PBF.unsupported)
                                   cases args.toList with
-                                  | nil => exact PBF.unsupported
+                                  | nil => exact PBF.exn hslot _
                                   | cons arg rest =>
                                       cases rest with
                                       | cons _ _ => simp; exact PBF.unsupported
@@ -4279,7 +4279,9 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                       by_cases hpy : isPyBuiltinName id
                                       · simp [hfc, hnt, hpy]
                                         cases args.toList with
-                                        | nil => exact PBF.unsupported
+                                        | nil =>
+                                          exact PBF.ite (fun _ => PBF.exn hslot _)
+                                            (fun _ => PBF.unsupported)
                                         | cons arg rest =>
                                           cases rest with
                                           | cons _ _ => simp; exact PBF.unsupported

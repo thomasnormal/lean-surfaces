@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Repaired payload-blind proofs for zero-argument user and admitted builtin exception constructors; runtime behavior is unchanged.
+
 - Refreshed the generated Python coverage page after the current differential battery moved from one divergence to zero.
 
 - Refreshed the two stale Python lab envelopes found by the pinned frontend freshness gate; the committed envelope set is fresh again.

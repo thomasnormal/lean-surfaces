@@ -10062,3 +10062,21 @@ runner output; no semantic implementation changed.
 
 DECIDED: generated coverage artifacts must be refreshed whenever row verdicts
 change, and `coverage_page.py --check` remains the gate.
+
+## 2026-11-07-pycomplete-398 — repair payload-blind raise branches
+
+The current Python source builds had two `PayloadBlind` proof branches for
+zero-argument exception constructor calls that used the refusal combinator even
+though the base run is an exception (user exception classes, or admitted
+builtin exception classes). Replaced those branches with the corresponding
+state-preserving `PBF.exn`/conditional proof cases. This is proof-layer
+maintenance only; runtime semantics and refusal boundaries are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Target build | managed `lake build LeanModels.Python.PayloadBlind` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep payload-blind branches aligned with the exact `Run.exn` shape;
+zero-argument admitted exception construction remains a decided exception, not
+a refusal.

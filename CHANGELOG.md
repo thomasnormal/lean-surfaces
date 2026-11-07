@@ -10,6 +10,10 @@
   function-body calls and duplicate module definitions remain loud rather than
   answering through the static table.
 
+- Rechecked structured `global` and `nonlocal` declarations: names come from
+  the approved AST arrays, with no source-text reparsing or 200-character
+  truncation path.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

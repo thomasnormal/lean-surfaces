@@ -10741,7 +10741,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         Run.finishCallAt w.callDepth <|
           Run.toWorld <|
             execStmts m fuel
-              ⟨{ w with callDepth := 0 },
+              ⟨{ w with callDepth := 1 },
                 markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
               f.body.toList ⤳ fun st flow =>
             match flow with
@@ -11469,7 +11469,7 @@ def proofCellGeneratorUnsafe (m : Module) (fname : String) : Bool :=
 
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
   Run.toPublic fuel
-    (callIn m fuel { initWorld m with callDepth := pythonTopCallDepth } fname
+    (callIn m fuel (initWorld m) fname
       (RVal.thawArgs args))
 
 /-- The narrower theorem-runner projection for generator-cell shapes that the
@@ -11489,7 +11489,7 @@ def callFunctionClock (m : Module) (fname : String) (args : Array Val)
     (clock : List Int) (fuel : Nat) : Res Val :=
   Run.toPublic fuel
     (callIn m fuel
-      { initWorld m with clock := clock, callDepth := pythonTopCallDepth }
+      { initWorld m with clock := clock }
       fname (RVal.thawArgs args))
 
 end LeanModels.Python

@@ -9,6 +9,10 @@
   calls, restoring the active frame depth after returns and raises so sibling
   calls do not consume one another's stack budget.
 
+- Repaired the closed-call proof geometry after adding frame depth: public
+  `callFunction` now starts at the ordinary zero-depth world, matching the
+  stateful `CallsIn` frame and keeping the recursion guard in the body.
+
 - Rechecked the position-independent module definition boundary: forward
   function-body calls and duplicate module definitions remain loud rather than
   answering through the static table.

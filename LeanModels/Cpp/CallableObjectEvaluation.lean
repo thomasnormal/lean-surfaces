@@ -74,12 +74,9 @@ private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpressi
 
 private def alignOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
-  match integralTypeOfEvidence operandType, formatFor profile typed.type with
-  | some integer, some format =>
-      match integralAlignBytes profile integer with
-      | .ok bytes => .ok {format, value := Int.ofNat bytes}
-      | .error _ => .unsupported .unresolvedArithmeticConversions
-  | _, _ => .unsupported .unresolvedArithmeticConversions
+  match integralAlignValueOfEvidence profile typed.type operandType with
+  | .ok value => .ok value
+  | .error _ => .unsupported .unresolvedArithmeticConversions
 
 private inductive Execution where
   | normal

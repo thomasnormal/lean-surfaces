@@ -230,6 +230,14 @@ def callableIntegralSizeAgreement : Bool :=
 
 #guard callableIntegralSizeAgreement
 
+def callableIntegralAlignAgreement : Bool :=
+  integralAlignValueOfEvidence .lp64 intType intType matches .ok ⟨.signed 32, 4⟩ &&
+    integralAlignValueOfEvidence .lp64 intType (.qualified true false intType)
+      matches .ok ⟨.signed 32, 4⟩ &&
+    integralAlignValueOfEvidence .lp64 intType (.record (handle "0x99")) matches .error _
+
+#guard callableIntegralAlignAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

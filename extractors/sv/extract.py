@@ -26276,6 +26276,17 @@ def _sva_pexpr(node):
               "UnaryMinusExpression": "-", "UnaryPlusExpression": "+"}[kind]
         return {"kind": "Unary", "op": op,
                 "operand": _sva_pexpr(node.get("operand"))}
+    reduction_ops = {
+        "UnaryBitwiseOrExpression": "|",
+        "UnaryBitwiseAndExpression": "&",
+        "UnaryBitwiseXorExpression": "^",
+        "UnaryBitwiseNorExpression": "~|",
+        "UnaryBitwiseNandExpression": "~&",
+        "UnaryBitwiseXnorExpression": "~^",
+    }
+    if kind in reduction_ops:
+        return {"kind": "Reduce", "op": reduction_ops[kind],
+                "operand": _sva_pexpr(node.get("operand"))}
     binary_ops = {
         "LogicalAndExpression": "&&", "LogicalOrExpression": "||",
         "EqualityExpression": "==", "InequalityExpression": "!=",

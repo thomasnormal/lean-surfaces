@@ -8,6 +8,11 @@ qualified through the E contract. The clean-room `sem2/sva_scoped` witness and
 Verilator differential row cover the form; package and unavailable paths stay
 loud.
 
+Finite SVA reduction operators now use the existing `PExpr` `Reduce` nodes,
+including four-state reduction-OR. The `sem2/sva_reduce` witness and Verilator
+differential row cover the admitted form; nested temporal calls, dynamic
+selects, and shifts remain named boundaries.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

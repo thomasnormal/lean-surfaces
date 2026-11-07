@@ -39,6 +39,9 @@ Promoted increment/decrement arithmetic is shared through
 Null-pointer comparison decoding for `==` and `!=` is shared through
 `ScalarArithmetic`, with unsupported spellings still loud in each evaluator.
 
+Evidence-to-value conversion now uses one profile/type boundary in
+`ScalarArithmetic`; evaluator-specific error domains remain at the call sites.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

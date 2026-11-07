@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized evidence-to-value conversion in `ScalarArithmetic` for both
+  callable evaluators and added a builtin/qualified/unsupported witness.
+
 - Centralized null-pointer comparison decoding in `ScalarArithmetic` for both
   callable evaluators and added an agreement witness.
 

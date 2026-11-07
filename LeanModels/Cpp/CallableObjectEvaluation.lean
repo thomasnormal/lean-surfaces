@@ -60,9 +60,9 @@ private def mapOutcome (outcome : Outcome (IntegralResult IntegralValue))
 
 private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
     (value : IntegralValue) : IntegralResult IntegralValue :=
-  match formatFor profile type with
-  | some format => integralConvert format value
-  | none => .unsupported .unresolvedArithmeticConversions
+  match integralConvertOfEvidence profile type value with
+  | .ok result => result
+  | .error _ => .unsupported .unresolvedArithmeticConversions
 
 private def literalValue (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :
     Option IntegralValue :=

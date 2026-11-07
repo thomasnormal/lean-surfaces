@@ -1651,8 +1651,8 @@ class ImportFromTests(unittest.TestCase):
         self.assertEqual(present["module"], "time")
 
     def test_benign_whitelist_rows_are_structured(self):
-        # Structured fields are carried through ingestion; the model's benign
-        # import admission keys on module and names rather than source text.
+        # Structured fields are carried through ingestion; the extractor's
+        # admission keys on module and names rather than source text.
         for src, mod, name in (
                 ("from itertools import count\n", "itertools", "count"),
                 ("from collections import namedtuple\n", "collections",
@@ -1661,6 +1661,22 @@ class ImportFromTests(unittest.TestCase):
             self.assertEqual(s["kind"], "ImportFrom")
             self.assertEqual(s["module"], mod)
             self.assertEqual(s["names"], [name])
+
+    def test_benign_whitelist_does_not_parse_unparsed_text(self):
+        # A supported ImportFrom must remain admitted if the diagnostic
+        # unparser is unavailable: source text is not semantic input.
+        old = extract.unparse_truncated
+
+        def fail(_node):
+            raise AssertionError("benign import consulted diagnostic text")
+
+        extract.unparse_truncated = fail
+        try:
+            for src in ("from itertools import count\n",
+                        "from collections import namedtuple\n"):
+                self.assertEqual(self._module_body(src)[0]["kind"], "ImportFrom")
+        finally:
+            extract.unparse_truncated = old
 
     def test_top_level_if_body_is_module_scope(self):
         # module_scope threads through top-level if/for/while bodies

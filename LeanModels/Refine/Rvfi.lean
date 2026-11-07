@@ -595,6 +595,31 @@ theorem rvfiCycleStepRefines_normalized_trace_refines
     state isaState inputs hrel hall
   exact hcycle.symm.trans htrace
 
+/-- The complete strict normalized RVFI boundary exposes the ISA trace and
+the carried post-window relation together.  Raw normalization remains an
+explicit premise, so a malformed valid row cannot disappear while obtaining
+either conclusion. -/
+theorem rvfiCycleStepRefines_normalized
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ inputs, admit i)
+    (hnorm : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    (retirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state inputs)) ∧
+    rel (rvfiStateAfter machine state inputs)
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state inputs)) := by
+  exact ⟨rvfiCycleStepRefines_normalized_trace_refines h state isaState inputs
+      hrel hall hnorm,
+    rvfiCycleStepRefines_stateAfter_refines machine isa rel admit h
+      state isaState inputs hrel hall⟩
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -798,6 +823,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

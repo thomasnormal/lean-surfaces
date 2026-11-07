@@ -4054,3 +4054,21 @@ No RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** keep retirement-count transport as a generic cycle fact and make
 normalization consume it, rather than deriving counts from a particular core's
 order fields or from a filtered list implementation.
+
+## 2026-11-07-ls-sv2-263 — bundle the strict normalized RVFI boundary
+
+The inboxes were reread before this item.  No newer lane-specific request was
+present: generated-member support in the memory route remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_normalized` to `LeanModels/Refine/Rvfi.lean`.
+It packages the strict contract's normalized ISA trace equality and its
+state-threaded post-window relation, while retaining the successful raw
+normalization certificate and input-admission proof as explicit premises.
+Added `pinned_cycle_normalized_refines_of` to the PicoRV32 witness, fixing the
+pair on the measured eight-cycle machine and leaving the symbolic invariant
+as the hypothesis the loaded-core proof must establish.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** expose one complete raw-to-ISA/state boundary for a loaded-core
+window, but keep trace normalization and step refinement as separate premises
+inside its proof so malformed valid rows remain loud.

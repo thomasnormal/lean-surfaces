@@ -157,6 +157,10 @@ loaded-core invariant and input-admission obligations.
 normalization has exactly as many retained retiring inputs as decoded
 retirements, and `pinned_cycle_normalized_input_length` records that count for
 the measured window.
+The bundled `rvfiCycleStepRefines_normalized` theorem exposes the trace and
+post-window relation together; `pinned_cycle_normalized_refines_of` fixes that
+pair on the same measured machine while leaving the actual invariant as its
+premise.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

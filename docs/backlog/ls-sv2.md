@@ -4342,3 +4342,21 @@ loader, or `LeanModels/Sv/**` file changed.
 
 **DECIDED:** make adjacent-window composition available in the optional proof
 shape while preserving the exact raw-state and normalization obligations.
+
+## 2026-11-07-ls-sv2-279 — expose the optional normalized RVFI chain boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_chain` to
+`LeanModels/Refine/Rvfi.lean`.  The optional cycle contract now exposes the
+first normalized trace and relation, the exact middle core/ISA boundary, the
+second trace from the reached ISA state, and the final relation across the
+concatenated raw window.  The raw well-formedness invariant and both
+normalization certificates remain explicit; the theorem delegates to the
+strict chain boundary.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** preserve the segmented state boundary in the optional API so a
+loaded-core invariant can resume at the second raw window without rebuilding
+the prefix proof.

@@ -202,6 +202,8 @@ equality, without requiring callers to rebuild the strict contract by hand.
 post-window relation for the same optional proof shape.
 `cycleStepRefines_normalized_append` carries the paired result across adjacent
 optional windows, including the exact raw-state boundary between them.
+`cycleStepRefines_normalized_chain` additionally exposes the intermediate
+relation and second ISA state needed to resume a segmented optional proof.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.

@@ -90,6 +90,11 @@
   positional-star, and flat-star-target slices retain their loud or guarded
   behavior without shadowable builtin names.
 
+- Rechecked the remaining general ingestion bridges: retired source-shape
+  rewrites stay absent, while f-string, multi-item `with`, delete-target,
+  chained-assignment, dictionary-view, and type-error-handler markers remain
+  explicit documented debt or loud boundaries.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

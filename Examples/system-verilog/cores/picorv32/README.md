@@ -198,6 +198,8 @@ For an invariant already stated against the optional cycle adapter,
 `cycleStepRefines_normalized_trace_refines` composes the raw well-formedness
 premise and normalization certificate directly into the same ISA trace
 equality, without requiring callers to rebuild the strict contract by hand.
+`cycleStepRefines_normalized` exposes that equality together with the carried
+post-window relation for the same optional proof shape.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.

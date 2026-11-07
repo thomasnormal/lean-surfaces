@@ -4307,3 +4307,20 @@ no RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** keep the optional-to-strict lift and the normalization certificate
 visible at this boundary, while offering one reusable theorem for loaded-core
 trace proofs.
+
+## 2026-11-07-ls-sv2-277 — expose the optional normalized RVFI boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized` to `LeanModels/Refine/Rvfi.lean`.  The
+optional cycle contract now composes with the explicit valid-row
+well-formedness invariant and a successful `normalizeRvfiTrace?` certificate
+to expose both normalized retirement equality and the relation carried by the
+retained RVFI state.  It delegates to the strict paired boundary, so malformed
+valid rows remain loud and the optional proof shape does not duplicate the
+normalization or state-transport argument.  Updated the PicoRV32 README;
+no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep trace and post-window state transport bundled for optional
+callers, with the raw wire invariant still explicit at the adapter boundary.

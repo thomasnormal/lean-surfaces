@@ -144,6 +144,9 @@ matches the ISA step; a malformed valid row cannot be silently projected to a
 bubble.  `rvfiCycleStepRefines_toCycleStepRefines` transports this strict raw
 contract to the existing cycle bridge, so a loaded-core invariant can be
 proved against packed fields first and use the trace/state theorems afterward.
+The companion `rvfiCycleStepRefines_trace_refines` and
+`rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
+post-window-state results directly from the strict contract.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

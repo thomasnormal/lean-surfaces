@@ -528,6 +528,38 @@ theorem rvfiStateAfter_refines
   rw [RvfiCycleMachine.toCycleMachine_stateAfter] at hstate
   exact hstate
 
+/-- The strict packed-cycle contract directly gives the existing finite trace
+theorem.  Keeping this wrapper next to the raw contract prevents a loaded-core
+proof from accidentally invoking the optional adapter without first proving
+that valid rows normalize. -/
+theorem rvfiCycleStepRefines_trace_refines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit) :
+    ∀ (state : State) (isaState : IsaState) (inputs : List Input),
+      rel state isaState → (∀ i ∈ inputs, admit i) →
+      cycleTrace machine.toCycleMachine state inputs =
+        trace isa isaState
+          (retireInputs machine.toCycleMachine state inputs) := by
+  exact cycle_trace_refines (rvfiCycleStepRefines_toCycleStepRefines h)
+
+/-- The strict packed-cycle contract also transports the relation to the
+post-state retained by the RVFI machine, with bubbles omitted from the ISA
+input stream exactly as in `rvfiStateAfter_refines`. -/
+theorem rvfiCycleStepRefines_stateAfter_refines
+    {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Prop) (admit : Input → Prop)
+    (h : RvfiCycleStepRefines machine isa rel admit) :
+    ∀ (state : State) (isaState : IsaState) (inputs : List Input),
+      rel state isaState → (∀ i ∈ inputs, admit i) →
+      rel (rvfiStateAfter machine state inputs)
+        (machineStateAfter isa isaState
+          (retireInputs machine.toCycleMachine state inputs)) := by
+  exact rvfiStateAfter_refines machine isa rel admit
+    (rvfiCycleStepRefines_toCycleStepRefines h)
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -728,6 +760,8 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

@@ -4482,3 +4482,28 @@ axiom report contains only the existing `propext`/`Classical.choice`/
 **DECIDED:** treat a successful raw normalization certificate as a functional
 boundary, so later loaded-core proofs can transport it without selecting among
 competing retirement streams.
+
+## 2026-11-07-ls-sv2-287 — construct the core-facing ADDI RVFI invariant
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `rvfiCycleStepRefines_of_addi` to
+`LeanModels/Refine/RvfiAddi.lean`.  It packages a profile-parametric strict
+RVFI cycle contract from one per-cycle invariant: a valid row must satisfy the
+raw `addiBoundary`, advance the core relation through `addiNext`, and agree
+with the `rvMachineWith` architectural retirement; an invalid row carries the
+relation while the ISA stutters.  The proof keeps the fetched word, decoded
+registers, and retirement equality explicit and avoids dependent elimination
+of the pair-valued machine steps.  Updated the PicoRV32 README; no RTL,
+loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiAddi` passed (13 jobs).  The
+new theorem's axiom report contains only the existing
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** make ADDI the first reusable instruction-class invariant
+constructor for loaded-core proofs, while retaining the strict raw-row
+obligations at the boundary.

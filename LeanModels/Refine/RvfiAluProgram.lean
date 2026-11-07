@@ -196,6 +196,39 @@ theorem rvMemoryMachineWith_alu_program_trace
         (ih (state := aluNext state instruction.op instruction.rd
           instruction.src1 instruction.src2))
 
+/-- The stateful ALU machine resumes at the exact memory-machine state after
+the first program segment. -/
+theorem rvMemoryMachineWith_alu_program_state_append
+    (profile : PlatformProfile) (state : ArchState) (memory : Memory)
+    (first second : List AluInstruction) :
+    machineStateAfter (rvMemoryMachineWith profile)
+        { arch := state, memory := memory }
+        (aluProgramInputs memory (first ++ second)) =
+      machineStateAfter (rvMemoryMachineWith profile)
+        (machineStateAfter (rvMemoryMachineWith profile)
+          { arch := state, memory := memory }
+          (aluProgramInputs memory first))
+        (aluProgramInputs memory second) := by
+  rw [aluProgramInputs_append, machineStateAfter_append]
+
+/-- The stateful ALU retirement stream splits at the same first-segment
+boundary as the architectural state. -/
+theorem rvMemoryMachineWith_alu_program_trace_append
+    (profile : PlatformProfile) (state : ArchState) (memory : Memory)
+    (first second : List AluInstruction) :
+    trace (rvMemoryMachineWith profile)
+        { arch := state, memory := memory }
+        (aluProgramInputs memory (first ++ second)) =
+      trace (rvMemoryMachineWith profile)
+          { arch := state, memory := memory }
+          (aluProgramInputs memory first) ++
+        trace (rvMemoryMachineWith profile)
+          (machineStateAfter (rvMemoryMachineWith profile)
+            { arch := state, memory := memory }
+            (aluProgramInputs memory first))
+          (aluProgramInputs memory second) := by
+  rw [aluProgramInputs_append, machineTrace_append]
+
 /-! ## Raw RVFI certificate for an arbitrary ALU program -/
 
 /-- A raw RVFI stream whose retiring rows are exactly the supplied ALU
@@ -469,6 +502,8 @@ theorem AluRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_alu_step
 #print axioms LeanModels.Refine.rvMemoryMachineWith_alu_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_alu_program_trace
+#print axioms LeanModels.Refine.rvMemoryMachineWith_alu_program_state_append
+#print axioms LeanModels.Refine.rvMemoryMachineWith_alu_program_trace_append
 #print axioms LeanModels.Refine.AluRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.AluRvfiTrace.normalize
 #print axioms LeanModels.Refine.AluRvfiTrace.trace_refines

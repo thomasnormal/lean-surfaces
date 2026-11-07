@@ -5758,3 +5758,32 @@ ALU observation certificates before adding the machine-state association;
 arbitrary bubbles and retirement order remain explicit.  PicoRV32 remains
 parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
+
+## 2026-11-07-ls-sv2-331 — expose stateful ALU program append bridges
+
+The inbox and goal file were reread after item 330 was pushed.  Raw ALU
+certificates now compose, but a segmented proof still had to combine the ALU
+fold append law with the generic stateful-machine append theorem by hand.
+
+**CHANGED:** Added
+`rvMemoryMachineWith_alu_program_state_append` and
+`rvMemoryMachineWith_alu_program_trace_append` to
+`LeanModels/Refine/RvfiAluProgram.lean`.  The first theorem splits
+`machineStateAfter` at the concatenated ALU input boundary; the second splits
+the corresponding retirement stream and feeds the first segment's threaded
+state to the second.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAluProgram.lean` passes and
+both new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new
+axiom was introduced.  The umbrella refinement build, focused PicoRV32
+boundary compile, docs check, backlog-index check, and `git diff --check` are
+the validation gates for this item.
+
+**JUDGED / DECIDED:** A future loaded-core proof can segment an ALU program at
+the stateful ISA-machine level without manually reopening generic list
+recursions; the first segment's exact memory and retirement state remains the
+second segment's input.  PicoRV32 remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.

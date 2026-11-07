@@ -10732,3 +10732,20 @@ static alias when a later ordinary assignment shadows it.
 
 DECIDED: retain guarded static aliases and loud unsafe observations; schedule
 runtime function values before deleting the ingestion table pass.
+
+## 2026-11-07-pycomplete-434 — recheck trailing definition deletion
+
+The trailing-definition deletion rewrite is absent from current ingestion.
+`parseStmt` preserves every bare-name `Delete` as `.delStmt`; both script
+surfaces refuse deletion of a static `def`, `class`, namedtuple, or alias entry
+rather than silently turning it into `pass`. Partial left-to-right effects
+remain represented for ordinary names.
+
+| Measurement | Result |
+|---|---|
+| Trailing witness | `del_trailing_script.py` remains LOUD while CPython 3.9.25 exits 0 |
+| Mid/partial witnesses | `del_def_mid_script.py` and `del_partial_script.py` remain LOUD with retained side effects |
+| Semantic change | none; this packet records the existing source-node boundary |
+
+DECIDED: preserve trailing definition deletes as source nodes and keep the
+static-table tombstone boundary loud until definitions become runtime bindings.

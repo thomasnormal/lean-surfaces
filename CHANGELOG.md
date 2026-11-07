@@ -17,6 +17,9 @@
 - Docs: record the guarded module-level callable-alias slice and its remaining
   first-class-function representation debt.
 
+- Docs: record that trailing definition deletes remain source nodes and loud
+  until runtime definition bindings are implemented.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

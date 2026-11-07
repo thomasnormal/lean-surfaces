@@ -4200,3 +4200,20 @@ backlog/index.  No RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** make the strict RVFI contract consumable in both directions:
 loaded-core proofs can establish it from a single total case split, and later
 trace/state theorems can still use the named branch projections.
+
+## 2026-11-07-ls-sv2-271 — characterize strict RVFI refinement by cycle cases
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_iff_step` to `LeanModels/Refine/Rvfi.lean`.  It
+states the strict contract exactly as the initial relation plus the total
+packed-field valid/invalid case split, and proves both directions using the
+item 269 projection and item 270 constructor.  This gives a loaded-core
+invariant one canonical statement to establish without exposing the optional
+adapter's existential shape.  Updated the PicoRV32 README and backlog/index.
+No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** use the total raw-cycle case split as the public characterization
+of strict RVFI refinement; retain the existential adapter only behind its
+constructor.

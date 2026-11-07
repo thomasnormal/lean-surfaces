@@ -547,6 +547,30 @@ theorem rvfiCycleStepRefines_of_step
       simp only [hinvalid]
       exact hrel'
 
+/-! The strict contract and the total raw-cycle case split are equivalent.
+This form lets a loaded-core proof work entirely with packed fields and defer
+the optional-retirement adapter to the generic constructor. -/
+theorem rvfiCycleStepRefines_iff_step
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop} :
+    RvfiCycleStepRefines machine isa rel admit ↔
+      rel machine.init isa.init ∧
+      (∀ (state : State) (isaState : IsaState) (input : Input),
+        rel state isaState → admit input →
+        let (state', observation) := machine.step state input
+        let (isaState', isaRetirement) := isa.step isaState input
+        (observation.valid = true ∧ observation.wellFormed ∧
+            rel state' isaState' ∧ observation.toRetirement = isaRetirement) ∨
+          (observation.valid = false ∧ rel state' isaState)) := by
+  constructor
+  · intro h
+    refine ⟨h.1, ?_⟩
+    intro state isaState input hrel hadmit
+    exact rvfiCycleStepRefines_step h state isaState input hrel hadmit
+  · rintro ⟨hinit, hstep⟩
+    exact rvfiCycleStepRefines_of_step hinit hstep
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -1086,6 +1110,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_iff_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines

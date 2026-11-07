@@ -224,7 +224,7 @@ def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
 
 def MemDesign2.initState (d : MemDesign2) : MemCycleState :=
   { scalar := d.decls.map fun dc =>
-      let value := dc.init.getD (LVec.xVec dc.width)
+      let value := dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)
       (dc.name, if dc.twoState then value.toTwoState else value)
     memory := MemState.ofShapes ((d.memDecls.map fun pd =>
       match pd.memShape? d.env with

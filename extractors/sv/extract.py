@@ -32483,6 +32483,16 @@ def convert_net_sym(sm, m):
             return unsupported(sm, m, "NetSymbol:signed" if m.type.isSigned else "NetSymbol:net-z")
         net_reason = lower_proc.net_driver_reason(sys.modules[__name__], sm, m, dtype)
         if net_reason is not None:
+            if net_reason == "no driver: the net reads z" and not m.type.isSigned:
+                result = {
+                    "kind": "Net",
+                    "span": sym_span(sm, m),
+                    "name": m.name,
+                    "width": dtype,
+                    "init": None,
+                    "net_z": True,
+                }
+                return result
             if m.type.isSigned:
                 return unsupported(sm, m, "NetSymbol:signed")
             return unsupported(sm, m, "NetSymbol:net-z")

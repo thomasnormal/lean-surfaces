@@ -134,6 +134,7 @@ structure Decl where
   twoState : Bool := false
   isInput : Bool := false
   isOutput : Bool := false
+  isNet : Bool := false
   init : Option LVec := none
 deriving Repr, BEq, Inhabited
 

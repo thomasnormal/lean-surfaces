@@ -198,6 +198,9 @@ loud.
 The R2 memory route now also executes a source-shaped `always_comb` blocking
 read after sequential memory commits. The `sem2/unpacked_memory_comb` witness
 and direct Icarus row cover this form; NBA in `always_comb` remains loud.
+Undriven four-state wires now remain source-shaped net declarations and
+initialize to z in the memory route. The `sem2/unpacked_memory_netz` guard
+covers the form; partial and multiply driven nets remain loud.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

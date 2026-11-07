@@ -5302,3 +5302,29 @@ changed.
 memory relation as the next concrete resume point for a loaded-core invariant;
 keep generated-member and unpacked-memory support explicitly parked with
 `ls-sv`.
+
+## 2026-11-07-ls-sv2-316 — carry the four-row window through the ISA trace
+
+The inbox and goal file were reread before this item.  The generated-member
+and unpacked-register-memory refusals remain upstream `ls-sv` walls, so this
+item composes the completed finite phase witness with the owned trace bridge.
+
+Added `pinned_window_trace_refines` to the PicoRV32 RVFI boundary witness.
+The theorem applies `rvfiCycleStepRefines_normalized_trace_refines` to the
+eight-cycle bubble/ADDI/SW/LW window, proves the phase machine's initial
+relation against the stateful ISA reset state, and explicitly discharges
+admission for every scheduled input.  Therefore the four normalized measured
+retirements equal the profile-parametric stateful ISA trace after invalid
+cycles are filtered.
+
+**MEASURED:** the focused PicoRV32 boundary target, `lake build
+LeanModels.Refine`, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  `pinned_window_trace_refines` reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** keep the normalized trace equality and the strict
+phase/state witness as separate reusable endpoints; the symbolic PicoRV32
+invariant remains parked at the loader refusals with `ls-sv`.

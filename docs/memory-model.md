@@ -1635,8 +1635,8 @@ dead.** No stub, no frozen clock, no "returns 0": any numeric answer
 would be silently wrong somewhere, and the model never guesses.
 
 The MECHANISM is the one already in place, now claimed as the
-abstraction rather than an accident: `import time` sits on the exact
-benign-import whitelist (`benignImportBinds`, Ast.lean) with
+abstraction rather than an accident: `import time` sits on the structured
+whitelist (`benignImportBindsStructured`, Ast.lean) with
 `modelled = false`, so G1 binds `time` POISONED — CPython did bind the
 name, so a read must never be a fake `NameError` — and any evaluation
 that reaches the name (in particular the receiver of `time.time()`)
@@ -3121,16 +3121,13 @@ standing exception — `__name__`/`__doc__`/… are bound by the import
 machinery, not by any statement, so a miss on one is loud even in an
 analysable module.
 
-**Imports are decided by an EXACT-TEXT whitelist**, `benignImportBinds`
-(Ast.lean) — the table the namedtuple census already established for its
-single member, now shared and extended to the three stdlib imports the
-shipped file uses. A blanket "imports are benign" would be a genuinely
-wider claim (an import runs code, and a circular one can mutate the
-importer). A whitelisted row records whether the model already gives the
-bound name a meaning: `count` IS `itertools.count` in `isBuiltinName`, so
-G1 binds nothing and resolution falls through to it; `time` is
-unmodelled, so it is bound POISONED — loud, never a fake `NameError` for
-a name CPython did bind.
+**Imports are decided by a structured whitelist**,
+`benignImportBindsStructured module names star` (Ast.lean). The parser's
+module, imported names, and star flag are carried into `Stmt.importFrom`; no
+semantic decision reparses source text. A whitelisted row records whether
+the model already gives the bound name a meaning: `count` is
+`itertools.count` in `isBuiltinName`, while `time` is bound poisoned because
+its live value is outside the tier.
 
 On the shipped file this resolves exactly the intended set, kernel-
 checked: `time` poisoned; `piece`/`pst` valued, then the
@@ -4393,91 +4390,11 @@ observe. This arm is OWNER-GATED with the rest of the memo and is
 recorded here only so the Pass 0 constructor is not built in a shape
 that forecloses it.
 
-### The admission change — where the refusal lives today, and what narrows
+### Structured import admission
 
-Today there is no bespoke import refusal site AT ALL. `convert_stmt`
-(extractors/python/extract.py) has no arm for
-`ast.Import`/`ast.ImportFrom`; both fall through to the terminal
-`return unsupported(node)`, arriving as `Stmt.unsupported
-"Import"/"ImportFrom" text span` with the source text TRUNCATED at
-`UNSUPPORTED_TEXT_LIMIT = 200` — a limit the exact-text whitelist
-(`benignImportBinds`, Ast.lean) silently depends on (harmless for its
-three short rows; recorded, and retired for from-imports by the
-structured node). The refusal is then decided at EXECUTION — execStmt's
-`.unsupported` arm, `unsupported statement 'ImportFrom'`
-(Semantics.lean:5240); script mode skips whitelisted texts and
-delegates the rest (Script.lean:598–602) — and the WALL census mirrors
-the whitelist by text (`BENIGN_IMPORTS`,
-harness/leanpy_survey.py `census()`: `py_kind` Import/ImportFrom, text
-not whitelisted → wall `import`). Text-keying on the Unsupported shape
-spans five consumers: `benignImportBinds` (Ast.lean:361), `importBinds`
-+ `isBenignNtImport` (Json.lean), `scriptImports` (Script.lean:346),
-`Stmt.g1Binds` (Semantics.lean:2840), and the survey.
+Import statements are retained as structured AST nodes. The extractor carries the module name, imported names, aliases, scope, and guard facts; ingestion admits only the measured absolute, unaliased forms and stores them as `Stmt.importFrom` or `Stmt.importStmt`. `Script.lean` and `Monadic/Script.lean` consult `benignImportBindsStructured module names star`, which is keyed on those fields. `Unsupported.text` is diagnostic payload only and is never parsed to decide a supported path. Present modules, relative and dotted imports, aliases, class-body imports, and other unmeasured forms remain loud.
 
-**The narrowing.** The extractor gains an `ast.ImportFrom` arm that
-STRUCTURES exactly the paying shape: module or function scope (`module_scope`
-or `func_scope`, with class bodies still loud),
-the flag `convert_stmt` already threads), absolute (`node.level == 0`),
-single unqualified module name (no dots), plain names or star, no
-`as` aliases — AND (module absent from the pinned inventory OR the node
-is a direct body statement of a `try` guarded by `except ImportError:`).
-The extractor reads the committed inventory data file; it is already
-the envelope's trust boundary (`py_kind`, `text`, `exception_base`,
-`has_global` precedents), so the Lean side needs NO inventory in Pass 0
-— its semantics raises unconditionally, and the wrong-answer hazard for
-present modules is discharged by the admission, plus §2.5's rows.
-EVERYTHING ELSE keeps the Unsupported fallthrough VERBATIM, so the
-still-refused forms are: plain `import X` of a present module, relative
-imports, dotted/package modules, `as` aliases, class-body imports, and the
-unguarded from-import of a platform-present module. Consequence, paid for by
-the narrowness:
-envelope-structured ⇔ admitted, so the survey's wall census is correct
-with ZERO code change — walls key on `Unsupported` nodes, and a
-structured from-import is rightly no longer an `import` wall.
-
-A parallel plain-import slice now admits one absolute, unaliased
-`ast.Import` at any executable scope whose module is absent from the pinned
-inventory. Ingestion
-canonicalizes it to the same `Stmt.importFrom` shape with no imported names;
-Pass 0 therefore raises the exact `ModuleNotFoundError` before any binding,
-including inside a function's `try` handler. Present modules and all other
-plain-import shapes retain the loud `Import` wall.
-
-**As-built (Pass 0 implementation, 2026-08-14).** (1) The admission
-disjunction as written above (absent OR guarded) never fires for the
-two benign whitelist ImportFrom rows — `itertools`/`collections` are
-platform-PRESENT and sunfish's imports are unguarded — yet the
-envelope-change and canonicalization paragraphs below require them
-structured. As built, the extractor's admission carries the exact
-benign texts as a third disjunct (`BENIGN_IMPORT_FROM`, extract.py — a
-two-row mirror of `benignImportBinds`'s ImportFrom rows with a sync
-comment, the `BENIGN_IMPORTS` survey precedent), which is what makes
-"structured in the ENVELOPE and canonicalized back at ingestion" true
-and keeps envelope-structured ⇔ admitted exact. (2) The pinned
-inventory is `extractors/python/platform_inventory.json` (309 modules,
-3.9.19), captured by `extractors/python/capture_inventory.py` —
-subprocess-asked, never imported; the extractor loads it lazily and a
-missing file is a hard `ExtractError`, never a silent empty set.
-(3) Guard position is decided on the handler name alone (single
-handler, literally `except ImportError:`); a try that is otherwise out
-of v0 still carries `try_unsupported` and refuses whole at execution
-before any guarded import inside could run — loud, never wrong.
-
-`Stmt.importFrom (module : String) (names : Array String) (star : Bool)
-(sp : Span)` is structured from the approved extractor through ingestion.
-The benign-import table is keyed directly by `(module, names, star)` in
-`Ast.lean`; no reconstructed `from ... import ...` text or legacy text marker
-is consulted by the namedtuple census, script admission, G1, or the survey.
-Semantics: ONE new execStmt arm, `.importFrom mod _ _ _ => .exn
-(.importError mod)` — fuel-free, state unchanged, never `.ok` in
-Pass 0. Script mode needs nothing: `execScriptStmts`' generic
-`| s => execStmt m fuel st s` fallthrough routes it, and both try
-shells match through the new pinned table. `Main.lean` gains the
-`errName`/`errMessage` rows. Top-level `importFrom` IS a
-`g1ExecCandidate` (the "imports are not candidates" note was about
-`.unsupported` statements, which execStmt REFUSES; this one RAISES, and
-a raising candidate takes the fold's recorded `.exn` rollback-and-
-poison path; the guarded try was already a candidate).
+The Pass 0 semantics raises the modeled import error before any binding. This keeps guarded fallback rows faithful while avoiding a claim that arbitrary module initialization is modeled.
 
 ### Walkers, censuses, and the trace-clock invariant
 

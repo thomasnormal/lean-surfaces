@@ -10380,3 +10380,22 @@ survive through the position-independent tables.
 DECIDED: retain loud refusal for module `def`/`class`/namedtuple/alias deletion
 until definitions become runtime bindings; benign-import deletion remains the
 only static no-op.
+
+## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
+
+The clock audit finding is already closed in both interpreters. The explicit
+`World.clock : List Int` trace cannot represent CPython's binary64
+`time.time()` result, so zero-argument reads refuse before consuming a trace
+entry. The oracle battery now runs the source program with real CPython values;
+only the model's loud boundary is whitelisted.
+
+| Measurement | Result |
+|---|---|
+| Clock rows | 8 intentional loud readings, 4 MATCH controls, 0 failures |
+| Boundary | `time.time()` reports the binary64-outside-tier refusal; the trace remains untouched |
+| Controls | shadowed receiver, positional arity, and pure/dead-clock short-circuit rows MATCH CPython 3.9.25 |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: keep integer trace readings as explicit future input but refuse any
+zero-argument clock value until the trace carries binary64 readings; preserve
+real-value oracle comparison.

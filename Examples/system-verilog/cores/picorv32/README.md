@@ -950,7 +950,8 @@ certificate, but the relation no longer ends at an auxiliary program fold.
 
 The structure-valued `Rv32iPrefixRefinement` keeps that certificate,
 the exact program-input and program-state equations, normalized trace equality,
-and target-state relation together for one prefix;
+committed `cycleTrace` equality, and target-state relation together for one
+prefix;
 `Rv32iAllPrefixRefinement` quantifies it over every finite target prefix, and
 `rv32i_progress_refinement` constructs this public R2 contract.  A future
 loaded-core proof can consume the named fields without unpacking the nested

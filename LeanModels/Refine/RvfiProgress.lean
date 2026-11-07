@@ -77,6 +77,11 @@ structure Rv32iPrefixRefinement {State : Type}
         (rvfiObservations machine coreState (schedulePrefix schedule boundary)) =
       some (trace (rvMemoryMachineWith profile) memoryState
         (schedulePrefix target k))
+  cycle_trace_eq :
+    cycleTrace machine.toCycleMachine coreState
+        (schedulePrefix schedule boundary) =
+      trace (rvMemoryMachineWith profile) memoryState
+        (schedulePrefix target k)
   state_rel :
     rel (rvfiStateAfter machine coreState (schedulePrefix schedule boundary))
       (rvMemoryStateAfter profile memoryState (schedulePrefix target k))
@@ -261,6 +266,13 @@ theorem rv32i_progress_refinement
               (schedulePrefix schedule boundary))) := htrace
       _ = some (trace (rvMemoryMachineWith profile) memoryState
             (schedulePrefix target k)) := by rw [htarget]
+  have cycle_trace_eq :
+      cycleTrace machine.toCycleMachine coreState
+          (schedulePrefix schedule boundary) =
+        trace (rvMemoryMachineWith profile) memoryState
+          (schedulePrefix target k) :=
+    normalizeRvfiCycleTrace machine coreState
+      (schedulePrefix schedule boundary) trace_eq
   exact ⟨{
     boundary := boundary
     program := program
@@ -268,6 +280,7 @@ theorem rv32i_progress_refinement
     program_inputs_eq := program_inputs_eq
     program_state_eq := program_state_eq
     trace_eq := trace_eq
+    cycle_trace_eq := cycle_trace_eq
     state_rel := program_state_eq ▸ hfinal }⟩
 
 /-- The reset-specialized form of the R2 contract: RVFI order starts at zero,

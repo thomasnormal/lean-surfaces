@@ -6655,3 +6655,29 @@ new axiom was introduced.
 decoded-program-to-target equations needed by the from-reset R2 theorem.  The
 PicoRV32 core remains parked at the two approved memory-route walls; the Sem2
 multi-clock item remains deferred to ls-sv.
+
+## 2026-11-07-ls-sv2-359 — expose the committed cycle stream
+
+The prefix record's normalized packed-RVFI equality still left the finish-line
+observable one projection away.  A core refinement is about committed
+retirements, so the public record should expose the cycle machine's filtered
+stream directly while retaining normalization as an explicit premise.
+
+**CHANGED:** Added `cycle_trace_eq` to `Rv32iPrefixRefinement` and derive it
+with `normalizeRvfiCycleTrace` in `rv32i_progress_refinement`.  The equality is
+exactly between `cycleTrace machine.toCycleMachine` at the retained cycle
+boundary and `trace (rvMemoryMachineWith profile)` on the target retirement
+prefix; no rows are sorted, repaired, or silently dropped.  Updated the
+PicoRV32 README and backlog index.  No semantics, RTL, loader, extractor, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiProgress.lean` passes under
+Lean 4.35.0, with the declarations reporting only
+`propext`/`Classical.choice`/`Quot.sound`.  The refinement umbrella build, wall
+probe, docs check, backlog index check, and diff check pass.  No `sorryAx` or
+new axiom was introduced.
+
+**JUDGED / DECIDED:** The from-reset prefix contract now exposes the exact
+committed retirement stream required by R2, alongside its raw RVFI
+normalization, target equations, and state relation.  PicoRV32 remains parked
+at the two approved memory-route walls.

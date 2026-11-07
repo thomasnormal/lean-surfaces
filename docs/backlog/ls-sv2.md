@@ -6210,3 +6210,41 @@ illegal causes and handler transitions, actual cycle inputs, unchanged data
 memory, and core state transitions.  Unimplemented CSR addresses remain on
 their separate illegal-CSR boundary.  PicoRV32 remains parked at the existing
 unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-345 — unify symbolic RV32I illegal trap programs
+
+The decode-failure certificate covers undecodable words, while the Zicsr
+certificate records an absent CSR row as a separate illegal-CSR boundary.  A
+complete trap stream may contain both shapes, so the program certificate must
+retain their distinct parser proofs while sharing the same illegal trap
+transition.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiTrapProgram.lean`.  `TrapInstruction` has explicit
+constructors for an undecodable word and a decoded Zicsr word whose CSR row is
+absent; each constructor carries the exact decoder and row-lookup proof.  The
+input, architectural-state, and retirement folds cover arbitrary mixtures of
+the two trap forms and expose append laws.  The stateful
+`rvMemoryMachineWith` bridge dispatches to the exact
+`isaStepWith_illegal`/`isaStepWith_illegal_csr` equations while sharing the
+`illegalNext`/`illegalRetirement` transition.  `TrapRvfiTrace` and
+`TrapRvfiCycleTrace` normalize raw RVFI observations, retain arbitrary bubble
+inputs and exact cycle-step equalities, identify retiring inputs, and compose
+at the exact core/state/retirement-order boundary.  Updated both core READMEs
+and regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiTrapProgram.lean`, the
+umbrella `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment a mixed
+illegal trap stream without conflating undecodable words with unimplemented
+CSRs, preserving exact illegal causes and handler transitions, actual cycle
+inputs, unchanged data memory, and core state transitions.  PicoRV32 remains
+parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
+walls.

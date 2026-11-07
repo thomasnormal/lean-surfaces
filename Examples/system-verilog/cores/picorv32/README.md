@@ -231,6 +231,14 @@ that boundary and the second window's ISA state, while
 `pinned_cycle_normalized_chain_refines_of` instantiates those four segmented
 facts on the same measured split.
 
+`rvfiCycleStepRefines_of_addi` is the first instruction-class constructor for
+the strict raw-cycle contract.  Given a core relation and admission predicate,
+it packages an invariant whose valid rows satisfy `addiBoundary` and advance
+the ISA through `addiNext`, while invalid rows carry the relation across an
+ISA stutter.  The profile, core relation, and input admission remain explicit,
+so a future loaded-core proof can discharge the ADDI row case without
+reconstructing the packed valid/invalid dispatch.
+
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,
 `rs1_rdata = 5`), proves the threaded architectural state has `pc = 12`,

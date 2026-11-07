@@ -331,6 +331,18 @@ absence of register, memory, and trap effects.  A valid cycle advances only
 the architectural pc and preserves threaded byte memory; invalid rows remain
 explicit ISA stutters.
 
+The generic ALU boundary now covers the complete decoded `.alu` family:
+register-register and immediate operations, plus the LUI/AUIPC operand forms.
+`RvfiObservation.aluBoundary` keeps the operation, destination, source muxes,
+writeback value, sequential pc advance, and no-memory/no-trap facts explicit;
+register sources are checked against the architectural state while immediate
+sources carry no fictitious RVFI register read.  Its
+`rvfiCycleStepRefines_of_alu_memory` constructor advances a valid row through
+`aluNext` and preserves the threaded byte memory, while invalid rows remain
+explicit ISA stutters.  The contract is generic over all ten RV32I ALU
+operations, so a loaded-core invariant can specialize it by the decoded
+operation rather than duplicating ten wire predicates.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

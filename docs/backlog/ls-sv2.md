@@ -4779,3 +4779,36 @@ checks passed, including `python3 tools/docs_check.py`,
 family with the condition parameter retained at the raw boundary.  Continue
 with the next owned RV32I refinement step while the CombView and generated
 member work remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-298 — add the generic RV32I ALU RVFI boundary
+
+The inboxes and goal file were reread before this item.  The owner lane's
+CombView migration remains in `LeanModels/Sv/**`, and the generated-member
+memory-route refusal remains an `ls-sv` request, so this item advances the
+owned generic refinement layer without touching those files.
+
+Added `LeanModels/Refine/Rv32iAlu.lean` with the profile-parametric
+`aluNext`/`aluEffects`/`aluRetirement` equations and their
+`isaStepWith`, memory-threaded, and `rvMachineWith` bridges.  Added
+`LeanModels/Refine/RvfiAlu.lean` with the raw
+`RvfiObservation.aluBoundary` predicate and
+`rvfiCycleStepRefines_of_alu_memory`.  The boundary covers all ten RV32I ALU
+operations, register and immediate second sources, and the pc-based AUIPC
+first source; source register reads remain explicit, immediate sources do not
+invent RVFI register fields, and valid rows preserve threaded byte memory
+while invalid rows remain ISA stutters.  Updated the `LeanModels.Refine`
+umbrella and the PicoRV32 README; no RTL, loader, extractor, or
+`LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iAlu`,
+`lake build LeanModels.Refine.RvfiAlu`, `lake build LeanModels.Refine`, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The ALU declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**JUDGED / DECIDED:** keep the ten operations and all operand mux forms under
+one semantic ALU family, with source fields parameterized by `Src1`/`Src2`;
+continue the owned RV32I boundary layer while generated-member memory support
+remains with `ls-sv`.

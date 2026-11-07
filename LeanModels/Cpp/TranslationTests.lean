@@ -3634,6 +3634,25 @@ def resolvedConstructorNullHandleRefusal : Except String Unit := do
   let _ ← admitResolvedCXXConstructExpression resolvedConstructorNullHandleTranslation [0]
   pure ()
 
+private def resolvedConstructorArrayHandleTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0xca"), ("kind", .string "CXXConstructExpr"),
+        ("ctor", .object [
+          ("id", .array []), ("kind", .string "CXXConstructorDecl")
+        ]),
+        ("ctorType", .object [("qualType", .string "void (int)")]),
+        ("inner", .array [])
+      ]
+    ])
+  ]}
+
+def resolvedConstructorArrayHandleRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXConstructExpression resolvedConstructorArrayHandleTranslation [0]
+  pure ()
+
 private def resolvedConstructorMalformedValueTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -3955,6 +3974,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedConstructorNumericHandleRefusal matches .error _
 #guard resolvedConstructorBooleanHandleRefusal matches .error _
 #guard resolvedConstructorNullHandleRefusal matches .error _
+#guard resolvedConstructorArrayHandleRefusal matches .error _
 #guard resolvedConstructorMalformedValueRefusal matches .error _
 #guard resolvedConstructorWrongKindRefusal matches .error _
 #guard resolvedConstructorMalformedScalarRefusal matches .error _

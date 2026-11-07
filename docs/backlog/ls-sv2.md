@@ -4713,3 +4713,35 @@ was introduced.
 
 **DECIDED:** continue the generic threaded RVFI boundary with the next RV32I
 instruction family while generated-member memory support remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-296 — add the RV32I jump RVFI boundaries
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned generic
+RVFI and RISC-V refinement layers.
+
+Added `LeanModels/Refine/Rv32iJump.lean` with profile-parametric JAL and JALR
+state/effects equations (`jalNext`/`jalrNext`, their effects and retirements)
+plus the `isaStepWith`, memory-threaded, and `rvMachineWith` bridge theorems.
+Added `LeanModels/Refine/RvfiJump.lean` with raw
+`RvfiObservation.jalBoundary` and `jalrBoundary` predicates and the strict
+threaded-memory cycle constructors `rvfiCycleStepRefines_of_jal_memory` and
+`rvfiCycleStepRefines_of_jalr_memory`.  JAL keeps the pc-relative target and
+link write explicit; JALR keeps its `rs1` read and low-bit-cleared target
+explicit.  Both valid cases preserve the threaded byte memory, while invalid
+rows remain explicit ISA stutters.  The umbrella import and PicoRV32 README
+were updated; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iJump` and
+`lake build LeanModels.Refine.RvfiJump` passed, followed by
+`lake build LeanModels.Refine` (28 jobs).  The new theorem reports contain
+only the established `propext`/`Classical.choice`/`Quot.sound` boundary; no
+`sorryAx` or new axiom was introduced.  The docs and generated backlog index
+checks passed, including `python3 tools/docs_check.py`,
+`./tools/backlog-index.sh --check`, and `git diff --check`.
+
+**JUDGED / DECIDED:** treat JAL and JALR together as the model's unconditional
+`.jump` family, with separate raw predicates so JALR's register base cannot be
+lost at the core-facing boundary.  Continue with the next decoded RV32I
+family after this item while generated-member memory support remains with
+`ls-sv`.

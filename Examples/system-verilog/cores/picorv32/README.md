@@ -314,6 +314,15 @@ and unchanged byte memory, matching `lwRetirement`; invalid rows remain
 explicit ISA stutters.  This completes the threaded-memory constructors for
 the measured ADDI/SW/LW prefix.
 
+The jump-family boundary now covers both RV32I `JAL` and `JALR`.  The
+`RvfiObservation.jalBoundary` predicate identifies the pc-relative decode,
+the link writeback (`pc + 4`), and the redirected pc; its
+`rvfiCycleStepRefines_of_jal_memory` constructor threads the unchanged byte
+memory through the valid row.  The corresponding `jalrBoundary` contract
+keeps the source-register read and the target's low-bit clearing explicit,
+with `rvfiCycleStepRefines_of_jalr_memory` carrying the resulting state and
+retirement.  Both constructors retain invalid rows as explicit ISA stutters.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

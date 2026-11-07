@@ -3787,3 +3787,21 @@ preservation.  The README records this direct raw-to-ISA bridge.
 **DECIDED:** make the raw RVFI predicate the sole premise of the ADDI step
 bridge.  Keep profile and memory explicit, preserve the no-interrupt/RV32I
 scope, and leave the eventual RTL state relation to the loaded-core proof.
+
+## 2026-11-07-ls-sv2-250 — exercise the ADDI boundary after state threading
+
+The inboxes were reread before this item.  The owner lane still has no new
+loader result, so this item validates the owned boundary against a later row
+of the measured PicoRV32 stream rather than inventing a symbolic core state.
+
+Extended `rvfi_addi_boundary.lean` with a state-threaded witness for the
+measured `ADDI x3, x2, 1` row after the `ADDI/SW/LW` prefix.  The witness
+retains the source fields that the compact five-row normalization fixture did
+not need (`rs1_addr = 2`, `rs1_rdata = 5`), computes the architectural prefix
+with `machineStateAfter`, and proves `pc = 12`, `x2 = 5`, and `x0 = 0`.  It
+then proves the full raw `RvfiObservation.addiBoundary` and derives the exact
+profile-parametric `isaStepMemWith` result for that non-reset state.
+
+**DECIDED:** use the same raw-to-ISA predicate at reset and after a measured
+memory-affecting prefix; keep state threading in the architectural machine
+until the loaded PicoRV32 invariant can supply its own related state.

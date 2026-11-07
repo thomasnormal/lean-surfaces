@@ -27,6 +27,9 @@ Typed integer literal construction uses the shared structured type-evidence
 and target-profile boundary before each evaluator applies its own invalid or
 unsupported result handling.
 
+Typed `sizeof` value construction follows the same shared operand-evidence and
+profile boundary before evaluator-specific error wrapping.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

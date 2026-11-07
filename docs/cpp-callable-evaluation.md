@@ -12,6 +12,9 @@ Integral type extraction is likewise shared; qualified builtin evidence unwraps
 to its builtin type, while records and other non-integral evidence remain
 unsupported.
 
+Profile format selection is shared at the same boundary, including invalid or
+unsupported target-profile outcomes.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

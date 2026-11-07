@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized profile format selection in `ScalarArithmetic` for both callable
+  evaluators and added a witness for qualified and unsupported evidence.
+
 - Centralized integral type extraction in ScalarArithmetic for both callable
   evaluators and added a kernel agreement witness for builtin, qualified, and
   non-integral evidence.

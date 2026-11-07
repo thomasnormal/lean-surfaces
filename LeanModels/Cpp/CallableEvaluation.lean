@@ -28,12 +28,10 @@ private def mapFormatError (reason : TypeResolutionError) : CallableEvaluationEr
 
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Except CallableEvaluationError IntegralFormat :=
-  match integralTypeOfEvidence type with
-  | none => .error (.unsupportedType type)
-  | some integer =>
-      match profile.format integer with
-      | .ok format => .ok format
-      | .error reason => .error (mapFormatError reason)
+  (integralFormatOfEvidence profile type).mapError fun reason =>
+    match reason with
+    | .unsupportedType _ => .unsupportedType type
+    | other => mapFormatError other
 
 private def exactArgument (profile : TargetProfile) (type : CppTypeEvidence)
     (value : IntegralValue) (declaration : FrontendHandle) :

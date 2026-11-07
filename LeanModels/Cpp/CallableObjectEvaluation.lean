@@ -47,8 +47,7 @@ private def frameFailure (frame : IntegralObjectFrame) (reason : FrameError) :
 
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Option IntegralFormat :=
-  integralTypeOfEvidence type |>.bind fun integer =>
-    (profile.format integer).toOption
+  (integralFormatOfEvidence profile type).toOption
 
 private def mapIntegralResult (result : IntegralResult IntegralValue)
     (convert : IntegralValue → IntegralResult IntegralValue) :

@@ -9,6 +9,12 @@ def integralTypeOfEvidence : CppTypeEvidence → Option CppIntType
   | .qualified _ _ base => integralTypeOfEvidence base
   | _ => none
 
+def integralFormatOfEvidence (profile : TargetProfile) (type : CppTypeEvidence) :
+    Except TypeResolutionError IntegralFormat := do
+  let some integer := integralTypeOfEvidence type
+    | throw (.unsupportedType .int)
+  profile.format integer
+
 def integralBinaryOfString : String → Option IntegralBinary
   | "+" => some .add
   | "-" => some .subtract

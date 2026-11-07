@@ -166,6 +166,13 @@ def callableIntegralTypeEvidenceAgreement : Bool :=
 
 #guard callableIntegralTypeEvidenceAgreement
 
+def callableIntegralFormatEvidenceAgreement : Bool :=
+  (integralFormatOfEvidence .lp64 intType matches .ok (.signed 32)) &&
+    (integralFormatOfEvidence .lp64 (.qualified true false intType) matches .ok (.signed 32)) &&
+    (integralFormatOfEvidence .lp64 (.record (handle "0x99")) matches .error _)
+
+#guard callableIntegralFormatEvidenceAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

@@ -7,6 +7,10 @@ lemmas and fuel monotonicity theorem, so multi-clock and implicit-clock
 refusals remain sound after the guard was added. Startup-state shape proofs
 also preserve the declared z value and width of undriven nets.
 
+The memory-cycle wall probe now pins both sides of the referenced-task
+boundary: source-declared empty input-only tasks are admitted as metadata,
+while ordinary task metadata remains a loud unsupported member.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

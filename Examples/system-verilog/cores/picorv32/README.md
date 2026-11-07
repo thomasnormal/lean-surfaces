@@ -133,6 +133,11 @@ measured stream; the same witness now derives the exact `isaStepMemWith` result
 and the `rvMachineWith` commit from the raw predicate, while the symbolic RTL
 proof still waits on the generic loader wall.
 
+The raw ADDI predicate also has a stateful-machine bridge.  The reset and
+post-prefix witnesses use `RvfiObservation.addiBoundary_rvMemoryMachineWith`
+to show that the row's commit leaves its explicit byte-memory state unchanged
+while producing the exact `addiNext` architectural state and retirement.
+
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,
 `rs1_rdata = 5`), proves the threaded architectural state has `pc = 12`,

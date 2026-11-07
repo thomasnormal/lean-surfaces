@@ -1,5 +1,6 @@
 import LeanModels.Refine.Rv32i
 import LeanModels.Refine.Rvfi
+import LeanModels.Refine.MemoryMachine
 
 /-!
 # Raw RVFI ADDI boundary
@@ -161,6 +162,26 @@ theorem RvfiObservation.addiBoundary_rvMachineWith
   rw [hinput]
   exact rvMachineWith_addi profile s input.memory w rd rs1 imm hdecode
 
+/- The same raw boundary drives the memory-threaded machine.  ADDI has no
+data-memory effect, so the stateful memory remains exactly the input view. -/
+theorem RvfiObservation.addiBoundary_rvMemoryMachineWith
+    (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
+    (input : Input) (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.addiBoundary s input w rd rs1 imm) :
+    (rvMemoryMachineWith profile).step { arch := s, memory := input.memory } input =
+      ({ arch := addiNext s rd rs1 imm, memory := input.memory },
+        addiRetirement s input rd rs1 imm) := by
+  rcases h.1 with ⟨hirq, hfetched, hdecode, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩
+  have hinput : input =
+      { fetched := .word w, memory := input.memory, irq := 0 } := by
+    cases input with
+    | mk fetched memory irq =>
+        simp_all
+  rw [hinput]
+  simp only [rvMemoryMachineWith]
+  rw [isaStepWith_addi profile s input.memory w rd rs1 imm hdecode]
+  rfl
+
 #print axioms LeanModels.Refine.addiEffects_no_memory
 #print axioms LeanModels.Refine.addiRetirement_no_memory
 #print axioms LeanModels.Refine.addiNext_preserves_x0
@@ -168,5 +189,6 @@ theorem RvfiObservation.addiBoundary_rvMachineWith
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary_isaStepMemWith
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary_rvMachineWith
+#print axioms LeanModels.Refine.RvfiObservation.addiBoundary_rvMemoryMachineWith
 
 end LeanModels.Refine

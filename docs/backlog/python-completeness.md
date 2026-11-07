@@ -11062,6 +11062,24 @@ return-value behavior remain outside the current tier.
 DECIDED: retain the structured delegation boundary and implement a PEP 380
 frame before admitting resumed `yield from` behavior.
 
+## 2026-11-07-pycomplete-466 — audit yield-from inlining
+
+The medium `py-yieldfrom-inline` finding is already fixed at the source and
+ingestion boundary. The approved extractor and JSON parser preserve
+`.yieldFromStmt`; the old synthetic target/`for` loop and `yieldFromName`
+helpers have no active path. The dedicated interpreter arm refuses unsupported
+delegation rather than pretending that a loop has PEP 380 send/throw/close or
+return-value semantics.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active yield-from loop synthesis or `yieldFromName` helper |
+| Boundary | dedicated `yieldFromStmt` refusal remains explicit |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-yieldfrom-inline` as already fixed; retain the structured
+delegation refusal until a PEP 380 frame is implemented.
+
 ## 2026-11-07-pycomplete-436 — recheck structured class statement boundary
 
 The class-ingestion audit is closed at the statement boundary. The approved

@@ -26350,6 +26350,8 @@ def _sva_pexpr(node):
         "BinaryXorExpression": "^", "AddExpression": "+",
         "SubtractExpression": "-", "MultiplyExpression": "*",
         "DivideExpression": "/", "ModExpression": "%",
+        "LogicalShiftLeftExpression": "<<", "LogicalShiftRightExpression": ">>",
+        "ArithmeticShiftLeftExpression": "<<<", "ArithmeticShiftRightExpression": ">>>",
     }
     if kind == "LogicalImplicationExpression":
         return {"kind": "Binary", "op": "||",

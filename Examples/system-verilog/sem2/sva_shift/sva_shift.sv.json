@@ -1,0 +1,250 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_shift",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_shift/sva_shift.sv",
+      "sha256": "228bf1054a6e7834c381d22f256114322b42c15e9f6717a2eb308134ae3ab01c"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "sva_shift",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 21,
+              "end_line": 4,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 22,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 20
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 7,
+                "col": 14,
+                "end_line": 7,
+                "end_col": 20
+              },
+              "width": 4,
+              "op": "u<<",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 14,
+                  "end_line": 7,
+                  "end_col": 15
+                },
+                "width": 4,
+                "name": "a"
+              },
+              "right": {
+                "kind": "Int",
+                "span": {
+                  "line": 7,
+                  "col": 19,
+                  "end_line": 7,
+                  "end_col": 20
+                },
+                "value": 1,
+                "resolved_width": 32
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 50
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) (a << 1) == q);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaValueEq",
+                    "left": {
+                      "kind": "SvaValueBinary",
+                      "op": "<<",
+                      "left": {
+                        "kind": "SvaCurrent",
+                        "expr": {
+                          "kind": "Ident",
+                          "name": "a"
+                        }
+                      },
+                      "right": {
+                        "kind": "SvaCurrent",
+                        "expr": {
+                          "kind": "Int",
+                          "value": 1
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "SvaCurrent",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "q"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

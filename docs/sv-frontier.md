@@ -203,8 +203,12 @@ one known one exists and no unknown can make the count exceed one. The clean
 from 3 to 2, leaving one shift and one other invocation.
 Sampled order comparisons (`<`, `<=`, `>`, `>=`) now retain temporal operands
 as `SvaValueCmp` and evaluate them at the sampled width. The clean-room
-`sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter census falls
-from 2 to 1, leaving only the parameter-sized shift expression.
+`sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter remains at two
+independent walls for the parameter-sized cast and one system invocation.
+Fixed-width shift expressions now use the existing sampled value-binary path.
+The clean-room `sem2/sva_shift` witness covers `a << 1`; the parameter-sized
+`N'(1)` cast in the arbiter remains loud because its width context is not yet
+represented in the SVA environment.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

@@ -186,6 +186,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 environment. The clean-room `sem2/sva_select` witness covers the sampled
 selector form; the arbiter property-expression census falls from 12 to 9,
 leaving only nested temporal calls and a shift expression.
+Boolean conjunction, disjunction, and negation now recurse through structured
+SVA leaves, so a finite `$past` operand remains a sampled `SvaPast` node inside
+the boolean tree. The clean-room `sem2/sva_past_logic` witness covers the
+conjunction form; the remaining arbiter invocation walls are system calls,
+arithmetic temporal terms, and shifts. The arbiter property-expression census
+falls from 9 to 7, with six system-call invocations and one shift remaining.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

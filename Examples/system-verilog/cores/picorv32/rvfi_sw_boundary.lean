@@ -54,6 +54,16 @@ theorem pinned_store_machine_commit :
     cv32e40pProfile storeRaw storeState storeInput
       0x10102023 0 1 0x100 pinned_store_boundary
 
+theorem pinned_store_stateful_machine_commit :
+    (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := storeState, memory := storeInput.memory } storeInput =
+      ({ arch := swNext storeState,
+          memory := storeVal storeInput.memory .word 0x100 5 },
+        swRetirement storeState storeInput 0 1 0x100) := by
+  exact RvfiObservation.swBoundary_rvMemoryMachineWith
+    cv32e40pProfile storeRaw storeState storeInput
+      0x10102023 0 1 0x100 pinned_store_boundary
+
 #guard storeInput.fetched = .word 0x10102023
 #guard storeRaw.toRetirement? == some
   (swRetirement storeState storeInput 0 1 0x100)
@@ -62,5 +72,6 @@ theorem pinned_store_machine_commit :
 #print axioms pinned_store_boundary
 #print axioms pinned_store_memory
 #print axioms pinned_store_machine_commit
+#print axioms pinned_store_stateful_machine_commit
 
 end Examples.«system-verilog».cores.picorv32.rvfi_sw_boundary

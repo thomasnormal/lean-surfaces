@@ -190,6 +190,30 @@ theorem RvfiObservation.swBoundary_rvMachineWith
   rw [hinput]
   exact rvMachineWith_sw profile s input.memory w rs1 rs2 imm hdecode
 
+/- The store boundary also drives the memory-threaded machine, exposing the
+exact byte-memory update alongside the architectural commit. -/
+theorem RvfiObservation.swBoundary_rvMemoryMachineWith
+    (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
+    (input : Input) (w : Word) (rs1 rs2 : Reg) (imm : Word)
+    (h : o.swBoundary s input w rs1 rs2 imm) :
+    (rvMemoryMachineWith profile).step { arch := s, memory := input.memory } input =
+      ({ arch := swNext s,
+          memory := storeVal input.memory .word
+            (s.readReg rs1 + imm) (s.readReg rs2) },
+        swRetirement s input rs1 rs2 imm) := by
+  rcases h.1 with
+    ⟨hirq, hfetched, hdecode, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+      _, _⟩
+  have hinput : input =
+      { fetched := .word w, memory := input.memory, irq := 0 } := by
+    cases input with
+    | mk fetched memory irq =>
+        simp_all
+  rw [hinput]
+  simp only [rvMemoryMachineWith]
+  rw [isaStepWith_sw profile s input.memory w rs1 rs2 imm hdecode]
+  rfl
+
 theorem RvfiObservation.lwBoundary_rvMachineWith
     (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
     (input : Input) (w : Word) (rd rs1 : Reg) (imm : Word)
@@ -207,11 +231,36 @@ theorem RvfiObservation.lwBoundary_rvMachineWith
   rw [hinput]
   exact rvMachineWith_lw profile s input.memory w rd rs1 imm hdecode
 
+/- A load leaves the threaded byte memory unchanged while retaining the exact
+memory view used to compute the destination register. -/
+theorem RvfiObservation.lwBoundary_rvMemoryMachineWith
+    (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
+    (input : Input) (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.lwBoundary s input w rd rs1 imm) :
+    (rvMemoryMachineWith profile).step { arch := s, memory := input.memory } input =
+      ({ arch := lwNext s input.memory rd rs1 imm,
+          memory := input.memory },
+        lwRetirement s input rd rs1 imm) := by
+  rcases h.1 with
+    ⟨hirq, hfetched, hdecode, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+      _⟩
+  have hinput : input =
+      { fetched := .word w, memory := input.memory, irq := 0 } := by
+    cases input with
+    | mk fetched memory irq =>
+        simp_all
+  rw [hinput]
+  simp only [rvMemoryMachineWith]
+  rw [isaStepWith_lw profile s input.memory w rd rs1 imm hdecode]
+  rfl
+
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary_isaStepMemWith
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary_rvMachineWith
+#print axioms LeanModels.Refine.RvfiObservation.swBoundary_rvMemoryMachineWith
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_isaStepMemWith
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMachineWith
+#print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMemoryMachineWith
 
 end LeanModels.Refine

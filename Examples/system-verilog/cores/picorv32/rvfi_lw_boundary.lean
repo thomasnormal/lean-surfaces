@@ -54,6 +54,16 @@ theorem pinned_load_machine_commit :
     cv32e40pProfile loadRaw loadState loadInput
       0x10002103 2 0 0x100 pinned_load_boundary
 
+theorem pinned_load_stateful_machine_commit :
+    (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := loadState, memory := loadInput.memory } loadInput =
+      ({ arch := lwNext loadState loadInput.memory 2 0 0x100,
+          memory := loadInput.memory },
+        lwRetirement loadState loadInput 2 0 0x100) := by
+  exact RvfiObservation.lwBoundary_rvMemoryMachineWith
+    cv32e40pProfile loadRaw loadState loadInput
+      0x10002103 2 0 0x100 pinned_load_boundary
+
 #guard loadInput.fetched = .word 0x10002103
 #guard loadRaw.toRetirement? == some
   (lwRetirement loadState loadInput 2 0 0x100)
@@ -62,5 +72,6 @@ theorem pinned_load_machine_commit :
 #print axioms pinned_load_boundary
 #print axioms pinned_load_memory
 #print axioms pinned_load_machine_commit
+#print axioms pinned_load_stateful_machine_commit
 
 end Examples.«system-verilog».cores.picorv32.rvfi_lw_boundary

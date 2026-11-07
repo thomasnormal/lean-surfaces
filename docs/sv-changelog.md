@@ -41,6 +41,11 @@ Fixed-width SVA shifts now use the existing sampled value-binary route. The
 `sem2/sva_shift` witness covers `a << 1`; parameter-sized casts remain loud
 until their width context is represented.
 
+The first pinned F1 target now meets its property-set bar: `prim_fifo_sync`
+retains all 27 assertion properties with no `Unsupported` nodes inside their
+structured property ASTs. Nine design-level loader boundaries remain outside
+that property set.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

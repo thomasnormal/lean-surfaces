@@ -223,6 +223,11 @@ The clean-room `sem2/sva_shift` witness covers `a << 1`; the parameter-sized
 `N'(1)` cast in the arbiter remains loud because its width context is not yet
 represented in the SVA environment.
 
+F1 acceptance for the first pinned target is now measured: the current
+`prim_fifo_sync` extraction retains all 27 assertion properties and contains
+zero `Unsupported` nodes inside their structured property ASTs. Its remaining
+9 nodes are design-level loader boundaries outside the property set.
+
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown
 value is never turned into a true result by `!`, `$past`, or `$stable`. Missing

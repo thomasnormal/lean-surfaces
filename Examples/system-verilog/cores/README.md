@@ -249,3 +249,13 @@ RV32I machine trace.  Their append theorems compose adjacent certificates at
 the exact architectural state, core state, and retirement-order boundary.
 This is generic refinement infrastructure; the PicoRV32 RTL remains parked at
 the existing unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+
+The generic refinement layer now includes
+`LeanModels.Refine.RvfiJumpProgram`.  `JumpInstruction` retains the fetched
+word, semantic JAL/JALR kind, and decoder proof; the state and retirement folds
+cover arbitrary mixtures of the two jump forms.  `JumpRvfiTrace` and
+`JumpRvfiCycleTrace` normalize raw RVFI rows, retain arbitrary bubble inputs and
+cycle-step equalities, and compose at the exact core, architectural-state, and
+retirement-order boundary.  The bridges use the existing JAL/JALR target and
+link-address semantics without introducing a second decoder.

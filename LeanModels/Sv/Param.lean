@@ -559,6 +559,7 @@ inductive PSvaBool where
   | and (left right : PSvaBool)
   | or (left right : PSvaBool)
   | isUnknown (value : PExpr)
+  | oneHot0 (value : PExpr)
   | past (cycles : Nat) (value : PExpr)
   | rose (value : PExpr)
   | fell (value : PExpr)

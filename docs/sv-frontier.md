@@ -196,6 +196,11 @@ falls from 9 to 6, with five system-call invocations and one shift remaining.
 returns true exactly when the evaluated vector contains x/z. The clean-room
 `sem2/sva_isunknown` witness covers the form; the arbiter census falls from 6
 to 3, leaving `$onehot0` and two other system-call boundaries plus the shift.
+`$onehot0(expr)` now maps to a finite four-state predicate: known vectors pass
+when at most one bit is one, while unknown vectors pass only when no more than
+one known one exists and no unknown can make the count exceed one. The clean
+`sem2/sva_onehot0` witness covers the admitted form; the arbiter census falls
+from 3 to 2, leaving one shift and one other invocation.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

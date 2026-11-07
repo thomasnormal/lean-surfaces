@@ -26435,6 +26435,8 @@ def _sva_bool(node):
                 if isinstance(p, dict) and p.get("kind") == "OrderedArgument"]
         if name == "$isunknown" and len(args) == 1:
             return {"kind": "SvaIsUnknown", "expr": _sva_pexpr(args[0])}
+        if name == "$onehot0" and len(args) == 1:
+            return {"kind": "SvaOneHot0", "expr": _sva_pexpr(args[0])}
         if name in ("$rose", "$fell", "$stable") and len(args) == 1:
             return {"kind": {"$rose": "SvaRose", "$fell": "SvaFell",
                               "$stable": "SvaStable"}[name],

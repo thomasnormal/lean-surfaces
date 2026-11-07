@@ -1,0 +1,299 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "net_z_memory",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/cores/picorv32/walls/net_z_memory.sv",
+      "sha256": "64ef56baf0e3c0c683de0f60e045b8674710fd4299724db37a2fc294a1974bbb"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "net_z_memory",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 37,
+              "end_line": 2,
+              "end_col": 42
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 37,
+                      "end_line": 2,
+                      "end_col": 42
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 37,
+                      "end_line": 2,
+                      "end_col": 42
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 41,
+                "end_line": 2,
+                "end_col": 42
+              },
+              "value": 4,
+              "resolved_width": 32
+            },
+            "resolved": 4
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 23,
+              "end_line": 4,
+              "end_col": 24
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 17,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 20,
+                      "end_line": 4,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "UnpackedDecl",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 27
+            },
+            "name": "mem",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 10,
+                      "end_line": 6,
+                      "end_col": 12
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 13,
+                      "end_line": 6,
+                      "end_col": 14
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "unpacked": [
+              {
+                "msb": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 6,
+                    "col": 21,
+                    "end_line": 6,
+                    "end_col": 22
+                  },
+                  "value": 0,
+                  "resolved_width": null
+                },
+                "lsb": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 6,
+                    "col": 23,
+                    "end_line": 6,
+                    "end_col": 26
+                  },
+                  "width": null,
+                  "op": "-",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 24
+                    },
+                    "name": "N"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 25,
+                      "end_line": 6,
+                      "end_col": 26
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 8,
+              "end_line": 7,
+              "end_col": 19
+            },
+            "sv_kind": "NetSymbol:net-z",
+            "text": "pcpi_mul_wr"
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 20
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 11
+              },
+              "width": 32,
+              "name": "q"
+            },
+            "value": {
+              "kind": "ArraySel",
+              "span": {
+                "line": 8,
+                "col": 14,
+                "end_line": 8,
+                "end_col": 20
+              },
+              "width": 32,
+              "name": "mem",
+              "indices": [
+                {
+                  "kind": "Int",
+                  "span": {
+                    "line": 8,
+                    "col": 18,
+                    "end_line": 8,
+                    "end_col": 19
+                  },
+                  "value": 0,
+                  "resolved_width": 32
+                }
+              ],
+              "part": null,
+              "unpacked": true
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

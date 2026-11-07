@@ -167,6 +167,19 @@
       "measured": "2026-11-07: dynamic packed element selects in SVA preserve the existing BitSel/Expr2.index path and sampled four-state out-of-range behavior."
     },
     {
+      "name": "sva_indexed_part",
+      "example": "sem2/sva_indexed_part",
+      "top": "sva_indexed_part",
+      "clock": "clk",
+      "signals": ["a", "base"],
+      "stimulus": [
+        {"a": "00000001", "base": "000"},
+        {"a": "00000100", "base": "010"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: indexed packed part-selects and sized vector literals in SVA retain source widths and evaluate through the sampled Expr2 part-select path."
+    },
+    {
       "name": "sva_past_logic",
       "example": "sem2/sva_past_logic",
       "top": "sva_past_logic",

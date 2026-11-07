@@ -135,6 +135,31 @@ endmodule
             "index": {"kind": "Ident", "name": "i"},
         })
 
+    def test_indexed_part_select_and_vector_literal_are_source_shaped(self):
+        source = """module top(input logic clk, input logic [7:0] a,
+  input logic [2:0] base);
+  assert property (@(posedge clk) a[base +: 2] == 2'b01);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "part.sv"
+            out = Path(directory) / "part.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        test = prop["ast"]["property"]["body"]["test"]
+        self.assertEqual(test["left"]["expr"], {
+            "kind": "PartSel", "value": {"kind": "Ident", "name": "a"},
+            "msb": {"kind": "Binary", "op": "+",
+                    "left": {"kind": "Ident", "name": "base"},
+                    "right": {"kind": "Binary", "op": "-",
+                               "left": {"kind": "Int", "value": 2},
+                               "right": {"kind": "Int", "value": 1}}},
+            "lsb": {"kind": "Ident", "name": "base"},
+        })
+        self.assertEqual(test["right"]["expr"], {
+            "kind": "Literal", "span": None, "width": 2, "bits": "01"})
+
 
 if __name__ == "__main__":
     unittest.main()

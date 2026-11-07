@@ -199,6 +199,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 environment. The clean-room `sem2/sva_select` witness covers the sampled
 selector form; the arbiter property-expression census falls from 12 to 9,
 leaving only nested temporal calls and a shift expression.
+Indexed packed part-selects (`base +: width` and `base -: width`) now retain
+their source-shaped `PartSel` bounds, and sized based literals retain their
+declared width and x/z digits in the existing literal node. The clean-room
+`sem2/sva_indexed_part` witness covers both forms. On the pinned `prim_packer`
+set, its four dynamic-selector and four integer-vector property walls are
+removed; the remaining property nodes are outside this finite fragment.
 Boolean conjunction, disjunction, and negation now recurse through structured
 SVA leaves, so a finite `$past` operand remains a sampled `SvaPast` node inside
 the boolean tree. The clean-room `sem2/sva_past_logic` witness covers the

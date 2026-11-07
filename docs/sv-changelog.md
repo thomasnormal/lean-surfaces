@@ -18,6 +18,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 The `sem2/sva_select` witness covers the sampled selector form; nested
 temporal calls and shifts remain named boundaries.
 
+Indexed packed part-selects now retain their source-shaped `PartSel` bounds,
+and sized based literals retain their declared width and four-state digits.
+The `sem2/sva_indexed_part` witness and Verilator row cover both forms; the
+pinned `prim_packer` census loses its four selector and four vector-literal
+property walls.
+
 Finite SVA boolean conjunction, disjunction, and negation now recurse through
 structured leaves, preserving nested `$past` sampling. The
 `sem2/sva_past_logic` witness and its Verilator row cover the conjunction form;

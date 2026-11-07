@@ -4630,3 +4630,28 @@ was introduced.
 
 **DECIDED:** complete the threaded-memory strict constructors for the measured
 `ADDI`/`SW`/`LW` prefix before adding another instruction family or core glue.
+
+## 2026-11-07-ls-sv2-293 — expose the generic threaded-memory RVFI boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `rvfiCycleStepRefines_of_memory_step` to
+`LeanModels/Refine/RvfiMem.lean`.  This constructor is independent of an
+instruction family: for a valid row its invariant must expose input-memory
+equality, row well-formedness, the concrete retirement, the exact
+`rvMemoryMachineWith` transition, and the related post-state; invalid rows
+remain explicit ISA stutters.  The ADDI/SW/LW constructors remain convenient
+decoded specializations, while future instruction families can consume the
+generic stateful boundary without duplicating its dispatch proof.  Updated the
+PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiMem` passed (15 jobs).  The
+new theorem's axiom report contains only the existing
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** use the generic stateful boundary for the next decoded RV32I
+instruction family, retaining the explicit memory equality and raw retirement
+obligations at every class-specific wrapper.

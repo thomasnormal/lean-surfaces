@@ -11027,6 +11027,23 @@ remain represented for ordinary names.
 DECIDED: preserve trailing definition deletes as source nodes and keep the
 static-table tombstone boundary loud until definitions become runtime bindings.
 
+## 2026-11-07-pycomplete-465 — audit trailing definition deletion rewrite
+
+The medium `py-trailing-del-rewrite` finding is already fixed. Ingestion keeps
+trailing bare-name `Delete` nodes; the script executor refuses a static
+function, class, namedtuple, or alias tombstone instead of rewriting the
+statement to `pass`, preserving source order and the explicit runtime-value
+boundary.
+
+| Measurement | Result |
+|---|---|
+| Trailing opcode witness | `del_trailing_script.py`: expected loud refusal |
+| Oracle | CPython 3.9 executes preceding output then exits successfully |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-trailing-del-rewrite` as already fixed; retain the loud
+static-definition deletion boundary until runtime bindings exist.
+
 ## 2026-11-07-pycomplete-435 — recheck structured yield-from delegation
 
 Statement-position `yield from` remains a source `YieldFrom` node from the

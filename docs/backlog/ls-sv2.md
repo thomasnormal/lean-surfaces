@@ -7007,6 +7007,31 @@ loaded-core per-cycle invariant are core-side premises of
 lemmas are in scope only when they establish one line above; no alternate
 packaging or per-instruction duplicate is planned.
 
+## 2026-11-07-ls-sv2-375 — audit the R2 headline ISA surface
+
+The six-line consumption list from item 374 needed a compiled API check before
+the ISA lane could be held.  The check must qualify `PlatformProfile` through
+`LeanModels.Rv`; the stateful machine and refinement declarations themselves
+remain in `LeanModels.Refine`.
+
+**MEASURED:** A temporary Lean 4.35.0 probe importing `LeanModels.Refine`,
+opening `LeanModels.Refine` and `LeanModels.Rv`, successfully resolves every
+listed declaration: `RvMemoryState`, `PlatformProfile`,
+`rvMemoryMachineWith`, `rvMemoryStateAfter`, the mixed `Rv32iInstruction`
+input/step/retirement functions, the `Rv32iBoundary` retirement and machine
+bridges, the one-step and mixed program state/trace equations,
+`Rv32iRvfiCycleTrace.retireInputs_eq`,
+`Rv32iRvfiCycleTrace.trace_refines`, and `rv32i_reset_refinement`.
+
+**CHANGED:** No ISA or refinement source changed.  This entry records that the
+headline API is present and typechecks with the intended namespace; it is an
+audit/hold result rather than another wrapper theorem.
+
+**JUDGED / DECIDED:** No missing ISA-side fact justifies item 375 work.  Hold
+further ISA packaging while PicoRV32 remains blocked by the retained task/net-z
+memory-route wall, and resume with an exact re-probe after that owner-lane wall
+changes.  Do not add finite captured-window lemmas.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

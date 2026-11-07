@@ -18,6 +18,7 @@ import LeanModels.Sv.ToggleExample
 import LeanModels.Sv.Param
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.MultiClock
+import LeanModels.Sv.PreemptGuard2
 -- The Design2 proof layer over the sv-0.2 semantics: the fuel-free evaluator
 -- (Pure2), the spec judgment `⊨₂` (Spec2), the known-value BitVec calculus and
 -- `sv2_known` (Known2), the generate-loop expansion lemmas (Gen2), the

@@ -6507,3 +6507,12 @@ requires the E relation to quantify over multiple-clock schedules, coincident
 edges, stopped clocks, and asynchronous input arrival times while preserving
 the defined sampling and NBA rules.
 
+## 2026-11-07
+
+- Added the optional `Schedule:preemptive` profile guard. It keeps the
+  source-shaped process-atomic E route unchanged while refusing designs whose
+  cross-process read/write or write/write windows could expose an IEEE §4.7
+  mid-process suspension. `runner2` rows opt in with `"preemptive": true`;
+  `sem2/preempt_profile` records the loud refusal until ls-spec supplies the
+  scheduler choice point.
+

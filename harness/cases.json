@@ -1534,6 +1534,7 @@
   ,{"file": "Examples/python/round_lab/round_lab.py", "function": "round_float_general", "args": [[125, -2]], "expect": "unsupported", "note": "negative ndigits for integer inputs remains outside the admitted slice"}
 
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "copy_order", "args": [[7]], "expect": "unsupported", "note": "set.copy() rebuilds a CPython hash table whose sizing and order are not modeled"}
-  ,{"file": "Examples/python/set_lab/set_lab.py", "function": "from_dict_order", "args": [[7]], "expect": "match", "note": "set(dict) consumes dict keys in insertion order; the admitted nonnegative shape matches CPython"}
+  ,{"file": "Examples/python/set_lab/set_lab.py", "function": "from_dict_order", "args": [[7]], "expect": "unsupported", "note": "set(dict) uses CPython dict-source table construction; the order is not modeled"}
+  ,{"file": "Examples/python/set_lab/set_lab.py", "function": "from_dict_order_wide", "args": [[]], "expect": "unsupported", "note": "wide dict-source set construction uses CPython pre-sized merge order, not sequential insertion order"}
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "intersection_order", "args": [[7]], "expect": "unsupported", "note": "set intersection has CPython-specific table sizing and iteration order"}
 ]

@@ -9495,7 +9495,9 @@ The differential batteries now carry explicit witnesses for the set-table edges
 called out by the audit: negative integer iteration (`-5`), `set.copy()`,
 `set(dict)` construction, and set intersection. The copy and intersection
 shapes remain loud because their CPython hash-table layout is not modeled;
-the nonnegative `set(dict)` path matches CPython. Existing script witnesses
+the narrow two-key nonnegative `set(dict)` path matched CPython at that time;
+the later wide-source audit found that this was not a general admission.
+Existing script witnesses
 for recursion limits, generator creation, list-comprehension shadowing, long
 global declarations, oversized repetition, annotated assignment order, and
 dead global-yield targets are retained. Script expectations were synchronized
@@ -10322,3 +10324,22 @@ returning a fabricated length.
 DECIDED: retain ordinary sequence multiplication followed by `len`; refuse
 products whose materialization exceeds the modeled allocation budget until
 allocation and memory outcomes are represented.
+
+## 2026-11-07-pycomplete-412 — refuse dictionary-source set table order
+
+The integer-set audit exposed one remaining silent wrong answer after negative
+hashes, copies, and intersections had been made loud: `set(dict)` retained the
+dict keys in first-seen order and then replayed sequential insertions, while
+CPython uses a distinct pre-sized set-merge table. A 20-key witness produced
+an exit-0 order mismatch. Both interpreter surfaces now refuse set construction
+from a heap dict or dictionary view before the set can be iterated. The narrow
+`set([nonnegative ints])` table reconstruction remains unchanged.
+
+| Measurement | Result |
+|---|---|
+| Previous wide witness | leanpy returned a wrong order with exit 0; CPython 3.9.25 returned a different order |
+| New focused rows | small and wide `set(dict)` rows are LOUD; direct nonnegative insertion still MATCHES |
+| Semantic change | set-source admission narrowed in `Semantics.lean` and `Monadic/Eval.lean` |
+
+DECIDED: keep dictionary and dictionary-view set construction outside the tier
+until CPython's pre-sized merge and resize transitions are represented.

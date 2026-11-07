@@ -617,6 +617,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [.ref a] =>
         match Heap.get? (← frameHeap) a with
         | some (.pyset _) => refuse "set copy construction is outside the tier (the copied table's iteration order is not modeled)"
+        | some (.dict _ _) => refuse "set construction from a dict is outside the tier (dict-source table order is not modeled)"
+        | some (.dictView ..) => refuse "set construction from a dictionary view is outside the tier (dict-source table order is not modeled)"
         | _ => do
             let xs ← iterValues K m "set" false (.ref a)
             let es ← liftRes (setDedup (← frameHeap) K.fuel [] xs)

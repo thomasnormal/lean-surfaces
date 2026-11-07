@@ -38,6 +38,10 @@
   ordinary materialization, with oversized products remaining loud instead of
   returning a fabricated length.
 
+- Refused set construction from dictionary sources: CPython's pre-sized
+  merge table gives iteration order the model cannot reproduce, so both small
+  and wide `set(dict)` witnesses now fail loudly.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

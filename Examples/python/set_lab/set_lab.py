@@ -114,8 +114,8 @@ def copy_order(a):
 
 
 def from_dict_order(a):
-    # Constructing a set from dict keys uses the live dict iterator and its
-    # own set table; neither order is guessed by the tier.
+    # Constructing a set from dict keys uses CPython's distinct table-merge
+    # path; iteration order is deliberately loud in the tier.
     d = {a: 1, a + 1: 2}
     s = set(d)
     out = []
@@ -127,6 +127,19 @@ def from_dict_order(a):
 def intersection_order(a):
     # Set intersection has CPython-specific table sizing and insertion order.
     s = set([a, a + 1]) & set([a + 1, a + 2])
+    out = []
+    for v in s:
+        out.append(v)
+    return out
+
+
+def from_dict_order_wide():
+    # A wider dict source exposes CPython's pre-sized set-merge table order
+    # and remains a differential loud-boundary witness.
+    d = {137: 1, 582: 2, 867: 3, 821: 4, 782: 5, 64: 6, 261: 7,
+         120: 8, 507: 9, 779: 10, 460: 11, 483: 12, 667: 13,
+         388: 14, 807: 15, 214: 16, 96: 17, 499: 18, 29: 19, 914: 20}
+    s = set(d)
     out = []
     for v in s:
         out.append(v)

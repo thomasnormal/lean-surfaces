@@ -10992,6 +10992,24 @@ static alias when a later ordinary assignment shadows it.
 DECIDED: retain guarded static aliases and loud unsafe observations; schedule
 runtime function values before deleting the ingestion table pass.
 
+## 2026-11-07-pycomplete-464 — audit module-level function alias copying
+
+The medium `py-def-alias-copy` finding remains open. `recognizeDefAliases`
+still admits a guarded source-order alias by copying a function entry and
+rewriting the assignment to `pass`. The guards preserve measured callable
+dispatch and shadow/rebinding behavior, but function-object identity,
+`__name__`, and general first-class value semantics remain outside that static
+representation.
+
+| Measurement | Result |
+|---|---|
+| Alias battery | 4/4 MATCH against CPython 3.9.25 |
+| Remaining debt | runtime function objects and ordinary alias assignment |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-def-alias-copy` open as a medium runtime-value milestone; do
+not broaden the guarded static alias admission.
+
 ## 2026-11-07-pycomplete-434 — recheck trailing definition deletion
 
 The trailing-definition deletion rewrite is absent from current ingestion.

@@ -847,3 +847,16 @@ at `picorv32.v:257`.  The clean-room `generate if` and `generate for`
 fixtures both remain admitted, so this is not a new generated-member shape and
 no `REQUEST ls-sv:` repro is filed.  The symbolic ADDI invariant remains
 parked at the unpacked `cpuregs` and unsupported-member/net-z walls.
+
+## Mixed RV32I program certificate
+
+`LeanModels.Refine.RvfiRv32iProgram` now combines the admitted ALU, branch,
+jump, memory, fence, system, implemented-CSR, and illegal/trap families in one
+`Rv32iInstruction` union.  Its input, architectural-state, byte-memory, and
+retirement folds thread arbitrary mixed programs, and their append laws expose
+the exact state boundary for segmented proofs.  `Rv32iRvfiTrace` and
+`Rv32iRvfiCycleTrace` consume the existing indexed `Rv32iBoundary`, preserve
+arbitrary bubble cycles and actual retiring inputs, and normalize the mixed
+stream to the stateful RV32I machine trace.  This is generic refinement
+infrastructure; the pinned PicoRV32 RTL remains parked at the loader walls
+above.

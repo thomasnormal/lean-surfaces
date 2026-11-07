@@ -1,0 +1,483 @@
+import LeanModels.Refine.RvfiRv32i
+import LeanModels.Refine.RvfiAluProgram
+import LeanModels.Refine.RvfiBranchProgram
+import LeanModels.Refine.RvfiJumpProgram
+import LeanModels.Refine.RvfiMemProgram
+import LeanModels.Refine.RvfiFenceProgram
+import LeanModels.Refine.RvfiSystemProgram
+import LeanModels.Refine.RvfiCsrProgram
+import LeanModels.Refine.RvfiTrapProgram
+
+/-!
+# Symbolic mixed RV32I programs
+
+The family certificates each cover one instruction class.  A loaded core's
+retirement stream is mixed, however, so its invariant needs one indexed
+program surface that keeps the family choice and every parser-derived proof.
+`Rv32iInstruction` is that union.  Its state, input, and retirement folds
+thread byte memory through arbitrary mixed lists without introducing a second
+instruction decoder.
+
+`Rv32iRvfiTrace` and `Rv32iRvfiCycleTrace` are the corresponding proof-facing
+certificates.  A valid row must supply the unified `Rv32iBoundary` at the exact
+post-state and retirement selected by the instruction; invalid rows remain
+explicit bubbles.  The cycle certificate retains the core's actual inputs and
+state at every cycle, so a future loaded-core proof can instantiate it directly.
+-/
+
+namespace LeanModels.Refine
+
+open LeanModels.Rv
+
+/-! ## The mixed instruction union and folds -/
+
+/-- One decoded instruction from the admitted RV32I boundary. -/
+inductive Rv32iInstruction where
+  | alu (instruction : AluInstruction)
+  | branch (instruction : BranchInstruction)
+  | jump (instruction : JumpInstruction)
+  | memory (instruction : MemInstruction)
+  | fence (instruction : FenceInstruction)
+  | system (instruction : SystemInstruction)
+  | csr (instruction : CsrInstruction)
+  | trap (instruction : TrapInstruction)
+
+/-- The input presented to one mixed instruction at its threaded state. -/
+def rv32iProgramInput (state : RvMemoryState) : Rv32iInstruction → Input
+  | .alu instruction => aluProgramInput state.memory instruction
+  | .branch instruction => branchProgramInput state.memory instruction
+  | .jump instruction => jumpProgramInput state.memory instruction
+  | .memory instruction => memProgramInput state instruction
+  | .fence instruction => fenceProgramInput state.memory instruction
+  | .system instruction => systemProgramInput state.memory instruction
+  | .csr instruction => csrProgramInput state.memory instruction
+  | .trap instruction => trapProgramInput state.memory instruction
+
+/-- The stateful architectural and byte-memory transition for one instruction. -/
+def rv32iProgramStep (state : RvMemoryState) : Rv32iInstruction → RvMemoryState
+  | .alu instruction =>
+      { arch := aluNext state.arch instruction.op instruction.rd instruction.src1
+          instruction.src2, memory := state.memory }
+  | .branch instruction =>
+      { arch := branchNext state.arch instruction.cond instruction.rs1
+          instruction.rs2 instruction.offset, memory := state.memory }
+  | .jump instruction =>
+      { arch := JumpKind.next state.arch instruction.kind, memory := state.memory }
+  | .memory instruction => memProgramStep state instruction
+  | .fence instruction =>
+      { arch := fenceNext state.arch instruction.kind, memory := state.memory }
+  | .system instruction =>
+      { arch := systemNext state.arch instruction.kind, memory := state.memory }
+  | .csr instruction =>
+      { arch := csrNext state.arch instruction.row instruction.kind,
+        memory := state.memory }
+  | .trap _ =>
+      { arch := illegalNext state.arch, memory := state.memory }
+
+/-- The retirement emitted by one mixed instruction. -/
+def rv32iProgramRetirement (state : RvMemoryState)
+    (instruction : Rv32iInstruction) : Retirement :=
+  match instruction with
+  | .alu instruction =>
+      aluRetirement state.arch (aluProgramInput state.memory instruction)
+        instruction.op instruction.rd instruction.src1 instruction.src2
+  | .branch instruction =>
+      branchRetirement state.arch (branchProgramInput state.memory instruction)
+        instruction.cond instruction.rs1 instruction.rs2 instruction.offset
+  | .jump instruction =>
+      JumpKind.retirement state.arch (jumpProgramInput state.memory instruction)
+        instruction.kind
+  | .memory instruction =>
+      memRetirement state.arch (memProgramInput state instruction)
+        instruction.kind instruction.r instruction.rs1 instruction.imm
+  | .fence instruction =>
+      fenceRetirement state.arch (fenceProgramInput state.memory instruction)
+        instruction.kind
+  | .system instruction =>
+      systemRetirement state.arch (systemProgramInput state.memory instruction)
+        instruction.kind
+  | .csr instruction =>
+      csrRetirement state.arch (csrProgramInput state.memory instruction)
+        instruction.row instruction.kind
+  | .trap instruction =>
+      illegalRetirement state.arch (trapProgramInput state.memory instruction)
+
+/-- The cycle inputs for a mixed program, with memory from the preceding state. -/
+def rv32iProgramInputs : RvMemoryState → List Rv32iInstruction → List Input
+  | _, [] => []
+  | state, instruction :: program =>
+      rv32iProgramInput state instruction ::
+        rv32iProgramInputs (rv32iProgramStep state instruction) program
+
+/-- The threaded state after a mixed program. -/
+def rv32iProgramState : RvMemoryState → List Rv32iInstruction → RvMemoryState
+  | state, [] => state
+  | state, instruction :: program =>
+      rv32iProgramState (rv32iProgramStep state instruction) program
+
+/-- The exact retirement stream for a mixed program. -/
+def rv32iProgramRetirements : RvMemoryState → List Rv32iInstruction →
+    List Retirement
+  | _, [] => []
+  | state, instruction :: program =>
+      rv32iProgramRetirement state instruction ::
+        rv32iProgramRetirements (rv32iProgramStep state instruction) program
+
+/-! ## Program-fold laws -/
+
+theorem rv32iProgramInputs_append (state : RvMemoryState)
+    (first second : List Rv32iInstruction) :
+    rv32iProgramInputs state (first ++ second) =
+      rv32iProgramInputs state first ++
+        rv32iProgramInputs (rv32iProgramState state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, rv32iProgramInputs, rv32iProgramState]
+      simp [ih (state := rv32iProgramStep state instruction)]
+
+theorem rv32iProgramState_append (state : RvMemoryState)
+    (first second : List Rv32iInstruction) :
+    rv32iProgramState state (first ++ second) =
+      rv32iProgramState (rv32iProgramState state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, rv32iProgramState]
+      exact ih (state := rv32iProgramStep state instruction)
+
+theorem rv32iProgramRetirements_append (state : RvMemoryState)
+    (first second : List Rv32iInstruction) :
+    rv32iProgramRetirements state (first ++ second) =
+      rv32iProgramRetirements state first ++
+        rv32iProgramRetirements (rv32iProgramState state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, rv32iProgramRetirements]
+      rw [ih (state := rv32iProgramStep state instruction)]
+      rfl
+
+/-! ## Stateful ISA equations -/
+
+/-- Every mixed instruction dispatches to its existing family theorem. -/
+theorem rvMemoryMachineWith_rv32i_step
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (instruction : Rv32iInstruction) :
+    (rvMemoryMachineWith profile).step state
+        (rv32iProgramInput state instruction) =
+      (rv32iProgramStep state instruction,
+        rv32iProgramRetirement state instruction) := by
+  cases instruction with
+  | alu instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_alu_step profile state.arch state.memory instruction)
+  | branch instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_branch_step profile state.arch state.memory instruction)
+  | jump instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_jump_step profile state.arch state.memory instruction)
+  | memory instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_mem_step profile state instruction)
+  | fence instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_fence_step profile state.arch state.memory instruction)
+  | system instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_system_step profile state.arch state.memory instruction)
+  | csr instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_csr_step profile state.arch state.memory instruction)
+  | trap instruction =>
+      simpa [rv32iProgramInput, rv32iProgramStep, rv32iProgramRetirement] using
+        (rvMemoryMachineWith_trap_step profile state.arch state.memory instruction)
+
+theorem rvMemoryMachineWith_rv32i_program_state
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (program : List Rv32iInstruction) :
+    machineStateAfter (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state program) =
+      rv32iProgramState state program := by
+  induction program generalizing state with
+  | nil => rfl
+  | cons instruction program ih =>
+      simp only [rv32iProgramInputs, machineStateAfter]
+      rw [rvMemoryMachineWith_rv32i_step profile state instruction]
+      simpa [rv32iProgramState] using
+        (ih (state := rv32iProgramStep state instruction))
+
+theorem rvMemoryMachineWith_rv32i_program_trace
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (program : List Rv32iInstruction) :
+    trace (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state program) =
+      rv32iProgramRetirements state program := by
+  induction program generalizing state with
+  | nil => rfl
+  | cons instruction program ih =>
+      simp only [rv32iProgramInputs, trace, rv32iProgramRetirements]
+      change
+        ((rvMemoryMachineWith profile).step state
+            (rv32iProgramInput state instruction)).2 ::
+          trace (rvMemoryMachineWith profile)
+            ((rvMemoryMachineWith profile).step state
+              (rv32iProgramInput state instruction)).1
+            (rv32iProgramInputs (rv32iProgramStep state instruction) program) = _
+      rw [rvMemoryMachineWith_rv32i_step profile state instruction]
+      simpa using
+        (ih (state := rv32iProgramStep state instruction))
+
+theorem rvMemoryMachineWith_rv32i_program_state_append
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (first second : List Rv32iInstruction) :
+    machineStateAfter (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state (first ++ second)) =
+      machineStateAfter (rvMemoryMachineWith profile)
+        (machineStateAfter (rvMemoryMachineWith profile) state
+          (rv32iProgramInputs state first))
+        (rv32iProgramInputs (rv32iProgramState state first) second) := by
+  rw [rv32iProgramInputs_append, machineStateAfter_append]
+
+theorem rvMemoryMachineWith_rv32i_program_trace_append
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (first second : List Rv32iInstruction) :
+    trace (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state (first ++ second)) =
+      trace (rvMemoryMachineWith profile) state
+          (rv32iProgramInputs state first) ++
+        trace (rvMemoryMachineWith profile)
+          (machineStateAfter (rvMemoryMachineWith profile) state
+            (rv32iProgramInputs state first))
+          (rv32iProgramInputs (rv32iProgramState state first) second) := by
+  rw [rv32iProgramInputs_append, machineTrace_append]
+
+/-! ## Raw RVFI certificate -/
+
+/-- A raw RVFI stream for an arbitrary mixed RV32I program. -/
+inductive Rv32iRvfiTrace (memory : Memory) :
+    Nat → RvMemoryState → List RvfiObservation → List Rv32iInstruction → Prop where
+  | nil (start : Nat) (state : RvMemoryState) :
+      Rv32iRvfiTrace memory start state [] []
+  | bubble {start : Nat} {state : RvMemoryState}
+      {observation : RvfiObservation} {observations : List RvfiObservation}
+      {program : List Rv32iInstruction}
+      (hvalid : observation.valid = false)
+      (tail : Rv32iRvfiTrace memory start state observations program) :
+      Rv32iRvfiTrace memory start state (observation :: observations) program
+  | retire {start : Nat} {state : RvMemoryState}
+      {observation : RvfiObservation} {observations : List RvfiObservation}
+      {instruction : Rv32iInstruction} {program : List Rv32iInstruction}
+      (horder : observation.order = start)
+      (boundary :
+        Rv32iBoundary state.arch (rv32iProgramInput state instruction) observation
+          (rv32iProgramStep state instruction) (rv32iProgramRetirement state instruction))
+      (tail : Rv32iRvfiTrace memory (start + 1)
+        (rv32iProgramStep state instruction) observations program) :
+      Rv32iRvfiTrace memory start state (observation :: observations)
+        (instruction :: program)
+
+theorem Rv32iRvfiTrace.toRvfiTraceRefines
+    {memory : Memory} {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiTrace memory start state observations program) :
+    RvfiTraceRefines start observations
+      (rv32iProgramRetirements state program) := by
+  induction certificate with
+  | nil start state => exact .nil start
+  | bubble hvalid tail ih => exact .bubble hvalid ih
+  | retire horder boundary tail ih =>
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      exact .retire hspec.1 horder hretirement ih
+
+theorem Rv32iRvfiTrace.normalize
+    {memory : Memory} {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiTrace memory start state observations program) :
+    normalizeRvfiTrace? start observations =
+      some (rv32iProgramRetirements state program) :=
+  (normalizeRvfiTrace?_iff).2 certificate.toRvfiTraceRefines
+
+theorem Rv32iRvfiTrace.trace_refines
+    (profile : PlatformProfile)
+    {memory : Memory} {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiTrace memory start state observations program) :
+    normalizeRvfiTrace? start observations =
+      some (trace (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state program)) := by
+  calc
+    normalizeRvfiTrace? start observations =
+        some (rv32iProgramRetirements state program) := certificate.normalize
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state program)) := by
+      rw [rvMemoryMachineWith_rv32i_program_trace]
+
+theorem Rv32iRvfiTrace.append
+    {memory : Memory} {start : Nat} {state : RvMemoryState}
+    {firstObservations secondObservations : List RvfiObservation}
+    {firstProgram secondProgram : List Rv32iInstruction}
+    (first : Rv32iRvfiTrace memory start state firstObservations firstProgram)
+    (second : Rv32iRvfiTrace memory
+      (start + firstProgram.length)
+      (rv32iProgramState state firstProgram)
+      secondObservations secondProgram) :
+    Rv32iRvfiTrace memory start state
+      (firstObservations ++ secondObservations)
+      (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start state =>
+      simpa [rv32iProgramState] using second
+  | bubble hvalid tail ih =>
+      refine Rv32iRvfiTrace.bubble hvalid ?_
+      apply ih
+      simpa [rv32iProgramState] using second
+  | retire horder boundary tail ih =>
+      refine Rv32iRvfiTrace.retire horder boundary ?_
+      apply ih
+      simpa [rv32iProgramState, List.length_cons, Nat.add_assoc,
+        Nat.add_comm, Nat.add_left_comm] using second
+
+/-! ## Input-aware cycle certificate -/
+
+/-- A mixed RV32I certificate tied to an actual packed-RVFI cycle machine. -/
+inductive Rv32iRvfiCycleTrace {State : Type}
+    (machine : RvfiCycleMachine State) :
+    Nat → State → RvMemoryState → List Input → List Rv32iInstruction → Prop where
+  | nil (start : Nat) (coreState : State) (state : RvMemoryState) :
+      Rv32iRvfiCycleTrace machine start coreState state [] []
+  | bubble {start : Nat} {coreState coreState' : State}
+      {state : RvMemoryState} {cycleInput : Input} {cycles : List Input}
+      {program : List Rv32iInstruction} {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hvalid : observation.valid = false)
+      (tail : Rv32iRvfiCycleTrace machine (start) coreState' state cycles program) :
+      Rv32iRvfiCycleTrace machine start coreState state
+        (cycleInput :: cycles) program
+  | retire {start : Nat} {coreState coreState' : State}
+      {state : RvMemoryState} {cycleInput : Input} {cycles : List Input}
+      {instruction : Rv32iInstruction} {program : List Rv32iInstruction}
+      {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hinput : cycleInput = rv32iProgramInput state instruction)
+      (horder : observation.order = start)
+      (boundary :
+        Rv32iBoundary state.arch (rv32iProgramInput state instruction) observation
+          (rv32iProgramStep state instruction) (rv32iProgramRetirement state instruction))
+      (tail : Rv32iRvfiCycleTrace machine (start + 1) coreState'
+        (rv32iProgramStep state instruction) cycles program) :
+      Rv32iRvfiCycleTrace machine start coreState state
+        (cycleInput :: cycles) (instruction :: program)
+
+theorem Rv32iRvfiCycleTrace.normalize
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiCycleTrace machine start coreState state cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (rv32iProgramRetirements state program) := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | bubble hstep hvalid tail ih =>
+      simp only [rvfiObservations, hstep]
+      simp [normalizeRvfiTrace?, hvalid, ih]
+  | retire hstep hinput horder boundary tail ih =>
+      simp only [rvfiObservations, hstep]
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      simp [normalizeRvfiTrace?, rv32iProgramRetirements, hspec.1,
+        horder, hretirement, ih]
+
+theorem Rv32iRvfiCycleTrace.retireInputs_eq
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiCycleTrace machine start coreState state cycles program) :
+    retireInputs machine.toCycleMachine coreState cycles =
+      rv32iProgramInputs state program := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | @bubble start coreState coreState' state cycleInput cycles program
+      observation hstep hvalid tail ih =>
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', none) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep,
+          RvfiObservation.toRetirement?, hvalid]
+      simp only [retireInputs, hstep']
+      exact ih
+  | @retire start coreState coreState' state cycleInput cycles
+      instruction program observation hstep hinput horder boundary tail ih =>
+      have hretirement := boundary.toRetirement?_eq_some
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', some (rv32iProgramRetirement state instruction)) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep, hretirement]
+      simp only [retireInputs, hstep']
+      rw [hinput]
+      simpa [rv32iProgramInputs] using ih
+
+theorem Rv32iRvfiCycleTrace.trace_refines
+    {State : Type} (profile : PlatformProfile)
+    {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List Rv32iInstruction}
+    (certificate : Rv32iRvfiCycleTrace machine start coreState state cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (trace (rvMemoryMachineWith profile) state
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+  calc
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+        some (rv32iProgramRetirements state program) := certificate.normalize
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (rv32iProgramInputs state program)) := by
+      rw [rvMemoryMachineWith_rv32i_program_trace]
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+      rw [certificate.retireInputs_eq]
+
+theorem Rv32iRvfiCycleTrace.append
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {firstCycles secondCycles : List Input}
+    {firstProgram secondProgram : List Rv32iInstruction}
+    (first : Rv32iRvfiCycleTrace machine start coreState state
+      firstCycles firstProgram)
+    (second : Rv32iRvfiCycleTrace machine
+      (start + firstProgram.length)
+      (rvfiStateAfter machine coreState firstCycles)
+      (rv32iProgramState state firstProgram)
+      secondCycles secondProgram) :
+    Rv32iRvfiCycleTrace machine start coreState state
+      (firstCycles ++ secondCycles) (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start coreState state =>
+      simpa [rvfiStateAfter, rv32iProgramState] using second
+  | bubble hstep hvalid tail ih =>
+      refine Rv32iRvfiCycleTrace.bubble hstep hvalid ?_
+      apply ih
+      simpa [rvfiStateAfter, hstep] using second
+  | retire hstep hinput horder boundary tail ih =>
+      refine Rv32iRvfiCycleTrace.retire hstep hinput horder boundary ?_
+      apply ih
+      simpa [rvfiStateAfter, rv32iProgramState, hstep, List.length_cons,
+        Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using second
+
+#print axioms LeanModels.Refine.rv32iProgramInputs_append
+#print axioms LeanModels.Refine.rv32iProgramState_append
+#print axioms LeanModels.Refine.rv32iProgramRetirements_append
+#print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_step
+#print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_state
+#print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace
+#print axioms LeanModels.Refine.Rv32iRvfiTrace.toRvfiTraceRefines
+#print axioms LeanModels.Refine.Rv32iRvfiTrace.normalize
+#print axioms LeanModels.Refine.Rv32iRvfiTrace.trace_refines
+#print axioms LeanModels.Refine.Rv32iRvfiTrace.append
+#print axioms LeanModels.Refine.Rv32iRvfiCycleTrace.normalize
+#print axioms LeanModels.Refine.Rv32iRvfiCycleTrace.retireInputs_eq
+#print axioms LeanModels.Refine.Rv32iRvfiCycleTrace.trace_refines
+#print axioms LeanModels.Refine.Rv32iRvfiCycleTrace.append
+
+end LeanModels.Refine

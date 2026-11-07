@@ -448,6 +448,14 @@ obligation for a core proof.  The dispatcher is scoped to RV32I plus the
 admitted machine-mode system/CSR and trap cases; interrupts and M-extension
 operations remain outside this R2 boundary.
 
+The instruction-specific contracts remain useful when a core invariant retains
+raw fields that the indexed family intentionally abstracts.  The adapters
+`addiBoundary_rv32i`, `luiBoundary_rv32i`, `auipcBoundary_rv32i`,
+`swBoundary_rv32i`, and `lwBoundary_rv32i` convert those specialized
+predicates into the corresponding `Rv32iBoundary` index without changing the
+wire-level premises.  Thus a proof may preserve an instruction-specific RVFI
+fact while consuming the same stateful dispatcher as the generic row cases.
+
 The measured four-row prefix is instantiated in
 [`rvfi_rv32i_boundary.lean`](rvfi_rv32i_boundary.lean).  Its four theorems
 construct the indexed ALU/store/load witnesses, and

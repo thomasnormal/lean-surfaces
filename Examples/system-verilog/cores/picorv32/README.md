@@ -163,9 +163,11 @@ proves every valid raw row well formed on related, admitted states.  The global
 specialization `cycleStepRefines_to_rvfiCycleStepRefines` is available when a
 stronger all-state premise is convenient.  Both premises are explicit:
 without one, the optional adapter could hide a malformed valid row as a bubble.
-Under this invariant, `cycleStepRefines_iff_rvfiCycleStepRefines` packages the
-two directions as an equivalence, so a loaded-core proof may choose the
-optional or raw contract without changing its wire obligations.
+Under this invariant, `cycleStepRefines_iff_rvfiCycleStepRefines_of_rel`
+packages the two directions as an equivalence, so a loaded-core proof may
+choose the optional or raw contract without changing its wire obligations.
+The global-row `cycleStepRefines_iff_rvfiCycleStepRefines` specialization remains
+available for callers with the stronger premise.
 The equivalence `rvfiCycleStepRefines_iff_step` exposes this case split as the
 canonical packed-field statement of the strict contract.
 The companion `rvfiCycleStepRefines_trace_refines` and

@@ -185,6 +185,10 @@ row, without using the optional-adapter theorem.
 `normalizeRvfiTrace?_eq_none_iff` gives the failure-side companion: a `none`
 result is exactly the absence of any order/decode certificate, so malformed
 valid rows and order gaps cannot be reinterpreted as an empty stream.
+`RvfiTraceRefines.functional` closes the corresponding success-side ambiguity:
+the same raw observation window and starting order cannot certify two different
+retirement lists.  A loaded-core proof may therefore transport a certificate
+without choosing between competing normalized streams.
 At the single-row adapter boundary,
 `RvfiObservation.toRetirement?_eq_some_iff` characterizes a successful decode
 as `valid ∧ wellFormed` together with equality to the observation's concrete

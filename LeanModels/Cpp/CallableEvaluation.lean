@@ -132,8 +132,7 @@ private def evaluateIncrement (profile : TargetProfile) (parameters : List Calla
 
 private def evaluateInteger (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
-  let format ← formatFor profile typed.sourceType
-  let literal : IntegralValue := {format, value := Int.ofNat value}
+  let literal ← (integralLiteralOfEvidence profile typed.sourceType value).mapError mapFormatError
   pure (match literal.invalid? with
     | some reason => .invalid reason
     | none => .ok literal)

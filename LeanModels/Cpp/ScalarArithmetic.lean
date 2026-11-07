@@ -1,5 +1,6 @@
 import LeanModels.Cpp.Types
 import LeanModels.Cpp.Integral
+import LeanModels.Cpp.TypeEvidence
 
 namespace LeanModels.Cpp
 
@@ -66,6 +67,17 @@ def integralIncrementBinaryOfString : String → Option IntegralBinary
   | "--" => some .subtract
   | _ => none
 
+def integralTypeOfEvidence : CppTypeEvidence → Option CppIntType
+  | .builtin type => some type
+  | .qualified _ _ base => integralTypeOfEvidence base
+  | _ => none
+
+def integralFormatOfEvidence (profile : TargetProfile) (type : CppTypeEvidence) :
+    Except TypeResolutionError IntegralFormat := do
+  let some integer := integralTypeOfEvidence type
+    | throw (.unsupportedType .int)
+  profile.format integer
+
 def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
   | .ok value => .ok (map value)
@@ -80,6 +92,11 @@ def bindIntegralResultValue (result : IntegralResult α)
   | .invalid reason => .invalid reason
   | .undefined reason => .undefined reason
   | .unsupported reason => .unsupported reason
+
+def integralLiteralOfEvidence (profile : TargetProfile) (type : CppTypeEvidence)
+    (value : Nat) : Except TypeResolutionError IntegralValue := do
+  let format ← integralFormatOfEvidence profile type
+  pure {format, value := Int.ofNat value}
 
 /-- Execute an integral binary operation after C++'s promotions and usual
 arithmetic conversions select one common destination format. The conversion

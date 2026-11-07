@@ -66,8 +66,7 @@ private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
 
 private def literalValue (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :
     Option IntegralValue :=
-  (formatFor profile typed.sourceType).map fun format =>
-    {format, value := Int.ofNat value}
+  (integralLiteralOfEvidence profile typed.sourceType value).toOption
 
 private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=

@@ -23,6 +23,10 @@ handling after selection.
 Increment and decrement spellings use a shared `++`/`--` decoder before each
 evaluator applies its own promoted arithmetic and state update.
 
+Typed integer literal construction uses the shared structured type-evidence
+and target-profile boundary before each evaluator applies its own invalid or
+unsupported result handling.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

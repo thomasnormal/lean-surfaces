@@ -251,15 +251,14 @@
               },
               "stmts": [
                 {
-                  "kind": "Unsupported",
+                  "kind": "Empty",
                   "span": {
                     "line": 11,
                     "col": 5,
                     "end_line": 11,
                     "end_col": 21
                   },
-                  "sv_kind": "ExpressionStatement:CallExpression",
-                  "text": "empty_statement;"
+                  "empty_input_task_call": "empty_statement"
                 }
               ]
             }
@@ -321,7 +320,7 @@
               "end_line": 9,
               "end_col": 10
             },
-            "sv_kind": "SubroutineSymbol:Subroutine",
+            "sv_kind": "SubroutineSymbol:empty-task",
             "text": "task empty_statement;\n    begin end\n  endtask"
           }
         ]

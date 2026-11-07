@@ -100,6 +100,10 @@ The item-2 clean-room PicoRV32 wall pair is pinned under
 ordinary unpacked-memory refusal, while `net_z_memory` checks the memory-route
 unsupported-member refusal and `NetSymbol:net-z` metadata. `walls/probe.lean`
 checks both exact messages.
+The same route now admits a referenced source-shaped empty input-only task as
+metadata (`SubroutineSymbol:empty-task`) and executes its call as the existing
+empty statement. `task_memory` guards this exact no-op shape; tasks with
+outputs, defaults, timing, or nonempty bodies remain loud unsupported members.
 
 ### Initial ROM loading remains an explicit F4 boundary
 

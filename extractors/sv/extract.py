@@ -12071,9 +12071,39 @@ def _empty_input_task_call(expression):
                for formal in formals):
             return False
         body = getattr(subroutine, "body", None)
+        if type(body).__name__ == "BlockStatement":
+            body = getattr(body, "body", None)
         body_list = (list(body.list)
                      if type(body).__name__ == "StatementList" else None)
         return body_list == []
+    except Exception:
+        return False
+
+
+def _empty_task_symbol(subroutine):
+    """Recognize the source-shaped empty input-only task supported by E.
+
+    The declaration remains metadata in ``others`` with a distinct marker;
+    only its call is represented as the existing empty statement. Any task
+    with formals, defaults, output storage, or a nonempty body stays loud.
+    """
+    try:
+        if str(getattr(subroutine, "subroutineKind", "")).split(".")[-1] != "Task":
+            return False
+        if getattr(subroutine, "syntax", None) is None:
+            return False
+        if str(getattr(subroutine, "flags", "")).split(".")[-1] != "None_":
+            return False
+        formals = list(getattr(subroutine, "arguments", []))
+        if any(str(getattr(formal, "direction", "")).split(".")[-1] != "In"
+               or getattr(formal, "initializer", None) is not None
+               for formal in formals):
+            return False
+        body = getattr(subroutine, "body", None)
+        if type(body).__name__ == "BlockStatement":
+            body = getattr(body, "body", None)
+        return (type(body).__name__ == "StatementList"
+                and list(getattr(body, "list", [])) == [])
     except Exception:
         return False
 
@@ -33157,6 +33187,12 @@ def _convert_member_sym(sm, m, k, path=()):
         # routine remains the explicit USERFN boundary.
         if not _subroutine_is_referenced(_SYM.scope, m):
             return None
+        if _empty_task_symbol(m):
+            # A referenced empty input-only task has exact no-op call
+            # semantics in the memory route. Keep its declaration metadata,
+            # but distinguish this admitted shape from every other task so
+            # unsupported tasks cannot be silently dropped.
+            return unsupported(sm, m, "SubroutineSymbol:empty-task")
         if (_literal_function_symbol(m, allow_implicit=True,
                                      allow_automatic=True)
                 or _sym_conditional_function_shape(m) is not None

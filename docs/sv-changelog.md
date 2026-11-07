@@ -222,6 +222,11 @@ The item-2 clean-room PicoRV32 wall pair is pinned under
 `Examples/system-verilog/cores/picorv32/walls`; its probe checks the exact
 ordinary unpacked-memory and memory-route net-z refusals without adapting
 PicoRV32.
+Referenced empty input-only tasks are now retained as
+`SubroutineSymbol:empty-task` metadata in the memory route, and their calls
+execute as the existing empty statement. The `task_memory` wall proves the
+source-shaped no-op; stateful, timed, output, defaulted, and nonempty tasks
+remain loud.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

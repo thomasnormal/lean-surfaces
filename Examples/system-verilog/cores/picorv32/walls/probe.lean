@@ -40,11 +40,13 @@ private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
 #guard net_z_memory_wall.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
 
 #guard task_memory_wall.pdesign.others ==
-  [("SubroutineSymbol:Subroutine", "task empty_statement;\n    begin end\n  endtask")]
+  [("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")]
 
-#guard match (task_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
+  task_memory_wall.pdesign.instantiateMemD2 [4]
+
+#guard match taskMem.processes with
+  | .alwaysFF "clk" (.block [.block []]) :: .assign "q" (.arrayElem "mem" [.int 0]) :: _ => true
   | _ => false
 
 #guard task_memory_comments_wall.pdesign.others ==

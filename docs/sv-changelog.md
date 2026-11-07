@@ -11,6 +11,11 @@ The memory-cycle wall probe now pins both sides of the referenced-task
 boundary: source-declared empty input-only tasks are admitted as metadata,
 while ordinary task metadata remains a loud unsupported member.
 
+The x-resolution boundary now inventories every current `condTrue` projection
+across execution, assertion, observation, and proof routes. Until the
+concretization judgment is connected, those consumers require a known-value
+witness or remain loud.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

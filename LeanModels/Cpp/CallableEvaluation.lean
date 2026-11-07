@@ -374,21 +374,20 @@ mutual
             | .ok _ => evaluateTyped fuel profile parameters afterLeft right
             | result => pure (result, afterLeft)
         | .logical operator left right => do
-            unless operator == "&&" || operator == "||" do
-              throw (.unsupportedOperator operator)
+            let some operation := integralLogicalOfString operator
+              | .error (.unsupportedOperator operator)
             let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
             match leftResult with
             | .ok leftValue =>
-                let leftTrue := leftValue.value != 0
-                if operator == "&&" && !leftTrue then
-                  pure (.ok (integralBoolean false), afterLeft)
-                else if operator == "||" && leftTrue then
-                  pure (.ok (integralBoolean true), afterLeft)
-                else
-                  let (rightResult, afterRight) ← evaluateTyped fuel profile parameters afterLeft right
-                  match rightResult with
-                  | .ok rightValue => pure (.ok (integralBoolean (rightValue.value != 0)), afterRight)
-                  | result => pure (result, afterRight)
+                match integralLogicalShortCircuit operation leftValue with
+                | some result => pure (.ok result, afterLeft)
+                | none =>
+                    let (rightResult, afterRight) ←
+                      evaluateTyped fuel profile parameters afterLeft right
+                    match rightResult with
+                    | .ok rightValue =>
+                        pure (.ok (integralBoolean (rightValue.value != 0)), afterRight)
+                    | result => pure (result, afterRight)
             | result => pure (result, afterLeft)
         | .call callee callArguments => do
             let (argumentResult, afterArguments) ←

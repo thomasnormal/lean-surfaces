@@ -1,5 +1,9 @@
 # C++ callable statement evaluation
 
+Logical operator spelling and the left operand's short-circuit decision are
+shared through `ScalarArithmetic`; each evaluator retains its own frame and
+error handling after that pure boundary.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

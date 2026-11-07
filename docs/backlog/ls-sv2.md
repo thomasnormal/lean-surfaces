@@ -4812,3 +4812,35 @@ was introduced.
 one semantic ALU family, with source fields parameterized by `Src1`/`Src2`;
 continue the owned RV32I boundary layer while generated-member memory support
 remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-299 — add the RV32I fence RVFI boundary
+
+The inboxes and goal file were reread before this item.  CombView migration
+and generated-member memory support remain `ls-sv` work, so this item stays in
+the owned generic refinement layer and does not touch `LeanModels/Sv/**`.
+
+Added `LeanModels/Refine/Rv32iFence.lean` with `FenceKind`, the shared
+`fenceNext`/`fenceEffects`/`fenceRetirement` equations for `fence` and
+`fence.i`, and their profile-parametric `isaStepWith`, memory-threaded, and
+`rvMachineWith` bridges.  Added `LeanModels/Refine/RvfiFence.lean` with the
+raw `RvfiObservation.fenceBoundary` predicate and
+`rvfiCycleStepRefines_of_fence_memory`.  The predicate retains the decoded
+system operation and sequential pc advance, requires no register/data-memory
+or trap effect, and leaves unspecified RVFI register payloads unconstrained;
+valid rows preserve threaded byte memory while invalid rows remain explicit
+ISA stutters.  Updated the `LeanModels.Refine` umbrella and PicoRV32 README;
+no RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iFence`,
+`lake build LeanModels.Refine.RvfiFence`, `lake build LeanModels.Refine`, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**JUDGED / DECIDED:** keep `fence` and `fence.i` as one non-trapping
+system-operation family with an explicit `FenceKind`, preserving the
+operation at the raw boundary even though the commit-level retirement has no
+system-op field; continue with the next owned RV32I boundary while the
+generated-member memory route remains with `ls-sv`.

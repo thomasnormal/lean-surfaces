@@ -6450,3 +6450,33 @@ the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
 end-to-end theorem for every admitted finite mixed cycle window, with the
 certificate, normalized ISA trace, and post-window relation available at the
 same boundary.  PicoRV32 remains parked at the two requested loader walls.
+
+## 2026-11-07-ls-sv2-352 — state all-prefix mixed RVFI progress
+
+The finite mixed-window theorem is a safety result.  The R2 headline also
+needs an explicit progress premise for an unbounded clock schedule: every
+finite target retirement prefix must occur at some finite cycle boundary.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiProgress.lean` and imported it from
+the refinement umbrella.  `Rv32iRetiresTarget` records the progress witness
+over `retireInputs` without choosing a scheduler or replacing the parsed
+core.  `schedulePrefix_admit` derives the finite-window admission obligation
+from pointwise admission of the cycle schedule.  The theorem
+`rv32i_progress_trace_refines` combines the mixed per-cycle invariant and the
+progress witness for every target prefix, returning the finite
+`Rv32iRvfiCycleTrace`, its normalized stateful ISA trace, and the final
+core-to-ISA relation.  Updated the PicoRV32 README; no RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiProgress` (48 jobs), the
+focused source compile, `python3 tools/docs_check.py`,
+`./tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  The new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`; no `sorryAx` or new axiom was
+introduced.
+
+**JUDGED / DECIDED:** The generic R2 surface now separates finite safety from
+the explicit progress assumption needed to state refinement over every
+finite prefix of an infinite run.  PicoRV32 remains parked at the unpacked
+`cpuregs` and unsupported-member/net-z loader walls; no finite window was
+extended.

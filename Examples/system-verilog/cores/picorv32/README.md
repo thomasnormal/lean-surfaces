@@ -882,6 +882,20 @@ loaded-core proof: from the indexed step invariant and an admitted finite
 window it returns the mixed certificate, its normalized equality to the
 stateful ISA trace, and the final core-to-ISA relation together.
 
+## All-prefix progress contract
+
+`LeanModels.Refine.RvfiProgress` adds the explicit liveness boundary needed
+for an unbounded clock schedule.  `Rv32iRetiresTarget` requires that every
+finite prefix of a target retirement-input stream appears at some finite
+`retireInputs` boundary; it does not choose a scheduler or decode a row.
+`rv32i_progress_trace_refines` combines that witness with the mixed per-cycle
+invariant and returns, for every target prefix, a finite RVFI certificate, the
+normalized stateful ISA trace, and the post-window core relation.  The
+progress premise is separate from safety, so a core that stutters forever
+cannot satisfy it by vacuity.  This is generic R2 infrastructure and does not
+extend the measured PicoRV32 window; the pinned RTL remains parked at the two
+loader walls above.
+
 ## Clean-room repros for the two current walls
 
 The owner-lane request for the remaining PicoRV32 walls is backed by two

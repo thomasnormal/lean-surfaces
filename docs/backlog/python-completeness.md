@@ -10675,3 +10675,21 @@ retired exact-text whitelist.
 
 DECIDED: keep parser fields as the only supported semantic inputs; diagnostic
 text may remain for loud reporting but is never reparsed.
+
+## 2026-11-07-pycomplete-431 — recheck the two-interpreter refinement edge
+
+The audit's absolute no-refinement claim is stale. The shared pure-worker
+boundary has kernel-checked `twinAgrees_liftRes` and `twinAgrees_binOp` in
+`LeanModels/Python/Monadic/Prim.lean`, so the monadic runner and theorem
+interpreter agree there. The remaining control-level adequacy theorem for the
+mutually recursive evaluators and stateful script layer is still explicit debt;
+this item does not claim that larger theorem is complete.
+
+| Measurement | Result |
+|---|---|
+| Refinement declarations | `twinAgrees_liftRes` and `twinAgrees_binOp` present and elaborated |
+| Axiom check | both declarations report the standard kernel axioms only |
+| Remaining debt | control recursion and script publication still lack a cross-interpreter theorem |
+
+DECIDED: retain the shared primitive refinement edge and keep the control-level
+adequacy work visible rather than claiming the two interpreters are equivalent.

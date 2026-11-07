@@ -32,6 +32,9 @@
 - Docs: record the structured display/comprehension boundaries and the limited
   measured starred-target/call slices.
 
+- Docs: catalog the remaining explicit ingestion compatibility bridges and
+  their loud or guarded interpreter cases.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

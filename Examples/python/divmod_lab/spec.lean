@@ -50,7 +50,14 @@ set_option maxRecDepth 8192
   (.typeError "unsupported operand type(s) for divmod(): 'int' and 'NoneType'")
 #py_check divmod_lab.kwargs() raises
   (.typeError "divmod() takes no keyword arguments")
-#py_check divmod_lab.first_class() = (Val.tuple #[.int 2, .int 1])
+/-! `first_class` refuses since the alias-then-call ingestion rewrite was
+removed (`docs/backlog/python-completeness.md` §2026-11-05-pycomplete-342).
+The CPython answers these checks pinned are kept in the `-- was` comments;
+`harness/cases.json` expects `unsupported` for these functions. -/
+
+-- was `#py_check divmod_lab.first_class() = (Val.tuple #[.int 2, .int 1])`
+#guard callFunction divmod_lab "first_class" #[] 4096 matches
+  .unsupported "calling a first-class callable value is outside the tier"
 
 theorem by_one_total (value : PyInt) :
     divmod_lab.by_one(value) ==> (Val.tuple #[.int value, .int 0]) := by proofs

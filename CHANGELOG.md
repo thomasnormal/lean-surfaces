@@ -19,6 +19,9 @@
 - Rebased the exception-ancestor proof's handler normalization onto the
   structured primary and bare-handler predicates.
 
+- Pinned stale example checks to the exact loud refusals produced after the
+  removed lowering paths, retaining each former CPython answer as a comment.
+
 - Rechecked the position-independent module definition boundary: forward
   function-body calls and duplicate module definitions remain loud rather than
   answering through the static table.

@@ -54,8 +54,11 @@ set_option maxRecDepth 8192
   matches .unsupported _
 #guard callFunction tuple_repeat "repeat_aug" #[.tuple #[.int 7], .int 1048577] 4096
   matches .unsupported _
+/-! The former length-only repetition shortcut is retired; oversized
+materialization remains a loud tier boundary. -/
+-- was `#guard callFunction tuple_repeat "repeat_right_length" #[.int 524289] 4096 matches .ok (.int 1048578)`
 #guard callFunction tuple_repeat "repeat_right_length" #[.int 524289] 4096
-  matches .unsupported _
+  matches .unsupported "tuple repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §tuple repetition)"
 #guard callFunction tuple_repeat "repeat_empty_length" #[.int (-1048577)] 4096 matches .ok (.int 0)
 #guard callFunction tuple_repeat "repeat_empty" #[.int 1267650600228229401496703205376] 4096
   matches .exn (.overflowError "cannot fit 'int' into an index-sized integer")

@@ -98,9 +98,22 @@ live-clock battery is `clock_lab`). -/
 #py_check exc_lab.except_builtin(1) = 1
 #py_check exc_lab.except_builtin(0) = -1
 #py_check exc_lab.except_ancestor_still_loud(0) = -1
-#py_check exc_lab.else_clause(1) = 2
-#py_check exc_lab.else_skips_on_exception(2) = 5
-#py_check exc_lab.else_skips_on_exception(0) = 7
+/-! `else`, `finally`, multiple handlers and a `yield` under `try` refuse since
+the try lowerings were removed (`docs/backlog/python-completeness.md`
+§2026-11-06-pycomplete-360); a bare `raise` and `raise … from …` refuse
+since §2026-11-05-pycomplete-342 and §2026-11-06-pycomplete-362. The CPython
+answers these checks pinned are kept in the `-- was` comments;
+`harness/cases.json` expects `unsupported` for these functions. -/
+
+-- was `#py_check exc_lab.else_clause(1) = 2`
+#guard callFunction exc_lab "else_clause" #[.int 1] 4096 matches
+  .unsupported "try/except uses unsupported features (else clause) — outside the tier (docs/memory-model.md §exceptions)"
+-- was `#py_check exc_lab.else_skips_on_exception(2) = 5`
+#guard callFunction exc_lab "else_skips_on_exception" #[.int 2] 4096 matches
+  .unsupported "try/except uses unsupported features (else clause) — outside the tier (docs/memory-model.md §exceptions)"
+-- was `#py_check exc_lab.else_skips_on_exception(0) = 7`
+#guard callFunction exc_lab "else_skips_on_exception" #[.int 0] 4096 matches
+  .unsupported "try/except uses unsupported features (else clause) — outside the tier (docs/memory-model.md §exceptions)"
 #guard callFunction exc_lab "time_live" #[.int 5] 4096
   matches .unsupported "time.time() readings are outside the tier until the clock trace carries binary64 values (CPython returns float)"
 
@@ -109,18 +122,27 @@ form — deliberate). Every remaining deviation from the retained shape is
 loud. -/
 
 #guard callFunction exc_lab "as_binding" #[.int 7] 4096 matches .ok (.int 7)
-#py_check exc_lab.finally_clause(1) = 1
+-- was `#py_check exc_lab.finally_clause(1) = 1`
+#guard callFunction exc_lab "finally_clause" #[.int 1] 4096 matches
+  .unsupported "try/except uses unsupported features (no handler, 'finally' clause) — outside the tier (docs/memory-model.md §exceptions)"
 #guard callFunction exc_lab "bare_except" #[.int 0] 4096 matches .ok (.int (-1))
-#py_check exc_lab.multi_handler(1) = 1
+-- was `#py_check exc_lab.multi_handler(1) = 1`
+#guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches
+  .unsupported "try/except uses unsupported features (multiple handlers) — outside the tier (docs/memory-model.md §exceptions)"
 #py_check exc_lab.tuple_handler(1) = 1
 #guard callFunction exc_lab "raise_args" #[.int 1] 4096
   matches .exn (.userMessage _ "Stop" "with a message")
-#guard callFunction exc_lab "raise_bare" #[.int 1] 4096
-  matches .exn (.user _ "Stop")
+-- was `#guard callFunction exc_lab "raise_bare" #[.int 1] 4096 matches .exn (.user _ "Stop")`
+#guard callFunction exc_lab "raise_bare" #[.int 1] 4096 matches
+  .unsupported "bare 'raise' (re-raise of the active exception) is outside the tier (docs/memory-model.md §exceptions)"
 #guard callFunction exc_lab "raise_value" #[.int 1] 4096
   matches .exn (.typeError "exceptions must derive from BaseException")
-#py_check exc_lab.raise_from(1) raises (.user 0 "Stop")
+-- was `#py_check exc_lab.raise_from(1) raises (.user 0 "Stop")`
+#guard callFunction exc_lab "raise_from" #[.int 1] 4096 matches
+  .unsupported "dynamic 'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
 #py_check exc_lab.raise_shadowed(1) raises
   (.typeError "exceptions must derive from BaseException")
 #py_check exc_lab.exc_as_value(1) = 1
-#py_check exc_lab.drive_yield_under_try(1) = 1
+-- was `#py_check exc_lab.drive_yield_under_try(1) = 1`
+#guard callFunction exc_lab "drive_yield_under_try" #[.int 1] 4096 matches
+  .unsupported "a 'yield' under 'try' would make the try suspendable (it would need its own generator frame) — outside the tier (docs/memory-model.md §exceptions)"

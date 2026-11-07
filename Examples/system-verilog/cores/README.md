@@ -164,3 +164,6 @@ the real PicoRV32 instantiation remains blocked by the existing loader walls.
 The input-aware `AddiRvfiCycleTrace` extension also retains actual cycle-step
 equalities and proves that the adapter's `retireInputs` are exactly the
 symbolic ADDI inputs before applying the same trace theorem.
+The companion `LeanModels.Refine.RvfiAluProgram` certificate lifts this
+surface to arbitrary decoded RV32I ALU instructions, including register,
+immediate, pc-based, and upper-immediate operand shapes.

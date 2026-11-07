@@ -5641,3 +5641,32 @@ backlog-index check, and `git diff --check` also pass.
 certificate append theorem or the whole-program folds without a hand-written
 list normalization.  PicoRV32 remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-327 — add a symbolic RV32I ALU program certificate
+
+The inbox and goal file were reread after item 326 was pushed.  The ADDI
+program certificate is now compositional; the next instruction-class milestone
+is the complete RV32I ALU family, whose existing one-cycle boundary already
+covers OP, OP-IMM, LUI, and AUIPC operand shapes.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiAluProgram.lean` and imported it from
+the refinement umbrella.  `AluInstruction` retains the fetched word, operation,
+operand sources, and decoder proof.  The input, architectural-state, and
+retirement folds preserve x0 and unchanged memory, expose append laws, and are
+related to `rvMemoryMachineWith` by exact state and trace equations.  The
+inductive `AluRvfiTrace` admits arbitrary invalid bubbles and requires an
+indexed `Rv32iBoundary.alu` witness at each retirement; its normalization and
+trace theorems produce the stateful ISA stream for every ALU program.  Updated
+both core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL, loader,
+extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAluProgram.lean` passes and
+all twelve new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` also pass.
+
+**JUDGED / DECIDED:** The reusable symbolic invariant surface now covers every
+RV32I ALU retirement shape, while the real-core instantiation remains blocked
+at PicoRV32's existing unpacked `cpuregs` and unsupported-member/net-z loader
+walls.

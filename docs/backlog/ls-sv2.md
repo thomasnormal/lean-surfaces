@@ -7273,3 +7273,30 @@ RTL, or finite captured-window theorem was edited; no oracle result is claimed.
 part of the previous request is no longer blocking locally.  Hold the public
 R2 re-probe until the owner lands the remaining `CycleMachine` and signed proof
 repairs and the import closure is green on `origin/master`.
+
+## 2026-11-07-ls-sv2-381 — recheck the published net/comb repair
+
+Item 381 reread both inboxes and the goal, observed owner commit `4b308092c`,
+and reran the requested owner import closure with the owner’s uncommitted
+`CycleMachine` and signed-proof edits.
+
+**MEASURED:** `ClockGuard0`, `SelfCheck`, `CombView`, `Comb2`, `Comb2Proc`,
+and the local `CycleMachine` bridge build.  The bridge removes the prior
+`rcycle_run2` `sorryAx`; its axiom report is now
+`[propext, Classical.choice, Quot.sound]`.  The downstream closure remains
+red: `Loop2.lean:885` receives a `run2ClockGuard d = Res.ok () → Terminates2 d`
+from `Terminates2.of_invariant` but needs `Terminates2 d`, and `Loop2.lean:1057`
+therefore reports a `sorryAx` dependency.  Signed `remainder` and `division`
+source pins now include `.cast true`, but their instantiation proofs leave
+`False` at remainder line 40 and division line 42, and signed guards still fail
+at remainder 66, 67, 69 and division 112, 113, 115.  The `sem2/sva_select`
+guard at line 21 remains false.  `ripple_add` now builds.
+
+**CHANGED:** Routed the exact residual `REQUEST ls-sv:` and added this backlog
+entry.  No ls-sv-owned source, semantics, loader, extractor, RTL, or finite
+captured-window theorem was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The published net/comb repair and local cycle bridge
+advance the closure, but public master is not green.  Hold the PicoRV32 R2
+re-probe until `Loop2`, signed proof-side cast/instantiation checks, and the
+SVA row are repaired and landed; do not add finite captured-window lemmas.

@@ -805,11 +805,12 @@ independent and coincident clocks; letting a multi-clock design reach
 answer.  Retained data-driven event controls are likewise outside this
 transport and remain a named clock boundary. -/
 
+def run2Clock? : Process2 → Option String
+  | .alwaysFF c _ | .alwaysPlain c _ | .alwaysFFR c _ _ _ => some c
+  | _ => none
+
 def run2ClockNames (d : Design2) : List String :=
-  (d.processes.toList.filterMap fun p =>
-    match p with
-    | .alwaysFF c _ | .alwaysPlain c _ | .alwaysFFR c _ _ _ => some c
-    | _ => none).eraseDups
+  (d.processes.toList.filterMap run2Clock?).eraseDups
 
 def run2ClockGuard (d : Design2) : Res Unit :=
   if (run2ClockNames d).length > 1 then

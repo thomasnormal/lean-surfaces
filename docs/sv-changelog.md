@@ -47,6 +47,12 @@ The v4.35 import roots are green again: ClockGuard0 and SelfCheck now use
 parser-stable named guard fixtures, and the initial-order refusal passes its
 message as the single `Res.unsupported` payload.
 
+The v4.35 net-startup regression is repaired. CombView summaries preserve a
+declaration's `isNet` flag through the symbolic declaration stage, so
+undriven nets retain z initialization. The comb termination theorem also
+supplies the one-clock guard required by the current `run2` proof interface;
+comb-only designs discharge it structurally.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

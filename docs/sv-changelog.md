@@ -334,6 +334,13 @@ lower to the existing sampled boolean operators. The clean-room
 `prim_fifo_sync` VIP retains all 27 properties with 15 residual unsupported
 nodes; nested `$past` expressions remain a named boundary.
 
+Finite sampled value expressions now retain `$past` through equality and
+arithmetic trees. `sem2/sva_past_value` checks both a previous-value equality
+and a previous-value increment against the E trace, with a Verilator row. The
+pinned `prim_fifo_sync` assertion VIP retains all 27 properties and has 11
+residual unsupported nodes; the remaining nodes are outside this value
+fragment.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

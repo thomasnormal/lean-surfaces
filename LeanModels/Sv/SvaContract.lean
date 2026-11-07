@@ -51,8 +51,16 @@ def instantiateExpr (env : IEnv) (elems : List (String × Nat)) (value : PExpr) 
   -- unbased unsized fills (`'0`, `'1`, `'x`, `'z`) their required width.
   instExpr2 env elems (selfWidth2 env elems value) value
 
+def instantiateValue (env : IEnv) (elems : List (String × Nat)) : PSvaValue → SvaValue
+  | .current value => .current (instantiateExpr env elems value)
+  | .past cycles value => .past cycles (instantiateExpr env elems value)
+  | .binary op left right => .binary op
+      (instantiateValue env elems left) (instantiateValue env elems right)
+
 def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → Except String SvaBool
   | .expr value => .ok (.expr (instantiateExpr env elems value))
+  | .valueEq left right => .ok (.valueEq (instantiateValue env elems left)
+      (instantiateValue env elems right))
   | .past cycles value => .ok (.past cycles (.expr (instantiateExpr env elems value)))
   | .rose value => .ok (.roseExpr (instantiateExpr env elems value))
   | .fell value => .ok (.fellExpr (instantiateExpr env elems value))

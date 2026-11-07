@@ -26234,6 +26234,48 @@ def _sva_pexpr(node):
             "text": kind or "SvaExpression"}
 
 
+def _sva_value(node):
+    """Convert a finite value expression that may contain `$past`.
+
+    Temporal values stay out of ordinary ``PExpr`` so the E contract can
+    evaluate each operand at its sampled index without inventing a live
+    signal value for the previous cycle.
+    """
+    node = _sva_unwrap(node)
+    if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
+        left = node.get("left", {})
+        name = left.get("systemIdentifier", {}).get("text", "")
+        args = [p.get("expr") for p in node.get("arguments", {}).get("parameters", [])
+                if isinstance(p, dict) and p.get("kind") == "OrderedArgument"]
+        if name == "$past" and 1 <= len(args) <= 2:
+            cycles = _sva_integer(args[1]) if len(args) == 2 else 1
+            if cycles is not None and cycles >= 0:
+                return {"kind": "SvaPastValue", "cycles": cycles,
+                        "expr": _sva_pexpr(args[0])}
+    binary_ops = {
+        "AddExpression": "+", "SubtractExpression": "-",
+        "MultiplyExpression": "*", "DivideExpression": "/",
+        "ModExpression": "%",
+    }
+    if isinstance(node, dict) and node.get("kind") in binary_ops:
+        return {"kind": "SvaValueBinary", "op": binary_ops[node["kind"]],
+                "left": _sva_value(node.get("left")),
+                "right": _sva_value(node.get("right"))}
+    return {"kind": "SvaCurrent", "expr": _sva_pexpr(node)}
+
+
+def _sva_has_past(node):
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict):
+        return False
+    if node.get("kind") == "InvocationExpression":
+        name = node.get("left", {}).get("systemIdentifier", {}).get("text", "")
+        if name == "$past":
+            return True
+    return any(_sva_has_past(v) for key, v in node.items()
+               if key not in ("span", "trivia"))
+
+
 def _sva_bool(node):
     node = _sva_unwrap(node)
     if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
@@ -26252,6 +26294,12 @@ def _sva_bool(node):
             if cycles is not None and cycles >= 0:
                 return {"kind": "SvaPast", "cycles": cycles,
                         "expr": _sva_pexpr(args[0])}
+    if isinstance(node, dict) and node.get("kind") in (
+            "EqualityExpression", "CaseEqualityExpression"):
+        left, right = node.get("left"), node.get("right")
+        if _sva_has_past(left) or _sva_has_past(right):
+            return {"kind": "SvaValueEq", "left": _sva_value(left),
+                    "right": _sva_value(right)}
     return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
 
 

@@ -23,6 +23,16 @@ set_option autoImplicit false
 
 /-! ## Retained boolean and sequence vocabulary -/
 
+/-! A sampled value may read the current expression, a finite `$past`, or
+combine two such values with an ordinary arithmetic operator.  Keeping this
+tree separate from `Expr2` prevents a previous-cycle read from becoming a
+live signal lookup. -/
+inductive SvaValue where
+  | current (value : Expr2)
+  | past (cycles : Nat) (value : Expr2)
+  | binary (op : BinOp) (left right : SvaValue)
+deriving Repr, Inhabited
+
 /-- The boolean portion of the F1 SVA envelope. `past`, `rose`, `fell`, and
 `stable` are sampled at the edge-trace index, not at an arbitrary active-region
 state. -/
@@ -30,6 +40,7 @@ inductive SvaBool where
   | lit (value : Bool)
   | signal (name : String)
   | expr (value : Expr2)
+  | valueEq (left right : SvaValue)
   | not (arg : SvaBool)
   | and (left right : SvaBool)
   | or (left right : SvaBool)
@@ -165,11 +176,26 @@ def exprStable (trace : List SvState) (index : Nat) (value : Expr2) : Except Str
   if index == 0 then .ok false
   else return caseEqual (← exprAt trace (index - 1) value) (← exprAt trace index value)
 
+def SvaValue.eval (trace : List SvState) (index : Nat) : SvaValue →
+    Except String (Option LVec)
+  | .current value => exprAt trace index value
+  | .past cycles value =>
+      if cycles ≤ index then exprAt trace (index - cycles) value else .ok none
+  | .binary op left right => do
+      let some l ← left.eval trace index | .ok none
+      let some r ← right.eval trace index | .ok none
+      .ok (some (evalBinOp op l r))
+
 def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except String (Option Logic)
   | .caseEq (.signal left) (.signal right) =>
       return some (if caseEqual (← signalAt trace index left) (← signalAt trace index right)
         then .l1 else .l0)
   | .caseEq _ _ => .error "SVA: case equality currently requires signal operands"
+  | .valueEq left right => do
+      let some l ← left.eval trace index | .ok none
+      let some r ← right.eval trace index | .ok none
+      let width := max l.width r.width
+      return some (LVec.eqLogical (l.resizeU width) (r.resizeU width))
   | .lit value => .ok (some (if value then .l1 else .l0))
   | .signal name => return (← signalAt trace index name).map boolLogic
   | .expr value => return (← exprAt trace index value).map boolLogic

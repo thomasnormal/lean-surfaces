@@ -91,6 +91,7 @@ deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
 deriving instance Lean.ToExpr for PStmt
 deriving instance Lean.ToExpr for PProcess
+deriving instance Lean.ToExpr for PSvaValue
 deriving instance Lean.ToExpr for PSvaBool
 deriving instance Lean.ToExpr for PSvaSeq
 deriving instance Lean.ToExpr for PSvaProp
@@ -310,6 +311,22 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
 
 /-! ## Structured concurrent assertions -/
 
+partial def parsePSvaValue (j : Json) : Except String PSvaValue := do
+  let kind ← getKind j
+  withCtx kind do
+    match kind with
+    | "SvaCurrent" => return .current (← parsePExpr (← getField j "expr"))
+    | "SvaPastValue" =>
+        return .past (← getNatField j "cycles") (← parsePExpr (← getField j "expr"))
+    | "SvaValueBinary" =>
+        let op ← parseSymBinOp (← getStrField j "op")
+        let .m0 bop := op
+          | throw "SVA value binary operator is outside the finite value fragment"
+        return .binary bop
+          (← parsePSvaValue (← getField j "left"))
+          (← parsePSvaValue (← getField j "right"))
+    | other => throw s!"unknown SVA value kind {other.quote}"
+
 partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
   let kind ← getKind j
   withCtx kind do
@@ -317,6 +334,9 @@ partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
     | "SvaExpr" =>
         let e ← parsePExpr (← getField j "expr")
         return .expr e
+    | "SvaValueEq" =>
+        return .valueEq (← parsePSvaValue (← getField j "left"))
+          (← parsePSvaValue (← getField j "right"))
     | "SvaPast" =>
         let cycles ← getNatField j "cycles"
         let e ← parsePExpr (← getField j "expr")

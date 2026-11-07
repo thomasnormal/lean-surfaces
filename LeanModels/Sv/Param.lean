@@ -539,11 +539,22 @@ inductive GenItem where
   | inst (i : PInst)
 deriving Repr, BEq, Inhabited
 
+/-! Value expressions keep `$past` inside an equality instead of erasing it
+from the ordinary `PExpr` tree.  This is the finite safety fragment's
+source-shaped temporal value route; unsupported value operators remain loud
+at ingestion. -/
+inductive PSvaValue where
+  | current (value : PExpr)
+  | past (cycles : Nat) (value : PExpr)
+  | binary (op : BinOp) (left right : PSvaValue)
+deriving Repr, BEq, Inhabited
+
 /-! Structured SVA syntax retained from Slang.  Ordinary boolean leaves are
 `PExpr`; the property layer adds only sampling, delays, implications and
 `disable iff`.  Source text remains provenance, never a second parser input. -/
 inductive PSvaBool where
   | expr (value : PExpr)
+  | valueEq (left right : PSvaValue)
   | past (cycles : Nat) (value : PExpr)
   | rose (value : PExpr)
   | fell (value : PExpr)

@@ -10657,3 +10657,21 @@ same parameterized worker rather than adding a branch per new digit value.
 
 DECIDED: retain the parameterized worker and add boundary rows for future
 CPython cutoff changes instead of unrolling new digit cases.
+
+## 2026-11-07-pycomplete-430 — recheck structured semantic inputs
+
+The text-keyed semantics audit is closed in the current implementation and
+its documentation. Global/nonlocal names, value-less annotations, import
+admission, and exception-handler names are carried as structured AST fields;
+`Unsupported.text` remains diagnostic only. The import and trace-clock sections
+now describe `benignImportBindsStructured module names star` rather than the
+retired exact-text whitelist.
+
+| Measurement | Result |
+|---|---|
+| Semantic search | no active `annNoValueName`, `nonlocalNamesText`, `importBinds`, `globalNamesText`, or `excHandlerNamesAux` consumers |
+| Import path | `Stmt.importFrom`/`Stmt.importStmt` and structured whitelist fields are used by both script surfaces |
+| Documentation | stale exact-text admission claims removed from `docs/memory-model.md` |
+
+DECIDED: keep parser fields as the only supported semantic inputs; diagnostic
+text may remain for loud reporting but is never reparsed.

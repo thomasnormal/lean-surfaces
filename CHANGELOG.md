@@ -5,6 +5,9 @@
 - Python: rebase the legacy `ClockErase` proof over the five-field world and
   current generator, set, call-depth, and structured-statement semantics.
 
+- Docs: update the import-admission and trace-clock sections to describe the
+  structured AST whitelist instead of the retired text-keyed path.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

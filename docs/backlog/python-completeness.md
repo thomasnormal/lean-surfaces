@@ -10693,3 +10693,23 @@ this item does not claim that larger theorem is complete.
 
 DECIDED: retain the shared primitive refinement edge and keep the control-level
 adequacy work visible rather than claiming the two interpreters are equivalent.
+
+## 2026-11-07-pycomplete-432 — recheck namedtuple recognition boundary
+
+The namedtuple audit is a representation debt item, with the dangerous
+source-order cases guarded today. Recognition is all-or-nothing: the exact
+structured `collections.namedtuple` import, validated field specification,
+source-order admission, binding census, and global-free constraints are
+required before a static value-like table entry is created. Unsafe candidates
+remain source assignments and reach the loud callable boundary. This does not
+claim that the ingestion rewrite is equivalent to a runtime class object;
+identity, rebinding, and deletion remain outside the admitted table tier.
+
+| Measurement | Result |
+|---|---|
+| Import-order witness | `namedtuple_import_order.py` remains LOUD where the call precedes its import |
+| Admitted script | `namedtuple_script.py` MATCHES CPython 3.9.25 |
+| Remaining debt | model `collections.namedtuple` as a runtime class value before removing recognition |
+
+DECIDED: retain the guarded static value-like tier and keep the runtime
+constructor/class-object replacement as explicit future work.

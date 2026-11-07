@@ -268,6 +268,9 @@ is also refused; declaration kind evidence must be frontend text.
 A structured overloaded-operator declaration evidence whose `kind` is null is
 also refused; declaration kind evidence must be frontend text.
 
+A `DeclRefExpr` callee without a `referencedDecl` field is also refused; the
+operator gate never invents declaration identity from the node kind alone.
+
 A structured operator handle with malformed string `id` is also refused; the
 artifact-local handle parser validates object and string forms uniformly.
 

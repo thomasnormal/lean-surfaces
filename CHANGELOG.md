@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for overloaded-operator callees missing their
+  `referencedDecl` field; declaration identity is never invented from node kind.
+
 - Added a recorded refusal for null structured overloaded-operator declaration
   kind evidence; frontend declaration kinds remain string-typed.
 

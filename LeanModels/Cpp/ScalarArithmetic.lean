@@ -67,6 +67,11 @@ def integralIncrementBinaryOfString : String → Option IntegralBinary
   | "--" => some .subtract
   | _ => none
 
+def integralNullComparison : String → Option IntegralValue
+  | "==" => some (integralBoolean true)
+  | "!=" => some (integralBoolean false)
+  | _ => none
+
 def integralTypeOfEvidence : CppTypeEvidence → Option CppIntType
   | .builtin type => some type
   | .qualified _ _ base => integralTypeOfEvidence base

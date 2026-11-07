@@ -207,6 +207,13 @@ def callableSwitchSuffixAgreement : Bool :=
 
 #guard callableSwitchSuffixAgreement
 
+def callableIncrementOperatorAgreement : Bool :=
+  integralIncrementBinaryOfString "++" == some .add &&
+    integralIncrementBinaryOfString "--" == some .subtract &&
+    integralIncrementBinaryOfString "+=" == none
+
+#guard callableIncrementOperatorAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

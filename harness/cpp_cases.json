@@ -5248,6 +5248,18 @@
     "rung": 4
   },
   {
+    "id": "expression.callable-increment-operator-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIncrementOperatorAgreement",
+    "cpp_source": "int increment_witness(int value) { return ++value; } bool callable_witness() { return increment_witness(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

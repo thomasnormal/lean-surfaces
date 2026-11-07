@@ -27,6 +27,9 @@ and callable evaluators.
 Switch case and default suffix selection is also shared across the value and
 object-frame evaluators.
 
+The pure `++`/`--` operator decoding is shared, while each evaluator retains
+its own state update path.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

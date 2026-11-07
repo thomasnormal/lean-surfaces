@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized `++`/`--` operator decoding in `ScalarArithmetic` for both
+  callable evaluators and added an agreement witness.
+
 - Centralized switch case/default suffix selection in `Callable` for both
   callable evaluators and added a matching/default agreement witness.
 

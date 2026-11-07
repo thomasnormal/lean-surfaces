@@ -105,10 +105,8 @@ private def evaluateIncrement (profile : TargetProfile) (parameters : List Calla
   let .builtin type := parameter.type
     | throw (.unsupportedType parameter.type)
   if type == .boolean then throw (.unsupportedType parameter.type)
-  let operation ← match operator with
-    | "++" => pure IntegralBinary.add
-    | "--" => pure IntegralBinary.subtract
-    | _ => throw (.unsupportedOperator operator)
+  let some operation := integralIncrementBinaryOfString operator
+    | throw (.unsupportedOperator operator)
   let common ← match usualArithmeticType profile type .int with
     | .ok type => pure type
     | .error reason => throw (mapFormatError reason)

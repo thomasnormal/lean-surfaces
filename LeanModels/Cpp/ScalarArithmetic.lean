@@ -74,6 +74,11 @@ def integralCompoundBinaryOfString : String → Option IntegralBinary
   | ">>=" => some .shiftRight
   | _ => none
 
+def integralIncrementBinaryOfString : String → Option IntegralBinary
+  | "++" => some .add
+  | "--" => some .subtract
+  | _ => none
+
 /-- Execute an integral binary operation after C++'s promotions and usual
 arithmetic conversions select one common destination format. The conversion
 boundary is explicit so mixed signed/unsigned operands cannot silently reach

@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1249 entries across 18 lanes.** Regenerate with
+**1250 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -88,6 +88,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-374` |  | bound ISA-side work to the R2 headline | ls-sv2 |
 | `2026-11-07-ls-sv2-373` |  | re-probe PicoRV32 after empty-task admission | ls-sv2 |
 | `2026-11-07-ls-sv2-372` |  | lift the jump invariant into the mixed step obligation | ls-sv2 |
 | `2026-11-07-ls-sv2-371` |  | embed jump certificates in mixed RV32I | ls-sv2 |

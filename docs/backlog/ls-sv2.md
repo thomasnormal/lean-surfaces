@@ -6975,6 +6975,38 @@ first retained wall.  PicoRV32 remains parked at the approved unsupported
 module-member/net-z boundary; continue only after the owner lane admits that
 generic construct.
 
+## 2026-11-07-ls-sv2-374 — bound ISA-side work to the R2 headline
+
+The owner requested a stop to the recent sequence of alternate packaging and
+instruction-family re-exports.  The from-reset theorem should grow only when
+an ISA-side fact below is missing from the headline proof.
+
+**ISA-SIDE FACTS THE HEADLINE CONSUMES:**
+
+- `RvMemoryState`, `PlatformProfile`, `rvMemoryMachineWith`, and
+  `rvMemoryStateAfter` define the stateful RV32I machine and its threaded byte
+  memory.
+- `Rv32iInstruction` together with `rv32iProgramInput`,
+  `rv32iProgramStep`, and `rv32iProgramRetirement` identifies one decoded
+  instruction's exact input, post-state, and retirement.
+- `Rv32iBoundary` and `RvfiObservation.toRetirement?_eq_some` connect a valid
+  raw RVFI row to that exact retirement and indexed post-state.
+- `rvMemoryMachineWith_rv32i_step` proves the one-instruction stateful ISA
+  transition equation.
+- `rvMemoryMachineWith_rv32i_program_state` and
+  `rvMemoryMachineWith_rv32i_program_trace` fold those equations over a mixed
+  decoded program.
+- `Rv32iRvfiCycleTrace.retireInputs_eq` identifies the certificate's retiring
+  cycle inputs with the decoded program inputs, and
+  `Rv32iRvfiCycleTrace.trace_refines` identifies its normalized rows with the
+  stateful ISA trace.
+
+**DECISION:** The reset relation, admitted schedule, progress witness, and
+loaded-core per-cycle invariant are core-side premises of
+`rv32i_reset_refinement`, not reasons to add more ISA-side wrappers.  Future
+lemmas are in scope only when they establish one line above; no alternate
+packaging or per-instruction duplicate is planned.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

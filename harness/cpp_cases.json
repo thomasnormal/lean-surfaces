@@ -20231,5 +20231,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "refuse",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-logical-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectLogicalAgreement",
+    "cpp_source": "bool logical_witness(int value) { return value && 1; } bool callable_witness() { return logical_witness(0) == false; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

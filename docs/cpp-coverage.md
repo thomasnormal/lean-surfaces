@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1711 | 0 | 1607 | 0 | 94 | 0 | 10 |
+| 1712 | 0 | 1608 | 0 | 94 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -1725,6 +1725,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-frame-local-while-switch-default-shadow-computed-initialization-assignment-return-negative-false` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-frame-local-while-switch-default-shadow-computed-initialization-assignment-continue-negative-false` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-effectful-argument-order-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `statement.callable-value-object-logical-agreement` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 
 ## Grammar census
 

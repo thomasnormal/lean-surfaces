@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centralized logical `&&`/`||` decoding and short-circuit decisions in
+  `ScalarArithmetic` for both callable evaluators and added a value/object
+  agreement witness.
+
 - Centralized null-pointer comparison decoding in `ScalarArithmetic` for both
   callable evaluators and added an agreement witness.
 

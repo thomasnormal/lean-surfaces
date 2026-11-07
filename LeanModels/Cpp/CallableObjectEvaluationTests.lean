@@ -159,6 +159,26 @@ def callableValueObjectBinaryAgreement : Bool :=
 
 #guard callableValueObjectBinaryAgreement
 
+def callableValueObjectLogicalAgreement : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.logical "&&"
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 1,
+          sourceType := intType, type := intType}
+        , sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 0⟩ && objectValue == ⟨.boolean, 0⟩
+  | _, _ => false
+
+#guard callableValueObjectLogicalAgreement
+
 def callableIntegralTypeEvidenceAgreement : Bool :=
   integralTypeOfEvidence (.qualified true false intType) == some .int &&
     integralTypeOfEvidence (.builtin .unsignedLong) == some .unsignedLong &&
@@ -229,6 +249,16 @@ def callableNullComparisonAgreement : Bool :=
     integralNullComparison "<" == none
 
 #guard callableNullComparisonAgreement
+
+def callableLogicalOperatorAgreement : Bool :=
+  integralLogicalOfString "&&" == some .conjunction &&
+    integralLogicalOfString "||" == some .disjunction &&
+    integralLogicalOfString "^^" == none &&
+    integralLogicalShortCircuit .conjunction ⟨.boolean, 0⟩ == some (integralBoolean false) &&
+    integralLogicalShortCircuit .disjunction ⟨.boolean, 1⟩ == some (integralBoolean true) &&
+    integralLogicalShortCircuit .conjunction ⟨.boolean, 1⟩ == none
+
+#guard callableLogicalOperatorAgreement
 
 def callableIntegralLiteralAgreement : Bool :=
   integralLiteralOfEvidence .lp64 intType 7 matches .ok ⟨.signed 32, 7⟩ &&

@@ -4,6 +4,11 @@ import LeanModels.Cpp.TypeEvidence
 
 namespace LeanModels.Cpp
 
+inductive IntegralLogical where
+  | conjunction
+  | disjunction
+  deriving Repr, BEq
+
 def integralTypeOfEvidence : CppTypeEvidence → Option CppIntType
   | .builtin type => some type
   | .qualified _ _ base => integralTypeOfEvidence base
@@ -65,6 +70,20 @@ def integralUnaryOfString : String → Option IntegralUnary
   | "~" => some .complement
   | "!" => some .logicalNot
   | _ => none
+
+def integralLogicalOfString : String → Option IntegralLogical
+  | "&&" => some .conjunction
+  | "||" => some .disjunction
+  | _ => none
+
+/-- The short-circuit result for a logical operation, when its left operand
+    decides the result. A missing result means that the right operand must be
+    evaluated. -/
+def integralLogicalShortCircuit (operation : IntegralLogical) (left : IntegralValue) :
+    Option IntegralValue :=
+  match operation with
+  | .conjunction => if left.value == 0 then some (integralBoolean false) else none
+  | .disjunction => if left.value == 0 then none else some (integralBoolean true)
 
 def integralCompoundBinaryOfString : String → Option IntegralBinary
   | "+=" => some .add

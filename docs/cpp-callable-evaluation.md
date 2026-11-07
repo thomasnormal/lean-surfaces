@@ -8,6 +8,10 @@ API and refuse through its dedicated call boundary.
 Unary and binary operator strings are decoded by the shared ScalarArithmetic
 mapping used by both evaluator layers.
 
+Logical `&&`/`||` decoding and the left-operand short-circuit result use the
+same ScalarArithmetic boundary; evaluator-specific state and error handling
+starts only after that decision.
+
 Integral type extraction is likewise shared; qualified builtin evidence unwraps
 to its builtin type, while records and other non-integral evidence remain
 unsupported.

@@ -220,25 +220,24 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           | .ok (.ok _) => evalExpression fuel profile leftResult.frame right
           | .ok result => success leftResult.frame result
       | .logical operator left right =>
-          match operator with
-          | "&&" | "||" =>
+          match integralLogicalOfString operator with
+          | none => success frame (.unsupported .unresolvedArithmeticConversions)
+          | some operation =>
               let leftResult := evalExpression fuel profile frame left
               match leftResult.result with
               | .error reason => failure leftResult.frame reason
               | .ok (.ok value) =>
-                  let leftTrue := value.value != 0
-                  if (operator == "&&" && !leftTrue) || (operator == "||" && leftTrue) then
-                    success leftResult.frame
-                      (.ok (integralBoolean (if operator == "&&" then false else true)))
-                  else
-                    let rightResult := evalExpression fuel profile leftResult.frame right
-                    match rightResult.result with
-                    | .error reason => failure rightResult.frame reason
-                    | .ok (.ok rightValue) =>
-                        success rightResult.frame (.ok (integralBoolean (rightValue.value != 0)))
-                    | .ok result => success rightResult.frame result
+                  match integralLogicalShortCircuit operation value with
+                  | some result => success leftResult.frame (.ok result)
+                  | none =>
+                      let rightResult := evalExpression fuel profile leftResult.frame right
+                      match rightResult.result with
+                      | .error reason => failure rightResult.frame reason
+                      | .ok (.ok rightValue) =>
+                          success rightResult.frame
+                            (.ok (integralBoolean (rightValue.value != 0)))
+                      | .ok result => success rightResult.frame result
               | .ok result => success leftResult.frame result
-          | _ => success frame (.unsupported .unresolvedArithmeticConversions)
       | .call _ _ => failure frame .unsupportedCall
 termination_by structural fuel
 

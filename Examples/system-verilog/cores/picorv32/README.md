@@ -452,10 +452,12 @@ The instruction-specific contracts remain useful when a core invariant retains
 raw fields that the indexed family intentionally abstracts.  The adapters
 `addiBoundary_rv32i`, `luiBoundary_rv32i`, `auipcBoundary_rv32i`,
 `swBoundary_rv32i`, `lwBoundary_rv32i`, `branchBoundary_rv32i`,
-`jalBoundary_rv32i`, and `jalrBoundary_rv32i` convert those contracts into the
-corresponding `Rv32iBoundary` index without changing the wire-level premises.
-Thus a proof may preserve an instruction-specific RVFI fact while consuming
-the same stateful dispatcher as the generic row cases.
+`jalBoundary_rv32i`, `jalrBoundary_rv32i`, `fenceBoundary_rv32i`,
+`systemBoundary_rv32i`, `csrBoundary_rv32i`, `illegalBoundary_rv32i`, and
+`illegalCsrBoundary_rv32i` convert those contracts into the corresponding
+`Rv32iBoundary` index without changing the wire-level premises.  Thus a proof
+may preserve an instruction-specific RVFI fact while consuming the same
+stateful dispatcher as the generic row cases.
 
 The measured four-row prefix is instantiated in
 [`rvfi_rv32i_boundary.lean`](rvfi_rv32i_boundary.lean).  Its four theorems

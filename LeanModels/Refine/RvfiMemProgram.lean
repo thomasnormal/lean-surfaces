@@ -292,6 +292,123 @@ theorem MemRvfiTrace.append
       simpa [memProgramState, List.length_cons, Nat.add_assoc,
         Nat.add_comm, Nat.add_left_comm] using second
 
+/-! ## Input-aware cycle certificate -/
+
+/-- The memory invariant tied to an actual packed-RVFI cycle machine.  Bubble
+cycles may carry any input; a retiring cycle must present the exact threaded
+memory-program input whose memory view it reports. -/
+inductive MemRvfiCycleTrace {State : Type}
+    (machine : RvfiCycleMachine State) :
+    Nat → State → RvMemoryState → List Input → List MemInstruction → Prop
+  where
+  | nil (start : Nat) (coreState : State) (state : RvMemoryState) :
+      MemRvfiCycleTrace machine start coreState state [] []
+  | bubble {start : Nat} {coreState coreState' : State}
+      {state : RvMemoryState} {cycleInput : Input} {cycles : List Input}
+      {program : List MemInstruction} {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hvalid : observation.valid = false)
+      (tail : MemRvfiCycleTrace machine start coreState' state cycles program) :
+      MemRvfiCycleTrace machine start coreState state
+        (cycleInput :: cycles) program
+  | retire {start : Nat} {coreState coreState' : State}
+      {state : RvMemoryState} {cycleInput : Input} {cycles : List Input}
+      {instruction : MemInstruction} {program : List MemInstruction}
+      {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hinput : cycleInput = memProgramInput state instruction)
+      (horder : observation.order = start)
+      (boundary :
+        Rv32iBoundary state.arch (memProgramInput state instruction)
+          observation (memProgramStep state instruction)
+          (memRetirement state.arch (memProgramInput state instruction)
+            instruction.kind instruction.r instruction.rs1 instruction.imm))
+      (tail : MemRvfiCycleTrace machine (start + 1) coreState'
+        (memProgramStep state instruction) cycles program) :
+      MemRvfiCycleTrace machine start coreState state
+        (cycleInput :: cycles) (instruction :: program)
+
+/-- An input-aware memory certificate normalizes the observations emitted by
+its actual cycle machine to the symbolic program's retirement stream. -/
+theorem MemRvfiCycleTrace.normalize
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List MemInstruction}
+    (certificate : MemRvfiCycleTrace machine start coreState state
+      cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (memProgramRetirements state program) := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | bubble hstep hvalid tail ih =>
+      simp only [rvfiObservations, hstep]
+      simp [normalizeRvfiTrace?, hvalid, ih]
+  | retire hstep hinput horder boundary tail ih =>
+      simp only [rvfiObservations, hstep]
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      simp [normalizeRvfiTrace?, memProgramRetirements, hspec.1,
+        horder, hretirement, ih]
+
+/-- The cycle inputs retained by an input-aware memory certificate are exactly
+the symbolic program inputs; bubbles are removed by the optional adapter. -/
+theorem MemRvfiCycleTrace.retireInputs_eq
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List MemInstruction}
+    (certificate : MemRvfiCycleTrace machine start coreState state
+      cycles program) :
+    retireInputs machine.toCycleMachine coreState cycles =
+      memProgramInputs state program := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | @bubble start coreState coreState' state cycleInput cycles program
+      observation hstep hvalid tail ih =>
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', none) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep,
+          RvfiObservation.toRetirement?, hvalid]
+      simp only [retireInputs, hstep']
+      exact ih
+  | @retire start coreState coreState' state cycleInput cycles
+      instruction program observation hstep hinput horder boundary tail ih =>
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', some (memRetirement state.arch
+              (memProgramInput state instruction)
+              instruction.kind instruction.r instruction.rs1 instruction.imm)) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep, hretirement]
+      simp only [retireInputs, hstep']
+      rw [hinput]
+      simpa [memProgramInputs] using ih
+
+/-- Direct core-stream theorem: an input-aware memory certificate relates the
+normalized packed observations to the stateful ISA trace on the machine's own
+retiring inputs. -/
+theorem MemRvfiCycleTrace.trace_refines
+    {State : Type} (profile : PlatformProfile)
+    {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {cycles : List Input} {program : List MemInstruction}
+    (certificate : MemRvfiCycleTrace machine start coreState state
+      cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (trace (rvMemoryMachineWith profile) state
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+  calc
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+        some (memProgramRetirements state program) :=
+      certificate.normalize
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (memProgramInputs state program)) := by
+      rw [rvMemoryMachineWith_mem_program_trace]
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+      rw [certificate.retireInputs_eq]
+
 #print axioms LeanModels.Refine.memProgramInputs_append
 #print axioms LeanModels.Refine.memProgramState_append
 #print axioms LeanModels.Refine.memProgramRetirements_append
@@ -304,5 +421,8 @@ theorem MemRvfiTrace.append
 #print axioms LeanModels.Refine.MemRvfiTrace.normalize
 #print axioms LeanModels.Refine.MemRvfiTrace.trace_refines
 #print axioms LeanModels.Refine.MemRvfiTrace.append
+#print axioms LeanModels.Refine.MemRvfiCycleTrace.normalize
+#print axioms LeanModels.Refine.MemRvfiCycleTrace.retireInputs_eq
+#print axioms LeanModels.Refine.MemRvfiCycleTrace.trace_refines
 
 end LeanModels.Refine

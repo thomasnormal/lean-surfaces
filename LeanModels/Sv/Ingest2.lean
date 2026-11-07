@@ -318,6 +318,8 @@ partial def parsePSvaValue (j : Json) : Except String PSvaValue := do
     | "SvaCurrent" => return .current (← parsePExpr (← getField j "expr"))
     | "SvaPastValue" =>
         return .past (← getNatField j "cycles") (← parsePExpr (← getField j "expr"))
+    | "SvaCountOnes" => return (PSvaValue.countOnes
+          (← parsePExpr (← getField j "expr")))
     | "SvaValueBinary" =>
         let op ← parseSymBinOp (← getStrField j "op")
         let left ← parsePSvaValue (← getField j "left")

@@ -214,6 +214,12 @@ when at most one bit is one, while unknown vectors pass only when no more than
 one known one exists and no unknown can make the count exceed one. The clean
 `sem2/sva_onehot0` witness covers the admitted form; the arbiter census falls
 from 3 to 2, leaving one shift and one other invocation.
+`$countones(expr)` now maps to a sampled four-state known-one count, with x/z
+bits contributing zero as required by the SVA bit query. The clean-room
+`sem2/sva_countones` witness and Verilator row cover the retained value form.
+On the pinned `prim_packer` set, the eight `$countones` invocation walls are
+removed from the property AST; eight unrelated property nodes remain outside
+the finite value fragment.
 Sampled order comparisons (`<`, `<=`, `>`, `>=`) now retain temporal operands
 as `SvaValueCmp` and evaluate them at the sampled width. The clean-room
 `sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter remains at two

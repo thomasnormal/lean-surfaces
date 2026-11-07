@@ -26392,6 +26392,8 @@ def _sva_value(node):
             if cycles is not None and cycles >= 0:
                 return {"kind": "SvaPastValue", "cycles": cycles,
                         "expr": _sva_pexpr(args[0])}
+        if name == "$countones" and len(args) == 1:
+            return {"kind": "SvaCountOnes", "expr": _sva_pexpr(args[0])}
     binary_ops = {
         "AddExpression": "+", "SubtractExpression": "-",
         "MultiplyExpression": "*", "DivideExpression": "/",

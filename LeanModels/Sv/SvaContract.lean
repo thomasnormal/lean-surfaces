@@ -55,7 +55,7 @@ def instantiateExpr (env : IEnv) (elems : List (String × Nat)) (value : PExpr) 
 def svaValueWidth (env : IEnv) (elems : List (String × Nat)) : PSvaValue → Option Nat :=
   let allElems := elems ++ env.widths
   let rec width : PSvaValue → Option Nat
-    | .current value | .past _ value => selfWidth2 env allElems value
+    | .current value | .past _ value | .countOnes value => selfWidth2 env allElems value
     | .binary _ left right =>
       match width left, width right with
       | some a, some b => some (max a b)
@@ -70,6 +70,7 @@ def instantiateValueAt (env : IEnv) (elems : List (String × Nat))
   let rec go : PSvaValue → SvaValue
     | .current value => .current (instExpr2 env allElems ctx value)
     | .past cycles value => .past cycles (instExpr2 env allElems ctx value)
+    | .countOnes value => .countOnes (instExpr2 env allElems ctx value)
     | .binary op left right => .binary op (go left) (go right)
   exact go
 

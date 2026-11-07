@@ -243,6 +243,12 @@ The kernel now exposes `DecisionKnown` over correlated concretizations and a
 known-state theorem, without changing execution until the refinement relation
 is connected to E.
 
+The x-resolution note now defines the differential testing levels: H is the
+nondeterministic relation, E the deterministic IEEE execution, and S/J
+downstream refinements. Known-value rows remain equality tests; rows that read
+unknowns use membership in H, classifying a simulator's selected x behavior
+without changing E.
+
 ## Initial `$readmemh` remains a named F4 boundary
 
 The clean-room `sem2/readmemh_rom` fixture now records an initial

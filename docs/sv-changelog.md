@@ -234,6 +234,12 @@ ordinary `clk_two` route therefore refuses, while the exact `runMulti` instant
 route remains available; `clk_implicit` records the data-driven event-control
 refusal.
 
+The x-resolution ruling is now recorded as an active proof boundary: until E
+quantifies correlated 0/1 concretizations, decisions and dynamic selects must
+carry a known-value witness or remain loud. Existing `condTrue` x-optimism is
+not a proof rule; the migration plan and its current call sites are listed in
+`docs/sv-x-resolution.md`.
+
 ## Initial `$readmemh` remains a named F4 boundary
 
 The clean-room `sem2/readmemh_rom` fixture now records an initial

@@ -11100,6 +11100,25 @@ DECIDED: retain structured class statements and creation-purity checks; replace
 qualified method indexing with a runtime class namespace only when full class
 object semantics are implemented.
 
+## 2026-11-07-pycomplete-467 — audit class method flattening
+
+The medium `py-method-flattening` finding remains open beyond the structured
+class-statement boundary. `ClassDef` is now retained as a source node and class
+creation effects are admitted or refused at the statement position, but methods
+are still flattened into qualified `C.method` function entries for the admitted
+protocol. This preserves current instance dispatch while leaving full class
+namespace, method-object identity, and class-body binding semantics as future
+runtime-class work.
+
+| Measurement | Result |
+|---|---|
+| Pure class witness | `class_script.py`: MATCH against CPython 3.9.25 |
+| Creation-effect witness | `cls_deco_script.py`: expected loud refusal |
+| Remaining debt | runtime class namespace and first-class method values |
+
+DECIDED: keep `py-method-flattening` open as a medium class-runtime milestone;
+retain qualified dispatch only for the conservative admitted protocol.
+
 ## 2026-11-07-pycomplete-437 — recheck structured extractor try handling
 
 The extractor try-lowering audit remains closed. `convert_stmt(ast.Try)` carries

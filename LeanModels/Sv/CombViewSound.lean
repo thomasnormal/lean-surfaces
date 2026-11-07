@@ -272,8 +272,6 @@ theorem paramEnv2_dims {d : PDesign} {args : List Int} {env : IEnv}
   obtain ⟨_, -, _, -, e0, -, e1, -, e2, -, pws, -, hfin⟩ := h
   exact ⟨{ e2 with pwidths := pws }, (Res.ok.inj hfin).symm⟩
 
-
-
 theorem dimsOf'_some {s : Summary} {n : String} {dims : List (Aff × Aff)}
     (h : s.dimsOf' n = some dims) :
     ∃ dt, s.find n = some dt ∧ dt ∈ s.decls ∧ dt.dims.map (fun p => (p.2.1, p.2.2)) = dims := by
@@ -533,7 +531,7 @@ theorem ctx_of_env {s : Summary} {d : PDesign} (hsd : declsOf? d.decls = .ok s.d
     Ctx σ (env.withDecls (s.decls.map (DeclT.toDecl σ))) (s.decls.map fun dt => (dt.name, dt.elemW σ))
       (s.DW σ) (s.DG σ) (s.EW σ) s.params := by
   obtain ⟨env2, henv⟩ := hdim
-  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env2.vals.lookup n = some (σ n) := by
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env2.intVal? n = some (σ n) := by
     intro dt hdt n hn
     have := hag n (hdecl dt hdt n hn)
     rw [henv] at this
@@ -816,12 +814,11 @@ theorem Hdr.expand2 {env : IEnv} {elems : List (String × Nat)} {F : Nat} {σ : 
     (hf : ∀ v, h.Rng σ v → expandList2 (env.bindVal h.g v) elems F body = .ok (f v)) :
     (h.gen rc body).expand2 env elems F = .ok ((h.range σ).flatMap f) := by
   have hbag : ∀ i : Int, ∀ n ∈ h.bound.names,
-      (env.bindVal h.g i).vals.lookup n = some (σ n) := by
+      (env.bindVal h.g i).intVal? n = some (σ n) := by
     intro i n hn
     obtain ⟨hnp, hng⟩ := hbn n hn
     have hb' : (n == h.g) = false := beq_eq_false_iff_ne.2 hng
-    simp only [IEnv.bindVal, List.lookup, hb']
-    exact hag n hnp
+    exact (IEnv.intVal?_bindVal_ne i hng).trans (hag n hnp)
   have hei : ∀ i : Int, h.bndE.isInt (env.bindVal h.g i) = true :=
     fun i => (affOf?_sound h.bndE h.bound hwf (hbag i)).1
   have he : ∀ i : Int, evalInt (env.bindVal h.g i) h.bndE = .ok (h.bound.eval σ) :=
@@ -957,15 +954,16 @@ theorem sound_prefix {d : PDesign} {s : Summary} {args : List Int} {σ : String 
         (s.decls.map fun dt => (dt.name, dt.elemW σ))).map Prod.snd := by
   have hok' := hok
   obtain ⟨-, -, -, -, -, hdecl, -, -⟩ := hok'
-  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n) :=
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n) :=
     fun dt hdt n hn => hag n (hdecl dt hdt n hn)
   have h2 := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
   have h3 := buildElems_summary (σ := σ) d.decls s.decls hsd env hagd
   have hdim := paramEnv2_dims h1
+  obtain ⟨-, -, hauto3⟩ := hauto
   refine ⟨ctx_of_env hsd hdim hag hdecl, ?_⟩
   have hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p,
       (h.bound.eval σ - h.c0).toNat < PDesign.surfaceFuel args :=
-    fun p hp h hh => surfaceFuel_gt args _ (hauto.2.2 p hp h hh)
+    fun p hp h hh => surfaceFuel_gt args _ (hauto3 p hp h hh)
   have h4 : expandList2 (env.withDecls (s.decls.map (DeclT.toDecl σ)))
       (s.decls.map fun dt => (dt.name, dt.elemW σ)) (PDesign.surfaceFuel args) d.generates =
       .ok (s.fams.flatMap fun f => TFam.enum

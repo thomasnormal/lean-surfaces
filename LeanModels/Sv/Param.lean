@@ -1696,15 +1696,44 @@ def evalInt (env : IEnv) : PExpr → Except String Int
 /-- Exact-mode proof entry point.  INT-class trees whose constants are in
 `nvals` are evaluated through their propagated signed-32 type; the legacy
 `evalInt` path remains available for unbounded proof arithmetic. -/
+def evalIntExactRec (env : IEnv) : PExpr → Except String Int
+  | .int v => .ok (canonInt 32 true v)
+  | .paramRef n none =>
+      match env.intVal? n with
+      | some v => .ok (canonInt 32 true v)
+      | none => .error s!"unbound parameter '{n}'"
+  | .genvarRef n =>
+      match env.intVal? n with
+      | some v => .ok (canonInt 32 true v)
+      | none => .error s!"genvar '{n}' outside its loop"
+  | .unary op a =>
+      if a.isIntExact env then do
+        let v ← evalIntExactRec env a
+        match op with
+        | .m0 .neg => .ok (canonInt 32 true (-v))
+        | .m0 .pos | .plus => .ok (canonInt 32 true v)
+        | _ => evalSized env (.unary op a)
+      else evalSized env (.unary op a)
+  | .binary op l r =>
+      if l.isIntExact env && r.isIntExact env && op.intArith then do
+        let a ← evalIntExactRec env l
+        let b ← evalIntExactRec env r
+        match op with
+        | .m0 .add => .ok (canonInt 32 true (a + b))
+        | .m0 .sub => .ok (canonInt 32 true (a - b))
+        | .m0 .mul | .mul => .ok (canonInt 32 true (a * b))
+        | .div => if b == 0 then .error "division by zero" else .ok (canonInt 32 true (a.tdiv b))
+        | .mod => if b == 0 then .error "modulo by zero" else .ok (canonInt 32 true (a.tmod b))
+        | .pow => if b < 0 then .error "negative exponent" else .ok (canonInt 32 true (a ^ b.toNat))
+        | .shl | .ashl => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a * (2 : Int)^b.toNat))
+        | .shr => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a.tdiv ((2 : Int)^b.toNat)))
+        | .ashr => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a.fdiv ((2 : Int)^b.toNat)))
+        | _ => evalSized env (.binary op l r)
+      else evalSized env (.binary op l r)
+  | e => evalSized env e
+
 def evalIntExact (env : IEnv) (e : PExpr) : Except String Int :=
-  if !env.int32 then evalInt env e
-  else match e with
-    | .int v => .ok (canonInt 32 true v)
-    | .paramRef n none =>
-        match env.intVal? n with
-        | some v => .ok (canonInt 32 true v)
-        | none => .error s!"unbound parameter '{n}'"
-    | _ => evalSized env e
+  if !env.int32 then evalInt env e else evalIntExactRec env e
 
 #guard (evalIntExact ({ nvals := [("N", (5, 32, true))], int32 := true } : IEnv)
     (.binary (.m0 .add) (.paramRef "N" none) (.int 1))).toOption == some 6

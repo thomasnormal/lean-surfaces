@@ -1139,6 +1139,10 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
               (.repl amount.toNat (instDivOperand2 env elems false (divOperandWidth2 env elems operand) operand))
           else .unsupported "Repl:count" "negative replication count"
       | .error message => .unsupported "Repl:count" message
+  | .paramRef n none =>
+      fitDivOperand2 signed ctx (some 32) (instExpr2 env elems (some 32) (.paramRef n none))
+  | .genvarRef n =>
+      fitDivOperand2 signed ctx (some 32) (instExpr2 env elems (some 32) (.genvarRef n))
   | .cast _ operand =>
       let source := divOperandWidth2 env elems operand
       fitDivOperand2 signed ctx source (instDivOperand2 env elems false source operand)

@@ -1125,6 +1125,9 @@ theorem evalAt_sigOpd {e : PExpr} (h : sigOpd e = true) (ty : Nat × Bool) (v : 
 theorem isInt_sigOpd {e : PExpr} (h : sigOpd e = true) : e.isInt env = false := by
   cases e <;> simp_all [sigOpd]
 
+theorem isIntExact_sigOpd {e : PExpr} (h : sigOpd e = true) : e.isIntExact env = false := by
+  cases e <;> simp_all [sigOpd, PExpr.isIntExact]
+
 /-- **A product with a signal-access factor is no constant**: `evalInt` fails on it, so `instExpr2` lowers it as an
 operation, the way it lowers `+`. -/
 theorem evalInt_mul_sig {l r : PExpr} (h : (sigOpd l || sigOpd r) = true) (v : Int) :
@@ -1146,6 +1149,38 @@ theorem evalInt_mul_sig {l r : PExpr} (h : (sigOpd l || sigOpd r) = true) (v : I
     · simp [evalInt, hi, evalSized, hc, he, bind, Except.bind]
     · exact absurd he (hat _ x)
 
+theorem evalSized_mul_sig {l r : PExpr} (h : (sigOpd l || sigOpd r) = true) (v : Int) :
+    evalSized env (.binary .mul l r) ≠ .ok v := by
+  have hat : ∀ ty x, evalAt env ty (.binary .mul l r) ≠ .ok x := by
+    intro ty x
+    rcases hl : evalAt env ty l with m | a
+    · simp [evalAt, SymBinOp.constClass, hl, bind, Except.bind]
+    · rcases hr : evalAt env ty r with m | b
+      · simp [evalAt, SymBinOp.constClass, hl, hr, bind, Except.bind]
+      · rcases Bool.or_eq_true_iff.mp h with h' | h'
+        · exact absurd hl (evalAt_sigOpd h' ty a)
+        · exact absurd hr (evalAt_sigOpd h' ty b)
+  rcases hc : ctype env (.binary .mul l r) with m | ⟨w, s⟩
+  · simp [evalSized, hc, bind, Except.bind]
+  · rcases he : evalAt env (w, s) (.binary .mul l r) with m | x
+    · simp [evalSized, hc, he, bind, Except.bind]
+    · exact absurd he (hat _ x)
+
+theorem evalIntExact_mul_sig {l r : PExpr} (h : (sigOpd l || sigOpd r) = true) (v : Int) :
+    evalIntExact env (.binary .mul l r) ≠ .ok v := by
+  by_cases h32 : env.int32 = true
+  · unfold evalIntExact
+    simp only [h32, Bool.not_true]
+    intro hs
+    rcases Bool.or_eq_true_iff.mp h with hl | hr
+    · have he := isIntExact_sigOpd (env := env) hl
+      simp [evalIntExactRec, he] at hs
+      exact (evalSized_mul_sig h v) hs
+    · have he := isIntExact_sigOpd (env := env) hr
+      simp [evalIntExactRec, he] at hs
+      exact (evalSized_mul_sig h v) hs
+  · simpa [evalIntExact, h32] using (evalInt_mul_sig h v)
+
 /-- `a * b` at any context, one factor a signal access: the operation over two fits, possibly under one `resize`, the
 shape of `+` (`ie_addsub_cases`). -/
 theorem ie_mul_cases {l r : PExpr} (hm : (sigOpd l || sigOpd r) = true) (ctx : Option Nat) :
@@ -1156,13 +1191,17 @@ theorem ie_mul_cases {l r : PExpr} (hm : (sigOpd l || sigOpd r) = true) (ctx : O
   rcases he : evalInt env (.binary .mul l r) with e | v
   · cases ctx with
     | none =>
-        refine Or.inl ?_
-        simp only [instExpr2, he]
-        exact ⟨_, rfl⟩
+        rcases hxe : evalIntExact env (.binary .mul l r) with ex | v'
+        · refine Or.inl ?_
+          simp only [instExpr2, hxe]
+          exact ⟨_, rfl⟩
+        · exact absurd hxe (evalIntExact_mul_sig hm v')
     | some w =>
-        by_cases h : (ctxOpWidth2 env elems l r).getD w ≤ w
-        · exact Or.inl ⟨some w, by simp [instExpr2, he, h]⟩
-        · exact Or.inr ⟨w, some ((ctxOpWidth2 env elems l r).getD w), by simp [instExpr2, he, h]⟩
+        rcases hxe : evalIntExact env (.binary .mul l r) with ex | v'
+        · by_cases h' : (ctxOpWidth2 env elems l r).getD w ≤ w
+          · exact Or.inl ⟨some w, by simp [instExpr2, hxe, h']⟩
+          · exact Or.inr ⟨w, some ((ctxOpWidth2 env elems l r).getD w), by simp [instExpr2, hxe, h']⟩
+        · exact absurd hxe (evalIntExact_mul_sig hm v')
   · exact absurd he (evalInt_mul_sig hm v)
 
 /-- … at a context the factors fit (`instExpr2_add`). -/
@@ -1171,7 +1210,9 @@ theorem instExpr2_mul {l r : PExpr} (hm : (sigOpd l || sigOpd r) = true) (w : Na
     instExpr2 env elems (some w) (.binary .mul l r) =
       .binary .mul (fitExpr2 env elems (some w) l) (fitExpr2 env elems (some w) r) := by
   rcases he : evalInt env (.binary .mul l r) with e | v
-  · simp [instExpr2, he, hw]
+  · rcases hxe : evalIntExact env (.binary .mul l r) with ex | v'
+    · simp [instExpr2, hxe, hw]
+    · exact absurd hxe (evalIntExact_mul_sig hm v')
   · exact absurd he (evalInt_mul_sig hm v)
 
 /-- … and at no context (a self-determined position: the wider of the factors' own widths). -/
@@ -1180,7 +1221,9 @@ theorem ie_mul_none {l r : PExpr} (hm : (sigOpd l || sigOpd r) = true) {a c : Na
     instExpr2 env elems none (.binary .mul l r) =
       .binary .mul (fitExpr2 env elems (some (max a c)) l) (fitExpr2 env elems (some (max a c)) r) := by
   rcases he : evalInt env (.binary .mul l r) with e | v
-  · simp [instExpr2, he, hl, hr]
+  · rcases hxe : evalIntExact env (.binary .mul l r) with ex | v'
+    · simp [instExpr2, hxe, hl, hr]
+    · exact absurd hxe (evalIntExact_mul_sig hm v')
   · exact absurd he (evalInt_mul_sig hm v)
 
 /-- A marker over a non-propagating, non-constant operand is, at every context, a `resize` over an
@@ -1332,8 +1375,8 @@ theorem Ctx.bindVal {σ : String → Int} {E : IEnv} {elems : List (String × Na
     {DW : String → Option Nat} {DG : String → Option (List (Int × Int))}
     {EW : String → Option Nat} {ns : List String}
     (C : Ctx σ E elems DW DG EW ns) (g : String) (i : Int) :
-    Ctx (bindσ g i σ) (E.bindVal g i) elems DW DG EW (g :: ns) :=
-  ⟨C.agree.bindVal g i, C.widths, C.elemsG, C.elems, C.dims⟩
+    Ctx (bindσ g i σ) (E.bindVal g i) elems DW DG EW (g :: ns) := by
+  exact ⟨C.agree.bindVal g i, C.widths, C.elemsG, C.elems, C.dims⟩
 
 /-- Everything a site lemma needs about one access. -/
 def AccOK (σ : String → Int) (DW : String → Option Nat)
@@ -1362,7 +1405,7 @@ theorem ctxElemsOne (C : Ctx σ E elems DW DG EW ns) {n : String} {m : Int}
 /-- **A legacy part select of a one-dimensional declaration** instantiates to the window `Acc.part1` promises. -/
 theorem inst_partSel (C : Ctx σ E elems DW DG EW ns) {n : String} {msb lsb : PExpr} {x y : Aff} {m : Int}
     (hdg : DG n = some [(m, 0)]) (hx : affOf? msb = some x) (hy : affOf? lsb = some y)
-    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.vals.lookup v = some (σ v))
+    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.intVal? v = some (σ v))
     (hy0 : 0 ≤ y.eval σ) (hyx : y.eval σ ≤ x.eval σ) (ctx : Option Nat) :
     instExpr2 E elems ctx (.partSel (.ident n) msb lsb) =
       .slice (.ident n) (y.eval σ).toNat (x.eval σ - y.eval σ + 1).toNat := by
@@ -1375,7 +1418,7 @@ theorem inst_partSel (C : Ctx σ E elems DW DG EW ns) {n : String} {msb lsb : PE
 /-- … and its self-width. -/
 theorem selfWidth_partSel (C : Ctx σ E elems DW DG EW ns) {n : String} {msb lsb : PExpr} {x y : Aff} {m : Int}
     (hdg : DG n = some [(m, 0)]) (hx : affOf? msb = some x) (hy : affOf? lsb = some y)
-    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.vals.lookup v = some (σ v))
+    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.intVal? v = some (σ v))
     (hy0 : 0 ≤ y.eval σ) (hyx : y.eval σ ≤ x.eval σ) :
     selfWidth2 E elems (.partSel (.ident n) msb lsb) = some (x.eval σ - y.eval σ + 1).toNat := by
   obtain ⟨-, heh⟩ := affOf?_sound msb x hx (hagx x (by simp))
@@ -1387,7 +1430,7 @@ theorem selfWidth_partSel (C : Ctx σ E elems DW DG EW ns) {n : String} {msb lsb
 /-- … and the write window of a legacy part-select target. -/
 theorem instLhs_partSel (C : Ctx σ E elems DW DG EW ns) {n : String} {msb lsb : PExpr} {x y : Aff} {m : Int}
     (hdg : DG n = some [(m, 0)]) (hx : affOf? msb = some x) (hy : affOf? lsb = some y)
-    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.vals.lookup v = some (σ v))
+    (hagx : ∀ a ∈ [x, y], ∀ v ∈ a.names, E.intVal? v = some (σ v))
     (hy0 : 0 ≤ y.eval σ) (hyx : y.eval σ ≤ x.eval σ) :
     instLhs2 E elems (.partSel n msb lsb) =
       .ok (.slice n (y.eval σ).toNat (x.eval σ - y.eval σ + 1).toNat, (x.eval σ - y.eval σ + 1).toNat) := by
@@ -1403,7 +1446,7 @@ theorem inst_leaf (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr}
     (h : leafRd? ds e = .ok a) (ha : AccOK σ DW DG EW ns a) (ctx : Option Nat) :
     RdOK σ [a] (instExpr2 E elems ctx e) := by
   obtain ⟨hdec, hgeo, hns⟩ := ha
-  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.vals.lookup n = some (σ n) :=
+  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.intVal? n = some (σ n) :=
     fun x hx n hn => C.agree n (hns x hx n hn)
   cases e with
   | ident n =>
@@ -1788,7 +1831,7 @@ theorem repRd?_cases {ds : List DeclT} {c a : PExpr} {rs : List Acc} (h : repRd?
 `ConstOK`). -/
 theorem repl_facts (C : Ctx σ E elems DW DG EW ns) {c a : PExpr} {k : Aff} (hk : affOf? c = some k)
     (hco : ConstOK σ ns (.repl c a)) : evalInt E c = .ok (k.eval σ) ∧ 0 ≤ k.eval σ := by
-  have hn : ∀ n ∈ k.names, E.vals.lookup n = some (σ n) := by
+  have hn : ∀ n ∈ k.names, E.intVal? n = some (σ n) := by
     intro n hn
     apply C.agree n
     apply hco.1 n
@@ -1873,20 +1916,28 @@ theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
     (hp : ∀ n, e = .paramRef n none → n ∈ ns) (c : Option Nat) :
     RdOK σ rs (instDivOperand2 E elems false c e) := by
   rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
-  · have hb : E.vals.lookup g = some (σ g) := C.agree g (hg g rfl)
+  · have hb : E.intVal? g = some (σ g) := C.agree g (hg g rfl)
     have e1 : instDivOperand2 E elems false c (.genvarRef g) =
-        fitDivOperand2 false c (some 32) (.lit (LVec.ofInt 32 (σ g))) := by
+        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.genvarRef g)) := by
       simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
     rw [e1]
     refine RdOK.fitDiv ?_ false _ _
-    simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
-  · have hb : E.vals.lookup n = some (σ n) := C.agree n (hp n rfl)
+    rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
+    · simp [instExpr2, intLit2, IEnv.intVal?, hv, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+    · cases hx : E.vals.lookup g <;>
+        simp [instExpr2, intLit2, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+  · have hb : E.intVal? n = some (σ n) := C.agree n (hp n rfl)
     have e1 : instDivOperand2 E elems false c (.paramRef n none) =
-        fitDivOperand2 false c (some 32) (.lit (LVec.ofInt 32 (σ n))) := by
-      simp [instDivOperand2, instExpr2, intLit2_eq, hb, divOperandWidth2]
+        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.paramRef n none)) := by
+      rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
+      · simp [instDivOperand2, instExpr2, IEnv.intVal?, hv]
+      · cases hx : E.vals.lookup n <;> simp [instDivOperand2, instExpr2, IEnv.intVal?, hx, hn]
     rw [e1]
     refine RdOK.fitDiv ?_ false _ _
-    simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+    rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
+    · simp [instExpr2, intLit2, IEnv.intVal?, hv, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+    · cases hx : E.vals.lookup n <;>
+        simp [instExpr2, intLit2, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   · exact rd_shOpd C h' hacc false c
 
 /-- … and of the left operand of a shift (the marker is transparent). -/
@@ -2052,7 +2103,7 @@ theorem instLhs_acc (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {l : PLhs
     (h : tgtOf? ds l = .ok a) (ha : AccOK σ DW DG EW ns a) :
     ∃ w, instLhs2 E elems l = .ok (a.lhs σ, w) := by
   obtain ⟨hdec, hgeo, hns⟩ := ha
-  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.vals.lookup n = some (σ n) :=
+  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.intVal? n = some (σ n) :=
     fun x hx n hn => C.agree n (hns x hx n hn)
   rcases tgtOf?_cases h with ⟨n, rfl, rfl⟩ | ⟨n, i, x, rfl, hx, hba⟩ | ⟨n, is, rfl, he⟩ |
     ⟨n, is, mode, hi, lo, rfl, hp⟩ | ⟨n, msb, lsb, rfl, hp⟩

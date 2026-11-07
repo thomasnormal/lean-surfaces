@@ -143,4 +143,12 @@ def integralSizeValueOfEvidence (profile : TargetProfile) (resultType operandTyp
   let bytes ← integralSizeBytes profile integer
   pure {format, value := Int.ofNat bytes}
 
+def integralAlignValueOfEvidence (profile : TargetProfile) (resultType operandType : CppTypeEvidence) :
+    Except TypeResolutionError IntegralValue := do
+  let format ← integralFormatOfEvidence profile resultType
+  let some integer := integralTypeOfEvidence operandType
+    | throw (.unsupportedType .int)
+  let bytes ← integralAlignBytes profile integer
+  pure {format, value := Int.ofNat bytes}
+
 end LeanModels.Cpp

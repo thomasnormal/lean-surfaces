@@ -147,13 +147,9 @@ private def evaluateSizeOf (profile : TargetProfile) (typed : TypedCallableExpre
 private def evaluateAlignOf (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
-  let format ← formatFor profile typed.type
-  let some integer := builtinIntegralType operandType
-    | throw (.unsupportedType operandType)
-  let bytes ← match integralAlignBytes profile integer with
-    | .ok value => pure value
-    | .error reason => throw (mapFormatError reason)
-  pure (.ok {format, value := Int.ofNat bytes})
+  (integralAlignValueOfEvidence profile typed.type operandType).map
+    (fun value => .ok value)
+    |>.mapError mapFormatError
 
 private def evaluateParameter (profile : TargetProfile) (parameters : List CallableParameter)
     (arguments : List IntegralValue) (typed : TypedCallableExpression)

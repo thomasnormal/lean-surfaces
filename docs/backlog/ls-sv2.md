@@ -4745,3 +4745,37 @@ checks passed, including `python3 tools/docs_check.py`,
 lost at the core-facing boundary.  Continue with the next decoded RV32I
 family after this item while generated-member memory support remains with
 `ls-sv`.
+
+## 2026-11-07-ls-sv2-297 — add the RV32I conditional-branch RVFI boundary
+
+The inboxes and goal file were reread before this item.  The owner lane's
+CombView migration remains the top priority in `ls-sv2.md`, but its files are
+owned by `ls-sv`; the generated-member memory-route refusal likewise remains
+with that lane.  This item therefore advances the next owned refinement layer
+without touching `LeanModels/Sv/**`.
+
+Added `LeanModels/Refine/Rv32iBranch.lean` with profile-parametric equations
+for the complete decoded `.branch` family (`branchTarget`, `branchNext`,
+`branchEffects`, and `branchRetirement`) plus the `isaStepWith`,
+memory-threaded, and `rvMachineWith` bridge theorems.  Added
+`LeanModels/Refine/RvfiBranch.lean` with the raw
+`RvfiObservation.branchBoundary` predicate and
+`rvfiCycleStepRefines_of_branch_memory`.  The contract keeps both source
+reads, the condition-selected pc target, and the absence of register, memory,
+and trap effects explicit; valid rows advance only the architectural pc and
+preserve threaded byte memory, while invalid rows remain explicit ISA
+stutters.  Updated the umbrella import and PicoRV32 README; no RTL, loader,
+or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iBranch`,
+`lake build LeanModels.Refine.RvfiBranch`, `lake build LeanModels.Refine`, and
+the PicoRV32 `trace_proof` target passed.  The new theorem reports contain
+only the established `propext`/`Classical.choice`/`Quot.sound` boundary; no
+`sorryAx` or new axiom was introduced.  The docs and generated backlog index
+checks passed, including `python3 tools/docs_check.py`,
+`./tools/backlog-index.sh --check`, and `git diff --check`.
+
+**JUDGED / DECIDED:** treat all six conditional branches as one semantic
+family with the condition parameter retained at the raw boundary.  Continue
+with the next owned RV32I refinement step while the CombView and generated
+member work remains with `ls-sv`.

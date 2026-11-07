@@ -323,6 +323,14 @@ keeps the source-register read and the target's low-bit clearing explicit,
 with `rvfiCycleStepRefines_of_jalr_memory` carrying the resulting state and
 retirement.  Both constructors retain invalid rows as explicit ISA stutters.
 
+The conditional-branch boundary now covers all six RV32I conditions through
+`RvfiObservation.branchBoundary` and
+`rvfiCycleStepRefines_of_branch_memory`.  The raw contract records both source
+register reads, the signed or unsigned condition's selected target, and the
+absence of register, memory, and trap effects.  A valid cycle advances only
+the architectural pc and preserves threaded byte memory; invalid rows remain
+explicit ISA stutters.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

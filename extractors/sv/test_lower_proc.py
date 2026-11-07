@@ -683,6 +683,16 @@ class StarBlocks(Base):
         procs, _ = self.admitted("always_comb y = a & b;")
         self.assertNotIn("always_star_lowered", procs[0])
 
+    def test_retain_proc_rewrites_keeps_event_control_source_node(self):
+        source = ("module t (input logic [3:0] a, b, output logic [3:0] y); "
+                  "always @* y = a & b; endmodule")
+        retained = self.module(source, retain_proc_rewrites=True)
+        process = retained["processes"][0]
+        self.assertEqual(process["kind"], "AlwaysEvent")
+        self.assertTrue(process["symbolic_event_retained"])
+        self.assertEqual(process["event_kind"], "ImplicitEventControl")
+        self.assertNotIn("always_star_lowered", process)
+
     def test_blocks_with_if_else_and_case(self):
         self.admitted("always @* begin if (s[0]) y = a; else y = b; case (s) 2'd0: z = a; 2'd1: z = b; default: z = 4'd0; endcase end")
 

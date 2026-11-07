@@ -6569,3 +6569,8 @@ the defined sampling and NBA rules.
   `LocalDecl` nodes and reports the frozen scoped-storage boundary at load;
   ordinary symbolic extraction continues to hoist static locals as before.
 
+- Event-controlled plain `always` blocks now have a retain-mode `AlwaysEvent`
+  envelope twin that keeps the event-control kind and body. The default E1
+  `always @*`/event-list conversion to `AlwaysComb` is unchanged, and the
+  retained node loads as a named event-list Unsupported boundary.
+

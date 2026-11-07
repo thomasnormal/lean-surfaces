@@ -552,6 +552,9 @@ def parsePProcess (j : Json) : Except String PProcess := do
             | "always" => return .alwaysPlain clock body
             | s => throw s!"unknown AlwaysPosedge style {s.quote}"
     | "AlwaysComb" => return .alwaysComb (← parsePStmt (← getField j "body"))
+    | "AlwaysEvent" =>
+        return .unsupported "ProceduralBlockSymbol:Always"
+          "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
     | "Initial" =>
         -- Keep the envelope parseable so the semantic tier can report the
         -- named unsupported process instead of failing while decoding JSON.

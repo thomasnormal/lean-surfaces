@@ -157,6 +157,11 @@ so the model no longer selects one active-region ordering.
 Rows: `proc_star` (implicit, an explicit list, a single-event list, a `case` with a default, a temporary written first, a ripple chain
 through the windows an unrolled loop wrote) and `proc_star_param_n3/n4/n8` (whole assignments at every width).
 
+Under `--retain-proc-rewrites`, an event-controlled plain `always` remains an
+`AlwaysEvent` envelope node with its event-control kind and body. `Ingest2`
+reports the frozen event-list process boundary as Unsupported; the default E1
+conversion to `AlwaysComb` remains unchanged.
+
 ## N2. Nets with one continuous driver
 
 A net reads z where no driver drives it (IEEE 1800-2023 6.6) and resolves several drivers; the semantic tier stores variables, so

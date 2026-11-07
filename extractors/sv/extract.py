@@ -26346,6 +26346,20 @@ def convert_procedural_block(sm, m, module_level=False):
 
     body = m.body
     if _SYM is not None and pk == ProceduralBlockKind.Always:
+        if _RETAIN_PROC_REWRITES:
+            # Preserve the event-controlled process until the retained
+            # scheduler vocabulary is available.  The normal path below
+            # applies WP-PROC E1 and admits the always_comb-equivalent shape.
+            timing = getattr(body, "timing", None)
+            timed_body = getattr(body, "stmt", body)
+            return {
+                "kind": "AlwaysEvent",
+                "span": span,
+                "event_kind": type(timing).__name__ if timing is not None else None,
+                "body": convert_stmt(sm, timed_body),
+                "text": source_text(m),
+                "symbolic_event_retained": True,
+            }
         # WP-PROC E1: a level-sensitive `always` (`@*`, `@(a or b)`, `@a`) is an `always_comb` under rules R1 to R6
         lowered = lower_proc.star_block(sys.modules[__name__], sm, m, module_level)
         if lowered is not None:

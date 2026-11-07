@@ -73,6 +73,9 @@
 - Tests: recheck the audited Python edge-row coverage against the pinned
   CPython 3.9 script corpus; all 158 scripts remain either matched or an
   explicit loud boundary.
+
+- Python: recheck the parameterized float-round worker and its CPython cutoff
+  boundary battery; no per-digit worker family remains.
 - Centralized logical `&&`/`||` decoding and short-circuit decisions in
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.

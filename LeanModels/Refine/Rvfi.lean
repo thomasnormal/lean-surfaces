@@ -547,6 +547,44 @@ theorem rvfiCycleStepRefines_of_step
       simp only [hinvalid]
       exact hrel'
 
+/-! The optional cycle contract can be lifted back to the raw RVFI contract
+when a separate wire invariant proves that every valid row is well formed.
+Without this premise the optional adapter could turn a malformed valid row
+into `none`, so the reverse direction would be unsound. -/
+theorem cycleStepRefines_to_rvfiCycleStepRefines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (input : Input),
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed) :
+    RvfiCycleStepRefines machine isa rel admit := by
+  refine rvfiCycleStepRefines_of_step h.1 ?_
+  intro state isaState input hrel hadmit
+  rcases hstep : machine.step state input with ⟨state', observation⟩
+  rcases hisa : isa.step isaState input with ⟨isaState', isaRetirement⟩
+  have hcycle := h.2 state isaState input hrel hadmit
+  simp only [RvfiCycleMachine.toCycleMachine, hstep, hisa] at hcycle
+  by_cases hv : observation.valid = true
+  · have hwell' : observation.wellFormed := by
+      have hvalid : (machine.step state input).2.valid = true := by
+        simpa [hstep] using hv
+      have hwellRaw := hwell state input hvalid
+      simpa [hstep] using hwellRaw
+    have hsome : observation.toRetirement? = some observation.toRetirement :=
+      observation.toRetirement?_eq_some hv hwell'
+    rw [hsome] at hcycle
+    exact Or.inl ⟨hv, hwell', hcycle.1, hcycle.2⟩
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hnone : observation.toRetirement? = none := by
+      simp [RvfiObservation.toRetirement?, hv']
+    rw [hnone] at hcycle
+    exact Or.inr ⟨hv', hcycle⟩
+
 /-! The strict contract and the total raw-cycle case split are equivalent.
 This form lets a loaded-core proof work entirely with packed fields and defer
 the optional-retirement adapter to the generic constructor. -/
@@ -1110,6 +1148,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
+#print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_iff_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines

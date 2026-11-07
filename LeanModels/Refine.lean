@@ -36,6 +36,7 @@ import LeanModels.Refine.RvfiIllegalProgram
 import LeanModels.Refine.RvfiTrapProgram
 import LeanModels.Refine.RvfiRv32iProgram
 import LeanModels.Refine.RvfiProgress
+import LeanModels.Refine.RvfiAddiProgress
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

@@ -6739,6 +6739,35 @@ adapter retains the parser-derived decoder proof and the original boundary at
 the same state, so it does not choose a new instruction interpretation.
 PicoRV32 remains parked at the approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-363 — compose the ADDI invariant with reset progress
+
+The ADDI invariant could now discharge the mixed per-cycle obligation, while
+the generic reset theorem could consume a mixed obligation and a progress
+witness.  A first instruction-class result should expose their composition as
+one end-to-end contract so a loaded-core proof does not manually duplicate
+the wiring.
+
+**CHANGED:** Added `rv32i_reset_addi_stream_refines` in
+`LeanModels/Refine/RvfiAddiProgress.lean`.  It composes
+`rv32iCycleStepRefines_of_addi_memory` with
+`rv32i_reset_stream_refines`, retaining the reset relation, pointwise input
+admission, explicit valid-row order equation, and independent target-prefix
+progress witness.  The result is the exact committed `cycleTrace` equality
+and post-state simulation relation for every finite target prefix.  The
+refinement umbrella and PicoRV32 README now expose this complete ADDI-only
+entry point.
+
+**MEASURED:** The focused theorem compiles under Lean 4.35.0 and reports only
+`propext`/`Classical.choice`/`Quot.sound`; the umbrella build, PicoRV32 wall
+probe, docs check, backlog index check, and diff check are the remaining
+validation gates.  No semantics, RTL, loader, extractor, or finite
+captured-window theorem changed; no `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** The first instruction-class invariant now has a direct
+from-reset, all-prefix stream contract with no alternate semantics or guessed
+schedule.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
 ## 2026-11-07-ls-sv2-362 — lift the ADDI invariant into the mixed step obligation
 
 The ADDI certificate adapter now reached the mixed cycle certificate, but a

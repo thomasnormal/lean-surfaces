@@ -932,6 +932,12 @@ the strict raw RVFI contract does not itself assign an order index.  The
 bridge builds its `AddiInstruction` from the boundary's decoder equality and
 preserves the exact input and indexed boundary.
 
+`rv32i_reset_addi_stream_refines` composes that bridge with the generic
+from-reset progress theorem.  Once a loaded core supplies the ADDI invariant,
+the reset relation, admitted schedule, and explicit progress witness, this
+single theorem returns the exact committed stream and post-state relation for
+every finite target retirement prefix.
+
 ## Constructing mixed cycle certificates from an invariant
 
 The generic `Rv32iCycleStepRefines` contract and

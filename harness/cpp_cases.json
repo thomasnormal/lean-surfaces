@@ -18775,5 +18775,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-shared-operator-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSharedOperatorAgreementWitness",
+    "cpp_source": "bool operator_witness() { return (3 + 4 == 7) && !(3 < 2); } bool callable_witness() { return operator_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

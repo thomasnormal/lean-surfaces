@@ -73,32 +73,6 @@ private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
   | some format => integralConvert format value
   | none => .unsupported .unresolvedArithmeticConversions
 
-private def operator? : String → Option IntegralBinary
-  | "+" => some .add
-  | "-" => some .subtract
-  | "*" => some .multiply
-  | "/" => some .divide
-  | "%" => some .remainder
-  | "<<" => some .shiftLeft
-  | ">>" => some .shiftRight
-  | "&" => some .bitAnd
-  | "|" => some .bitOr
-  | "^" => some .bitXor
-  | "==" => some .equal
-  | "!=" => some .notEqual
-  | "<" => some .less
-  | "<=" => some .lessEqual
-  | ">" => some .greater
-  | ">=" => some .greaterEqual
-  | _ => none
-
-private def unaryOperator? : String → Option IntegralUnary
-  | "+" => some .plus
-  | "-" => some .negate
-  | "~" => some .complement
-  | "!" => some .logicalNot
-  | _ => none
-
 private def literalValue (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :
     Option IntegralValue :=
   (formatFor profile typed.sourceType).map fun format =>
@@ -251,7 +225,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           mapOutcome (evalExpression fuel profile frame operand)
             (convertTo profile typed.type)
       | .unary operator operand =>
-          match unaryOperator? operator with
+          match integralUnaryOfString operator with
           | none => success frame (.unsupported .unresolvedArithmeticConversions)
           | some operation =>
               let evaluated := evalExpression fuel profile frame operand
@@ -262,7 +236,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     mapIntegralResult (integralUnary operation value)
                       (convertTo profile typed.type))
       | .binary operator left right =>
-          match operator? operator with
+          match integralBinaryOfString operator with
           | none => success frame (.unsupported .unresolvedArithmeticConversions)
           | some operation =>
               if left.expression.hasEffects || right.expression.hasEffects then

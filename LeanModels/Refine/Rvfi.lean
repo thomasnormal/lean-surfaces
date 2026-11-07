@@ -651,6 +651,59 @@ theorem rvfiCycleStepRefines_normalized_append
   exact rvfiCycleStepRefines_normalized h state isaState (first ++ second)
     hrel hall hcombined
 
+/-! A normalized two-window proof also exposes the relation at the boundary
+between the windows.  The second window is checked from the ISA state reached
+by the first retiring-input stream, so a loaded-core invariant can be resumed
+at a raw observation boundary without rebuilding the prefix proof. -/
+theorem rvfiCycleStepRefines_normalized_chain
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hrel : rel state isaState)
+    (hallFirst : ∀ i ∈ first, admit i)
+    (hallSecond : ∀ i ∈ second, admit i)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state first)) ∧
+    rel (rvfiStateAfter machine state first)
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state first)) ∧
+    (secondRetirements = trace isa
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state first))
+      (retireInputs machine.toCycleMachine
+        (rvfiStateAfter machine state first) second)) ∧
+    rel (rvfiStateAfter machine state (first ++ second))
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) := by
+  have hfirstBoundary := rvfiCycleStepRefines_normalized h state isaState first
+    hrel hallFirst hfirst
+  have hsecondBoundary := rvfiCycleStepRefines_normalized h
+    (rvfiStateAfter machine state first)
+    (machineStateAfter isa isaState
+      (retireInputs machine.toCycleMachine state first))
+    second hfirstBoundary.2 hallSecond hsecond
+  have hfinal : rel (rvfiStateAfter machine state (first ++ second))
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) := by
+    rw [rvfiStateAfter_append]
+    rw [retireInputs_append]
+    rw [RvfiCycleMachine.toCycleMachine_stateAfter]
+    rw [machineStateAfter_append]
+    exact hsecondBoundary.2
+  exact ⟨hfirstBoundary.1, hfirstBoundary.2,
+    hsecondBoundary.1, hfinal⟩
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -856,6 +909,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

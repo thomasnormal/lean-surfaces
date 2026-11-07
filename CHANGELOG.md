@@ -30,6 +30,10 @@
 - Rechecked expression-yield target handling: global and nonlocal dead-yield
   stores remain explicit loud boundaries instead of dropping the resumed store.
 
+- Rechecked non-simple annotated-assignment ordering: values and stores happen
+  before module/class annotation evaluation, while function annotations stay
+  unevaluated.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

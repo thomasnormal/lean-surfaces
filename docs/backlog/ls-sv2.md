@@ -3874,3 +3874,21 @@ invariant or changing the core source.
 future PicoRV32 invariant can connect its architectural memory to the same
 `storeVal`/`loadVal` state before applying the ADDI boundary.  No RTL, loader,
 or `LeanModels/Sv/**` file changed.
+
+## 2026-11-07-ls-sv2-254 — extend the stateful prefix through ADDI x3
+
+The inboxes were reread after item 253 was pushed; the generated-member
+memory-route refusal is unchanged.  This item continues in the owned
+stateful-memory witness rather than changing the blocked loader path.
+
+Extended `rvfi_prefix_boundary.lean` with `fullState`, which threads the
+measured fourth `ADDI x3, x2, 1` from the proved three-instruction state.  The
+new theorem proves the final architectural values (`pc = 16`, `x2 = 5`,
+`x3 = 6`, `x0 = 0`) and that the fourth instruction leaves the threaded memory
+equal to `memFive`.  Its step equation is derived from the same exact
+profile-parametric `isaStepWith` ADDI contract used by the earlier boundary.
+
+**DECIDED:** keep the fourth instruction as a stateful machine step from
+`prefixState`; this makes the complete measured non-trapping window explicit
+while preserving the exact memory relation needed by a future core invariant.
+No RTL, loader, or `LeanModels/Sv/**` file changed.

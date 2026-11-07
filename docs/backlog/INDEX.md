@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1045 entries across 18 lanes.** Regenerate with
+**1046 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-ls-sv2-254` |  | extend the stateful prefix through ADDI x3 | ls-sv2 |
 | `2026-11-07-ls-sv2-253` |  | certify the stateful ADDI/SW/LW prefix | ls-sv2 |
 | `2026-11-07-ls-sv2-252` |  | establish the RV32I LW memory boundary | ls-sv2 |
 | `2026-11-07-ls-sv2-251` |  | establish the RV32I SW memory boundary | ls-sv2 |

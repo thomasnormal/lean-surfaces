@@ -25,6 +25,10 @@ def prefixState : RvMemoryState :=
     { arch := rvMachine.init, memory := memZero }
     (nontrapInputs.take 3)
 
+def fullState : RvMemoryState :=
+  rvMemoryStateAfter cv32e40pProfile prefixState
+    [{ fetched := .word 0x00110193, memory := memFive }]
+
 theorem pinned_prefix_architecture :
     prefixState.arch.pc = 12 ∧ prefixState.arch.readReg 2 = 5 ∧
       prefixState.arch.readReg 0 = 0 := by
@@ -154,12 +158,44 @@ theorem pinned_prefix_state :
   exact ⟨pinned_prefix_architecture.1, pinned_prefix_architecture.2.1,
     pinned_prefix_architecture.2.2, pinned_prefix_memory⟩
 
+theorem pinned_full_state :
+    fullState.arch.pc = 16 ∧ fullState.arch.readReg 2 = 5 ∧
+      fullState.arch.readReg 3 = 6 ∧ fullState.arch.readReg 0 = 0 ∧
+      (∀ a, fullState.memory a = memFive a) := by
+  have h4 : isaStepWith cv32e40pProfile prefixState.arch prefixState.memory
+      (.word 0x00110193) 0 =
+      (addiNext prefixState.arch 3 2 1, addiEffects prefixState.arch) :=
+    isaStepWith_addi cv32e40pProfile prefixState.arch prefixState.memory
+      0x00110193 3 2 1 (by decide)
+  have hs4 :
+      ((rvMemoryMachineWith cv32e40pProfile).step prefixState
+        { fetched := .word 0x00110193, memory := memFive }).fst =
+      { arch := addiNext prefixState.arch 3 2 1,
+        memory := prefixState.memory } := by
+    simp only [rvMemoryMachineWith]
+    rw [h4]
+    rfl
+  simp only [fullState, rvMemoryStateAfter, machineStateAfter]
+  rw [hs4]
+  have harch := pinned_prefix_architecture
+  have hmem := pinned_prefix_memory
+  rcases harch with ⟨hpc, h2, h0⟩
+  change prefixState.arch.regs 2 = 5 at h2
+  change prefixState.arch.regs 0 = 0 at h0
+  simp only [addiNext, ArchState.readReg, ArchState.writeReg]
+  simp [hpc, h2, h0, hmem]
+
 #guard prefixState.arch.pc = 12
 #guard prefixState.arch.readReg 2 = 5
 #guard prefixState.arch.readReg 0 = 0
+#guard fullState.arch.pc = 16
+#guard fullState.arch.readReg 2 = 5
+#guard fullState.arch.readReg 3 = 6
+#guard fullState.arch.readReg 0 = 0
 
 #print axioms pinned_prefix_architecture
 #print axioms pinned_prefix_memory
 #print axioms pinned_prefix_state
+#print axioms pinned_full_state
 
 end Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary

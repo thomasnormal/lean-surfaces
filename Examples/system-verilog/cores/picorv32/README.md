@@ -159,6 +159,10 @@ proves the concrete threaded state (`pc = 12`, `x2 = 5`, `x0 = 0`) and the
 pointwise equality of its memory with `memFive`, making the state consumed by
 the later `ADDI x3, x2, 1` witness explicit.
 
+The same witness extends that state through the fourth `ADDI` in `fullState`:
+the final `pc` is 16, `x2` remains 5, `x3` is 6, `x0` remains 0, and the
+threaded memory is still `memFive`.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

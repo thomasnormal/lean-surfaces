@@ -4875,3 +4875,37 @@ was introduced.
 boundary, with load signedness explicit and store data represented by the
 instruction's second source register.  Continue the owned refinement layer
 while generated-member memory support remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-301 — add the RV32I system-transfer RVFI boundary
+
+The inboxes and goal file were reread before this item.  The owner-approved
+next `ls-sv` work is the CombView migration and then generated-member memory
+support; those files remain outside this lane.  This item therefore advances
+the owned generic refinement layer for the R2 no-interrupt subset.
+
+Added `LeanModels/Refine/Rv32iSystem.lean` with `SysKind` and shared
+`systemNext`/`systemEffects`/`systemRetirement` equations for ECALL, EBREAK,
+MRET, and the no-wake WFI case, plus profile-parametric ISA,
+threaded-memory, and machine bridges.  Added
+`LeanModels/Refine/RvfiSystem.lean` with the raw
+`RvfiObservation.systemBoundary` contract and
+`rvfiCycleStepRefines_of_system_memory`.  Trap rows retain the exact cause and
+handler pc; MRET retains its CSR-derived target; WFI retains its same-pc
+stutter.  All four forms require no register or data-memory effect, valid rows
+carry the exact architectural state through `RvMemoryState`, and invalid rows
+remain explicit ISA stutters.  CSR operations and interrupt wake behavior are
+left for their own boundaries.  Updated the umbrella import and PicoRV32
+README; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iSystem`,
+`lake build LeanModels.Refine.RvfiSystem`, `lake build LeanModels.Refine`, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**JUDGED / DECIDED:** keep ECALL, EBREAK, MRET, and no-wake WFI together as
+the admitted non-CSR system family, with trap causes and the WFI stutter
+explicit at the raw boundary.  Continue the owned refinement layer while
+generated-member memory support remains with `ls-sv`.

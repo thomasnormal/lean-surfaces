@@ -4289,3 +4289,21 @@ loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** preserve the adapter's two failure causes explicitly; strict
 RVFI proofs must discharge malformed-valid rows rather than infer bubbles
 from an optional `none`.
+
+## 2026-11-07-ls-sv2-276 — compose optional normalized RVFI traces
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_trace_refines` to
+`LeanModels/Refine/Rvfi.lean`.  An existing optional cycle-refinement proof,
+the explicit premise that every valid raw row is well formed, and a successful
+`normalizeRvfiTrace?` certificate now compose directly into equality between
+the normalized retirement list and the ISA trace.  The wrapper reuses the
+strict packed-cycle bridge without hiding malformed-valid rows or rebuilding
+the raw contract at each loaded-core call site.  Updated the PicoRV32 README;
+no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep the optional-to-strict lift and the normalization certificate
+visible at this boundary, while offering one reusable theorem for loaded-core
+trace proofs.

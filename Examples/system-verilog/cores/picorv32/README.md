@@ -194,6 +194,10 @@ The bundled `rvfiCycleStepRefines_normalized` theorem exposes the trace and
 post-window relation together; `pinned_cycle_normalized_refines_of` fixes that
 pair on the same measured machine while leaving the actual invariant as its
 premise.
+For an invariant already stated against the optional cycle adapter,
+`cycleStepRefines_normalized_trace_refines` composes the raw well-formedness
+premise and normalization certificate directly into the same ISA trace
+equality, without requiring callers to rebuild the strict contract by hand.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.

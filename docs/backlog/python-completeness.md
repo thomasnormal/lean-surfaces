@@ -10805,3 +10805,24 @@ shortcut, or `raise N()` replacement is emitted.
 
 DECIDED: preserve `Try` and `Raise` source nodes; model full cleanup and handler
 protocols before widening admission.
+
+## 2026-11-07-pycomplete-438 — recheck display and starred extraction boundaries
+
+The display-lowering audit is split into explicit source-node boundaries and
+measured slices. Set and dict comprehensions, unsupported starred load displays,
+and unsupported nested starred shapes remain loud source nodes. `ListComp` is
+carried structurally and stays loud until a native eager evaluator is used;
+there is no active call to a user-shadowable `list` name. The admitted flat
+starred assignment/`for` target and positional-star call use unspellable
+markers with dedicated interpreter cases.
+
+| Measurement | Result |
+|---|---|
+| Comprehension scripts | `listcomp_script.py` and `listcomp_shadow.py` remain LOUD |
+| Star target script | `star_target_script.py` MATCHES CPython 3.9.25 |
+| Source audit | no active `lower_starred_display` or display-to-builtin call path remains |
+| Semantic change | none; this packet records the existing source-node boundaries |
+
+DECIDED: keep display/comprehension syntax source-level and loud until native
+nodes exist; retain only the measured positional-star and flat-star-target
+slices with their unspellable markers.

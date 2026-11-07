@@ -6509,6 +6509,11 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- `always @*` lowering now refuses an external signal with a continuous
+  time-zero driver under R3, preserving the distinction from `always_comb`
+  until active-region ordering is modelled. The procedural extractor also
+  keeps dynamic unpacked-array compound and ordinary targets equally loud.
+
 - Self-check now refuses time-zero initial blocks with overlapping
   read/write or write/write state as `Initial:order` instead of selecting
   source order. Independent initial blocks remain admitted; the refusal is

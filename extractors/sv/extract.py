@@ -20654,6 +20654,21 @@ def select_target(sm, lhs):
     return t, _target_shape_ok(t)
 
 
+def _sym_runtime_unpacked_lhs(lhs):
+    """A dynamic write into a fixed unpacked array has no source-shaped
+    target in Stmt2. Keep both ordinary and compound spellings loud rather
+    than letting one form acquire a fabricated ternary-cell meaning."""
+    try:
+        if type(lhs).__name__ != "ElementSelectExpression":
+            return False
+        array_type = lhs.value.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return False
+        return _literal_integral_value(lhs.selector) is None
+    except Exception:
+        return False
+
+
 def _invalid_associative_index_target(lhs):
     """Whether an associative-array element selection violates §7.8.4/5."""
     try:
@@ -24034,6 +24049,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                            "AssignmentExpression:" + type(expr).__name__)
     if _sym_cell_index_point_dependent(expr.left):
         return unsupported(sm, span_node or expr, "ElementSelect:default-point-index")
+    if _SYM is not None and _sym_runtime_unpacked_lhs(expr.left):
+        return unsupported(sm, span_node or expr, "AssignmentExpression:target")
     endpoint = _associative_endpoint_assignment(sm, expr)
     if endpoint is not None:
         return endpoint
@@ -24422,6 +24439,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                     }
         target, ok = legacy_blocking_target(sm, expr.left)
     else:
+        if _sym_runtime_unpacked_lhs(expr.left):
+            return unsupported(sm, span_node or expr,
+                               "AssignmentExpression:target")
         target, ok = select_target(sm, expr.left)
     if not ok:
         return unsupported(sm, span_node or expr, "AssignmentExpression:target")

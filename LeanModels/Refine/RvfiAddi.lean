@@ -249,6 +249,92 @@ theorem rvfiCycleStepRefines_of_addi
     right
     exact ⟨hv', hrel'⟩
 
+/-! ## Memory-threaded ADDI cycle case
+
+The stateful architectural machine carries the byte memory between
+retirements.  This constructor keeps the raw input-memory equality explicit,
+so an invariant cannot silently compare an RVFI row against a different
+memory view. -/
+
+theorem rvfiCycleStepRefines_of_addi_memory
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ w rd rs1 imm,
+          input.memory = memoryState.memory ∧
+          observation.addiBoundary memoryState.arch input w rd rs1 imm ∧
+          rel state'
+            { arch := addiNext memoryState.arch rd rs1 imm,
+              memory := memoryState.memory }
+      else rel state' memoryState) :
+    RvfiCycleStepRefines machine (rvMemoryMachineWith profile) rel admit := by
+  apply rvfiCycleStepRefines_of_step hinit
+  intro state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase
+  rcases hisa : (rvMemoryMachineWith profile).step memoryState input with
+    ⟨memoryState', retirement⟩
+  simp only
+  change (observation.valid = true ∧ observation.wellFormed ∧
+      rel state' memoryState' ∧ observation.toRetirement = retirement) ∨
+    (observation.valid = false ∧ rel state' memoryState)
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ w rd rs1 imm,
+        input.memory = memoryState.memory ∧
+        observation.addiBoundary memoryState.arch input w rd rs1 imm ∧
+        rel state'
+          { arch := addiNext memoryState.arch rd rs1 imm,
+            memory := memoryState.memory } := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨w, rd, rs1, imm, hmem, hboundary, hrel'⟩
+    have hwell : observation.wellFormed := by
+      exact hboundary.1.2.2.2.2.1
+    have hto : observation.toRetirement =
+        addiRetirement memoryState.arch input rd rs1 imm := by
+      have hsome := observation.toRetirement?_eq_some hv hwell
+      exact Option.some.inj (hsome.symm.trans hboundary.2)
+    have hstate : memoryState =
+        { arch := memoryState.arch, memory := input.memory } := by
+      cases memoryState with
+      | mk arch memory => simp [hmem]
+    have hstepAddi := observation.addiBoundary_rvMemoryMachineWith
+      profile memoryState.arch input w rd rs1 imm hboundary
+    have hstepAddi' :
+        (rvMemoryMachineWith profile).step memoryState input =
+          ({ arch := addiNext memoryState.arch rd rs1 imm,
+             memory := memoryState.memory },
+            addiRetirement memoryState.arch input rd rs1 imm) := by
+      rw [hstate]
+      simpa [hmem] using hstepAddi
+    have hpair : (memoryState', retirement) =
+        ({ arch := addiNext memoryState.arch rd rs1 imm,
+           memory := memoryState.memory },
+          addiRetirement memoryState.arch input rd rs1 imm) := by
+      rw [← hisa, hstepAddi']
+    have hstate' : memoryState' =
+        { arch := addiNext memoryState.arch rd rs1 imm,
+          memory := memoryState.memory } := congrArg Prod.fst hpair
+    have hretirement : retirement =
+        addiRetirement memoryState.arch input rd rs1 imm :=
+      congrArg Prod.snd hpair
+    rw [hstate', hretirement]
+    left
+    exact ⟨hv, hwell, hrel', hto⟩
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    right
+    exact ⟨hv', hrel'⟩
+
 #print axioms LeanModels.Refine.addiEffects_no_memory
 #print axioms LeanModels.Refine.addiRetirement_no_memory
 #print axioms LeanModels.Refine.addiNext_preserves_x0
@@ -258,5 +344,6 @@ theorem rvfiCycleStepRefines_of_addi
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary_rvMachineWith
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary_rvMemoryMachineWith
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_addi
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_addi_memory
 
 end LeanModels.Refine

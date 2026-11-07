@@ -4554,3 +4554,29 @@ was introduced.
 
 **DECIDED:** complete the strict constructors for the measured
 `ADDI`/`SW`/`LW` prefix before adding another instruction family or core glue.
+
+## 2026-11-07-ls-sv2-290 — lift ADDI to the stateful memory boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `rvfiCycleStepRefines_of_addi_memory` to
+`LeanModels/Refine/RvfiAddi.lean`.  The constructor targets the
+`rvMemoryMachineWith` architectural machine and relates core state to
+`RvMemoryState`.  Its valid case requires the input memory view to equal the
+threaded architectural memory, then uses `addiBoundary_rvMemoryMachineWith`
+to carry `addiNext` with unchanged memory and the exact retirement.  Invalid
+rows remain explicit ISA stutters.  The input-memory equality is a visible
+obligation, so a core proof cannot silently compare a row against stale
+architectural memory.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiAddi` passed (13 jobs).  The
+new theorem's axiom report contains only the existing
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** begin the memory-threaded strict invariant layer with ADDI, where
+the architectural memory transition is unchanged, before lifting store and
+load constructors.

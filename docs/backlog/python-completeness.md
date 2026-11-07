@@ -11066,3 +11066,24 @@ display forms remain separate loud boundaries.
 DECIDED: implement native `ListComp` next, starting with one generator and
 ordinary target/filter expressions, then add its proof transport before
 widening to nested generators or walrus capture.
+
+## 2026-11-07-pycomplete-452 — price the ListComp recursion seam
+
+The first native evaluator experiment was reverted before commit because Lean
+correctly rejects a fuel-free helper that re-enters `evalOpen` through a
+`List.foldlM`: the mutual structural measure cannot see the element walk.
+The existing monadic architecture already records the solution pattern in
+`Kont`: fuel-bearing loops and generator drains are continuation fields, while
+`evalOpen` remains structural on expressions. ListComp therefore needs a
+`Kont` continuation/fuel field for its per-element target/filter/element walk,
+with the same field mirrored in monotonicity and the primitive proof specs.
+
+| Measurement | Result |
+|---|---|
+| Experimental build | rejected by Lean's structural-recursion checker; no source change retained |
+| Existing design precedent | `Kont.forSeq`, `Kont.forList`, `Kont.drainIter` carry fueled walks |
+| Semantic change | none; this packet prices the recursion seam |
+
+DECIDED: add the ListComp continuation to `Kont` and its transport proofs as
+the next implementation item; keep the source node loud until that field is
+landed.

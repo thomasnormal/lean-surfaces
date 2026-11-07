@@ -20,6 +20,9 @@
 - Docs: record that trailing definition deletes remain source nodes and loud
   until runtime definition bindings are implemented.
 
+- Docs: record that `yield from` remains a structured loud boundary rather than
+  an extractor-generated `for` loop.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

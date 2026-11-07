@@ -5272,6 +5272,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-null-comparison-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableNullComparisonAgreement",
+    "cpp_source": "bool null_witness() { int *value = nullptr; return value == nullptr; } bool callable_witness() { return null_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-integral-literal-agreement",
     "kind": "expression",
     "corpus": "rung-3 witness",

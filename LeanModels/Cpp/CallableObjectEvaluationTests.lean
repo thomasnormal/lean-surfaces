@@ -223,6 +223,13 @@ def callableIncrementValueAgreement : Bool :=
 
 #guard callableIncrementValueAgreement
 
+def callableNullComparisonAgreement : Bool :=
+  integralNullComparison "==" == some (integralBoolean true) &&
+    integralNullComparison "!=" == some (integralBoolean false) &&
+    integralNullComparison "<" == none
+
+#guard callableNullComparisonAgreement
+
 def callableIntegralLiteralAgreement : Bool :=
   integralLiteralOfEvidence .lp64 intType 7 matches .ok ⟨.signed 32, 7⟩ &&
     integralLiteralOfEvidence .lp64 (.qualified true false intType) 7

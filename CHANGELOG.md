@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized typed `sizeof` value construction in `ScalarArithmetic` for both
+  callable evaluators and added an agreement witness.
+
 - Centralized typed integer-literal construction in `ScalarArithmetic` for
   both callable evaluators and added an agreement witness.
 

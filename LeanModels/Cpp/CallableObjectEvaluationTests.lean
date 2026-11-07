@@ -40435,4 +40435,12 @@ def callableSharedLiteralAgreementWitness : Bool :=
 
 #guard callableSharedLiteralAgreementWitness
 
+def callableSharedSizeAgreementWitness : Bool :=
+  integralSizeValueOfEvidence .lp64 intType intType matches .ok ⟨.signed 32, 4⟩ &&
+    integralSizeValueOfEvidence .lp64 intType (.qualified true false intType)
+      matches .ok ⟨.signed 32, 4⟩ &&
+    integralSizeValueOfEvidence .lp64 intType (.record (handle "0x99")) matches .error _
+
+#guard callableSharedSizeAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

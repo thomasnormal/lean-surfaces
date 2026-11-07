@@ -70,12 +70,9 @@ private def literalValue (profile : TargetProfile) (typed : TypedCallableExpress
 
 private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
-  match builtinIntegralType operandType, formatFor profile typed.type with
-  | some integer, some format =>
-      match integralSizeBytes profile integer with
-      | .ok bytes => .ok {format, value := Int.ofNat bytes}
-      | .error _ => .unsupported .unresolvedArithmeticConversions
-  | _, _ => .unsupported .unresolvedArithmeticConversions
+  match integralSizeValueOfEvidence profile typed.type operandType with
+  | .ok value => .ok value
+  | .error _ => .unsupported .unresolvedArithmeticConversions
 
 private def alignOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=

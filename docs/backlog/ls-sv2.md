@@ -5554,3 +5554,34 @@ axiom reports contain only the established `propext`/`Classical.choice`/
 `trace_refines` for the universal ADDI stream.  The concrete PicoRV32
 instantiation remains parked until ls-sv clears the existing unpacked
 `cpuregs` and unsupported-member/net-z boundaries.
+
+## 2026-11-07-ls-sv2-324 — tie the ADDI certificate to cycle inputs
+
+The inbox and goal file were reread before this item.  Item 323's raw
+observation certificate deliberately did not carry the cycle input that
+produced each row.  The next owned step closes that seam without changing the
+indexed dispatcher or adding a finite witness.
+
+**CHANGED:** Extended `LeanModels/Refine/RvfiAddiProgram.lean` with the
+machine-parameterized inductive `AddiRvfiCycleTrace`.  Its constructors retain
+the actual `RvfiCycleMachine.step` equality and core state, admit arbitrary
+bubble inputs, and require each retiring input to equal the corresponding
+`addiProgramInput` while carrying the indexed `Rv32iBoundary`.  Theorems
+`AddiRvfiCycleTrace.normalize`, `retireInputs_eq`, and `trace_refines` prove,
+for every cycle list and ADDI program, that packed observations normalize to
+the symbolic retirement stream and that the cycle adapter retains exactly the
+program inputs before the profile-parametric stateful ISA trace is applied.
+
+This is the direct input-aware core-stream theorem needed by a loaded-core
+invariant; it reuses the item-323 folds, indexed dispatcher, and RVFI memory
+contracts.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAddiProgram.lean` passes
+with all nine declarations reporting only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new
+axiom was introduced.
+
+**JUDGED / DECIDED:** the next real-core invariant can be stated over the
+actual cycle machine and its inputs, rather than reconstructing a schedule
+from observations.  PicoRV32 itself remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader boundaries.

@@ -606,6 +606,15 @@ PicoRV32 state relation, not a finite capture or a PicoRV32 model.  The
 actual RTL instantiation remains parked at the unpacked `cpuregs` and
 unsupported-member/net-z loader walls recorded above.
 
+`AddiRvfiCycleTrace` closes the input association needed at a real cycle
+boundary.  Its step indices retain the actual packed-RVFI machine state and
+cycle input; bubble inputs are arbitrary, while each retirement input is
+definitionally tied to the corresponding `AddiInstruction`.  The
+`normalize`, `retireInputs_eq`, and `trace_refines` projections therefore give
+the direct theorem for a loaded machine's own cycle list: normalized RVFI rows
+equal the stateful ISA trace on exactly the inputs that the cycle adapter
+retains.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

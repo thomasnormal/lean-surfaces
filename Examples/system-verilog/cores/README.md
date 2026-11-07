@@ -161,3 +161,6 @@ The owned refinement layer now has a symbolic ADDI-program certificate in
 invalid RVFI bubbles, and indexed `Rv32iBoundary` witnesses normalize to the
 exact stateful ISA trace.  This advances the reusable invariant surface while
 the real PicoRV32 instantiation remains blocked by the existing loader walls.
+The input-aware `AddiRvfiCycleTrace` extension also retains actual cycle-step
+equalities and proves that the adapter's `retireInputs` are exactly the
+symbolic ADDI inputs before applying the same trace theorem.

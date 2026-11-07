@@ -133,6 +133,12 @@ measured stream; the same witness now derives the exact `isaStepMemWith` result
 and the `rvMachineWith` commit from the raw predicate, while the symbolic RTL
 proof still waits on the generic loader wall.
 
+The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
+`ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,
+`rs1_rdata = 5`), proves the threaded architectural state has `pc = 12`,
+`x2 = 5`, and `x0 = 0`, and applies the same raw-to-ISA step bridge at that
+non-reset boundary.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

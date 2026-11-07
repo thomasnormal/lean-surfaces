@@ -1,5 +1,6 @@
 import LeanModels.Refine.RvfiAddi
 import Examples.«system-verilog».cores.picorv32.rvfi_proof
+import Examples.«system-verilog».cores.picorv32.trace_proof
 
 /-!
 # PicoRV32 raw RVFI ADDI boundary witness
@@ -17,9 +18,22 @@ namespace Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary
 open LeanModels.Rv
 open LeanModels.Refine
 open Examples.«system-verilog».cores.picorv32.rvfi_proof
+open Examples.«system-verilog».cores.picorv32.trace_proof
 
 def addiInput : Input :=
   { fetched := .word 0x00500093, memory := fun _ => 0, irq := 0 }
+
+/-- The measured second ADDI row with the source fields retained.  The older
+compact `rvfi_proof` row intentionally omitted those fields because its
+normalization theorem does not consume them. -/
+def addi2Raw : RvfiObservation :=
+  { addi2 with rs1Addr := 2, rs1Rdata := 5 }
+
+def addi2Input : Input :=
+  { fetched := .word 0x00110193, memory := memFive, irq := 0 }
+
+def addi2State : ArchState :=
+  machineStateAfter rvMachine (ArchState.init 0) (nontrapInputs.take 3)
 
 theorem pinned_addi_boundary :
     RvfiObservation.addiBoundary (ArchState.init 0) addiInput addi1
@@ -74,6 +88,26 @@ theorem pinned_addi_machine_commit :
     cv32e40pProfile addi1 (ArchState.init 0) addiInput
       0x00500093 1 0 5 pinned_addi_boundary
 
+theorem pinned_addi2_state :
+    addi2State.pc = 12 ∧ addi2State.readReg 2 = 5 ∧
+      addi2State.readReg 0 = 0 := by
+  decide
+
+theorem pinned_addi2_boundary :
+    RvfiObservation.addiBoundary addi2State addi2Input addi2Raw
+      0x00110193 3 2 1 := by
+  unfold RvfiObservation.addiBoundary RvfiObservation.addiFields
+  unfold RvfiObservation.wellFormed RvfiObservation.toRetirement?
+  decide
+
+theorem pinned_addi2_isa_step :
+    isaStepMemWith cv32e40pProfile addi2State addi2Input.memory
+      addi2Input.fetched addi2Input.irq =
+      (addiNext addi2State 3 2 1, addi2Input.memory) := by
+  exact RvfiObservation.addiBoundary_isaStepMemWith
+    cv32e40pProfile addi2Raw addi2State addi2Input
+      0x00110193 3 2 1 pinned_addi2_boundary
+
 #guard addiInput.fetched = .word 0x00500093
 #guard addi1.toRetirement? == some
   (addiRetirement (ArchState.init 0) addiInput 1 0 5)
@@ -86,5 +120,8 @@ theorem pinned_addi_machine_commit :
 #print axioms pinned_addi_x0_preserved
 #print axioms pinned_addi_isa_step
 #print axioms pinned_addi_machine_commit
+#print axioms pinned_addi2_state
+#print axioms pinned_addi2_boundary
+#print axioms pinned_addi2_isa_step
 
 end Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary

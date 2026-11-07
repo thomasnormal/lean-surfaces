@@ -140,12 +140,12 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual([part["width"] for part in targets[1]["parts"]], [1, 2])
         self.assertTrue(targets[1]["parts"][0]["index_signed"])
 
-    def test_alias_and_index_dependencies_are_not_precaptured(self):
+    def test_alias_and_index_dependencies_are_refused(self):
         design = extract_source("module top; logic [1:0] index; logic [3:0] value; "
                                 "initial {index, value[index]} = 3'b111; endmodule")
-        target, = [node for node in nodes(design) if node.get("kind") == "ConcatTarget"]
-        self.assertEqual(target["parts"][1]["index"]["kind"], "Ident")
-        self.assertEqual(target["parts"][1]["index"]["name"], "index")
+        self.assertFalse(any(node.get("kind") == "ConcatTarget" for node in nodes(design)))
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
 
     def test_effectful_concat_index_is_loud(self):
         design = extract_source("module top; logic [3:0] value; integer index; "

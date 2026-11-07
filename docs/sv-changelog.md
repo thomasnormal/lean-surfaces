@@ -6509,6 +6509,11 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- Self-check concatenated blocking targets with dynamic selectors or aliasing
+  leaves are now refused as `AssignmentExpression:target` instead of fixing
+  a right-to-left order. Static disjoint leaves retain the explicit
+  assignment-order parameter.
+
 - Explicit drive strengths on continuous assignments are now refused in the
   single-file/self-check path as well as symbolic mode. Strength resolution,
   including `highz0`/`highz1`, is outside the flat store; no strength is

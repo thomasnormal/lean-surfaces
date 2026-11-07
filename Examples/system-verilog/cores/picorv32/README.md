@@ -435,3 +435,24 @@ first ends at order 1; the second starts at order 2, and
 four-row normalized stream.  This is the chunking rule a streamed RVFI capture
 can use without resetting the architectural order.
 
+## Zicsr boundary
+
+The generic refinement layer now covers the implemented machine-mode Zicsr
+family through `LeanModels.Refine.Rv32iCsr` and
+`LeanModels.Refine.RvfiCsr`.  `CsrOpKind` retains the operation (`CSRRW`,
+`CSRRS`, or `CSRRC`), destination, source form, and CSR address.  The
+`findCsr?` row is an explicit premise, so an unimplemented CSR remains the
+ISA's illegal-instruction trap rather than being guessed as a no-op.  The
+state equation reads the old row value into `rd`, applies the exact
+`csrRmw`/`csrWrites` condition, and routes writes through the row's WARL
+legalizer.  `RvfiObservation.csrBoundary` carries the same row lookup, source
+readback for register forms, destination readback, sequential pc, and clear
+memory/trap fields.  `rvfiCycleStepRefines_of_csr_memory` threads the updated
+CSR file through the stateful architectural relation while preserving data
+memory.
+
+This boundary assumes the no-interrupt input subset (`irq = 0`) and the
+implemented CV32E40P machine-mode table (`mstatus`, `mie`, `mtvec`,
+`mscratch`, `mepc`, and `mcause`).  CSR addresses outside that table and
+interrupt-dispatch rows remain separate boundaries.
+

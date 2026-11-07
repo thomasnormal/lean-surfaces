@@ -7327,3 +7327,40 @@ edited; no oracle result is claimed.
 public master is not green until `Loop2` threads the guard without an axiom and
 the SVA proof-side row records the measured false result.  Hold the PicoRV32
 R2 re-probe until those changes land and the import closure passes.
+
+## 2026-11-07-ls-sv2-383 — recheck the local Loop2 guard repair
+
+Item 383 reread both inboxes and the goal, then reran the two targets changed in
+the owner worktree.  The owner public branch remains `4b308092c`; the worktree
+still contains uncommitted `Loop2` and proof-side edits, so this is a local
+repair check rather than a public-closure or core probe.
+
+**MEASURED:** On Lean 4.35.0,
+`lake build LeanModels.Sv.Loop2
+Examples.«system-verilog».sem2.sva_select.proof` now builds
+`sem2.sva_select.proof`; its exact loaded-property row is `.ok false`, as
+measured in the previous standalone probe.  `LeanModels.Sv.Loop2` still fails
+at line 891 with the unsolved indexed-array obligation
+
+```text
+⊢ ∀ (x : Nat) (x_1 : x < d.processes.size),
+    (match d.processes[x] with
+      | Process2.unsupported svKind text =>
+          svKind.startsWith "SignalEventControl:"
+      | _ => false) = false
+```
+
+Consequently `SingleComb.terminates` still depends on `sorryAx`.  The public
+owner branch remains `4b308092c` and public `origin/master` remains `31f9c79e6`.
+No PicoRV32 load or oracle result is claimed.
+
+**CHANGED:** Routed the exact remaining indexed-array guard obligation as a
+dated `REQUEST ls-sv:` and added this backlog entry.  No ls-sv-owned source,
+semantics, loader, extractor, RTL, or finite captured-window theorem was
+edited.
+
+**JUDGED / DECIDED:** The SVA proof-side update is locally complete, but the
+Loop2 guard bridge is not.  Hold the PicoRV32 R2 re-probe until the owner
+discharges `run2ClockGuard d = Res.ok ()` in `SingleComb.terminates`, removes
+the `sorryAx`, lands the repair on public master, and the import closure passes.
+Do not add finite captured-window lemmas.

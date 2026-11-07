@@ -161,6 +161,9 @@ The bundled `rvfiCycleStepRefines_normalized` theorem exposes the trace and
 post-window relation together; `pinned_cycle_normalized_refines_of` fixes that
 pair on the same measured machine while leaving the actual invariant as its
 premise.
+`rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
+normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
+the first/second measured window split with its carried order offset.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

@@ -620,6 +620,37 @@ theorem rvfiCycleStepRefines_normalized
     rvfiCycleStepRefines_stateAfter_refines machine isa rel admit h
       state isaState inputs hrel hall⟩
 
+/-- Adjacent raw-normalized RVFI windows compose through the strict boundary.
+The second certificate starts at the first window's retirement count, while
+the strict step proof is applied once to the concatenated cycle input stream. -/
+theorem rvfiCycleStepRefines_normalized_append
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ first ++ second, admit i)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) ∧
+    rel (rvfiStateAfter machine state (first ++ second))
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) := by
+  have hcombined := normalizeRvfiCycleTrace_append machine state first second
+    hfirst hsecond
+  exact rvfiCycleStepRefines_normalized h state isaState (first ++ second)
+    hrel hall hcombined
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -824,6 +855,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

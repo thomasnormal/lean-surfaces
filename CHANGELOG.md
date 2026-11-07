@@ -73,6 +73,10 @@
   statement and the script surface refuses static `def`/`class`/namedtuple
   tombstones instead of rewriting them to `pass`.
 
+- Rechecked `yield from`: the extractor and ingestion preserve a structured
+  delegation node, and resumed delegation remains loud until a PEP 380 frame
+  models send, throw, close, and the delegation return value.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

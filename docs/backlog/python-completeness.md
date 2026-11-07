@@ -10493,3 +10493,20 @@ statement happens to be at the end of the module.
 
 DECIDED: preserve all trailing definition deletes as source nodes and keep the
 static-table tombstone boundary loud until definitions become runtime bindings.
+
+## 2026-11-07-pycomplete-421 — recheck structured yield-from delegation
+
+Statement-position `yield from` remains a source `YieldFrom` node from the
+approved extractor through ingestion. No fresh loop target or synthetic
+`for …: yield …` body is generated; both interpreter surfaces refuse the node
+when delegation would resume. The empty-delegate control remains admitted only
+because no delegated value is requested, while all resumed paths stay loud.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active `yieldFromName` or yield-from loop synthesis remains |
+| Differential controls | `yf_live_drive(0)` MATCHES CPython 3.9.25; resumed/filter/list/target rows remain loud |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain the structured delegation boundary and implement a real PEP
+380 frame before admitting resumed `yield from` behavior.

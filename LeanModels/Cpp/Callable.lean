@@ -86,6 +86,20 @@ structure CallableCallTarget where
   deriving Repr, BEq, Inhabited
 end
 
+def callableSwitchCaseSuffix (value : Int) : List CallableSwitchClause → Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | some label => if label == value then some (clause :: rest) else callableSwitchCaseSuffix value rest
+      | none => callableSwitchCaseSuffix value rest
+
+def callableSwitchDefaultSuffix : List CallableSwitchClause → Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | some _ => callableSwitchDefaultSuffix rest
+      | none => some (clause :: rest)
+
 /- A forward goto resumes at the target label and then continues with the
    statements that follow that label in its enclosing compound statement. The
    parser/evaluator deliberately keep labels inside the bounded compound

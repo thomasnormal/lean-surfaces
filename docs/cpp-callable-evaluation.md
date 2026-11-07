@@ -24,6 +24,9 @@ remain unsupported in both layers.
 `IntegralResult` success and failure propagation is shared by the arithmetic
 and callable evaluators.
 
+Switch case and default suffix selection is also shared across the value and
+object-frame evaluators.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

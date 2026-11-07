@@ -196,6 +196,17 @@ def callableIntegralResultMappingAgreement : Bool :=
 
 #guard callableIntegralResultMappingAgreement
 
+def callableSwitchSuffixAgreement : Bool :=
+  let clauses : List CallableSwitchClause := [
+    {label := some 1, body := .skip},
+    {label := none, body := .break_},
+    {label := some 3, body := .continue_}]
+  callableSwitchCaseSuffix 3 clauses matches some [{label := some 3, body := .continue_}] &&
+    callableSwitchDefaultSuffix clauses matches some [{label := none, body := .break_},
+      {label := some 3, body := .continue_}]
+
+#guard callableSwitchSuffixAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

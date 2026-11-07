@@ -6764,6 +6764,32 @@ ADDI invariant and hand it to either the mixed step theorem or the full
 from-reset contract without duplicating its dependent predicates.  PicoRV32
 remains parked at the approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-366 — expose the packaged ADDI stream contract
+
+The named `Rv32iAddiInvariant` now feeds the structure-valued reset theorem,
+but callers interested only in the public committed stream still had to
+project that result or restate the two invariant fields.
+
+**CHANGED:** Added
+`rv32i_reset_addi_stream_refines_of_invariant` to
+`LeanModels/Refine/RvfiAddiProgress.lean`.  It consumes the packaged ADDI
+invariant, reset relation, admitted schedule, and all-prefix progress witness
+and returns the exact committed `cycleTrace` equality plus the final
+core-to-ISA relation for every target prefix.  The explicit-premise and
+structure-valued entry points remain available.  Updated the PicoRV32 README
+and backlog index.
+
+**MEASURED:** The focused module, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declaration reports only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core proof can carry one named ADDI
+invariant directly to either the full reset certificate or its public stream
+projection.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

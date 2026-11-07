@@ -141,9 +141,32 @@ theorem rv32i_reset_addi_stream_refines
     (rv32iCycleStepRefines_of_addi_memory machine rel admit hstep horder)
     hinit hschedule progress
 
+/-- Packaged-invariant form of the direct committed-stream reset contract. -/
+theorem rv32i_reset_addi_stream_refines_of_invariant
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (invariant : Rv32iAddiInvariant machine rel admit)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine machine.init schedule target) :
+    ∀ k : Nat, ∃ boundary : Nat,
+      cycleTrace machine.toCycleMachine machine.init
+          (schedulePrefix schedule boundary) =
+        trace (rvMemoryMachineWith profile)
+          (rvMemoryMachineWith profile).init (schedulePrefix target k) ∧
+      rel (rvfiStateAfter machine machine.init
+          (schedulePrefix schedule boundary))
+        (rvMemoryStateAfter profile (rvMemoryMachineWith profile).init
+          (schedulePrefix target k)) := by
+  exact rv32i_reset_addi_stream_refines profile machine rel admit hinit
+    invariant.step invariant.order hschedule progress
+
 #print axioms LeanModels.Refine.rv32i_reset_addi_stream_refines
 #print axioms LeanModels.Refine.rv32i_reset_addi_refines
 #print axioms LeanModels.Refine.Rv32iAddiInvariant.toMixedStep
 #print axioms LeanModels.Refine.rv32i_reset_addi_refines_of_invariant
+#print axioms LeanModels.Refine.rv32i_reset_addi_stream_refines_of_invariant
 
 end LeanModels.Refine

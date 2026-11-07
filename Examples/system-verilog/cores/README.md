@@ -343,3 +343,8 @@ cycle-aware RVFI certificates consume the indexed `Rv32iBoundary`, preserve
 bubbles and actual retiring inputs, and identify the normalized observations
 with the stateful RV32I machine trace.  PicoRV32 remains blocked at the
 unpacked `cpuregs` and unsupported-member/net-z loader boundaries.
+
+The companion `rvfiCycleStepRefines_of_rv32i_program` constructor packages the
+core-facing one-step invariant: each valid row identifies one mixed
+instruction, its exact input, indexed post-state, and retirement; invalid rows
+remain explicit ISA stutters.

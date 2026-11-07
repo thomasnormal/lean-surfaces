@@ -10343,3 +10343,22 @@ from a heap dict or dictionary view before the set can be iterated. The narrow
 
 DECIDED: keep dictionary and dictionary-view set construction outside the tier
 until CPython's pre-sized merge and resize transitions are represented.
+
+## 2026-11-07-pycomplete-413 — recheck shape-specific ingestion rewrite removal
+
+The shape-specific audit finding remains closed in current `Json.lean`. The
+removed immediate-builtin-alias, dead-value, named-generator-drain,
+length-only-repetition, and direct-bare-reraise passes have no active
+implementation or call site. The source statement pairs remain structured and
+reach the existing first-class-value, generator-cell, ordinary materialization,
+or active-exception boundary instead of being replaced by a second program.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five audited helper names absent from active ingestion |
+| Focused differential | generator assignment/rebinding/unbound rows remain MATCH against CPython 3.9.25; alias and bare-reraise boundary rows remain explicitly loud |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: preserve source statement structure and keep unsupported callable,
+active-exception, and budget boundaries loud until their native semantics are
+modeled.

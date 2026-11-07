@@ -11087,3 +11087,24 @@ with the same field mirrored in monotonicity and the primitive proof specs.
 DECIDED: add the ListComp continuation to `Kont` and its transport proofs as
 the next implementation item; keep the source node loud until that field is
 landed.
+
+## 2026-11-07-pycomplete-453 — price proof-interpreter ListComp transport
+
+The monadic surface now has the ordinary one-generator evaluator and focused
+differential rows. A matching change in `Semantics.lean` is a separate proof
+item: its fuel-recursive `evalExpr` monotonicity theorem in `Obs.lean` currently
+has no induction hypotheses for the new per-element walk, so making the arm
+live without adding those hypotheses leaves the build unsoundly incomplete.
+The proof surface must gain fuel-monotonicity lemmas for the comprehension
+stepper and its filter walk, then thread those lemmas through `Obs`,
+`PayloadBlind`, and `ClockErase` before the proof interpreter changes.
+
+| Measurement | Result |
+|---|---|
+| Monadic differential slice | 18 rows: 16 matches, 2 loud boundaries, 0 failures |
+| Proof build experiment | native trunk arm compiled in isolation but `Obs.lean` failed at the ListComp monotonicity case |
+| Semantic change | none retained in the proof interpreter; its ListComp arm remains loud |
+
+DECIDED: land the monadic evaluator and rows first; make proof-interpreter
+ListComp transport its own item with explicit stepper induction, then widen
+only after all three proof consumers build.

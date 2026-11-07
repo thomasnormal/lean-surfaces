@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a differential refusal witness for qualified direct enum argument
+  spellings without structured identity evidence.
+
 - Added a differential refusal witness for qualified enum setter spellings
   without structured identity evidence.
 

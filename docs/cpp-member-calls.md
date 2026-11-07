@@ -3,6 +3,9 @@
 Qualified enum spellings without matching structured declaration evidence are
 refused rather than treated as identity by suffix matching.
 
+The same refusal applies to direct enum argument evidence; a qualified
+qualType spelling cannot select an enum declaration by its final component.
+
 2026-10-20. N4950 [expr.call] and [class.mfct.non.static] permit a narrow
 source bridge over the existing integral member getter and class receiver
 projection surfaces. `IntegralMemberCallSyntax.admit` accepts a

@@ -249,6 +249,17 @@ def enumSetterQualifiedSpellingRefusal : Bool :=
 
 #guard !enumSetterQualifiedSpellingRefusal
 
+def enumArgumentQualifiedSpellingRefusal : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit
+          (qualifyEnumSpelling (enumSetterRight "0x15")) representation with
+      | .error _ => false
+      | _ => true
+  | none => false
+
+#guard !enumArgumentQualifiedSpellingRefusal
+
 private def enumSetterAccepted : Bool :=
   match enumSetterEvidence with
   | some setter =>

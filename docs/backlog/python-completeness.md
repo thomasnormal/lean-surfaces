@@ -10187,3 +10187,21 @@ where every reached definition is bound before its use.
 
 DECIDED: retain the conservative loud boundary until definitions become
 runtime bindings; do not loosen admission based on direct top-level names only.
+
+## 2026-11-07-pycomplete-404 — recheck structured global declarations
+
+The global-declaration audit finding is already closed in the current tree.
+The extractor carries `ast.Global.names` and `ast.Nonlocal.names` as structured
+arrays, JSON ingestion preserves them as `globalDecl`/`nonlocalDecl`, and both
+interpreter surfaces consume those arrays directly. The former truncated text
+parser is absent. The long-name witness and the live-global pipeline both
+remain differential matches.
+
+| Measurement | Result |
+|---|---|
+| Structured global witness | `global_structured_script.py` prints `5`, MATCH CPython 3.9 |
+| Live module global | `live_fresh_global.py` prints `1` then `7`, MATCH CPython 3.9 |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: keep lexical declarations structured from the approved AST through
+execution; no text fallback is admissible.

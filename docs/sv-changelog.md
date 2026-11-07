@@ -21,7 +21,7 @@ temporal calls and shifts remain named boundaries.
 Finite SVA boolean conjunction, disjunction, and negation now recurse through
 structured leaves, preserving nested `$past` sampling. The
 `sem2/sva_past_logic` witness and its Verilator row cover the conjunction form;
-the `prim_arbiter_ppc` property-expression census falls from 9 to 7, with
+the `prim_arbiter_ppc` property-expression census falls from 9 to 6, with
 system calls and a shift remaining loud.
 
 ## Alias-flow core split

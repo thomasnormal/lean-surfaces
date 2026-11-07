@@ -26394,6 +26394,9 @@ def _sva_value(node):
         "AddExpression": "+", "SubtractExpression": "-",
         "MultiplyExpression": "*", "DivideExpression": "/",
         "ModExpression": "%",
+        "BinaryAndExpression": "&", "BinaryOrExpression": "|",
+        "BinaryXorExpression": "^", "LogicalShiftLeftExpression": "<<",
+        "LogicalShiftRightExpression": ">>",
     }
     if isinstance(node, dict) and node.get("kind") in binary_ops:
         return {"kind": "SvaValueBinary", "op": binary_ops[node["kind"]],

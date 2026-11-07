@@ -1066,9 +1066,41 @@ theorem rvfiCycleStepRefines_normalized_append
     hrel hall hcombined
 
 /-! Adjacent normalized windows can use the optional cycle contract as well.
-The raw well-formedness premise is applied once to obtain the strict bridge;
-the strict append theorem then carries both the retirement list and the final
-state relation across the exact RVFI boundary. -/
+The relation-aware form keeps the raw well-formedness premise restricted to
+related, admitted states. -/
+theorem cycleStepRefines_normalized_append_of_rel
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed)
+    (state : State) (isaState : IsaState)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ first ++ second, admit i)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements ++ secondRetirements =
+      trace isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) ∧
+    rel (rvfiStateAfter machine state (first ++ second))
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) := by
+  exact rvfiCycleStepRefines_normalized_append
+    (cycleStepRefines_to_rvfiCycleStepRefines_of_rel h hwell)
+    state isaState first second hrel hall hfirst hsecond
+
+/-! The global-row append theorem is a convenience specialization of the
+relation-aware boundary above. -/
 theorem cycleStepRefines_normalized_append
     {State IsaState : Type}
     {machine : RvfiCycleMachine State} {isa : Machine IsaState}
@@ -1095,8 +1127,8 @@ theorem cycleStepRefines_normalized_append
     rel (rvfiStateAfter machine state (first ++ second))
       (machineStateAfter isa isaState
         (retireInputs machine.toCycleMachine state (first ++ second))) := by
-  exact rvfiCycleStepRefines_normalized_append
-    (cycleStepRefines_to_rvfiCycleStepRefines h hwell)
+  exact cycleStepRefines_normalized_append_of_rel h
+    (fun state _ input _ _ hvalid => hwell state input hvalid)
     state isaState first second hrel hall hfirst hsecond
 
 /-! A normalized two-window proof also exposes the relation at the boundary
@@ -1412,6 +1444,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_normalized
+#print axioms LeanModels.Refine.cycleStepRefines_normalized_append_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append

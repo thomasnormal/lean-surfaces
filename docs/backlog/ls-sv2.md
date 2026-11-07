@@ -4413,3 +4413,19 @@ now its specialization.  Updated the PicoRV32 README; no RTL, loader, or
 
 **DECIDED:** keep normalized optional proofs reachability-sensitive while
 retaining the stronger all-state API for compatibility.
+
+## 2026-11-07-ls-sv2-283 — expose relation-aware optional RVFI window composition
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_append_of_rel` to
+`LeanModels/Refine/Rvfi.lean`.  Adjacent normalized windows can now be
+composed from an optional cycle contract with a well-formedness invariant
+restricted to related states and admitted inputs.  The result carries the
+concatenated retirement equality and final core/ISA relation; the existing
+global-row append theorem is its convenience specialization.  Updated the
+PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep adjacent optional-window proofs reachability-sensitive while
+retaining the stronger all-state API for compatibility.

@@ -206,8 +206,11 @@ equality, without requiring callers to rebuild the strict contract by hand.
 carried post-window relation while restricting the wire invariant to related,
 admitted states.  The global-row `cycleStepRefines_normalized` specialization
 remains available for the stronger premise.
-`cycleStepRefines_normalized_append` carries the paired result across adjacent
-optional windows, including the exact raw-state boundary between them.
+`cycleStepRefines_normalized_append_of_rel` carries the paired result across
+adjacent optional windows while restricting the wire invariant to related,
+admitted states.  The global-row `cycleStepRefines_normalized_append`
+specialization remains available, including the exact raw-state boundary
+between windows.
 `cycleStepRefines_normalized_chain` additionally exposes the intermediate
 relation and second ISA state needed to resume a segmented optional proof.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent

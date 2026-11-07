@@ -1,5 +1,6 @@
 import Lean
 import LeanModels.Sv.Ast
+import LeanModels.Sv.ClockGuard0
 
 /-!
 # SV envelope JSON ingestion (`LeanModels.Sv`)
@@ -303,7 +304,7 @@ def parseEnvelope (j : Json) : Except String Envelope :=
 
 /-- The main entry point: envelope JSON in, `Design` out. -/
 def loadDesign (j : Json) : Except String Design :=
-  (·.design) <$> parseEnvelope j
+  (·.design.clockGuard) <$> parseEnvelope j
 
 /-- Convenience: JSON text → `Envelope` (composes `Lean.Json.parse`). -/
 def parseEnvelopeString (s : String) : Except String Envelope :=
@@ -311,7 +312,7 @@ def parseEnvelopeString (s : String) : Except String Envelope :=
 
 /-- Convenience: JSON text → `Design`. -/
 def loadDesignString (s : String) : Except String Design :=
-  (·.design) <$> parseEnvelopeString s
+  (·.design.clockGuard) <$> parseEnvelopeString s
 
 /-! ## Inline tests — hand-written envelopes only
 

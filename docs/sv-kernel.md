@@ -61,6 +61,11 @@ or contract used by automation carries a refinement theorem back to the exact se
     - several unrelated clocks. These are also outside the profile.
   - Retirement path: samples at both clock levels (an observation-model extension of Task v2, no change to E), then a
     two-edge clocking discipline, then multi-clock as a later E milestone.
+- **M0 clock boundary.** The legacy `sv-0.1` JSON loader now applies the
+  same loud source discipline before its implicit cycle runner: one input
+  clock only, using the canonical `clk` port. Two clocks and data/derived
+  clocks are refused as `Clock:multiple` or `Clock:implicit`; the richer
+  `sv-0.2` event route remains the place for named clocks and instant lists.
 - **Elaboration happens in Lean.** slang is a multi-point witness, never the definition.
 - **Three kinds of refusal**, each loud:
   - elaboration refusal: the construct is outside the profile;

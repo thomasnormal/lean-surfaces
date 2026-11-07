@@ -35,6 +35,7 @@ only ever overwrite declared *input* ports, absent inputs hold.
 import Lean
 import LeanModels.Sv.Json
 import LeanModels.Sv.Semantics
+import LeanModels.Sv.ClockGuard0
 
 open Lean (Json)
 open LeanModels.Sv
@@ -245,6 +246,8 @@ structure Prepared where
 /-- Load envelope + cases file, select the named case, cross-check it. -/
 def prepare (envText casesText caseName : String) : Except String Prepared := do
   let d ← loadEnvelopeDesign envText
+  if let some (k, msg) := d.clockReport then
+    throw s!"{k}: {msg}"
   let cj ← Json.parse casesText
   let fuel := ((getF cj "fuel").toOption.bind (·.getNat?.toOption)).getD 1000
   let arr ← getArrF cj "cases"

@@ -342,6 +342,8 @@ partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
           (← parsePSvaBool (← getField j "right")))
     | "SvaOr" => return (PSvaBool.or (← parsePSvaBool (← getField j "left"))
           (← parsePSvaBool (← getField j "right")))
+    | "SvaIsUnknown" => return (PSvaBool.isUnknown
+          (← parsePExpr (← getField j "expr")))
     | "SvaPast" =>
         let cycles ← getNatField j "cycles"
         let e ← parsePExpr (← getField j "expr")

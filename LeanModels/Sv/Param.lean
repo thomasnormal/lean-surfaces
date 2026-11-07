@@ -558,6 +558,7 @@ inductive PSvaBool where
   | not (arg : PSvaBool)
   | and (left right : PSvaBool)
   | or (left right : PSvaBool)
+  | isUnknown (value : PExpr)
   | past (cycles : Nat) (value : PExpr)
   | rose (value : PExpr)
   | fell (value : PExpr)

@@ -44,6 +44,7 @@ inductive SvaBool where
   | not (arg : SvaBool)
   | and (left right : SvaBool)
   | or (left right : SvaBool)
+  | isUnknown (value : Expr2)
   | caseEq (left right : SvaBool)
   | past (cycles : Nat) (arg : SvaBool)
   | rose (name : String)
@@ -196,6 +197,9 @@ def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except 
       let some r ← right.eval trace index | .ok none
       let width := max l.width r.width
       return some (LVec.eqLogical (l.resizeU width) (r.resizeU width))
+  | .isUnknown value => do
+      let some v ← exprAt trace index value | .ok none
+      return some (if v.allKnown then .l0 else .l1)
   | .lit value => .ok (some (if value then .l1 else .l0))
   | .signal name => return (← signalAt trace index name).map boolLogic
   | .expr value => return (← exprAt trace index value).map boolLogic

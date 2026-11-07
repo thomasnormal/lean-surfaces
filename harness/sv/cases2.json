@@ -177,6 +177,16 @@
       "measured": "2026-11-07: boolean conjunction retains a nested finite $past operand as structured SVA logic."
     },
     {
+      "name": "sva_isunknown",
+      "example": "sem2/sva_isunknown",
+      "top": "sva_isunknown",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: $isunknown retains four-state sampled knownness as an explicit SVA predicate."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

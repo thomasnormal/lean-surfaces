@@ -24,6 +24,10 @@ structured leaves, preserving nested `$past` sampling. The
 the `prim_arbiter_ppc` property-expression census falls from 9 to 6, with
 system calls and a shift remaining loud.
 
+`$isunknown(expr)` now has an explicit sampled four-state knownness predicate.
+The `sem2/sva_isunknown` witness and Verilator row cover the form; `$onehot0`
+and other system calls remain loud.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

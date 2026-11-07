@@ -11498,6 +11498,23 @@ rounding. The earlier one-definition-per-digit chain is absent.
 DECIDED: keep the parameterized worker and extend its boundary rows when
 CPython cutoff behavior changes; do not unroll new digit cases.
 
+## 2026-11-07-pycomplete-474 — audit float-round worker family
+
+The low `py-round-digits-unrolled` finding is already fixed. Both interpreter
+surfaces dispatch through the single parameterized `roundFloatNDigits` worker;
+the former per-digit worker family is absent. Positive and negative decimal
+cutoffs, zero digits, signed zero, and values beyond the old forty-digit range
+are handled by the shared worker and one proof boundary.
+
+| Measurement | Result |
+|---|---|
+| Round differential | 216 expanded cases: 215 MATCH, 1 expected refusal, 0 failures |
+| Worker census | one `roundFloatNDigits`; no `roundFloatOne`/`roundDigitsOne` family |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-round-digits-unrolled` as already fixed; retain the single
+parameterized worker and explicit unsupported integer boundary.
+
 ## 2026-11-07-pycomplete-451 — choose the next completeness milestone
 
 The current measured frontier has `ListComp` as the next practical language

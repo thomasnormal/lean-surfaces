@@ -218,6 +218,44 @@ schedule and every stimulus has a completed run. Together with
 Named like `Spec2`'s `Terminates2.of_invariant`, the general way to build
 `Terminates2`; `terminates2_of_acyclic` is the same theorem under a root
 name. -/
+theorem CombDesign.run2ClockGuard_ok {d : Design2} (hd : CombDesign d) :
+    run2ClockGuard d = .ok () := by
+    have hassign : ∀ p ∈ d.processes.toList, ∃ t e, p = .assign t e := by
+      intro p hp
+      obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp hp
+      have hget : d.processes[i]? = some p := by
+        rw [Array.getElem?_toList] at hi
+        exact hi
+      obtain ⟨t, e, ws, hpe, -⟩ := hd.assign i p hget
+      exact ⟨t, e, hpe⟩
+    have hnames : d.processes.toList.filterMap run2Clock? = [] := by
+      apply List.filterMap_eq_nil_iff.mpr
+      intro p hp
+      obtain ⟨t, e, rfl⟩ := hassign p hp
+      rfl
+    have himplicit : d.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) = false := by
+      simp only [List.any_eq_false]
+      intro p hp
+      obtain ⟨t, e, rfl⟩ := hassign p hp
+      simp
+    have hnames' : run2ClockNames d = [] := by
+      simp [run2ClockNames, hnames]
+    unfold run2ClockGuard
+    change (if (run2ClockNames d).length > 1 then _ else
+      if d.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) then _ else Res.ok ()) = Res.ok ()
+    rw [hnames']
+    simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+    rw [show d.processes.toList.any (fun p =>
+      match p with
+      | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+      | _ => false) = false from himplicit]
+    rfl
 theorem Terminates2.of_acyclic (hd : CombDesign d) (ha : Acyclic d) : Terminates2 d :=
   Terminates2.of_invariant (d := d) (StateShape d) (StateShape.of_initState2 hd) (fun σ =>
     ⟨d.settleFuel, fun inputs st k hs =>
@@ -230,7 +268,7 @@ theorem Terminates2.of_acyclic (hd : CombDesign d) (ha : Acyclic d) : Terminates
       exact hi
     obtain ⟨t, e, ws, hpe, hws⟩ := hd.assign i p hget
     cases hpe
-    simp [Process2.hasQualifiedCase])
+    simp [Process2.hasQualifiedCase]) (CombDesign.run2ClockGuard_ok hd)
 
 /-- Root-name alias of `Terminates2.of_acyclic` (acyclic comb designs
 terminate). -/

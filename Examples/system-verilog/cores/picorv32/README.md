@@ -937,6 +937,9 @@ from-reset progress theorem.  Once a loaded core supplies the ADDI invariant,
 the reset relation, admitted schedule, and explicit progress witness, this
 single theorem returns the exact committed stream and post-state relation for
 every finite target retirement prefix.
+The structure-valued `rv32i_reset_addi_refines` entry point retains the same
+contract's decoded program, raw certificate, target equations, and normalized
+trace for callers that need those proof fields.
 
 ## Constructing mixed cycle certificates from an invariant
 

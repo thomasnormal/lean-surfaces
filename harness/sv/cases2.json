@@ -31128,6 +31128,15 @@
       "measured": "The exact multi-clock E instant route admits independent and coincident input-clock edges. At a coincident edge the read-domain flop samples the old write-domain value; the row is source-shaped and matches the simulator trace."
     },
     {
+      "name": "clk_implicit",
+      "example": "sem2/clk_implicit",
+      "top": "clk_implicit",
+      "signals": ["a", "d", "q"],
+      "stimulus": [{"a": "0", "d": "1"}, {"a": "1", "d": "0"}],
+      "refusal": "Clock:implicit",
+      "measured": "Sem2 run2 now refuses a data-driven event control instead of executing the edge body once per stimulus entry; event sensitivity remains in the exact scheduler route."
+    },
+    {
       "name": "clk_rst_int",
       "example": "sem2/clk_rst_int",
       "top": "clk_rst_int",

@@ -796,6 +796,32 @@ def edgePass2 (d : Design2) (fuel : Nat) (st : SvState) (nba : NbaQueue2) :
         | none => pure (st, nba)
       edgePass2 d fuel st' nba' rest
 
+/-! ## Admission guard for the one-clock `run2` profile
+
+`cycleStep2` is deliberately the one-clock transport: one stimulus entry is
+one rising edge.  The exact instant-list route in `MultiClock.lean` carries
+independent and coincident clocks; letting a multi-clock design reach
+`edgePass2` here would tick every domain on every entry and give a wrong
+answer.  Retained data-driven event controls are likewise outside this
+transport and remain a named clock boundary. -/
+
+def run2ClockNames (d : Design2) : List String :=
+  (d.processes.toList.filterMap fun p =>
+    match p with
+    | .alwaysFF c _ | .alwaysPlain c _ | .alwaysFFR c _ _ _ => some c
+    | _ => none).eraseDups
+
+def run2ClockGuard (d : Design2) : Res Unit :=
+  if (run2ClockNames d).length > 1 then
+    .unsupported s!"Clock:multiple: module {d.name} has multiple edge clocks; run2 requires one clock per stimulus entry; use the exact MultiClock instant route"
+  else if d.processes.toList.any (fun p =>
+      match p with
+      | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+      | _ => false) then
+    .unsupported s!"Clock:implicit: module {d.name} has a data-driven event control; run2 has no event-sensitivity transport for it"
+  else
+    .ok ()
+
 /-! ## The cycle -/
 
 def applyInputs2 (d : Design2) (inputs : SvState) (st : SvState) : SvState :=
@@ -859,6 +885,7 @@ declaration initializers, all else x; one snapshot per stimulus entry). -/
 def run2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) (stim : List SvState) :
     Res (List SvState) :=
   do
+    run2ClockGuard d
     let tr ← runFrom2 d σ fuel (initState2 d) 0 stim
     let _ ← if d.processes.toList.any Process2.hasQualifiedCase
       then validateTraceChecks2 fuel d tr else .ok ()
@@ -890,7 +917,9 @@ def runFrom2ExecChecks (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
 
 def run2ExecChecks (d : Design2) (σ : ScheduleOracle) (fuel : Nat)
     (stim : List SvState) : Res (List SvState) :=
-  runFrom2ExecChecks d σ fuel (initState2 d) 0 stim
+  do
+    run2ClockGuard d
+    runFrom2ExecChecks d σ fuel (initState2 d) 0 stim
 
 /-! ## The pinned-fact table (`#guard` twins of the diff rows)
 

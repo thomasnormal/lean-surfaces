@@ -585,6 +585,25 @@ theorem cycleStepRefines_to_rvfiCycleStepRefines
     rw [hnone] at hcycle
     exact Or.inr ⟨hv', hcycle⟩
 
+/-! With the raw well-formedness invariant in hand, the optional and strict
+cycle contracts are equivalent.  The invariant is retained as an explicit
+premise because the strict-to-optional direction alone does not establish it.
+-/
+theorem cycleStepRefines_iff_rvfiCycleStepRefines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (hwell : ∀ (state : State) (input : Input),
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed) :
+    CycleStepRefines machine.toCycleMachine isa rel admit ↔
+      RvfiCycleStepRefines machine isa rel admit := by
+  constructor
+  · intro h
+    exact cycleStepRefines_to_rvfiCycleStepRefines h hwell
+  · intro h
+    exact rvfiCycleStepRefines_toCycleStepRefines h
+
 /-! The strict contract and the total raw-cycle case split are equivalent.
 This form lets a loaded-core proof work entirely with packed fields and defer
 the optional-retirement adapter to the generic constructor. -/
@@ -1149,6 +1168,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
 #print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines
+#print axioms LeanModels.Refine.cycleStepRefines_iff_rvfiCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_iff_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines

@@ -4254,3 +4254,21 @@ boundary.  Updated the PicoRV32 README and backlog/index.  No RTL, loader, or
 **DECIDED:** expose the two representations as interchangeable only under a
 visible wire invariant, so callers can select the proof shape without erasing
 the raw RVFI obligation.
+
+## 2026-11-07-ls-sv2-274 — characterize one-row RVFI decoding
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `RvfiObservation.toRetirement?_eq_some_iff` to
+`LeanModels/Refine/Rvfi.lean`.  It characterizes a successful optional decode
+exactly: the row is valid, its packed fields are well formed, and the returned
+retirement is the row's concrete `toRetirement`.  The reverse direction reuses
+the existing introduction theorem, while the forward direction derives the
+validity and well-formedness before inverting `Option.some`.  Updated the
+PicoRV32 README and backlog/index.  No RTL, loader, or `LeanModels/Sv/**`
+file changed.
+
+**DECIDED:** make the optional adapter's success condition a reusable theorem
+so raw-cycle and normalization proofs do not duplicate executable `if` and
+`Option` case analysis.

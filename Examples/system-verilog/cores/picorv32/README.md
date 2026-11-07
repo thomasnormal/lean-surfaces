@@ -178,6 +178,11 @@ loaded-core invariant and input-admission obligations.
 `normalizeRvfiTrace?_wellFormed` independently classifies every row in a
 successful raw certificate as either an invalid bubble or a well-formed valid
 row, without using the optional-adapter theorem.
+At the single-row adapter boundary,
+`RvfiObservation.toRetirement?_eq_some_iff` characterizes a successful decode
+as `valid ∧ wellFormed` together with equality to the observation's concrete
+retirement, so callers can invert or introduce the option without reopening
+its executable branches.
 `normalizeRvfiCycleTrace_input_length` additionally proves that a successful
 normalization has exactly as many retained retiring inputs as decoded
 retirements, and `pinned_cycle_normalized_input_length` records that count for

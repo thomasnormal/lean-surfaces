@@ -276,6 +276,35 @@ theorem AluRvfiTrace.trace_refines
         (aluProgramInputs memory program)) := by
       rw [rvMemoryMachineWith_alu_program_trace]
 
+/-! ## Composing raw ALU certificates -/
+
+/-- Raw ALU certificates compose at the next retirement order and folded
+architectural state produced by the first program chunk. -/
+theorem AluRvfiTrace.append
+    {memory : Memory} {start : Nat} {state : ArchState}
+    {firstObservations secondObservations : List RvfiObservation}
+    {firstProgram secondProgram : List AluInstruction}
+    (first : AluRvfiTrace memory start state firstObservations firstProgram)
+    (second : AluRvfiTrace memory
+      (start + firstProgram.length)
+      (aluProgramState state firstProgram)
+      secondObservations secondProgram) :
+    AluRvfiTrace memory start state
+      (firstObservations ++ secondObservations)
+      (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start state =>
+      simpa [aluProgramState] using second
+  | bubble hvalid tail ih =>
+      refine AluRvfiTrace.bubble hvalid ?_
+      apply ih
+      simpa [aluProgramState] using second
+  | retire horder boundary tail ih =>
+      refine AluRvfiTrace.retire horder boundary ?_
+      apply ih
+      simpa [aluProgramState, List.length_cons, Nat.add_assoc,
+        Nat.add_comm, Nat.add_left_comm] using second
+
 /-! ## Input-aware cycle certificate -/
 
 /-- The ALU invariant tied to an actual packed-RVFI cycle machine.  Bubble
@@ -443,6 +472,7 @@ theorem AluRvfiCycleTrace.append
 #print axioms LeanModels.Refine.AluRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.AluRvfiTrace.normalize
 #print axioms LeanModels.Refine.AluRvfiTrace.trace_refines
+#print axioms LeanModels.Refine.AluRvfiTrace.append
 #print axioms LeanModels.Refine.AluRvfiCycleTrace.normalize
 #print axioms LeanModels.Refine.AluRvfiCycleTrace.retireInputs_eq
 #print axioms LeanModels.Refine.AluRvfiCycleTrace.trace_refines

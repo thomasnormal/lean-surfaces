@@ -1095,6 +1095,47 @@ theorem rvfiCycleStepRefines_normalized_chain
   exact ⟨hfirstBoundary.1, hfirstBoundary.2,
     hsecondBoundary.1, hfinal⟩
 
+/-! The optional cycle contract has the same segmented boundary theorem.
+The returned middle relation is the exact state/ISA pair needed to resume an
+invariant for the second raw window. -/
+theorem cycleStepRefines_normalized_chain
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (input : Input),
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed)
+    (state : State) (isaState : IsaState)
+    (first second : List Input)
+    {start : Nat} {firstRetirements secondRetirements : List Retirement}
+    (hrel : rel state isaState)
+    (hallFirst : ∀ i ∈ first, admit i)
+    (hallSecond : ∀ i ∈ second, admit i)
+    (hfirst : normalizeRvfiTrace? start
+        (rvfiObservations machine state first) = some firstRetirements)
+    (hsecond : normalizeRvfiTrace?
+        (start + firstRetirements.length)
+        (rvfiObservations machine
+          (rvfiStateAfter machine state first) second) =
+      some secondRetirements) :
+    (firstRetirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state first)) ∧
+    rel (rvfiStateAfter machine state first)
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state first)) ∧
+    (secondRetirements = trace isa
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state first))
+      (retireInputs machine.toCycleMachine
+        (rvfiStateAfter machine state first) second)) ∧
+    rel (rvfiStateAfter machine state (first ++ second))
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state (first ++ second))) := by
+  exact rvfiCycleStepRefines_normalized_chain
+    (cycleStepRefines_to_rvfiCycleStepRefines h hwell)
+    state isaState first second hrel hallFirst hallSecond hfirst hsecond
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -1312,6 +1353,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.cycleStepRefines_normalized
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_append
+#print axioms LeanModels.Refine.cycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff

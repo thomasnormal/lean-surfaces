@@ -26190,6 +26190,12 @@ def _sva_pexpr(node):
         if value is not None:
             return {"kind": "Int", "value": value}
         return {"kind": "Unsupported", "sv_kind": kind, "text": "integer literal"}
+    if kind == "UnbasedUnsizedLiteralExpression":
+        raw = (node.get("literal", {}).get("text", "") or "").lower()
+        if raw in ("'0", "'1", "'x", "'z"):
+            return {"kind": "Fill", "bit": raw[1]}
+        return {"kind": "Unsupported", "sv_kind": kind,
+                "text": "unbased unsized literal"}
     if kind in ("UnaryLogicalNotExpression", "UnaryBitwiseNotExpression",
                 "UnaryMinusExpression", "UnaryPlusExpression"):
         op = {"UnaryLogicalNotExpression": "!", "UnaryBitwiseNotExpression": "~",

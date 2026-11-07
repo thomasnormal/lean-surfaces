@@ -145,6 +145,14 @@ Simple boolean negation (`!a`) maps to `SvaBool.not`.
 The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
+Unbased unsized SVA literals (`'0`, `'1`, `'x`, and `'z`) are retained as
+width-directed fills in the expression tree. The clean-room
+`sem2/sva_unbased_literal` witness checks a passing and a failing sampled
+trace; the source also passes Verilator's assertion-capable lint path.
+On the pinned OpenTitan `prim_fifo_sync` assertion VIP, the same adapter keeps
+all 27 assertion properties in metadata and removes its 27
+`UnbasedUnsizedLiteralExpression` refusals; 29 unrelated loader nodes remain
+for later target-enabling packets.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

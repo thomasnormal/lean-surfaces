@@ -554,8 +554,8 @@
   },
   {
     "file": "Examples/python/float_lab/floor_script.py",
-    "expect": "unsupported",
-    "note": "the floor test contains a list comprehension, which remains an explicit loud AST boundary"
+    "expect": "match",
+    "note": "native list comprehension execution matches CPython"
   },
   {
     "file": "Examples/python/float_lab/nan_floor_script.py",

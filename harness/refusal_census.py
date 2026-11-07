@@ -341,7 +341,7 @@ print(len({1, 2}))
 """, "MATCH", "lowered to set(list) at ingestion; order remains unobservable")
 w("expr.ListComp", """
 print([x + 1 for x in [1, 2]])
-""", "MATCH", "desugared to list(genexp) at ingestion")
+""", "MATCH", "native ListComp evaluator")
 w("expr.SetComp", """
 print(len({x for x in [1, 2]}))
 """, "MATCH", "lowered to set(generator) at ingestion")
@@ -1045,7 +1045,6 @@ WHITELIST_CLASS.update({
     'bool_lab::len_alias': 'callable.alias',
     'builtin_raise_lab::caught_inside_generator': 'generator.lowering',
     'builtin_raise_lab::chained': 'raise.cause',
-    'bytes_lab::comprehension': 'comprehension.lowering',
     'clock_lab::dead_clock': 'clock.underrun',
     'clock_lab::dead_clock': 'clock.underrun',
     'clock_lab::read_twice': 'clock.underrun',
@@ -1065,7 +1064,6 @@ WHITELIST_CLASS.update({
     'exc_lab::multi_handler': 'try.structured',
     'exc_lab::raise_bare': 'try.structured',
     'exc_lab::raise_from': 'try.structured',
-    'float_lab::constructor_comprehension': 'comprehension.lowering',
     'float_lab::set_finite_keys': 'set.order',
     'fstring_lab::set_field': 'set.order',
     'gen_lab::unconsumed_noniterable': 'genexp.lowering-admission',
@@ -1076,6 +1074,8 @@ WHITELIST_CLASS.update({
     'iter_lab::lc_capture': 'listcomp.lowering',
     'iter_lab::lc_filter': 'listcomp.lowering',
     'iter_lab::lc_squares': 'listcomp.lowering',
+    'listcomp_lab::walrus_filter': 'listcomp.lowering-admission',
+    'listcomp_lab::from_generator': 'listcomp.lowering-admission',
     'repr_lab::alias_call': 'callable.alias',
     'round_lab::round_float_general': 'builtin.round',
     'set_lab::comprehension': 'comprehension.lowering',
@@ -1152,7 +1152,6 @@ SCRIPT_CLASS.update({
     'del_def_mid_script': 'del.definition-binding',
     'del_partial_script': 'del.definition-binding',
     'del_trailing_script': 'del.definition-binding',
-    'floor_script': 'listcomp.lowering',
     'fmt_script': 'listcomp.lowering',
     'genexp_capture_rebinding': 'genexp.lowering-admission',
     'len_repeat_oversize': 'op.Mult-repetition',

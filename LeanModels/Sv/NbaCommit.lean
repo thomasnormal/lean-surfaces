@@ -7,8 +7,8 @@ import LeanModels.Sv.Comb2Base
 write disjoint bits, the commit does not depend on the blocks' order (`commitNba2_perm`). Used by
 E-core-1's R-EDGE (`Kernel/Core1Edge.lean`) and by the FF-only cycle lemma (`Seq2Cycle.lean`).
 **Status: a `run2` library lemma** (about `commitNba2` only). Moved verbatim from
-`Kernel/Core1Edge.lean` (arch-x1 `e39d0871`): when the two meet, `Core1Edge` imports this module and
-drops its copy.
+`Kernel/Core1Edge.lean` (arch-x1 `e39d0871`); `Core1Edge` imports this module and has dropped its
+copy, which collided with this one once the umbrella `LeanModels.lean` imported both.
 
 Also here: `commitNba2_nil`/`_cons`/`_append`, and the commit restricted to one signal (`nbaFold`, with
 `nbaFold_append`, `nbaFold_flatMap`, `nbaFold_flatMap_eq_self`, `width_nbaFold`) and `width_foldl_insertAt`.

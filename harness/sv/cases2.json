@@ -137,6 +137,20 @@
       "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
     },
     {
+      "name": "sva_logical_ops",
+      "example": "sem2/sva_logical_ops",
+      "top": "sva_logical_ops",
+      "clock": "clk",
+      "signals": ["a", "b", "q"],
+      "stimulus": [
+        {"a": "0", "b": "0"},
+        {"a": "1", "b": "1"},
+        {"a": "0", "b": "0"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: retained SVA logical equivalence and nested logical implication map to the finite E boolean layer; the clean-room source is accepted by Verilator's assertion-capable front end."
+    },
+    {
       "name": "sva_unbased_literal",
       "example": "sem2/sva_unbased_literal",
       "top": "sva_unbased_literal",

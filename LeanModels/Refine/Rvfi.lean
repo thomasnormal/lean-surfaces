@@ -927,6 +927,30 @@ theorem rvfiCycleStepRefines_normalized
     rvfiCycleStepRefines_stateAfter_refines machine isa rel admit h
       state isaState inputs hrel hall⟩
 
+/-! An ordinary optional-cycle proof can consume the raw normalization
+certificate directly once the separate valid-row well-formedness invariant is
+available.  This wrapper keeps the strict bridge explicit while avoiding
+repeated construction in loaded-core trace theorems. -/
+theorem cycleStepRefines_normalized_trace_refines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (input : Input),
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed)
+    (state : State) (isaState : IsaState) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ inputs, admit i)
+    (hnorm : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    retirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state inputs) := by
+  exact rvfiCycleStepRefines_normalized_trace_refines
+    (cycleStepRefines_to_rvfiCycleStepRefines h hwell)
+    state isaState inputs hrel hall hnorm
+
 /-- Adjacent raw-normalized RVFI windows compose through the strict boundary.
 The second certificate starts at the first window's retirement count, while
 the strict step proof is applied once to the concatenated cycle input stream. -/
@@ -1225,6 +1249,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized
+#print axioms LeanModels.Refine.cycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff

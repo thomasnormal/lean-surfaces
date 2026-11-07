@@ -71,6 +71,9 @@ agreement while preserving each evaluator's state threading.
 The agreement battery also includes a direct `switch` callable, checking case
 selection and return propagation through both evaluator APIs.
 
+It also includes a `do-while` callable, checking one mandatory body execution
+and the subsequent condition through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -94,18 +94,6 @@ private def finishResult (frame : IntegralObjectFrame)
   | .ok _ => success frame .normal
   | _ => success frame (.failed result)
 
-private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
-    (operation : IntegralBinary) (old : IntegralValue) : IntegralResult IntegralValue :=
-  match integralTypeOfEvidence type with
-  | none | some .boolean => .unsupported .unresolvedArithmeticConversions
-  | some integer =>
-      match usualArithmeticType profile integer .int with
-      | .error _ => .unsupported .unresolvedArithmeticConversions
-      | .ok common =>
-          bindIntegralResultValue (convertTo profile (.builtin common) old) fun operand =>
-            bindIntegralResultValue (integralBinary operation operand ⟨operand.format, 1⟩)
-              (convertTo profile type)
-
 private def evalParameter (fuel : Nat) (profile : TargetProfile)
     (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
     (declaration : FrontendHandle) : Outcome (IntegralResult IntegralValue) :=
@@ -132,7 +120,7 @@ private def evalIncrement (fuel : Nat) (profile : TargetProfile)
               match current.frame.lookup declaration with
               | .error reason => frameFailure current.frame reason
               | .ok binding =>
-                  match incrementValue profile binding.type operation old with
+                  match integralIncrementValue profile binding.type operation old with
                   | .ok value =>
                       let assigned := current.frame.assignValue declaration binding.type value
                       match assigned.result with

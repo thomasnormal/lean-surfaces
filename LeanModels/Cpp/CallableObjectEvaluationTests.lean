@@ -214,6 +214,15 @@ def callableIncrementOperatorAgreement : Bool :=
 
 #guard callableIncrementOperatorAgreement
 
+def callableIncrementValueAgreement : Bool :=
+  integralIncrementValue .lp64 intType .add ⟨.signed 32, 7⟩ matches .ok ⟨.signed 32, 8⟩ &&
+    integralIncrementValue .lp64 (.qualified true false intType) .subtract ⟨.signed 32, 7⟩
+      matches .ok ⟨.signed 32, 6⟩ &&
+    integralIncrementValue .lp64 (.builtin .boolean) .add ⟨.boolean, 1⟩
+      matches .unsupported _
+
+#guard callableIncrementValueAgreement
+
 def callableIntegralLiteralAgreement : Bool :=
   integralLiteralOfEvidence .lp64 intType 7 matches .ok ⟨.signed 32, 7⟩ &&
     integralLiteralOfEvidence .lp64 (.qualified true false intType) 7

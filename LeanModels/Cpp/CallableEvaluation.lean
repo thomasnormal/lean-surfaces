@@ -102,27 +102,13 @@ private def evaluateIncrement (profile : TargetProfile) (parameters : List Calla
     Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) := do
   let some parameter := parameters.find? (fun parameter => parameter.declaration == declaration)
     | throw (.missingParameter declaration)
-  let .builtin type := parameter.type
-    | throw (.unsupportedType parameter.type)
-  if type == .boolean then throw (.unsupportedType parameter.type)
   let some operation := integralIncrementBinaryOfString operator
     | throw (.unsupportedOperator operator)
-  let common ← match usualArithmeticType profile type .int with
-    | .ok type => pure type
-    | .error reason => throw (mapFormatError reason)
   let current ← parameterValue parameters arguments declaration
-  let converted ← convertTo profile (.builtin common) current
-  match converted with
-  | .ok operand =>
-      match integralBinary operation operand ⟨operand.format, 1⟩ with
-      | .ok result =>
-          let stored ← convertTo profile parameter.type result
-          match stored with
-          | .ok value =>
-              let updated ← assignParameter profile parameters arguments declaration value
-              pure (.ok (if isPostfix then current else value), updated)
-          | result => pure (result, arguments)
-      | result => pure (result, arguments)
+  match integralIncrementValue profile parameter.type operation current with
+  | .ok value =>
+      let updated ← assignParameter profile parameters arguments declaration value
+      pure (.ok (if isPostfix then current else value), updated)
   | result => pure (result, arguments)
 
 private def evaluateInteger (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :

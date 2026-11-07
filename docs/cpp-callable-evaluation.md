@@ -38,6 +38,9 @@ remain loud in each evaluator's error domain.
 
 Typed `alignof` value construction follows the same shared boundary.
 
+Promoted increment arithmetic is shared before each evaluator updates its
+parameter or object frame.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

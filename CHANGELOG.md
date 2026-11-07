@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized promoted increment arithmetic in `ScalarArithmetic` for both
+  callable evaluators and added success, qualified, and Boolean controls.
+
 - Centralized typed `alignof` value construction in `ScalarArithmetic` for
   both callable evaluators and added an agreement witness.
 

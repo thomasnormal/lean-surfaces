@@ -91,10 +91,15 @@ The PicoRV32 R2 item is now started from the re-probe's generic walls. A
 source-shaped `always_comb` memory read is admitted after the sequential
 `MemState` commit; `sem2/unpacked_memory_comb` covers this exact form. The
 memory route still refuses unsupported module members such as `net-z` wires.
-The generic undriven-wire boundary is now source-shaped: a plain four-state
-`wire` with no driver is retained as a net declaration and initializes to z in
-the memory route. `sem2/unpacked_memory_netz` guards this behavior; partially
-driven or multiply driven nets remain named refusals.
+The generic undriven-wire boundary remains source-shaped metadata: a plain
+four-state `wire` with no driver is retained in `pdesign.others`, and the
+memory route keeps its named unsupported-member refusal until net resolution is
+represented. `sem2/unpacked_memory_netz` guards this behavior.
+The item-2 clean-room PicoRV32 wall pair is pinned under
+`Examples/system-verilog/cores/picorv32/walls`: `unpacked_cpuregs` checks the
+ordinary unpacked-memory refusal, while `net_z_memory` checks the memory-route
+unsupported-member refusal and `NetSymbol:net-z` metadata. `walls/probe.lean`
+checks both exact messages.
 
 ### Initial ROM loading remains an explicit F4 boundary
 

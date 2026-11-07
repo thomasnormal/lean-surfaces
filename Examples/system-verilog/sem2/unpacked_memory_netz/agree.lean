@@ -9,10 +9,11 @@ open LeanModels.Sv.Kernel
 load_design_sv2 memoryNetz from
   "Examples/system-verilog/sem2/unpacked_memory_netz/unpacked_memory_netz.sv.json"
 
+#guard memoryNetz.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
 private def memD : MemDesign2 := memoryNetz.pdesign.instantiateMemD2 [4]
-
-#guard memD.memDecls.length == 1
-#guard (memD.decls.find? (·.name == "pcpi_mul_wr")).map (·.isNet) == some true
-#guard (memD.initState.scalar.find? (·.1 == "pcpi_mul_wr")).map (·.2.toBinString) == some "z"
+#guard match memD.processes with
+  | [.unsupported "Instantiate"
+      "memory cycle route does not yet admit unsupported module members"] => true
+  | _ => false
 
 end Examples.«system-verilog».sem2.unpacked_memory_netz.agree

@@ -198,9 +198,14 @@ loud.
 The R2 memory route now also executes a source-shaped `always_comb` blocking
 read after sequential memory commits. The `sem2/unpacked_memory_comb` witness
 and direct Icarus row cover this form; NBA in `always_comb` remains loud.
-Undriven four-state wires now remain source-shaped net declarations and
-initialize to z in the memory route. The `sem2/unpacked_memory_netz` guard
-covers the form; partial and multiply driven nets remain loud.
+Undriven four-state wires remain source-shaped `pdesign.others` metadata, and
+the memory route keeps its named unsupported-member refusal until net
+resolution is represented. The `sem2/unpacked_memory_netz` guard covers the
+boundary.
+The item-2 clean-room PicoRV32 wall pair is pinned under
+`Examples/system-verilog/cores/picorv32/walls`; its probe checks the exact
+ordinary unpacked-memory and memory-route net-z refusals without adapting
+PicoRV32.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

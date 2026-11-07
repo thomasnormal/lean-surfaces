@@ -5453,3 +5453,27 @@ two loader walls above.
 route's first wall.  Keep the next R2 step focused on the existing unpacked
 `cpuregs`/net-z and unsupported-member boundaries, and do not extend the finite
 window until a loaded-core invariant can consume them.
+
+## 2026-11-07-ls-sv2-321 — refresh the cross-core scouting frontier
+
+The inbox and goal file were reread before this item.  Item 320's current
+PicoRV32 measurement made the top-level R2 census stale: it still described the
+pre-admission generated-member refusal as the current memory-route wall.
+
+Updated `Examples/system-verilog/cores/README.md` with the current PicoRV32
+re-probe: source commit `ef203c2b0a3fb793280f5114941416c425c5b461`, extractor
+revision `83638b50fccf1dfe7980f2ca1ab49e1366f34ef4`, envelope
+`2d2d3c1b5cdd459b61a29ab38e6384db20f1f4a6cdbf5b211fe47cc2a1e785c8`, and size
+`2,986,551` bytes.  The ordinary semantic family first refuses `cpuregs` at
+`picorv32.v:203`; the rebuilt memory route advances past generated members and
+first refuses at the existing `NetSymbol:net-z`/unsupported-member boundary,
+with `pcpi_mul_wr` at `picorv32.v:257` as the first retained member.
+
+**MEASURED:** `python3 tools/docs_check.py` and `git diff --check` pass.  This
+is a documentation-only synchronization; no RTL, loader, extractor,
+`LeanModels/Sv/**`, finite-window theorem, or symbolic-core claim changed.
+
+**JUDGED / DECIDED:** keep the cross-core ranking anchored to the current
+PicoRV32 frontier, while leaving the symbolic ADDI invariant parked until a
+loaded real-core state can be related through the remaining unpacked-memory and
+module-member walls.

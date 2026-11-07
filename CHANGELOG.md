@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized profile format selection in `ScalarArithmetic` for both callable
+  evaluators and added a qualified/unsupported evidence witness.
+
 - Centralized evidence-to-value conversion in `ScalarArithmetic` for both
   callable evaluators and added a builtin/qualified/unsupported witness.
 

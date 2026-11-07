@@ -48,8 +48,7 @@ private def builtinIntegralType : CppTypeEvidence → Option CppIntType
 
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Option IntegralFormat :=
-  builtinIntegralType type |>.bind fun integer =>
-    (profile.format integer).toOption
+  (integralFormatOfEvidence profile type).toOption
 
 private def mapOutcome (outcome : Outcome (IntegralResult IntegralValue))
     (convert : IntegralValue → IntegralResult IntegralValue) :

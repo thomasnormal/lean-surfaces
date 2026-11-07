@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for structured ordinary-call handles with array ids;
+  frontend identity remains string-typed.
+
 - Added a recorded refusal for structured overloaded-operator handles with null
   ids; frontend identity remains string-typed.
 

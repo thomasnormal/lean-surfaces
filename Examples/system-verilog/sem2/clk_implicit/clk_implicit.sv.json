@@ -1,0 +1,103 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "clk_implicit",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/clk_implicit/clk_implicit.sv",
+      "sha256": "13fb8e9eb2abf0fe0f406ddab35c94ecd05e456677b4492f9507fd0c481477d8"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "clk_implicit",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 33,
+              "end_line": 2,
+              "end_col": 34
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 36,
+              "end_line": 2,
+              "end_col": 37
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 52,
+              "end_line": 2,
+              "end_col": 53
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 22
+            },
+            "sv_kind": "SignalEventControl:None_",
+            "text": "always @(list): R1: a `NonblockingAssign` statement in the body -- always @(a) q <= d;"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -362,3 +362,9 @@ loader work waits behind the target census. Each rung records its before/after
 refusal census, adds differential rows, and lands only with a theorem or a
 loud named boundary. SVA properties are never silently treated as comments or
 plain procedural statements.
+
+The Sem2 one-clock transport refuses multi-clock designs and retained
+data-driven event controls before `edgePass2`; these shapes cannot be assigned
+one rising edge per stimulus entry. `clk_two` remains a `Clock:multiple`
+refusal, while `clk_two_instants` uses the exact `runMulti` instant route, and
+`clk_implicit` pins the `Clock:implicit` refusal.

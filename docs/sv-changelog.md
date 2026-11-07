@@ -228,6 +228,12 @@ execute as the existing empty statement. The `task_memory` wall proves the
 source-shaped no-op; stateful, timed, output, defaulted, and nonempty tasks
 remain loud.
 
+The Sem2 `run2`, `run2ExecChecks`, and observation runner now apply a
+`Clock:multiple`/`Clock:implicit` guard before the one-clock edge pass. The
+ordinary `clk_two` route therefore refuses, while the exact `runMulti` instant
+route remains available; `clk_implicit` records the data-driven event-control
+refusal.
+
 ## Initial `$readmemh` remains a named F4 boundary
 
 The clean-room `sem2/readmemh_rom` fixture now records an initial

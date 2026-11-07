@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1693 | 0 | 1593 | 0 | 90 | 0 | 10 |
+| 1694 | 0 | 1593 | 0 | 91 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -278,6 +278,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.resolved-constructor-scalar-kind-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-boolean-kind-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-null-kind-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `translation.resolved-constructor-array-kind-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-missing-declaration-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-duplicate-declaration-refusal` | 7 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-constructor-identity` | 7 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |

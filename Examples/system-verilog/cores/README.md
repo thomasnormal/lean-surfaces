@@ -294,3 +294,9 @@ decode-failure trap certificate.  `IllegalInstruction` retains an undecodable
 word and its proof; raw and cycle-aware certificates preserve the precise
 illegal-instruction cause, trap handler transition, arbitrary bubbles, actual
 inputs, unchanged data memory, and compositional core/state/order boundaries.
+
+`LeanModels.Refine.RvfiTrapProgram` combines both illegal-instruction shapes
+in one trap-program certificate: undecodable words and decoded Zicsr words
+whose CSR rows are absent.  The indexed constructors retain the parser proofs
+for each case while normalizing arbitrary bubbles and composing exact trap
+transitions at the core, architectural-state, and retirement-order boundaries.

@@ -806,3 +806,9 @@ causes and handler pcs, bubble inputs, cycle transitions, and unchanged
 threaded data memory while composing at the same core, architectural-state,
 and retirement-order boundaries.  Unimplemented CSR rows remain covered by
 the separate raw illegal-CSR boundary.
+
+`LeanModels.Refine.RvfiTrapProgram` unifies the symbolic trap-program surface
+for undecodable words and decoded Zicsr words with absent rows.  It keeps both
+parser-derived proofs explicit while retaining exact illegal causes, handler
+pcs, cycle inputs, and threaded memory through compositional raw and
+cycle-aware certificates.

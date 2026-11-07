@@ -286,7 +286,8 @@ def KontLe (K K' : Kont) : Prop :=
   (∀ t a b, K.forGen t a b ⊑ₚ K'.forGen t a b) ∧
   (∀ a, K.drainIter a ⊑ₚ K'.drainIter a) ∧
   (∀ a b, K.anyAllIter a b ⊑ₚ K'.anyAllIter a b) ∧
-  (∀ body, K.withBody body ⊑ₚ K'.withBody body)
+  (∀ body, K.withBody body ⊑ₚ K'.withBody body) ∧
+  (∀ c, K.listComp c ⊑ₚ K'.listComp c)
 
 /-! ## §1 THE PRE-BLOCK HELPERS — in dependency order -/
 
@@ -301,7 +302,7 @@ set_option maxRecDepth 8000 in
 theorem iterValues_mono (K K' : Kont) (hK : KontLe K K') (m : Module)
     (fname : String) (g : Bool) :
     ∀ v, iterValues K m fname g v ⊑ₚ iterValues K' m fname g v := by
-  obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, hdrain, hanyAll, _⟩ := hK
+  obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, hdrain, hanyAll, _, _⟩ := hK
   intro v
   simp only [iterValues]
   mono_with (first | exact hdrain _ | exact hanyAll _ _ | assumption)
@@ -311,7 +312,7 @@ theorem applyBuiltin_mono (K K' : Kont) (hK : KontLe K K') (m : Module)
     (fname : String) (vs : List RVal) :
     applyBuiltin K m fname vs ⊑ₚ applyBuiltin K' m fname vs := by
   have hIV := iterValues_mono K K' hK m
-  obtain ⟨hfuel, hcall, hcallClo, _, _, _, _, _, _, hstepIter, _, _, hdrain, hanyAll, _⟩ := hK
+  obtain ⟨hfuel, hcall, hcallClo, _, _, _, _, _, _, hstepIter, _, _, hdrain, hanyAll, _, _⟩ := hK
   unfold applyBuiltin
   mono_with (first
     | exact hdrain _
@@ -325,7 +326,7 @@ set_option maxRecDepth 8000 in
 theorem applyAttrPlan_mono (K K' : Kont) (hK : KontLe K K') (a : Addr) (attr : String) :
     ∀ (p : AttrPlan) (vs : List RVal),
       applyAttrPlan K a attr p vs ⊑ₚ applyAttrPlan K' a attr p vs := by
-  obtain ⟨_, hcall, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨_, hcall, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro p vs
   unfold applyAttrPlan
   mono_with (first | exact hcall _ _ | assumption)
@@ -345,7 +346,7 @@ theorem applyCallPlan_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ (p : CallPlan) (vs : List RVal),
       applyCallPlan K m p vs ⊑ₚ applyCallPlan K' m p vs := by
   have hAB := applyBuiltin_mono K K' hK m
-  obtain ⟨_, hcall, hcallClo, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨_, hcall, hcallClo, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro p vs
   unfold applyCallPlan
   mono_with (first
@@ -360,7 +361,7 @@ One `mutual_induct`, four conjuncts, ONE uniform tactic over all 31 arms. The
 leaf list is the `Kont` fields the arms reach plus the two seams the fuel BOUND
 comes through (`PyLe.liftRes` over `evalCompareOpH_mono`). -/
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 2000000 in
 set_option maxRecDepth 8000 in
 theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
     (∀ e : Expr, evalOpen K m e ⊑ₚ evalOpen K' m e) ∧
@@ -372,7 +373,7 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
   have hCP := applyCallPlan_mono K K' hK m
   have hAP := applyAttrPlan_mono K K' hK
   obtain ⟨hfuel, hcall, hcallClo, hdictItems, hkwArgs, hwhile, hforSeq, hforList,
-          hforDict, hstepIter, hexecGen, hforGen, hdrain, hanyAll, hwithBody⟩ := hK
+          hforDict, hstepIter, hexecGen, hforGen, hdrain, hanyAll, hwithBody, hlistComp⟩ := hK
   apply evalOpen.mutual_induct
     (motive_1 := fun e => evalOpen K m e ⊑ₚ evalOpen K' m e)
     (motive_2 := fun es => evalOpenList K m es ⊑ₚ evalOpenList K' m es)
@@ -400,6 +401,7 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hforGen _ _ _
       | exact hdrain _
       | exact hanyAll _ _
+      | exact hlistComp _
       | exact truthyM_mono _
       | exact PyLe.liftRes (evalCompareOpH_mono hfuel)
       | exact PyLe.map (g := flattenStarCallArgs) assumption
@@ -449,6 +451,53 @@ theorem evalBoolChainM_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
       evalBoolChainM K m op es ⊑ₚ evalBoolChainM K' m op es :=
   (evalOpen_monoAll K K' hK m).2.2.2
 
+set_option maxRecDepth 8000 in
+theorem listCompIfs_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
+    ∀ ifs, listCompIfs K m ifs ⊑ₚ listCompIfs K' m ifs := by
+  have hE := evalOpen_mono K K' hK m
+  intro ifs
+  induction ifs with
+  | nil => simp only [listCompIfs]; exact PyLe.refl' _
+  | cons test rest ih =>
+      simp only [listCompIfs]
+      mono_with (first | exact hE _ | exact truthyM_mono _ | exact ih | assumption)
+
+set_option maxRecDepth 8000 in
+theorem listCompAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
+    ∀ c, listCompAt K m c ⊑ₚ listCompAt K' m c := by
+  have hE := evalOpen_mono K K' hK m
+  have hI := listCompIfs_mono K K' hK m
+  obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, hLC⟩ := hK
+  intro c
+  induction hrest : c.rest with
+  | nil => simp [listCompAt, hrest]; exact PyLe.refl' _
+  | cons v rest ih =>
+      simp [listCompAt, hrest]
+      mono_with (first
+        | exact hE _
+        | exact hI _
+        | exact hLC (.step _)
+        | exact ih
+        | assumption)
+
+set_option maxRecDepth 8000 in
+theorem listCompReqAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
+    ∀ req, listCompReqAt K m req ⊑ₚ listCompReqAt K' m req := by
+  have hE := evalOpen_mono K K' hK m
+  have hI := listCompIfs_mono K K' hK m
+  have hA := listCompAt_mono K K' hK m
+  have hIV := iterValues_mono K K' hK m "list" false
+  obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, hLC⟩ := hK
+  intro req
+  cases req with
+  | step c => exact hA c
+  | start elt target iter ifs walrus =>
+      by_cases hw : walrus.isEmpty
+      · simp [listCompReqAt, hw]
+        mono_with (first | exact hE _ | exact hIV _ | exact hA _ | exact hLC _ | assumption)
+      · simp [listCompReqAt, hw]
+        exact PyLe.refl' _
+
 /-! ## §3 THE FUEL-FREE STATEMENT HALF -/
 
 set_option maxHeartbeats 1000000 in
@@ -465,7 +514,7 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
   have hCP := applyCallPlan_mono K K' hK m
   have hAP := applyAttrPlan_mono K K' hK
   obtain ⟨hfuel, hcall, hcallClo, hdictItems, hkwArgs, hwhile, hforSeq, hforList,
-          hforDict, hstepIter, hexecGen, hforGen, hdrain, hanyAll, hwithBody⟩ := hK
+          hforDict, hstepIter, hexecGen, hforGen, hdrain, hanyAll, hwithBody, _⟩ := hK
   apply execOpen.mutual_induct (m := m)
     (motive_1 := fun st => execOpen K m st ⊑ₚ execOpen K' m st)
     (motive_2 := fun ss => execOpenList K m ss ⊑ₚ execOpenList K' m ss)
@@ -590,7 +639,8 @@ theorem KontLe.bottom (K' : Kont) : KontLe Kont.bottom K' :=
    fun _ _ _ _ => PyLe.exhausted_le _, fun _ _ _ _ _ _ _ _ => PyLe.exhausted_le _,
    fun _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
    fun _ _ _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
-   fun _ _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _⟩
+   fun _ _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
+   fun _ => PyLe.exhausted_le _⟩
 
 /-- The uniform leaf closer for every `Kont`-parameterised lemma: the two
 pure-worker seams the fuel BOUND comes through, then the context. `hf` is the
@@ -608,7 +658,7 @@ set_option maxRecDepth 8000 in
 theorem kwArgsAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ kws, kwArgsAt K m kws ⊑ₚ kwArgsAt K' m kws := by
   have hE := evalOpen_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro kws
   induction kws with
   | nil => simp only [kwArgsAt]; exact PyLe.refl' _
@@ -621,7 +671,7 @@ set_option maxRecDepth 8000 in
 theorem dictItemsAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ ks vs, dictItemsAt K m ks vs ⊑ₚ dictItemsAt K' m ks vs := by
   have hE := evalOpen_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro ks
   induction ks with
   | nil => intro vs; cases vs <;> (simp only [dictItemsAt]; exact PyLe.refl' _)
@@ -634,7 +684,7 @@ theorem dictItemsAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
 set_option maxRecDepth 8000 in
 theorem stepIterAt_mono (K K' : Kont) (hK : KontLe K K') :
     ∀ a, stepIterAt K a ⊑ₚ stepIterAt K' a := by
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro a
   unfold stepIterAt
   mono_kont hfuel
@@ -645,7 +695,7 @@ theorem execGenAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
   have hE := evalOpen_mono K K' hK m
   have hEL := execOpenList_mono K K' hK m
   have hS := execOpen_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro k
   unfold execGenAt
   mono_kont hfuel
@@ -654,7 +704,7 @@ set_option maxRecDepth 8000 in
 theorem forGenAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ target a body, forGenAt K m target a body ⊑ₚ forGenAt K' m target a body := by
   have hEL := execOpenList_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro target a body
   unfold forGenAt
   mono_kont hfuel
@@ -662,7 +712,7 @@ theorem forGenAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
 set_option maxRecDepth 8000 in
 theorem drainIterAt_mono (K K' : Kont) (hK : KontLe K K') :
     ∀ a, drainIterAt K a ⊑ₚ drainIterAt K' a := by
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro a
   unfold drainIterAt
   mono_kont hfuel
@@ -670,7 +720,7 @@ theorem drainIterAt_mono (K K' : Kont) (hK : KontLe K K') :
 set_option maxRecDepth 8000 in
 theorem anyAllIterAt_mono (K K' : Kont) (hK : KontLe K K') :
     ∀ a b, anyAllIterAt K a b ⊑ₚ anyAllIterAt K' a b := by
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro a b
   unfold anyAllIterAt
   mono_kont hfuel
@@ -681,7 +731,7 @@ theorem callCloAt_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
       callCloAt K m name params argsOk localsOk isGen body captured args
         ⊑ₚ callCloAt K' m name params argsOk localsOk isGen body captured args := by
   have hEL := execOpenList_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro name params argsOk localsOk isGen body captured args
   unfold callCloAt
   mono_kont hfuel
@@ -690,7 +740,7 @@ set_option maxRecDepth 8000 in
 theorem callInM_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ fname args, callInM K m fname args ⊑ₚ callInM K' m fname args := by
   have hEL := execOpenList_mono K K' hK m
-  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
+  obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hK
   intro fname args
   unfold callInM
   mono_kont hfuel
@@ -727,8 +777,9 @@ theorem kontMono (m : Module) : ∀ (f f' : Nat), f ≤ f' → KontLe (kont m f)
       have hAA := anyAllIterAt_mono _ _ IH
       have hE := evalOpen_mono _ _ IH m
       have hEL := execOpenList_mono _ _ IH m
-      obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := IH
-      refine ⟨hk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      obtain ⟨hfuel, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := IH
+      have hLC := listCompReqAt_mono (kont m f) (kont m g) (ih g hk) m
+      refine ⟨hk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       all_goals intros
       all_goals simp only [kont]
       all_goals try mono_kont hfuel

@@ -77,6 +77,10 @@
   delegation node, and resumed delegation remains loud until a PEP 380 frame
   models send, throw, close, and the delegation return value.
 
+- Rechecked structured class statements: class creation purity is decided at
+  the statement boundary, while qualified method indexing remains the
+  intentional dispatch representation and effectful creation stays loud.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

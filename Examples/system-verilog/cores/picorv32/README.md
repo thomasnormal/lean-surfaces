@@ -934,6 +934,10 @@ PicoRV32 source.
 bridge: an upper-boundary witness and explicit order equation become the
 unified mixed per-cycle obligation while preserving the memory-threaded
 post-state relation.
+The dependent upper step and order premises can be carried as the named
+`Rv32iUpperInvariant`; its `toMixedStep` method in
+`LeanModels.Refine.RvfiUpperProgress` feeds the same mixed R2 theorem without
+repeating those predicates.
 
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an

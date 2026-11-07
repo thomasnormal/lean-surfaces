@@ -6841,6 +6841,30 @@ the same mixed per-cycle obligation consumed by the all-prefix reset theorem,
 with memory threading and order remaining explicit proof obligations.
 PicoRV32 remains parked at the approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-369 — package the upper-immediate invariant
+
+The upper mixed-step bridge still required callers to repeat the dependent
+LUI/AUIPC row and order predicates at every theorem application.  The ADDI
+family already had a named invariant package for this boundary.
+
+**CHANGED:** Added `Rv32iUpperInvariant` and its `toMixedStep` theorem in
+`LeanModels/Refine/RvfiUpperProgress.lean`.  The package retains the decoded
+`UpperInstruction` witness, memory-threaded post-state, and explicit RVFI
+order equation, then delegates to `rv32iCycleStepRefines_of_upper_memory`.
+Imported it from the refinement umbrella and documented the API in the
+PicoRV32 README and backlog index.
+
+**MEASURED:** The focused package, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declaration reports only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core proof can now carry one named
+LUI/AUIPC invariant into the mixed per-cycle theorem, matching the ADDI proof
+shape while preserving decode evidence and order obligations.  PicoRV32
+remains parked at the approved task/net-z memory-route walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

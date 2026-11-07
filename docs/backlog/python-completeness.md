@@ -10443,6 +10443,23 @@ DECIDED: retain ordinary sequence multiplication followed by `len`; refuse
 products whose materialization exceeds the modeled allocation budget until
 allocation and memory outcomes are represented.
 
+## 2026-11-07-pycomplete-457 — audit length-only repetition removal
+
+The high-priority `py-lenmult-length-only` finding is already fixed. Source
+ingestion no longer fuses `len(seq * n)` into a synthetic length worker;
+ordinary sequence multiplication is evaluated first, and oversized
+materialization stays loud rather than returning a length CPython cannot
+produce.
+
+| Measurement | Result |
+|---|---|
+| Oversized witness | `len_repeat_oversize.py`: expected loud exit-1 boundary |
+| Source audit | no active `lowerLenRepeatPairs` definition or ingestion call |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-lenmult-length-only` as already fixed; retain the explicit
+allocation-budget refusal until memory outcomes are modeled.
+
 ## 2026-11-07-pycomplete-412 — refuse dictionary-source set table order
 
 The integer-set audit exposed one remaining silent wrong answer after negative

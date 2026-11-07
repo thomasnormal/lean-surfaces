@@ -208,9 +208,9 @@
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "chr_surrogate", "args": [[]], "expect": "match", "note": "Lone UTF-16 surrogates are represented explicitly and serialized as the canonical JSON escape."},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "enum_sum", "args": [[{"t": "str", "v": "PNBRQK"}], [{"t": "str", "v": ""}], [{"t": "str", "v": "a"}]], "expect": "match"},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "enum_first", "args": [[{"t": "str", "v": "PNB"}], [{"t": "str", "v": ""}]], "expect": "match"},
-  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_squares", "args": [[0], [1], [5]], "expect": "unsupported"},
-  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_filter", "args": [[{"t": "str", "v": "abcb"}], [{"t": "str", "v": ""}], [{"t": "str", "v": "bbb"}]], "expect": "unsupported"},
-  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_capture", "args": [[{"t": "str", "v": "abc"}, 1], [{"t": "str", "v": ""}, 0]], "expect": "unsupported"},
+  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_squares", "args": [[0], [1], [5]], "expect": "match"},
+  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_filter", "args": [[{"t": "str", "v": "abcb"}], [{"t": "str", "v": ""}], [{"t": "str", "v": "bbb"}]], "expect": "match"},
+  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "lc_capture", "args": [[{"t": "str", "v": "abc"}, 1], [{"t": "str", "v": ""}, 0]], "expect": "match"},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "list_of", "args": [[{"t": "str", "v": "xy"}], [{"t": "str", "v": ""}], [{"t": "tuple", "v": [{"t": "int", "v": 1}, {"t": "int", "v": 2}]}], [{"t": "list", "v": [{"t": "int", "v": 4}, {"t": "int", "v": 5}]}]], "expect": "match"},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "list_empty", "args": [[]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "walrus_filter", "args": [[4], [0], [26]], "expect": "match"},
@@ -1537,4 +1537,10 @@
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "from_dict_order", "args": [[7]], "expect": "unsupported", "note": "set(dict) uses CPython dict-source table construction; the order is not modeled"}
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "from_dict_order_wide", "args": [[]], "expect": "unsupported", "note": "wide dict-source set construction uses CPython pre-sized merge order, not sequential insertion order"}
   ,{"file": "Examples/python/set_lab/set_lab.py", "function": "intersection_order", "args": [[7]], "expect": "unsupported", "note": "set intersection has CPython-specific table sizing and iteration order"}
+  ,{"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "squares", "args": [[0], [1], [5]], "expect": "match"},
+  {"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "filtered", "args": [[{"t": "tuple", "v": [{"t": "int", "v": -2}, {"t": "int", "v": 0}, {"t": "int", "v": 3}]}], [{"t": "tuple", "v": []}]], "expect": "match"},
+  {"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "shadowed_global", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "shadowed_local", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "walrus_filter", "args": [[4]], "expect": "unsupported"},
+  {"file": "Examples/python/listcomp_lab/listcomp_lab.py", "function": "from_generator", "args": [[4]], "expect": "unsupported"}
 ]

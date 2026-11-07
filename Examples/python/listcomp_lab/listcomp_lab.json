@@ -1,0 +1,731 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/listcomp_lab/listcomp_lab.py",
+  "source_sha256": "11333764dd83b47114e5efbbccd93ae8f58ad07eae0998a385339ff711d18c68",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 64
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 64
+          },
+          "value": {
+            "type": "str",
+            "value": "Native one-generator list-comprehension differential rows."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 36
+        },
+        "name": "squares",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 4,
+              "col_offset": 12,
+              "end_lineno": 4,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 36
+            },
+            "value": {
+              "kind": "ListComp",
+              "span": {
+                "lineno": 5,
+                "col_offset": 11,
+                "end_lineno": 5,
+                "end_col_offset": 36
+              },
+              "elt": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 12,
+                  "end_lineno": 5,
+                  "end_col_offset": 17
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 12,
+                    "end_lineno": 5,
+                    "end_col_offset": 13
+                  },
+                  "id": "i"
+                },
+                "op": "Mult",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 16,
+                    "end_lineno": 5,
+                    "end_col_offset": 17
+                  },
+                  "id": "i"
+                }
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 22,
+                  "end_lineno": 5,
+                  "end_col_offset": 23
+                },
+                "id": "i"
+              },
+              "iter": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 27,
+                  "end_lineno": 5,
+                  "end_col_offset": 35
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 27,
+                    "end_lineno": 5,
+                    "end_col_offset": 32
+                  },
+                  "id": "range"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 5,
+                      "col_offset": 33,
+                      "end_lineno": 5,
+                      "end_col_offset": 34
+                    },
+                    "id": "n"
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 39
+        },
+        "name": "filtered",
+        "args": [
+          {
+            "arg": "xs",
+            "span": {
+              "lineno": 8,
+              "col_offset": 13,
+              "end_lineno": 8,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 39
+            },
+            "value": {
+              "kind": "ListComp",
+              "span": {
+                "lineno": 9,
+                "col_offset": 11,
+                "end_lineno": 9,
+                "end_col_offset": 39
+              },
+              "elt": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 12,
+                  "end_lineno": 9,
+                  "end_col_offset": 17
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 12,
+                    "end_lineno": 9,
+                    "end_col_offset": 13
+                  },
+                  "id": "x"
+                },
+                "op": "Mult",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 16,
+                    "end_lineno": 9,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 22,
+                  "end_lineno": 9,
+                  "end_col_offset": 23
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 27,
+                  "end_lineno": 9,
+                  "end_col_offset": 29
+                },
+                "id": "xs"
+              },
+              "ifs": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 33,
+                    "end_lineno": 9,
+                    "end_col_offset": 38
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 9,
+                      "col_offset": 33,
+                      "end_lineno": 9,
+                      "end_col_offset": 34
+                    },
+                    "id": "x"
+                  },
+                  "ops": [
+                    "Gt"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 9,
+                        "col_offset": 37,
+                        "end_lineno": 9,
+                        "end_col_offset": 38
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "walrus": []
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 19
+        },
+        "name": "list",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 12,
+              "col_offset": 9,
+              "end_lineno": 12,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 13,
+              "col_offset": 4,
+              "end_lineno": 13,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 13,
+                "col_offset": 11,
+                "end_lineno": 13,
+                "end_col_offset": 19
+              },
+              "value": {
+                "type": "str",
+                "value": "shadow"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 16,
+          "col_offset": 0,
+          "end_lineno": 17,
+          "end_col_offset": 30
+        },
+        "name": "shadowed_global",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 17,
+              "col_offset": 4,
+              "end_lineno": 17,
+              "end_col_offset": 30
+            },
+            "value": {
+              "kind": "ListComp",
+              "span": {
+                "lineno": 17,
+                "col_offset": 11,
+                "end_lineno": 17,
+                "end_col_offset": 30
+              },
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 12,
+                  "end_lineno": 17,
+                  "end_col_offset": 13
+                },
+                "id": "x"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 18,
+                  "end_lineno": 17,
+                  "end_col_offset": 19
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 23,
+                  "end_lineno": 17,
+                  "end_col_offset": 29
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 17,
+                      "col_offset": 24,
+                      "end_lineno": 17,
+                      "end_col_offset": 25
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 17,
+                      "col_offset": 27,
+                      "end_lineno": 17,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                ]
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 20,
+          "col_offset": 0,
+          "end_lineno": 22,
+          "end_col_offset": 30
+        },
+        "name": "shadowed_local",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 21,
+              "col_offset": 4,
+              "end_lineno": 21,
+              "end_col_offset": 12
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 21,
+                  "col_offset": 4,
+                  "end_lineno": 21,
+                  "end_col_offset": 8
+                },
+                "id": "list"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 21,
+                "col_offset": 11,
+                "end_lineno": 21,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "3"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 30
+            },
+            "value": {
+              "kind": "ListComp",
+              "span": {
+                "lineno": 22,
+                "col_offset": 11,
+                "end_lineno": 22,
+                "end_col_offset": 30
+              },
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 12,
+                  "end_lineno": 22,
+                  "end_col_offset": 13
+                },
+                "id": "x"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 18,
+                  "end_lineno": 22,
+                  "end_col_offset": 19
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 23,
+                  "end_lineno": 22,
+                  "end_col_offset": 29
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 22,
+                      "col_offset": 24,
+                      "end_lineno": 22,
+                      "end_col_offset": 25
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 22,
+                      "col_offset": 27,
+                      "end_lineno": 22,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                ]
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 26,
+          "end_col_offset": 51
+        },
+        "name": "walrus_filter",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 25,
+              "col_offset": 18,
+              "end_lineno": 25,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 26,
+              "end_col_offset": 51
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 26,
+                "col_offset": 11,
+                "end_lineno": 26,
+                "end_col_offset": 51
+              },
+              "py_kind": "ListComp:walrus",
+              "text": "[x for x in range(n) if (seen := x) > 0]"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 29,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 45
+        },
+        "name": "from_generator",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 29,
+              "col_offset": 19,
+              "end_lineno": 29,
+              "end_col_offset": 20
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 30,
+              "col_offset": 4,
+              "end_lineno": 30,
+              "end_col_offset": 45
+            },
+            "value": {
+              "kind": "ListComp",
+              "span": {
+                "lineno": 30,
+                "col_offset": 11,
+                "end_lineno": 30,
+                "end_col_offset": 45
+              },
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 12,
+                  "end_lineno": 30,
+                  "end_col_offset": 13
+                },
+                "id": "x"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 18,
+                  "end_lineno": 30,
+                  "end_col_offset": 19
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "GeneratorExp",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 23,
+                  "end_lineno": 30,
+                  "end_col_offset": 44
+                },
+                "elt": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 30,
+                    "col_offset": 24,
+                    "end_lineno": 30,
+                    "end_col_offset": 25
+                  },
+                  "id": "y"
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 30,
+                    "col_offset": 30,
+                    "end_lineno": 30,
+                    "end_col_offset": 31
+                  },
+                  "id": "y"
+                },
+                "iter": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 30,
+                    "col_offset": 35,
+                    "end_lineno": 30,
+                    "end_col_offset": 43
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 30,
+                      "col_offset": 35,
+                      "end_lineno": 30,
+                      "end_col_offset": 40
+                    },
+                    "id": "range"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 30,
+                        "col_offset": 41,
+                        "end_lineno": 30,
+                        "end_col_offset": 42
+                      },
+                      "id": "n"
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "ifs": [],
+                "walrus": []
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

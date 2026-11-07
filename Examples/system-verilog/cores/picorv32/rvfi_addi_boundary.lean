@@ -58,6 +58,22 @@ theorem pinned_addi_x0_preserved :
   rw [hx]
   rfl
 
+theorem pinned_addi_isa_step :
+    isaStepMemWith cv32e40pProfile (ArchState.init 0) addiInput.memory
+      addiInput.fetched addiInput.irq =
+      (addiNext (ArchState.init 0) 1 0 5, addiInput.memory) := by
+  exact RvfiObservation.addiBoundary_isaStepMemWith
+    cv32e40pProfile addi1 (ArchState.init 0) addiInput
+      0x00500093 1 0 5 pinned_addi_boundary
+
+theorem pinned_addi_machine_commit :
+    (rvMachineWith cv32e40pProfile).step (ArchState.init 0) addiInput =
+      (addiNext (ArchState.init 0) 1 0 5,
+        addiRetirement (ArchState.init 0) addiInput 1 0 5) := by
+  exact RvfiObservation.addiBoundary_rvMachineWith
+    cv32e40pProfile addi1 (ArchState.init 0) addiInput
+      0x00500093 1 0 5 pinned_addi_boundary
+
 #guard addiInput.fetched = .word 0x00500093
 #guard addi1.toRetirement? == some
   (addiRetirement (ArchState.init 0) addiInput 1 0 5)
@@ -68,5 +84,7 @@ theorem pinned_addi_x0_preserved :
 #print axioms pinned_addi_boundary_no_trap
 #print axioms pinned_addi_boundary_no_memory
 #print axioms pinned_addi_x0_preserved
+#print axioms pinned_addi_isa_step
+#print axioms pinned_addi_machine_commit
 
 end Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary

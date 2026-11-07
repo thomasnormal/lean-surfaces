@@ -131,10 +131,42 @@ theorem RvfiObservation.addiBoundary_x0
     (addiNext s rd rs1 imm).readReg 0 = s.readReg 0 := by
   exact addiNext_preserves_x0 s rd rs1 imm
 
+/-- A raw ADDI boundary supplies the exact one-step architectural memory
+equation needed by a core invariant. -/
+theorem RvfiObservation.addiBoundary_isaStepMemWith
+    (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
+    (input : Input) (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.addiBoundary s input w rd rs1 imm) :
+    isaStepMemWith profile s input.memory input.fetched input.irq =
+      (addiNext s rd rs1 imm, input.memory) := by
+  rcases h.1 with ⟨hirq, hfetched, hdecode, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩
+  simpa [hirq, hfetched] using
+    (isaStepMemWith_addi profile s input.memory w rd rs1 imm hdecode)
+
+/-- The same raw boundary exposes the generic machine adapter's commit, so a
+future loaded-core proof can compare its RVFI row directly with `rvMachineWith`.
+-/
+theorem RvfiObservation.addiBoundary_rvMachineWith
+    (profile : PlatformProfile) (o : RvfiObservation) (s : ArchState)
+    (input : Input) (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.addiBoundary s input w rd rs1 imm) :
+    (rvMachineWith profile).step s input =
+      (addiNext s rd rs1 imm, addiRetirement s input rd rs1 imm) := by
+  rcases h.1 with ⟨hirq, hfetched, hdecode, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩
+  have hinput : input =
+      { fetched := .word w, memory := input.memory, irq := 0 } := by
+    cases input with
+    | mk fetched memory irq =>
+        simp_all
+  rw [hinput]
+  exact rvMachineWith_addi profile s input.memory w rd rs1 imm hdecode
+
 #print axioms LeanModels.Refine.addiEffects_no_memory
 #print axioms LeanModels.Refine.addiRetirement_no_memory
 #print axioms LeanModels.Refine.addiNext_preserves_x0
 #print axioms LeanModels.Refine.addiNext_preserves_WF
 #print axioms LeanModels.Refine.RvfiObservation.addiBoundary
+#print axioms LeanModels.Refine.RvfiObservation.addiBoundary_isaStepMemWith
+#print axioms LeanModels.Refine.RvfiObservation.addiBoundary_rvMachineWith
 
 end LeanModels.Refine

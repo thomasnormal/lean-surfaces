@@ -3763,3 +3763,27 @@ predicate, leave `rdWdataValid` to the existing commit adapter's explicit
 write-change semantics, and require the eventual loaded-core invariant to
 establish this predicate from actual PicoRV32 state.  The generated-memory
 loader wall remains the dependency for any symbolic RTL theorem.
+
+## 2026-11-07-ls-sv2-249 — bridge the raw ADDI boundary to one ISA step
+
+The inboxes were reread before this item.  The owner lane's generated-member
+memory request is unchanged, so this item adds only owned refinement
+infrastructure and does not bypass the blocked PicoRV32 loader route.
+
+Extended `LeanModels/Refine/RvfiAddi.lean` with
+`RvfiObservation.addiBoundary_isaStepMemWith` and
+`RvfiObservation.addiBoundary_rvMachineWith`.  From the raw boundary
+predicate, the first theorem derives the exact profile-parametric
+`isaStepMemWith` result with the same fetched word, zero interrupt input, and
+unchanged byte memory.  The second theorem derives the generic machine
+adapter's `(addiNext, addiRetirement)` commit after normalizing the input
+record, so a future loaded-core invariant can consume the raw RVFI facts
+without restating the ISA calculation or assuming `RobStepRefines`.
+
+The PicoRV32 witness now proves both derived equations for the measured reset
+row in addition to the raw predicate, no-trap/no-memory projections, and x0
+preservation.  The README records this direct raw-to-ISA bridge.
+
+**DECIDED:** make the raw RVFI predicate the sole premise of the ADDI step
+bridge.  Keep profile and memory explicit, preserve the no-interrupt/RV32I
+scope, and leave the eventual RTL state relation to the loaded-core proof.

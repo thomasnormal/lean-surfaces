@@ -246,18 +246,16 @@ def annotation_table_alias(tree):
 
 
 # Pass 0 import forms (docs/memory-model.md paragraph "Import forms
-# (Pass 0)"): the two ImportFrom rows of the exact-text benign-import
-# whitelist (`benignImportBinds`, Ast.lean; `BENIGN_IMPORTS`,
-# harness/leanpy_survey.py -- keep all three in sync). These rows are
-# STRUCTURED here like every other admitted from-import and rewritten
-# back to the legacy Unsupported node at ingestion (Json.lean, the one
-# rewrite site), so the five text-keyed whitelist consumers see today's
-# shape unchanged. `import time` is a plain Import and never reaches
-# the ImportFrom arm.
-BENIGN_IMPORT_FROM = frozenset((
-    "from itertools import count",
-    "from collections import namedtuple",
-))
+# (Pass 0)"): the two benign ImportFrom rows are admitted from the AST's
+# structured module/name fields. `import time` is a plain Import and never
+# reaches this predicate. Diagnostic `Unsupported.text` remains an unparsed
+# payload, but no supported admission depends on reparsing it.
+def benign_import_from(module, aliases, star):
+    if star or any(alias.asname is not None for alias in aliases):
+        return False
+    names = [alias.name for alias in aliases]
+    return ((module == "itertools" and names == ["count"])
+            or (module == "collections" and names == ["namedtuple"]))
 
 # THE §2.5 ACCELERATOR-EQUIVALENCE REGISTRY (2026-08-16; docs/memory-model.md
 # §import forms -- "per-module differential admission").
@@ -2448,9 +2446,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         #   * the module is ABSENT from the pinned platform inventory
         #     (the Pass 0 raise is then CPython's own behavior,
         #     guarded or not, at module or function scope);
-        #   * the exact benign-whitelist texts (BENIGN_IMPORT_FROM
-        #     above), structured here and canonicalized back to the
-        #     legacy Unsupported node at ingestion;
+        #   * the exact benign-whitelist fields (benign_import_from above),
+        #     structured here and carried through ingestion;
         #   * import-guard position (a direct body statement of a
         #     top-level `try` with a single `except ImportError:`
         #     handler -- the raise is caught by construction and the
@@ -2479,7 +2476,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # shape does not claim a module system or any successful import.
             admitted = (((module_scope or func_scope) and absent)
                         or (module_scope and
-                            unparse_truncated(node) in BENIGN_IMPORT_FROM)
+                            benign_import_from(node.module, node.names, star))
                         or (import_guard and absent))
             if not admitted and module_scope and import_guard:
                 record = ACCELERATOR_ADMISSIONS.get(node.module)

@@ -10399,3 +10399,20 @@ only the model's loud boundary is whitelisted.
 DECIDED: keep integer trace readings as explicit future input but refuse any
 zero-argument clock value until the trace carries binary64 readings; preserve
 real-value oracle comparison.
+
+## 2026-11-07-pycomplete-416 — structure benign import admission
+
+The text-keyed semantics audit had one extractor residue despite the structured
+Lean import path: Pass 0 still called `ast.unparse` and matched the resulting
+string against the benign `count`/`namedtuple` whitelist. Replaced that lookup
+with a structured `(module, aliases, star)` predicate. `Unsupported.text`
+continues to serve diagnostics only; no supported admission parses it.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 163 passed, including a regression that disables `unparse_truncated` while admitting both benign imports |
+| Semantic search | no `BENIGN_IMPORT_FROM` text lookup or `unparse_truncated(node) in` admission remains |
+| Differential behavior | existing structured import rows remain unchanged; no envelope regeneration needed |
+
+DECIDED: keep supported import admission on parser AST fields and reserve
+`ast.unparse` for loud diagnostic payloads only.

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for null structured constructor declaration kind
+  evidence; frontend declaration kinds remain string-typed.
+
 - Added a recorded refusal for Boolean structured constructor declaration kind
   evidence; frontend declaration kinds remain string-typed.
 

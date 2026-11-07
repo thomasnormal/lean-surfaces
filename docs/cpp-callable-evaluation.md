@@ -45,6 +45,9 @@ Evidence-to-value conversion now uses one profile/type boundary in
 Profile format selection is likewise shared through `integralFormatOfEvidence`,
 including qualified builtin evidence and unsupported-type refusal.
 
+Integral type extraction is shared through `integralTypeOfEvidence`; qualified
+builtins unwrap structurally while non-integral evidence remains loud.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

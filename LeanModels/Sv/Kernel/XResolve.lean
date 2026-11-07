@@ -53,6 +53,26 @@ def LVec.Resolves (abstract concrete : LVec) : Prop :=
   abstract.bits.toList.length = concrete.bits.toList.length ∧
     bitListResolves abstract.bits.toList concrete.bits.toList
 
+/-- IEEE 1800 §6.11's explicit 4-state to 2-state conversion boundary.
+This is a separate relation from `LVec.Resolves`: conversion maps x/z to 0
+by definition, rather than quantifying those source bits as environment
+choices. -/
+def TwoStateBoundary (source result : LVec) : Prop :=
+  result = source.toTwoState
+
+theorem twoStateBoundary_total (source : LVec) :
+    TwoStateBoundary source source.toTwoState := rfl
+
+theorem twoStateBoundary_unique {source result result' : LVec}
+    (h : TwoStateBoundary source result)
+    (h' : TwoStateBoundary source result') : result = result' := by
+  exact h.trans h'.symm
+
+theorem twoStateBoundary_width {source result : LVec}
+    (h : TwoStateBoundary source result) : result.width = source.width := by
+  cases h
+  simp [LVec.toTwoState, LVec.width]
+
 /-- A decision is known when every correlated concretization gives the same
 boolean result. This is deliberately weaker than requiring every source bit
 to be known: `1'bx` is definitely true for a nonzero test, while `1'b0x` is
@@ -136,6 +156,12 @@ theorem DecisionKnown.abstract {v : LVec} (h : DecisionKnown v)
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4
 #guard (LVec.concretizations (LVec.toTwoState (LVec.xVec 2))).length == 1
+
+example : TwoStateBoundary (LVec.lit "xz") ((LVec.lit "xz").toTwoState) :=
+  twoStateBoundary_total _
+
+example {v r : LVec} (h : TwoStateBoundary v r) : r.width = v.width := by
+  exact twoStateBoundary_width h
 
 example : DecisionKnown (LVec.ofNat 3 5) := by
   apply decisionKnown_of_allKnown

@@ -11252,6 +11252,22 @@ fallback.
 DECIDED: retain independent pinned frontend and oracle controls with visible
 fallback warnings rather than silent version drift.
 
+## 2026-11-07-pycomplete-471 — audit runner oracle and frontend pinning
+
+The low `py-leanpy-oracle-unpinned` finding is already fixed. `tools/leanpy`,
+`diff_test.py`, `script_corpus.py`, and `leanpy_survey.py` default to pinned
+CPython 3.9, re-execute under the pinned frontend, report both identities, and
+warn visibly when a fallback is required.
+
+| Measurement | Result |
+|---|---|
+| Runner tests | 11/11 `tools.test_leanpy` tests passed |
+| Identity behavior | frontend/oracle identity and fallback-warning tests pass |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-leanpy-oracle-unpinned` as already fixed; retain visible
+fallback warnings and independent frontend/oracle controls.
+
 ## 2026-11-07-pycomplete-441 — recheck frontend admission and envelope freshness
 
 The frontend audit is closed at ingestion and in the committed-artifact gate.

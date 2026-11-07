@@ -69,6 +69,10 @@
 - Python: rebase the `float_lab` proof's symbolic execution over the active
   call-depth guard and structured import resolution; the real float example
   proof and spec build cleanly under Lean 4.35.
+
+- Tests: recheck the audited Python edge-row coverage against the pinned
+  CPython 3.9 script corpus; all 158 scripts remain either matched or an
+  explicit loud boundary.
 - Centralized logical `&&`/`||` decoding and short-circuit decisions in
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.

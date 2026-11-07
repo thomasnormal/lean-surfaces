@@ -11009,3 +11009,22 @@ the refusal for set displays.
 
 DECIDED: retain the call-depth and structured-import proof reductions as the
 canonical Lean 4.35 fixture maintenance; keep the float semantics unchanged.
+
+## 2026-11-07-pycomplete-449 — recheck differential edge coverage
+
+The low coverage audit is already represented by the current pinned rows and
+script fixtures. Function rows include the non-cancelling negative set hash,
+dictionary-source/copy/intersection set construction, and parameterized
+repetition and rounding boundaries. Script fixtures cover recursion depth,
+generator creation timing, list-comprehension shadowing, structured long
+globals, annotation ordering, oversized repetition, and global-yield targets.
+
+| Measurement | Result |
+|---|---|
+| Pinned script corpus | 158 scripts: 142 completed-and-matched, 16 explicit loud, 0 failed |
+| Oracle | CPython 3.9.25 |
+| Focus rows | negative hash `-5`; dict/copy/intersection set paths; all named audit scripts present |
+| Semantic change | none; coverage recheck only |
+
+DECIDED: retain every measured edge as a matching row or documented loud
+boundary; add future rows only when a new semantic edge is measured.

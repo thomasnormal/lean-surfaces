@@ -1975,7 +1975,42 @@ def execOpenList (K : Kont) (m : Module) : List Stmt → SemF RFlow
 
 end
 
-/-! ## §2.5 THE DICT LOCKSTEP — the one walk that could not be a block member
+/-! ## §2.5 THE LIST-COMPREHENSION STEP
+
+The expression arm above only evaluates the comprehension's outer iterable;
+the per-element walk is routed through `Kont.listComp`.  Each call to that
+field therefore consumes one fuel level in `kont`, while the filter and
+element expressions remain ordinary structural `evalOpen` calls at that
+level.  The expression arm remains a loud boundary until the next item wires
+this continuation to the AST node; keeping the stepping seam separate is what
+lets that arm stay structural. -/
+
+def listCompIfs (K : Kont) (m : Module) : List Expr → SemF Bool
+  | [] => pure true
+  | test :: rest => do
+      let v ← evalOpen K m test
+      let keep ← truthyM v
+      if keep then listCompIfs K m rest else pure false
+  termination_by structural ifs => ifs
+
+def listCompAt (K : Kont) (m : Module) : ListCompCont → SemF RVal
+  | c =>
+      match c.rest with
+      | [] => do
+          envPut c.savedLocals
+          let a ← heapPush (.list c.acc.reverse.toArray)
+          pure (.ref a)
+      | v :: rest => do
+          assignM c.target v
+          let keep ← listCompIfs K m c.ifs
+          if keep then do
+            let x ← evalOpen K m c.elt
+            K.listComp { c with rest := rest, acc := x :: c.acc }
+          else
+            K.listComp { c with rest := rest }
+  termination_by structural c.rest
+
+/-! ## §2.6 THE DICT LOCKSTEP — the one walk that could not be a block member
 
 **THE ARCHITECTURAL DEBT OF §0.5, PAID — and this is the choice and its price.**
 
@@ -2586,7 +2621,8 @@ def kont (m : Module) : Nat → Kont
       forGen := fun t a b => forGenAt (kont m fuel) m t a b
       drainIter := fun a => drainIterAt (kont m fuel) a
       anyAllIter := fun a b => anyAllIterAt (kont m fuel) a b
-      withBody := fun body => execOpenList (kont m fuel) m body }
+      withBody := fun body => execOpenList (kont m fuel) m body
+      listComp := fun c => listCompAt (kont m fuel) m c }
   termination_by structural fuel => fuel
 
 

@@ -10917,3 +10917,20 @@ the same parameterized worker rather than adding a branch for each digit value.
 
 DECIDED: retain the parameterized worker and add boundary rows for future
 CPython cutoff changes instead of unrolling new digit cases.
+
+## 2026-11-07-pycomplete-444 — recheck CI concurrency and job bounds
+
+The coordinator's CI saturation item is already landed in the workflow. The
+`ci` workflow uses `concurrency.group: ci-${{ github.ref }}` with
+`cancel-in-progress: true`, the full `check` job is bounded at 180 minutes, and
+the two-platform `quickstart` matrix is bounded at 60 minutes. This prevents
+superseded pushes and hung jobs from occupying the hosted runner queue.
+
+| Measurement | Result |
+|---|---|
+| Workflow structure | concurrency group and cancellation are present |
+| Long jobs | `check`: 180 minutes; `quickstart`: 60 minutes |
+| Existing implementation | landed in `122de04c3` and present on current `origin/master` |
+
+DECIDED: retain the per-ref cancellation and explicit job timeouts; no workflow
+logic change is needed in this recheck.

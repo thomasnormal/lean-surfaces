@@ -189,7 +189,7 @@ theorem sound_pairs {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args :
   obtain ⟨hloc, hens, hoth, hpar, hsd, hsts, hgen, hspec⟩ := summary_spec hs
   have hok' := hok
   obtain ⟨hnodup, hnames, hinput, haff, hpaths, hdecl, hacc, hkeys⟩ := hok'
-  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n) :=
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n) :=
     fun dt hdt n hn => hag n (hdecl dt hdt n hn)
   have h2 := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
   have h3 := buildElems_summary (σ := σ) d.decls s.decls hsd env hagd
@@ -512,7 +512,7 @@ localparams (`s.val args`), the environment check in a `rfl`-provable form (as `
 theorem eq_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args))

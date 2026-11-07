@@ -841,7 +841,7 @@ theorem acyclic_of_lex {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {arg
 /-! ## The forms the tactic uses: the valuation is the parameters zipped with the arguments, then the localparams -/
 
 theorem Agrees_of_map {σ : String → Int} {env : IEnv} {ns : List String}
-    (h : ns.map (fun n => env.vals.lookup n) = ns.map (fun n => some (σ n))) :
+    (h : ns.map (fun n => env.intVal? n) = ns.map (fun n => some (σ n))) :
     Agrees σ env ns := by
   intro n hn
   exact List.map_inj_left.mp h n hn
@@ -852,7 +852,7 @@ check in a `rfl`-provable form. -/
 theorem comb_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args)) :
@@ -862,7 +862,7 @@ theorem comb_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 theorem acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -873,7 +873,7 @@ theorem acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 theorem lex_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -922,7 +922,7 @@ theorem acyclic_using {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
 theorem acyclic_view_using {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args))
@@ -935,7 +935,7 @@ theorem acyclic_view_using {d : PDesign} {s : Summary} {args : List Int} {env : 
 theorem lex_view_using {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args))
@@ -987,7 +987,7 @@ check, as `comb_view`). -/
 theorem comb_acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -999,7 +999,7 @@ theorem comb_acyclic_view {d : PDesign} {s : Summary} {args : List Int} {env : I
 theorem comb_lex_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -1049,7 +1049,7 @@ theorem decls_of_comb {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
   subst henv
   obtain ⟨-, -, -, -, hsd, -, -, -⟩ := summary_spec hs
   obtain ⟨-, -, -, -, -, hdecl, -, -⟩ := hok
-  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n) :=
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n) :=
     fun dt hdt n hn => hag n (hdecl dt hdt n hn)
   have h2' := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
   rw [h2] at h2'
@@ -1058,7 +1058,7 @@ theorem decls_of_comb {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
 /-- The tactic's form of `decls_of_comb` (valuation `s.val args`). -/
 theorem decls_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hc : CombDesign (d.instantiateGD2 args)) :
     (d.instantiateGD2 args).decls.toList = s.decls.map (DeclT.toDecl (s.val args)) :=

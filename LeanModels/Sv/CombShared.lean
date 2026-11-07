@@ -47,7 +47,7 @@ theorem sharedObl_of {d : PDesign} {s : Summary} {args : List Int} (hs : d.summa
 theorem comb_acyclic_shared_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -60,7 +60,7 @@ theorem comb_acyclic_shared_view {d : PDesign} {s : Summary} {args : List Int} {
 theorem comb_lex_shared_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summary = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))

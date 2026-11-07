@@ -181,7 +181,7 @@ theorem bindσ_ne {g n : String} (h : n ≠ g) (i : Int) (σ : String → Int) :
 
 /-- `σ` agrees with the environment's constants on the listed names. -/
 def Agrees (σ : String → Int) (E : IEnv) (ns : List String) : Prop :=
-  ∀ n ∈ ns, E.vals.lookup n = some (σ n)
+  ∀ n ∈ ns, E.intVal? n = some (σ n)
 
 /-- Every named constant used by the affine view is representable by the
 exact signed-32 `int` instantiation.  This is the refinement premise that
@@ -211,20 +211,67 @@ theorem evalIntExact_paramRef {E : IEnv} {n : String} {v : Int}
     (hm : E.int32 = true) (h : IEnv.intVal? E n = some v) :
     evalIntExact E (.paramRef n none) = .ok (canonInt 32 true v) := by
   unfold evalIntExact
-  simp [hm, h]
+  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+  · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
+  · cases hx : E.vals.lookup n with
+    | none => simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+    | some x =>
+        have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
+        subst x
+        simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+
+theorem evalIntExact_genvarRef {E : IEnv} {n : String} {v : Int}
+    (hm : E.int32 = true) (h : IEnv.intVal? E n = some v) :
+    evalIntExact E (.genvarRef n) = .ok (canonInt 32 true v) := by
+  unfold evalIntExact
+  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+  · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
+  · cases hx : E.vals.lookup n with
+    | none => simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+    | some x =>
+        have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
+        subst x
+        simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+
+theorem isInt_paramRef_of_intVal {E : IEnv} {n : String} {v : Int}
+    (h : E.intVal? n = some v) : (PExpr.paramRef n none).isInt E = true := by
+  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+  · simp [PExpr.isInt, hv]
+  · cases hv : E.vals.lookup n <;> simp [PExpr.isInt, hv, hn]
+
+theorem evalInt_paramRef_of_intVal {E : IEnv} {n : String} {v : Int}
+    (h : E.intVal? n = some v) : evalInt E (.paramRef n none) = .ok v := by
+  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+  · simp [evalInt, hv]
+  · cases hv : E.vals.lookup n with
+    | none => simp [evalInt, IEnv.intVal?, hv, hn]
+    | some x =>
+        have heq : x = v := by simpa [IEnv.intVal?, hv, hn] using h
+        subst x
+        simp [evalInt, hv, hn]
+
+theorem evalInt_genvarRef_of_intVal {E : IEnv} {n : String} {v : Int}
+    (h : E.intVal? n = some v) : evalInt E (.genvarRef n) = .ok v := by
+  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+  · simp [evalInt, hv]
+  · cases hv : E.vals.lookup n with
+    | none => simp [evalInt, IEnv.intVal?, hv, hn]
+    | some x =>
+        have heq : x = v := by simpa [IEnv.intVal?, hv, hn] using h
+        subst x
+        simp [evalInt, hv, hn]
 
 theorem Agrees.bindVal {σ : String → Int} {E : IEnv} {ns : List String} (h : Agrees σ E ns)
     (g : String) (i : Int) : Agrees (bindσ g i σ) (E.bindVal g i) (g :: ns) := by
   intro n hn
-  simp only [IEnv.bindVal, List.lookup]
   by_cases hng : n = g
-  · subst hng; simp
+  · subst hng
+    simp [IEnv.intVal?_bindVal_self]
   · have hns : n ∈ ns := by
       rcases List.mem_cons.mp hn with h' | h'
       · exact absurd h' hng
       · exact h'
-    have hb : (n == g) = false := by simpa using hng
-    simp [hb, bindσ_ne hng, h n hns]
+    rw [IEnv.intVal?_bindVal_ne i hng, h n hns, bindσ_ne hng]
 
 theorem Agrees.mono {σ : String → Int} {E : IEnv} {ns ms : List String} (h : Agrees σ E ns)
     (hs : ∀ n ∈ ms, n ∈ ns) : Agrees σ E ms := fun n hn => h n (hs n hn)
@@ -307,7 +354,7 @@ theorem affBin_cases {op : SymBinOp} {a b c : Aff} (h : affBin op a b = some c) 
 to its affine value, in every environment that binds the names it mentions. -/
 theorem affOf?_sound {E : IEnv} {σ : String → Int} :
     ∀ (e : PExpr) (a : Aff), affOf? e = some a →
-      (∀ n ∈ a.names, E.vals.lookup n = some (σ n)) →
+      (∀ n ∈ a.names, E.intVal? n = some (σ n)) →
       e.isInt E = true ∧ evalInt E e = .ok (a.eval σ)
   | .int v, a, h, _ => by
       simp only [affOf?, Option.some.injEq] at h
@@ -316,42 +363,42 @@ theorem affOf?_sound {E : IEnv} {σ : String → Int} :
   | .genvarRef n, a, h, hb => by
       simp only [affOf?, Option.some.injEq] at h
       subst h
-      have hl : E.vals.lookup n = some (σ n) := hb n (by simp [Aff.names, Aff.var])
+      have hl : E.intVal? n = some (σ n) := hb n (by simp [Aff.names, Aff.var])
       refine ⟨by simp [PExpr.isInt], ?_⟩
-      rw [evalInt_genvarRef_of hl, Aff.eval_var]
+      rw [evalInt_genvarRef_of_intVal hl, Aff.eval_var]
   | .paramRef n none, a, h, hb => by
       simp only [affOf?, Option.some.injEq] at h
       subst h
-      have hl : E.vals.lookup n = some (σ n) := hb n (by simp [Aff.names, Aff.var])
-      refine ⟨isInt_paramRef_of hl, ?_⟩
-      rw [evalInt_paramRef_of hl, Aff.eval_var]
+      have hl : E.intVal? n = some (σ n) := hb n (by simp [Aff.names, Aff.var])
+      refine ⟨isInt_paramRef_of_intVal hl, ?_⟩
+      rw [evalInt_paramRef_of_intVal hl, Aff.eval_var]
   | .binary op l r, a, h, hb => by
       simp only [affOf?] at h
       rcases h1 : affOf? l with _ | a1 <;> rcases h2 : affOf? r with _ | a2 <;>
         simp only [h1, h2] at h <;> try exact absurd h (by simp)
       rcases affBin_cases h with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨hop, hm⟩
-      · have hb1 : ∀ n ∈ a1.names, E.vals.lookup n = some (σ n) :=
+      · have hb1 : ∀ n ∈ a1.names, E.intVal? n = some (σ n) :=
           fun n hn => hb n (by rw [Aff.names_add]; exact List.mem_append_left _ hn)
-        have hb2 : ∀ n ∈ a2.names, E.vals.lookup n = some (σ n) :=
+        have hb2 : ∀ n ∈ a2.names, E.intVal? n = some (σ n) :=
           fun n hn => hb n (by rw [Aff.names_add]; exact List.mem_append_right _ hn)
         obtain ⟨hi1, he1⟩ := affOf?_sound l a1 h1 hb1
         obtain ⟨hi2, he2⟩ := affOf?_sound r a2 h2 hb2
         exact ⟨isInt_binary_of (by simp) hi1 hi2, by rw [evalInt_add_of hi1 hi2 he1 he2, Aff.eval_add]⟩
-      · have hb1 : ∀ n ∈ a1.names, E.vals.lookup n = some (σ n) :=
+      · have hb1 : ∀ n ∈ a1.names, E.intVal? n = some (σ n) :=
           fun n hn => hb n (by rw [Aff.names_sub]; exact List.mem_append_left _ hn)
-        have hb2 : ∀ n ∈ a2.names, E.vals.lookup n = some (σ n) :=
+        have hb2 : ∀ n ∈ a2.names, E.intVal? n = some (σ n) :=
           fun n hn => hb n (by rw [Aff.names_sub]; exact List.mem_append_right _ hn)
         obtain ⟨hi1, he1⟩ := affOf?_sound l a1 h1 hb1
         obtain ⟨hi2, he2⟩ := affOf?_sound r a2 h2 hb2
         exact ⟨isInt_binary_of (by simp) hi1 hi2, by rw [evalInt_sub_of hi1 hi2 he1 he2, Aff.eval_sub]⟩
       · have hev := affMul_eval σ hm
         have hn := affMul_names hm
-        have hb1 : ∀ n ∈ a1.names, E.vals.lookup n = some (σ n) := by
+        have hb1 : ∀ n ∈ a1.names, E.intVal? n = some (σ n) := by
           intro n hn1
           rcases hn with ⟨h0, -⟩ | ⟨-, hc⟩
           · simp [Aff.names, h0] at hn1
           · exact hb n (by rw [hc]; exact hn1)
-        have hb2 : ∀ n ∈ a2.names, E.vals.lookup n = some (σ n) := by
+        have hb2 : ∀ n ∈ a2.names, E.intVal? n = some (σ n) := by
           intro n hn2
           rcases hn with ⟨-, hc⟩ | ⟨h0, -⟩
           · exact hb n (by rw [hc]; exact hn2)
@@ -1894,14 +1941,14 @@ theorem declsOf?_cons {pd : PDecl} {rest : List PDecl} {sd : List DeclT}
 theorem evalDims_dims {env : IEnv} {σ : String → Int} :
     ∀ (dims : List (PDim × Aff × Aff)),
       (∀ p ∈ dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) →
-      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n)) →
+      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.intVal? n = some (σ n)) →
       evalDims env (dims.map (·.1)) = .ok (dims.map fun p => (p.2.1.eval σ, p.2.2.eval σ))
   | [], _, _ => by simp
   | p :: rest, ha, hg => by
       obtain ⟨hm, hl⟩ := ha p (List.mem_cons_self ..)
-      have hm' : ∀ n ∈ p.2.1.names, env.vals.lookup n = some (σ n) :=
+      have hm' : ∀ n ∈ p.2.1.names, env.intVal? n = some (σ n) :=
         fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_left _ hn)
-      have hl' : ∀ n ∈ p.2.2.names, env.vals.lookup n = some (σ n) :=
+      have hl' : ∀ n ∈ p.2.2.names, env.intVal? n = some (σ n) :=
         fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_right _ hn)
       obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
       obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
@@ -1913,14 +1960,14 @@ theorem evalDims_dims {env : IEnv} {σ : String → Int} :
 theorem width_dims {env : IEnv} {σ : String → Int} (r : Option Nat) :
     ∀ (dims : List (PDim × Aff × Aff)),
       (∀ p ∈ dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) →
-      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n)) →
+      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.intVal? n = some (σ n)) →
       (PType.packed (dims.map (·.1)) r).width env = .ok (dimsW σ dims)
   | [], _, _ => by simp [dimsW]
   | p :: rest, ha, hg => by
       obtain ⟨hm, hl⟩ := ha p (List.mem_cons_self ..)
-      have hm' : ∀ n ∈ p.2.1.names, env.vals.lookup n = some (σ n) :=
+      have hm' : ∀ n ∈ p.2.1.names, env.intVal? n = some (σ n) :=
         fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_left _ hn)
-      have hl' : ∀ n ∈ p.2.2.names, env.vals.lookup n = some (σ n) :=
+      have hl' : ∀ n ∈ p.2.2.names, env.intVal? n = some (σ n) :=
         fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_right _ hn)
       obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
       obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
@@ -1930,8 +1977,8 @@ theorem width_dims {env : IEnv} {σ : String → Int} (r : Option Nat) :
       simp [PDim.width, hem, hel, dimsW, Gen2.except_ok_bind]
 
 theorem dt_agree {env : IEnv} {σ : String → Int} {dt : DeclT}
-    (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
-    ∀ p ∈ dt.dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n) := by
+    (hag : ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) :
+    ∀ p ∈ dt.dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.intVal? n = some (σ n) := by
   intro p hp n hn
   apply hag n
   simp only [DeclT.affNames, List.mem_flatMap]
@@ -1940,7 +1987,7 @@ theorem dt_agree {env : IEnv} {σ : String → Int} {dt : DeclT}
 /-- `dimsWidth` of a declaration, computed. -/
 theorem width_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
     (hd : declOf? pd = .ok dt)
-    (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
+    (hag : ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) :
     pd.type.width env = .ok (dt.width σ) := by
   obtain ⟨-, -, -, -, ⟨r, hr⟩, -, hdim, -, -⟩ := declOf?_spec hd
   rw [hr]
@@ -1948,7 +1995,7 @@ theorem width_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
 
 theorem elemWidth_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
     (hd : declOf? pd = .ok dt)
-    (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
+    (hag : ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) :
     pd.type.elemWidth env = .ok (dt.elemW σ) := by
   obtain ⟨-, -, -, -, ⟨r, hr⟩, hlen, hdim, -, -⟩ := declOf?_spec hd
   rw [hr]
@@ -1970,7 +2017,7 @@ theorem elemWidth_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : Dec
 
 theorem buildDecls_summary {σ : String → Int} :
     ∀ (ds : List PDecl) (sd : List DeclT), declsOf? ds = .ok sd →
-      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) →
+      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) →
         buildDecls env ds = .ok (sd.map (·.toDecl σ))
   | [], sd, h, env, _ => by
       simp [declsOf?] at h; subst h; rfl
@@ -1998,7 +2045,7 @@ theorem buildDecls_summary {σ : String → Int} :
 
 theorem buildElems_summary {σ : String → Int} :
     ∀ (ds : List PDecl) (sd : List DeclT), declsOf? ds = .ok sd →
-      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) →
+      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) →
         buildElems env ds = .ok (sd.map fun dt => (dt.name, dt.elemW σ))
   | [], sd, h, env, _ => by
       simp [declsOf?] at h; subst h; rfl
@@ -2018,9 +2065,14 @@ theorem dimTableStep_vals (env : IEnv) (pd : PDecl) : (dimTableStep env pd).vals
   unfold dimTableStep
   split <;> rfl
 
+theorem dimTableStep_intVal (env : IEnv) (pd : PDecl) (n : String) :
+    (dimTableStep env pd).intVal? n = env.intVal? n := by
+  unfold dimTableStep
+  split <;> rfl
+
 theorem dimTable_summary {σ : String → Int} :
     ∀ (ds : List PDecl) (sd : List DeclT), declsOf? ds = .ok sd →
-      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) →
+      ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) →
         ∀ n, (dimTable env ds).lookup n = (sd.find? (fun dt => dt.name == n)).map (DeclT.vals σ)
   | [], sd, h, env, _, n => by
       simp [declsOf?] at h; subst h; simp [dimTable]
@@ -2029,7 +2081,7 @@ theorem dimTable_summary {σ : String → Int} :
       obtain ⟨hn, -, -, -, ⟨r, hr'⟩, -, hdim, -, -⟩ := declOf?_spec hd
       have hrest := dimTable_summary rest sd' hr (dimTableStep env pd)
         (fun dt' hdt' n' hn' => by
-          rw [dimTableStep_vals]; exact hag dt' (by simp [hdt']) n' hn') n
+          rw [dimTableStep_intVal]; exact hag dt' (by simp [hdt']) n' hn') n
       have hev : evalDims env dt.pdims = .ok (dt.vals σ) :=
         evalDims_dims dt.dims hdim (dt_agree (fun n hn => hag dt (by simp) n hn))
       simp only [dimTable, hr', hev, List.lookup, List.find?_cons]

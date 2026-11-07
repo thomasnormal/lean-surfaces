@@ -4976,3 +4976,35 @@ refinement build, PicoRV32 trace proof, docs check, backlog-index check, and
 **JUDGED / DECIDED:** keep undecodable words and unimplemented CSR addresses
 as separate raw cases so a core proof cannot conflate a decode failure with a
 CSR-table miss or silently convert either trap to a sequential retirement.
+
+## 2026-11-07-ls-sv2-304 — unify the RV32I RVFI boundaries
+
+The inboxes and goal file were reread before this item.  The owner-lane
+CombView and generated-member route remain `ls-sv` work; this item stays in
+the owned refinement layer and gives a future loaded-core invariant one
+indexed dispatcher over the already-proved RV32I families.
+
+Added `LeanModels/Refine/RvfiRv32i.lean` with the indexed
+`Rv32iBoundary` family for ALU, conditional branch, JAL/JALR, all memory
+forms, fence/fence.i, ECALL/EBREAK/MRET/WFI, implemented CSR, undecodable
+instruction, and unimplemented-CSR trap rows.  The post `RvMemoryState` and
+`Retirement` are indices, preserving each row's exact architectural result.
+`Rv32iBoundary.rvMemoryMachineWith` dispatches every constructor to its raw
+boundary theorem, while `rvfiCycleStepRefines_of_rv32i_memory` lifts a single
+family witness into the generic strict cycle refinement contract.  The
+dispatcher remains scoped to `irq = 0`, RV32I, and the admitted machine-mode
+CSR/system subset; interrupts and M-extension operations remain outside it.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i`, the umbrella
+`lake build LeanModels.Refine`, the PicoRV32 `trace_proof` target,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** expose one indexed family rather than a parallel
+optional dispatcher, so a loaded-core invariant cannot erase which instruction
+class supplied its post-state or retirement.  Continue with the next owned
+generic refinement obligation while the generated-member memory support
+remains with `ls-sv`.

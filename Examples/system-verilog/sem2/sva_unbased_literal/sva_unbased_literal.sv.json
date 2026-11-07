@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/sem2/sva_unbased_literal/sva_unbased_literal.sv",
-      "sha256": "c6b655da4614c4d2fa4c16e445f308fd3bc107e649fbd0e3a5f85e5d7995ed6b"
+      "sha256": "b470541197f3ffa7ee636d40383d0c9f00e454d8ec01ad6d7c0b56f4e4f48104"
     }
   ],
   "packages": [],
@@ -169,12 +169,12 @@
               "line": 8,
               "col": 3,
               "end_line": 8,
-              "end_col": 44
+              "end_col": 46
             },
             "name": "",
             "property_kind": "assert",
             "clock": "clk",
-            "text": "assert property (@(posedge clk) a == '0);",
+            "text": "assert property (@(posedge clk) (a == '0));",
             "ast": {
               "kind": "SvaCheck",
               "property_kind": "assert",

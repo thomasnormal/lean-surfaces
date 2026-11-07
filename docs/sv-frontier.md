@@ -153,6 +153,9 @@ On the pinned OpenTitan `prim_fifo_sync` assertion VIP, the same adapter keeps
 all 27 assertion properties in metadata and removes its 27
 `UnbasedUnsizedLiteralExpression` refusals; 29 unrelated loader nodes remain
 for later target-enabling packets.
+Parenthesized property expressions now unwrap before implication and sequence
+classification; the same VIP's residual census falls to 18 nodes without
+losing any retained property.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

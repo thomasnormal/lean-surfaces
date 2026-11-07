@@ -237,3 +237,15 @@ The first retained member is the net-z wire `pcpi_mul_wr` at
 `picorv32.v:257`.  This confirms the existing unpacked-memory and
 unsupported-member/net-z walls; no new clean-room request or core adaptation
 is justified.
+
+The owned refinement layer now also includes
+`LeanModels.Refine.RvfiBranchProgram`.  `BranchInstruction` retains the fetched
+word, branch condition, source registers, offset, and decoder proof; the input,
+architectural-state, and retirement folds preserve the exact conditional-branch
+semantics for arbitrary lists.  `BranchRvfiTrace` and
+`BranchRvfiCycleTrace` normalize raw RVFI observations, retain arbitrary bubble
+inputs and cycle-step equalities, and identify the result with the stateful
+RV32I machine trace.  Their append theorems compose adjacent certificates at
+the exact architectural state, core state, and retirement-order boundary.
+This is generic refinement infrastructure; the PicoRV32 RTL remains parked at
+the existing unpacked `cpuregs` and unsupported-member/net-z loader walls.

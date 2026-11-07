@@ -5964,3 +5964,37 @@ validation gates for this item.
 cycle-machine memory stream and resume at the exact core, architectural-memory,
 and retirement-order boundary.  PicoRV32 remains parked at the existing
 unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-338 — add a symbolic RV32I branch-program certificate
+
+The inbox and goal file were reread after item 337 was pushed.  The memory
+program surface now carries arbitrary mixed loads and stores, while the next
+uncovered RV32I family needed a state-threaded certificate for conditional
+branches and their taken/not-taken pc targets.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiBranchProgram.lean` and imported it
+from the refinement umbrella.  `BranchInstruction` retains the fetched word,
+branch condition, source registers, offset, and decoder proof.  The input,
+architectural-state, and retirement folds cover arbitrary decoded conditional
+branches and expose append laws.  The stateful `rvMemoryMachineWith` bridges
+reuse the existing exact `branchNext`, `branchRetirement`, and
+`isaStepWith_branch` semantics.  `BranchRvfiTrace` and
+`BranchRvfiCycleTrace` normalize raw RVFI observations, retain arbitrary bubble
+inputs and exact cycle-step equalities, identify retiring inputs, and compose
+at the exact core/state/retirement-order boundary.  Updated both core READMEs
+and regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiBranchProgram.lean`, the
+umbrella `lake build LeanModels.Refine` (47 jobs), the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize an arbitrary conditional-branch stream, including taken and
+fall-through targets, while preserving the machine's actual cycle inputs and
+state transitions.  PicoRV32 remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.

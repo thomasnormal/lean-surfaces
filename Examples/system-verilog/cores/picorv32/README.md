@@ -238,6 +238,9 @@ the ISA through `addiNext`, while invalid rows carry the relation across an
 ISA stutter.  The profile, core relation, and input admission remain explicit,
 so a future loaded-core proof can discharge the ADDI row case without
 reconstructing the packed valid/invalid dispatch.
+The companion `rvfiCycleStepRefines_of_sw` applies the same strict dispatch to
+the measured store class: valid rows use `swBoundary`, advance through
+`swNext`, and agree with `swRetirement`, while invalid rows remain bubbles.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

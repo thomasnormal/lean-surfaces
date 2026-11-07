@@ -130,6 +130,9 @@ identity requires object or string handle evidence.
 A non-object, non-string ordinary-call `referencedDecl` array is also refused;
 declaration identity is never reconstructed from an arbitrary JSON container.
 
+A Boolean-valued ordinary-call `referencedDecl` is also refused; declaration
+identity is never coerced from scalar data.
+
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 

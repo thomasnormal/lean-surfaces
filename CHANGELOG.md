@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for Boolean-valued ordinary-call `referencedDecl`
+  evidence; declaration identity is never coerced from scalar data.
+
 - Added a recorded refusal for array-valued overloaded-operator `referencedDecl`
   evidence; operator identity is never reconstructed from an arbitrary JSON
   container.

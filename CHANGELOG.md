@@ -41,6 +41,9 @@
 - Docs: record frontend metadata admission and envelope freshness as enforced
   gates.
 
+- Docs: record the expanded differential edge battery covering audited refusal
+  and recursion/set/comprehension boundaries.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

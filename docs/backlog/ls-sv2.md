@@ -5115,3 +5115,30 @@ constructible as indexed family witnesses, so future core invariants can retain
 wire fields without duplicating stateful transition logic.  The next item
 remains an owned refinement milestone while generated-member support stays with
 `ls-sv`.
+
+## 2026-11-07-ls-sv2-309 — complete specialized RVFI adapters for the indexed family
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item extends only the
+owned generic refinement layer.
+
+`LeanModels.Refine.RvfiRv32i` now exposes indexed constructor adapters for the
+remaining specialized contracts: `fenceBoundary_rv32i`,
+`systemBoundary_rv32i`, `csrBoundary_rv32i`, `illegalBoundary_rv32i`, and
+`illegalCsrBoundary_rv32i`.  Together with the earlier ALU, memory, branch,
+and jump adapters, every raw RVFI predicate in the RV32I dispatcher can now be
+introduced without repeating its post-state or retirement simplification.
+The trap adapters retain the distinction between an undecodable word and a
+decoded but unimplemented CSR.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i`, the umbrella
+`lake build LeanModels.Refine`, and the PicoRV32 unified-boundary target pass
+under Lean 4.35.0.  `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  The wrappers
+are axiom-free; no `sorryAx` or new axiom was introduced.  No RTL, loader,
+extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** keep every specialized raw predicate as a direct
+constructor path into the single indexed family, with illegal CSR rows kept
+separate from undecodable rows.  The generated-member support remains with
+`ls-sv`; the next item is an owned refinement milestone.

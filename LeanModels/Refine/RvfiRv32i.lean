@@ -188,6 +188,55 @@ theorem RvfiObservation.jalrBoundary_rv32i
       (jalrRetirement s input rd rs1 offset) := by
   exact Rv32iBoundary.jalr w rd rs1 offset h
 
+theorem RvfiObservation.fenceBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (kind : FenceKind)
+    (h : o.fenceBoundary s input w kind) :
+    Rv32iBoundary s input o
+      { arch := fenceNext s kind,
+        memory := input.memory }
+      (fenceRetirement s input kind) := by
+  exact Rv32iBoundary.fence w kind h
+
+theorem RvfiObservation.systemBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (kind : SysKind)
+    (h : o.systemBoundary s input w kind) :
+    Rv32iBoundary s input o
+      { arch := systemNext s kind,
+        memory := input.memory }
+      (systemRetirement s input kind) := by
+  exact Rv32iBoundary.system w kind h
+
+theorem RvfiObservation.csrBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (row : CsrBehavior) (kind : CsrOpKind)
+    (h : o.csrBoundary s input w row kind) :
+    Rv32iBoundary s input o
+      { arch := csrNext s row kind,
+        memory := input.memory }
+      (csrRetirement s input row kind) := by
+  exact Rv32iBoundary.csr w row kind h
+
+theorem RvfiObservation.illegalBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (h : o.illegalBoundary s input w) :
+    Rv32iBoundary s input o
+      { arch := illegalNext s,
+        memory := input.memory }
+      (illegalRetirement s input) := by
+  exact Rv32iBoundary.illegal w h
+
+theorem RvfiObservation.illegalCsrBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (kind : CsrOpKind)
+    (h : o.illegalCsrBoundary s input w kind) :
+    Rv32iBoundary s input o
+      { arch := illegalNext s,
+        memory := input.memory }
+      (illegalRetirement s input) := by
+  exact Rv32iBoundary.illegalCsr w kind h
+
 theorem Rv32iBoundary.toRetirement?_eq_some
     {s : ArchState} {input : Input} {o : RvfiObservation}
     {post : RvMemoryState} {retirement : Retirement}

@@ -19,6 +19,43 @@ namespace LeanModels.Refine
 
 open LeanModels.Rv
 
+/-- The local obligations for an ADDI-only loaded-core invariant.
+
+The step field describes the memory-threaded ADDI boundary and post-state;
+the order field supplies the RVFI order tag separately.  Keeping them in one
+named proposition lets a core proof carry its invariant without repeating the
+dependent cycle-step predicates at every reset theorem call.
+-/
+structure Rv32iAddiInvariant {State : Type}
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop) : Prop where
+  step : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+    rel state memoryState → admit input →
+    let (state', observation) := machine.step state input
+    if observation.valid then
+      ∃ w rd rs1 imm,
+        input.memory = memoryState.memory ∧
+        observation.addiBoundary memoryState.arch input w rd rs1 imm ∧
+        rel state'
+          { arch := addiNext memoryState.arch rd rs1 imm,
+            memory := memoryState.memory }
+    else rel state' memoryState
+  order : ∀ (start : Nat) (state : State)
+    (memoryState : RvMemoryState) (input : Input),
+    rel state memoryState → admit input →
+    let (_, observation) := machine.step state input
+    if observation.valid then observation.order = start else True
+
+/-- The packaged ADDI invariant discharges the unified mixed per-cycle
+obligation. -/
+theorem Rv32iAddiInvariant.toMixedStep
+    {State : Type} {machine : RvfiCycleMachine State}
+    {rel : State → RvMemoryState → Prop} {admit : Input → Prop}
+    (invariant : Rv32iAddiInvariant machine rel admit) :
+    Rv32iCycleStepRefines machine rel admit := by
+  exact rv32iCycleStepRefines_of_addi_memory machine rel admit
+    invariant.step invariant.order
+
 /-- The ADDI-only invariant establishes the full structure-valued reset
 refinement, retaining the decoded program and cycle certificate at every
 target prefix. -/
@@ -50,6 +87,20 @@ theorem rv32i_reset_addi_refines
   exact rv32i_reset_refinement profile machine rel admit
     (rv32iCycleStepRefines_of_addi_memory machine rel admit hstep horder)
     hinit hschedule progress
+
+/-- Packaged-invariant form of the full ADDI reset contract. -/
+theorem rv32i_reset_addi_refines_of_invariant
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (invariant : Rv32iAddiInvariant machine rel admit)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine machine.init schedule target) :
+    Rv32iResetRefinement profile machine rel schedule target := by
+  exact rv32i_reset_addi_refines profile machine rel admit hinit
+    invariant.step invariant.order hschedule progress
 
 /-- An order-aware, memory-threaded ADDI invariant refines every finite target
 retirement prefix from reset through the public committed-stream contract. -/
@@ -92,5 +143,7 @@ theorem rv32i_reset_addi_stream_refines
 
 #print axioms LeanModels.Refine.rv32i_reset_addi_stream_refines
 #print axioms LeanModels.Refine.rv32i_reset_addi_refines
+#print axioms LeanModels.Refine.Rv32iAddiInvariant.toMixedStep
+#print axioms LeanModels.Refine.rv32i_reset_addi_refines_of_invariant
 
 end LeanModels.Refine

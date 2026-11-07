@@ -5725,16 +5725,15 @@ retain that boundary.
 
 | Measurement | Result |
 |---|---|
-| Focused differential | `finite_keys`, `nested_finite_keys`, and `set_finite_keys`: 3/3 MATCH in both interpreters |
+| Focused differential | `finite_keys` and `nested_finite_keys`: 2/2 MATCH; `set_finite_keys` is now an explicit loud set-display boundary |
 | Full executable differential | 3,694 cases: 0 failed, 90 whitelisted-unsupported, 3,604 matched |
 | Full proof differential | 3,694 cases: 0 failed, 196 refused, 3,498 matched |
 | Refusal census | 90 rows, 0 drifts; `float.hashing` removed |
-| Example proof | `lake build Examples.python.float_lab.spec` passed |
+| Example proof | `finite_keys` and `nested_finite_keys` remain proved; the set-display theorem is retired |
 | Formatting | `git diff --check` passed |
 
-DECIDED: admit finite float keys and their tuple/set consumers; retain loud
-failure for non-finite float keys until immediate-value identity semantics are
-priced separately.
+DECIDED: retain finite float dictionary and tuple keys; the set consumer is
+loud because set displays remain outside the tier.
 
 ## 2026-10-25-pycomplete-126 — admit tuple exception handlers
 

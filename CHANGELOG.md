@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added the remaining measured dictionary-source set witnesses to the loud
+  differential whitelist, including the length-only `set(d.keys())` path.
+
 - Python: enforce the pinned CPython 3.9 recursion limit on closed-function
   calls, restoring the active frame depth after returns and raises so sibling
   calls do not consume one another's stack budget.

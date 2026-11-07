@@ -129,3 +129,29 @@ symbolic R2 invariant therefore remains parked at the unpacked `cpuregs` and
 net-z/unsupported-member walls; no core-specific adaptation or finite-window
 extension was made.
 
+## Latest PicoRV32 re-probe after dynamic parameterized-memory admission
+
+After `github/master` advanced to `cb99d49c69db72421ab3c7b16447b47311f60890`
+(`[ls-sv] admit dynamic parameterized register memories`), the unchanged
+PicoRV32 source was extracted again.  The fresh envelope is
+`bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c` and
+2,992,406 bytes.  The declaration still loads as a 26-parameter family.  The
+ordinary semantic family still first refuses the unpacked `cpuregs` memory at
+`picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route reaches its existing unsupported-module-member gate before
+the new dynamic-memory path can run:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is still `NetSymbol:net-z` for `pcpi_mul_wr` at
+`picorv32.v:257`, an already catalogued generic boundary.  No new owner-lane
+request or core adaptation is justified by this probe.

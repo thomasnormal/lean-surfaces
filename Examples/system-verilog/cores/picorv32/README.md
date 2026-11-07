@@ -508,6 +508,13 @@ This is still a finite boundary certificate for the captured stream; it does
 not claim the symbolic PicoRV32 RTL invariant while the upstream loader
 refusals remain.
 
+`pinned_window_trace_refines` composes the strict eight-cycle contract with
+the raw normalization certificate and shows that the four normalized
+retirements equal the profile-parametric stateful ISA trace after the same
+input filtering.  This keeps the trace-level claim separate from the
+cycle-phase relation and preserves an explicit input-admission obligation for
+future loaded-core proofs.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

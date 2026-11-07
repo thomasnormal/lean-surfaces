@@ -163,6 +163,11 @@ The store and load witnesses now also apply their raw predicates directly to
 while the load retains the supplied byte memory.  Both stateful commits keep
 the raw RVFI row and the architectural memory transition in one theorem.
 
+The prefix witness bundles all four raw RVFI predicates with their four
+stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
+This is the concrete window certificate a future loaded-core invariant can
+consume without choosing between the wire-level and stateful premises.
+
 [`rvfi_prefix_boundary.lean`](rvfi_prefix_boundary.lean) also runs the
 first three non-trapping instructions through `rvMemoryMachineWith`.  It
 proves the concrete threaded state (`pc = 12`, `x2 = 5`, `x0 = 0`) and the

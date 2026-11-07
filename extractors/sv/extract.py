@@ -20625,6 +20625,26 @@ def _target_shape_ok(t):
     return k == "ArraySel"
 
 
+def _concat_target_order_unsafe(t):
+    """Whether a concatenated blocking target depends on an unspecified
+    leaf-evaluation order. Dynamic selectors are refused, as are repeated
+    leaves that would alias; static disjoint leaves remain source shaped."""
+    if not isinstance(t, dict) or t.get("kind") != "ConcatTarget":
+        return False
+    parts = t.get("parts") or []
+    names = []
+    for part in parts:
+        if part.get("kind") == "SelectTarget":
+            if part.get("index", {}).get("kind") != "Literal":
+                return True
+            name = part.get("value", {}).get("name")
+        else:
+            name = part.get("name")
+        if name:
+            names.append(name)
+    return len(names) != len(set(names))
+
+
 def _sym_array_select_static(t):
     """Whether every label of an `ArraySel` node is an elaboration-time
     constant (False for a dynamic indexed part-select base)."""
@@ -24432,6 +24452,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                                "AssignmentExpression:target")
         target, ok = select_target(sm, expr.left)
     if not ok:
+        return unsupported(sm, span_node or expr, "AssignmentExpression:target")
+    if _SYM is None and _concat_target_order_unsafe(target):
         return unsupported(sm, span_node or expr, "AssignmentExpression:target")
     if (target.get("kind") in ("SelectTarget", "ConcatTarget")
             and not _case_source_expression_ok(expr.right, packed_members=_SYM is None)):

@@ -5818,3 +5818,32 @@ the stateful ISA-machine level without manually reopening generic list
 recursions; the first segment's exact memory and retirement state remains the
 second segment's input.  PicoRV32 remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-333 — add a raw symbolic memory certificate
+
+The inbox and goal file were reread after item 332 was pushed.  The memory
+program folds now carry stores into later loads, but the raw RVFI side still
+needed an indexed observation certificate that could feed the normalizer.
+
+**CHANGED:** Added `MemRvfiTrace` and its `toRvfiTraceRefines`, `normalize`,
+and `trace_refines` theorems to `LeanModels/Refine/RvfiMemProgram.lean`.
+The inductive certificate admits arbitrary invalid bubbles, requires the next
+retirement order, and carries an indexed `Rv32iBoundary` witness whose
+post-state and retirement are exactly the threaded `MemInstruction` step.
+The projections normalize the raw observations and identify them with the
+profile-parametric stateful ISA trace.  Updated both core READMEs and
+regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiMemProgram.lean` passes and
+all three new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` are the
+validation gates for this item.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now normalize a
+state-threaded stream containing arbitrary mixed loads and stores, including
+store-to-load memory effects, without reconstructing its observation schedule.
+PicoRV32 remains parked at the existing unpacked `cpuregs` and
+unsupported-member/net-z loader walls.

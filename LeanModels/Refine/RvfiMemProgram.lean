@@ -1,4 +1,5 @@
 import LeanModels.Refine.RvfiMemAll
+import LeanModels.Refine.RvfiRv32i
 
 /-!
 # Symbolic RVFI programs made only of RV32I memory instructions
@@ -186,6 +187,81 @@ theorem rvMemoryMachineWith_mem_program_trace_append
           (memProgramInputs (memProgramState state first) second) := by
   rw [memProgramInputs_append, machineTrace_append]
 
+/-! ## Raw RVFI certificate for an arbitrary memory program -/
+
+/-- A raw RVFI stream whose retiring rows are exactly the supplied threaded
+load/store program. -/
+inductive MemRvfiTrace :
+    Nat → RvMemoryState → List RvfiObservation → List MemInstruction → Prop
+  where
+  | nil (start : Nat) (state : RvMemoryState) :
+      MemRvfiTrace start state [] []
+  | bubble {start : Nat} {state : RvMemoryState}
+      {observation : RvfiObservation} {observations : List RvfiObservation}
+      {program : List MemInstruction}
+      (hvalid : observation.valid = false)
+      (tail : MemRvfiTrace start state observations program) :
+      MemRvfiTrace start state (observation :: observations) program
+  | retire {start : Nat} {state : RvMemoryState}
+      {observation : RvfiObservation}
+      {observations : List RvfiObservation}
+      {instruction : MemInstruction} {program : List MemInstruction}
+      (horder : observation.order = start)
+      (boundary :
+        Rv32iBoundary state.arch (memProgramInput state instruction)
+          observation (memProgramStep state instruction)
+          (memRetirement state.arch (memProgramInput state instruction)
+            instruction.kind instruction.r instruction.rs1 instruction.imm))
+      (tail :
+        MemRvfiTrace (start + 1) (memProgramStep state instruction)
+          observations program) :
+      MemRvfiTrace start state (observation :: observations)
+        (instruction :: program)
+
+/-- Every symbolic memory certificate is an ordinary RVFI normalization
+certificate. -/
+theorem MemRvfiTrace.toRvfiTraceRefines
+    {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List MemInstruction}
+    (certificate : MemRvfiTrace start state observations program) :
+    RvfiTraceRefines start observations
+      (memProgramRetirements state program) := by
+  induction certificate with
+  | nil start state => exact .nil start
+  | bubble hvalid tail ih => exact .bubble hvalid ih
+  | retire horder boundary tail ih =>
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      exact .retire hspec.1 horder hretirement ih
+
+/-- The executable normalizer accepts exactly the retirement stream specified
+by an arbitrary `MemRvfiTrace` certificate. -/
+theorem MemRvfiTrace.normalize
+    {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List MemInstruction}
+    (certificate : MemRvfiTrace start state observations program) :
+    normalizeRvfiTrace? start observations =
+      some (memProgramRetirements state program) :=
+  (normalizeRvfiTrace?_iff).2 certificate.toRvfiTraceRefines
+
+/-- The normalized symbolic memory stream is the stateful ISA trace for the
+same threaded load/store program. -/
+theorem MemRvfiTrace.trace_refines
+    (profile : PlatformProfile)
+    {start : Nat} {state : RvMemoryState}
+    {observations : List RvfiObservation} {program : List MemInstruction}
+    (certificate : MemRvfiTrace start state observations program) :
+    normalizeRvfiTrace? start observations =
+      some (trace (rvMemoryMachineWith profile) state
+        (memProgramInputs state program)) := by
+  calc
+    normalizeRvfiTrace? start observations =
+        some (memProgramRetirements state program) :=
+      certificate.normalize
+    _ = some (trace (rvMemoryMachineWith profile) state
+        (memProgramInputs state program)) := by
+      rw [rvMemoryMachineWith_mem_program_trace]
+
 #print axioms LeanModels.Refine.memProgramInputs_append
 #print axioms LeanModels.Refine.memProgramState_append
 #print axioms LeanModels.Refine.memProgramRetirements_append
@@ -194,5 +270,8 @@ theorem rvMemoryMachineWith_mem_program_trace_append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_mem_program_trace
 #print axioms LeanModels.Refine.rvMemoryMachineWith_mem_program_state_append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_mem_program_trace_append
+#print axioms LeanModels.Refine.MemRvfiTrace.toRvfiTraceRefines
+#print axioms LeanModels.Refine.MemRvfiTrace.normalize
+#print axioms LeanModels.Refine.MemRvfiTrace.trace_refines
 
 end LeanModels.Refine

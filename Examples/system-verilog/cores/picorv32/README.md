@@ -669,8 +669,12 @@ The next generic surface is
 `LeanModels.Refine.RvfiMemProgram`.  It retains each memory instruction's
 decoder proof and threads the exact byte memory through mixed loads and
 stores, with state, retirement, and append equations for the existing
-`rvMemoryMachineWith` semantics.  A raw memory RVFI certificate will consume
-this surface once the loaded-core invariant reaches the memory family.
+`rvMemoryMachineWith` semantics.  `MemRvfiTrace` now consumes those folds: it
+admits arbitrary invalid bubbles, requires consecutive retirement order and an
+indexed `Rv32iBoundary` witness for every retiring load/store, and normalizes
+to the exact stateful ISA trace.  The certificate is generic and state-threaded;
+the loaded PicoRV32 invariant remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.
 
 ## Zicsr boundary
 

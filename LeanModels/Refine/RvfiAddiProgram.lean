@@ -62,6 +62,46 @@ def addiProgramRetirements (memory : Memory) (state : ArchState) :
         addiProgramRetirements memory
           (addiNext state instruction.rd instruction.rs1 instruction.imm) program
 
+/-! ## Program-fold composition -/
+
+/-- The input fold preserves list concatenation. -/
+theorem addiProgramInputs_append (memory : Memory)
+    (first second : List AddiInstruction) :
+    addiProgramInputs memory (first ++ second) =
+      addiProgramInputs memory first ++ addiProgramInputs memory second := by
+  induction first with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, addiProgramInputs, ih, List.cons_append]
+
+/-- The architectural ADDI fold can resume from the state reached by its
+prefix. -/
+theorem addiProgramState_append (state : ArchState)
+    (first second : List AddiInstruction) :
+    addiProgramState state (first ++ second) =
+      addiProgramState (addiProgramState state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, addiProgramState]
+      exact ih (state :=
+        addiNext state instruction.rd instruction.rs1 instruction.imm)
+
+/-- The retirement fold carries the same architectural prefix boundary as the
+state fold. -/
+theorem addiProgramRetirements_append (memory : Memory) (state : ArchState)
+    (first second : List AddiInstruction) :
+    addiProgramRetirements memory state (first ++ second) =
+      addiProgramRetirements memory state first ++
+        addiProgramRetirements memory (addiProgramState state first) second := by
+  induction first generalizing state with
+  | nil => rfl
+  | cons instruction first ih =>
+      simp only [List.cons_append, addiProgramRetirements]
+      rw [ih (state :=
+        addiNext state instruction.rd instruction.rs1 instruction.imm)]
+      rfl
+
 theorem addiProgramState_preserves_WF (state : ArchState)
     (program : List AddiInstruction) (hWF : state.WF) :
     (addiProgramState state program).WF := by
@@ -375,6 +415,9 @@ theorem AddiRvfiCycleTrace.append
         Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using second
 
 #print axioms LeanModels.Refine.addiProgramState_preserves_WF
+#print axioms LeanModels.Refine.addiProgramInputs_append
+#print axioms LeanModels.Refine.addiProgramState_append
+#print axioms LeanModels.Refine.addiProgramRetirements_append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_addi_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_addi_program_trace
 #print axioms LeanModels.Refine.AddiRvfiTrace.toRvfiTraceRefines

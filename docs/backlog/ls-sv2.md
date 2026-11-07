@@ -5615,3 +5615,29 @@ compile, docs check, backlog-index check, and `git diff --check` also pass.
 stream while preserving the actual core state and ISA order boundary; no
 captured window is promoted to the theorem's domain.  PicoRV32 remains parked
 at the existing unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-326 — expose symbolic ADDI fold append laws
+
+The inbox and goal file were reread after item 325 was pushed.  The new cycle
+certificate composes at a threaded boundary, but the three program-side folds
+still needed explicit append equations for a segmented proof to rewrite its
+result back to one whole program.
+
+**CHANGED:** Added `addiProgramInputs_append`, `addiProgramState_append`, and
+`addiProgramRetirements_append` to
+`LeanModels/Refine/RvfiAddiProgram.lean`.  The input, architectural-state, and
+retirement folds now all resume from their exact prefix result and agree with
+list concatenation.  Updated the PicoRV32 README and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAddiProgram.lean` passes and
+all three new declarations report only the established
+`propext`/`Quot.sound` footprint.  No `sorryAx` or new axiom was introduced.
+The umbrella refinement build, focused PicoRV32 boundary compile, docs check,
+backlog-index check, and `git diff --check` also pass.
+
+**JUDGED / DECIDED:** The next segmented ADDI proof can use either the
+certificate append theorem or the whole-program folds without a hand-written
+list normalization.  PicoRV32 remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.

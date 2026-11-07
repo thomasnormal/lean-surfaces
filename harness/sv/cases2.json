@@ -137,6 +137,16 @@
       "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
     },
     {
+      "name": "sva_scoped",
+      "example": "sem2/sva_scoped",
+      "top": "sva_scoped",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: qualified SVA signal paths retain their elaborated instance/generate spelling as one observation key in the E contract."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

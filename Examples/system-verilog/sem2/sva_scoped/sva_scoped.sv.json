@@ -1,0 +1,276 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_scoped",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_scoped/sva_scoped.sv",
+      "sha256": "08f96f931130a564f791235bde0208643008fd35309db7cb50274d6ff7c3679b"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 9,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "sva_scoped",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 15,
+              "end_line": 10,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 11,
+              "col": 15,
+              "end_line": 11,
+              "end_col": 16
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 16,
+              "end_line": 12,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 14,
+              "col": 19,
+              "end_line": 14,
+              "end_col": 38
+            },
+            "name": "u",
+            "module": "sva_scoped_leaf",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 14,
+                  "col": 25,
+                  "end_line": 14,
+                  "end_col": 26
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 14,
+                    "col": 25,
+                    "end_line": 14,
+                    "end_col": 26
+                  },
+                  "width": 1,
+                  "name": "a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 14,
+                  "col": 35,
+                  "end_line": 14,
+                  "end_col": 36
+                },
+                "port": "flag",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 14,
+                    "col": 35,
+                    "end_line": 14,
+                    "end_col": 36
+                  },
+                  "width": 1,
+                  "name": "q"
+                }
+              }
+            ]
+          }
+        ],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 15,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 48
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) u.flag == a);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Binary",
+                      "op": "==",
+                      "left": {
+                        "kind": "Ident",
+                        "name": "u.flag"
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "name": "a"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "sva_scoped_leaf",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 16
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 20
+            },
+            "name": "flag",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 6,
+              "col": 10,
+              "end_line": 6,
+              "end_col": 18
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 10,
+                "end_line": 6,
+                "end_col": 14
+              },
+              "width": 1,
+              "name": "flag"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 17,
+                "end_line": 6,
+                "end_col": 18
+              },
+              "width": 1,
+              "name": "a"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -26172,6 +26172,32 @@ def _sva_integer(node):
         return None
 
 
+def _sva_scoped_name(node):
+    """Return a qualified value path from Slang's nested ``ScopedName``.
+
+    SVA properties may observe a signal through an elaborated instance or
+    generate scope (for example ``u.g.flag``).  The property evaluator already
+    treats an ``Ident`` as an observation-environment key, so preserving the
+    complete path in that existing node keeps the source qualification without
+    adding a second expression constructor.  Package-qualified names are kept
+    with their ``::`` separator; an environment that cannot provide such a
+    key remains loud during evaluation.
+    """
+    if not isinstance(node, dict):
+        return None
+    kind = node.get("kind")
+    if kind == "IdentifierName":
+        return (node.get("identifier") or {}).get("text")
+    if kind != "ScopedName":
+        return None
+    left = _sva_scoped_name(node.get("left"))
+    right = _sva_scoped_name(node.get("right"))
+    if not left or not right:
+        return None
+    separator = (node.get("separator") or {}).get("text", ".")
+    return f"{left}{separator}{right}"
+
+
 def _sva_pexpr(node):
     """Convert an ordinary SV expression in an assertion to PExpr JSON.
 
@@ -26185,6 +26211,12 @@ def _sva_pexpr(node):
     kind = node.get("kind")
     if kind == "IdentifierName":
         return {"kind": "Ident", "name": node.get("identifier", {}).get("text", "")}
+    if kind == "ScopedName":
+        name = _sva_scoped_name(node)
+        if name:
+            return {"kind": "Ident", "name": name}
+        return {"kind": "Unsupported", "sv_kind": kind,
+                "text": "malformed scoped name"}
     if kind == "IntegerLiteralExpression":
         value = _sva_integer(node)
         if value is not None:

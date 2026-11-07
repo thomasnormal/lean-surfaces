@@ -79,6 +79,26 @@ endmodule
         self.assertEqual(implication["consequent"]["test"]["expr"]["kind"],
                          "Binary")
 
+    def test_qualified_signal_path_stays_one_observation_key(self):
+        source = """module leaf(input logic a, output logic flag);
+  assign flag = a;
+endmodule
+module top(input logic clk, a, output logic q);
+  leaf u (.a(a), .flag(q));
+  assert property (@(posedge clk) u.flag == a);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "scoped.sv"
+            out = Path(directory) / "scoped.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        expr = prop["ast"]["property"]["body"]["test"]["expr"]
+        self.assertEqual(expr["op"], "==")
+        self.assertEqual(expr["left"], {"kind": "Ident", "name": "u.flag"})
+        self.assertEqual(expr["right"], {"kind": "Ident", "name": "a"})
+
 
 if __name__ == "__main__":
     unittest.main()

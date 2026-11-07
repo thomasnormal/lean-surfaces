@@ -3932,3 +3932,23 @@ and for the measured `ADDI x3, x2, 1` row after the ADDI/SW/LW prefix.
 stateless and stateful ADDI bridges.  A future loaded-core invariant can now
 consume a row while retaining its memory relation, with no duplicate semantic
 step or hidden memory replacement.
+
+## 2026-11-07-ls-sv2-257 — bridge raw SW and LW rows into the stateful machine
+
+The inboxes were reread before this item.  The generated-member memory-route
+wall remains with `ls-sv`, so this item extends only the owned RVFI and
+stateful-memory contracts.
+
+Added `RvfiObservation.swBoundary_rvMemoryMachineWith` and
+`RvfiObservation.lwBoundary_rvMemoryMachineWith`.  The SW bridge consumes its
+raw source/effective-address/write-mask facts and returns the exact
+`storeVal`-updated byte memory with `swNext` and `swRetirement`; the LW bridge
+retains the supplied memory while returning `lwNext` and `lwRetirement`.  The
+PicoRV32 store and load witnesses exercise both bridges on the measured rows,
+so the ADDI/SW/LW prefix now has raw-to-stateful contracts for every memory
+operation it uses.
+
+**DECIDED:** keep each raw RVFI predicate as the sole premise of its
+stateful bridge and expose the memory transition explicitly.  This preserves
+the exact load/store view needed by the eventual loaded-core invariant and
+avoids a second memory semantics or implicit bus-data substitution.

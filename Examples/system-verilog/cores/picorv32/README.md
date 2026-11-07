@@ -158,6 +158,11 @@ writeback, and the unchanged memory result.  Its witness threads the state
 through the first two instructions and consumes the explicit memory view
 where address `0x100` contains 5.
 
+The store and load witnesses now also apply their raw predicates directly to
+`rvMemoryMachineWith`: the store produces the exact `storeVal` memory update,
+while the load retains the supplied byte memory.  Both stateful commits keep
+the raw RVFI row and the architectural memory transition in one theorem.
+
 [`rvfi_prefix_boundary.lean`](rvfi_prefix_boundary.lean) also runs the
 first three non-trapping instructions through `rvMemoryMachineWith`.  It
 proves the concrete threaded state (`pc = 12`, `x2 = 5`, `x0 = 0`) and the

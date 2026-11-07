@@ -360,3 +360,8 @@ for every admitted finite cycle window, retaining every bubble input and core
 state transition and threading the final relation to the mixed program state.
 This is generic refinement infrastructure and does not model or extend a
 finite PicoRV32 capture.
+
+The companion `rv32iRvfiCycleTrace_of_step_refines` corollary now composes the
+indexed step invariant with any admitted finite cycle window.  It returns the
+mixed cycle certificate, the normalized equality to the stateful ISA trace,
+and the final core-to-ISA relation in one quantified result.

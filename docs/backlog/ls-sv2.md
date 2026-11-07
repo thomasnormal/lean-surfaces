@@ -4531,3 +4531,26 @@ was introduced.
 **DECIDED:** extend the strict raw-cycle invariant constructors in the
 measured program order, making the store's memory effect explicit before
 adding the load case.
+
+## 2026-11-07-ls-sv2-289 — construct the core-facing LW RVFI invariant
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `rvfiCycleStepRefines_of_lw` to `LeanModels/Refine/RvfiMem.lean`.  The
+constructor packages a strict cycle invariant whose valid rows satisfy the
+input-memory-sensitive `lwBoundary`, advance the core relation through
+`lwNext`, and agree with the `rvMachineWith` load retirement; invalid rows
+carry the relation while the ISA stutters.  The memory view and destination
+writeback remain tied to the same raw row, and malformed valid rows cannot
+become bubbles.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiMem` passed (15 jobs).  The
+new theorem's axiom report contains only the existing
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** complete the strict constructors for the measured
+`ADDI`/`SW`/`LW` prefix before adding another instruction family or core glue.

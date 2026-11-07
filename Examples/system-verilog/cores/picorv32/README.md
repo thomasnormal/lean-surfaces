@@ -241,6 +241,10 @@ reconstructing the packed valid/invalid dispatch.
 The companion `rvfiCycleStepRefines_of_sw` applies the same strict dispatch to
 the measured store class: valid rows use `swBoundary`, advance through
 `swNext`, and agree with `swRetirement`, while invalid rows remain bubbles.
+`rvfiCycleStepRefines_of_lw` completes the three-instruction memory prefix:
+valid rows use the input-memory-sensitive `lwBoundary`, advance through
+`lwNext`, and agree with `lwRetirement`, with malformed valid rows still
+excluded by the strict contract.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

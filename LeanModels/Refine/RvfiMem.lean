@@ -318,6 +318,71 @@ theorem rvfiCycleStepRefines_of_sw
     right
     exact ⟨hv', hrel'⟩
 
+/-! ## Core-facing load cycle case
+
+The load constructor keeps the memory view in the raw boundary: the valid
+case advances through `lwNext` using the input memory and matches the exact
+`lwRetirement`, while invalid rows remain architectural bubbles. -/
+
+theorem rvfiCycleStepRefines_of_lw
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → ArchState → Prop) (admit : Input → Prop)
+    (hinit : rel machine.init (rvMachineWith profile).init)
+    (hstep : ∀ (state : State) (arch : ArchState) (input : Input),
+      rel state arch → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ w rd rs1 imm,
+          observation.lwBoundary arch input w rd rs1 imm ∧
+          rel state' (lwNext arch input.memory rd rs1 imm)
+      else rel state' arch) :
+    RvfiCycleStepRefines machine (rvMachineWith profile) rel admit := by
+  apply rvfiCycleStepRefines_of_step hinit
+  intro state arch input hrel hadmit
+  have hcase := hstep state arch input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase
+  rcases hisa : (rvMachineWith profile).step arch input with
+    ⟨arch', retirement⟩
+  simp only
+  change (observation.valid = true ∧ observation.wellFormed ∧
+      rel state' arch' ∧ observation.toRetirement = retirement) ∨
+    (observation.valid = false ∧ rel state' arch)
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ w rd rs1 imm,
+        observation.lwBoundary arch input w rd rs1 imm ∧
+        rel state' (lwNext arch input.memory rd rs1 imm) := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨w, rd, rs1, imm, hboundary, hrel'⟩
+    have hwell : observation.wellFormed := by
+      exact hboundary.1.2.2.2.2.1
+    have hto : observation.toRetirement =
+        lwRetirement arch input rd rs1 imm := by
+      have hsome := observation.toRetirement?_eq_some hv hwell
+      exact Option.some.inj (hsome.symm.trans hboundary.2)
+    have hstepLw := observation.lwBoundary_rvMachineWith
+      profile arch input w rd rs1 imm hboundary
+    have hpair : (arch', retirement) =
+        (lwNext arch input.memory rd rs1 imm,
+          lwRetirement arch input rd rs1 imm) := by
+      rw [← hisa, hstepLw]
+    have harch' : arch' = lwNext arch input.memory rd rs1 imm :=
+      congrArg Prod.fst hpair
+    have hretirement : retirement =
+        lwRetirement arch input rd rs1 imm := congrArg Prod.snd hpair
+    rw [harch', hretirement]
+    left
+    exact ⟨hv, hwell, hrel', hto⟩
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' arch := by
+      simpa [hv, hv'] using hcase
+    right
+    exact ⟨hv', hrel'⟩
+
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary_isaStepMemWith
 #print axioms LeanModels.Refine.RvfiObservation.swBoundary_rvMachineWith
@@ -327,5 +392,6 @@ theorem rvfiCycleStepRefines_of_sw
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMachineWith
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMemoryMachineWith
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_sw
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_lw
 
 end LeanModels.Refine

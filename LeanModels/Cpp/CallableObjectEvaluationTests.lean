@@ -40390,4 +40390,11 @@ def callableSharedOperatorAgreementWitness : Bool :=
 
 #guard callableSharedOperatorAgreementWitness
 
+def callableSharedCompoundOperatorAgreementWitness : Bool :=
+  integralCompoundBinaryOfString "+=" == some .add &&
+    integralCompoundBinaryOfString "<<=" == some .shiftLeft &&
+    integralCompoundBinaryOfString "??=" == none
+
+#guard callableSharedCompoundOperatorAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

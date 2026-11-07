@@ -106,19 +106,6 @@ private inductive Execution where
   | goto_ (label : String)
   deriving Inhabited
 
-private def compoundOperator? : String → Option IntegralBinary
-  | "+=" => some .add
-  | "-=" => some .subtract
-  | "*=" => some .multiply
-  | "/=" => some .divide
-  | "%=" => some .remainder
-  | "&=" => some .bitAnd
-  | "|=" => some .bitOr
-  | "^=" => some .bitXor
-  | "<<=" => some .shiftLeft
-  | ">>=" => some .shiftRight
-  | _ => none
-
 private def switchCaseSuffix (value : Int) : List CallableSwitchClause →
     Option (List CallableSwitchClause)
   | [] => none
@@ -362,7 +349,7 @@ mutual
                     | .ok _ => success assigned.frame .normal
             | .ok result => success evaluated.frame (.failed result)
         | .compoundAssign operator declaration expression =>
-            match compoundOperator? operator with
+            match integralCompoundBinaryOfString operator with
             | none => failure frame (.unsupportedOperator operator)
             | some operation =>
                 let evaluated := evalExpression fuel profile frame expression

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centralized compound-assignment operator spelling decoding in
+  `ScalarArithmetic` for both callable evaluators and added an agreement
+  witness.
+
 - Centralized unary and binary operator spelling decoding in `ScalarArithmetic`
   for both callable evaluators and added an agreement witness.
 

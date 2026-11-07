@@ -26527,16 +26527,45 @@ def _sva_has_past(node):
                if key not in ("span", "trivia"))
 
 
+def _sva_has_temporal_call(node):
+    """Whether an assertion expression contains a sampled-value call.
+
+    These calls cannot be represented by one live ``Expr2`` evaluated at the
+    current sample; ordinary boolean operators around them stay in the small
+    SVA wrapper while their non-temporal leaves remain ``Expr2``.
+    """
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict):
+        return False
+    if node.get("kind") == "InvocationExpression":
+        name = node.get("left", {}).get("systemIdentifier", {}).get("text", "")
+        if name in ("$past", "$rose", "$fell", "$stable", "$isunknown",
+                    "$onehot0", "$countones"):
+            return True
+    return any(_sva_has_temporal_call(v) for key, v in node.items()
+               if key not in ("span", "trivia"))
+
+
 def _sva_bool(node):
     node = _sva_unwrap(node)
+    # Ordinary boolean operators are ordinary SystemVerilog expressions.
+    # Keep them in the existing PExpr/Expr2 evaluator so four-state logical
+    # truth tables (including !x) are not replaced by a separate Boolean
+    # mini-language.  Temporal sampled-value calls still need the SVA
+    # wrappers below because their operands are evaluated at another sample.
+    temporal = _sva_has_past(node) or _sva_has_temporal_call(node)
     if isinstance(node, dict) and node.get("kind") in (
             "LogicalAndExpression", "LogicalOrExpression"):
+        if not temporal:
+            return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
         return {
             "kind": "SvaAnd" if node["kind"] == "LogicalAndExpression" else "SvaOr",
             "left": _sva_bool(node.get("left")),
             "right": _sva_bool(node.get("right")),
         }
     if isinstance(node, dict) and node.get("kind") == "UnaryLogicalNotExpression":
+        if not temporal:
+            return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
         return {"kind": "SvaNot", "arg": _sva_bool(node.get("operand"))}
     if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
         left = node.get("left", {})

@@ -157,6 +157,11 @@ remain explicit refusals. Simple `$past(signal)` maps to the sampled
 Simple `disable iff (reset)` guards map to `SvaProp.disable`.
 Simple boolean conjunctions and disjunctions map to `SvaBool.and` and
 `SvaBool.or`.
+When these operators contain no sampled-value call, the structured adapter
+keeps the whole boolean expression as an existing `PExpr`/`Expr2` tree, so
+`&&`, `||`, and `!` use the exact four-state evaluator (including `!x`).
+Only temporal calls such as `$past`, `$rose`, `$fell`, `$stable`, and the
+sampled predicates stay in the SVA wrapper.
 Simple case equality (`a === b`) maps to `SvaBool.caseEq`.
 Simple boolean negation (`!a`) maps to `SvaBool.not`.
 The retained `cover property` spelling is directly guarded through the same
@@ -257,7 +262,8 @@ F1 keeps the four-state sampled value until the assertion boundary. IEEE
 value is never turned into a true result by `!`, `$past`, or `$stable`. Missing
 signals, unsupported expression evaluation, and timing failures remain named
 `SVA:` errors. `$rose` and `$fell` use the sampled-value edge table, with the
-first sampled tick forced false because it has no preceding sampled value.
+first sampled tick compared with the default unknown sample, so a first
+sampled `1` is a rose and a first sampled `0` is a fell.
 
 #### Downstream clean-room wall audit
 

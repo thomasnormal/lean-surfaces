@@ -10767,3 +10767,23 @@ return-value behavior remain outside the current tier.
 
 DECIDED: retain the structured delegation boundary and implement a PEP 380
 frame before admitting resumed `yield from` behavior.
+
+## 2026-11-07-pycomplete-436 — recheck structured class statement boundary
+
+The class-ingestion audit is closed at the statement boundary. The approved
+parser and JSON layer retain a structured `.classDef` node with parsed class
+metadata, body effects, bases, and method information. Script execution checks
+`creationPure`/`creationExecutable` at the source position; it does not silently
+skip decorators, bases, or class-body effects. Qualified method names remain an
+internal dispatch index for the admitted protocol, while full runtime class
+namespace semantics remain future work.
+
+| Measurement | Result |
+|---|---|
+| Pure class script | `class_script.py` MATCHES CPython 3.9.25 |
+| Effectful creation | `cls_deco_script.py` is LOUD; the pure-creation control matches |
+| Semantic change | none; this packet records the structured class boundary |
+
+DECIDED: retain structured class statements and creation-purity checks; replace
+qualified method indexing with a runtime class namespace only when full class
+object semantics are implemented.

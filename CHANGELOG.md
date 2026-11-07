@@ -23,6 +23,9 @@
 - Docs: record that `yield from` remains a structured loud boundary rather than
   an extractor-generated `for` loop.
 
+- Docs: clarify the structured class statement boundary and qualified method
+  dispatch index, including creation-purity admission.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

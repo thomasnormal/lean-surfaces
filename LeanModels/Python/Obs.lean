@@ -1317,6 +1317,9 @@ theorem fuelMono (fuel : Nat) :
                                           nm ps ao lo ig bd cap' vs.toArray k hk)
         | genExp elt tgt it ifs wb _ =>
           simp only [evalExpr]; exact Run.le_refl _
+        | listComp elt tgt it ifs wb _ =>
+          simp only [evalExpr]
+          exact Run.le_refl _
         | list elts _ =>
           simp only [evalExpr]
           exact Run.le_bind (ihEs m st elts.toList k hk) fun st vs => Run.le_refl _
@@ -2191,7 +2194,6 @@ theorem fuelMono (fuel : Nat) :
           (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
           fun st flow => ?_
         cases flow <;> exact Run.le_refl _
-
 /-! ## Per-function corollaries (the `FuelMono` statement shape) -/
 
 private theorem mono_of_le {α : Type} {x y r : Res α}
@@ -3164,6 +3166,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             exact .unsupported
       | genExp elt tgt it ifs wb _ =>
         -- H4: a genexp ALLOCATES a generator — outside the fragment
+        simp [Expr.heapFree] at hfree
+      | listComp elt tgt it ifs wb _ =>
         simp [Expr.heapFree] at hfree
       | list elts _ =>
         -- H2: list displays ALLOCATE — outside the fragment

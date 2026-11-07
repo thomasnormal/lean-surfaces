@@ -154,6 +154,9 @@ mutual
     | .genExp e t it ifs wb _ =>
       e.allNames ++ t.allNames ++ it.allNames ++ Expr.allNamesList ifs.toList
         ++ Expr.allNamesKw wb.toList
+    | .listComp e t it ifs wb _ =>
+      e.allNames ++ t.allNames ++ it.allNames ++ Expr.allNamesList ifs.toList
+        ++ Expr.allNamesKw wb.toList
     | .unsupported .. => []
 
   /-- Elementwise `Expr.allNames`. -/

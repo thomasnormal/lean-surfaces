@@ -363,6 +363,7 @@ def Expr.kindName : Expr → String
   | .ifExp .. => "IfExp"
   | .slice .. => "Slice"
   | .genExp .. => "GeneratorExp"
+  | .listComp .. => "ListComp"
   | .unsupported pyKind _ _ => pyKind
 
 /-- Schema `kind` name of a statement node (error messages) — the
@@ -7992,6 +7993,7 @@ mutual
     -- expression leaves the world-preservation fragment.
     | .slice _ _ _ _ _ => false
     | .genExp .. => false               -- ALLOCATES a generator (H4)
+    | .listComp .. => false              -- ALLOCATES the result list
     | .unsupported .. => true           -- loud, never decides `.ok`
 
   /-- Elementwise `Expr.heapFree`. -/
@@ -8159,6 +8161,7 @@ mutual
     | .slice v l u st _ =>
       v.genAllocFree && l.genAllocFree && u.genAllocFree && st.genAllocFree
     | .genExp .. => false
+    | .listComp .. => false
     | .unsupported .. => true
 
   /-- Elementwise `Expr.genAllocFree`. -/
@@ -9853,6 +9856,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         -- (`lowerGenExps`, Json.lean); one that survives to evaluation is
         -- a shape the lowering refused — loud, never a guess.
         .unsupported "this generator expression is outside the tier (ingestion could not lower it to a generator function; docs/memory-model.md §generator semantics)"
+    | .listComp .. =>
+        .unsupported "list comprehension semantics are outside the tier"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
   termination_by structural fuel
 
@@ -11367,6 +11372,9 @@ mutual
     | .slice v l u st _ => proofCellDrainExpr genName v || proofCellDrainExpr genName l ||
         proofCellDrainExpr genName u || proofCellDrainExpr genName st
     | .genExp e t it ifs wb _ => proofCellDrainExpr genName e || proofCellDrainExpr genName t ||
+        proofCellDrainExpr genName it || ifs.toList.any (proofCellDrainExpr genName) ||
+        wb.toList.any (fun kv => proofCellDrainExpr genName kv.2)
+    | .listComp e t it ifs wb _ => proofCellDrainExpr genName e || proofCellDrainExpr genName t ||
         proofCellDrainExpr genName it || ifs.toList.any (proofCellDrainExpr genName) ||
         wb.toList.any (fun kv => proofCellDrainExpr genName kv.2)
 

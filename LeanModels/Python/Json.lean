@@ -254,11 +254,20 @@ partial def parseExpr (j : Json) : Except String Expr := do
           | .error _ => pure (Expr.constant .none span)
         return .slice value (← comp "lower") (← comp "upper") (← comp "step") span
     | "ListComp" =>
-        -- Keep the source construct loud until list-comprehension
-        -- evaluation is modeled directly. Do not turn syntax with no NAME
-        -- lookup into a call through the shadowable builtin `list`.
-        return .unsupported "ListComp"
-          "list comprehension semantics are not modeled yet" span
+        let elt ← parseExpr (← getField j "elt")
+        let target ← parseExpr (← getField j "target")
+        let iter ← parseExpr (← getField j "iter")
+        let ifs ← (← (← getField j "ifs").getArr?).mapM parseExpr
+        let walrus ← match j.getObjVal? "walrus" with
+          | .ok wj => do
+            (← wj.getArr?).mapM fun w => do
+              pure ((← (← getField w "name").getStr?), ← parseExpr (← getField w "value"))
+          | .error _ => pure #[]
+        if walrus.isEmpty then
+          return Expr.listComp elt target iter ifs walrus span
+        else
+          return .unsupported "ListComp:walrus"
+            "list-comprehension walrus filters are outside the tier" span
     | "GeneratorExp" =>
         -- Structured only (H4); `parseModule` lowers admitted occurrences
         -- into a synthesized generator function.
@@ -719,6 +728,9 @@ mutual
     | .genExp e t it ifs wb _ =>
       exprRefs e ++ exprRefs t ++ exprRefs it ++ (ifs.toList.map exprRefs).flatten
         ++ (wb.toList.map (fun p => exprRefs p.2)).flatten
+    | .listComp e t it ifs wb _ =>
+      exprRefs e ++ exprRefs t ++ exprRefs it ++ (ifs.toList.map exprRefs).flatten
+        ++ (wb.toList.map (fun p => exprRefs p.2)).flatten
     | .unsupported .. => []
 
   /-- Every `Name` occurring in the statement. -/
@@ -1079,6 +1091,8 @@ private partial def exprAssigns : Expr → List String
   | .slice v l u st _ => exprAssigns v ++ exprAssigns l ++ exprAssigns u ++ exprAssigns st
   | .genExp e t it ifs wb _ => exprAssigns e ++ exprAssigns t ++ exprAssigns it ++
       (ifs.toList.map exprAssigns).flatten ++ (wb.toList.map (fun p => exprAssigns p.2)).flatten
+  | .listComp e t it ifs wb _ => exprAssigns e ++ exprAssigns t ++ exprAssigns it ++
+      (ifs.toList.map exprAssigns).flatten ++ (wb.toList.map (fun p => exprAssigns p.2)).flatten
   | .constant .. | .name .. | .unsupported .. => []
 
 /-- Names a function body assigns anywhere (CPython's static-locals
@@ -1264,6 +1278,10 @@ private partial def exprNamesXW : Expr → List String
         exprNamesXW e ++ exprNamesXW t ++ exprNamesXW it
           ++ (ifs.toList.map exprNamesXW).flatten
       else []
+  | .listComp e t it ifs wb _ =>
+      exprNamesXW e ++ exprNamesXW t ++ exprNamesXW it
+        ++ (ifs.toList.map exprNamesXW).flatten
+        ++ (wb.toList.map (fun p => exprNamesXW p.2)).flatten
   | .unsupported .. => []
 
 /-- The statement-level walk for `exprNamesXW` (binds included via the
@@ -1428,6 +1446,10 @@ mutual
             #[] Option.none sp
         else
           return .genExp elt target iter ifs wb sp
+    | .listComp elt target iter ifs wb sp =>
+        return .listComp (← lowerExpr ctx elt) (← lowerExpr ctx target)
+          (← lowerExpr ctx iter) (← lowerExprs ctx ifs)
+          (← wb.mapM fun p => do pure (p.1, ← lowerExpr ctx p.2)) sp
 
   /-- Elementwise `lowerExpr`. -/
   private partial def lowerExprs (ctx : LowerCtx) (es : Array Expr) :

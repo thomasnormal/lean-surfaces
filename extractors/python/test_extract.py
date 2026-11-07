@@ -1236,11 +1236,11 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["kind"], "Unsupported")
         self.assertEqual(e["py_kind"], "SetComp")
 
-    def test_list_comprehension_stays_unsupported(self):
+    def test_list_comprehension_is_structured(self):
         e = self._first_return_expr(
             "def f(xs):\n    return [x + 1 for x in xs if x > 0]\n")
-        self.assertEqual(e["kind"], "Unsupported")
-        self.assertEqual(e["py_kind"], "ListComp")
+        self.assertEqual(e["kind"], "ListComp")
+        self.assertEqual(e["target"]["id"], "x")
 
     def test_dict_comprehension_lowers_to_dict_generator(self):
         e = self._first_return_expr(

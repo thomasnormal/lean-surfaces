@@ -53,15 +53,91 @@
           }
         ],
         "value": {
-          "kind": "Unsupported",
+          "kind": "ListComp",
           "span": {
             "lineno": 14,
             "col_offset": 5,
             "end_lineno": 14,
             "end_col_offset": 31
           },
-          "py_kind": "ListComp",
-          "text": "[i * i for i in range(10)]"
+          "elt": {
+            "kind": "BinOp",
+            "span": {
+              "lineno": 14,
+              "col_offset": 6,
+              "end_lineno": 14,
+              "end_col_offset": 11
+            },
+            "left": {
+              "kind": "Name",
+              "span": {
+                "lineno": 14,
+                "col_offset": 6,
+                "end_lineno": 14,
+                "end_col_offset": 7
+              },
+              "id": "i"
+            },
+            "op": "Mult",
+            "right": {
+              "kind": "Name",
+              "span": {
+                "lineno": 14,
+                "col_offset": 10,
+                "end_lineno": 14,
+                "end_col_offset": 11
+              },
+              "id": "i"
+            }
+          },
+          "target": {
+            "kind": "Name",
+            "span": {
+              "lineno": 14,
+              "col_offset": 16,
+              "end_lineno": 14,
+              "end_col_offset": 17
+            },
+            "id": "i"
+          },
+          "iter": {
+            "kind": "Call",
+            "span": {
+              "lineno": 14,
+              "col_offset": 21,
+              "end_lineno": 14,
+              "end_col_offset": 30
+            },
+            "func": {
+              "kind": "Name",
+              "span": {
+                "lineno": 14,
+                "col_offset": 21,
+                "end_lineno": 14,
+                "end_col_offset": 26
+              },
+              "id": "range"
+            },
+            "args": [
+              {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 27,
+                  "end_lineno": 14,
+                  "end_col_offset": 29
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            ],
+            "keywords": [],
+            "call_unsupported": null
+          },
+          "ifs": [],
+          "walrus": []
         }
       },
       {
@@ -279,15 +355,132 @@
           }
         ],
         "value": {
-          "kind": "Unsupported",
+          "kind": "ListComp",
           "span": {
             "lineno": 19,
             "col_offset": 8,
             "end_lineno": 19,
             "end_col_offset": 44
           },
-          "py_kind": "ListComp",
-          "text": "[i for i in range(10) if i % 2 == 0]"
+          "elt": {
+            "kind": "Name",
+            "span": {
+              "lineno": 19,
+              "col_offset": 9,
+              "end_lineno": 19,
+              "end_col_offset": 10
+            },
+            "id": "i"
+          },
+          "target": {
+            "kind": "Name",
+            "span": {
+              "lineno": 19,
+              "col_offset": 15,
+              "end_lineno": 19,
+              "end_col_offset": 16
+            },
+            "id": "i"
+          },
+          "iter": {
+            "kind": "Call",
+            "span": {
+              "lineno": 19,
+              "col_offset": 20,
+              "end_lineno": 19,
+              "end_col_offset": 29
+            },
+            "func": {
+              "kind": "Name",
+              "span": {
+                "lineno": 19,
+                "col_offset": 20,
+                "end_lineno": 19,
+                "end_col_offset": 25
+              },
+              "id": "range"
+            },
+            "args": [
+              {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 26,
+                  "end_lineno": 19,
+                  "end_col_offset": 28
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            ],
+            "keywords": [],
+            "call_unsupported": null
+          },
+          "ifs": [
+            {
+              "kind": "Compare",
+              "span": {
+                "lineno": 19,
+                "col_offset": 33,
+                "end_lineno": 19,
+                "end_col_offset": 43
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 33,
+                  "end_lineno": 19,
+                  "end_col_offset": 38
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 33,
+                    "end_lineno": 19,
+                    "end_col_offset": 34
+                  },
+                  "id": "i"
+                },
+                "op": "Mod",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 37,
+                    "end_lineno": 19,
+                    "end_col_offset": 38
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 42,
+                    "end_lineno": 19,
+                    "end_col_offset": 43
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          ],
+          "walrus": []
         }
       },
       {
@@ -460,15 +653,88 @@
               "end_col_offset": 34
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "ListComp",
               "span": {
                 "lineno": 26,
                 "col_offset": 11,
                 "end_lineno": 26,
                 "end_col_offset": 34
               },
-              "py_kind": "ListComp",
-              "text": "[ord(c) + k for c in s]"
+              "elt": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 12,
+                  "end_lineno": 26,
+                  "end_col_offset": 22
+                },
+                "left": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 12,
+                    "end_lineno": 26,
+                    "end_col_offset": 18
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 26,
+                      "col_offset": 12,
+                      "end_lineno": 26,
+                      "end_col_offset": 15
+                    },
+                    "id": "ord"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 26,
+                        "col_offset": 16,
+                        "end_lineno": 26,
+                        "end_col_offset": 17
+                      },
+                      "id": "c"
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "op": "Add",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 21,
+                    "end_lineno": 26,
+                    "end_col_offset": 22
+                  },
+                  "id": "k"
+                }
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 27,
+                  "end_lineno": 26,
+                  "end_col_offset": 28
+                },
+                "id": "c"
+              },
+              "iter": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 32,
+                  "end_lineno": 26,
+                  "end_col_offset": 33
+                },
+                "id": "s"
+              },
+              "ifs": [],
+              "walrus": []
             }
           }
         ]

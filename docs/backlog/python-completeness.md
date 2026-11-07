@@ -10119,3 +10119,26 @@ approximation order.
 
 DECIDED: keep list-fold sequencing explicit in the proof layer; use the new
 congruence when the native `ListComp` evaluator is reintroduced.
+
+## 2026-11-07-pycomplete-401 — preserve the list-comprehension source node
+
+The extractor and JSON ingestion now carry `ListComp` as its own structured
+AST node, including its element, target, iterable, filters, and walrus
+metadata. The evaluator and both proof-facing interpreters handle the node as
+an explicit loud boundary, so list-comprehension syntax cannot become a lookup
+of the shadowable builtin name `list`. All AST/name/capture walkers and the
+clock/payload proof case splits were extended, and the pinned script witnesses
+continue to refuse with the exact boundary message while CPython 3.9 runs.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 162 passed |
+| Python parser/proof target | managed `lake build LeanModels.Python.Tests` passed |
+| Proof interpreter target | managed `lake build LeanModels.Python.Obs` passed |
+| Runner build | managed `lake build leanmodels-run` passed (40 jobs) |
+| Differential witnesses | `listcomp_script.py` and `listcomp_shadow.py` both loud; no fabricated shadow result |
+| Formatting | `git diff --check` passed |
+
+DECIDED: retain the source-level loud boundary until native comprehension
+evaluation has a complete recursion, payload-blindness, and clock-erasure
+proof package; do not reintroduce the builtin-name lowering.

@@ -4,6 +4,8 @@
 
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
+- Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.
+
 - Closed the stale JSON list-comprehension lowering path; `ListComp` remains an explicit loud boundary and no longer becomes a shadowable `list` call.
 
 - Repaired payload-blind proofs for zero-argument user and admitted builtin exception constructors; runtime behavior is unchanged.

@@ -132,6 +132,8 @@ inductive Expr where
   representable and refuses loudly at evaluation. -/
   | genExp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr)
       (walrus : Array (String × Expr)) (span : Span)
+  | listComp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr)
+      (walrus : Array (String × Expr)) (span : Span)
   /-- The WALRUS `(x := e)` in general expression position (schema
   `NamedExpr`, H7+ — docs/memory-model.md §the walrus operator).
   Evaluates `e`, BINDS `x` in the executing frame, and answers the same
@@ -393,6 +395,12 @@ mutual
           || exprMentionsAny names upper
           || exprMentionsAny names step
     | .genExp elt target iter ifs walrus _ =>
+        exprMentionsAny names elt
+          || exprMentionsAny names target
+          || exprMentionsAny names iter
+          || exprListMentionsAny names ifs.toList
+          || pairExprMentionsAny names walrus.toList
+    | .listComp elt target iter ifs walrus _ =>
         exprMentionsAny names elt
           || exprMentionsAny names target
           || exprMentionsAny names iter

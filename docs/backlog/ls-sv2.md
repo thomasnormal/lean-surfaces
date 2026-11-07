@@ -6790,6 +6790,32 @@ invariant directly to either the full reset certificate or its public stream
 projection.  PicoRV32 remains parked at the approved task/net-z memory-route
 walls.
 
+## 2026-11-07-ls-sv2-367 — embed upper-immediate certificates in mixed RV32I
+
+The unified RV32I certificate already admits LUI and AUIPC through its ALU
+family, while `RvfiUpperProgram` retained those instructions in a dedicated
+upper-immediate certificate.  A future loaded-core proof needs to cross that
+boundary without rebuilding rows or losing decoder evidence.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiUpperMixed.lean`.  It defines the
+structure-preserving `UpperInstruction.toRv32i` embedding, proves the exact
+input, state-step, and retirement equations, and maps every
+`UpperRvfiCycleTrace` constructor to a mixed `Rv32iRvfiCycleTrace` over the
+same cycle list.  The adapter retains bubbles, actual cycle inputs, order tags,
+decoder proofs, and indexed boundaries.  Imported it from the refinement
+umbrella and documented the bridge in the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** LUI/AUIPC certificates now feed the same mixed RV32I
+surface as ADDI, so later per-cycle upper invariants can reuse the existing
+from-reset contracts.  PicoRV32 remains parked at the approved task/net-z
+memory-route walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

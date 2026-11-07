@@ -924,6 +924,13 @@ feed the mixed R2 theorem without reconstructing a retirement stream.  This
 is generic certificate plumbing, not a claim about the currently blocked
 PicoRV32 RTL.
 
+The same mixed adapter is available for the upper-immediate family in
+`LeanModels.Refine.RvfiUpperMixed`.  `UpperInstruction.toRv32i` maps LUI and
+AUIPC to their exact `.alu` forms, and `UpperRvfiCycleTrace.toRv32i` preserves
+the source certificate's bubbles, cycle inputs, order tags, decoder proofs,
+and indexed boundaries.  It does not choose a new decode or alter the
+PicoRV32 source.
+
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an
 explicit order equation for valid rows, it constructs the mixed

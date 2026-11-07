@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-407` |  | recheck list-comprehension shadowing | python-completeness |
 | `2026-11-07-pycomplete-406` |  | recheck generator creation-time iteration | python-completeness |
 | `2026-11-07-pycomplete-405` |  | recheck generator capture census | python-completeness |
 | `2026-11-07-pycomplete-404` |  | recheck structured global declarations | python-completeness |

@@ -21,6 +21,9 @@
 - Rechecked the generator-expression creation-time `GET_ITER` guard: scalar
   outer sources raise at creation rather than answering after deferred resume.
 
+- Rechecked list-comprehension shadowing: the approved AST preserves
+  `ListComp` as a structured loud boundary, so user bindings cannot affect it.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

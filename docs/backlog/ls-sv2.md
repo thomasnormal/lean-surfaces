@@ -7083,6 +7083,33 @@ request.  Do not treat the stale public-master probe as evidence that task
 admission is absent; re-probe again when the owner lane's change reaches
 `origin/master`.
 
+## 2026-11-07-ls-sv2-377 — file the urgent owner-lane build repair request
+
+The inbox reported a red `origin/master` import closure after the recent
+SystemVerilog v4.35 migration.  Item 377 reproduced that state before doing
+any further R2 work.
+
+**MEASURED:** On Lean 4.35.0, a clean
+`lake build LeanModels.Sv.ClockGuard0 LeanModels.Sv.SelfCheck` at public commit
+`26b804266` fails in `ClockGuard0.lean:55-60` and `SelfCheck.lean:2283-2288`
+with `unexpected identifier; expected '}'` for multiline `Design` literals.
+`SelfCheck.lean:1402` independently fails because
+`Res.unsupported "Initial:order" msg` supplies two strings while the
+constructor accepts one.  The same build also reports the downstream stale
+`CombView`/`Comb2Base` net metadata obligation and the four example blockers
+listed in the inbox (`ripple_add`, `remainder`, `division`, and
+`sem2/sva_select`).
+
+**CHANGED:** Filed a dated `REQUEST ls-sv:` in the shared inbox with the exact
+files, lines, measured errors, and preservation requirements.  No owner-lane
+source was edited; no semantics or core theorem changed.
+
+**JUDGED / DECIDED:** The red import closure takes priority over item-2
+PicoRV32 progress.  ls-sv must repair its owned syntax, refusal arity, stale
+net metadata proof, and dependent example pins before an R2 proof can provide
+meaningful validation.  Item 377 has no oracle result and does not add a
+finite captured-window theorem.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

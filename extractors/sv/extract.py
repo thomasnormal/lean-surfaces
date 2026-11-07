@@ -24557,6 +24557,31 @@ def _convert_expression_stmt(sm, stmt):
 
 def _convert_local_decl(sm, stmt):
     symbol = stmt.symbol
+    if _SYM is not None and _RETAIN_PROC_REWRITES:
+        # Preserve the declaration's lexical scope for the retained WP-PROC
+        # route.  The frozen PStmt parser maps LocalDecl to a named
+        # Unsupported node; no module storage or symbol rename is invented.
+        try:
+            width, two_state, reason = type_width_2s(symbol.type)
+            init = getattr(symbol, "initializer", None)
+            init_node = convert_expr(sm, init) if init is not None else None
+            if two_state and init_node is not None and width is not None:
+                init_node = squash2_wrap(init_node, width)
+            node = {
+                "kind": "LocalDecl",
+                "span": node_span(sm, stmt),
+                "name": symbol.name,
+                "width": width,
+                "two_state": two_state,
+                "init": init_node,
+                "symbolic_local_retained": True,
+            }
+            if reason is not None:
+                node["type_reason"] = reason
+            return node
+        except Exception:
+            return {"kind": "LocalDecl", "span": node_span(sm, stmt),
+                    "name": symbol.name, "symbolic_local_retained": True}
     if _SYM is not None and lower_proc.erased_iterator(sys.modules[__name__], symbol):
         # WP-PROC X1: the dead block-level declaration of an unrolled loop iterator
         return {"kind": "Empty", "span": node_span(sm, stmt), "symbolic_iterator_decl_erased": True}

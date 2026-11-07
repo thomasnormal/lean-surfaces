@@ -120,6 +120,12 @@ Rows: `proc_local` (named and nested blocks, one shadowing a module variable, se
 body), `proc_local_initializer`, `proc_local_initializer_param` (a
 parameter-point value), and `proc_local_param_n3/n4/n8`.
 
+The same `--retain-proc-rewrites` mode keeps a block declaration as its
+lexical `LocalDecl` envelope node and leaves references under the original
+symbol name. `Ingest2` reports the frozen scoped-storage boundary as
+`Unsupported` instead of hoisting the declaration into module storage; the
+hoisting path remains the default.
+
 ## E1. `always @*` and level-sensitive event lists
 
 IEEE 1800-2023 9.2.2.2.2 lists exactly three differences between `always_comb` and `always @*`: `always_comb` runs once at time

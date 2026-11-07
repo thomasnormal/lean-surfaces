@@ -528,6 +528,17 @@ class LocalDeclarations(Base):
         target = always_comb_body(m)["stmts"][1]["target"]
         self.assertEqual(target["name"], "blk1__t1")
 
+    def test_retain_proc_rewrites_keeps_block_local_source_node(self):
+        source = ("module t (input logic [7:0] a, b, output logic [7:0] y); "
+                  "always_comb begin logic [7:0] t1; t1 = a ^ b; y = t1 & a; end endmodule")
+        retained = self.module(source, retain_proc_rewrites=True)
+        body = always_comb_body(retained)
+        local = body["stmts"][0]
+        self.assertEqual(local["kind"], "LocalDecl")
+        self.assertTrue(local["symbolic_local_retained"])
+        self.assertEqual(local["name"], "t1")
+        self.assertFalse(any(d["name"] == "blk1__t1" for d in retained["decls"]))
+
     def test_named_and_nested_blocks(self):
         m = self.module("module t (input logic [7:0] a, output logic [7:0] y, z); always_comb begin : blk logic [7:0] p;"
                         " p = a; begin : in logic [7:0] q; q = ~p; y = q; end z = p; end endmodule")

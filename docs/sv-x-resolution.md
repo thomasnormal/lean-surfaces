@@ -101,7 +101,11 @@ clock or arrival schedule.
 ## Refinement obligations
 
 The implementation will introduce an explicit concretization/resolution
-judgment over E's source-shaped states and traces. It must prove:
+judgment over E's source-shaped states and traces. Until that judgment is
+threaded through a consumer, an unknown-sensitive decision is a named proof
+obligation: the consumer must provide `DecisionKnown` (or an equivalent
+all-known witness), or refuse. It must not use the x-optimistic else branch
+as an unproved theorem. The implementation must prove:
 
 1. **Soundness.** Every resolved E run is a concrete run permitted by the
    four-state AST semantics, including the same environment and schedule
@@ -119,10 +123,25 @@ The migration plan is to add a `DecisionKnown` witness to the E step
 judgments, lift it through `⊨₂`/`Runs2` and the cycle observation contracts,
 then replace each direct `condTrue` decision with the resolution relation. The
 known-state theorem will show that the old evaluator is the singleton
-projection under that witness. The current direct users are the `ifStmt` and
-ternary arms in `Sem2`, the procedural and memory-cycle `if` executors, the
-case-check conditional path, and the proof-layer `Models2`/`Obs_run2` bridges;
-each must either carry the witness or move to the resolved relation.
+projection under that witness. The current direct users are grouped by
+surface so the migration cannot silently omit a proof route:
+
+* `Sem2` and `Semantics` use it for procedural `if`/ternary execution and
+  two-state expression conversion; `SelfCheck` has the corresponding
+  self-check evaluator.
+* `Step`, `Loop2Frag`, `Loop2E`, `CombFragE`, `FlatMemRun2`, `Core0Proc`,
+  `Core1Edge`, and `Seq2Cycle` branch while proving or executing source-shaped
+  statements. `MemCycle` and the case-check validator are the memory and
+  qualified-case variants of the same operation.
+* `Sva` and the assertion/self-check observers turn sampled values into
+  Boolean outcomes; those outcomes need the same known-sample witness.
+* `Surface`, `Observe`, `Obs_run2`, and the `Models2`/contract bridges expose
+  traces or edge decisions to the proof layer. `Comb2Proc` and `CombKnownBits`
+  also contain Boolean projection lemmas consumed by the comb tactics.
+
+Each consumer must either carry the witness or move to the resolved relation;
+the inventory is intentionally broader than the current `run2` path because
+all of these definitions can be used by a theorem or a derived view.
 
 The first kernel-facing fragment is now present in
 `LeanModels.Sv.Kernel.XResolve`: `DecisionKnown v` states that all correlated

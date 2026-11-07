@@ -1399,7 +1399,7 @@ initials — after the last possible output, so it is dropped here. -/
 def runSelfCheck (d : Design) (fuel : Nat)
     (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) : Res (List String) := do
   if let some msg := d.initialOrderReport then
-    return ← .unsupported "Initial:order" msg
+    return ← .unsupported s!"Initial:order: {msg}"
   if let some tag := d.procs.findSome? fun p =>
       match p with
       | .other svKind _ => some svKind
@@ -2280,14 +2280,18 @@ private def displayPass : SStmt :=
 private def initWriteA : SStmt := .m0 (.blockingAssign "a" (.lit (.ofNat 1 1)))
 private def initReadA : SStmt :=
   .sysCall false (some "%0d") #[(.m0 (.ident "a"), false)]
-#guard ({ name := "indep", decls := #[],
-  procs := #[.initial initWriteA,
-             .initial (.m0 (.blockingAssign "b" (.lit (.ofNat 1 1))))] } : Design).initialOrderReport == none
-#guard ({ name := "dep", decls := #[],
-  procs := #[.initial initWriteA, .initial initReadA] } : Design).initialOrderReport.isSome
-#guard (runSelfCheck
-  { name := "dep", decls := #[], procs := #[.initial initWriteA, .initial initReadA] }
-  1000).toOption == none
+private def initIndep : Design :=
+  { name := "indep"
+    decls := #[]
+    procs := #[.initial initWriteA,
+      .initial (.m0 (.blockingAssign "b" (.lit (.ofNat 1 1))))] }
+private def initDep : Design :=
+  { name := "dep"
+    decls := #[]
+    procs := #[.initial initWriteA, .initial initReadA] }
+#guard initIndep.initialOrderReport == none
+#guard initDep.initialOrderReport.isSome
+#guard (runSelfCheck initDep 1000).toOption == none
 
 end Tests
 

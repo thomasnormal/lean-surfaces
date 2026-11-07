@@ -137,6 +137,16 @@
       "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
     },
     {
+      "name": "sva_inside",
+      "example": "sem2/sva_inside",
+      "top": "sva_inside",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: finite SVA inside membership over concrete literal items maps to case-equality disjunction in E; the clean-room source is accepted by Verilator's assertion-capable front end."
+    },
+    {
       "name": "sva_past_value",
       "example": "sem2/sva_past_value",
       "top": "sva_past_value",

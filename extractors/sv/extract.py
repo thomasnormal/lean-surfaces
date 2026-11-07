@@ -26196,6 +26196,48 @@ def _sva_pexpr(node):
             return {"kind": "Fill", "bit": raw[1]}
         return {"kind": "Unsupported", "sv_kind": kind,
                 "text": "unbased unsized literal"}
+    if kind == "InsideExpression":
+        subject = _sva_pexpr(node.get("expr"))
+        ranges = (node.get("ranges") or {}).get("valueRanges") or []
+        items = []
+        for item in ranges:
+            item_kind = item.get("kind") if isinstance(item, dict) else None
+            if item_kind == "Comma":
+                continue
+            if item_kind == "CastExpression":
+                rhs = _sva_unwrap(item.get("right"))
+                raw = (rhs.get("value", {}).get("text", "")
+                       if isinstance(rhs, dict) else "")
+                if raw in ("0", "1"):
+                    items.append({"kind": "Fill", "bit": raw})
+                    continue
+            if item_kind == "MultipleConcatenationExpression":
+                concat = item.get("concatenation") or {}
+                exprs = concat.get("expressions") or []
+                if len(exprs) == 1:
+                    raw = ((exprs[0].get("value") or {}).get("text", "")
+                           if isinstance(exprs[0], dict) else "")
+                    if raw == "1":
+                        items.append({"kind": "Fill", "bit": "1"})
+                        continue
+            if item_kind == "IntegerVectorExpression":
+                raw = ((item.get("value") or {}).get("text", "")
+                       if isinstance(item, dict) else "")
+                if raw in ("0", "1"):
+                    items.append({"kind": "Fill", "bit": raw})
+                    continue
+            return {"kind": "Unsupported", "sv_kind": "InsideExpression",
+                    "text": "inside range or item outside the finite literal fragment"}
+        if not items:
+            return {"kind": "Unsupported", "sv_kind": "InsideExpression",
+                    "text": "empty inside set"}
+        result = None
+        for item in reversed(items):
+            eq = {"kind": "Binary", "op": "===", "left": subject,
+                  "right": item}
+            result = eq if result is None else {
+                "kind": "Binary", "op": "||", "left": eq, "right": result}
+        return result
     if kind in ("UnaryLogicalNotExpression", "UnaryBitwiseNotExpression",
                 "UnaryMinusExpression", "UnaryPlusExpression"):
         op = {"UnaryLogicalNotExpression": "!", "UnaryBitwiseNotExpression": "~",

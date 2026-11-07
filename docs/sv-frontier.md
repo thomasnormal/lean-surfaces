@@ -167,6 +167,10 @@ expressions, with previous-sample lookup performed before the arithmetic fold.
 The clean-room `sem2/sva_past_value` witness and Verilator row cover both
 `depth == $past(depth)` and `depth == $past(depth) + 1`; the VIP census falls to
 11 residual nodes, all outside this finite value fragment.
+Finite literal `inside` sets now lower to case-equality disjunctions with
+width-directed fills. The clean-room `sem2/sva_inside` witness and Verilator
+row cover the admitted membership form; the VIP census falls to 10 residual
+nodes, with no retained-property loss.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

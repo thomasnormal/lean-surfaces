@@ -51,16 +51,31 @@ def instantiateExpr (env : IEnv) (elems : List (String × Nat)) (value : PExpr) 
   -- unbased unsized fills (`'0`, `'1`, `'x`, `'z`) their required width.
   instExpr2 env elems (selfWidth2 env elems value) value
 
-def instantiateValue (env : IEnv) (elems : List (String × Nat)) : PSvaValue → SvaValue
-  | .current value => .current (instantiateExpr env elems value)
-  | .past cycles value => .past cycles (instantiateExpr env elems value)
+def svaValueWidth (env : IEnv) (elems : List (String × Nat)) : PSvaValue → Option Nat
+  | .current value | .past _ value => selfWidth2 env elems value
+  | .binary _ left right =>
+      match svaValueWidth env elems left, svaValueWidth env elems right with
+      | some a, some b => some (max a b)
+      | some a, none => some a
+      | none, some b => some b
+      | none, none => none
+
+def instantiateValueAt (env : IEnv) (elems : List (String × Nat))
+    (ctx : Option Nat) : PSvaValue → SvaValue
+  | .current value => .current (instExpr2 env elems ctx value)
+  | .past cycles value => .past cycles (instExpr2 env elems ctx value)
   | .binary op left right => .binary op
-      (instantiateValue env elems left) (instantiateValue env elems right)
+      (instantiateValueAt env elems ctx left) (instantiateValueAt env elems ctx right)
+
+def instantiateValue (env : IEnv) (elems : List (String × Nat)) (value : PSvaValue) : SvaValue :=
+  instantiateValueAt env elems (svaValueWidth env elems value) value
 
 def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → Except String SvaBool
   | .expr value => .ok (.expr (instantiateExpr env elems value))
-  | .valueEq left right => .ok (.valueEq (instantiateValue env elems left)
-      (instantiateValue env elems right))
+  | .valueEq left right =>
+      let ctx := (svaValueWidth env elems left).orElse (fun _ => svaValueWidth env elems right)
+      .ok (.valueEq (instantiateValueAt env elems ctx left)
+        (instantiateValueAt env elems ctx right))
   | .past cycles value => .ok (.past cycles (.expr (instantiateExpr env elems value)))
   | .rose value => .ok (.roseExpr (instantiateExpr env elems value))
   | .fell value => .ok (.fellExpr (instantiateExpr env elems value))

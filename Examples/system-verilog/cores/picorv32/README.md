@@ -161,6 +161,9 @@ The reverse bridge `cycleStepRefines_to_rvfiCycleStepRefines` lifts an existing
 optional `CycleStepRefines` proof when a separate wire invariant proves every
 valid raw row well formed.  That premise is explicit: without it, the optional
 adapter could hide a malformed valid row as a bubble.
+Under this invariant, `cycleStepRefines_iff_rvfiCycleStepRefines` packages the
+two directions as an equivalence, so a loaded-core proof may choose the
+optional or raw contract without changing its wire obligations.
 The equivalence `rvfiCycleStepRefines_iff_step` exposes this case split as the
 canonical packed-field statement of the strict contract.
 The companion `rvfiCycleStepRefines_trace_refines` and

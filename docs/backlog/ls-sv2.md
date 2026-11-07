@@ -4236,3 +4236,21 @@ valid RVFI data into a silently dropped cycle.  No RTL, loader, or
 **DECIDED:** keep raw well-formedness as a visible premise at the optional-to-
 strict boundary, rather than weakening the strict contract or inferring the
 wire condition from an optional `none` result.
+
+## 2026-11-07-ls-sv2-273 — characterize optional and strict RVFI refinement
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_iff_rvfiCycleStepRefines` to
+`LeanModels/Refine/Rvfi.lean`.  With the same explicit premise that every
+valid raw observation is well formed, the ordinary optional cycle contract and
+the strict packed RVFI contract are equivalent.  The equivalence composes the
+new optional-to-strict bridge with the existing strict-to-optional theorem;
+malformed valid rows therefore remain excluded from both theorems' usable
+boundary.  Updated the PicoRV32 README and backlog/index.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** expose the two representations as interchangeable only under a
+visible wire invariant, so callers can select the proof shape without erasing
+the raw RVFI obligation.

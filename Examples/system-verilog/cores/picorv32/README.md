@@ -35,48 +35,72 @@ unsupported nodes; the most common classes are unsized/XZ parametric literals
 (16), call expressions (13), width conversions (11), net-z ports (8), and
 assignment targets (6).  These counts are telemetry, not admitted semantics.
 
-The existing one-rank memory adapter can inspect the same `PDesign`, but its
-current source-shaped route reports the next generic wall before constructing a
-memory design:
+The initial one-rank memory probe was run before the generic generate-member
+route landed and therefore reported the following historical wall:
 
 ```text
 memory cycle route does not yet admit generate members
 ```
 
-This packet therefore does not claim an R1 refinement theorem for PicoRV32.
-The exact memory wall is already requested from the owner lane in
-`/var/tmp/thomas-ahle/fleet2/inbox/ls-sv.md` (the 2026-11-05 R2 request and
-the parameter-sized-array follow-up).  Once that generic route is integrated,
-the generated members and the remaining source-shaped process forms must be
-re-measured before core-specific proof glue is added.
+This packet therefore did not claim an R1 refinement theorem for PicoRV32.
+The historical memory wall was requested from the owner lane in
+`/var/tmp/thomas-ahle/fleet2/inbox/ls-sv.md`.
 
 ## Re-probe after the generic memory route
 
 On 2026-11-05, the unchanged pinned envelope was re-probed against
 `origin/master` at `38288d414` (which includes the generic one-rank memory
-adapter).  The normal semantic family still reports exactly the
-`cpuregs` unpacked-memory wall above, and
-`pdesign.instantiateMemD2` still returns
-`unsupported "Instantiate" "memory cycle route does not yet admit generate members"`.
-The route has therefore not silently advanced past the source's generate
-members; no core-specific proof was started.  The CV32E40P and Ibex probes
-were also rerun from their pinned envelopes: their first loader diagnostics
-remain `AlwaysPosedge:edge` and `AlwaysLatch`, respectively.  These are
-measurements of the current tool, not adaptations of any upstream RTL.
+adapter).  That historical run still reported the `cpuregs` unpacked-memory
+wall and the pre-generate route refusal.  The CV32E40P and Ibex probes were
+also rerun from their pinned envelopes: their first loader diagnostics remain
+`AlwaysPosedge:edge` and `AlwaysLatch`, respectively.  These are measurements
+of the tool, not adaptations of upstream RTL.
+
+## 2026-11-07 re-probe on current `github/master`
+
+The pinned source was re-extracted with the current extractor and no RTL was
+changed:
+
+```text
+source commit: ef203c2b0a3fb793280f5114941416c425c5b461
+ls-sv revision: 83638b50fccf1dfe7980f2ca1ab49e1366f34ef4
+envelope: 2d2d3c1b5cdd459b61a29ab38e6384db20f1f4a6cdbf5b211fe47cc2a1e785c8
+size: 2,986,551 bytes
+```
+
+The declaration still loads.  At the default arguments (26 parameters, 216
+declarations, 43 processes, three generate entries), the ordinary semantic
+family's first refusal is unchanged:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+After rebuilding the current memory-route modules, the first memory-design
+refusal is now the top-level `PDesign.others` gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the
+`wire` declaration at `picorv32.v:257`.  This is an existing net-z boundary,
+not a new generate-member shape, so no additional `REQUEST ls-sv` repro is
+filed.  The symbolic PicoRV32 invariant remains parked at these loader walls.
 
 ## Generated-member clean-room repro
 
-The next wall is independent of PicoRV32's source.  The clean-room fixtures
-[`generate_memory_if.sv`](generate_memory_if.sv) and
-[`generate_memory_for.sv`](generate_memory_for.sv) combine a one-rank unpacked
-memory with a source-shaped `generate if` or `generate for`.  Their approved
-envelopes are checked by [`generate_memory_if_probe.lean`](generate_memory_if_probe.lean)
-and [`generate_memory_for_probe.lean`](generate_memory_for_probe.lean): the
-loader declaration succeeds, while
-`pdesign.instantiateMemD2 [4]` reduces exactly to
-`unsupported "Instantiate" "memory cycle route does not yet admit generate members"`.
-These fixtures are generic repros for the owner lane; they do not alter or
-lower the pinned PicoRV32 RTL.
+The generic route is independently confirmed by the clean-room fixtures in
+`Examples/system-verilog/seq_mem/gen_members`: freshly extracted envelopes
+produce one memory declaration and one process for the `generate if`, and two
+memory declarations and five expanded processes for the `generate for`.  The
+older core-local [`generate_memory_if.sv`](generate_memory_if.sv) probe now
+records its admitted assignment; the [`generate_memory_for.sv`](generate_memory_for.sv)
+probe retains a separate refusal because its `wire`/default-point array shape
+is still an unsupported module member.  Neither fixture alters or lowers the
+pinned PicoRV32 RTL.
 
 ## RVFI and memory-port witness
 

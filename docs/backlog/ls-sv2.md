@@ -5405,3 +5405,51 @@ changed.
 **JUDGED / DECIDED:** expose exact phase/state data alongside the abstract
 relation so a future loaded-core invariant can resume at the measured state;
 keep the symbolic PicoRV32 proof parked at the loader refusals with `ls-sv`.
+
+## 2026-11-07-ls-sv2-320 — re-probe PicoRV32 after generated-member admission
+
+The inbox and goal file were reread before this item.  The owner explicitly
+redirected the lane away from another finite captured-window lemma and asked
+for a fresh PicoRV32 load against current `github/master`.
+
+The pinned YosysHQ source at commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` was re-extracted with the current
+extractor and loaded against `github/master` revision
+`83638b50fccf1dfe7980f2ca1ab49e1366f34ef4`.  The fresh envelope is
+`2d2d3c1b5cdd459b61a29ab38e6384db20f1f4a6cdbf5b211fe47cc2a1e785c8`
+(`2,986,551` bytes).  Its declaration succeeds; the ordinary semantic
+family's first refusal remains the unpacked register file at
+`picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+After rebuilding `LeanModels.Sv.Kernel.MemCycle`, the memory route no longer
+stops at generate members.  It reaches the top-level unsupported-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire`
+at `picorv32.v:257`; this is an already catalogued net-z boundary, so no new
+clean-room request was needed.  Fresh clean-room `generate if` and `generate
+for` envelopes both instantiate successfully (the latter expands to four
+indexed assignments), while the older core-local `wire`/default-point fixture
+still refuses at the unsupported-member gate.  No RTL, loader, extractor, or
+`LeanModels/Sv/**` file changed, and no finite-window lemmas were added.
+
+**MEASURED:** fresh extraction, the rebuilt loader probe, both fresh
+clean-room generate probes, `lake build LeanModels.Refine`, the focused
+PicoRV32 boundary target, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass.  The existing
+finite proof remains untouched; its symbolic invariant is still parked at the
+two loader walls above.
+
+**JUDGED / DECIDED:** generated members are no longer the PicoRV32 memory
+route's first wall.  Keep the next R2 step focused on the existing unpacked
+`cpuregs`/net-z and unsupported-member boundaries, and do not extend the finite
+window until a loaded-core invariant can consume them.

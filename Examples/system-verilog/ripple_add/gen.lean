@@ -1,6 +1,7 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Gen2
 import LeanModels.Sv.Hier2Gen
+import LeanModels.Sv.CombView
 
 /-!
 # `ripple_add` — the generate-loop acceptance of the Design2 proof layer
@@ -124,13 +125,16 @@ def rippleDecls (N : Nat) : List Decl :=
 /-! ## The stages of `instantiate2` at symbolic `N` -/
 
 /-- The declaration scope: `N` bound, its declared type `int` 32 bits. -/
-def rippleScope (N : Int) : IEnv := { vals := [("N", N)], pwidths := [("N", 32)] }
+def rippleScope (N : Int) : IEnv :=
+  { nvals := [("N", (N, 32, true))], pwidths := [("N", 32)], int32 := true }
 
 /-- The parameter environment: the declaration scope plus the packed-array
 geometry table evaluated in it (`dimTable` — every `instantiate2`
 environment carries it). -/
 def rippleEnv (N : Int) : IEnv :=
   { rippleScope N with dims := dimTable (rippleScope N) ripple_add.pdesign.decls }
+
+def rippleRange (N : Int) : Prop := -2147483648 ≤ N ∧ N < 2147483648
 
 /-- Declarations at raw widths: `wv` = `|N-1| + 1` (the `[N-1:0]` ports),
 `wc` = `|N| + 1` (`c[N:0]`) — the width rule is total in `N`, which is why
@@ -148,7 +152,44 @@ def rippleElems : List (String × Nat) :=
   [("a", 1), ("b", 1), ("cin", 1), ("s", 1), ("cout", 1), ("c", 1)]
 
 /-- The parameter stage binds `N` (by `rfl`). -/
-theorem ripple_paramEnv (N : Int) : ripple_add.pdesign.paramEnv2 [N] = .ok (rippleEnv N) := rfl
+private theorem ripple_declConstType :
+    declConstType ({ int32 := true } : IEnv)
+      (some (.packed [⟨.int 31, .int 0⟩] (some 32))) none = .ok none := by
+  rw [declConstType]
+  rw [PType.width_packed_single_of (r := some 32) (hm := rfl) (hl := rfl)]
+  simp only [PType.boundsLiteral]
+  · rfl
+  · intro name pkg resolved h
+    cases h
+
+theorem ripple_paramEnv (N : Int) (hN : rippleRange N) :
+    ripple_add.pdesign.paramEnv2 [N] = .ok (rippleEnv N) := by
+  have hc : canonInt 32 true N = N :=
+    LeanModels.Sv.CombView.canonInt32_of_range hN
+  have hbind : bindParamsRes ({ int32 := true } : IEnv)
+      [{ name := "N", default? := some (.int 4), resolved? := some 4,
+         type? := some (.packed [⟨.int 31, .int 0⟩] (some 32)) }] [N] =
+      .ok ({ nvals := [("N", (N, 32, true))], int32 := true } : IEnv) := by
+    unfold bindParamsRes
+    rw [bindParams]
+    simp only [ripple_declConstType, Gen2.except_ok_bind, Res.ok_bind]
+    rw [hc]
+    simp [Except.bind, Except.mapError, Gen2.except_ok_bind, Res.ok_bind,
+      bindParams, IEnv.bindNVal, rippleScope]
+  unfold PDesign.paramEnv2
+  simp only [ripple_add.pdesign, bindPackageParams, bindPackageEnums,
+    Gen2.except_ok_bind]
+  simp only [Res.bind_eq_ok]
+  refine ⟨_, rfl, ?_⟩
+  refine ⟨_, rfl, ?_⟩
+  refine ⟨_, hbind, ?_⟩
+  refine ⟨_, rfl, ?_⟩
+  refine ⟨_, rfl, ?_⟩
+  refine ⟨[("N", 32)], ?_, ?_⟩
+  · simp [List.filterMapM, List.filterMapM.loop, PType.width_packed_single_of, PDim.width, evalInt_int, Gen2.except_ok_bind]
+  · simp [rippleEnv, rippleScope, ripple_add.pdesign, dimTable, dimTableStep, evalDims, evalInt,
+      PType.width_packed_single_of, PDim.width, IEnv.intVal?, List.lookup, PExpr.isInt, bindLocals, bindEnums, List.filterMapM_cons,
+      List.filterMapM_nil, Gen2.except_ok_bind, bindParams, IEnv.bindNVal, hc]
 
 /-- The declaration stage at symbolic `N`: the raw widths `|N-1| + 1` and
 `|N| + 1`. -/
@@ -202,46 +243,46 @@ theorem ripple_gens (N : Nat) (wv wc : Nat) :
 
 /-- **`instantiate2` at symbolic `N`**: succeeds, and is the assembled
 design of the stages above. -/
-theorem ripple_instantiate2 (N : Nat) :
+theorem ripple_instantiate2 (N : Nat) (hN : (N : Int) < 2147483648) :
     ripple_add.pdesign.instantiate2 [(N : Int)] (PDesign.surfaceFuel [(N : Int)]) =
       .ok (ripple_add.pdesign.assemble2 (rippleEnv N)
         (rippleDeclsRaw (((N : Int) - 1).natAbs + 1) ((N : Int).natAbs + 1)) rippleElems
         ((List.range N).flatMap fun i => [sumProc i, carryProc i])) :=
-  PDesign.instantiate2_of_ok rfl (ripple_paramEnv N) (ripple_decls N) (ripple_elems N)
+  PDesign.instantiate2_of_ok rfl (ripple_paramEnv N ⟨by omega, hN⟩) (ripple_decls N) (ripple_elems N)
     (ripple_gens N _ _)
 
 /-! ## The acceptance theorems -/
 
 /-- **The instantiated process list, for every `N`** (no unrolling): `c[0] =
 cin`, `cout = c[N]`, then `s[i]`, `c[i+1]` for each `i < N`. -/
-theorem ripple_processes (N : Nat) :
+theorem ripple_processes (N : Nat) (hN : (N : Int) < 2147483648) :
     (ripple_add.pdesign.instantiateD2 [(N : Int)]).processes.toList = rippleProcs N := by
-  rw [PDesign.instantiateD2_of_ok (ripple_instantiate2 N), PDesign.assemble2_processes,
+  rw [PDesign.instantiateD2_of_ok (ripple_instantiate2 N hN), PDesign.assemble2_processes,
     ripple_static]
   simp [rippleProcs, ripple_add.pdesign]
 
 /-- **Membership characterization, both directions**:
 a process of the instantiated adder is the carry-in, the carry-out, or the
 sum/carry cell of some bit `i < N`. -/
-theorem mem_ripple_processes (N : Nat) (p : Process2) :
+theorem mem_ripple_processes (N : Nat) (hN : (N : Int) < 2147483648) (p : Process2) :
     p ∈ (ripple_add.pdesign.instantiateD2 [(N : Int)]).processes.toList ↔
       p = cinProc ∨ p = coutProc N ∨ ∃ i < N, p = sumProc i ∨ p = carryProc i := by
-  rw [ripple_processes]
+  rw [ripple_processes N hN]
   simp [rippleProcs]
 
 /-- The process count: `2N + 2`. -/
-theorem ripple_processes_length (N : Nat) :
+theorem ripple_processes_length (N : Nat) (hN : (N : Int) < 2147483648) :
     (ripple_add.pdesign.instantiateD2 [(N : Int)]).processes.toList.length = 2 * N + 2 := by
-  rw [ripple_processes]
+  rw [ripple_processes N hN]
   simp only [rippleProcs, List.length_cons, List.length_flatMap, List.length_nil,
     List.map_const', List.sum_replicate_nat, List.length_range]
   omega
 
 /-- **The instantiated declarations** for `N ≥ 1`: `a`, `b`, `s` are `N`
 bits, `cin`/`cout` 1 bit, the carry chain `c` is `N + 1` bits. -/
-theorem ripple_decls_instantiated (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_decls_instantiated (N : Nat) (hN : 1 ≤ N) (hRange : (N : Int) < 2147483648) :
     (ripple_add.pdesign.instantiateD2 [(N : Int)]).decls.toList = rippleDecls N := by
-  rw [PDesign.instantiateD2_of_ok (ripple_instantiate2 N), PDesign.assemble2_decls]
+  rw [PDesign.instantiateD2_of_ok (ripple_instantiate2 N hRange), PDesign.assemble2_decls]
   have hv : ((N : Int) - 1).natAbs + 1 = N := by omega
   have hc : (N : Int).natAbs = N := Int.natAbs_natCast N
   rw [hv, hc]
@@ -308,33 +349,48 @@ theorem ripple_driversOk (N : Nat) :
 
 /-- **`ripple_add.sem N` is the instantiated design**, for every `N` (the
 guard of `instantiateGD2` passes: `ripple_driversOk`). -/
-theorem ripple_sem_eq (N : Nat) :
+theorem ripple_sem_eq (N : Nat) (hN : (N : Int) < 2147483648) :
     ripple_add.sem N = ripple_add.pdesign.instantiateD2 [(N : Int)] := by
-  show ripple_add.pdesign.instantiateGD2 [(N : Int)] = _
-  apply PDesign.instantiateGD2_of_driversOk
-  rw [ripple_processes]
-  exact ripple_driversOk N
+  unfold ripple_add.sem
+  unfold PDesign.instantiateGDAlias2
+  have hinst : ripple_add.pdesign.instantiate2 [(N : Int)]
+      (PDesign.surfaceFuel [(N : Int)]) =
+      .ok (ripple_add.pdesign.instantiateD2 [(N : Int)]) := by
+    rw [PDesign.instantiateD2_of_ok (ripple_instantiate2 N hN)]
+    exact ripple_instantiate2 N hN
+  have hgd : ripple_add.pdesign.instantiateGD2 [(N : Int)] =
+      ripple_add.pdesign.instantiateD2 [(N : Int)] :=
+    PDesign.instantiateGD2_of_ok hinst (by
+      rw [ripple_processes N hN]
+      exact ripple_driversOk N)
+  change (ripple_add.pdesign.instantiateGD2 [(N : Int)]).aliasGuard = _
+  rw [hgd]
+  apply Design2.aliasGuard_of_noComb
+  intro p hp b hb
+  rw [ripple_processes N hN] at hp
+  simp [rippleProcs] at hp
+  rcases hp with rfl | rfl | ⟨a, ha, rfl | rfl⟩ <;> cases hb
 
 /-- The `load_design_sv2` family member `ripple_add.sem N` is the same
 design (`Int.ofNat N` is the binder encoding of `(N : Int)`; the one-driver
 guard passes, `ripple_sem_eq`). -/
-theorem ripple_sem_processes (N : Nat) :
+theorem ripple_sem_processes (N : Nat) (hN : (N : Int) < 2147483648) :
     (ripple_add.sem N).processes.toList = rippleProcs N := by
-  rw [ripple_sem_eq]
-  exact ripple_processes N
+  rw [ripple_sem_eq N hN]
+  exact ripple_processes N hN
 
 /-- `mem_ripple_processes` for the family member `ripple_add.sem N`. -/
-theorem mem_ripple_sem_processes (N : Nat) (p : Process2) :
+theorem mem_ripple_sem_processes (N : Nat) (hN : (N : Int) < 2147483648) (p : Process2) :
     p ∈ (ripple_add.sem N).processes.toList ↔
       p = cinProc ∨ p = coutProc N ∨ ∃ i < N, p = sumProc i ∨ p = carryProc i := by
-  rw [ripple_sem_eq]
-  exact mem_ripple_processes N p
+  rw [ripple_sem_eq N hN]
+  exact mem_ripple_processes N hN p
 
 /-- `ripple_decls_instantiated` for the family member `ripple_add.sem N`. -/
-theorem ripple_sem_decls (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_sem_decls (N : Nat) (hN : 1 ≤ N) (hRange : (N : Int) < 2147483648) :
     (ripple_add.sem N).decls.toList = rippleDecls N := by
-  rw [ripple_sem_eq]
-  exact ripple_decls_instantiated N hN
+  rw [ripple_sem_eq N hRange]
+  exact ripple_decls_instantiated N hN hRange
 
 #print axioms ripple_driversOk
 #print axioms ripple_sem_eq

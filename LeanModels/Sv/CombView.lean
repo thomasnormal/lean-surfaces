@@ -214,7 +214,10 @@ theorem evalIntExact_paramRef {E : IEnv} {n : String} {v : Int}
   rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
   · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
   · cases hx : E.vals.lookup n with
-    | none => simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+    | none =>
+        by_cases hs : n ∈ E.stale
+        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs] at h
+        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs, hm]
     | some x =>
         have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
         subst x
@@ -227,7 +230,10 @@ theorem evalIntExact_genvarRef {E : IEnv} {n : String} {v : Int}
   rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
   · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
   · cases hx : E.vals.lookup n with
-    | none => simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+    | none =>
+        by_cases hs : n ∈ E.stale
+        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs] at h
+        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs, hm]
     | some x =>
         have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
         subst x

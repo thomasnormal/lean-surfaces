@@ -10362,3 +10362,21 @@ or active-exception boundary instead of being replaced by a second program.
 DECIDED: preserve source statement structure and keep unsupported callable,
 active-exception, and budget boundaries loud until their native semantics are
 modeled.
+
+## 2026-11-07-pycomplete-414 — recheck the static definition-delete census
+
+The static definition-delete audit finding is already closed by the current
+`scriptStaticDeleteNoop`: its no-op arm admits only an unobserved benign import
+and explicitly excludes every function, class, and namedtuple table entry.
+Function-body references therefore cannot make `del f` or `del C` silently
+survive through the position-independent tables.
+
+| Measurement | Result |
+|---|---|
+| `del_def_call.py` | leanpy LOUD at `del h`; CPython 3.9.25 raises `NameError` after the deleted call target |
+| Partial/trailing witnesses | `del_partial_script.py` and `del_trailing_script.py` remain LOUD; CPython retains their side effects and failure classes |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain loud refusal for module `def`/`class`/namedtuple/alias deletion
+until definitions become runtime bindings; benign-import deletion remains the
+only static no-op.

@@ -300,6 +300,9 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
               | m => throw s!"unknown ArraySel part mode {m.quote}"
             return .arrayPart name indices mode (← parsePExpr (← getField pj "left"))
               (← parsePExpr (← getField pj "right"))
+    | "FunctionCall" =>
+        return .unsupported "CallExpression:user-function"
+          "source-level user-function call is retained; the frozen expression AST has no call constructor"
     | "Unsupported" =>
         let (svKind, text) ← parseUnsupportedFields j
         return .unsupported svKind text

@@ -30,13 +30,14 @@ def nodes(value):
 
 
 class EmptyFunctionCalls(unittest.TestCase):
-    def symbolic(self, source):
+    def symbolic(self, source, retain_proc_rewrites=False):
         with tempfile.TemporaryDirectory() as directory:
             source_path = Path(directory) / "top.sv"
             output_path = Path(directory) / "top.sv.json"
             source_path.write_text(source)
             extract.process_symbolic("top", [str(source_path)], [],
-                                    str(output_path))
+                                    str(output_path),
+                                    retain_proc_rewrites=retain_proc_rewrites)
             return json.loads(output_path.read_text())["design"]
 
     def test_two_state_default_is_zero(self):
@@ -108,6 +109,19 @@ class EmptyFunctionCalls(unittest.TestCase):
             "return 4'd7; endfunction assign y = seven(selector); endmodule")
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
+
+    def test_symbolic_retain_mode_keeps_user_function_call_source_node(self):
+        design = self.symbolic(
+            "module top(input logic selector, output logic [3:0] y); "
+            "function automatic logic [3:0] step(input logic x); "
+            "return x ? 4'd2 : 4'd1; endfunction "
+            "assign y = step(selector); endmodule",
+            retain_proc_rewrites=True)
+        calls = [node for node in nodes(design)
+                 if node.get("kind") == "FunctionCall"]
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(calls[0]["symbolic_user_function_retained"])
+        self.assertEqual(calls[0]["name"], "step")
 
     def test_symbolic_constant_expression_return_is_materialized(self):
         design = self.symbolic(

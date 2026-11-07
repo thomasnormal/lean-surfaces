@@ -53,6 +53,16 @@ no compound constructor. The default lowering and all existing rows are
 unchanged; this mode is a loud source-preserving boundary until the retained
 Sv AST is available.
 
+## USERFN. User-function calls
+
+The established symbolic path inlines only the narrow pure automatic-function
+shapes covered by the function-call tests: input-only formals, source-pure
+expressions, and the admitted straight-line, conditional, and case local-return
+forms. With `--retain-proc-rewrites`, a call to a source-declared function is
+kept as a `FunctionCall` envelope node with its name and converted actuals;
+`Ingest2` reports `CallExpression:user-function` because frozen `PExpr` has no
+call constructor. System calls and the default pure inliner are unchanged.
+
 ## X1. Loop header forms
 
 The retained `For` path takes a source-pure counted loop whose header declares ONE `int` iterator with a literal

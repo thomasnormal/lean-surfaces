@@ -154,6 +154,9 @@ row as an explicit bubble and carries the relation while the ISA stutters.
 The combined `rvfiCycleStepRefines_step` projection dispatches every raw cycle
 to exactly one of those two branches, retaining the validity bit alongside
 the corresponding well-formed retirement or stutter relation.
+Its dual constructor `rvfiCycleStepRefines_of_step` packages the same
+exhaustive case split into the strict contract, including the valid row's
+existential optional-retirement witness.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.

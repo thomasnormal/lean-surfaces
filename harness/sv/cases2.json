@@ -70330,6 +70330,20 @@
       "measured": "2026-11-04: the envelope retains the parameter-dependent array as UnpackedDecl; the flat E store refuses UnpackedDecl:memory rather than flattening default-point cells."
     },
     {
+      "name": "readmemh_rom_initial_refuse",
+      "example": "sem2/readmemh_rom",
+      "top": "readmemh_rom",
+      "refusal": "ProceduralBlockSymbol:Initial",
+      "signals": ["addr", "q"],
+      "stimulus": [
+        {"addr": "00"},
+        {"addr": "01"},
+        {"addr": "10"},
+        {"addr": "11"}
+      ],
+      "measured": "2026-11-07: the initial $readmemh process is retained as a named ProceduralBlockSymbol:Initial refusal; the ROM read assignment remains source-shaped until initial-process/file-loading semantics enter E."
+    },
+    {
       "name": "sva_property_retained",
       "example": "sem2/sva_property_retained",
       "top": "sva_property_retained",

@@ -147,6 +147,16 @@ continuous scalar read are covered by the `async_mem_fifo` clean-room fixture.
 Nested ranks, partial targets, loops, and compound memory expressions remain
 loud. The fixture matches Icarus over three reset/write/read cycles.
 
+## Initial `$readmemh` remains a named F4 boundary
+
+The clean-room `sem2/readmemh_rom` fixture now records an initial
+`$readmemh("rom.hex", rom)` process as `ProceduralBlockSymbol:Initial` in the
+symbolic envelope and in the instantiated `Design2`. The ROM declaration and
+its dynamic read assignment remain visible. Initial-process scheduling and
+file-loading semantics are still required before this shape can enter E, so
+the differential row is a loud refusal rather than a fabricated time-zero
+memory image.
+
 ## Plain edge-triggered `always` joins the NBA cycle profile
 
 `Design2.ffOnlyProfileB` and its kernel-checked cycle theorem now accept a

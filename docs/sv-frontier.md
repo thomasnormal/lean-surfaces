@@ -81,6 +81,17 @@ kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
 
+### Initial ROM loading remains an explicit F4 boundary
+
+The clean-room `sem2/readmemh_rom` fixture measures the next memory wall:
+`initial $readmemh("rom.hex", rom)` is retained in the envelope and becomes a
+named `ProceduralBlockSymbol:Initial` refusal in `PDesign` and `Design2`.
+The generated ROM cells and the combinational `rom[addr]` read remain visible,
+so the loader does not invent time-zero contents from the file. This row is
+loud in
+`harness/sv/cases2.json`; admitting it requires initial-process scheduling and
+file-loading semantics in E, followed by a differential witness.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

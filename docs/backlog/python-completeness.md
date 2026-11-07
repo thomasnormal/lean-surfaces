@@ -11214,6 +11214,26 @@ this recheck.
 DECIDED: preserve the remaining bridges only as explicit debt and replace each
 with a native source-node semantic case before widening admission.
 
+## 2026-11-07-pycomplete-470 — audit remaining general ingestion bridges
+
+The medium `py-general-ingestion-rewrites` finding remains partially open as
+representation debt. Retired list-comprehension, display, raise-cause,
+yield-from, and try rewrites are gone, but f-string format workers, multi-item
+`with` nesting, delete-target markers, chained-assignment splitting,
+consuming dict-view markers, and synthetic `TypeErrorHandler` markers still
+bridge source syntax to existing interpreter cases. Their names are explicit
+and their boundaries are tested, yet they are not all native source-node
+semantics under the new engineering rule.
+
+| Measurement | Result |
+|---|---|
+| Retired paths | absent from active ingestion |
+| Residual bridges | present and documented with dedicated loud/guarded cases |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-general-ingestion-rewrites` open as a medium source-node
+refactoring queue; do not widen any residual bridge without a native case.
+
 ## 2026-11-07-pycomplete-440 — recheck leanpy frontend and oracle pinning
 
 The runner pinning audit is closed. `tools/leanpy` re-execs extraction under

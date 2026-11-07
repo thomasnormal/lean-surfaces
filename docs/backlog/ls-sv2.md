@@ -6248,3 +6248,48 @@ CSRs, preserving exact illegal causes and handler transitions, actual cycle
 inputs, unchanged data memory, and core state transitions.  PicoRV32 remains
 parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
+
+## 2026-11-07-ls-sv2-346 — re-probe PicoRV32 after generated-member admission
+
+The inbox required a fresh load of the pinned PicoRV32 source after ls-sv's
+generated-member regression.  This item records the current loader frontier;
+it does not extend the finite captured window or alter the RTL.
+
+**CHANGED:** Re-extracted the unchanged YosysHQ source and reran both the
+ordinary `sem` and `instantiateMemD2` routes.  The clean-room generated-member
+fixtures remain admitted.  No new `REQUEST ls-sv:` repro is needed because the
+first PicoRV32 wall is an existing generic unsupported-module-member/net-z
+boundary.  Updated both core READMEs and regenerated `docs/backlog/INDEX.md`.
+
+**MEASURED:** The source is pinned at
+`ef203c2b0a3fb793280f5114941416c425c5b461`; its fresh envelope is 2,992,406
+bytes with SHA-256
+`bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c`.
+The semantic files are identical to `origin/master` at `27e7d5d62`, which
+contains ls-sv's `bf85f330a` generated-member regression.  The declaration
+loads as 26 parameters, 216 declarations, 43 processes, and three generate
+entries.  The ordinary route's exact first refusal is:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route's exact first refusal is:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+Its first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire`
+at `picorv32.v:257`.  The probe was run with the approved extractor and
+`lake env lean /tmp/ls-sv2-item346-probe.lean`; the ordinary and memory probes
+returned the two diagnostics above, and the detail probe reported the same
+first retained member.  No symbolic ADDI invariant is claimed.
+
+**JUDGED / DECIDED:** Generated members are no longer the first PicoRV32
+memory-route wall.  The real-core R2 proof remains parked at the unpacked
+`cpuregs` memory and the unsupported-module-member/net-z boundary.  The next
+useful step is to resume the symbolic ADDI invariant only after that loader
+boundary changes.

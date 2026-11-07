@@ -16,6 +16,10 @@ across execution, assertion, observation, and proof routes. Until the
 concretization judgment is connected, those consumers require a known-value
 witness or remain loud.
 
+The first E edge bridge now consumes `ResolvedDecision`: a source-shaped
+`always_ff` conditional can be related to the branch selected by a concrete
+resolution, while the existing evaluator and AST remain unchanged.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

@@ -10226,6 +10226,22 @@ remain differential matches.
 DECIDED: keep lexical declarations structured from the approved AST through
 execution; no text fallback is admissible.
 
+## 2026-11-07-pycomplete-451 — audit structured global declaration handling
+
+The high-priority `py-global-text-truncation` finding is already fixed in the
+current tree. The extractor emits the approved AST name arrays, ingestion keeps
+them as structured declaration nodes, and both interpreters consume those
+arrays. No source-text fallback or truncation worker remains.
+
+| Measurement | Result |
+|---|---|
+| Long declaration script | `global_structured_script.py`: 1/1 MATCH, prints `5` |
+| Oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-global-text-truncation` as already fixed; keep structured
+lexical declarations as the only admitted path.
+
 ## 2026-11-07-pycomplete-405 — recheck generator capture census
 
 The generator-capture audit finding is already closed by the structured

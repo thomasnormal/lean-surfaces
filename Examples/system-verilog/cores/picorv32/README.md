@@ -629,6 +629,23 @@ join for inputs, architectural state, and semantic retirements.  A segmented
 proof can therefore rewrite either side of the certificate composition to the
 single whole-program folds before applying the stateful ISA equations.
 
+## Symbolic ALU program certificate
+
+`LeanModels.Refine.RvfiAluProgram` extends the unbounded program surface to
+the complete RV32I ALU family.  `AluInstruction` retains the fetched word,
+`AluOp`, both operand-source forms, and its decoder proof; the corresponding
+input, architectural-state, and retirement folds preserve x0 and threaded
+memory for every program list.  `rvMemoryMachineWith_alu_program_state` and
+`rvMemoryMachineWith_alu_program_trace` connect those folds to the existing
+profile-parametric ISA machine.
+
+`AluRvfiTrace` accepts arbitrary invalid bubbles and requires an indexed
+`Rv32iBoundary.alu` witness for every retiring row, so its `normalize` and
+`trace_refines` theorems give the stateful ISA trace for any ALU program and
+bubble schedule.  The certificate is generic refinement infrastructure; the
+PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
+unsupported-member/net-z loader walls.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

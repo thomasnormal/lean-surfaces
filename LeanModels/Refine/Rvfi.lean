@@ -480,6 +480,44 @@ theorem rvfiCycleStepRefines_invalid_step
   rw [hinvalid'] at hs
   exact hs
 
+/-! A single per-cycle projection dispatches to the two strict branches.  The
+valid side exposes the decoded row and architectural step; the invalid side
+is an explicit ISA stutter.  Keeping the validity bit in each disjunct makes
+the branch total and prevents a caller from treating an unchecked row as a
+bubble. -/
+theorem rvfiCycleStepRefines_step
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState) (input : Input)
+    (hrel : rel state isaState) (hadmit : admit input) :
+    let (state', observation) := machine.step state input
+    let (isaState', isaRetirement) := isa.step isaState input
+    (observation.valid = true ∧ observation.wellFormed ∧
+        rel state' isaState' ∧ observation.toRetirement = isaRetirement) ∨
+      (observation.valid = false ∧ rel state' isaState) := by
+  rcases hstep : machine.step state input with ⟨state', observation⟩
+  rcases hisa : isa.step isaState input with ⟨isaState', isaRetirement⟩
+  by_cases hv : observation.valid = true
+  · left
+    have hvalid : (machine.step state input).2.valid = true := by
+      simpa [hstep] using hv
+    have hs := rvfiCycleStepRefines_valid_step h state isaState input
+      hrel hadmit hvalid
+    simpa [hstep, hisa] using And.intro hv hs
+  · right
+    have hinvalid : (machine.step state input).2.valid = false := by
+      cases hvalue : observation.valid with
+      | false => simp [hstep, hvalue]
+      | true => exact False.elim (hv hvalue)
+    have hs := rvfiCycleStepRefines_invalid_step h state isaState input
+      hrel hadmit hinvalid
+    exact ⟨by
+      cases hvalue : observation.valid with
+      | false => rfl
+      | true => exact False.elim (hv hvalue), by simpa [hstep] using hs⟩
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -1017,6 +1055,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines

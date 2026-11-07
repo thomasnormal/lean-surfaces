@@ -33,6 +33,9 @@ profile boundary before evaluator-specific error wrapping.
 Typed `alignof` value construction uses the shared operand-evidence and profile
 boundary as well, preserving each evaluator's error surface.
 
+Promoted increment/decrement arithmetic is shared through
+`integralIncrementValue`; parameter/list state updates remain evaluator-owned.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

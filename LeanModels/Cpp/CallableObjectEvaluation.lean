@@ -98,15 +98,7 @@ private def finishResult (frame : IntegralObjectFrame)
 
 private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
     (operation : IntegralBinary) (old : IntegralValue) : IntegralResult IntegralValue :=
-  match builtinIntegralType type with
-  | none | some .boolean => .unsupported .unresolvedArithmeticConversions
-  | some integer =>
-      match usualArithmeticType profile integer .int with
-      | .error _ => .unsupported .unresolvedArithmeticConversions
-      | .ok common =>
-          bindIntegralResultValue (convertTo profile (.builtin common) old) fun operand =>
-            bindIntegralResultValue (integralBinary operation operand ⟨operand.format, 1⟩)
-              (convertTo profile type)
+  integralIncrementValue profile type operation old
 
 private def evalParameter (fuel : Nat) (profile : TargetProfile)
     (frame : IntegralObjectFrame) (typed : TypedCallableExpression)

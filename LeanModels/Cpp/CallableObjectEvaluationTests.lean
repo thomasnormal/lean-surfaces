@@ -40451,4 +40451,14 @@ def callableSharedAlignAgreementWitness : Bool :=
 
 #guard callableSharedAlignAgreementWitness
 
+def callableSharedIncrementValueAgreementWitness : Bool :=
+  integralIncrementValue .lp64 intType .add ⟨.signed 32, 7⟩
+      matches .ok ⟨.signed 32, 8⟩ &&
+    integralIncrementValue .lp64 (.qualified true false intType) .subtract
+      ⟨.signed 32, 7⟩ matches .ok ⟨.signed 32, 6⟩ &&
+    integralIncrementValue .lp64 (.builtin .boolean) .add ⟨.boolean, 1⟩
+      matches .unsupported _
+
+#guard callableSharedIncrementValueAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

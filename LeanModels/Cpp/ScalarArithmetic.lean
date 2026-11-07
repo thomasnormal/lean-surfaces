@@ -151,4 +151,23 @@ def integralAlignValueOfEvidence (profile : TargetProfile) (resultType operandTy
   let bytes ← integralAlignBytes profile integer
   pure {format, value := Int.ofNat bytes}
 
+def integralIncrementValue (profile : TargetProfile) (type : CppTypeEvidence)
+    (operation : IntegralBinary) (old : IntegralValue) : IntegralResult IntegralValue :=
+  match integralTypeOfEvidence type with
+  | none | some .boolean => .unsupported .unresolvedArithmeticConversions
+  | some integer =>
+      match usualArithmeticType profile integer .int with
+      | .error _ => .unsupported .unresolvedArithmeticConversions
+      | .ok common =>
+          bindIntegralResultValue
+            (match integralFormatOfEvidence profile (.builtin common) with
+             | .ok format => integralConvert format old
+             | .error _ => .unsupported .unresolvedArithmeticConversions)
+            (fun operand =>
+              bindIntegralResultValue (integralBinary operation operand ⟨operand.format, 1⟩)
+                (fun result =>
+                  match integralFormatOfEvidence profile type with
+                  | .ok format => integralConvert format result
+                  | .error _ => .unsupported .unresolvedArithmeticConversions))
+
 end LeanModels.Cpp

@@ -4396,3 +4396,20 @@ loader, or `LeanModels/Sv/**` file changed.
 
 **DECIDED:** make the relation-aware invariant the canonical equivalence
 boundary and retain the all-state form only as a convenience specialization.
+
+## 2026-11-07-ls-sv2-282 — expose a relation-aware normalized RVFI boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_of_rel` to
+`LeanModels/Refine/Rvfi.lean`.  An optional cycle-refinement proof can now
+consume a well-formedness invariant restricted to related core/ISA states and
+admitted inputs, together with a successful raw normalization certificate, and
+return both the normalized ISA trace equality and the carried post-window
+relation.  The existing global-row `cycleStepRefines_normalized` theorem is
+now its specialization.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep normalized optional proofs reachability-sensitive while
+retaining the stronger all-state API for compatibility.

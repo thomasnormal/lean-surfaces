@@ -983,7 +983,34 @@ theorem cycleStepRefines_normalized_trace_refines
 
 /-! The optional-cycle form also exposes the complete normalized boundary:
 the ISA trace equality and the relation carried by the retained core state.
-The raw well-formedness premise remains visible through the strict bridge. -/
+The relation-aware form keeps the raw well-formedness premise restricted to
+states that the invariant can actually reach. -/
+theorem cycleStepRefines_normalized_of_rel
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed)
+    (state : State) (isaState : IsaState) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ inputs, admit i)
+    (hnorm : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    (retirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state inputs)) ∧
+    rel (rvfiStateAfter machine state inputs)
+      (machineStateAfter isa isaState
+        (retireInputs machine.toCycleMachine state inputs)) := by
+  exact rvfiCycleStepRefines_normalized
+    (cycleStepRefines_to_rvfiCycleStepRefines_of_rel h hwell)
+    state isaState inputs hrel hall hnorm
+
+/-! The global-row normalized theorem is a convenience specialization of the
+relation-aware boundary above. -/
 theorem cycleStepRefines_normalized
     {State IsaState : Type}
     {machine : RvfiCycleMachine State} {isa : Machine IsaState}
@@ -1003,8 +1030,8 @@ theorem cycleStepRefines_normalized
     rel (rvfiStateAfter machine state inputs)
       (machineStateAfter isa isaState
         (retireInputs machine.toCycleMachine state inputs)) := by
-  exact rvfiCycleStepRefines_normalized
-    (cycleStepRefines_to_rvfiCycleStepRefines h hwell)
+  exact cycleStepRefines_normalized_of_rel h
+    (fun state _ input _ _ hvalid => hwell state input hvalid)
     state isaState inputs hrel hall hnorm
 
 /-- Adjacent raw-normalized RVFI windows compose through the strict boundary.
@@ -1383,6 +1410,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_trace_refines
+#print axioms LeanModels.Refine.cycleStepRefines_normalized_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_normalized
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.cycleStepRefines_normalized_chain

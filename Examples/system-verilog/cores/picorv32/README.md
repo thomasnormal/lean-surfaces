@@ -153,6 +153,12 @@ writeback, and the unchanged memory result.  Its witness threads the state
 through the first two instructions and consumes the explicit memory view
 where address `0x100` contains 5.
 
+[`rvfi_prefix_boundary.lean`](rvfi_prefix_boundary.lean) also runs the
+first three non-trapping instructions through `rvMemoryMachineWith`.  It
+proves the concrete threaded state (`pc = 12`, `x2 = 5`, `x0 = 0`) and the
+pointwise equality of its memory with `memFive`, making the state consumed by
+the later `ADDI x3, x2, 1` witness explicit.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

@@ -1,0 +1,165 @@
+import LeanModels.Refine.MemoryMachine
+import LeanModels.Refine.RvfiMem
+import Examples.«system-verilog».cores.picorv32.trace_proof
+
+/-!
+# PicoRV32 stateful memory-prefix boundary
+
+The first three non-trapping instructions are an ADDI, a store, and a load.
+This witness evaluates them through the stateful memory machine and exposes
+the concrete architectural state and memory view consumed by the next ADDI.
+-/
+
+namespace Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary
+
+open LeanModels.Rv
+open LeanModels.Refine
+open Examples.«system-verilog».cores.picorv32.trace_proof
+
+def prefixS0 : ArchState := ArchState.init 0
+def prefixS1 : ArchState := addiNext prefixS0 1 0 5
+def prefixS2 : ArchState := swNext prefixS1
+
+def prefixState : RvMemoryState :=
+  rvMemoryStateAfter cv32e40pProfile
+    { arch := rvMachine.init, memory := memZero }
+    (nontrapInputs.take 3)
+
+theorem pinned_prefix_architecture :
+    prefixState.arch.pc = 12 ∧ prefixState.arch.readReg 2 = 5 ∧
+      prefixState.arch.readReg 0 = 0 := by
+  decide
+
+theorem pinned_prefix_memory :
+    ∀ a, prefixState.memory a = memFive a := by
+  intro a
+  have h1 : isaStepWith cv32e40pProfile (ArchState.init 0) memZero
+      (.word 0x00500093) 0 =
+      (addiNext (ArchState.init 0) 1 0 5,
+        addiEffects (ArchState.init 0)) :=
+    isaStepWith_addi cv32e40pProfile (ArchState.init 0) memZero 0x00500093 1 0 5
+      (by decide)
+  have h2 : isaStepWith cv32e40pProfile
+      (addiNext (ArchState.init 0) 1 0 5) memZero
+      (.word 0x10102023) 0 =
+      (swNext (addiNext (ArchState.init 0) 1 0 5),
+        swEffects (addiNext (ArchState.init 0) 1 0 5) 0 1 0x100) :=
+    isaStepWith_sw cv32e40pProfile (addiNext (ArchState.init 0) 1 0 5)
+      memZero 0x10102023 0 1 0x100
+      (by decide)
+  have h3 : isaStepWith cv32e40pProfile
+      (swNext (addiNext (ArchState.init 0) 1 0 5))
+      (storeVal memZero .word 0x100 5) (.word 0x10002103) 0 =
+      (lwNext (swNext (addiNext (ArchState.init 0) 1 0 5))
+          (storeVal memZero .word 0x100 5) 2 0 0x100,
+        lwEffects (swNext (addiNext (ArchState.init 0) 1 0 5)) 0 0x100) :=
+    isaStepWith_lw cv32e40pProfile (swNext (addiNext (ArchState.init 0) 1 0 5))
+      (storeVal memZero .word 0x100 5) 0x10002103 2 0 0x100
+      (by decide)
+  have hs1 :
+      ((rvMemoryMachineWith cv32e40pProfile).step
+        { arch := ArchState.init 0, memory := memZero }
+        { fetched := .word 0x00500093, memory := memZero }).fst =
+      { arch := addiNext (ArchState.init 0) 1 0 5, memory := memZero } := by
+    simp only [rvMemoryMachineWith]
+    rw [h1]
+    rfl
+  have hs2 :
+      ((rvMemoryMachineWith cv32e40pProfile).step
+        { arch := addiNext (ArchState.init 0) 1 0 5, memory := memZero }
+        { fetched := .word 0x10102023, memory := memZero }).fst =
+      { arch := swNext (addiNext (ArchState.init 0) 1 0 5),
+        memory := storeVal memZero .word 0x100 5 } := by
+    simp only [rvMemoryMachineWith]
+    rw [h2]
+    rfl
+  have hs3 :
+      ((rvMemoryMachineWith cv32e40pProfile).step
+        { arch := swNext (addiNext (ArchState.init 0) 1 0 5),
+          memory := storeVal memZero .word 0x100 5 }
+        { fetched := .word 0x10002103, memory := memFive }).fst =
+      { arch := lwNext (swNext (addiNext (ArchState.init 0) 1 0 5))
+          (storeVal memZero .word 0x100 5) 2 0 0x100,
+        memory := storeVal memZero .word 0x100 5 } := by
+    simp only [rvMemoryMachineWith]
+    rw [h3]
+    rfl
+  simp only [prefixState, rvMemoryStateAfter, machineStateAfter,
+    nontrapInputs, List.take, rvMachine]
+  rw [hs1, hs2, hs3]
+  have hstore : storeVal memZero .word 0x100 5 = memFive := by
+    funext a
+    simp only [storeVal, memFive, memZero, MemW.bytes, BitVec.toNat_sub]
+    simp [BitVec.toNat_ofNat]
+    have ha_lt : a.toNat < 4294967296 := by exact a.isLt
+    by_cases hsmall : a.toNat < 256
+    · have hoff : (4294967040 + a.toNat) % 4294967296 =
+          4294967040 + a.toNat := by omega
+      have hnot : ¬ (4294967040 + a.toNat) % 4294967296 < 4 := by
+        rw [hoff]
+        omega
+      have hnot' : ¬ (4294967040 + a.toNat) < 4 := by omega
+      have hne : a ≠ (256 : BitVec 32) := by
+        intro ha
+        subst a
+        simp at hsmall
+      have hbool : ¬ (a == (256 : BitVec 32)) = true := by
+        simp
+        exact hne
+      simp [hoff, hnot']
+      exact hne
+    · have hbig : 256 ≤ a.toNat := by omega
+      by_cases hnear : a.toNat < 260
+      · have hcases : a.toNat = 256 ∨ a.toNat = 257 ∨
+            a.toNat = 258 ∨ a.toNat = 259 := by omega
+        rcases hcases with h256 | h257 | h258 | h259
+        · have ha : a = (256 : BitVec 32) :=
+            BitVec.eq_of_toNat_eq (by simpa using h256)
+          subst a
+          simp [BitVec.toNat_sub, BitVec.toNat_ofNat]
+        · have ha : a = (257 : BitVec 32) :=
+            BitVec.eq_of_toNat_eq (by simpa using h257)
+          subst a
+          simp [BitVec.toNat_sub, BitVec.toNat_ofNat]
+        · have ha : a = (258 : BitVec 32) :=
+            BitVec.eq_of_toNat_eq (by simpa using h258)
+          subst a
+          simp [BitVec.toNat_sub, BitVec.toNat_ofNat]
+        · have ha : a = (259 : BitVec 32) :=
+            BitVec.eq_of_toNat_eq (by simpa using h259)
+          subst a
+          simp [BitVec.toNat_sub, BitVec.toNat_ofNat]
+      · have hfar : 260 ≤ a.toNat := by omega
+        have hoff : (4294967040 + a.toNat) % 4294967296 =
+            a.toNat - 256 := by omega
+        have hnot : ¬ (4294967040 + a.toNat) % 4294967296 < 4 := by
+          rw [hoff]
+          omega
+        have hnot' : ¬ a.toNat - 256 < 4 := by omega
+        have hne : a ≠ (256 : BitVec 32) := by
+          intro ha
+          subst a
+          simp at hfar
+        have hbool : ¬ (a == (256 : BitVec 32)) = true := by
+          simp
+          exact hne
+        simp [hoff, hnot']
+        exact hne
+  rw [hstore]
+
+theorem pinned_prefix_state :
+    prefixState.arch.pc = 12 ∧ prefixState.arch.readReg 2 = 5 ∧
+      prefixState.arch.readReg 0 = 0 ∧
+      (∀ a, prefixState.memory a = memFive a) := by
+  exact ⟨pinned_prefix_architecture.1, pinned_prefix_architecture.2.1,
+    pinned_prefix_architecture.2.2, pinned_prefix_memory⟩
+
+#guard prefixState.arch.pc = 12
+#guard prefixState.arch.readReg 2 = 5
+#guard prefixState.arch.readReg 0 = 0
+
+#print axioms pinned_prefix_architecture
+#print axioms pinned_prefix_memory
+#print axioms pinned_prefix_state
+
+end Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary

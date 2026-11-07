@@ -14,6 +14,9 @@
 - Docs: record the remaining namedtuple static-table boundary and its
   source-order guard; runtime namedtuple construction remains future work.
 
+- Docs: record the guarded module-level callable-alias slice and its remaining
+  first-class-function representation debt.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

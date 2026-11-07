@@ -63,6 +63,23 @@ in the tier:
 These are separate axes of choice. A proof quantifies over their product, while
 preserving correlations within each run.
 
+## Differential testing across refinement levels
+
+The most general specification is H: a nondeterministic relation containing
+every result permitted by the four-state source semantics. E is the
+deterministic IEEE execution selected by the language rules, while a
+synthesizer S and a formal tool J are separate consumers. Their results are
+useful only when they refine H; a simulator's choice among x-optimistic or
+x-pessimistic outcomes does not redefine E.
+
+Rows whose exercised values and decisions are all known remain equality tests:
+the E trace must equal the oracle trace. A row that reads an unknown in a
+branch condition, a two-state conversion, or an x-observer is a membership
+test: the oracle result must be one of the traces admitted by H. Xcelium's
+single selected trace is then recorded as a classified refinement choice,
+rather than used to alter the E rule. The same distinction applies to S and J
+when their output is compared with a four-state source row.
+
 ## Clocks and asynchronous inputs
 
 Multiple clocks are an environment and scheduling choice, not a preferred

@@ -10189,6 +10189,25 @@ where every reached definition is bound before its use.
 DECIDED: retain the conservative loud boundary until definitions become
 runtime bindings; do not loosen admission based on direct top-level names only.
 
+## 2026-11-07-pycomplete-450 — audit module-definition position independence
+
+The high-priority `py-def-table-position-independent` finding is already
+contained by the current script admission guard. A function body reaching a
+later module definition and a duplicate module function name both refuse before
+execution, avoiding a fabricated value from the static table. This preserves
+the correct CPython boundary while runtime-bound definition nodes remain future
+work.
+
+| Measurement | Result |
+|---|---|
+| Forward witness | `deadval3.py`: loud refusal; CPython 3.9 raises `NameError` |
+| Redefinition witness | `redef.py`: loud refusal; CPython 3.9 prints `1`, then `2` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-def-table-position-independent` as already fixed by a loud
+admission boundary; retain the conservative refusal until definitions become
+runtime bindings.
+
 ## 2026-11-07-pycomplete-404 — recheck structured global declarations
 
 The global-declaration audit finding is already closed in the current tree.

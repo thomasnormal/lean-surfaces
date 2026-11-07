@@ -74,6 +74,9 @@ selection and return propagation through both evaluator APIs.
 It also includes a `do-while` callable, checking one mandatory body execution
 and the subsequent condition through both evaluator APIs.
 
+The battery also includes a decrementing `for` callable, checking initializer,
+condition, body, step, and return state through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

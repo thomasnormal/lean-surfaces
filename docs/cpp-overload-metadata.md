@@ -151,6 +151,9 @@ frontend handle must carry a string identity.
 A structured ordinary-call handle whose `id` is an object is also refused; a
 frontend handle must carry a string identity.
 
+A structured ordinary-call declaration evidence whose `kind` is scalar is also
+refused; declaration kind evidence must be frontend text.
+
 A scalar ordinary-call `referencedDecl` value is also refused; declaration
 identity is never coerced from a number or Boolean.
 

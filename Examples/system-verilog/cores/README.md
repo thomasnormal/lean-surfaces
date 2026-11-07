@@ -281,3 +281,10 @@ system-operation surface for `ECALL`, `EBREAK`, `MRET`, and `WFI`.
 and cycle-aware certificates preserve arbitrary bubbles, exact cycle inputs,
 trap and return transitions, and the unchanged threaded data memory while
 composing at the same core/state/retirement-order boundaries.
+
+`LeanModels.Refine.RvfiCsrProgram` adds the implemented machine-mode Zicsr
+surface.  `CsrInstruction` retains its CSR row, operation, decoder proof, and
+row-lookup proof; raw and cycle-aware certificates preserve CSR readback,
+WARL state updates, arbitrary bubbles, actual inputs, and the unchanged data
+memory while composing at the same boundaries.  An absent CSR row remains
+outside this certificate and follows the illegal-instruction boundary.

@@ -792,3 +792,10 @@ The system-operation program certificate in
 return effects, arbitrary bubble inputs, cycle-step equalities, and the
 unchanged threaded data memory in raw and cycle-aware certificates, with
 append laws at the core, architectural-state, and retirement-order boundaries.
+
+The implemented Zicsr program certificate in
+`LeanModels.Refine.RvfiCsrProgram` covers arbitrary machine-mode `CSRRW`,
+`CSRRS`, and `CSRRC` streams whose addresses resolve to the explicit CSR table.
+It retains old-value readback, source forms, WARL updates, arbitrary bubble
+inputs, and exact cycle transitions while preserving threaded data memory and
+composing at the core, architectural-state, and retirement-order boundaries.

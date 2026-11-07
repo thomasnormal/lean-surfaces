@@ -307,7 +307,16 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.exhaustion_escape() raises (.runtimeError "generator raised StopIteration")
 
-#py_check builtin_raise_lab.caught_inside_generator() = 5
+/-! `caught_inside_generator` (a `try` in a generator) and `chained` (`raise …
+from …`) refuse since the try lowerings were removed and raise causes are
+retained (`docs/backlog/python-completeness.md` §2026-11-06-pycomplete-360,
+§2026-11-06-pycomplete-362). The CPython answers these checks pinned are
+kept in the `-- was` comments; `harness/cases.json` expects `unsupported`
+for these functions. -/
+
+-- was `#py_check builtin_raise_lab.caught_inside_generator() = 5`
+#guard callFunction builtin_raise_lab "caught_inside_generator" #[] 4096 matches
+  .unsupported "try/except uses unsupported features (generator try frame) — outside the tier (docs/memory-model.md §exceptions)"
 
 #py_check builtin_raise_namedtuple.raise_value_error() raises
   (.typeError "exceptions must derive from BaseException")
@@ -338,7 +347,9 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.raised_instance() raises (.builtinException "ValueError")
 
-#py_check builtin_raise_lab.chained() raises (.builtinException "ValueError")
+-- was `#py_check builtin_raise_lab.chained() raises (.builtinException "ValueError")`
+#guard callFunction builtin_raise_lab "chained" #[] 4096 matches
+  .unsupported "dynamic 'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
 
 #py_check builtin_raise_lab.unsupported_class() raises (.builtinException "OSError")
 

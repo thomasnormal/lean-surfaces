@@ -42,7 +42,14 @@ set_option exponentiation.threshold 4300
 #py_check repr_lab.parameter_shadow(1) raises .typeError "'int' object is not callable"
 #py_check repr_lab.generator_shadow() = (Val.tuple #[.int 8, .int 9])
 #py_check repr_lab.custom() = "custom"
-#py_check repr_lab.alias_call(17) = "17"
+/-! `alias_call` refuses since the alias-then-call ingestion rewrite was removed
+(`docs/backlog/python-completeness.md` §2026-11-05-pycomplete-342). The
+CPython answers these checks pinned are kept in the `-- was` comments;
+`harness/cases.json` expects `unsupported` for these functions. -/
+
+-- was `#py_check repr_lab.alias_call(17) = "17"`
+#guard callFunction repr_lab "alias_call" #[.int 17] 4096 matches
+  .unsupported "calling a first-class callable value is outside the tier"
 #py_check repr_shadow.direct(-7) = 4
 #py_check repr_shadow.captured_generator() = (Val.tuple #[.int 12, .int 13])
 

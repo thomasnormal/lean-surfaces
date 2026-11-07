@@ -20,8 +20,15 @@ load_program sum_order_lab from "Examples/python/sum_order_lab/sum_order_lab.jso
   (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")
 #py_check sum_order_lab.dict_start("") raises
   (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
-#py_check sum_order_lab.set_start(Val.bytes #[]) raises
-  (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")
+/-! `set_start` refuses at its set display since the extractor stopped lowering
+set displays (`docs/backlog/python-completeness.md`
+§2026-11-06-pycomplete-361). The CPython answers these checks pinned are
+kept in the `-- was` comments; `harness/cases.json` expects `unsupported`
+for these functions. -/
+
+-- was `#py_check sum_order_lab.set_start(Val.bytes #[]) raises (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")`
+#guard callFunction sum_order_lab "set_start" #[Val.bytes #[]] 4096 matches
+  .unsupported "unsupported expression 'Set:display'"
 #py_check sum_order_lab.list_start("") raises
   (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
 #py_check sum_order_lab.range_start("") raises

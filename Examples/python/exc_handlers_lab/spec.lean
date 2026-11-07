@@ -56,9 +56,21 @@ set_option maxRecDepth 8192
 #py_check exc_handlers_lab.base_exception() = 16
 #py_check exc_handlers_lab.arithmetic_ancestor() = 17
 #py_check exc_handlers_lab.lookup_ancestor() = 18
-#py_check exc_handlers_lab.else_clause() = 1
-#py_check exc_handlers_lab.finally_clause() = (Val.list #[.int 19])
-#py_check exc_handlers_lab.multiple_handlers() = 21
+/-! `else`, `finally` and multiple-handler `try` statements refuse since the try
+lowerings were removed (`docs/backlog/python-completeness.md`
+§2026-11-06-pycomplete-360). The CPython answers these checks pinned are
+kept in the `-- was` comments; `harness/cases.json` expects `unsupported`
+for these functions. -/
+
+-- was `#py_check exc_handlers_lab.else_clause() = 1`
+#guard callFunction exc_handlers_lab "else_clause" #[] 4096 matches
+  .unsupported "try/except uses unsupported features (else clause) — outside the tier (docs/memory-model.md §exceptions)"
+-- was `#py_check exc_handlers_lab.finally_clause() = (Val.list #[.int 19])`
+#guard callFunction exc_handlers_lab "finally_clause" #[] 4096 matches
+  .unsupported "try/except uses unsupported features ('finally' clause) — outside the tier (docs/memory-model.md §exceptions)"
+-- was `#py_check exc_handlers_lab.multiple_handlers() = 21`
+#guard callFunction exc_handlers_lab "multiple_handlers" #[] 4096 matches
+  .unsupported "try/except uses unsupported features (multiple handlers) — outside the tier (docs/memory-model.md §exceptions)"
 #py_check exc_handlers_lab.bare_handler() = 22
 #guard callFunction exc_handlers_lab "exception_value" #[] 4096 == .ok (.callable "TypeError")
 #py_check exc_handlers_lab.loud_body() = Float64.ofBits 0x3ff0000000000000

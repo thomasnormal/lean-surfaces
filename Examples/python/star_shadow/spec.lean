@@ -16,8 +16,18 @@ open LeanModels LeanModels.Python
 
 load_program star_shadow from "Examples/python/star_shadow/star_shadow.json"
 
-#py_check star_shadow.shadowed(3) = (Val.list #[.int 1, .int 2, .int 3])
-#py_check star_shadow.elsewhere(3) = (Val.list #[.int 1, .int 2, .int 3])
+/-! Since the extractor stopped lowering starred displays
+(`docs/backlog/python-completeness.md` §2026-11-06-pycomplete-361),
+`shadowed` and `elsewhere` refuse; `plain_display` is unchanged. The CPython
+answers these checks pinned are kept in the `-- was` comments;
+`harness/cases.json` expects `unsupported` for these functions. -/
+
+-- was `#py_check star_shadow.shadowed(3) = (Val.list #[.int 1, .int 2, .int 3])`
+#guard callFunction star_shadow "shadowed" #[.int 3] 4096 matches
+  .unsupported "unsupported expression 'Starred:display'"
+-- was `#py_check star_shadow.elsewhere(3) = (Val.list #[.int 1, .int 2, .int 3])`
+#guard callFunction star_shadow "elsewhere" #[.int 3] 4096 matches
+  .unsupported "unsupported expression 'Starred:display'"
 
 #py_check star_shadow.plain_display(3) =
   (Val.list #[.int 1, .int 2, .int 3])

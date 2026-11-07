@@ -130,14 +130,12 @@ private def evalIncrement (fuel : Nat) (profile : TargetProfile)
     (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
     (operator : String) (isPostfix : Bool) (declaration : FrontendHandle) :
     Outcome (IntegralResult IntegralValue) :=
-  match operator with
-  | "++" | "--" =>
+  match integralIncrementBinaryOfString operator with
+  | some operation =>
       let current := evalParameter fuel profile frame typed declaration
       match current.result with
       | .error reason => failure current.frame reason
       | .ok result =>
-          let operation := if operator == "++" then IntegralBinary.add
-            else IntegralBinary.subtract
           match result with
           | .ok old =>
               match current.frame.lookup declaration with
@@ -156,7 +154,7 @@ private def evalIncrement (fuel : Nat) (profile : TargetProfile)
                         (bindIntegralResultValue result (convertTo profile typed.type))
           | result =>
               success current.frame (bindIntegralResultValue result (convertTo profile typed.type))
-  | _ => failure frame (.unsupportedOperator operator)
+  | none => failure frame (.unsupportedOperator operator)
 
 private def evalExpression (fuel : Nat) (profile : TargetProfile)
     (frame : IntegralObjectFrame) (typed : TypedCallableExpression) :

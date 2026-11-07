@@ -18823,5 +18823,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-shared-increment-operator-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSharedIncrementOperatorAgreementWitness",
+    "cpp_source": "bool increment_witness() { int value = 3; ++value; --value; return value == 3; } bool callable_witness() { return increment_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

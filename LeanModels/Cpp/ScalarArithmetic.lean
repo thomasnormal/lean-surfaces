@@ -61,6 +61,11 @@ def integralCompoundBinaryOfString : String → Option IntegralBinary
   | ">>=" => some .shiftRight
   | _ => none
 
+def integralIncrementBinaryOfString : String → Option IntegralBinary
+  | "++" => some .add
+  | "--" => some .subtract
+  | _ => none
+
 def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
   | .ok value => .ok (map value)

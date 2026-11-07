@@ -40420,4 +40420,11 @@ def callableSharedSwitchSuffixAgreementWitness : Bool :=
 
 #guard callableSharedSwitchSuffixAgreementWitness
 
+def callableSharedIncrementOperatorAgreementWitness : Bool :=
+  integralIncrementBinaryOfString "++" == some .add &&
+    integralIncrementBinaryOfString "--" == some .subtract &&
+    integralIncrementBinaryOfString "+=" == none
+
+#guard callableSharedIncrementOperatorAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

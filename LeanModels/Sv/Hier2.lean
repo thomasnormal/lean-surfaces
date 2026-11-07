@@ -63,9 +63,10 @@ narrower than the port at the instance's own point `connProcs` is loud
 (`PortConn:net-width`). Unchanged, because every tool agrees (Xcelium
 included): variable actuals, proper part-selects, constants and expressions,
 variable (`var`) and 2-state formals, equal or wider actuals. Not covered,
-listed as gaps: a full-range part-select or a constant bit-select of a net
-actual (Xcelium z-fills those too), and the output direction (a narrower
-output formal into a wider whole NET target leaves z in Xcelium).
+listed as gaps: none of the selected-input/output-target forms remain silent:
+the extractor now preserves a full-range/constant bit-select of a net actual
+and a narrower child output into a wider whole NET target, and `connProcs`
+refuses both as `PortConn:net-width` before flattening.
 
 Integer actuals (`.i(5)`, `.i(-1)`, `.i(g)`, `.i(N*3-1)`) arrive as their
 UNCONVERTED INT-class tree (the extractor peels slang's conversion to the

@@ -17,6 +17,18 @@
       "measured": "2026-11-07: the ordinary E profile is process-atomic; the optional IEEE §4.7 profile refuses the q-to-r cross-process dependency until E has an intra-process choice point."
     },
     {
+      "name": "port_net_width_refuse",
+      "example": "sem2/port_net_width",
+      "top": "port_net_width",
+      "refusal": "PortConn:net-width",
+      "signals": ["y"],
+      "stimulus": [
+        {"w": "00"},
+        {"w": "11"}
+      ],
+      "measured": "2026-11-07: a net input formal fed by a selected narrower net and a narrow child output driving a wider parent net retain the source shape and refuse the Xcelium/Icarus-width split."
+    },
+    {
       "name": "plain_always_profile",
       "example": "seq_plain",
       "top": "posedge_always_profile",

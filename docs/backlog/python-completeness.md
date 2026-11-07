@@ -9934,6 +9934,23 @@ DECIDED: keep structured AST fields as the only semantic inputs; diagnostic
 text on unsupported nodes may remain for loud error reporting but is not
 parsed or used to decide supported behavior.
 
+## 2026-11-07-pycomplete-462 — audit text-keyed semantic residues
+
+The medium `py-text-keyed-semantics` finding is already closed. Supported
+semantic decisions consume structured AST fields for globals, nonlocals,
+value-less annotations, imports, and exception-handler names. The remaining
+`Unsupported.text` and extractor `unparse_truncated` path are diagnostic-only
+payloads and are never parsed to admit or evaluate a supported construct.
+
+| Measurement | Result |
+|---|---|
+| Extractor regression suite | 163/163 tests passed under CPython 3.9.25 |
+| Semantic search | no active `splitOn`, `annNoValueName`, `nonlocalNamesText`, `importBinds`, `globalNamesText`, or `excHandlerNamesAux` consumers in Lean Python semantics |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-text-keyed-semantics` as already fixed; keep structured AST
+fields as the only supported semantic inputs.
+
 ## 2026-11-07-pycomplete-387 — recheck the two-interpreter refinement edge
 
 The audit's claim that no `twinAgrees` theorem exists is stale. Current

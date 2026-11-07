@@ -8,6 +8,9 @@
 - Docs: update the import-admission and trace-clock sections to describe the
   structured AST whitelist instead of the retired text-keyed path.
 
+- Docs: clarify that the monadic refinement edge currently covers the shared
+  pure workers, while control and script adequacy remain explicit debt.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

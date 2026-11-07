@@ -18944,5 +18944,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "refuse",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-arithmetic-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectArithmeticAgreementWitness",
+    "cpp_source": "int arithmetic_witness(int value) { return value + 3; } bool callable_witness() { return arithmetic_witness(7) == 10; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

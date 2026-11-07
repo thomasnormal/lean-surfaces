@@ -52,6 +52,10 @@ The object evaluator's direct-call boundary now reports its dedicated
 `unsupportedCall` cause; the differential harness records that refusal without
 discarding the diagnostic in the Lean witness.
 
+The value and object evaluator now also carry a kernel agreement witness for
+the same binary-arithmetic callable, extending the earlier logical agreement
+check.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

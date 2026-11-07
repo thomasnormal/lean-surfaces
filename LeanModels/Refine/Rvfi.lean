@@ -560,6 +560,29 @@ theorem rvfiCycleStepRefines_stateAfter_refines
   exact rvfiStateAfter_refines machine isa rel admit
     (rvfiCycleStepRefines_toCycleStepRefines h)
 
+/-- A strict packed-cycle proof and a successful raw normalization certificate
+compose to the ISA trace directly.  The normalization hypothesis checks the
+wire-level validity and order, while the strict contract supplies the
+architectural retirement and state relation; neither obligation is hidden in
+the optional `toRetirement?` adapter. -/
+theorem rvfiCycleStepRefines_normalized_trace_refines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (hrel : rel state isaState)
+    (hall : ∀ i ∈ inputs, admit i)
+    (hnorm : normalizeRvfiTrace? start
+        (rvfiObservations machine state inputs) = some retirements) :
+    retirements = trace isa isaState
+      (retireInputs machine.toCycleMachine state inputs) := by
+  have hcycle := normalizeRvfiCycleTrace machine state inputs hnorm
+  have htrace := rvfiCycleStepRefines_trace_refines h
+    state isaState inputs hrel hall
+  exact hcycle.symm.trans htrace
+
 /-! ## Encoding an existing semantic retirement -/
 
 structure RvfiMemFields where
@@ -762,6 +785,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

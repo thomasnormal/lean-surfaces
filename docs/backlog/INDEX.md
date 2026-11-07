@@ -29,6 +29,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-261` |  | compose strict RVFI refinement with raw normalization | ls-sv2 |
 | `2026-11-07-ls-sv2-260` |  | transport trace and state directly from strict RVFI refinement | ls-sv2 |
 | `2026-11-07-ls-sv2-259` |  | require valid RVFI rows to normalize before cycle refinement | ls-sv2 |
 | `2026-11-07-ls-sv2-258` |  | bundle the raw and stateful window certificate | ls-sv2 |

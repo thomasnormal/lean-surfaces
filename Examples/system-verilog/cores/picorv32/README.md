@@ -147,6 +147,12 @@ proved against packed fields first and use the trace/state theorems afterward.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.
+`rvfiCycleStepRefines_normalized_trace_refines` composes the strict contract
+with a successful raw `normalizeRvfiTrace?` certificate, yielding the
+normalized retirement list's equality with the ISA trace.  The conditional
+`pinned_cycle_normalized_trace_refines_of` witness fixes that composition on
+the measured eight-cycle window; its hypotheses are exactly the future
+loaded-core invariant and input-admission obligations.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

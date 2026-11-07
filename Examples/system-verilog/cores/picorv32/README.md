@@ -521,6 +521,12 @@ finite RVFI state and the stateful ISA state.  The initial relation and all
 eight input-admission facts are named separately so a later loaded-core proof
 can reuse them without reopening the finite list cases.
 
+The endpoint bridge is explicit as well.  `pinned_window_retire_inputs`
+identifies the phase machine's retained instruction inputs with
+`nontrapInputs`, `pinned_window_final_phase` reaches the `.done` phase, and
+`pinned_window_trace_refines_measured` connects the normalized list to the
+existing `nontrapExpected` certificate.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1164 entries across 18 lanes.** Regenerate with
+**1165 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -59,6 +59,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-318` |  | connect the phase witness to the measured endpoint | ls-sv2 |
 | `2026-11-07-ls-sv2-317` |  | retain the normalized four-row post-state relation | ls-sv2 |
 | `2026-11-07-ls-sv2-316` |  | carry the four-row window through the ISA trace | ls-sv2 |
 | `2026-11-07-ls-sv2-315` |  | certify the measured four-row RVFI prefix | ls-sv2 |

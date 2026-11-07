@@ -5354,3 +5354,29 @@ changed.
 **JUDGED / DECIDED:** retain the paired trace/state theorem as the finite
 resume point for a future loaded-core invariant; keep the symbolic PicoRV32
 proof parked at the loader refusals with `ls-sv`.
+
+## 2026-11-07-ls-sv2-318 — connect the phase witness to the measured endpoint
+
+The inbox and goal file were reread before this item.  The generated-member
+and unpacked-register-memory refusals remain upstream `ls-sv` walls, so this
+item connects the finite phase machine to the existing measured RVFI capture.
+
+Added `pinned_window_retire_inputs`, `pinned_window_final_phase`,
+`pinned_window_retirements_measured`, and
+`pinned_window_trace_refines_measured`.  The first identifies the retained
+instruction inputs with `nontrapInputs`; the second proves the phase machine
+reaches `.done`; and the final bridge composes the normalized stateful trace
+equality with `pinned_full_window_trace` to recover the existing
+`nontrapExpected` four-retirement certificate.
+
+**MEASURED:** the focused PicoRV32 boundary target, `lake build
+LeanModels.Refine`, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  The four new endpoint declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint (the phase computation
+uses only `propext`); no `sorryAx` or new axiom was introduced.  No RTL,
+loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** keep the finite phase witness tied to the measured
+capture through explicit input, phase, and retirement endpoints; the symbolic
+PicoRV32 invariant remains parked at the loader refusals with `ls-sv`.

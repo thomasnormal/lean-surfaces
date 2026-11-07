@@ -641,6 +641,29 @@ theorem pinned_window_normalized_refines :
     pinned_window_initial_rel pinned_window_inputs_admit
     pinned_window_observations_normalize
 
+theorem pinned_window_retire_inputs :
+    retireInputs pinnedWindowMachine.toCycleMachine
+        pinnedWindowMachine.init pinnedWindowInputs = nontrapInputs := by
+  rfl
+
+theorem pinned_window_final_phase :
+    rvfiStateAfter pinnedWindowMachine pinnedWindowMachine.init
+      pinnedWindowInputs = .done := by
+  decide
+
+theorem pinned_window_retirements_measured :
+    pinnedWindowRetirements = nontrapExpected := by
+  decide
+
+theorem pinned_window_trace_refines_measured :
+    pinnedWindowRetirements = nontrapExpected := by
+  calc
+    pinnedWindowRetirements =
+        trace (rvMemoryMachineWith cv32e40pProfile)
+          (rvMemoryMachineWith cv32e40pProfile).init nontrapInputs := by
+      rw [pinned_window_trace_refines, pinned_window_retire_inputs]
+    _ = nontrapExpected := pinned_full_window_trace
+
 #print axioms pinned_addi_unified
 #print axioms pinned_store_unified
 #print axioms pinned_load_unified
@@ -658,5 +681,9 @@ theorem pinned_window_normalized_refines :
 #print axioms pinned_window_normalized_refines
 #print axioms pinned_window_initial_rel
 #print axioms pinned_window_inputs_admit
+#print axioms pinned_window_retire_inputs
+#print axioms pinned_window_final_phase
+#print axioms pinned_window_retirements_measured
+#print axioms pinned_window_trace_refines_measured
 
 end Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary

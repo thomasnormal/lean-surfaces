@@ -39,8 +39,8 @@
   },
   {
     "file": "harness/scripts/listcomp_shadow.py",
-    "expect": "unsupported",
-    "note": "list-comprehension lowering refuses user list shadows rather than calling them"
+    "expect": "match",
+    "note": "native ListComp semantics ignore user list shadows, matching CPython"
   },
   {
     "file": "harness/scripts/yield_global_target.py",
@@ -57,8 +57,8 @@
   },
   {
     "file": "harness/scripts/listcomp_script.py",
-    "expect": "unsupported",
-    "note": "list-comprehension syntax remains an explicit loud boundary after ingestion lowerings were removed"
+    "expect": "match",
+    "note": "native ordinary ListComp script behavior matches CPython"
   },
   {
     "file": "harness/scripts/interleaved.py",

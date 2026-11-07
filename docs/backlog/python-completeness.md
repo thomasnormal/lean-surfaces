@@ -10309,6 +10309,22 @@ syntax therefore cannot become a lookup of a user-bound `list` name.
 DECIDED: keep list-comprehension syntax source-level and loud until native
 comprehension evaluation is implemented.
 
+## 2026-11-07-pycomplete-453 — close ListComp shadowing audit after native evaluator
+
+The ListComp shadowing finding is now resolved by the native ordinary
+one-generator evaluator landed in this lane. Comprehensions evaluate their own
+AST node and never look up a user binding named `list`; the old script-corpus
+expectations were stale loud-boundary pins and are updated to the live behavior.
+
+| Measurement | Result |
+|---|---|
+| Shadow script | `listcomp_shadow.py`: MATCH against CPython 3.9.25 |
+| Ordinary script | `listcomp_script.py`: MATCH against CPython 3.9.25 |
+| Semantic change | harness expectations only; evaluator was already landed |
+
+DECIDED: close `py-listcomp-list-shadow`; retain the explicit loud boundaries
+for walrus filters and generator sources.
+
 ## 2026-11-07-pycomplete-408 — recheck augmented-repeat semantics
 
 The augmented-repeat audit finding is already closed. The

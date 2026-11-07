@@ -5164,6 +5164,18 @@
     "rung": 4
   },
   {
+    "id": "expression.callable-value-object-binary-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectBinaryAgreement",
+    "cpp_source": "int binary_witness(int value) { return value + 1; } bool callable_witness() { return binary_witness(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

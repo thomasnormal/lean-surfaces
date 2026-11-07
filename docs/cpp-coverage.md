@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1698 | 0 | 1594 | 0 | 94 | 0 | 10 |
+| 1699 | 0 | 1595 | 0 | 94 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -470,6 +470,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-local-declaration` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-local-increment` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-value-object-agreement` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
+| `expression.callable-value-object-binary-agreement` | 3 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-nested-block` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-loop-local-reentry` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `statement.callable-return-closes-frame` | 4 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |

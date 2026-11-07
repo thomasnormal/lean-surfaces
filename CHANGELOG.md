@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centralized callable unary and binary operator decoding in
+  ScalarArithmetic; both evaluator layers now use the shared mapping, with a
+  cross-evaluator binary agreement witness.
+
 - Added a kernel agreement witness for the value-only and object-frame
   evaluators on a pure local callable.
 

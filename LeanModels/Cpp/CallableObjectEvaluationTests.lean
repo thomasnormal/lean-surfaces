@@ -141,6 +141,24 @@ def callableValueObjectAgreement : Bool :=
 
 #guard callableValueObjectAgreement
 
+def callableValueObjectBinaryAgreement : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.binary "+"
+        {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+        {expression := .integer 1, sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == signed 8 && objectValue == signed 8
+  | _, _ => false
+
+#guard callableValueObjectBinaryAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

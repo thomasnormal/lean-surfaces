@@ -77,34 +77,6 @@ private def convertArguments (profile : TargetProfile) (parameters : List Callab
       | .unsupported reason => pure (.unsupported reason)
   | _, _ => .error .arityMismatch
 
-private def operator? (operator : String) : Option IntegralBinary :=
-  match operator with
-  | "+" => some .add
-  | "-" => some .subtract
-  | "*" => some .multiply
-  | "/" => some .divide
-  | "%" => some .remainder
-  | "<<" => some .shiftLeft
-  | ">>" => some .shiftRight
-  | "&" => some .bitAnd
-  | "|" => some .bitOr
-  | "^" => some .bitXor
-  | "==" => some .equal
-  | "!=" => some .notEqual
-  | "<" => some .less
-  | "<=" => some .lessEqual
-  | ">" => some .greater
-  | ">=" => some .greaterEqual
-  | _ => none
-
-private def unaryOperator? (operator : String) : Option IntegralUnary :=
-  match operator with
-  | "+" => some .plus
-  | "-" => some .negate
-  | "~" => some .complement
-  | "!" => some .logicalNot
-  | _ => none
-
 private def argumentAt (arguments : List IntegralValue) (index : Nat) : Option IntegralValue :=
   arguments[index]?
 
@@ -345,7 +317,7 @@ mutual
                 (convertTo profile typed.type operandValue).map (fun result => (result, updated))
             | result => pure (result, updated)
         | .unary operator operand => do
-            let some operation := unaryOperator? operator
+            let some operation := integralUnaryOfString operator
               | .error (.unsupportedOperator operator)
             let (operandResult, updated) ← evaluateTyped fuel profile parameters arguments operand
             match operandResult with
@@ -406,7 +378,7 @@ mutual
         | .binary operator left right => do
             if left.expression.hasEffects || right.expression.hasEffects then
               throw .unsequencedEffects
-            let some operation := operator? operator
+            let some operation := integralBinaryOfString operator
               | .error (.unsupportedOperator operator)
             let (leftResult, _) ← evaluateTyped fuel profile parameters arguments left
             let (rightResult, _) ← evaluateTyped fuel profile parameters arguments right
@@ -484,7 +456,7 @@ mutual
       | .compoundAssign operator declaration expression => do
           let some arithmeticOperator := compoundAssignmentOperator? operator
             | throw (.unsupportedOperator operator)
-          let some operation := operator? arithmeticOperator
+          let some operation := integralBinaryOfString arithmeticOperator
             | throw (.unsupportedOperator operator)
           let (result, afterExpression) ← evaluateTyped fuel profile parameters arguments expression
           match result with

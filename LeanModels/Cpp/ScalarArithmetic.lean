@@ -3,6 +3,32 @@ import LeanModels.Cpp.Integral
 
 namespace LeanModels.Cpp
 
+def integralBinaryOfString : String → Option IntegralBinary
+  | "+" => some .add
+  | "-" => some .subtract
+  | "*" => some .multiply
+  | "/" => some .divide
+  | "%" => some .remainder
+  | "<<" => some .shiftLeft
+  | ">>" => some .shiftRight
+  | "&" => some .bitAnd
+  | "|" => some .bitOr
+  | "^" => some .bitXor
+  | "==" => some .equal
+  | "!=" => some .notEqual
+  | "<" => some .less
+  | "<=" => some .lessEqual
+  | ">" => some .greater
+  | ">=" => some .greaterEqual
+  | _ => none
+
+def integralUnaryOfString : String → Option IntegralUnary
+  | "+" => some .plus
+  | "-" => some .negate
+  | "~" => some .complement
+  | "!" => some .logicalNot
+  | _ => none
+
 private def mapIntegralResult (result : IntegralResult IntegralValue)
     (continuation : IntegralValue → IntegralResult IntegralValue) :
     IntegralResult IntegralValue :=

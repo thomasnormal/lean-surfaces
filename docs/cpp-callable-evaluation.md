@@ -5,6 +5,9 @@ The value-only \`evaluateCallable\` and stateful
 local callable. Calls requiring caller-owned storage remain in the object-frame
 API and refuse through its dedicated call boundary.
 
+Unary and binary operator strings are decoded by the shared ScalarArithmetic
+mapping used by both evaluator layers.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

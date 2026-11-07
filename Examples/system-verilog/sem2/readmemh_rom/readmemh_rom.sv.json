@@ -1,0 +1,562 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "readmemh_rom",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/readmemh_rom/readmemh_rom.sv",
+      "sha256": "b1699cdc8eb8ab3ca8e9ced209748843c5a78f72674d295ace3ffff983bd66c5"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "readmemh_rom",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 21,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "addr",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 16,
+                      "end_line": 2,
+                      "end_col": 17
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 18,
+                      "end_line": 2,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 23
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 17,
+                      "end_line": 3,
+                      "end_col": 18
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "rom[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 10,
+                      "end_line": 5,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "rom[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 10,
+                      "end_line": 5,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "rom[2]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 10,
+                      "end_line": 5,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "rom[3]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 10,
+                      "end_line": 5,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 37
+            },
+            "body": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 6,
+                "end_col": 37
+              },
+              "sv_kind": "ExpressionStatement:CallExpression",
+              "text": "$readmemh(\"rom.hex\", rom);"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 23
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 7,
+                "col": 14,
+                "end_line": 7,
+                "end_col": 23
+              },
+              "width": 8,
+              "cond": {
+                "kind": "Binary",
+                "span": {
+                  "line": 7,
+                  "col": 18,
+                  "end_line": 7,
+                  "end_col": 22
+                },
+                "width": 1,
+                "op": "===",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 7,
+                    "col": 18,
+                    "end_line": 7,
+                    "end_col": 22
+                  },
+                  "width": 2,
+                  "name": "addr"
+                },
+                "right": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 7,
+                    "col": 18,
+                    "end_line": 7,
+                    "end_col": 22
+                  },
+                  "width": 2,
+                  "bits": "00"
+                }
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 14,
+                  "end_line": 7,
+                  "end_col": 17
+                },
+                "width": 8,
+                "name": "rom[0]"
+              },
+              "else": {
+                "kind": "Ternary",
+                "span": {
+                  "line": 7,
+                  "col": 14,
+                  "end_line": 7,
+                  "end_col": 23
+                },
+                "width": 8,
+                "cond": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 7,
+                    "col": 18,
+                    "end_line": 7,
+                    "end_col": 22
+                  },
+                  "width": 1,
+                  "op": "===",
+                  "left": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 18,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "width": 2,
+                    "name": "addr"
+                  },
+                  "right": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 18,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "width": 2,
+                    "bits": "01"
+                  }
+                },
+                "then": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 17
+                  },
+                  "width": 8,
+                  "name": "rom[1]"
+                },
+                "else": {
+                  "kind": "Ternary",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 23
+                  },
+                  "width": 8,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 18,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 18,
+                        "end_line": 7,
+                        "end_col": 22
+                      },
+                      "width": 2,
+                      "name": "addr"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 18,
+                        "end_line": 7,
+                        "end_col": 22
+                      },
+                      "width": 2,
+                      "bits": "10"
+                    }
+                  },
+                  "then": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 17
+                    },
+                    "width": 8,
+                    "name": "rom[2]"
+                  },
+                  "else": {
+                    "kind": "Ternary",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 23
+                    },
+                    "width": 8,
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 18,
+                        "end_line": 7,
+                        "end_col": 22
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 18,
+                          "end_line": 7,
+                          "end_col": 22
+                        },
+                        "width": 2,
+                        "name": "addr"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 18,
+                          "end_line": 7,
+                          "end_col": 22
+                        },
+                        "width": 2,
+                        "bits": "11"
+                      }
+                    },
+                    "then": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 17
+                      },
+                      "width": 8,
+                      "name": "rom[3]"
+                    },
+                    "else": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 23
+                      },
+                      "width": 8,
+                      "bits": "xxxxxxxx"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

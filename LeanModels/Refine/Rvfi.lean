@@ -370,6 +370,43 @@ theorem rvfiCycleStepRefines_toCycleStepRefines
       rw [hnone]
       simpa using hs
 
+/-- A valid row in the strict contract is genuinely well formed, and its
+concrete packed retirement is the ISA retirement.  This projection keeps
+callers from treating the optional adapter as a second source of semantics. -/
+theorem rvfiCycleStepRefines_valid_step
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState) (input : Input)
+    (hrel : rel state isaState) (hadmit : admit input)
+    (hvalid : (machine.step state input).2.valid = true) :
+    (machine.step state input).2.wellFormed ∧
+    rel (machine.step state input).1 (isa.step isaState input).fst ∧
+    (machine.step state input).2.toRetirement =
+      (isa.step isaState input).snd := by
+  rcases hstep : machine.step state input with ⟨state', observation⟩
+  rcases hisa : isa.step isaState input with ⟨isaState', isaRetirement⟩
+  have hvalid' : observation.valid = true := by
+    simpa [hstep] using hvalid
+  have hs := h.2 state isaState input hrel hadmit
+  simp only [hstep, hisa] at hs ⊢
+  rw [hvalid'] at hs
+  rcases hs with ⟨retirement, hretirement, hrel', hcommit⟩
+  have hwell : observation.wellFormed := by
+    cases hvalue : observation.wellFormedB with
+    | false =>
+        have hnone : observation.toRetirement? = none := by
+          simp [RvfiObservation.toRetirement?, hvalid', hvalue]
+        rw [hnone] at hretirement
+        cases hretirement
+    | true => exact hvalue
+  have hsome : observation.toRetirement? = some observation.toRetirement :=
+    observation.toRetirement?_eq_some hvalid' hwell
+  have hto : observation.toRetirement = retirement := by
+    exact Option.some.inj (hsome.symm.trans hretirement)
+  exact ⟨hwell, hrel', hto.trans hcommit⟩
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -904,6 +941,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines

@@ -10713,3 +10713,22 @@ identity, rebinding, and deletion remain outside the admitted table tier.
 
 DECIDED: retain the guarded static value-like tier and keep the runtime
 constructor/class-object replacement as explicit future work.
+
+## 2026-11-07-pycomplete-433 — recheck module-level callable aliases
+
+The callable-alias audit remains a guarded static dispatch slice. Recognition
+requires an earlier definition or admitted alias, source-order binding checks,
+no rebinding or duplicate alias target, and the existing identifier/builtin
+censuses. Rejected candidates stay ordinary assignments and therefore reach the
+loud first-class-callable boundary. Script-scope live globals still override a
+static alias when a later ordinary assignment shadows it.
+
+| Measurement | Result |
+|---|---|
+| Alias script | `alias_script.py` MATCHES CPython 3.9.25 |
+| Rebinding controls | `alias_rebound.py` and `alias_rebound_callee.py` MATCH |
+| Forward definition | `alias_before_def.py` MATCHES the CPython `NameError` boundary |
+| Remaining debt | first-class function objects and identity/`__name__` semantics before removing `recognizeDefAliases` |
+
+DECIDED: retain guarded static aliases and loud unsafe observations; schedule
+runtime function values before deleting the ingestion table pass.

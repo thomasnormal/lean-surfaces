@@ -944,6 +944,9 @@ The repeated ADDI step and order premises can be carried as the named
 `Rv32iAddiInvariant`; its `toMixedStep` method and
 `rv32i_reset_addi_refines_of_invariant` wrapper provide the same two reset
 entry points without restating those dependent predicates.
+The direct-stream projection is also available as
+`rv32i_reset_addi_stream_refines_of_invariant`, so a caller that only needs
+the committed trace and final relation can keep the invariant packaged.
 
 ## Constructing mixed cycle certificates from an invariant
 

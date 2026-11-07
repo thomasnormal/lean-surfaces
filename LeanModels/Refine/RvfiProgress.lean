@@ -226,8 +226,35 @@ theorem rv32i_progress_refinement
     trace_eq := trace_eq
     state_rel := state_rel }⟩
 
+/-- The reset-specialized form of the R2 contract: RVFI order starts at zero,
+the core starts at its loaded-machine state, and the ISA starts at the
+profile's stateful-machine initial state. -/
+def Rv32iResetRefinement {State : Type}
+    (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop)
+    (schedule target : Nat → Input) : Prop :=
+  Rv32iAllPrefixRefinement profile machine rel 0 machine.init
+    (rvMemoryMachineWith profile).init schedule target
+
+/-- A reset relation, indexed step invariant, and explicit target progress
+establish the all-prefix refinement contract from reset. -/
+theorem rv32i_reset_refinement
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine machine.init schedule target) :
+    Rv32iResetRefinement profile machine rel schedule target := by
+  exact rv32i_progress_refinement profile machine rel admit hstep
+    0 machine.init (rvMemoryMachineWith profile).init hinit hschedule progress
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines_state
 #print axioms LeanModels.Refine.rv32i_progress_refinement
+#print axioms LeanModels.Refine.rv32i_reset_refinement

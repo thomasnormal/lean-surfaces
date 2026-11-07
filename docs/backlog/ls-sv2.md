@@ -6602,3 +6602,29 @@ headline: a future real-core invariant can return one named refinement record
 for every target retirement prefix without reconstructing or extending a
 finite measured stream.  PicoRV32 remains parked at the referenced-task and
 net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-357 — specialize the all-prefix contract to reset
+
+The structure-valued all-prefix contract still accepted an arbitrary starting
+core state, architectural memory state, and RVFI order.  The finish line is a
+claim from reset, so its public entry point should state those initial states
+directly while retaining the explicit schedule-progress premise.
+
+**CHANGED:** Added `Rv32iResetRefinement` and
+`rv32i_reset_refinement` to `LeanModels/Refine/RvfiProgress.lean`.
+The theorem specializes the generic result to `machine.init`,
+`(rvMemoryMachineWith profile).init`, and order zero, while requiring the
+reset relation, the indexed mixed step invariant, pointwise input admission,
+and `Rv32iRetiresTarget` progress witness.  No semantics, RTL, loader,
+extractor, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiProgress.lean` and the
+refinement umbrella build pass under Lean 4.35.0; the new declaration reports
+only `propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check pass.  No `sorryAx` or new axiom was
+introduced.
+
+**JUDGED / DECIDED:** A future loaded PicoRV32 invariant can now target the
+finish-line shape from reset without manually instantiating the arbitrary-state
+contract.  The real core remains parked at the two approved memory-route
+walls; the Sem2 multi-clock wall in the inbox remains ls-sv's later item.

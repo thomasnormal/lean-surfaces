@@ -848,6 +848,39 @@ fixtures both remain admitted, so this is not a new generated-member shape and
 no `REQUEST ls-sv:` repro is filed.  The symbolic ADDI invariant remains
 parked at the unpacked `cpuregs` and unsupported-member/net-z walls.
 
+## 2026-11-07 re-probe after `cpuregs` memory-route admission
+
+The current owner revision `43f0d0fa4` admits the source-shaped unpacked
+register file through the memory-cycle route while preserving the ordinary
+flat semantic refusal.  Re-extracting the unchanged pinned source
+(`ef203c2b0a3fb793280f5114941416c425c5b461`) with the current extractor
+produces a 2,992,406-byte envelope with SHA-256
+`9826ebcc33d28777483f347c0f864bdcc59b84b255eee18bdab105e0bc805311`.
+The declaration still has 26 parameters, 216 declarations, 43 processes, and
+three generate entries.
+
+At the default parameters, the ordinary route remains loud at the first
+`cpuregs` declaration:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now passes that register-file shape and reaches its existing
+unsupported-module-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The retained module metadata includes the undriven `pcpi_mul_wr` net (and the
+other disabled-PCPI net-z declarations).  This is the next generic wall; no
+PicoRV32 adaptation or new clean-room request is justified by this re-probe.
+The symbolic ADDI invariant remains parked until the unsupported-member/net-z
+route is admitted.
+
 ## Mixed RV32I program certificate
 
 `LeanModels.Refine.RvfiRv32iProgram` now combines the admitted ALU, branch,

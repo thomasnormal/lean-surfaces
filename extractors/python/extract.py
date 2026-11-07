@@ -733,8 +733,6 @@ def convert_expr(node):
         return unsupported(node, "SetComp")
 
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
-        if isinstance(node, ast.ListComp):
-            return unsupported(node, "ListComp")
         # H4: a generator EXPRESSION is structured only in the v0 shape --
         # ONE `for` clause, not `async`. CPython compiles every genexp into
         # an implicit generator FUNCTION whose first argument is the
@@ -796,6 +794,8 @@ def _convert_comprehension(node, g, kind=None, elt=None):
                     w.target))))
         else:
             ifs_out.append(convert_expr(i))
+    if isinstance(node, ast.ListComp) and walrus:
+        return unsupported(node, "ListComp:walrus")
     return {
         "kind": (kind if kind is not None else
                  ("ListComp" if isinstance(node, ast.ListComp)

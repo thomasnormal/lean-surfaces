@@ -606,15 +606,108 @@
           },
           "args": [
             {
-              "kind": "Unsupported",
+              "kind": "ListComp",
               "span": {
                 "lineno": 12,
                 "col_offset": 6,
                 "end_lineno": 12,
                 "end_col_offset": 54
               },
-              "py_kind": "ListComp",
-              "text": "[divmod(1.0, divisor) for divisor in (0.1, 0.3)]"
+              "elt": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 7,
+                  "end_lineno": 12,
+                  "end_col_offset": 27
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 12,
+                    "col_offset": 7,
+                    "end_lineno": 12,
+                    "end_col_offset": 13
+                  },
+                  "id": "divmod"
+                },
+                "args": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 14,
+                      "end_lineno": 12,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "4607182418800017408"
+                    }
+                  },
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 19,
+                      "end_lineno": 12,
+                      "end_col_offset": 26
+                    },
+                    "id": "divisor"
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 32,
+                  "end_lineno": 12,
+                  "end_col_offset": 39
+                },
+                "id": "divisor"
+              },
+              "iter": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 43,
+                  "end_lineno": 12,
+                  "end_col_offset": 53
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 44,
+                      "end_lineno": 12,
+                      "end_col_offset": 47
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "4591870180066957722"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 49,
+                      "end_lineno": 12,
+                      "end_col_offset": 52
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "4599075939470750515"
+                    }
+                  }
+                ]
+              },
+              "ifs": [],
+              "walrus": []
             }
           ],
           "keywords": [],

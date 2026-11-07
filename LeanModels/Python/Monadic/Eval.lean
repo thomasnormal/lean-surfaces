@@ -1352,6 +1352,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       sliceHeapM cv lv uv sv
   | .genExp .. =>
       refuse "this generator expression is outside the tier (ingestion could not lower it to a generator function; docs/memory-model.md §generator semantics)"
+  | .listComp .. =>
+      refuse "list comprehension semantics are outside the tier"
   | .unsupported pyKind _ _ => refuse s!"unsupported expression '{pyKind}'"
   termination_by structural e => e
 

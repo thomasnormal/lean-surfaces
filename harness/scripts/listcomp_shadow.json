@@ -135,15 +135,72 @@
               "end_col_offset": 30
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "ListComp",
               "span": {
                 "lineno": 10,
                 "col_offset": 11,
                 "end_lineno": 10,
                 "end_col_offset": 30
               },
-              "py_kind": "ListComp",
-              "text": "[y for y in (1, 2)]"
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 12,
+                  "end_lineno": 10,
+                  "end_col_offset": 13
+                },
+                "id": "y"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 18,
+                  "end_lineno": 10,
+                  "end_col_offset": 19
+                },
+                "id": "y"
+              },
+              "iter": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 23,
+                  "end_lineno": 10,
+                  "end_col_offset": 29
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 10,
+                      "col_offset": 24,
+                      "end_lineno": 10,
+                      "end_col_offset": 25
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 10,
+                      "col_offset": 27,
+                      "end_lineno": 10,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                ]
+              },
+              "ifs": [],
+              "walrus": []
             }
           }
         ]

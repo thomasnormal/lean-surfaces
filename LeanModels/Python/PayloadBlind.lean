@@ -4729,6 +4729,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       obtain ⟨h', r⟩ := x
       exact PBF.okWrite (sliceValH_slot hs4 hw) _
   | genExp elt target iter ifs sp => simp only [evalExpr]; exact PBF.unsupported
+  | listComp elt target iter ifs wb sp => simp only [evalExpr]; exact PBF.unsupported
   | unsupported pyKind text sp => simp only [evalExpr]; exact PBF.unsupported
   | call f args kwargs callUnsupported sp =>
       simp only [evalExpr, FrameState.swapAt_world, FrameState.swapAt_locals,

@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-401` |  | preserve the list-comprehension source node | python-completeness |
 | `2026-11-07-pycomplete-400` |  | prove monadic fold monotonicity | python-completeness |
 | `2026-11-07-pycomplete-399` |  | close the stale list-comprehension lowering path | python-completeness |
 | `2026-11-07-pycomplete-398` |  | repair payload-blind raise branches | python-completeness |

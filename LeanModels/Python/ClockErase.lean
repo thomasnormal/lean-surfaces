@@ -1990,6 +1990,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
         | mk hp g so c => rfl)
       (by first | rfl | simp [FrameState.withClock_self hs5, hs5])
   | genExp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
+  | listComp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
   | unsupported pyKind txt sp => simp only [evalExpr]; exact .unsupported
   | call f args kwargs cu sp =>
     cases cu with

@@ -162,6 +162,14 @@ Simple boolean negation (`!a`) maps to `SvaBool.not`.
 The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
+The downstream clean-room F1 forms `sva_f1_finite`, `sva_f1_range`, and
+`sva_assume_disable` now load their structured Slang assertion trees and are
+checked as `SvaContract`s over sampled E observations. The first pair covers
+finite `##1`, bounded `##[1:3]`, `|->`, `|=>`, `$rose`, and finite `$past`,
+including an assertion and a cover property; the third covers `disable iff`
+with `$stable`. These are kernel acceptance rows over explicit pre/post
+traces; no Xcelium verdict is claimed by these source-shaped fixtures until
+the property-result harness is connected.
 Unbased unsized SVA literals (`'0`, `'1`, `'x`, and `'z`) are retained as
 width-directed fills in the expression tree. The clean-room
 `sem2/sva_unbased_literal` witness checks a passing and a failing sampled

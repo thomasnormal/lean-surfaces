@@ -1,0 +1,330 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_f1_finite",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_f1_finite/sva_f1_finite.sv",
+      "sha256": "5ceadc612e81d461ceb524b556a4b49fa2b653b4b9165b6fc8389f9863cfb5f2"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "sva_f1_finite",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 34,
+              "end_line": 3,
+              "end_col": 37
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 39,
+              "end_line": 3,
+              "end_col": 42
+            },
+            "name": "rst",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 44,
+              "end_line": 3,
+              "end_col": 47
+            },
+            "name": "req",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 49,
+              "end_line": 3,
+              "end_col": 52
+            },
+            "name": "ack",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 67,
+              "end_line": 3,
+              "end_col": 68
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 5,
+              "end_col": 40
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "areset_n": "rst",
+            "body": {
+              "kind": "If",
+              "span": {
+                "line": 5,
+                "col": 5,
+                "end_line": 5,
+                "end_col": 40
+              },
+              "cond": {
+                "kind": "Unary",
+                "span": {
+                  "line": 5,
+                  "col": 9,
+                  "end_line": 5,
+                  "end_col": 13
+                },
+                "width": 1,
+                "op": "!",
+                "operand": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 10,
+                    "end_line": 5,
+                    "end_col": 13
+                  },
+                  "width": 1,
+                  "name": "rst"
+                }
+              },
+              "then": {
+                "kind": "NonblockingAssign",
+                "span": {
+                  "line": 5,
+                  "col": 15,
+                  "end_line": 5,
+                  "end_col": 25
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 15,
+                    "end_line": 5,
+                    "end_col": 16
+                  },
+                  "width": 1,
+                  "name": "q"
+                },
+                "value": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 5,
+                    "col": 20,
+                    "end_line": 5,
+                    "end_col": 24
+                  },
+                  "width": 1,
+                  "bits": "0"
+                }
+              },
+              "else": {
+                "kind": "NonblockingAssign",
+                "span": {
+                  "line": 5,
+                  "col": 31,
+                  "end_line": 5,
+                  "end_col": 40
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 31,
+                    "end_line": 5,
+                    "end_col": 32
+                  },
+                  "width": 1,
+                  "name": "q"
+                },
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 36,
+                    "end_line": 5,
+                    "end_col": 39
+                  },
+                  "width": 1,
+                  "name": "req"
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 70
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) disable iff (rst) req |-> ##1 ack);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaDisable",
+                "guard": {
+                  "kind": "SvaExpr",
+                  "expr": {
+                    "kind": "Ident",
+                    "name": "rst"
+                  }
+                },
+                "body": {
+                  "kind": "SvaImplication",
+                  "antecedent": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "req"
+                      }
+                    }
+                  },
+                  "consequent": {
+                    "kind": "SvaDelay",
+                    "cycles": 1,
+                    "body": {
+                      "kind": "SvaAtom",
+                      "test": {
+                        "kind": "SvaExpr",
+                        "expr": {
+                          "kind": "Ident",
+                          "name": "ack"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 65
+            },
+            "name": "",
+            "property_kind": "assume",
+            "clock": "clk",
+            "text": "assume property (@(posedge clk) $rose(req) |=> $past(ack, 1));",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assume",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaNonoverlap",
+                "antecedent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaRose",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "req"
+                    }
+                  }
+                },
+                "consequent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaPast",
+                    "cycles": 1,
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "ack"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

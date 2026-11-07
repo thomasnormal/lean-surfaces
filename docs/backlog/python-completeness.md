@@ -11176,6 +11176,24 @@ DECIDED: keep display/comprehension syntax source-level and loud until native
 nodes exist; retain only the measured positional-star and flat-star-target
 slices with their unspellable markers.
 
+## 2026-11-07-pycomplete-469 — audit display/comprehension/starred rewrites
+
+The medium `py-extractor-display-lowerings` finding is already removed from the
+approved extractor path. Set and dict comprehensions, starred load displays,
+and unsupported nested starred forms remain structured loud nodes; ordinary
+ListComp now has its native evaluator and does not synthesize a `list` name.
+Admitted flat starred assignment/for targets and positional-star calls retain
+dedicated markers rather than user-visible builtin names.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active `lower_starred_display` or display-to-builtin call path |
+| Differential boundaries | ListComp shadow/ordinary scripts MATCH; set/dict/starred unsupported forms remain loud |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-extractor-display-lowerings` as already fixed; retain loud
+set/dict-comprehension and unsupported starred-display boundaries.
+
 ## 2026-11-07-pycomplete-439 — recheck remaining ingestion bridges
 
 The general ingestion audit is split between retired shape rewrites and

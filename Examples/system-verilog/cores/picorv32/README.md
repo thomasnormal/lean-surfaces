@@ -704,7 +704,9 @@ stores, with state, retirement, and append equations for the existing
 `rvMemoryMachineWith` semantics.  `MemRvfiTrace` now consumes those folds: it
 admits arbitrary invalid bubbles, requires consecutive retirement order and an
 indexed `Rv32iBoundary` witness for every retiring load/store, and normalizes
-to the exact stateful ISA trace.  The certificate is generic and state-threaded;
+to the exact stateful ISA trace.  `MemRvfiTrace.append` composes adjacent
+certificates at the next retirement order and exact threaded memory state.  The
+certificate is generic and state-threaded;
 the loaded PicoRV32 invariant remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
 

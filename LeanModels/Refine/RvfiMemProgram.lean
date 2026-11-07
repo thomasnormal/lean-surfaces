@@ -262,6 +262,36 @@ theorem MemRvfiTrace.trace_refines
         (memProgramInputs state program)) := by
       rw [rvMemoryMachineWith_mem_program_trace]
 
+/-! ## Composing raw memory certificates -/
+
+/-- Raw memory certificates compose at the next retirement order and the
+threaded architectural/byte-memory state produced by the first program
+chunk. -/
+theorem MemRvfiTrace.append
+    {start : Nat} {state : RvMemoryState}
+    {firstObservations secondObservations : List RvfiObservation}
+    {firstProgram secondProgram : List MemInstruction}
+    (first : MemRvfiTrace start state firstObservations firstProgram)
+    (second : MemRvfiTrace
+      (start + firstProgram.length)
+      (memProgramState state firstProgram)
+      secondObservations secondProgram) :
+    MemRvfiTrace start state
+      (firstObservations ++ secondObservations)
+      (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start state =>
+      simpa [memProgramState] using second
+  | bubble hvalid tail ih =>
+      refine MemRvfiTrace.bubble hvalid ?_
+      apply ih
+      simpa [memProgramState] using second
+  | retire horder boundary tail ih =>
+      refine MemRvfiTrace.retire horder boundary ?_
+      apply ih
+      simpa [memProgramState, List.length_cons, Nat.add_assoc,
+        Nat.add_comm, Nat.add_left_comm] using second
+
 #print axioms LeanModels.Refine.memProgramInputs_append
 #print axioms LeanModels.Refine.memProgramState_append
 #print axioms LeanModels.Refine.memProgramRetirements_append
@@ -273,5 +303,6 @@ theorem MemRvfiTrace.trace_refines
 #print axioms LeanModels.Refine.MemRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.MemRvfiTrace.normalize
 #print axioms LeanModels.Refine.MemRvfiTrace.trace_refines
+#print axioms LeanModels.Refine.MemRvfiTrace.append
 
 end LeanModels.Refine

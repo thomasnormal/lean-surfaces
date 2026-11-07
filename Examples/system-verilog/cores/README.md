@@ -194,7 +194,9 @@ invalid RVFI bubbles and requires the next retirement order plus an indexed
 `Rv32iBoundary` witness for every load/store row.  Its normalization theorem
 feeds the existing order-checked RVFI normalizer, and `trace_refines` identifies
 the result with the profile-parametric stateful ISA trace for the same
-threaded memory program.  This is generic refinement infrastructure; the
+threaded memory program.  `MemRvfiTrace.append` composes adjacent certificates
+at the next retirement order and the exact threaded architectural and byte
+memory state.  This is generic refinement infrastructure; the
 PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
 

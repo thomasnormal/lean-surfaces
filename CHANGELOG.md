@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized switch case/default suffix selection in `Callable` for both
+  callable evaluators and added a matching/default agreement witness.
+
 - Centralized `IntegralResult` map and bind propagation in `ScalarArithmetic`
   for both callable evaluators and added a success/undefined witness.
 

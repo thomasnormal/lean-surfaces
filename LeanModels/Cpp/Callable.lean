@@ -121,6 +121,23 @@ structure CallableFunction where
   body : CallableStatement
   deriving Repr, BEq, Inhabited
 
+def callableSwitchCaseSuffix (value : Int) : List CallableSwitchClause →
+    Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | some label => if label == value then some (clause :: rest)
+          else callableSwitchCaseSuffix value rest
+      | none => callableSwitchCaseSuffix value rest
+
+def callableSwitchDefaultSuffix : List CallableSwitchClause →
+    Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | none => some (clause :: rest)
+      | some _ => callableSwitchDefaultSuffix rest
+
 private def rawChildren (raw : Raw) : Except String (List Raw) :=
   match raw.field "inner" with
   | none => .ok []

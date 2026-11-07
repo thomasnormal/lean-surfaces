@@ -160,6 +160,9 @@ refused; declaration kind evidence must be frontend text.
 A structured ordinary-call declaration evidence whose `kind` is null is also
 refused; declaration kind evidence must be frontend text.
 
+A `DeclRefExpr` callee without a `referencedDecl` field is also refused; the
+call gate never invents declaration identity from the node kind alone.
+
 A scalar ordinary-call `referencedDecl` value is also refused; declaration
 identity is never coerced from a number or Boolean.
 

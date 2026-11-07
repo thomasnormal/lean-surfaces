@@ -6136,3 +6136,40 @@ normalize an arbitrary `FENCE`/`FENCE.I` retirement stream while preserving
 the exact fence kind, actual cycle inputs, unchanged data memory, and core
 state transitions.  PicoRV32 remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-343 — add a symbolic RV32I Zicsr program certificate
+
+The system-operation program surface now covers the no-interrupt traps,
+returns, and WFI stutter.  The next RV32I subset family is implemented
+machine-mode Zicsr, where the selected CSR row and its WARL update must remain
+explicit and an absent row must not be guessed as a no-op.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiCsrProgram.lean`.  `CsrInstruction` retains the fetched
+word, `CsrOpKind`, the selected `CsrBehavior` row, and both decoder and row
+lookup proofs.  The input, architectural-state, and retirement folds cover
+arbitrary mixtures of `CSRRW`, `CSRRS`, and `CSRRC` over implemented rows and
+expose append laws.  The stateful `rvMemoryMachineWith` bridge reuses the
+exact `isaStepWith_csr`, `csrNext`, and `csrRetirement` semantics, preserving
+old-value readback, register/immediate source forms, WARL writes, and
+threaded data memory.  `CsrRvfiTrace` and `CsrRvfiCycleTrace` normalize raw
+RVFI observations, retain arbitrary bubble inputs and exact cycle-step
+equalities, identify retiring inputs, and compose at the exact core/state/
+retirement-order boundary.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiCsrProgram.lean`, the
+52-job `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize arbitrary implemented-row Zicsr streams while preserving exact
+CSR readback and WARL state updates, actual cycle inputs, unchanged data
+memory, and core state transitions.  Unimplemented CSR addresses remain on
+the separate illegal-instruction boundary.  PicoRV32 remains parked at the
+existing unpacked `cpuregs` and unsupported-member/net-z loader walls.

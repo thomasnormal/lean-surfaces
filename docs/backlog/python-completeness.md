@@ -10846,3 +10846,21 @@ this recheck.
 
 DECIDED: preserve the remaining bridges only as explicit debt and replace each
 with a native source-node semantic case before widening admission.
+
+## 2026-11-07-pycomplete-440 — recheck leanpy frontend and oracle pinning
+
+The runner pinning audit is closed. `tools/leanpy` re-execs extraction under
+the pinned CPython 3.9 frontend, defaults comparison to the same pinned oracle,
+reports both versions, and warns when either pin is unavailable. Envelope cache
+keys include the frontend family, and `leanpy_survey.py` keeps frontend
+re-execution separate from its selectable `--cpython` oracle while warning on
+fallback.
+
+| Measurement | Result |
+|---|---|
+| Runner tests | `tools/test_leanpy.py`: 11 passed, including frontend/oracle identity and fallback warning |
+| CLI identity | `tools/leanpy --compare` reports frontend and oracle versions |
+| Semantic change | none; this packet records the existing pinning fix |
+
+DECIDED: retain independent pinned frontend and oracle controls with visible
+fallback warnings rather than silent version drift.

@@ -35,6 +35,9 @@
 - Docs: catalog the remaining explicit ingestion compatibility bridges and
   their loud or guarded interpreter cases.
 
+- Docs: record the pinned leanpy frontend/oracle behavior and visible fallback
+  warnings.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

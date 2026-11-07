@@ -6514,3 +6514,31 @@ the focused wall guards, `python3 tools/docs_check.py`,
 moved for the memory route, but the real core is still blocked by generic
 unsupported module members/net-z.  Keep the symbolic ADDI invariant parked;
 do not extend the finite captured window or adapt PicoRV32.
+
+## 2026-11-07-ls-sv2-354 — expose target-state all-prefix refinement
+
+The all-prefix result from item 352 returned the final relation over the
+existential mixed program fold.  A whole-core R2 theorem should state that
+relation over the target retirement-input prefix itself, after the stateful
+byte-memory machine has run that prefix.
+
+**CHANGED:** Added `rv32i_progress_trace_refines_state` to
+`LeanModels/Refine/RvfiProgress.lean`.  It retains the finite mixed RVFI
+certificate and normalized trace from `rv32i_progress_trace_refines`, proves
+that the certificate's decoded program inputs equal the target prefix, and
+rewrites the final relation to
+`rvMemoryStateAfter profile memoryState (schedulePrefix target k)`.  Updated
+the PicoRV32 README.  No alternate ISA semantics, RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** The focused progress module and `lake build LeanModels.Refine`
+pass under Lean 4.35.0; the new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The current PicoRV32 wall probe,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass.  No `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** The generic R2 all-prefix surface now returns the
+post-state relation in the same target-state form used by the headline, while
+keeping the explicit progress premise and finite certificate.  The real
+PicoRV32 proof remains parked at the unsupported-member/net-z wall; no finite
+window was extended.

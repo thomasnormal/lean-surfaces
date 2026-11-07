@@ -929,6 +929,11 @@ cannot satisfy it by vacuity.  This is generic R2 infrastructure and does not
 extend the measured PicoRV32 window; the pinned RTL remains parked at the two
 loader walls above.
 
+`rv32i_progress_trace_refines_state` exposes the same result with the final
+relation stated directly over `rvMemoryStateAfter profile memoryState` for the
+target prefix.  The existential decoded program remains available for the
+certificate, but the relation no longer ends at an auxiliary program fold.
+
 ## Clean-room repros for the two current walls
 
 The owner-lane request for the remaining PicoRV32 walls is backed by two

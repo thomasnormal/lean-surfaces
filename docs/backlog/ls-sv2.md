@@ -6066,3 +6066,37 @@ normalize arbitrary upper-immediate streams while preserving LUI's x0-based
 writeback, AUIPC's pc-based writeback, actual cycle inputs, and core-state
 transitions.  PicoRV32 remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-341 — add a symbolic RV32I fence program certificate
+
+The upper-immediate program surface now covers LUI/AUIPC; the next missing
+RV32I family is the decoded `FENCE`/`FENCE.I` pair.  The fence contract must
+retain the exact fence kind while threading the architectural state and the
+unchanged data memory.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiFenceProgram.lean`.  `FenceInstruction` retains the
+fetched word, semantic `FenceKind`, and decoder proof.  The input,
+architectural-state, and retirement folds cover arbitrary fence programs and
+expose append laws.  The stateful `rvMemoryMachineWith` bridge reuses the
+existing `isaStepWith_fence`/`fenceNext` semantics, preserving the threaded
+memory.  `FenceRvfiTrace` and `FenceRvfiCycleTrace` normalize raw RVFI
+observations, retain arbitrary bubble inputs and exact cycle-step equalities,
+identify retiring inputs, and compose at the exact core/state/retirement-order
+boundary.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiFenceProgram.lean`, the
+umbrella `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize an arbitrary `FENCE`/`FENCE.I` retirement stream while preserving
+the exact fence kind, actual cycle inputs, unchanged data memory, and core
+state transitions.  PicoRV32 remains parked at the existing unpacked
+`cpuregs` and unsupported-member/net-z loader walls.

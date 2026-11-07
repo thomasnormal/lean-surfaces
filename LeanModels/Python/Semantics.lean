@@ -10738,16 +10738,32 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
             (markUnboundLocals f.body.toList (mkCallEnv f.params args))
             [.block f.body.toList] .created
         .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+      else if w.callDepth == pythonTopCallDepth then
+        Run.finishCallAt w.callDepth <|
+          Run.toWorld <|
+            execStmts m fuel
+              ⟨{ w with callDepth := 0 },
+                markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList ⤳ fun st flow =>
+            match flow with
+            | .ret v => .ok st v
+            | .next => .ok st .none
+            | .brk => .unsupported "'break' outside loop"
+            | .cont => .unsupported "'continue' outside loop"
+      else if w.callDepth + 1 >= pythonRecursionLimit then
+        .exn w .recursionError
       else
-        Run.toWorld <|
-          execStmts m fuel
-            ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
-            f.body.toList ⤳ fun st flow =>
-          match flow with
-          | .ret v => .ok st v
-          | .next => .ok st .none
-          | .brk => .unsupported "'break' outside loop"
-          | .cont => .unsupported "'continue' outside loop"
+        Run.leaveCallDepth <|
+          Run.toWorld <|
+            execStmts m fuel
+              ⟨{ w with callDepth := w.callDepth + 1 },
+                markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList ⤳ fun st flow =>
+            match flow with
+            | .ret v => .ok st v
+            | .next => .ok st .none
+            | .brk => .unsupported "'break' outside loop"
+            | .cont => .unsupported "'continue' outside loop"
   termination_by structural fuel
 
 /-- **The generator stepper** (H4, docs/memory-model.md §generator
@@ -11453,7 +11469,9 @@ def proofCellGeneratorUnsafe (m : Module) (fname : String) : Bool :=
           !(initialized && !reboundAfter && f.body.toList.any (proofCellDrainStmt g.name))
 
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
-  Run.toPublic fuel (callIn m fuel (initWorld m) fname (RVal.thawArgs args))
+  Run.toPublic fuel
+    (callIn m fuel { initWorld m with callDepth := pythonTopCallDepth } fname
+      (RVal.thawArgs args))
 
 /-- The narrower theorem-runner projection for generator-cell shapes that the
 monadic runner executes with live cells. -/
@@ -11471,6 +11489,8 @@ for `"clock"`-carrying rows. `callFunction m f args fuel` IS
 def callFunctionClock (m : Module) (fname : String) (args : Array Val)
     (clock : List Int) (fuel : Nat) : Res Val :=
   Run.toPublic fuel
-    (callIn m fuel { initWorld m with clock := clock } fname (RVal.thawArgs args))
+    (callIn m fuel
+      { initWorld m with clock := clock, callDepth := pythonTopCallDepth }
+      fname (RVal.thawArgs args))
 
 end LeanModels.Python

@@ -324,6 +324,10 @@ deriving Repr, Inhabited, BEq
 /-- CPython 3.9's pinned default `sys.getrecursionlimit()`. -/
 def pythonRecursionLimit : Nat := 1000
 
+/-- The public closed-function boundary contributes one virtual frame while
+the body theorem state remains the ordinary `initWorld` (depth zero). -/
+def pythonTopCallDepth : Nat := pythonRecursionLimit + 1
+
 /-- One frame's full interpreter state: the shared world + this frame's
 locals. Statement execution transforms a `FrameState`; a nested call
 passes only the `world` through (`callIn`). -/
@@ -479,6 +483,27 @@ AND on `.exn`). -/
   | .exn s e => .exn s.world e
   | .timeout => .timeout
   | .unsupported msg => .unsupported msg
+
+/-! A completed Python frame leaves the active recursion stack.  The helper
+is deliberately applied to both `.ok` and `.exn`: language raises unwind a
+frame just like returns, while timeout/refusal outcomes carry no state. -/
+
+@[inline] def leaveCallDepth : Run World α → Run World α
+  | .ok w a => .ok { w with callDepth := w.callDepth.pred } a
+  | .exn w e => .exn { w with callDepth := w.callDepth.pred } e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+/-! Restore the public boundary's virtual frame after its body returns or
+raises. -/
+@[inline] def finishCallAt (depth : Nat) : Run World α → Run World α
+  | .ok w a => .ok { w with callDepth := depth } a
+  | .exn w e => .exn { w with callDepth := depth } e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+@[inline] def finishTopCall : Run World α → Run World α :=
+  finishCallAt pythonTopCallDepth
 
 /-- Inversion of a successful bind (the `Res.bind_eq_ok` analog): the
 prefix decided with some intermediate state and value. -/

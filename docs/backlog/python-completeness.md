@@ -10142,3 +10142,28 @@ continue to refuse with the exact boundary message while CPython 3.9 runs.
 DECIDED: retain the source-level loud boundary until native comprehension
 evaluation has a complete recursion, payload-blindness, and clock-erasure
 proof package; do not reintroduce the builtin-name lowering.
+
+## 2026-11-07-pycomplete-402 — restore active recursion depth across calls
+
+The recursion-limit field was already present in the script runner, but the
+closed-function and monadic call entries only incremented it. A completed
+callee therefore poisoned later sibling calls and a raised callee left the
+caller at the wrong depth. Added a shared `Run.leaveCallDepth` transport for
+the trunk and a state-aware monadic unwind that handles both Python returns and
+Python raises. The trunk guard now applies at the same entry point as nested
+calls, while generator creation remains non-executing and does not consume a
+frame.
+
+| Measurement | Result |
+|---|---|
+| Focused proof targets | managed `lake build LeanModels.Python.Tests`, `LeanModels.Python.Obs`, `LeanModels.Python.Monadic.Eval`, and `LeanModels.Python.Monadic.Mono` passed |
+| Runner | managed `lake build leanmodels-run` passed (40 jobs) |
+| Differential recursion rows | closed `depth(100)` and `depth(1000)` both MATCH CPython 3.9.25 |
+| Script recursion witness | `recursion_limit_script.py` remains a faithful `RecursionError` MATCH |
+| Sibling unwind | two sequential depth-900 calls both return 900 under `tools/leanpy --compare` |
+
+DECIDED: the public closed-function wrapper carries one virtual top frame,
+while ordinary nested frames enter and leave the active counter; this keeps
+existing body triples at the `initWorld` state shape. The module shell's
+existing reset remains the statement boundary. The legacy clock-erasure proof
+file still has unrelated pre-existing set/value case gaps.

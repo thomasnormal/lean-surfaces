@@ -746,7 +746,8 @@ theorem toRun_le {σ α : Type} {x y : PyM σ α} (h : x ⊑ₚ y) (s : σ) :
 theorem fuelMono (m : Module) (fuel fuel' : Nat) (hf : fuel ≤ fuel')
     (w : World) (fname : String) (args : Array RVal) :
     callInMono m fuel w fname args ⊑ʳ callInMono m fuel' w fname args :=
-  toRun_le (((kontMono m fuel fuel' hf).2.1) fname args) w
+  toRun_le (((kontMono m fuel fuel' hf).2.1) fname args)
+    { w with callDepth := pythonTopCallDepth }
 
 /-- The same fact one layer in, for consumers that keep the rebuild's own
 `RefusalCause` and snapshot rather than the trunk-shaped projection. -/

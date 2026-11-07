@@ -9951,6 +9951,25 @@ payloads and are never parsed to admit or evaluate a supported construct.
 DECIDED: close `py-text-keyed-semantics` as already fixed; keep structured AST
 fields as the only supported semantic inputs.
 
+## 2026-11-07-pycomplete-462 — audit two-interpreter refinement edge
+
+The medium `py-two-interpreters` finding remains an active architectural debt,
+not a stale report. The monadic rebuild has kernel-checked pure-worker bridges
+(`twinAgrees_liftRes` and `twinAgrees_binOp`) and the proof interpreter is still
+checked separately with `--proof-interpreter`, but no control-level theorem yet
+relates the mutually recursive `Semantics.lean` runs to the monadic evaluator or
+script layer. The correct action is to preserve this explicit boundary rather
+than claim that differential agreement establishes theorem adequacy.
+
+| Measurement | Result |
+|---|---|
+| Existing refinement edge | pure `Res`/`binOp` bridges present and kernel-checked |
+| Missing edge | control-level `evalExpr`/statement/script refinement theorem |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-two-interpreters` open as a named control-level adequacy
+milestone; do not broaden the claim beyond the existing pure-worker bridges.
+
 ## 2026-11-07-pycomplete-387 — recheck the two-interpreter refinement edge
 
 The audit's claim that no `twinAgrees` theorem exists is stale. Current

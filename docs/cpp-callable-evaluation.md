@@ -15,6 +15,9 @@ unsupported.
 Profile format selection is shared at the same boundary, including invalid or
 unsupported target-profile outcomes.
 
+Evidence-to-value conversion uses the same shared wrapper before each
+evaluator applies its own error mapping.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -47,8 +47,10 @@ private def exactArgument (profile : TargetProfile) (type : CppTypeEvidence)
 
 private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
     (value : IntegralValue) : Except CallableEvaluationError (IntegralResult IntegralValue) := do
-  let destination ← formatFor profile type
-  pure (integralConvert destination value)
+  (integralConvertOfEvidence profile type value).mapError fun reason =>
+    match reason with
+    | .unsupportedType _ => .unsupportedType type
+    | other => mapFormatError other
 
 private def convertArguments (profile : TargetProfile) (parameters : List CallableParameter)
     (arguments : List IntegralValue) :

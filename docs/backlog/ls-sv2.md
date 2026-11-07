@@ -7032,6 +7032,57 @@ further ISA packaging while PicoRV32 remains blocked by the retained task/net-z
 memory-route wall, and resume with an exact re-probe after that owner-lane wall
 changes.  Do not add finite captured-window lemmas.
 
+## 2026-11-07-ls-sv2-376 — re-probe PicoRV32 after task admission
+
+The owner lane's task admission had landed on the current master, so item 376
+re-ran the full real-core probe and added a source-shaped regression for the
+task's comment-bearing form.  The probe was run with the approved Slang
+extractor and `load_design_sv2`; the upstream RTL was not edited.
+
+**MEASURED:** The unchanged YosysHQ source at commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` was freshly extracted with the
+clean owner-lane commit `68cbae253` (the public `origin/master` at `6914a9f78`
+still predates that task admission).  The 2,991,505-byte envelope has SHA-256
+`94e22334ce1502feb0123ca2c99e20a17d59787ab682b7c69f79537d9ae3d8d8` and
+contains 26 parameters, 216 declarations, 43 processes, and three generate
+entries.  The ordinary route's exact first refusal remains:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory-route metadata retains `SubroutineSymbol:empty-task` for the
+referenced `empty_statement` declaration, followed by the eight disabled PCPI
+`NetSymbol:net-z` entries, including `pcpi_mul_wr` at
+`picorv32.v:257`.  `instantiateMemD2` therefore returns exactly:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+As a clean-room check of the source shape, the new
+`walls/task_memory_comments.sv` fixture (8,936-byte envelope,
+SHA-256 `630bc3c5fcf792c4e96dc676ac3ef76ba5e2ae66ceee5eeb573a28954207e65e`)
+retains the same `SubroutineSymbol:Subroutine` metadata and the same loud
+memory-route refusal.  The existing admitted task fixture remains green, so
+the admission is correctly limited to the source-shaped empty task recognized
+by the extractor; comments do not silently broaden the route.
+
+**CHANGED:** Added the comment-bearing clean-room task fixture and exact guards
+to `Examples/system-verilog/cores/picorv32/walls/probe.lean`.  Updated no
+semantics, loader, extractor, RTL, or finite captured-window theorem.
+
+**JUDGED / DECIDED:** On the owner lane, the referenced task is admitted only
+for its exact source-shaped empty input-only form.  PicoRV32's first
+memory-route wall is still the generic unsupported-member/net-z boundary (with
+ordinary `cpuregs` refusal unchanged).  No new `REQUEST ls-sv:` is needed
+because the fixture is already covered by the routed task boundary and net-z
+request.  Do not treat the stale public-master probe as evidence that task
+admission is absent; re-probe again when the owner lane's change reaches
+`origin/master`.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

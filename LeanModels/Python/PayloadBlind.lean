@@ -3013,7 +3013,18 @@ theorem isClockCall_swapAt {pa : Addr} {o : Obj} (m : Module) (st : FrameState)
   cases recv <;> simp only [isClockCall, clockRecvOk, FrameState.swapAt_world,
     FrameState.swapAt_locals, World.swapAt_globals]
 
-/-! ## Tier D — the 18 conjuncts
+theorem listCompValues_swapAt {pa : Addr} {o₀ o : Obj} {h : Heap}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (src : RVal) :
+    listCompValues (Heap.swapAt h pa o) src = listCompValues h src := by
+  cases src with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+        ⟨_, _, _, _, _, h1, h2⟩
+      · simp [listCompValues, heq]
+      · simp [listCompValues, h1, h2]
+  | _ => rfl
+
+/-! ## Tier D — the 20 conjuncts
 
 One statement per member of the interpreter's mutual block
 (Semantics.lean:4232–6207), `fuelMono`'s conjunct order — ClockErase.lean's
@@ -3042,6 +3053,19 @@ abbrev PBEvalDictItems (fuel : Nat) : Prop :=
     Heap.get? st.world.heap pa = some o₀ →
     PBF pa o₀ o (evalDictItems m fuel st keys values)
       (evalDictItems m fuel (st.swapAt pa o) keys values)
+
+abbrev PBListCompIfs (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (ifs : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalListCompIfs m fuel st ifs)
+      (evalListCompIfs m fuel (st.swapAt pa o) ifs)
+
+abbrev PBListCompStep (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (saved : Env) (elt target : Expr)
+    (ifs : List Expr) (xs acc : List RVal),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalListCompStep m fuel st saved elt target ifs xs acc)
+      (evalListCompStep m fuel (st.swapAt pa o) saved elt target ifs xs acc)
 
 abbrev PBExecAttrCall (fuel : Nat) : Prop :=
   ∀ (m : Module) (st : FrameState) (b : Addr) (attr : String) (args : List Expr),
@@ -3146,7 +3170,8 @@ abbrev PBAll (fuel : Nat) : Prop :=
   PBExecForList pa o₀ o fuel ∧ PBExecAttrCall pa o₀ o fuel ∧
   PBStepIter pa o₀ o fuel ∧ PBExecGen pa o₀ o fuel ∧
   PBExecForGen pa o₀ o fuel ∧ PBDrainIter pa o₀ o fuel ∧
-  PBAnyAllIter pa o₀ o fuel ∧ PBCallClosure pa o₀ o fuel
+  PBAnyAllIter pa o₀ o fuel ∧ PBCallClosure pa o₀ o fuel ∧
+  PBListCompIfs pa o₀ o fuel ∧ PBListCompStep pa o₀ o fuel
 
 end Conjuncts
 
@@ -3160,6 +3185,54 @@ block's arms land one at a time rather than all-or-nothing. -/
 
 section Arms
 variable {pa : Addr} {o₀ o : Obj} {fuel : Nat}
+
+theorem pbListCompIfs_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBListCompIfs pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, ihLCIfs, -⟩ := ih
+  intro m st ifs hslot
+  cases ifs with
+  | nil => exact PBF.ok hslot _
+  | cons test rest =>
+      refine PBF.bind (ihE m st test hslot) fun s tv _ hs => ?_
+      have hlift : PBF pa o₀ o (Run.liftRes s (truthyH s.world.heap tv))
+          (Run.liftRes (s.swapAt pa o)
+            (truthyH (Heap.swapAt s.world.heap pa o) tv)) := by
+        rw [truthyH_swapAt hs htwin]
+        exact PBF.liftRes hs _
+      refine PBF.bind hlift fun s2 keep _ hs2 => ?_
+      exact PBF.ite (fun _ => ihLCIfs m s2 rest hs2) (fun _ => PBF.ok hs2 _)
+
+theorem pbListCompStep_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBListCompStep pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, -, -, ihSs, -, -, -, -, -, -, -, -, -, -, -, -, ihLCIfs, ihLCStep⟩ := ih
+  intro m st saved elt target ifs xs acc hslot
+  cases xs with
+  | nil =>
+      simp only [evalListCompStep, FrameState.swapAt_world, World.swapAt_heap,
+        Heap.size_swapAt]
+      have hp := Heap.get?_push_of_get? (g := .list acc.reverse.toArray) hslot
+      refine ⟨fun st' v' h => ?_, fun _ _ h => absurd h (by simp)⟩
+      injection h with hst hv
+      subst hst; subst hv
+      refine ⟨hp, ?_⟩
+      simp only [FrameState.swapAt, World.swapAt, World.swapAt_heap]
+      rw [Heap.swapAt_push (Heap.lt_size_of_get? hslot)]
+  | cons x rest =>
+      simp only [evalListCompStep]
+      have hassign : PBF pa o₀ o
+          (Run.liftRes st (assignToH st.world.heap st.locals target x))
+          (Run.liftRes (st.swapAt pa o)
+            (assignToH (Heap.swapAt st.world.heap pa o) st.locals target x)) := by
+        rw [assignToH_swapAt hslot htwin]
+        exact PBF.liftRes hslot _
+      refine PBF.bind hassign fun s env _ hs => ?_
+      refine PBF.bind (ihLCIfs m { s with locals := env } ifs hs)
+        fun s2 keep _ hs2 => ?_
+      cases keep with
+      | false => exact ihLCStep m s2 saved elt target ifs rest acc hs2
+      | true =>
+          refine PBF.bind (ihE m s2 elt hs2) fun s3 v _ hs3 => ?_
+          exact ihLCStep m s3 saved elt target ifs rest (v :: acc) hs3
 
 /-- Argument lists: `evalExpr` then recurse, cons the values. -/
 theorem pbEvalExprs_succ (ih : PBAll pa o₀ o fuel) : PBEvalExprs pa o₀ o (fuel + 1) := by
@@ -4582,7 +4655,7 @@ a member of the block under the IH. -/
 theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
     PBEvalExpr pa o₀ o (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihBool, ihCmp, -, -, -, ihIn, -, ihItems, -, ihAttrCall,
-    ihIter, -, -, ihDrain, ihAny, ihClosure⟩ := ih
+    ihIter, -, -, ihDrain, ihAny, ihClosure, ihLCIfs, ihLCStep⟩ := ih
   intro m st e hslot
   cases e with
   | constant c sp => simp only [evalExpr]; exact PBF.ok hslot _
@@ -4729,7 +4802,25 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       obtain ⟨h', r⟩ := x
       exact PBF.okWrite (sliceValH_slot hs4 hw) _
   | genExp elt target iter ifs sp => simp only [evalExpr]; exact PBF.unsupported
-  | listComp elt target iter ifs wb sp => simp only [evalExpr]; exact PBF.unsupported
+  | listComp elt target iter ifs walrus sp =>
+      simp only [evalExpr]
+      by_cases hwalrus : !walrus.isEmpty
+      · simp only [hwalrus, Bool.not_eq_true]
+        exact PBF.unsupported
+      · simp only [hwalrus, Bool.not_eq_false]
+        refine PBF.bind (ihE m st iter hslot) fun s src _ hs => ?_
+        have hv : listCompValues (Heap.swapAt s.world.heap pa o) src =
+            listCompValues s.world.heap src :=
+          listCompValues_swapAt hs htwin src
+        simp only [FrameState.swapAt_world, World.swapAt_heap, FrameState.swapAt_locals]
+        rw [hv]
+        cases hvals : listCompValues s.world.heap src with
+        | unsupported msg => simp only [hvals]; exact PBF.unsupported
+        | exn e => simp only [hvals]; exact PBF.exn hs _
+        | timeout => simp only [hvals]; exact PBF.timeout
+        | ok xs =>
+            simp only [hvals]
+            exact ihLCStep m s s.locals elt target ifs.toList xs [] hs
   | unsupported pyKind text sp => simp only [evalExpr]; exact PBF.unsupported
   | call f args kwargs callUnsupported sp =>
       simp only [evalExpr, FrameState.swapAt_world, FrameState.swapAt_locals,
@@ -6223,7 +6314,9 @@ theorem pbAll (htwin : PayloadTwin o₀ o) : ∀ (fuel : Nat), PBAll pa o₀ o f
         fun _ _ _ _ => PBW.timeout, fun _ _ _ _ => PBF.timeout,
         fun _ _ _ _ _ _ => PBF.timeout, fun _ _ _ _ => PBW.timeout,
         fun _ _ _ _ _ => PBW.timeout,
-        fun _ _ _ _ _ _ _ _ _ _ _ => PBW.timeout⟩
+        fun _ _ _ _ _ _ _ _ _ _ _ => PBW.timeout,
+        fun _ _ _ _ => PBF.timeout,
+        fun _ _ _ _ _ _ _ _ _ => PBF.timeout⟩
   | succ n ihn =>
       exact ⟨pbEvalExpr_succ htwin ihn, pbEvalExprs_succ ihn,
         pbEvalBoolChain_succ htwin ihn, pbEvalCompareChain_succ htwin ihn,
@@ -6233,7 +6326,8 @@ theorem pbAll (htwin : PayloadTwin o₀ o) : ∀ (fuel : Nat), PBAll pa o₀ o f
         pbExecForList_succ htwin ihn, pbExecAttrCall_succ htwin ihn,
         pbStepIter_succ htwin ihn, pbExecGen_succ htwin ihn,
         pbExecForGen_succ htwin ihn, pbDrainIter_succ ihn,
-        pbAnyAllIter_succ htwin ihn, pbCallClosure_succ ihn⟩
+        pbAnyAllIter_succ htwin ihn, pbCallClosure_succ ihn,
+        pbListCompIfs_succ htwin ihn, pbListCompStep_succ htwin ihn⟩
 
 end Arms
 

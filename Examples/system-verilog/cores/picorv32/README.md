@@ -362,6 +362,15 @@ store-update through the threaded byte-memory relation; invalid rows remain
 explicit ISA stutters.  The earlier `SW`/`LW` predicates remain as measured
 word-width specializations.
 
+The system-transfer boundary now covers ECALL, EBREAK, MRET, and no-wake WFI
+through `SysKind`.  Its raw predicate keeps trap causes and handler pc values
+for ECALL/EBREAK, the CSR-derived return pc for MRET, and the WFI stutter
+explicit, while requiring no register or data-memory effect.  The
+`rvfiCycleStepRefines_of_system_memory` constructor carries the exact
+trap/return/stutter state through the threaded memory relation; invalid rows
+remain explicit ISA stutters.  CSR read-modify-write parcels and interrupt
+wake behavior remain outside this no-interrupt boundary.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

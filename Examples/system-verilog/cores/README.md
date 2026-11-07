@@ -300,3 +300,35 @@ in one trap-program certificate: undecodable words and decoded Zicsr words
 whose CSR rows are absent.  The indexed constructors retain the parser proofs
 for each case while normalizing arbitrary bubbles and composing exact trap
 transitions at the core, architectural-state, and retirement-order boundaries.
+
+## Current PicoRV32 re-probe after generated-member admission (`bf85f330a`)
+
+The pinned YosysHQ source was re-extracted on 2026-11-07 without RTL changes.
+The semantic files used for the probe are identical to `origin/master` at
+`27e7d5d62`, which contains the generated-member regression
+`bf85f330a`; the later commits only add documentation.  The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the fresh envelope is 2,992,406
+bytes with SHA-256
+`bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c`.
+
+The declaration loads as a 26-parameter family with 216 declarations, 43
+processes, and three generate entries.  The ordinary semantic route's exact
+first refusal remains:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now admits the clean-room generated-member shapes, then first
+refuses the PicoRV32 instance at the existing unsupported-module-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+Its first retained member is `NetSymbol:net-z` for `pcpi_mul_wr` at
+`picorv32.v:257`.  No new clean-room request or core adaptation is justified;
+the symbolic ADDI invariant remains parked at the unpacked `cpuregs` and
+unsupported-member/net-z walls.

@@ -812,3 +812,38 @@ for undecodable words and decoded Zicsr words with absent rows.  It keeps both
 parser-derived proofs explicit while retaining exact illegal causes, handler
 pcs, cycle inputs, and threaded memory through compositional raw and
 cycle-aware certificates.
+
+## 2026-11-07 re-probe after generated-member admission (`bf85f330a`)
+
+The pinned YosysHQ source was re-extracted once more without RTL changes after
+the generic generated-member regression landed.  The semantic files in the
+working tree are identical to `origin/master` at `27e7d5d62`; that revision
+contains `bf85f330a` and only later documentation commits change the tree.
+The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`.  The fresh envelope is
+2,992,406 bytes with SHA-256
+`bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c`.
+
+The declaration loads as a 26-parameter family with 216 declarations, 43
+processes, and three generate entries.  At the default parameters, the
+ordinary semantic route's exact first refusal is still:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now expands the generic generated-member shapes, but the
+PicoRV32 instance first refuses at the existing unsupported-module-member
+gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire`
+at `picorv32.v:257`.  The clean-room `generate if` and `generate for`
+fixtures both remain admitted, so this is not a new generated-member shape and
+no `REQUEST ls-sv:` repro is filed.  The symbolic ADDI invariant remains
+parked at the unpacked `cpuregs` and unsupported-member/net-z walls.

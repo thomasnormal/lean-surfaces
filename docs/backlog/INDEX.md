@@ -16,11 +16,15 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1211 entries across 18 lanes.** Regenerate with
+**1216 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-452` |  | price the ListComp recursion seam | python-completeness |
+| `2026-11-07-pycomplete-451` |  | choose the next completeness milestone | python-completeness |
+| `2026-11-07-pycomplete-450` |  | recheck parameterized float-round worker | python-completeness |
+| `2026-11-07-pycomplete-449` |  | recheck differential edge coverage | python-completeness |
 | `2026-11-07-pycomplete-448` |  | rebase float proof over call depth | python-completeness |
 | `2026-11-07-pycomplete-447` |  | recheck active recursion depth | python-completeness |
 | `2026-11-07-pycomplete-446` |  | repair journal clock stamps | python-completeness |
@@ -78,6 +82,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-346` |  | re-probe PicoRV32 after generated-member admission | ls-sv2 |
 | `2026-11-07-ls-sv2-345` |  | unify symbolic RV32I illegal trap programs | ls-sv2 |
 | `2026-11-07-ls-sv2-344` |  | add a symbolic RV32I illegal-instruction program certificate | ls-sv2 |
 | `2026-11-07-ls-sv2-343` |  | add a symbolic RV32I Zicsr program certificate | ls-sv2 |

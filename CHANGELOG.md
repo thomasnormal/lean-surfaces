@@ -26,6 +26,9 @@
 - Docs: clarify the structured class statement boundary and qualified method
   dispatch index, including creation-purity admission.
 
+- Docs: record that extractor `Try`/`Raise` nodes retain structured clauses;
+  shape-specific handler and finalizer lowerings remain absent.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for structured ordinary-call handles with Boolean
+  ids; frontend identity remains string-typed.
+
 - Added a recorded refusal for Boolean-valued ordinary-call `referencedDecl`
   evidence; declaration identity is never coerced from scalar data.
 

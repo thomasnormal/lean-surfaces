@@ -6560,3 +6560,8 @@ the defined sampling and NBA rules.
   canonicalization premise. This keeps proof reductions on the exact
   instantiation path without reopening the legacy unbounded lookup cases.
 
+- Added `--retain-proc-rewrites` for the first WP-PROC source-structure twin:
+  compound assignments remain `CompoundAssign` envelope nodes and load as a
+  named `AssignmentExpression:compound` refusal because frozen `Stmt2` has no
+  compound constructor. The established lowering remains the default.
+

@@ -460,6 +460,13 @@ partial def parsePStmt (j : Json) : Except String PStmt := do
   let kind ← getKind j
   withCtx kind do
     match kind with
+    | "CompoundAssign" =>
+        -- Retain-mode symbolic extraction keeps the source-level read-modify-
+        -- write node.  Stmt2 is frozen and has no compound constructor, so
+        -- make the boundary explicit instead of lowering it or rejecting the
+        -- whole envelope while decoding it.
+        return .unsupported "AssignmentExpression:compound"
+          "source-level compound assignment is retained; a frozen Stmt2 compound node is not yet available"
     | "BlockingAssign" | "NonblockingAssign" =>
         let value ← parsePExpr (← getField j "value")
         match ← parseTargetL (← getField j "target") with
@@ -1500,6 +1507,9 @@ private def unsupMemberText : String := r#"{
         == some (.unsupported "SysCall:arity" "$size with 0 args")
 #guard (Json.parse r#"{"kind": "LocalDecl", "span": null, "name": "t", "width": {"kind": "PackedType", "packed": [], "resolved": 1}, "init": null}"# >>= parsePStmt).toOption
         == some (.unsupported "LocalDecl" "block-local declaration requires scoped procedural storage")
+#guard (Json.parse r#"{"kind": "CompoundAssign", "span": null, "target": {"kind": "Ident", "name": "v"}, "op": "+", "value": {"kind": "Int", "value": 1}}"# >>= parsePStmt).toOption
+        == some (.unsupported "AssignmentExpression:compound"
+          "source-level compound assignment is retained; a frozen Stmt2 compound node is not yet available")
 -- A `localparam` inside a generate block is a loud item, not a parse failure.
 #guard (Json.parse r#"{"kind": "LocalParam", "span": null, "name": "LL", "type": null,
     "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#

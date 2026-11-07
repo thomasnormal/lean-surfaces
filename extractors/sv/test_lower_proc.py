@@ -65,7 +65,8 @@ def packed_null(node):
 
 
 class Base(unittest.TestCase):
-    def extract(self, source, top="t", more=(), retain_loops=False):
+    def extract(self, source, top="t", more=(), retain_loops=False,
+                retain_proc_rewrites=False):
         with tempfile.TemporaryDirectory() as directory:
             srcs = []
             for i, text in enumerate((source,) + tuple(more)):
@@ -74,11 +75,14 @@ class Base(unittest.TestCase):
                 srcs.append(str(p))
             out = Path(directory) / "out.json"
             extract.process_symbolic(top, srcs, [], str(out),
-                                    retain_loops=retain_loops)
+                                    retain_loops=retain_loops,
+                                    retain_proc_rewrites=retain_proc_rewrites)
             return json.loads(out.read_text())["design"]
 
-    def module(self, source, top="t", more=(), retain_loops=False):
-        design = self.extract(source, top, more, retain_loops=retain_loops)
+    def module(self, source, top="t", more=(), retain_loops=False,
+              retain_proc_rewrites=False):
+        design = self.extract(source, top, more, retain_loops=retain_loops,
+                              retain_proc_rewrites=retain_proc_rewrites)
         return [m for m in design["modules"] if m["name"] == top][0]
 
 

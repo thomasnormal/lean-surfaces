@@ -45,6 +45,14 @@ not take. Statement-position `x++` / `x--` were already lowered by master.
 Rows: `proc_compound` (whole, bit, part, run-time index, a clmul accumulate, a popcount) and `proc_compound_param_n3/n4/n8`
 (the same inside a parametric family).
 
+For source-structure audits, `extract.py --top T --retain-proc-rewrites` keeps
+the compound statement as a `CompoundAssign` envelope node with its target,
+operator and right-hand side. `Ingest2` maps that retained node to the named
+`AssignmentExpression:compound` `Unsupported` PStmt because frozen `Stmt2` has
+no compound constructor. The default lowering and all existing rows are
+unchanged; this mode is a loud source-preserving boundary until the retained
+Sv AST is available.
+
 ## X1. Loop header forms
 
 The retained `For` path takes a source-pure counted loop whose header declares ONE `int` iterator with a literal

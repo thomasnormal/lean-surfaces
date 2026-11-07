@@ -10238,3 +10238,19 @@ iterables retain their existing cursor semantics.
 
 DECIDED: keep creation-time iterator validation in the lowering until native
 generator-expression semantics replace it.
+
+## 2026-11-07-pycomplete-407 — recheck list-comprehension shadowing
+
+The list-comprehension shadowing finding is already closed by the source-node
+work in this lane. Extraction and JSON ingestion preserve `ListComp` as a
+structured node, and both interpreter surfaces refuse that node directly. The
+syntax therefore cannot become a lookup of a user-bound `list` name.
+
+| Measurement | Result |
+|---|---|
+| Shadow witness | `listcomp_shadow.py` is loud while CPython 3.9 evaluates the comprehension normally |
+| Boundary | exact `list comprehension semantics are outside the tier` refusal |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: keep list-comprehension syntax source-level and loud until native
+comprehension evaluation is implemented.

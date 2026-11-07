@@ -2098,27 +2098,15 @@ def _time_scale_call(expression):
 
 
 def _convert_time_scale_call(sm, expression):
-    """Fold `$timeunit`/`$timeprecision` from a literal source timescale."""
-    try:
-        if (not _time_scale_call(expression) or expression.type.bitWidth != 32
-                or not expression.type.isSigned):
-            return None
-        text = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
-        matches = list(re.finditer(
-            r"`timescale\s+(?:1\s*)?([munpf]?s)\s*/\s*(?:1\s*)?([munpf]?s)",
-            text, flags=re.IGNORECASE))
-        if not matches:
-            return None
-        match = matches[-1]
-        unit = match.group(1 if expression.subroutineName == "$timeunit" else 2).lower()
-        exponent = _TIME_UNIT_EXPONENTS.get(unit)
-        if exponent is None:
-            return None
-        return {"kind": "Literal", "span": node_span(sm, expression),
-                "width": 32, "bits": format(exponent & 0xffffffff, "032b"),
-                "signed": True, "time_scale_query": expression.subroutineName}
-    except Exception:
+    """Keep time-scale queries loud until Slang's scope metadata is wired.
+
+    A raw-source scan cannot distinguish comments, module declarations, and
+    inherited compilation-unit directives.  Returning a named unsupported
+    node is safer than manufacturing a value from the last textual match.
+    """
+    if not _time_scale_call(expression):
         return None
+    return unsupported(sm, expression, "CallExpression:" + expression.subroutineName)
 
 
 def _convert_time_literal(sm, expression):

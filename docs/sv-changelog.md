@@ -6509,6 +6509,12 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- `$timeunit`/`$timeprecision` symbolic queries no longer fold from raw
+  source text. Until Slang scope time-scale metadata is threaded through,
+  they remain loud `CallExpression` nodes, covering comments, module
+  `timeunit` declarations, and inherited compilation-unit scales without a
+  fabricated value.
+
 - `always @*` lowering now refuses an external signal with a continuous
   time-zero driver under R3, preserving the distinction from `always_comb`
   until active-region ordering is modelled. The procedural extractor also

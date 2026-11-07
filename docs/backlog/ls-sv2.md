@@ -5519,3 +5519,38 @@ or `LeanModels/Sv/**` file changed.
 PicoRV32 proof frontier until the existing unsupported module member/net-z
 boundary is cleared.  Keep the R2 work parked there and do not add another
 finite captured-window theorem.
+
+## 2026-11-07-ls-sv2-323 — symbolic ADDI program certificate
+
+The inbox and goal file were reread before this item.  PicoRV32 still stops at
+the existing `net-z`/unsupported-module-member wall, so the owned next step is
+to carry the already-proved indexed ADDI boundary through an unbounded program
+shape instead of extending a captured window.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiAddiProgram.lean` and imported it from
+the refinement umbrella.  `AddiInstruction` keeps the source word and its
+decoder proof.  The list folds `addiProgramState`, `addiProgramInputs`, and
+`addiProgramRetirements` are related to the profile-parametric
+`rvMemoryMachineWith` by `rvMemoryMachineWith_addi_program_state` and
+`rvMemoryMachineWith_addi_program_trace`; `addiProgramState_preserves_WF`
+preserves the architectural x0 invariant for every list.  The inductive
+`AddiRvfiTrace` admits arbitrary invalid bubbles and requires each retiring row
+to provide an indexed `Rv32iBoundary` at the exact next ADDI state and
+retirement.  Its `toRvfiTraceRefines`, `normalize`, and `trace_refines`
+theorems prove that every such symbolic certificate normalizes to the same
+stateful ISA trace.
+
+This reuses the existing indexed dispatcher and RVFI memory contracts; it adds
+no second semantics, no core model, and no finite witness.  No RTL, loader,
+extractor, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAddiProgram.lean` passes, as
+does the umbrella refinement build after the import.  The six declarations'
+axiom reports contain only the established `propext`/`Classical.choice`/
+`Quot.sound` footprint; no `sorryAx` or new axiom is introduced.
+
+**JUDGED / DECIDED:** the next loaded-core proof can produce an
+`AddiRvfiTrace` relation over any program length and bubble schedule, then use
+`trace_refines` for the universal ADDI stream.  The concrete PicoRV32
+instantiation remains parked until ls-sv clears the existing unpacked
+`cpuregs` and unsupported-member/net-z boundaries.

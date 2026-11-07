@@ -155,3 +155,9 @@ unsupported "Instantiate"
 The first retained member is still `NetSymbol:net-z` for `pcpi_mul_wr` at
 `picorv32.v:257`, an already catalogued generic boundary.  No new owner-lane
 request or core adaptation is justified by this probe.
+
+The owned refinement layer now has a symbolic ADDI-program certificate in
+`LeanModels.Refine.RvfiAddiProgram`: arbitrary decoded ADDI lists, arbitrary
+invalid RVFI bubbles, and indexed `Rv32iBoundary` witnesses normalize to the
+exact stateful ISA trace.  This advances the reusable invariant surface while
+the real PicoRV32 instantiation remains blocked by the existing loader walls.

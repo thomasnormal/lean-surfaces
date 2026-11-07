@@ -753,3 +753,12 @@ CSR operation reads or writes state.  The two
 `RvMemoryState` while preserving byte memory.  Interrupt-dispatch rows remain
 outside the no-interrupt subset.
 
+
+The reusable branch-family surface is now provided by
+`LeanModels.Refine.RvfiBranchProgram`.  It carries arbitrary decoded
+conditional branches through the exact stateful RV32I machine, including the
+selected branch target and retirement fields, and supplies raw and cycle-aware
+RVFI certificates with append laws.  The certificate is generic refinement
+infrastructure and does not claim a symbolic PicoRV32 invariant while the
+pinned RTL remains blocked by the unpacked `cpuregs` and
+unsupported-member/net-z loader walls.

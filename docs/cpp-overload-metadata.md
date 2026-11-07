@@ -247,6 +247,9 @@ frontend handle must carry a string identity.
 A structured overloaded-operator handle whose `id` is an array is also refused;
 a frontend handle must carry a string identity.
 
+A structured overloaded-operator handle whose `id` is an object is also refused;
+a frontend handle must carry a string identity.
+
 A structured operator handle with malformed string `id` is also refused; the
 artifact-local handle parser validates object and string forms uniformly.
 

@@ -2438,6 +2438,28 @@ def resolvedOperatorArrayIdRefusal : Except String Unit := do
   let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorArrayIdTranslation [0]
   pure ()
 
+private def resolvedOperatorObjectIdTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0xb0"), ("kind", .string "CXXOperatorCallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0xb1"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [
+              ("id", .object []), ("kind", .string "FunctionDecl")
+            ])
+          ]
+        ])
+      ]
+    ])
+  ]}
+
+def resolvedOperatorObjectIdRefusal : Except String Unit := do
+  let _ ← admitResolvedCXXOperatorCallExpression resolvedOperatorObjectIdTranslation [0]
+  pure ()
+
 private def resolvedOperatorMalformedStringTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -3773,6 +3795,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedOperatorBooleanIdRefusal matches .error _
 #guard resolvedOperatorNullIdRefusal matches .error _
 #guard resolvedOperatorArrayIdRefusal matches .error _
+#guard resolvedOperatorObjectIdRefusal matches .error _
 #guard resolvedOperatorMalformedStringRefusal matches .error _
 #guard resolvedOperatorMethodStringTranslationWitnessOk
 #guard resolvedOperatorCastKindMismatchRefusal matches .error _

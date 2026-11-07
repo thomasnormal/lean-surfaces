@@ -943,6 +943,12 @@ The packaged reset entry points are
 `rv32i_reset_upper_stream_refines_of_invariant`; they retain either the full
 prefix certificate or only the committed stream and final relation.
 
+The JAL/JALR certificate is likewise connected to the mixed surface by
+`JumpInstruction.toRv32i` and `JumpRvfiCycleTrace.toRv32i` in
+`LeanModels.Refine.RvfiJumpMixed`.  The adapter preserves jump decoder proofs,
+cycle inputs, bubbles, order tags, and indexed boundaries while using the
+existing mixed `.jump` constructor.
+
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an
 explicit order equation for valid rows, it constructs the mixed

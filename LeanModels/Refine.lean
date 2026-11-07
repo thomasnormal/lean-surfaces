@@ -28,6 +28,7 @@ import LeanModels.Refine.RvfiAluProgram
 import LeanModels.Refine.RvfiMemProgram
 import LeanModels.Refine.RvfiBranchProgram
 import LeanModels.Refine.RvfiJumpProgram
+import LeanModels.Refine.RvfiJumpMixed
 import LeanModels.Refine.RvfiUpperProgram
 import LeanModels.Refine.RvfiUpperMixed
 import LeanModels.Refine.RvfiUpperProgress

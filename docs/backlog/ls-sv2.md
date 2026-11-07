@@ -6892,6 +6892,32 @@ end-to-end from-reset API as the ADDI invariant, with progress and schedule
 remaining explicit premises.  PicoRV32 remains parked at the approved
 task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-371 — embed jump certificates in mixed RV32I
+
+The unified RV32I certificate already admits JAL and JALR through its jump
+family, while `RvfiJumpProgram` retained those instructions in a dedicated
+jump certificate.  A future loaded-core proof needs to cross that boundary
+without rebuilding rows or losing the JALR target semantics.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiJumpMixed.lean`.  It defines the
+structure-preserving `JumpInstruction.toRv32i` embedding, proves the exact
+input, state-step, and retirement equations, and maps every
+`JumpRvfiCycleTrace` constructor to a mixed `Rv32iRvfiCycleTrace` over the
+same cycle list.  The adapter retains bubbles, actual cycle inputs, order tags,
+decoder proofs, and indexed boundaries.  Imported it from the refinement
+umbrella and updated the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** JAL/JALR certificates now feed the same mixed RV32I
+surface as ADDI and upper-immediate instructions, retaining JALR's exact
+register-base and low-bit-clearing semantics.  PicoRV32 remains parked at the
+approved task/net-z memory-route walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

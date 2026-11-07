@@ -4272,3 +4272,20 @@ file changed.
 **DECIDED:** make the optional adapter's success condition a reusable theorem
 so raw-cycle and normalization proofs do not duplicate executable `if` and
 `Option` case analysis.
+
+## 2026-11-07-ls-sv2-275 — characterize failed RVFI decoding
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `RvfiObservation.toRetirement?_eq_none_iff` to
+`LeanModels/Refine/Rvfi.lean`.  A failed optional decode is now characterized
+as either `valid = false` (an explicit bubble) or a row that is not well
+formed (a malformed wire record).  This makes the distinction visible at the
+single-row boundary instead of allowing a caller to treat every `none` as a
+legitimate stutter.  Updated the PicoRV32 README and backlog/index.  No RTL,
+loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** preserve the adapter's two failure causes explicitly; strict
+RVFI proofs must discharge malformed-valid rows rather than infer bubbles
+from an optional `none`.

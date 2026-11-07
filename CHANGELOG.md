@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for null-valued overloaded-operator `referencedDecl`
+  evidence; operator identity requires object or string handle data.
+
 - Added a recorded refusal for null-valued ordinary-call `referencedDecl`
   evidence; declaration identity requires object or string handle data.
 

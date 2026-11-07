@@ -150,6 +150,9 @@ never chooses one child from malformed frontend data.
 An empty parenthesis wrapper is also refused; the gate does not manufacture a
 selected declaration when the frontend supplies no child.
 
+A null-valued overloaded-operator `referencedDecl` is also refused; operator
+identity requires object or string handle evidence.
+
 A malformed string operator handle is a recorded refusal; operator metadata does
 not normalize arbitrary text into an artifact identity.
 

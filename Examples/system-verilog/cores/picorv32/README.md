@@ -484,6 +484,13 @@ post-state and retaining relation stuttering for the bubble.  This is finite
 proof plumbing for the RVFI boundary; it does not stand in for the symbolic
 PicoRV32 RTL invariant while the upstream loader refusals remain.
 
+`pinned_addi_cycle_observations_normalize` certifies the same two-cycle raw
+window (ADDI followed by the invalid bubble) with the executable order and
+decoding checker.  `pinned_addi_cycle_trace_refines` then applies
+`rvfiCycleStepRefines_normalized_trace_refines` to show that the normalized
+retirement is exactly the profile-parametric ISA ADDI step; the bubble supplies
+no ISA input.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

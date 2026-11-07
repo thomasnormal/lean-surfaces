@@ -6509,6 +6509,11 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- Self-check now refuses time-zero initial blocks with overlapping
+  read/write or write/write state as `Initial:order` instead of selecting
+  source order. Independent initial blocks remain admitted; the refusal is
+  pinned by new kernel guards.
+
 - Port-width extraction now preserves net input selects and narrower child
   outputs into wider parent NET targets, so `Hier2.connProcs` refuses the
   Xcelium/Icarus-width split as `PortConn:net-width`. Added a hierarchical

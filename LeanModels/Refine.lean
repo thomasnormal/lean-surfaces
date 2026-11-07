@@ -9,6 +9,7 @@ import LeanModels.Refine.Rv32iMem
 import LeanModels.Refine.Rv32iMemAll
 import LeanModels.Refine.Rv32iSystem
 import LeanModels.Refine.Rv32iCsr
+import LeanModels.Refine.Rv32iTrap
 import LeanModels.Refine.RvfiAddi
 import LeanModels.Refine.RvfiMem
 import LeanModels.Refine.RvfiUpper
@@ -19,6 +20,7 @@ import LeanModels.Refine.RvfiFence
 import LeanModels.Refine.RvfiMemAll
 import LeanModels.Refine.RvfiSystem
 import LeanModels.Refine.RvfiCsr
+import LeanModels.Refine.RvfiTrap
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

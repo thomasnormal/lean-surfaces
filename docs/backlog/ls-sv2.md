@@ -4943,3 +4943,36 @@ was introduced.  The docs, backlog-index, and diff checks pass.
 immediate source forms under one row-parametric boundary.  Do not invent a
 CSR result for an address absent from `csrTable`; the existing ISA step's
 illegal-instruction trap remains the loud behavior.
+
+## 2026-11-07-ls-sv2-303 — add explicit illegal-instruction RVFI boundaries
+
+The inboxes and goal file were reread before this item.  The CombView and
+generated-member route remain `ls-sv` work; this item stays in the owned
+refinement layer and closes the explicit trap gap left by the legal RV32I and
+Zicsr families.
+
+Added `LeanModels/Refine/Rv32iTrap.lean` with `illegalNext`,
+`illegalEffects`, and `illegalRetirement`, together with profile-parametric
+ISA, threaded-memory, and machine bridges for an undecodable 32-bit parcel.
+The same file also exposes the decoded-but-unimplemented CSR case, retaining
+the exact `findCsr? = none` premise before entering the illegal-instruction
+trap.  Added `LeanModels/Refine/RvfiTrap.lean` with
+`illegalBoundary`/`illegalCsrBoundary` raw predicates and matching
+`rvfiCycleStepRefines_of_*_memory` constructors.  Both contracts preserve the
+`trapEnter` handler pc, `Cause.illegalInstr`, clear register/data-memory
+effects, and threaded byte memory; the CSR trap leaves source/destination
+payloads unconstrained because the architectural step traps before the CSR
+operation executes.
+
+The boundary remains scoped to `irq = 0`; interrupt-dispatch rows are still a
+separate future boundary.
+
+**MEASURED:** focused builds for `LeanModels.Refine.Rv32iTrap` and
+`LeanModels.Refine.RvfiTrap` pass, with all new declarations reporting only the
+established `propext`/`Classical.choice`/`Quot.sound` footprint.  The umbrella
+refinement build, PicoRV32 trace proof, docs check, backlog-index check, and
+`git diff --check` pass.  No `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** keep undecodable words and unimplemented CSR addresses
+as separate raw cases so a core proof cannot conflate a decode failure with a
+CSR-table miss or silently convert either trap to a sequential retirement.

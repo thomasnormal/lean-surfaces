@@ -40361,4 +40361,24 @@ private theorem kernelControlExecution :
 #guard callableFuelExhaustionWitness
 #guard callableSelfInitializerFailureWitness
 
+def callableSharedLogicalAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.logical "&&"
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 1,
+          sourceType := intType, type := intType}
+        , sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 0⟩ && objectValue == ⟨.boolean, 0⟩
+  | _, _ => false
+
+#guard callableSharedLogicalAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

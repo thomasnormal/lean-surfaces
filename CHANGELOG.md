@@ -49,6 +49,9 @@
 
 - CI: confirm superseded workflow runs are cancelled per ref and both long jobs
   have bounded timeouts.
+- Centralized logical `&&`/`||` decoding and short-circuit decisions in
+  `ScalarArithmetic` for both callable evaluators and added a value/object
+  agreement witness.
 
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.

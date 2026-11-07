@@ -3,6 +3,25 @@ import LeanModels.Cpp.Integral
 
 namespace LeanModels.Cpp
 
+inductive IntegralLogical where
+  | conjunction
+  | disjunction
+  deriving Repr, BEq
+
+def integralLogicalOfString : String → Option IntegralLogical
+  | "&&" => some .conjunction
+  | "||" => some .disjunction
+  | _ => none
+
+/-- The short-circuit result for a logical operation, when its left operand
+    decides the result. A missing result means that the right operand must be
+    evaluated. -/
+def integralLogicalShortCircuit (operation : IntegralLogical) (left : IntegralValue) :
+    Option IntegralValue :=
+  match operation with
+  | .conjunction => if left.value == 0 then some (integralBoolean false) else none
+  | .disjunction => if left.value == 0 then none else some (integralBoolean true)
+
 private def mapIntegralResult (result : IntegralResult IntegralValue)
     (continuation : IntegralValue → IntegralResult IntegralValue) :
     IntegralResult IntegralValue :=

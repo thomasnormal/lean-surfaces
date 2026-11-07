@@ -1,6 +1,10 @@
 # Unknown-bit resolution in E
 
-Status: **design decision; implementation pending**.
+Status: **design decision; implementation pending**. Until the relation is
+wired through E, the approved proof boundary is the cheap sufficient condition
+that every branch, conditional select, dynamic index, and assertion decision
+reads a known value. A proof that cannot establish that condition must remain
+loud rather than use `condTrue`'s x-optimistic else branch.
 
 SystemVerilog `x` and `z` represent a bit whose 0/1 value is not known (IEEE
 1800-2023 §6.3.1). The exact E semantics therefore treats an unknown as a set
@@ -93,6 +97,15 @@ judgment over E's source-shaped states and traces. It must prove:
 4. **Derived-view refinement.** Cycle views, contracts, and proof tactics
    quantify over the resolved E relation. They may use the known-state
    sufficient condition, but may not silently select one resolution.
+
+The migration plan is to add a `DecisionKnown` witness to the E step
+judgments, lift it through `⊨₂`/`Runs2` and the cycle observation contracts,
+then replace each direct `condTrue` decision with the resolution relation. The
+known-state theorem will show that the old evaluator is the singleton
+projection under that witness. The current direct users are the `ifStmt` and
+ternary arms in `Sem2`, the procedural and memory-cycle `if` executors, the
+case-check conditional path, and the proof-layer `Models2`/`Obs_run2` bridges;
+each must either carry the witness or move to the resolved relation.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

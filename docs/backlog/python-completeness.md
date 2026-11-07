@@ -10434,3 +10434,24 @@ remain separate checks, with refusals recorded on the narrower theorem target.
 
 DECIDED: retain the landed primitive refinement theorem and keep full control
 and script adequacy as an explicit architectural item.
+
+## 2026-11-07-pycomplete-418 — recheck namedtuple recognition boundaries
+
+The namedtuple audit's source-order hazard is already guarded in the current
+recognition pass: the benign import must precede each candidate, every candidate
+must pass the structured field census, and duplicate/rebound or function-body
+forward references remain unrecognized. Unsafe candidates therefore reach the
+ordinary module-level callable boundary instead of a position-independent
+constructor table. The admitted value-like tier remains a deliberate static
+representation; replacing it with a runtime namedtuple class object is still
+an architectural rule-2 item rather than a new rewrite to add here.
+
+| Measurement | Result |
+|---|---|
+| Import-order witness | `namedtuple_import_order.py` is LOUD at `namedtuple` before its import; CPython 3.9.25 raises `NameError` |
+| Admitted battery | `namedtuple_script.py` MATCHES CPython 3.9.25 (constructor, fields, methods, and rendering) |
+| Semantic change | none; this packet records the existing guarded value-like slice |
+
+DECIDED: retain the guarded static value-like namedtuple tier and its loud
+unsafe candidates; schedule a native runtime class representation before
+removing the ingestion table.

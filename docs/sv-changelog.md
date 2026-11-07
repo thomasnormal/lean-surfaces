@@ -341,6 +341,12 @@ pinned `prim_fifo_sync` assertion VIP retains all 27 properties and has 11
 residual unsupported nodes; the remaining nodes are outside this value
 fragment.
 
+Finite SVA `inside` sets of literal items now lower to case-equality
+disjunctions, preserving four-state sampled behavior and width-directed
+literal fills. The `sem2/sva_inside` witness and Verilator row cover the
+source form; the pinned VIP census retains all 27 properties with 10 residual
+unsupported nodes.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

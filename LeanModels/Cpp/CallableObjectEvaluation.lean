@@ -97,22 +97,6 @@ private inductive Execution where
   | goto_ (label : String)
   deriving Inhabited
 
-private def switchCaseSuffix (value : Int) : List CallableSwitchClause →
-    Option (List CallableSwitchClause)
-  | [] => none
-  | clause :: rest =>
-      match clause.label with
-      | some label => if label == value then some (clause :: rest) else switchCaseSuffix value rest
-      | none => switchCaseSuffix value rest
-
-private def switchDefaultSuffix : List CallableSwitchClause →
-    Option (List CallableSwitchClause)
-  | [] => none
-  | clause :: rest =>
-      match clause.label with
-      | some _ => switchDefaultSuffix rest
-      | none => some (clause :: rest)
-
 private def finishResult (frame : IntegralObjectFrame)
     (result : IntegralResult IntegralValue) : Outcome Execution :=
   match result with
@@ -397,8 +381,8 @@ mutual
                 match entered.result with
                 | .error reason => frameFailure entered.frame reason
                 | .ok _ =>
-                    let selected := (switchCaseSuffix value.value clauses).orElse
-                      (fun _ => switchDefaultSuffix clauses) |>.getD []
+                    let selected := (callableSwitchCaseSuffix value.value clauses).orElse
+                      (fun _ => callableSwitchDefaultSuffix clauses) |>.getD []
                     let switched := evalSwitch (evalStatement fuel profile) entered.frame selected
                     match switched.result with
                     | .error reason => failure switched.frame reason

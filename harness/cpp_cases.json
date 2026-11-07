@@ -18811,5 +18811,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-shared-switch-suffix-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSharedSwitchSuffixAgreementWitness",
+    "cpp_source": "bool switch_witness(int value) { switch (value) { case 1: return false; default: return true; } } bool callable_witness() { return switch_witness(3); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

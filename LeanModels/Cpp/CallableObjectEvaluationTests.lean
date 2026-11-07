@@ -40408,4 +40408,16 @@ def callableSharedIntegralResultAgreementWitness : Bool :=
 
 #guard callableSharedIntegralResultAgreementWitness
 
+def callableSharedSwitchSuffixAgreementWitness : Bool :=
+  let clauses : List CallableSwitchClause := [
+    {label := some 1, body := .skip},
+    {label := none, body := .break_},
+    {label := some 3, body := .continue_}]
+  callableSwitchCaseSuffix 3 clauses == some [{label := some 3, body := .continue_}] &&
+    callableSwitchDefaultSuffix clauses == some [
+      {label := none, body := .break_},
+      {label := some 3, body := .continue_}]
+
+#guard callableSharedSwitchSuffixAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

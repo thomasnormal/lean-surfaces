@@ -192,20 +192,6 @@ private def terminalResult (arguments : List IntegralValue) :
   | .ok _ => .normal arguments
   | result => .failed result arguments
 
-private def switchCaseSuffix (value : Int) : List CallableSwitchClause → Option (List CallableSwitchClause)
-  | [] => none
-  | clause :: rest =>
-      match clause.label with
-      | some label => if label == value then some (clause :: rest) else switchCaseSuffix value rest
-      | none => switchCaseSuffix value rest
-
-private def switchDefaultSuffix : List CallableSwitchClause → Option (List CallableSwitchClause)
-  | [] => none
-  | clause :: rest =>
-      match clause.label with
-      | some _ => switchDefaultSuffix rest
-      | none => some (clause :: rest)
-
 /-- Fallthrough walks a finite suffix without consuming the statement depth budget. -/
 private def evaluateSwitchClauses
     (evaluate : List IntegralValue → CallableStatement →
@@ -489,8 +475,8 @@ mutual
           let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
           match result with
           | .ok value =>
-              let selected := (switchCaseSuffix value.value clauses).orElse
-                (fun _ => switchDefaultSuffix clauses) |>.getD []
+              let selected := (callableSwitchCaseSuffix value.value clauses).orElse
+                (fun _ => callableSwitchDefaultSuffix clauses) |>.getD []
               evaluateSwitchClauses (evaluateCallableStatement fuel profile parameters)
                 afterCondition selected
           | result => pure (.failed result afterCondition)

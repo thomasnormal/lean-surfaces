@@ -32,6 +32,12 @@ bridge. The source evaluator, AST, and fuel remain unchanged; callers must
 provide the correlated known-value witness before relating a branch to a
 concrete resolution.
 
+The x-resolution note now records the post-PicoRV32 interim boundary and the
+`⊨₂` migration order. Unknown-sensitive judgments require a named
+`DecisionKnown` witness or remain loud; `TwoStateBoundary` handles the
+deterministic §6.11 conversion. Resolution will be lifted through E steps,
+`Runs2`/`⊨₂`, observations and contracts, then comb and memory proof bridges.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

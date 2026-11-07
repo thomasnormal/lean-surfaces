@@ -20632,7 +20632,10 @@ def _compound_rhs(expr):
 def _target_shape_ok(t):
     """Semantic-tier LHS shapes: Ident, a single BitSel/PartSel whose
     base is an Ident, or an ArraySel packed-array select chain (nested
-    selects such as `pp[i][j]` — see `_sym_array_select`)."""
+    selects such as `pp[i][j]` — see `_sym_array_select`). A retained
+    one-rank unpacked ArraySel is also a source-shaped memory target; its
+    run-time index is resolved by the E memory route rather than flattened
+    into default-point cells."""
     if t is None:
         return False
     k = t.get("kind")
@@ -20641,8 +20644,11 @@ def _target_shape_ok(t):
     if k in ("BitSel", "PartSel"):
         base = t.get("value")
         return base is not None and base.get("kind") == "Ident"
-    if k == "ArraySel" and not _sym_array_select_static(t):
-        return False  # a run-time part-select base is a read-only form
+    if k == "ArraySel":
+        if t.get("unpacked"):
+            return (not t.get("part") and len(t.get("indices") or []) == 1)
+        if not _sym_array_select_static(t):
+            return False  # a run-time part-select base is a read-only form
     return k == "ArraySel"
 
 
@@ -20684,16 +20690,36 @@ def select_target(sm, lhs):
 
 
 def _sym_runtime_unpacked_lhs(lhs):
-    """A dynamic write into a fixed unpacked array has no source-shaped
-    target in Stmt2. Keep both ordinary and compound spellings loud rather
-    than letting one form acquire a fabricated ternary-cell meaning."""
+    """Whether a dynamic write is outside the source-shaped memory route.
+
+    Parameter-dependent one-rank memories retain their ``ArraySel`` target
+    and are resolved by E at run time. Fixed arrays still use the existing
+    finite-cell lowering, so their dynamic writes retain the old loud
+    boundary in the scalar route.
+    """
     try:
         if type(lhs).__name__ != "ElementSelectExpression":
             return False
         array_type = lhs.value.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return False
-        return _literal_integral_value(lhs.selector) is None
+        if _literal_integral_value(lhs.selector) is not None:
+            return False
+        return not _sym_array_point_dependent(None, lhs.value.symbol)
+    except Exception:
+        return False
+
+
+def _sym_retained_unpacked_lhs(lhs):
+    """Whether a dynamic one-rank target belongs to the parameterized
+    source-shaped memory path rather than the finite-cell lowering."""
+    try:
+        if type(lhs).__name__ != "ElementSelectExpression":
+            return False
+        array_type = lhs.value.type.canonicalType
+        return (type(array_type).__name__ == "FixedSizeUnpackedArrayType"
+                and _literal_integral_value(lhs.selector) is None
+                and _sym_array_point_dependent(None, lhs.value.symbol))
     except Exception:
         return False
 
@@ -24326,12 +24352,14 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         # specified no-op.  Continuous drivers stay on their own target
         # path and parameter/genvar-dependent selects are refused above.
         if _SYM is not None:
-            nested_dynamic_array = _fixed_array_nested_dynamic_assignment(sm, expr)
-            if nested_dynamic_array is not None:
-                return nested_dynamic_array
-        dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
-        if dynamic_array is not None:
-            return dynamic_array
+            if not _sym_retained_unpacked_lhs(expr.left):
+                nested_dynamic_array = _fixed_array_nested_dynamic_assignment(sm, expr)
+                if nested_dynamic_array is not None:
+                    return nested_dynamic_array
+        if not (_SYM is not None and _sym_retained_unpacked_lhs(expr.left)):
+            dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
+            if dynamic_array is not None:
+                return dynamic_array
     if expr.op is None and _SYM is None:
         dynamic_new_pattern = _dynamic_array_new_pattern_assignment(sm, expr)
         if dynamic_new_pattern is not None:

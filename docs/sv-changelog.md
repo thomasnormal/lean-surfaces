@@ -147,6 +147,14 @@ continuous scalar read are covered by the `async_mem_fifo` clean-room fixture.
 Nested ranks, partial targets, loops, and compound memory expressions remain
 loud. The fixture matches Icarus over three reset/write/read cycles.
 
+The same source-shaped route now admits run-time indices for a
+parameter-sized one-rank register memory. `ArraySel` reads and NBA targets are
+resolved at issue time against the scalar state; known indices update one
+`MemState` cell, unknown reads return all-x, and unknown or out-of-range writes
+are no-ops. `sem2/unpacked_register_memory` and its Icarus row cover the
+three-cycle read-after-write trace; nested and compound memory forms remain
+loud.
+
 ## Initial `$readmemh` remains a named F4 boundary
 
 The clean-room `sem2/readmemh_rom` fixture now records an initial

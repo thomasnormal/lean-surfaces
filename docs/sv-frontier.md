@@ -81,6 +81,13 @@ kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
 
+The clean-room `sem2/unpacked_register_memory` fixture extends this route to a
+parameter-sized register file with run-time read and write indices. The
+symbolic envelope retains both `ArraySel` operations; E evaluates known
+indices against `MemState`, returns all-x for an unknown read, and drops an
+unknown or out-of-range write. Its three-cycle trace matches Icarus. Nested
+memories, compound memory expressions, and hierarchy remain loud.
+
 ### Initial ROM loading remains an explicit F4 boundary
 
 The clean-room `sem2/readmemh_rom` fixture measures the next memory wall:

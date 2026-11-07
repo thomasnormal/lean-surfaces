@@ -324,8 +324,9 @@ deriving Repr, Inhabited, BEq
 /-- CPython 3.9's pinned default `sys.getrecursionlimit()`. -/
 def pythonRecursionLimit : Nat := 1000
 
-/-- The public closed-function boundary contributes one virtual frame while
-the body theorem state remains the ordinary `initWorld` (depth zero). -/
+/-- The script/monadic runner's module boundary contributes one virtual frame;
+the closed-function `callFunction` surface starts at ordinary depth zero so
+its body and the `CallsIn` frame theorem share one execution geometry. -/
 def pythonTopCallDepth : Nat := pythonRecursionLimit + 1
 
 /-- One frame's full interpreter state: the shared world + this frame's

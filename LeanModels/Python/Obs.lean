@@ -1828,7 +1828,7 @@ theorem fuelMono (fuel : Nat) :
           · refine Run.le_finishCallAt w.callDepth (Run.le_toWorld
                 (Run.le_bind
                   (ihSs m
-                    ⟨{ w with callDepth := 0 },
+                    ⟨{ w with callDepth := 1 },
                       markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
                     f.body.toList k hk)
                   fun st flow => ?_))
@@ -2426,7 +2426,7 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     ∀ fuel' ≥ fuel, callFunction m fname args fuel' = r := by
   intro fuel' hf
   unfold callFunction at h ⊢
-  let w0 : World := { initWorld m with callDepth := pythonTopCallDepth }
+  let w0 : World := initWorld m
   change Run.toPublic fuel (callIn m fuel w0 fname (RVal.thawArgs args)) = r at h
   change Run.toPublic fuel' (callIn m fuel' w0 fname (RVal.thawArgs args)) = r
   rcases (fuelMono fuel).2.2.2.2.2.2.2.1 m w0 fname
@@ -2569,6 +2569,25 @@ theorem leaveCallDepth {α : Type} {w : World} {x : Run World α}
 
 theorem finishCallAt {α : Type} {w : World} {depth : Nat} {x : Run World α}
     (h : Run.OkW (· = { w with callDepth := 0 }) x) :
+    Run.OkW (· = { w with callDepth := depth }) (Run.finishCallAt depth x) := by
+  cases x with
+  | ok s v =>
+      intro w' a he
+      simp only [Run.finishCallAt] at he
+      cases he
+      have hs := h s v rfl
+      subst s
+      simp
+  | exn s e => exact Run.OkW.exn
+  | timeout => exact Run.OkW.timeout
+  | unsupported msg => exact Run.OkW.unsupported
+
+/-! The public frame wrapper may execute its body at a caller-selected
+frame depth. This generalized form of `finishCallAt` keeps the original
+zero-depth lemma above for existing proof paths. -/
+theorem finishCallAtFrom {α : Type} {w : World} {base depth : Nat}
+    {x : Run World α}
+    (h : Run.OkW (· = { w with callDepth := base }) x) :
     Run.OkW (· = { w with callDepth := depth }) (Run.finishCallAt depth x) := by
   cases x with
   | ok s v =>
@@ -3655,11 +3674,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [findFunction_notGen hm hff, Bool.false_eq_true, if_false]
         refine .ite .unsupported (.ite .unsupported (.ite .exn
           (.ite ?_ (.ite .exn ?_))))
-        · apply Run.OkW.finishCallAt (w := w) (depth := w.callDepth)
+        · apply Run.OkW.finishCallAtFrom (w := w) (base := 1) (depth := w.callDepth)
           refine Run.OkW.toWorld ?_
           refine .bind
             (ihSs
-              ⟨{ w with callDepth := 0 },
+              ⟨{ w with callDepth := 1 },
                 markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
               f.body.toList
             (findFunction_heapFree hm hff)) fun st₁ flow h₁ => ?_

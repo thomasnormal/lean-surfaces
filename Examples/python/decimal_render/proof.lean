@@ -23,7 +23,7 @@ private def scalarFunction : FunctionDefn :=
 private theorem scalar_literal_actual :
     decimal_render.functions[0]! = scalarFunction := by rfl
 
-private theorem initial_world : initWorld decimal_render = (⟨#[], [], [], []⟩ : World) := by
+private theorem initial_world : initWorld decimal_render = (⟨#[], [], [], [], 0⟩ : World) := by
   rfl
 
 private theorem globals_empty : moduleGlobals decimal_render = ([], true) := by

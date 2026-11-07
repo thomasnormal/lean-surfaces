@@ -41,6 +41,58 @@ def UpperInstruction.toRv32i (instruction : UpperInstruction) :
     Rv32iInstruction :=
   .alu instruction.toAlu
 
+/-- The raw RVFI boundary selected by one decoded upper-immediate. -/
+def RvfiObservation.upperBoundary (s : ArchState) (input : Input)
+    (o : RvfiObservation) (instruction : UpperInstruction) : Prop :=
+  match instruction.kind with
+  | .lui rd imm => o.luiBoundary s input instruction.word rd imm
+  | .auipc rd imm => o.auipcBoundary s input instruction.word rd imm
+
+theorem RvfiObservation.upperBoundary_input
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (instruction : UpperInstruction)
+    (h : o.upperBoundary s input instruction) :
+    input = upperProgramInput input.memory instruction := by
+  cases instruction with
+  | mk word kind decode =>
+      cases kind with
+      | lui rd imm =>
+          have hirq : input.irq = 0 := h.1.1
+          have hfetched : input.fetched = .word word := h.1.2.1
+          cases input with
+          | mk fetched memory irq =>
+              simp_all [upperProgramInput]
+      | auipc rd imm =>
+          have hirq : input.irq = 0 := h.1.1
+          have hfetched : input.fetched = .word word := h.1.2.1
+          cases input with
+          | mk fetched memory irq =>
+              simp_all [upperProgramInput]
+
+theorem RvfiObservation.upperBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (instruction : UpperInstruction)
+    (h : o.upperBoundary s input instruction) :
+    Rv32iBoundary s input o
+      { arch := UpperKind.next s instruction.kind,
+        memory := input.memory }
+      (UpperKind.retirement s input instruction.kind) := by
+  cases instruction with
+  | mk word kind decode =>
+      cases kind with
+      | lui rd imm =>
+          simpa [RvfiObservation.upperBoundary, UpperKind.next,
+            UpperKind.retirement, luiNext, aluNext, luiRetirement,
+            aluRetirement, luiEffects, aluEffects, src1Val, src2Val,
+            aluSem] using
+            (RvfiObservation.luiBoundary_rv32i word rd imm h)
+      | auipc rd imm =>
+          simpa [RvfiObservation.upperBoundary, UpperKind.next,
+            UpperKind.retirement, auipcNext, aluNext, auipcRetirement,
+            aluRetirement, auipcEffects, aluEffects, src1Val, src2Val,
+            aluSem] using
+            (RvfiObservation.auipcBoundary_rv32i word rd imm h)
+
 theorem upper_toRv32i_input (state : RvMemoryState)
     (instruction : UpperInstruction) :
     rv32iProgramInput state instruction.toRv32i =
@@ -118,6 +170,82 @@ theorem UpperRvfiCycleTrace.toRv32i_trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
   exact certificate.toRv32i.trace_refines profile
 
+/-! ## Lifting an upper-immediate invariant to the mixed per-cycle obligation -/
+
+/-- An order-aware, memory-threaded upper-immediate invariant discharges the
+unified mixed RV32I cycle obligation.  The instruction witness retains its
+decoder proof and selects either the exact LUI or AUIPC boundary. -/
+theorem rv32iCycleStepRefines_of_upper_memory
+    {State : Type}
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ instruction : UpperInstruction,
+          input.memory = memoryState.memory ∧
+          observation.upperBoundary memoryState.arch input instruction ∧
+          rel state'
+            { arch := UpperKind.next memoryState.arch instruction.kind,
+              memory := memoryState.memory }
+      else rel state' memoryState)
+    (horder : ∀ (start : Nat) (state : State)
+      (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (_, observation) := machine.step state input
+      if observation.valid then observation.order = start else True) :
+    Rv32iCycleStepRefines machine rel admit := by
+  intro start state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  have horderCase := horder start state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase horderCase ⊢
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ instruction : UpperInstruction,
+        input.memory = memoryState.memory ∧
+        observation.upperBoundary memoryState.arch input instruction ∧
+        rel state'
+          { arch := UpperKind.next memoryState.arch instruction.kind,
+            memory := memoryState.memory } := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨instruction, hmem, hboundary, hrel'⟩
+    have horder' : observation.order = start := by
+      simpa [hv] using horderCase
+    have hinput : input = upperProgramInput memoryState.memory instruction := by
+      have hinput' := RvfiObservation.upperBoundary_input instruction hboundary
+      rw [hmem] at hinput'
+      exact hinput'
+    have hboundary' :
+        Rv32iBoundary memoryState.arch
+          input observation
+          (rv32iProgramStep memoryState instruction.toRv32i)
+          (rv32iProgramRetirement memoryState instruction.toRv32i) := by
+      rw [upper_toRv32i_step, upper_toRv32i_retirement]
+      rw [← hinput]
+      simpa [hmem] using
+        (RvfiObservation.upperBoundary_rv32i instruction hboundary)
+    simp only [hv]
+    refine ⟨instruction.toRv32i, ?_, horder', hboundary', ?_⟩
+    · calc
+        input = upperProgramInput memoryState.memory instruction := hinput
+        _ = rv32iProgramInput memoryState instruction.toRv32i :=
+          (upper_toRv32i_input memoryState instruction).symm
+    · rw [upper_toRv32i_step]
+      exact hrel'
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    simp only [hv]
+    exact hrel'
+
+#print axioms LeanModels.Refine.RvfiObservation.upperBoundary
+#print axioms LeanModels.Refine.RvfiObservation.upperBoundary_input
+#print axioms LeanModels.Refine.RvfiObservation.upperBoundary_rv32i
+#print axioms LeanModels.Refine.rv32iCycleStepRefines_of_upper_memory
 #print axioms LeanModels.Refine.UpperInstruction.toAlu
 #print axioms LeanModels.Refine.UpperInstruction.toRv32i
 #print axioms LeanModels.Refine.upper_toRv32i_input

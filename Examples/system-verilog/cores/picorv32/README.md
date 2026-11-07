@@ -930,6 +930,10 @@ AUIPC to their exact `.alu` forms, and `UpperRvfiCycleTrace.toRv32i` preserves
 the source certificate's bubbles, cycle inputs, order tags, decoder proofs,
 and indexed boundaries.  It does not choose a new decode or alter the
 PicoRV32 source.
+`rv32iCycleStepRefines_of_upper_memory` is the corresponding core-facing
+bridge: an upper-boundary witness and explicit order equation become the
+unified mixed per-cycle obligation while preserving the memory-threaded
+post-state relation.
 
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an

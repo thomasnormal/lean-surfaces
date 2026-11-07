@@ -4011,3 +4011,28 @@ existing `propext`/`Quot.sound` boundary.
 **DECIDED:** make the strict raw contract the single entry point for the
 loaded-core trace and state obligations; keep the optional adapter as an
 internal derivation.  No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+## 2026-11-07-ls-sv2-261 — compose strict RVFI refinement with raw normalization
+
+The inboxes were reread before this item.  No newer lane-specific request was
+present: the generated-member memory-route wall remains with `ls-sv`, while
+this lane continues the owned generic refinement boundary.
+
+Added `rvfiCycleStepRefines_normalized_trace_refines` to
+`LeanModels/Refine/Rvfi.lean`.  Given the strict packed-cycle contract, the
+admitted input window, and a successful `normalizeRvfiTrace?` certificate, it
+returns the normalized retirement list's equality with the ISA trace over the
+retiring inputs.  The proof composes `normalizeRvfiCycleTrace` with the strict
+trace wrapper; malformed valid rows remain rejected by the normalization
+certificate rather than being repaired by the optional adapter.
+
+Added `pinned_cycle_normalized_trace_refines_of` to the PicoRV32 trace witness.
+It instantiates the composition on the measured eight-cycle window while
+leaving the symbolic relation and admission predicate as the hypotheses that
+the eventual loaded-core invariant must discharge.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep raw normalization and architectural refinement as separate
+obligations, with one theorem composing them at the loaded-core boundary.  A
+successful wire certificate now leads directly to the ISA trace without a
+manual optional-retirement adapter step.

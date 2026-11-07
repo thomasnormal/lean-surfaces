@@ -913,6 +913,17 @@ core-facing one-step form: a valid row must identify an `Rv32iInstruction`,
 its exact input, indexed post-state, and retirement, while invalid rows remain
 ISA stutters.
 
+The ADDI-only certificate is now connected to this mixed surface by
+`AddiInstruction.toRv32i` and
+`AddiRvfiCycleTrace.toRv32i` in
+`LeanModels.Refine.RvfiAddiMixed`.  The adapter preserves the original cycle
+inputs, bubbles, order tags, decoder proofs, and indexed boundary at the same
+architectural state; it only changes the instruction-family view to the
+unified `.alu` constructor.  Thus an eventual loaded-core ADDI invariant can
+feed the mixed R2 theorem without reconstructing a retirement stream.  This
+is generic certificate plumbing, not a claim about the currently blocked
+PicoRV32 RTL.
+
 ## Constructing mixed cycle certificates from an invariant
 
 The generic `Rv32iCycleStepRefines` contract and

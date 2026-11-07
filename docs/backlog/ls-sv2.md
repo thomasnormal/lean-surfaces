@@ -6708,3 +6708,33 @@ introduced.
 shape: exact committed trace equality plus the post-state relation for every
 finite target retirement prefix.  PicoRV32 remains parked at the approved
 task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-361 — embed ADDI certificates in the mixed RV32I surface
+
+The ADDI-only cycle certificate was already strong enough to retain actual
+cycle inputs, bubbles, order tags, and indexed post-state boundaries, but it
+could not be passed directly to the unified mixed RV32I theorem.  A loaded
+core's first instruction-class invariant needs that bridge without rebuilding
+the retirement stream or introducing a finite captured window.
+
+**CHANGED:** Added `LeanModels.Refine.RvfiAddiMixed`.  It maps each decoded
+`AddiInstruction` to the corresponding `.alu` `Rv32iInstruction`, proves the
+input, state-step, and retirement equations, and maps every
+`AddiRvfiCycleTrace` constructor to an `Rv32iRvfiCycleTrace` over the same
+cycle list.  `AddiRvfiCycleTrace.toRv32i_trace_refines` exposes the resulting
+stateful trace theorem.  The refinement umbrella imports the new module, and
+the PicoRV32 README records how a future ADDI invariant feeds the mixed R2
+surface.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0; the declarations report only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check also pass.  No semantics, RTL,
+loader, extractor, or finite captured-window theorem changed; no `sorryAx` or
+new axiom was introduced.
+
+**JUDGED / DECIDED:** The first symbolic ADDI certificate now feeds the same
+mixed cycle certificate consumed by the R2 all-prefix/reset contracts.  The
+adapter retains the parser-derived decoder proof and the original boundary at
+the same state, so it does not choose a new instruction interpretation.
+PicoRV32 remains parked at the approved task/net-z memory-route walls.

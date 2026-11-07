@@ -6509,6 +6509,10 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- The legacy M0 JSON loader and runner now refuse two-clock and data-clocked
+  designs (`Clock:multiple` / `Clock:implicit`) instead of firing every edge
+  process on every implicit cycle. Clean-room refusal rows cover both shapes.
+
 - Added the optional `Schedule:preemptive` profile guard. It keeps the
   source-shaped process-atomic E route unchanged while refusing designs whose
   cross-process read/write or write/write windows could expose an IEEE §4.7

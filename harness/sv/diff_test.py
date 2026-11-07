@@ -158,6 +158,23 @@ def run_lean(envelope_rel, case_name, sigma):
     return cycle_lines(p.stdout)
 
 
+def run_lean_refusal(envelope_rel, case_name, sigma, kind):
+    """The M0 refusal rows are differential rows too: no simulator is run,
+    and the runner must fail loudly with the recorded kind."""
+    cmd = ["lake", "env", "lean", "--run", RUNNER,
+           envelope_rel, os.path.join("harness", "sv", "cases.json"),
+           case_name, sigma]
+    p = run_cmd(cmd, cwd=REPO, timeout=600)
+    text = p.stdout + "\n" + p.stderr
+    if p.returncode == 0:
+        raise HarnessError("refusal row %s [%s] unexpectedly ran" %
+                           (case_name, sigma))
+    if kind not in text:
+        raise HarnessError("refusal row %s [%s] named no %s:\n%s" %
+                           (case_name, sigma, kind, text[-3000:]))
+    return text
+
+
 def show_diff(sim, case_name, sigma, sim_lines, lean):
     print("  MISMATCH for case '%s' (sigma=%s): %s vs Lean:"
           % (case_name, sigma, sim))
@@ -204,6 +221,19 @@ def main():
     # THREE STATES, not two. A run that verified nothing must not exit 0.
     sim = resolve_sim(args.sim)
     if sim is None:
+        # A refusal-only selection is fully verifiable without a simulator:
+        # the M0 runner itself is the loud oracle for the recorded boundary.
+        if all("refusal" in c for c in cases):
+            ensure_oleans(verbose=True)
+            for case in cases:
+                example = case["example"]
+                envelope_rel = os.path.join(
+                    "Examples", "system-verilog", example, example + ".sv.json")
+                for sigma in case.get("accept_sigmas", ["src"]):
+                    run_lean_refusal(envelope_rel, case["name"], sigma,
+                                     case["refusal"])
+            print("diff_test: OK -- %d loud-refusal row(s) verified without a simulator" % len(cases))
+            return 0
         if args.sim != "auto":
             print("diff_test: FAIL -- simulator %r was requested and is not on "
                   "PATH (needs %s)"
@@ -245,6 +275,14 @@ def main():
         with open(example_sv, "rb") as f:
             source_bytes = f.read()
 
+        if "refusal" in case:
+            for sigma in sigmas:
+                run_lean_refusal(envelope_rel, name, sigma, case["refusal"])
+            print("  REFUSE: %s (%s)" % (name, case["refusal"]))
+            results.append((name, example, len(case["stimulus"]), sigmas,
+                            "refusal", None))
+            continue
+
         print("case %-20s (%s, %d cycles) ..." % (name, example, len(case["stimulus"])))
         tb_text = gen_tb.generate_tb(envelope, case)
         sim_trace = run_sim(example_sv, tb_text, os.path.join(workroot, name))
@@ -268,7 +306,10 @@ def main():
         except HarnessError as error:
             print("  FAIL: %s" % error)
             matched = None
-        if declared:
+        if matched == "refusal":
+            sig = "refusal"
+            res = "REFUSE"
+        elif declared:
             print("  DECLARED SIMULATOR DISAGREEMENT: %s (not a match)" % declared)
             print("  Reference: %s" % case["oracle_disagreement"]["reference"])
             report_annotation("%s: declared simulator disagreement %s; not a match" % (name, declared))

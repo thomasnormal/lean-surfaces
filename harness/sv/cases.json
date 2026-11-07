@@ -1,7 +1,29 @@
 {
-  "_comment": "SV M0 differential-harness cases (docs/sv-design-m0.md, 'Differential harness vs Xcelium'). Per case: example name (Examples/system-verilog/<example>/<example>.sv + .sv.json), signals to sample (canonical line 'CYCLE <k> <name>=<binary>...', sampled at negedge after NBA settle), and one stimulus object per cycle: input-port name -> MSB-first binary string (exact declared width; digits 0 1 x z). An input absent from a cycle's entry holds its previous value (initially x). accept_sigmas (default ['src']): Lean schedules the Xcelium trace may match; race_blk legitimately matches either source or reverse order.",
+  "_comment": "SV M0 differential-harness cases (docs/sv-design-m0.md, 'Differential harness vs Xcelium'). Per case: example name (Examples/system-verilog/<example>/<example>.sv + .sv.json), signals to sample (canonical line 'CYCLE <k> <name>=<binary>...', sampled at negedge after NBA settle), and one stimulus object per cycle: input-port name -> MSB-first binary string (exact declared width; digits 0 1 x z). An input absent from a cycle's entry holds its previous value (initially x). A refusal field records a loud loader boundary. accept_sigmas (default ['src']): Lean schedules the Xcelium trace may match; race_blk legitimately matches either source or reverse order.",
   "fuel": 1000,
   "cases": [
+    {
+      "name": "m0_two_clock_refuse",
+      "example": "m0_two_clock",
+      "refusal": "Clock:multiple",
+      "signals": ["qa", "qb"],
+      "stimulus": [
+        {"clk_a": "0", "clk_b": "0", "d": "0"},
+        {"clk_a": "1", "clk_b": "0", "d": "1"}
+      ],
+      "measured": "2026-11-07: M0's one-entry-per-cycle contract cannot represent independent clk_a/clk_b arrivals; the loader refuses Clock:multiple."
+    },
+    {
+      "name": "m0_data_clock_refuse",
+      "example": "m0_data_clock",
+      "refusal": "Clock:implicit",
+      "signals": ["q"],
+      "stimulus": [
+        {"en": "0", "d": "0"},
+        {"en": "0", "d": "1"}
+      ],
+      "measured": "2026-11-07: posedge en would fire on every M0 cycle even when en is static; the canonical M0 clk guard refuses it."
+    },
     {
       "name": "adder_directed",
       "example": "adder",

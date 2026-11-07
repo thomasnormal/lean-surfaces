@@ -1,0 +1,111 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/m0_data_clock/m0_data_clock.sv",
+  "source_sha256": "edf8e9cd535f52fde76d9e9e7979a1ae6c3ccfe5497c9cde2d3cf718e43ceda7",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "m0_data_clock",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 17
+            },
+            "name": "en",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 16
+            },
+            "name": "d",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": 1
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 34
+            },
+            "style": "always_ff",
+            "clock": "en",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 6,
+                "col": 27,
+                "end_line": 6,
+                "end_col": 34
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 27,
+                  "end_line": 6,
+                  "end_col": 28
+                },
+                "width": 1,
+                "name": "q"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 32,
+                  "end_line": 6,
+                  "end_col": 33
+                },
+                "width": 1,
+                "name": "d"
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

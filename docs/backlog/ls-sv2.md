@@ -5877,3 +5877,33 @@ the existing unsupported-member/net-z boundary.
 first wall.  The symbolic PicoRV32 invariant remains parked at the existing
 unpacked `cpuregs` and unsupported-member/net-z boundaries; proceed with owned
 generic refinement infrastructure while ls-sv addresses that wall.
+
+## 2026-11-07-ls-sv2-335 — compose raw symbolic memory certificates
+
+The inbox and goal file were reread after item 334 was pushed.  The fresh
+PicoRV32 probe confirmed the same loader walls, so the next owned generic step
+is to make the raw memory certificate compositional at a program boundary.
+
+**CHANGED:** Added `MemRvfiTrace.append` to
+`LeanModels/Refine/RvfiMemProgram.lean`.  Given a first certificate and a
+second certificate whose order starts at `start + firstProgram.length`, whose
+state is `memProgramState state firstProgram`, the theorem constructs the
+certificate for concatenated observations and mixed load/store programs.  The
+induction preserves arbitrary bubbles, the indexed memory boundary, the next
+retirement order, and the exact threaded architectural and byte-memory state.
+Updated both core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL,
+loader, extractor, `LeanModels/Sv/**`, or finite captured-window theorem
+changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiMemProgram.lean` passes and
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` are the
+validation gates for this item.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment an
+arbitrary state-threaded load/store stream and resume at the exact memory and
+retirement-order boundary, without promoting a finite capture.  PicoRV32
+remains parked at the existing unpacked `cpuregs` and unsupported-member/net-z
+loader walls.

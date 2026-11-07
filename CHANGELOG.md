@@ -52,6 +52,9 @@
 
 - CI: confirm superseded workflow runs are cancelled per ref and both long jobs
   have bounded timeouts.
+
+- Docs: recheck the CPython 3.9 recursion-limit model, including active-depth
+  restoration across returns, raises, and sibling calls.
 - Centralized logical `&&`/`||` decoding and short-circuit decisions in
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.

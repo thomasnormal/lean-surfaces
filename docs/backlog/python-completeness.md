@@ -10968,3 +10968,23 @@ repair was written, and the entries remain in their original order.
 
 DECIDED: keep journal headings tied to the box clock and use
 `journal-append.sh` for subsequent entries.
+
+## 2026-11-07-pycomplete-447 — recheck active recursion depth
+
+The recursion-limit audit is already implemented on both interpreter surfaces.
+Closed-function calls enter through the virtual top frame, reject the next
+frame at the pinned CPython 3.9 limit of 1000, and restore the caller's depth
+on both return and raise. Script statements reset the module frame between
+completed top-level statements. Generator creation remains non-executing and
+does not consume a call frame.
+
+| Measurement | Result |
+|---|---|
+| Closed-function differential | `depth(100)` and `depth(1000)`: 2/2 MATCH against CPython 3.9.25 |
+| Script witness | `recursion_limit_script.py --compare`: `RecursionError`, exit 1, MATCH |
+| Sibling restoration | two sequential `depth(900)` calls: `900`, `900`, MATCH |
+| Managed build | Python tests, both interpreters, and `leanmodels-run`: 41 jobs passed |
+| Remaining surface | universal recursive theorem specs still need explicit depth hypotheses |
+
+DECIDED: retain the pinned default recursion limit and active-depth unwind;
+keep `sys.setrecursionlimit` outside the tier until it is an explicit oracle.

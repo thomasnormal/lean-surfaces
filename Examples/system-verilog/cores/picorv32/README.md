@@ -515,6 +515,12 @@ input filtering.  This keeps the trace-level claim separate from the
 cycle-phase relation and preserves an explicit input-admission obligation for
 future loaded-core proofs.
 
+`pinned_window_normalized_refines` exposes the paired result: the same trace
+equality together with the final `PinnedWindowRel.done` relation between the
+finite RVFI state and the stateful ISA state.  The initial relation and all
+eight input-admission facts are named separately so a later loaded-core proof
+can reuse them without reopening the finite list cases.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

@@ -27295,11 +27295,11 @@ def _dynamic_array_continuous_target(expression):
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
-    if _SYM is not None and lower_proc.has_strength(m):
-        # WP-PROC follow-up 1: `assign (strong0, highz1) y = a;` was admitted as a plain assignment, because
-        # `_continuous_assignment_has_strength` below reads source bytes the symbolic mode never loads. Yosys cannot
-        # read a strength on `assign` (syntax error), while Icarus applies it (z for highz) and Xcelium ignores it on
-        # a variable (CAVSTR): no reading is shared, so it is refused (register row st-cont-strength).
+    if lower_proc.has_strength(m):
+        # Drive strength changes four-state net resolution (`highz0`/`highz1`
+        # can leave a literal driver at z).  The self-check and symbolic
+        # stores have no strength lattice, so retain the source process as a
+        # loud node in both modes rather than lowering it to a time-zero write.
         return unsupported(sm, m, "ContinuousAssignSymbol:strength")
     e = m.assignment
     explicit_strength = _continuous_assignment_has_strength(m)

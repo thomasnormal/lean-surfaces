@@ -6509,6 +6509,11 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- Explicit drive strengths on continuous assignments are now refused in the
+  single-file/self-check path as well as symbolic mode. Strength resolution,
+  including `highz0`/`highz1`, is outside the flat store; no strength is
+  erased into a time-zero write.
+
 - `$timeunit`/`$timeprecision` symbolic queries no longer fold from raw
   source text. Until Slang scope time-scale metadata is threaded through,
   they remain loud `CallExpression` nodes, covering comments, module

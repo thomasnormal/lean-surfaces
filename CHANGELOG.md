@@ -44,6 +44,9 @@
 - Docs: record the expanded differential edge battery covering audited refusal
   and recursion/set/comprehension boundaries.
 
+- Docs: record the parameterized float-round worker and its cutoff boundary
+  battery.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

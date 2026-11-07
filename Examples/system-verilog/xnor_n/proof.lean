@@ -119,14 +119,17 @@ theorem xnor_eval (st : SvState) (a b : LVec) (ha : SvState.lookup st "a" = some
 
 /-! ## 4. The design -/
 
-/-- The declaration scope: `N` bound, an `int` parameter. -/
-def xnorScope (N : Int) : IEnv := { vals := [("N", N)], pwidths := [("N", 32)] }
+/-- The declaration scope: `N` bound, an `int` parameter, in the exact 32-bit instantiation (`paramEnv2`
+runs with `int32 := true`: `N` is bound in `nvals` at its signed 32-bit value `canonInt 32 true N`). -/
+def xnorScope (N : Int) : IEnv :=
+  { nvals := [("N", (canonInt 32 true N, 32, true))], pwidths := [("N", 32)], int32 := true }
 
 /-- The parameter environment (with the packed-array geometry table, as `instantiate2` carries it). -/
 def xnorEnv (N : Int) : IEnv :=
   { xnorScope N with dims := dimTable (xnorScope N) xnor_n.pdesign.decls }
 
-/-- Declarations at raw width `|N-1| + 1` (all three ports are `[N-1:0]`). -/
+/-- Declarations at raw width `wv` (all three ports are `[N-1:0]`: `|N'-1| + 1`, `N'` the 32-bit value of
+`N`). -/
 def xnorDeclsRaw (wv : Nat) : List Decl :=
   [{ name := "a", width := wv, isInput := true },
    { name := "b", width := wv, isInput := true },
@@ -137,7 +140,8 @@ def xnorElems : List (String × Nat) := [("a", 1), ("b", 1), ("y", 1)]
 theorem xnor_paramEnv (N : Int) : xnor_n.pdesign.paramEnv2 [N] = .ok (xnorEnv N) := rfl
 
 theorem xnor_decls (N : Int) :
-    buildDecls (xnorEnv N) xnor_n.pdesign.decls = .ok (xnorDeclsRaw ((N - 1).natAbs + 1)) := by
+    buildDecls (xnorEnv N) xnor_n.pdesign.decls =
+      .ok (xnorDeclsRaw ((canonInt 32 true N - 1).natAbs + 1)) := by
   simp [xnor_n.pdesign, buildDecls, instDecl, PType.width_packed_cons, PDim.width, evalInt,
     xnorEnv, xnorScope, List.lookup, xnorDeclsRaw, Gen2.except_ok_bind]
 
@@ -158,7 +162,7 @@ theorem xnor_static (N : Nat) (wv : Nat) :
 /-- **`instantiate2` at symbolic `N`**: succeeds (no generate items), and is the assembled design. -/
 theorem xnor_instantiate2 (N : Nat) :
     xnor_n.pdesign.instantiate2 [(N : Int)] (PDesign.surfaceFuel [(N : Int)]) =
-      .ok (xnor_n.pdesign.assemble2 (xnorEnv N) (xnorDeclsRaw (((N : Int) - 1).natAbs + 1))
+      .ok (xnor_n.pdesign.assemble2 (xnorEnv N) (xnorDeclsRaw ((canonInt 32 true N - 1).natAbs + 1))
         xnorElems []) :=
   PDesign.instantiate2_of_ok rfl (xnor_paramEnv N) (xnor_decls N) (xnor_elems N) (by
     rw [show xnor_n.pdesign.generates = [] from rfl]
@@ -189,10 +193,20 @@ theorem xnor_driversOk :
 /-- **`xnor_n.sem N` is the instantiated design**, for every `N`. -/
 theorem xnor_sem_eq (N : Nat) :
     xnor_n.sem N = xnor_n.pdesign.instantiateD2 [(N : Int)] := by
-  show xnor_n.pdesign.instantiateGD2 [(N : Int)] = _
-  apply PDesign.instantiateGD2_of_driversOk
-  rw [xnor_processes]
-  exact xnor_driversOk
+  -- `X.sem` is the alias-guarded family (`PDesign.instantiateGDAlias2`, ls-sv 7c9b7ac59): the guard
+  -- touches `always_comb` processes only, and this design has none
+  show (xnor_n.pdesign.instantiateGD2 [(N : Int)]).aliasGuard = _
+  have hgd : xnor_n.pdesign.instantiateGD2 [(N : Int)] = xnor_n.pdesign.instantiateD2 [(N : Int)] := by
+    apply PDesign.instantiateGD2_of_driversOk
+    rw [xnor_processes]
+    exact xnor_driversOk
+  rw [hgd]
+  apply Design2.aliasGuard_of_noComb
+  intro p hp b hb
+  rw [xnor_processes] at hp
+  simp at hp
+  rw [hp] at hb
+  cases hb
 
 /-- **The design is `y = ~(a ^ b)` for every `N`**: with `xnor_eval` and `xnor_vec` the settled value of
 `y` is the bitwise Table 11-14 of `a` and `b` at every width. -/

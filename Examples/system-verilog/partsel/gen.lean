@@ -25,9 +25,11 @@ for i < N:   rev_up[i*W +: W]       = a[(N-1-i)*W +: W]   ↦  slice copy
              rev_dn[(i+1)*W-1 -: W] = a[(N-i)*W-1 -: W]   ↦  the same copy
 ```
 
-(`partsel_rev_expand` at any environment carrying `N`, `W` and the three
-vectors' evaluated geometry `[N*W-1:0]`; `partsel_rev_instantiated` at the
-environment `instantiate2` builds). Route: `Gen2`'s
+(`partsel_rev_expand` at any environment carrying `N`, `W` in `vals` and the
+three vectors' evaluated geometry `[N*W-1:0]`; `partsel_rev_instantiated` at the
+unbounded-`int` scope `psEnv`, the environment `instantiate2` built before
+ls-sv's exact 32-bit `int` instantiation; `instantiate2` now builds `psEnv32`,
+`N` and `W` read at their signed 32-bit value, `partsel_paramEnv`). Route: `Gen2`'s
 `arrayPartTarget_up_desc0`/`…_down_desc0` and
 `fitExpr2_arrayPart_up_desc0`/`…_down_desc0` per cell, and
 `GenItem.expand2_genFor_ascending_processes` for the loop.
@@ -216,19 +218,35 @@ theorem partsel_rev_expand (env : IEnv) (elems : List (String × Nat)) (N W F : 
     revDn_inst env elems N W i hNv hWv hdd hda hW (List.mem_range.mp hi)]
   rfl
 
-/-! ## At the environment `instantiate2` builds -/
+/-! ## At the unbounded-`int` scope, and the environment `instantiate2` builds
 
-/-- The declaration scope of `partsel` at `(N, W)`: both parameters bound,
+`psEnv` is the scope `instantiate2` built until the exact 32-bit `int` instantiation (both parameters in
+`vals`, unbounded); `psEnv32` is the one it builds now (`partsel_paramEnv`). The lane theorems below are
+stated at `psEnv`. -/
+
+/-- The unbounded-`int` declaration scope of `partsel` at `(N, W)`: both parameters bound in `vals`,
 their declared `int` types 32 bits. -/
 def psScope (N W : Int) : IEnv :=
   { vals := [("N", N), ("W", W)], pwidths := [("N", 32), ("W", 32)] }
 
-/-- The parameter environment of `partsel` (by `rfl`): the declaration scope
-plus the geometry table evaluated in it. -/
+/-- The unbounded-`int` parameter environment of `partsel`: that scope plus the geometry table
+evaluated in it. -/
 def psEnv (N W : Int) : IEnv :=
   { psScope N W with dims := dimTable (psScope N W) partsel.pdesign.decls }
 
-theorem partsel_paramEnv (N W : Int) : partsel.pdesign.paramEnv2 [N, W] = .ok (psEnv N W) := rfl
+/-- The declaration scope `instantiate2` builds since ls-sv's exact 32-bit `int` instantiation
+(`paramEnv2` runs with `int32 := true`): both `int` parameters bound in `nvals` at their signed 32-bit
+value `canonInt 32 true`, not in `vals`. -/
+def psScope32 (N W : Int) : IEnv :=
+  { nvals := [("W", (canonInt 32 true W, 32, true)), ("N", (canonInt 32 true N, 32, true))],
+    pwidths := [("N", 32), ("W", 32)], int32 := true }
+
+/-- The parameter environment of `partsel` (by `rfl`): the exact 32-bit declaration scope plus the
+geometry table evaluated in it. -/
+def psEnv32 (N W : Int) : IEnv :=
+  { psScope32 N W with dims := dimTable (psScope32 N W) partsel.pdesign.decls }
+
+theorem partsel_paramEnv (N W : Int) : partsel.pdesign.paramEnv2 [N, W] = .ok (psEnv32 N W) := rfl
 
 /-- `[N*W-1:0]` evaluated in the declaration scope, at any width table. -/
 private theorem lane_evalDims (N W : Nat) (ws : List (String × Nat)) :

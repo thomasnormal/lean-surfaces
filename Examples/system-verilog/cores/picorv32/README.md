@@ -924,6 +924,14 @@ feed the mixed R2 theorem without reconstructing a retirement stream.  This
 is generic certificate plumbing, not a claim about the currently blocked
 PicoRV32 RTL.
 
+`rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
+Given the ADDI row boundary, threaded-memory post-state relation, and an
+explicit order equation for valid rows, it constructs the mixed
+`Rv32iCycleStepRefines` obligation.  The order premise stays separate because
+the strict raw RVFI contract does not itself assign an order index.  The
+bridge builds its `AddiInstruction` from the boundary's decoder equality and
+preserves the exact input and indexed boundary.
+
 ## Constructing mixed cycle certificates from an invariant
 
 The generic `Rv32iCycleStepRefines` contract and

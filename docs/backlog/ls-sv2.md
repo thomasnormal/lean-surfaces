@@ -6542,3 +6542,36 @@ post-state relation in the same target-state form used by the headline, while
 keeping the explicit progress premise and finite certificate.  The real
 PicoRV32 proof remains parked at the unsupported-member/net-z wall; no finite
 window was extended.
+
+## 2026-11-07-ls-sv2-355 — file the referenced task memory wall
+
+The current PicoRV32 memory-route re-probe showed that `pdesign.others` starts
+with a retained `SubroutineSymbol:Subroutine` for `task empty_statement` at
+`picorv32.v:214`, before the disabled-PCPI net-z entries.  A declaration-only
+task is erased, so the wall must be reproduced with a referenced task rather
+than a larger copy of PicoRV32.
+
+**REQUEST ls-sv:** Added the clean-room source-shaped fixture
+`Examples/system-verilog/cores/picorv32/walls/task_memory.sv`, its generated
+8,757-byte envelope (SHA-256
+`00d83299b2cfab4e1209c9f82e86b6e00a1dc5f9cc547aa0c2b53f5d7ffc38d6`), and a
+guard in `walls/probe.lean`.  The fixture references `task empty_statement`
+from an `always_ff` beside a parameterized memory.  Its retained metadata is
+exactly
+`[("SubroutineSymbol:Subroutine", "task empty_statement;\\n    begin end\\n  endtask")]`,
+and `instantiateMemD2 [4]` returns exactly
+`unsupported "Instantiate" "memory cycle route does not yet admit unsupported
+module members"`.  The request asks ls-sv to admit referenced task metadata with
+exact task/process semantics while preserving loud refusal outside the
+supported shape.  No PicoRV32 RTL adaptation or oracle result is claimed.
+
+**MEASURED:** The clean-room fixture was extracted with the approved Slang
+extractor; `lake env lean Examples/system-verilog/cores/picorv32/walls/probe.lean`,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass.  The declaration-only task comparison was also probed
+and is erased, confirming that the request targets the referenced shape.
+
+**JUDGED / DECIDED:** The memory route's remaining full-core wall is now
+specified by two independent generic members: referenced task metadata and
+net-z metadata.  Keep the symbolic ADDI invariant parked and do not extend the
+finite captured window until ls-sv admits the route.

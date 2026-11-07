@@ -615,6 +615,14 @@ the direct theorem for a loaded machine's own cycle list: normalized RVFI rows
 equal the stateful ISA trace on exactly the inputs that the cycle adapter
 retains.
 
+`AddiRvfiCycleTrace.append` composes two such certificates at the exact
+`rvfiStateAfter`/`addiProgramState` boundary.  The first chunk may contain any
+number of bubbles; the second chunk starts at the first chunk's next order
+index and threaded core/architectural states, and the result covers the
+concatenated cycle and program lists.  This is the reusable segmented proof
+shape for a future invariant, without treating a captured finite window as
+the theorem's domain.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

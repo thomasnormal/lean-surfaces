@@ -340,6 +340,40 @@ theorem AddiRvfiCycleTrace.trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
       rw [certificate.retireInputs_eq]
 
+/-! ## Composing input-aware cycle certificates -/
+
+/-- Input-aware certificates compose at the exact state and retirement-order
+boundary produced by the first program chunk.  The second certificate starts
+from the machine state after the first cycle list and the folded architectural
+state after the first ADDI list; no captured window or reconstructed input
+stream is needed at the join. -/
+theorem AddiRvfiCycleTrace.append
+    {State : Type} {machine : RvfiCycleMachine State} {memory : Memory}
+    {start : Nat} {coreState : State} {state : ArchState}
+    {firstCycles secondCycles : List Input}
+    {firstProgram secondProgram : List AddiInstruction}
+    (first : AddiRvfiCycleTrace machine memory start coreState state
+      firstCycles firstProgram)
+    (second : AddiRvfiCycleTrace machine memory
+      (start + firstProgram.length)
+      (rvfiStateAfter machine coreState firstCycles)
+      (addiProgramState state firstProgram)
+      secondCycles secondProgram) :
+    AddiRvfiCycleTrace machine memory start coreState state
+      (firstCycles ++ secondCycles) (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start coreState state =>
+      simpa [rvfiStateAfter, addiProgramState] using second
+  | bubble hstep hvalid tail ih =>
+      refine AddiRvfiCycleTrace.bubble hstep hvalid ?_
+      apply ih
+      simpa [rvfiStateAfter, hstep] using second
+  | retire hstep hinput horder boundary tail ih =>
+      refine AddiRvfiCycleTrace.retire hstep hinput horder boundary ?_
+      apply ih
+      simpa [rvfiStateAfter, addiProgramState, hstep, List.length_cons,
+        Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using second
+
 #print axioms LeanModels.Refine.addiProgramState_preserves_WF
 #print axioms LeanModels.Refine.rvMemoryMachineWith_addi_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_addi_program_trace
@@ -349,5 +383,6 @@ theorem AddiRvfiCycleTrace.trace_refines
 #print axioms LeanModels.Refine.AddiRvfiCycleTrace.normalize
 #print axioms LeanModels.Refine.AddiRvfiCycleTrace.retireInputs_eq
 #print axioms LeanModels.Refine.AddiRvfiCycleTrace.trace_refines
+#print axioms LeanModels.Refine.AddiRvfiCycleTrace.append
 
 end LeanModels.Refine

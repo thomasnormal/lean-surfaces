@@ -5585,3 +5585,33 @@ axiom was introduced.
 actual cycle machine and its inputs, rather than reconstructing a schedule
 from observations.  PicoRV32 itself remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader boundaries.
+
+## 2026-11-07-ls-sv2-325 — compose symbolic ADDI cycle certificates
+
+The inbox and goal file were reread after item 324 was pushed.  The
+input-aware certificate now identifies the exact first-chunk boundary, so the
+next generic step is to make that certificate compositional instead of
+restarting a proof at each segment.
+
+**CHANGED:** Added `AddiRvfiCycleTrace.append` to
+`LeanModels/Refine/RvfiAddiProgram.lean`.  Given a first certificate and a
+second certificate whose order starts at `start + firstProgram.length`, whose
+core state is `rvfiStateAfter machine coreState firstCycles`, and whose
+architectural state is `addiProgramState state firstProgram`, the theorem
+constructs the certificate for the concatenated cycle and program lists.  The
+proof threads arbitrary bubble cycles, exact `RvfiCycleMachine.step`
+equalities, the next-order index, and the folded ADDI state through the join.
+Updated the PicoRV32 README and regenerated `docs/backlog/INDEX.md`.  No RTL,
+loader, extractor, `LeanModels/Sv/**`, or finite captured-window theorem
+changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAddiProgram.lean` passes and
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` also pass.
+
+**JUDGED / DECIDED:** A future loaded-core proof can segment an unbounded ADDI
+stream while preserving the actual core state and ISA order boundary; no
+captured window is promoted to the theorem's domain.  PicoRV32 remains parked
+at the existing unpacked `cpuregs` and unsupported-member/net-z loader walls.

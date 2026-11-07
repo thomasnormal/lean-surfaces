@@ -512,6 +512,18 @@ theorem normalizeRvfiCycleTrace {State : Type}
           rw [hnone]
           exact ih state' (start := start) (retirements := retirements) h
 
+theorem normalizeRvfiCycleTrace_input_length {State : Type}
+    (machine : RvfiCycleMachine State) (state : State) (inputs : List Input)
+    {start : Nat} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start (rvfiObservations machine state inputs) =
+      some retirements) :
+    (retireInputs machine.toCycleMachine state inputs).length =
+      retirements.length := by
+  have htrace := normalizeRvfiCycleTrace machine state inputs h
+  have hlength := congrArg List.length htrace
+  rw [cycleTrace_length_eq_retireInputs_length] at hlength
+  exact hlength
+
 theorem rvfiStateAfter_refines
     {State IsaState : Type}
     (machine : RvfiCycleMachine State) (isa : Machine IsaState)
@@ -795,3 +807,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiObservations_append
 #print axioms LeanModels.Refine.normalizeRvfiCycleTrace_append
 #print axioms LeanModels.Refine.normalizeRvfiCycleTrace
+#print axioms LeanModels.Refine.normalizeRvfiCycleTrace_input_length

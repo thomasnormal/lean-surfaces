@@ -120,6 +120,22 @@ theorem retireInputs_append {State : Type}
               rw [ih state']
               simp only [List.cons_append]
 
+theorem cycleTrace_length_eq_retireInputs_length {State : Type}
+    (m : CycleMachine State) (state : State) (inputs : List Input) :
+    (cycleTrace m state inputs).length =
+      (retireInputs m state inputs).length := by
+  induction inputs generalizing state with
+  | nil => rfl
+  | cons input inputs ih =>
+      cases hstep : m.step state input with
+      | mk state' observation =>
+          simp only [cycleTrace, retireInputs, hstep]
+          cases observation with
+          | none => exact ih state'
+          | some retirement =>
+              simp only [List.length_cons]
+              rw [ih state']
+
 @[simp] theorem cycleTrace_nil {State : Type} (m : CycleMachine State) (s : State) :
     cycleTrace m s [] = [] := rfl
 
@@ -220,3 +236,4 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.cycleStateAfter_append
 #print axioms LeanModels.Refine.cycleTrace_append
 #print axioms LeanModels.Refine.retireInputs_append
+#print axioms LeanModels.Refine.cycleTrace_length_eq_retireInputs_length

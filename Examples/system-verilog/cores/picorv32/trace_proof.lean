@@ -212,6 +212,12 @@ theorem pinned_cycle_observations_normalize :
       some nontrapExpected := by
   decide
 
+theorem pinned_cycle_normalized_input_length :
+    (retireInputs pinnedCycleMachine.toCycleMachine
+      pinnedCycleMachine.init cycleInputs).length = nontrapExpected.length := by
+  exact normalizeRvfiCycleTrace_input_length pinnedCycleMachine
+    pinnedCycleMachine.init cycleInputs pinned_cycle_observations_normalize
+
 theorem pinned_cycle_first_window_normalize :
     normalizeRvfiTrace? 0
         (rvfiObservations pinnedCycleMachine pinnedCycleMachine.init
@@ -4948,6 +4954,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_nontrap_bus_effects
 #print axioms pinned_cycle_retire_inputs
 #print axioms pinned_cycle_observations_normalize
+#print axioms pinned_cycle_normalized_input_length
 #print axioms pinned_cycle_first_window_normalize
 #print axioms pinned_cycle_second_window_normalize
 #print axioms pinned_cycle_windows_append

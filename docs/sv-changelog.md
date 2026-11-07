@@ -13,6 +13,11 @@ including four-state reduction-OR. The `sem2/sva_reduce` witness and Verilator
 differential row cover the admitted form; nested temporal calls, dynamic
 selects, and shifts remain named boundaries.
 
+Dynamic packed element selects in SVA now retain the existing `BitSel` and
+`Expr2.index` path, using declared widths from the observation environment.
+The `sem2/sva_select` witness covers the sampled selector form; nested
+temporal calls and shifts remain named boundaries.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

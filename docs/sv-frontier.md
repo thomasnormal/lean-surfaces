@@ -181,6 +181,11 @@ Reduction operators in finite SVA expressions now use the existing `PExpr`
 `sem2/sva_reduce` witness and Verilator row cover reduction-OR; on the pinned
 `prim_arbiter_ppc` set, property-expression refusals fall from 20 to 12 across
 all 15 retained properties.
+Dynamic packed element selects in SVA now retain the existing `BitSel` and
+`Expr2.index` path, with declaration widths supplied from the observation
+environment. The clean-room `sem2/sva_select` witness covers the sampled
+selector form; the arbiter property-expression census falls from 12 to 9,
+leaving only nested temporal calls and a shift expression.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

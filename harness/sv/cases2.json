@@ -157,6 +157,16 @@
       "measured": "2026-11-07: reduction operators in finite SVA expressions retain the existing PExpr Reduce vocabulary and evaluate with four-state reduction semantics."
     },
     {
+      "name": "sva_select",
+      "example": "sem2/sva_select",
+      "top": "sva_select",
+      "clock": "clk",
+      "signals": ["a", "i", "q"],
+      "stimulus": [{"a": "1001", "i": "00"}, {"a": "1001", "i": "10"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: dynamic packed element selects in SVA preserve the existing BitSel/Expr2.index path and sampled four-state out-of-range behavior."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

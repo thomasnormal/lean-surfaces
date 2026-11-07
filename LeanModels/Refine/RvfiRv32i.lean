@@ -302,9 +302,9 @@ theorem Rv32iBoundary.rvMemoryMachineWith
 /-! ## One core-facing RV32I dispatcher -/
 
 /-- A loaded RV32I core can discharge one valid cycle through one indexed
-family witness.  The extra `wellFormed` premise is exposed at this dispatcher
-because the individual predicates already carry it, but keeping it explicit
-makes the generic cycle theorem independent of their tuple layout. -/
+family witness.  The witness itself supplies the packed row's validity and
+well-formedness through `observation_spec`, so the core invariant only has to
+identify the indexed architectural result. -/
 theorem rvfiCycleStepRefines_of_rv32i_memory
     {State : Type} (profile : PlatformProfile)
     (machine : RvfiCycleMachine State)
@@ -316,7 +316,6 @@ theorem rvfiCycleStepRefines_of_rv32i_memory
       if observation.valid then
         ∃ post retirement,
           input.memory = memoryState.memory ∧
-          observation.wellFormed ∧
           Rv32iBoundary memoryState.arch input observation post retirement ∧
           rel state' post
       else rel state' memoryState) :
@@ -329,11 +328,10 @@ theorem rvfiCycleStepRefines_of_rv32i_memory
   by_cases hv : observation.valid = true
   · have hcase' : ∃ post retirement,
         input.memory = memoryState.memory ∧
-        observation.wellFormed ∧
         Rv32iBoundary memoryState.arch input observation post retirement ∧
         rel state' post := by
       simpa [hv] using hcase
-    rcases hcase' with ⟨post, retirement, hmem, hwell, hboundary, hrel'⟩
+    rcases hcase' with ⟨post, retirement, hmem, hboundary, hrel'⟩
     have hstate : memoryState =
         { arch := memoryState.arch, memory := input.memory } := by
       cases memoryState with
@@ -345,10 +343,10 @@ theorem rvfiCycleStepRefines_of_rv32i_memory
       rw [hstate]
       simpa [hmem] using hstepBoundary
     have hspec := hboundary.observation_spec
-    have hwell' : observation.wellFormed := hspec.2.1
+    have hwell : observation.wellFormed := hspec.2.1
     have hto : observation.toRetirement = retirement := hspec.2.2.symm
     simp only [hv]
-    exact ⟨post, retirement, hmem, hwell',
+    exact ⟨post, retirement, hmem, hwell,
       hto, hstepBoundary', hrel'⟩
   · have hv' : observation.valid = false := by
       cases hvalue : observation.valid with

@@ -5169,3 +5169,28 @@ single source for validity, well-formedness, and packed-retirement equality;
 the indexed family exposes it without constructor-specific projections.  The
 generated-member support remains with `ls-sv`; the next item is another owned
 refinement milestone.
+
+## 2026-11-07-ls-sv2-311 — make the indexed RV32I cycle obligation self-sufficient
+
+The inbox and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item tightens only the
+owned RVFI refinement API.
+
+Updated `rvfiCycleStepRefines_of_rv32i_memory` so a valid-cycle invariant need
+only provide the memory equality, an indexed `Rv32iBoundary` witness, and the
+core relation.  The previous separate `observation.wellFormed` premise was
+redundant: `Rv32iBoundary.observation_spec` now supplies validity,
+well-formedness, and the packed-retirement equality in the proof of the strict
+cycle contract.  The PicoRV32 README describes this smaller obligation.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i`, `lake build
+LeanModels.Refine`, and the PicoRV32 unified-boundary target pass under Lean
+4.35.0.  `python3 tools/docs_check.py` and `git diff --check` pass.  The
+dispatcher declaration retains only `propext`/`Classical.choice`/`Quot.sound`;
+no `sorryAx` or new axiom was introduced.  No RTL, loader, extractor, or
+`LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** make the indexed family the sole source of valid-row
+wire facts at this boundary, so a loaded-core invariant cannot state the same
+well-formedness obligation twice.  The generated-member support remains with
+`ls-sv`; the next item is another owned refinement milestone.

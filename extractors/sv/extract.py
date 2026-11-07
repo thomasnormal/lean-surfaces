@@ -317,6 +317,11 @@ _SYM = None
 # loops. Retention is the source-preserving default; the CLI flag remains as a
 # compatibility spelling for callers that already pass it explicitly.
 _RETAIN_LOOPS = True
+# Keep source-level procedural rewrites visible in the symbolic envelope when
+# requested.  The default remains the established lowering path; retained
+# nodes are loaded as named Unsupported statements until the frozen PStmt
+# vocabulary gains a compound-assignment constructor.
+_RETAIN_PROC_REWRITES = False
 # Symbolic procedural-loop unrolling binds a finite loop iterator to a
 # source-pure integer while its body is converted.  Keep this separate from
 # ``SymCtx.genvars``: a procedural iterator is a runtime local in SystemVerilog
@@ -23712,6 +23717,21 @@ def _unchanged_compound(sm, expression, read, value, span):
 
 def _convert_compound_assignment(sm, expression, span_node=None):
     """IEEE 11.4.1: capture selectors once and retain the bound RMW tree."""
+    if _SYM is not None and _RETAIN_PROC_REWRITES:
+        # Keep the source construct in the envelope.  Ingest2 deliberately
+        # maps this node to a named Unsupported PStmt: Stmt2 is frozen and
+        # cannot claim a compound-assignment meaning by silently lowering it.
+        rhs = _compound_rhs(expression.right)
+        return {
+            "kind": "CompoundAssign",
+            "span": node_span(sm, span_node or expression),
+            "target": convert_expr(sm, expression.left),
+            "op": BINARY_OPS.get(expression.op),
+            "value": convert_expr(sm, rhs),
+            "nonblocking": bool(expression.isNonBlocking),
+            "timing": expression.timingControl is not None,
+            "symbolic_compound_retained": True,
+        }
     if _SYM is not None:
         lowered = lower_proc.compound_assignment(sys.modules[__name__], sm, expression, span_node)
         if lowered is not None:
@@ -34035,15 +34055,17 @@ def convert_module_sym(sm, inst):
 
 
 def process_symbolic(top, sources, incdirs, out_path, probed=False,
-                     retain_loops=True):
+                     retain_loops=True, retain_proc_rewrites=False):
     """`--top` mode: compile all sources as ONE slang compilation (name
     resolution across packages/files) and emit the top module in the
     extended symbolic vocabulary as one sv-0.2 envelope. `probed`: the
     caller will also write the `--probe-points` sidecar (see `SlangError`).
-    `retain_loops` selects the opt-in structural `For` representation for
-    literal counted loops."""
-    global _SYM, _SOURCE_BYTES, _RETAIN_LOOPS
+    `retain_loops` selects the structural `For` representation for literal
+    counted loops (now the default), and `retain_proc_rewrites` selects the
+    source-preserving WP-PROC boundary mode."""
+    global _SYM, _SOURCE_BYTES, _RETAIN_LOOPS, _RETAIN_PROC_REWRITES
     previous_retain_loops = _RETAIN_LOOPS
+    previous_retain_proc_rewrites = _RETAIN_PROC_REWRITES
     # Symbolic mode reads sources from `source_map`, never from the M0-mode
     # global: clear it so an earlier `process_file` in the same process cannot
     # make Unsupported texts slice the wrong source (a fresh process has None).
@@ -34096,6 +34118,7 @@ def process_symbolic(top, sources, incdirs, out_path, probed=False,
 
     _SYM = SymCtx(comp, sm, source_map)
     _RETAIN_LOOPS = retain_loops
+    _RETAIN_PROC_REWRITES = retain_proc_rewrites
     try:
         try:
             module = convert_module_sym(sm, inst)
@@ -34155,6 +34178,7 @@ def process_symbolic(top, sources, incdirs, out_path, probed=False,
     finally:
         _SYM = None
         _RETAIN_LOOPS = previous_retain_loops
+        _RETAIN_PROC_REWRITES = previous_retain_proc_rewrites
 
     if out_path is None:
         # Default: next to the source file that defines the top module.
@@ -34327,7 +34351,7 @@ def _probe_strip_spans(node):
 
 
 def write_probe_sidecar(top, sources, incdirs, out_path, points,
-                        retain_loops=True):
+                        retain_loops=True, retain_proc_rewrites=False):
     """Extract `top` at every probe point (`parse_probe_points`) and write
     the sidecar next to the envelope `out_path` (already written at the
     defaults). Returns the sidecar path. Each point holds its overrides,
@@ -34361,7 +34385,8 @@ def write_probe_sidecar(top, sources, incdirs, out_path, points,
             _SYM_PARAM_OVERRIDES = ovs
             try:
                 process_symbolic(top, sources, incdirs, tmp,
-                                 retain_loops=retain_loops)
+                                 retain_loops=retain_loops,
+                                 retain_proc_rewrites=retain_proc_rewrites)
                 # The P-elaborated hierarchy (slang's own instance values).
                 if incdirs:
                     popt = pyslang.parsing.PreprocessorOptions()
@@ -34522,6 +34547,10 @@ def main(argv=None):
     parser.add_argument("--retain-loops", action="store_true", default=True,
                         help="symbolic mode: retain literal counted for-loops "
                         "as For nodes (the default)")
+    parser.add_argument("--retain-proc-rewrites", action="store_true",
+                        help="symbolic mode: retain source-level procedural "
+                             "rewrites as named Unsupported nodes (default "
+                             "keeps the established lowering path)")
     args = parser.parse_args(argv)
 
     try:
@@ -34532,12 +34561,14 @@ def main(argv=None):
                       if args.probe_points is not None else None)
             out = process_symbolic(args.top, args.sources, args.incdirs,
                                    args.out, probed=points is not None,
-                                   retain_loops=args.retain_loops)
+                                   retain_loops=args.retain_loops,
+                                   retain_proc_rewrites=args.retain_proc_rewrites)
             print(out)
             if points is not None:
                 print(write_probe_sidecar(args.top, args.sources, args.incdirs,
                                           out, points,
-                                          retain_loops=args.retain_loops))
+                                          retain_loops=args.retain_loops,
+                                          retain_proc_rewrites=args.retain_proc_rewrites))
         else:
             if args.incdirs or args.out:
                 raise ExtractError("-I/-o require --top (symbolic mode)")

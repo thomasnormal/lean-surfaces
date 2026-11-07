@@ -212,6 +212,21 @@ class ScalarCompoundAssignments(TestCase):
             self.assertTrue(statement["symbolic_compound_lowered"])
             self.assertEqual(statement["value"]["op"], "+")
 
+    def test_symbolic_compound_assignments_can_be_retained_loudly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "top.sv"
+            output = Path(directory) / "top.sv.json"
+            source.write_text("module top; logic [3:0] value, delta; "
+                              "always_comb value += delta; endmodule")
+            extract.process_symbolic("top", [str(source)], [], str(output),
+                                     retain_proc_rewrites=True)
+            design = json.loads(output.read_text())["design"]
+            statement = design["modules"][0]["processes"][0]["body"]
+            self.assertEqual(statement["kind"], "CompoundAssign")
+            self.assertTrue(statement["symbolic_compound_retained"])
+            self.assertEqual(statement["op"], "+")
+            self.assertNotIn("symbolic_compound_lowered", statement)
+
 
 if __name__ == '__main__':
     main()

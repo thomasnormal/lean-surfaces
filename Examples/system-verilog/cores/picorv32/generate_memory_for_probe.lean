@@ -10,7 +10,6 @@ def memoryRoute :=
 
 #eval memoryRoute.processes
 
-example :
-    memoryRoute.processes =
-      [.unsupported "Instantiate" "memory cycle route does not yet admit generate members"] := by
-  rfl
+#guard match memoryRoute.processes with
+  | [.unsupported "Instantiate" "memory cycle route does not yet admit unsupported module members"] => true
+  | _ => false

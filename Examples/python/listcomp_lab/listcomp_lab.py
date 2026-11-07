@@ -28,3 +28,9 @@ def walrus_filter(n):
 
 def from_generator(n):
     return [x for x in (y for y in range(n))]
+
+
+def scope_restore():
+    x = 99
+    values = [x for x in (1, 2)]
+    return x, values

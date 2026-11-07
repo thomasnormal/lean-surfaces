@@ -40,6 +40,9 @@ must carry a string identity.
 A structured `ctor` object whose `id` is an array is also refused; a frontend
 handle must carry a string identity.
 
+A structured `ctor` object whose `id` is an object is also refused; a frontend
+handle must carry a string identity.
+
 A structured `ctor` object whose declared kind disagrees with the retained
 constructor declaration is also refused; both pieces of frontend evidence must
 agree.

@@ -4324,3 +4324,21 @@ no RTL, loader, or `LeanModels/Sv/**` file changed.
 
 **DECIDED:** keep trace and post-window state transport bundled for optional
 callers, with the raw wire invariant still explicit at the adapter boundary.
+
+## 2026-11-07-ls-sv2-278 — compose adjacent optional normalized RVFI windows
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_append` to
+`LeanModels/Refine/Rvfi.lean`.  Two successful normalized RVFI certificates
+can now be composed from an existing optional cycle-refinement proof, with one
+explicit valid-row well-formedness premise.  The theorem carries the
+concatenated retirement equality and the final retained core/ISA relation;
+the second certificate starts at the first window's retirement count and
+state boundary.  It delegates to the strict append boundary without repairing
+order or hiding malformed-valid rows.  Updated the PicoRV32 README; no RTL,
+loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** make adjacent-window composition available in the optional proof
+shape while preserving the exact raw-state and normalization obligations.

@@ -90,7 +90,42 @@ Measured distance to an R2 proof target is:
    primitive/dependency unsupported nodes add further work after that wall.
 
 The result is a scouting decision, not a core selection for the proof rung:
-PicoRV32 is the first candidate to revisit after the generic memory route and
-the edge/latch process semantics land in the SV tier.  No core was rewritten
-to fit the loader.
+PicoRV32 is the first candidate to revisit after the remaining unpacked-memory
+and module-member boundaries land in the SV tier.  No core was rewritten to
+fit the loader.
+
+## Current PicoRV32 re-probe
+
+The table above is the original cross-core census.  On 2026-11-07, after the
+generic memory route admitted generated members, the pinned PicoRV32 source was
+re-extracted with the current extractor and loaded against `github/master`
+revision `83638b50fccf1dfe7980f2ca1ab49e1366f34ef4`:
+
+```text
+source commit: ef203c2b0a3fb793280f5114941416c425c5b461
+envelope: 2d2d3c1b5cdd459b61a29ab38e6384db20f1f4a6cdbf5b211fe47cc2a1e785c8
+size: 2,986,551 bytes
+```
+
+The declaration still loads as a 26-parameter family.  Its ordinary semantic
+family still first refuses at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The rebuilt memory route now expands the source-shaped generated members; its
+first PicoRV32 refusal is instead the top-level unsupported-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire`
+at `picorv32.v:257`.  This is an existing generic net-z boundary.  The
+symbolic R2 invariant therefore remains parked at the unpacked `cpuregs` and
+net-z/unsupported-member walls; no core-specific adaptation or finite-window
+extension was made.
 

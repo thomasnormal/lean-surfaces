@@ -4217,3 +4217,22 @@ No RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** use the total raw-cycle case split as the public characterization
 of strict RVFI refinement; retain the existential adapter only behind its
 constructor.
+
+## 2026-11-07-ls-sv2-272 — lift optional RVFI refinement with a raw-row invariant
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_to_rvfiCycleStepRefines` to
+`LeanModels/Refine/Rvfi.lean`.  An existing optional
+`CycleStepRefines machine.toCycleMachine isa rel admit` proof can now be lifted
+to the strict packed-cycle contract when a separate premise proves every
+valid raw observation well formed.  The valid branch uses that premise and
+`toRetirement?_eq_some` to recover the concrete retirement; the invalid branch
+remains an explicit bubble.  Thus the reverse bridge cannot turn malformed
+valid RVFI data into a silently dropped cycle.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep raw well-formedness as a visible premise at the optional-to-
+strict boundary, rather than weakening the strict contract or inferring the
+wire condition from an optional `none` result.

@@ -157,6 +157,10 @@ the corresponding well-formed retirement or stutter relation.
 Its dual constructor `rvfiCycleStepRefines_of_step` packages the same
 exhaustive case split into the strict contract, including the valid row's
 existential optional-retirement witness.
+The reverse bridge `cycleStepRefines_to_rvfiCycleStepRefines` lifts an existing
+optional `CycleStepRefines` proof when a separate wire invariant proves every
+valid raw row well formed.  That premise is explicit: without it, the optional
+adapter could hide a malformed valid row as a bubble.
 The equivalence `rvfiCycleStepRefines_iff_step` exposes this case split as the
 canonical packed-field statement of the strict contract.
 The companion `rvfiCycleStepRefines_trace_refines` and

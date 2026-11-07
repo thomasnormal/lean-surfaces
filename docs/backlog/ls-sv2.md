@@ -3725,3 +3725,41 @@ is promoted to a core theorem.
 future invariant extracted from loaded PicoRV32 state.  Keep the contract
 profile-parametric and preserve the current no-interrupt/RV32I scope; generated
 memory support remains an owner-lane prerequisite for the actual RTL proof.
+
+## 2026-11-07-ls-sv2-248 — add the raw RVFI ADDI boundary predicate
+
+The inboxes were reread before this item.  The owner lane still has the
+generic generated-member memory request as its current `ls-sv` priority, so
+this item advances only the owned refinement/API layer and does not adapt or
+rewrite PicoRV32.
+
+Added `LeanModels/Refine/RvfiAddi.lean` and exported it from
+`LeanModels.Refine`.  `RvfiObservation.addiFields` records the exact raw
+RVFI facts for an interrupt-free 32-bit `ADDI`: the input is the reported
+32-bit word and decodes to the specified `rd`, `rs1`, and sign-extended
+immediate; `pcWdata` is `pcRdata + 4`; the source and destination values match
+the architectural state; mode/XLEN and masks are well formed; and trap,
+interrupt, cause, and both data-memory masks are clear.  The enclosing
+`RvfiObservation.addiBoundary` additionally requires the row's
+`toRetirement?` to equal the reusable `addiRetirement`, so the raw bus cannot
+silently disagree with the semantic commit.  The file also exposes the
+profile-independent ADDI facts that memory is unchanged and x0 is preserved.
+
+Added `rvfi_addi_boundary.lean` for the measured PicoRV32 RVFI row
+`addi x1, x0, 5` at reset.  The axiom-free witness proves the full raw
+predicate, projects its semantic equality and no-trap/no-memory facts, and
+checks x0 preservation.  The README now points to this witness and the
+reusable contract.
+
+**MEASURED:** `slot-run.sh lake build LeanModels.Refine` and the focused
+PicoRV32 witness build passed; direct elaboration of
+`rvfi_addi_boundary.lean` passed.  The new theorem reports contain only the
+existing `propext`/`Quot.sound` boundary and no `sorryAx`.  `python3
+tools/docs_check.py`, `./tools/backlog-index.sh --check`, and `git diff --check`
+pass.
+
+**DECIDED:** keep raw wire checks and semantic equality in one reusable
+predicate, leave `rdWdataValid` to the existing commit adapter's explicit
+write-change semantics, and require the eventual loaded-core invariant to
+establish this predicate from actual PicoRV32 state.  The generated-memory
+loader wall remains the dependency for any symbolic RTL theorem.

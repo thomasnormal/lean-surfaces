@@ -1,5 +1,6 @@
 import LeanModels.Refine.Commit
 import LeanModels.Refine.Rv32i
+import LeanModels.Refine.RvfiAddi
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

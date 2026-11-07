@@ -76,6 +76,10 @@
 
 - Python: recheck the parameterized float-round worker and its CPython cutoff
   boundary battery; no per-digit worker family remains.
+
+- Docs: record the next measured completeness milestone: a native `ListComp`
+  evaluator over the existing heap-list and iterator workers, with the
+  source-level comprehension shadow boundary retained until that seam lands.
 - Centralized logical `&&`/`||` decoding and short-circuit decisions in
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.

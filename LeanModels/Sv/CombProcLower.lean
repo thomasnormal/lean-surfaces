@@ -829,7 +829,7 @@ theorem struct_of_lexL {d : PDesign} {s : Summary} (hs : d.summaryP = .ok s) {ar
 theorem comb_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -840,7 +840,7 @@ theorem comb_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 theorem struct_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))
@@ -852,7 +852,7 @@ theorem struct_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
 theorem struct_lex_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hdisj : s.DisjObl (s.val args))

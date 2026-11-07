@@ -31,6 +31,39 @@ theorem fragOk_of_ne {v : PExpr} (h1 : ∀ b, v ≠ .fill b) (h2 : ∀ ps, v ≠
     fragOk v = fragW v := by
   cases v <;> first | rfl | exact absurd rfl (h1 _) | exact absurd rfl (h2 _)
 
+/-! ## Constant leaves read through `IEnv.intVal?`
+
+The comb view's agreement (`Agrees`, `Ctx.agree`) is phrased through `IEnv.intVal?`: a name is a loop binding in
+`vals` or an exact signed-32 parameter in `nvals`. A genvar or parameter so bound instantiates to a literal of that
+value, as `instExpr2_genvarRef_of`/`instExpr2_paramRef_of` (`Gen2.lean`) state for a `vals` binding. -/
+
+theorem instExpr2_genvarRef_of_intVal {E : IEnv} {elems : List (String × Nat)} {g : String} {v : Int}
+    (h : E.intVal? g = some v) (ctx : Option Nat) :
+    instExpr2 E elems ctx (.genvarRef g) = .lit (LVec.ofInt (ctx.getD 32) v) := by
+  cases hx : E.vals.lookup g with
+  | some x =>
+      have hxv : x = v := by simpa [IEnv.intVal?, hx] using h
+      subst hxv
+      exact instExpr2_genvarRef_of ctx hx
+  | none =>
+      rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+      · rw [hx] at hv; cases hv
+      · simp [instExpr2, hx, hn, intLit2_eq]
+
+theorem instExpr2_paramRef_of_intVal {E : IEnv} {elems : List (String × Nat)} {n : String} {v : Int}
+    (h : E.intVal? n = some v) (ctx : Option Nat) :
+    instExpr2 E elems ctx (.paramRef n none) = .lit (LVec.ofInt (ctx.getD 32) v) := by
+  cases hx : E.vals.lookup n with
+  | some x =>
+      have hxv : x = v := by simpa [IEnv.intVal?, hx] using h
+      subst hxv
+      exact instExpr2_paramRef_of ctx hx
+  | none =>
+      have hs : n ∉ E.stale := fun hs => by simp [IEnv.intVal?, hx, hs] at h
+      rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+      · rw [hx] at hv; cases hv
+      · simp [instExpr2, hx, hn, hs, intLit2_eq]
+
 /-! ## One access leaf -/
 
 section leaf
@@ -46,7 +79,7 @@ theorem leaf_eq (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     selfWidth2 E elems e = some (a.win σ dw).2.2 ∧ (∀ ctx, instExpr2 E elems ctx e = accExpr σ a) ∧
       rigidExpr e = true := by
   obtain ⟨hdec, hgeo, hns⟩ := ha
-  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.vals.lookup n = some (σ n) :=
+  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.intVal? n = some (σ n) :=
     fun x hx n hn => C.agree n (hns x hx n hn)
   cases e with
   | ident n =>
@@ -654,7 +687,7 @@ theorem divW_eq_selfW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PE
           obtain ⟨-, hc⟩ := partAcc?_cases h
           rcases hc with ⟨x, y, -, hx, hy, rfl⟩ | ⟨i, r, x, y, w, hnil, -⟩
           · obtain ⟨m, hdg, hy0, hyx, hxm⟩ := hgeo
-            have hagx : ∀ x' ∈ [x, y], ∀ v ∈ x'.names, E.vals.lookup v = some (σ v) :=
+            have hagx : ∀ x' ∈ [x, y], ∀ v ∈ x'.names, E.intVal? v = some (σ v) :=
               fun x' hx' v hv => C.agree v (hns x' hx' v hv)
             obtain ⟨-, heh⟩ := affOf?_sound msb x hx (hagx x (by simp))
             obtain ⟨-, hel⟩ := affOf?_sound lsb y hy (hagx y (by simp))
@@ -695,19 +728,23 @@ theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     instDivOperand2 E elems s c x =
       fitDivOperand2 s c (some ((skT x rs).width σ dw)) ((skT x rs).low σ dw ((skT x rs).width σ dw)) := by
   rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
-  · have hb : E.vals.lookup g = some (σ g) := C.agree g (hg g rfl)
+  · have hb : E.intVal? g = some (σ g) := C.agree g (hg g rfl)
     have e1 : instDivOperand2 E elems s c (.genvarRef g) =
         fitDivOperand2 s c (some 32) (.lit (LVec.ofInt 32 (σ g))) := by
-      simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
+      rw [show instDivOperand2 E elems s c (.genvarRef g) =
+          fitDivOperand2 s c (some 32) (instExpr2 E elems (some 32) (.genvarRef g)) by simp only [instDivOperand2],
+        instExpr2_genvarRef_of_intVal hb] <;> rfl
     have e2 : (skT (.genvarRef g) ([] : List Acc)).width σ dw = 32 := by simp [skT, Sk.width]
     have e3 : (skT (.genvarRef g) ([] : List Acc)).low σ dw 32 = .lit (LVec.ofInt 32 (σ g)) := by
       simp [skT, Sk.low, Aff.eval_var]
     refine ⟨by simp [shiftAmtWidth2, divOperandWidth2, e2], ?_⟩
     rw [e1, e2, e3]
-  · have hb : E.vals.lookup n = some (σ n) := C.agree n (hp n rfl)
+  · have hb : E.intVal? n = some (σ n) := C.agree n (hp n rfl)
     · have e1 : instDivOperand2 E elems s c (.paramRef n none) =
           fitDivOperand2 s c (some 32) (.lit (LVec.ofInt 32 (σ n))) := by
-          simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
+        rw [show instDivOperand2 E elems s c (.paramRef n none) =
+            fitDivOperand2 s c (some 32) (instExpr2 E elems (some 32) (.paramRef n none)) by simp only [instDivOperand2],
+          instExpr2_paramRef_of_intVal hb] <;> rfl
       have e2 : (skT (.paramRef n none) ([] : List Acc)).width σ dw = 32 := by simp [skT, Sk.width]
       have e3 : (skT (.paramRef n none) ([] : List Acc)).low σ dw 32 = .lit (LVec.ofInt 32 (σ n)) := by
         simp [skT, Sk.low, Aff.eval_var]
@@ -1185,7 +1222,7 @@ theorem instLhs_acc_w (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (h : tgtOf? ds l = .ok a) (ha : AccOK σ DW DG EW ns a) :
     instLhs2 E elems l = .ok (a.lhs σ, (a.win σ dw).2.2) := by
   obtain ⟨hdec, hgeo, hns⟩ := ha
-  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.vals.lookup n = some (σ n) :=
+  have hagx : ∀ x ∈ a.affs, ∀ n ∈ x.names, E.intVal? n = some (σ n) :=
     fun x hx n hn => C.agree n (hns x hx n hn)
   rcases tgtOf?_cases h with ⟨n, rfl, rfl⟩ | ⟨n, i, x, rfl, hx, hba⟩ | ⟨n, is, rfl, he⟩ |
     ⟨n, is, mode, hi, lo, rfl, hp⟩ | ⟨n, msb, lsb, rfl, hp⟩

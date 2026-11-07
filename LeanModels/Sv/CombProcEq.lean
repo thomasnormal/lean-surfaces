@@ -1351,7 +1351,7 @@ theorem declsL_of_lowerable {d : PDesign} {s : Summary} (hs : d.summaryP = .ok s
   subst henv
   obtain ⟨-, -, -, -, hsd, -, -, -⟩ := summaryP_spec hs
   obtain ⟨-, -, -, -, -, hdecl, -, -⟩ := hok
-  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n) :=
+  have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env.intVal? n = some (σ n) :=
     fun dt hdt n hn => hag n (hdecl dt hdt n hn)
   have h2' := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
   rw [h2] at h2'
@@ -1360,7 +1360,7 @@ theorem declsL_of_lowerable {d : PDesign} {s : Summary} (hs : d.summaryP = .ok s
 /-- The tactic's form of `declsL_of_lowerable` (valuation `s.val args`). -/
 theorem declsL_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) {d' : Design2}
     (hl : (d.instantiateGD2 args).lowerComb = some d') :
@@ -1976,7 +1976,7 @@ theorem eq_of_summaryL {d : PDesign} {s : Summary} (hs : d.summaryP = .ok s) {ar
 theorem eq_viewL {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args)) (hself : s.NoSelfRead (s.val args))
@@ -2219,7 +2219,7 @@ theorem eq_of_summaryM {d : PDesign} {s : Summary} (hs : d.summaryP = .ok s) {ar
 theorem eq_viewLM {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
     (hs : d.summaryP = .ok s) (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env)
-    (hag : s.params.map (fun n => env.vals.lookup n) =
+    (hag : s.params.map (fun n => env.intVal? n) =
       s.params.map (fun n => some (s.val args n)))
     (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
     (hin : s.InRangeObl (s.val args))

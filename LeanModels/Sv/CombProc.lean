@@ -566,7 +566,8 @@ theorem idxFree_shAmt (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       simp [instDivOperand2, divOperandWidth2]
     rw [e1]
     refine idxFree_fitDiv ?_ s _ _
-    cases hb : E.vals.lookup g <;> simp [instExpr2, hb, Expr2.idxFree] <;> first | done | rfl
+    rcases hb : E.vals.lookup g with _ | v <;> rcases hn : E.nvals.lookup g with _ | ⟨v', w, s'⟩ <;>
+      simp [instExpr2, hb, hn, intLit2_eq, Expr2.idxFree] <;> first | done | rfl
   · unfold instDivOperand2
     cases hc : c <;>
       cases hv : E.vals.lookup n <;>
@@ -1658,7 +1659,7 @@ theorem carry_lowers (N k : Nat) (hk : k < N) (E : IEnv) (elems : List (String �
     have := (affOf?_sound (E := E) (σ := fun n => if n = "i" then (k : Int) else 0)
       (.binary (.m0 .add) (.genvarRef "i") (.int 1)) ⟨[("i", 1)], 1⟩
       (by simp [affOf?, affBin, Aff.add, Aff.var, Aff.const])
-      (by intro n hn; simp [Aff.names] at hn; subst hn; simpa using hi)).2
+      (by intro n hn; simp [Aff.names] at hn; subst hn; simp [IEnv.intVal?, hi])).2
     simpa [Aff.eval, Aff.evalTerms, Int.add_comm] using this
   have hev0 : evalInt E (.genvarRef "i") = .ok (k : Int) := evalInt_genvarRef_of hi
   have hlhs : instLhs2 E elems carryLhs = .ok (Win.lhs ("c", k + 1, 1), 1) := by

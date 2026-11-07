@@ -77,7 +77,7 @@ theorem cell_lowers_site (N k : Nat) (hk : k < N) (E : IEnv) (elems : List (Stri
         intro n hn
         rw [List.mem_singleton] at hn
         subst hn
-        simpa [cellσ] using hi
+        simp [cellσ, IEnv.intVal?, hi]
       widths := hwd
       elemsG := by intro n ds h; simp at h
       elems := by

@@ -6565,3 +6565,7 @@ the defined sampling and NBA rules.
   named `AssignmentExpression:compound` refusal because frozen `Stmt2` has no
   compound constructor. The established lowering remains the default.
 
+- The same retain mode now keeps block-local declarations as lexical
+  `LocalDecl` nodes and reports the frozen scoped-storage boundary at load;
+  ordinary symbolic extraction continues to hoist static locals as before.
+

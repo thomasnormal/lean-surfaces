@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a comma
+  expression callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a decrementing
   `for` callable and native differential row.
 

@@ -28,6 +28,10 @@ system calls and a shift remaining loud.
 The `sem2/sva_isunknown` witness and Verilator row cover the form; `$onehot0`
 and other system calls remain loud.
 
+`$onehot0(expr)` now has an explicit finite four-state predicate with the
+known-one count rule. The `sem2/sva_onehot0` witness and Verilator row cover
+the form; the arbiter property-expression census falls from 3 to 2.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

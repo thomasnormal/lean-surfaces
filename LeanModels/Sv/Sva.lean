@@ -45,6 +45,7 @@ inductive SvaBool where
   | and (left right : SvaBool)
   | or (left right : SvaBool)
   | isUnknown (value : Expr2)
+  | oneHot0 (value : Expr2)
   | caseEq (left right : SvaBool)
   | past (cycles : Nat) (arg : SvaBool)
   | rose (name : String)
@@ -200,6 +201,12 @@ def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except 
   | .isUnknown value => do
       let some v ← exprAt trace index value | .ok none
       return some (if v.allKnown then .l0 else .l1)
+  | .oneHot0 value => do
+      let some v ← exprAt trace index value | .ok none
+      let ones := v.bits.toList.countP (fun b => b == Logic.l1)
+      return some (if v.allKnown then
+        if ones ≤ 1 then .l1 else .l0
+      else if ones > 1 then .l0 else .lx)
   | .lit value => .ok (some (if value then .l1 else .l0))
   | .signal name => return (← signalAt trace index name).map boolLogic
   | .expr value => return (← exprAt trace index value).map boolLogic

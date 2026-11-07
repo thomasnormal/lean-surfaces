@@ -86,6 +86,7 @@ def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → E
   | .and left right => .and <$> instantiateBool env elems left <*> instantiateBool env elems right
   | .or left right => .or <$> instantiateBool env elems left <*> instantiateBool env elems right
   | .isUnknown value => .ok (SvaBool.isUnknown (instantiateExpr env elems value))
+  | .oneHot0 value => .ok (SvaBool.oneHot0 (instantiateExpr env elems value))
   | .past cycles value => .ok (.past cycles (.expr (instantiateExpr env elems value)))
   | .rose value => .ok (.roseExpr (instantiateExpr env elems value))
   | .fell value => .ok (.fellExpr (instantiateExpr env elems value))

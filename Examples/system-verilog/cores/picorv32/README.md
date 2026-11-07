@@ -955,6 +955,12 @@ normalized trace equality, and target-state relation together for one prefix;
 loaded-core proof can consume the named fields without unpacking the nested
 existentials of the compatibility theorem above.
 
+`Rv32iResetRefinement` specializes the contract to the loaded core's initial
+state, the stateful ISA machine's reset state, and RVFI order zero.
+`rv32i_reset_refinement` is the direct entry point for the finish-line claim:
+the core invariant, reset relation, admitted schedule, and explicit progress
+witness produce the all-prefix result from reset.
+
 ## Clean-room repros for the two current walls
 
 The owner-lane request for the remaining PicoRV32 walls is backed by two

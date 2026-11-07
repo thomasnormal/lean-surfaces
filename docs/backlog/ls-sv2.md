@@ -3971,3 +3971,23 @@ loaded-core invariant consume both the wire-level facts and the exact
 state-threaded memory transition for the complete measured window.  The
 invalid proposition `#guard` was removed; no RTL, loader, or
 `LeanModels/Sv/**` file changed.
+
+## 2026-11-07-ls-sv2-259 — require valid RVFI rows to normalize before cycle refinement
+
+The inboxes were reread before this item.  The owner lane's generated-member
+memory-route refusal is unchanged, and its CombView migration remains owner
+work, so this item advances the owned generic refinement boundary only.
+
+Added `RvfiCycleStepRefines` to `LeanModels/Refine/Rvfi.lean`.  It states the
+cycle simulation directly over packed RVFI observations: invalid rows stutter,
+while every valid row must produce a `toRetirement?` result equal to the ISA
+step's retirement and carry the state relation forward.  Thus a malformed
+valid row cannot become a bubble through the optional-retirement projection.
+The theorem `rvfiCycleStepRefines_toCycleStepRefines` proves that this strict
+raw contract implies the existing `CycleStepRefines` interface, preserving all
+trace and state transport theorems for downstream core proofs.  The theorem's
+axiom report contains only the existing `propext`/`Quot.sound` boundary.
+
+**DECIDED:** make raw RVFI validity a proof obligation at the loaded-core
+boundary and retain the optional adapter only as a derived view.  No RTL,
+loader, or `LeanModels/Sv/**` file changed.

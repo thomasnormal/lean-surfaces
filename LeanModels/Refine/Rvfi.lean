@@ -308,6 +308,68 @@ def RvfiCycleMachine.toCycleMachine {State : Type}
     let (state', observation) := machine.step state input
     (state', observation.toRetirement?)
 
+/-! ## Strict packed-cycle refinement -/
+
+/-- A cycle-level refinement stated before projecting a packed RVFI row to an
+optional retirement.
+
+Unlike `CycleStepRefines machine.toCycleMachine`, this relation does not let a
+malformed valid row become a bubble: every `valid = true` observation must
+normalize to one retirement that matches the ISA step.  Invalid observations
+remain explicit bubbles.  The separate definition is useful at the loaded
+core boundary, where the invariant is proved from the raw RVFI fields before
+the generic optional-retirement adapter is applied. -/
+def RvfiCycleStepRefines {State IsaState : Type}
+    (machine : RvfiCycleMachine State) (isa : Machine IsaState)
+    (rel : State → IsaState → Prop) (admit : Input → Prop) : Prop :=
+  rel machine.init isa.init ∧
+    ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ retirement,
+          (observation.toRetirement? = some retirement) ∧
+            ((rel state' (isa.step isaState input).fst) ∧
+              (retirement = (isa.step isaState input).snd))
+      else
+        rel state' isaState
+
+/-- The strict packed-cycle contract implies the existing optional-retirement
+cycle contract.  The proof is the only place that turns a valid raw row into
+the generic `some` branch; malformed valid rows have no branch to enter. -/
+theorem rvfiCycleStepRefines_toCycleStepRefines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit) :
+    CycleStepRefines machine.toCycleMachine isa rel admit := by
+  constructor
+  · exact h.1
+  · intro state isaState input hrel hadmit
+    have hs := h.2 state isaState input hrel hadmit
+    rcases hstep : machine.step state input with ⟨state', observation⟩
+    simp only [hstep] at hs
+    by_cases hv : observation.valid = true
+    · rw [hv] at hs
+      cases hs with
+      | intro retirement hbody =>
+          have hretirement := hbody.1
+          have hrel' := hbody.2.1
+          have hcommit := hbody.2.2
+          simp only [RvfiCycleMachine.toCycleMachine, hstep]
+          rw [hretirement]
+          exact ⟨hrel', hcommit⟩
+    · have hv' : observation.valid = false := by
+        cases hvalue : observation.valid with
+        | false => exact rfl
+        | true => exact False.elim (hv hvalue)
+      have hnone : observation.toRetirement? = none := by
+        simp [RvfiObservation.toRetirement?, hv']
+      rw [hv'] at hs
+      simp only [RvfiCycleMachine.toCycleMachine, hstep]
+      rw [hnone]
+      simpa using hs
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -665,6 +727,7 @@ end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap

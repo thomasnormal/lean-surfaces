@@ -138,6 +138,13 @@ post-prefix witnesses use `RvfiObservation.addiBoundary_rvMemoryMachineWith`
 to show that the row's commit leaves its explicit byte-memory state unchanged
 while producing the exact `addiNext` architectural state and retirement.
 
+The generic RVFI layer now also exposes `RvfiCycleStepRefines`.  Its valid
+cycle branch requires the raw observation to normalize to a retirement that
+matches the ISA step; a malformed valid row cannot be silently projected to a
+bubble.  `rvfiCycleStepRefines_toCycleStepRefines` transports this strict raw
+contract to the existing cycle bridge, so a loaded-core invariant can be
+proved against packed fields first and use the trace/state theorems afterward.
+
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,
 `rs1_rdata = 5`), proves the threaded architectural state has `pc = 12`,

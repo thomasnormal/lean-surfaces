@@ -20,6 +20,9 @@ Switch case and default suffix selection is shared through `Callable`; the
 value and object evaluators retain their own fallthrough execution and frame
 handling after selection.
 
+Increment and decrement spellings use a shared `++`/`--` decoder before each
+evaluator applies its own promoted arithmetic and state update.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

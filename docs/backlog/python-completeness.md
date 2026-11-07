@@ -10416,3 +10416,21 @@ continues to serve diagnostics only; no supported admission parses it.
 
 DECIDED: keep supported import admission on parser AST fields and reserve
 `ast.unparse` for loud diagnostic payloads only.
+
+## 2026-11-07-pycomplete-417 — recheck the two-interpreter refinement edge
+
+The two-interpreter audit's no-refinement claim remains stale. The shared pure
+worker boundary has kernel-checked `twinAgrees_liftRes` and `twinAgrees_binOp`
+in `Monadic/Prim.lean`; the architecture page identifies the remaining debt
+precisely as control-level adequacy for the mutually recursive evaluators and
+the stateful script layer. The runner and theorem-target differential modes
+remain separate checks, with refusals recorded on the narrower theorem target.
+
+| Measurement | Result |
+|---|---|
+| Refinement declarations | `twinAgrees_liftRes` and `twinAgrees_binOp` present and unchanged |
+| Axiom surface | existing substrate axioms only; no new native or `sorry` dependency |
+| Semantic change | none; this packet records a verified existing refinement edge |
+
+DECIDED: retain the landed primitive refinement theorem and keep full control
+and script adequacy as an explicit architectural item.

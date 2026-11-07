@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refreshed the generated Python coverage page after the current differential battery moved from one divergence to zero.
+
 - Refreshed the two stale Python lab envelopes found by the pinned frontend freshness gate; the committed envelope set is fresh again.
 
 - Namedtuple table recognition now requires the structured benign import to

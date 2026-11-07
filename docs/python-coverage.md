@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 4199 | 3900 | 1 | 298 |
+| 4199 | 3900 | 0 | 299 |
 
 ## Grammar
 

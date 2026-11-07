@@ -785,3 +785,10 @@ normalize to the stateful RV32I fence trace, and compose at the architectural,
 core-state, and retirement-order boundaries.  Fence instructions preserve the
 threaded data memory; PicoRV32 remains parked at the existing unpacked-memory
 and unsupported-member/net-z loader walls.
+
+The system-operation program certificate in
+`LeanModels.Refine.RvfiSystemProgram` covers arbitrary decoded `ECALL`,
+`EBREAK`, `MRET`, and no-interrupt `WFI` streams.  It retains exact trap and
+return effects, arbitrary bubble inputs, cycle-step equalities, and the
+unchanged threaded data memory in raw and cycle-aware certificates, with
+append laws at the core, architectural-state, and retirement-order boundaries.

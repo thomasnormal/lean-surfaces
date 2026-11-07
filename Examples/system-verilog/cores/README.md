@@ -274,3 +274,10 @@ streams, retain the actual cycle inputs, and compose at the exact core,
 architectural-state, and retirement-order boundaries.  Fence execution keeps
 the threaded data memory unchanged through the existing profile-parametric
 RV32I machine.
+
+`LeanModels.Refine.RvfiSystemProgram` provides the corresponding no-interrupt
+system-operation surface for `ECALL`, `EBREAK`, `MRET`, and `WFI`.
+`SystemInstruction` retains the decoded operation and fetched word; its raw
+and cycle-aware certificates preserve arbitrary bubbles, exact cycle inputs,
+trap and return transitions, and the unchanged threaded data memory while
+composing at the same core/state/retirement-order boundaries.

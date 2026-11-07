@@ -29,6 +29,7 @@ import LeanModels.Refine.RvfiBranchProgram
 import LeanModels.Refine.RvfiJumpProgram
 import LeanModels.Refine.RvfiUpperProgram
 import LeanModels.Refine.RvfiFenceProgram
+import LeanModels.Refine.RvfiSystemProgram
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1675 | 0 | 1593 | 0 | 72 | 0 | 10 |
+| 1676 | 0 | 1593 | 0 | 73 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -279,6 +279,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.resolved-call-boolean-id-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-null-id-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-array-id-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `translation.resolved-call-object-id-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-cast-kind-mismatch-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-malformed-cast-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-call-missing-callee-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |

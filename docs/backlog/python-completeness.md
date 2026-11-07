@@ -9970,6 +9970,23 @@ than claim that differential agreement establishes theorem adequacy.
 DECIDED: keep `py-two-interpreters` open as a named control-level adequacy
 milestone; do not broaden the claim beyond the existing pure-worker bridges.
 
+## 2026-11-07-pycomplete-463 — audit namedtuple static recognition
+
+The medium `py-namedtuple-recognition` finding remains open. Ingestion still
+recognizes the narrow benign-import plus assignment shape and rewrites those
+statements to `pass` while filling the static `Module.namedtuples` table. The
+admission is conservative and preserves unsafe source order as a loud refusal,
+but it remains a deep rewrite rather than a runtime `namedtuple` class value.
+
+| Measurement | Result |
+|---|---|
+| Admitted corpus | `namedtuple_script.py`: MATCH; handler/generator namedtuple rows also MATCH |
+| Ordering boundary | `namedtuple_import_order.py`: expected loud refusal; CPython 3.9 raises `NameError` |
+| Remaining debt | model `collections.namedtuple` at its statement and remove static recognition |
+
+DECIDED: keep `py-namedtuple-recognition` open as a medium ingestion/semantics
+milestone; do not broaden the static-table admission.
+
 ## 2026-11-07-pycomplete-387 — recheck the two-interpreter refinement edge
 
 The audit's claim that no `twinAgrees` theorem exists is stale. Current

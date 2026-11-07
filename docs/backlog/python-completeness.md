@@ -10287,3 +10287,18 @@ store; the narrow local dead-yield admission remains separate.
 
 DECIDED: retain the loud global/nonlocal target boundary until a send-aware
 yield-expression frame is implemented.
+
+## 2026-11-07-pycomplete-410 — recheck non-simple annotation order
+
+The annotated-assignment audit finding is already closed by the structured
+scope-aware `AnnAssign` path. CPython's value and target store occur before a
+module/class annotation is evaluated, and function-scope annotations are not
+evaluated; the extractor and both interpreters preserve that order without
+source-shape guessing.
+
+| Measurement | Result |
+|---|---|
+| Ordering witness | `ann_nonsimple_order.py` MATCHES CPython 3.9 (`val`, `ann`, `val`, `1`) |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain direct structured `AnnAssign` semantics and its scope gate.

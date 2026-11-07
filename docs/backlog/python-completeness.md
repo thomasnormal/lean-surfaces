@@ -10375,6 +10375,24 @@ store; the narrow local dead-yield admission remains separate.
 DECIDED: retain the loud global/nonlocal target boundary until a send-aware
 yield-expression frame is implemented.
 
+## 2026-11-07-pycomplete-455 — audit dead yield-target drop
+
+The high-priority `py-dead-yield-target-drop` finding is already fixed. The
+extractor identifies expression-yield assignments whose targets are declared
+`global` or `nonlocal` and emits the structured
+`YieldAssign:global-or-nonlocal` refusal before the old dead-target lowering can
+drop the resumed store. The narrow local dead-yield shape remains separately
+admitted.
+
+| Measurement | Result |
+|---|---|
+| Global target witness | `yield_global_target.py`: expected loud refusal |
+| Oracle | CPython 3.9 runs the generator and prints its result |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-dead-yield-target-drop` as already fixed; retain the loud
+global/nonlocal boundary until a send-aware yield-expression frame exists.
+
 ## 2026-11-07-pycomplete-410 — recheck non-simple annotation order
 
 The annotated-assignment audit finding is already closed by the structured

@@ -11285,6 +11285,23 @@ refuses when the frontend is absent or mismatched.
 DECIDED: retain family-level CPython 3.9 admission and make freshness a
 required check before committed envelopes enter theorem or runner surfaces.
 
+## 2026-11-07-pycomplete-472 — audit frontend-version admission and freshness
+
+The low `py-frontend-unchecked-stale-envelopes` finding is already fixed. JSON
+ingestion retains frontend family/version metadata and rejects envelopes outside
+the pinned CPython 3.9 AST family; the freshness instrument re-extracts with
+the pinned frontend and checks source hashes before committed envelopes enter
+the theorem or runner surfaces.
+
+| Measurement | Result |
+|---|---|
+| Python freshness | `envelope_fresh.py --tier python`: FRESH 83, STALE 0 |
+| Freshness self-test | 27/27 checks passed, including stale/foreign/absent/off-tree cases |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-frontend-unchecked-stale-envelopes` as already fixed; retain
+family-level CPython 3.9 admission and the freshness gate.
+
 ## 2026-11-07-pycomplete-442 — recheck differential edge coverage
 
 The edge-coverage audit is represented in the current pinned battery. Rows cover

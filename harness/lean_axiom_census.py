@@ -43,7 +43,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPT = HERE / "lean_axiom_deps.lean"
-DEFAULT_TOOLCHAIN = Path.home() / ".elan/toolchains/leanprover--lean4---v4.33.0-rc1"
+DEFAULT_TOOLCHAIN = Path.home() / ".elan/toolchains/leanprover--lean4---v4.35.0"
 
 
 class CensusRefusal(Exception):

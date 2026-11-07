@@ -10,7 +10,7 @@ once, on a file *you* wrote.
 ## 0. Prerequisites
 
 The toolchain is pinned in `lean-toolchain`
-(`leanprover/lean4:v4.33.0-rc1`); if you have elan, the first targeted build
+(`leanprover/lean4:v4.35.0`); if you have elan, the first targeted build
 fetches it automatically. Lake also fetches the pinned Mathlib dependency
 declared in `lakefile.toml`; these first proofs use core Lean only and need
 no compiled Mathlib modules.

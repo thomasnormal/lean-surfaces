@@ -27,7 +27,7 @@ into a generated companion Lean file.
 ## Repo layout
 
 ```
-lean-toolchain            # leanprover/lean4:v4.33.0-rc1 (pinned; already installed)
+lean-toolchain            # leanprover/lean4:v4.35.0 (pinned; already installed)
 lakefile.toml             # libs LeanModels, Examples (globs Examples.+), exe leanmodels-run
 LeanModels.lean           # root: imports Core + Python umbrella
 LeanModels/Core/Basic.lean        # Span (already written)

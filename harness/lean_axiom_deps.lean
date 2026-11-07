@@ -25,9 +25,11 @@ open Lean
 
 /-- The three axioms that move the compiler, its runtime and every
 `@[implemented_by]` into the trusted base. Measured, not recalled: see
-`docs/lean-kernel-census.json`. -/
+`docs/lean-kernel-census.json`. Lean v4.35.0 removed all three from core, so
+they are named literally (single backtick, no resolution) and the file still
+elaborates; the classification of every name is unchanged. -/
 def trustExtensions : Array Name :=
-  #[``Lean.ofReduceBool, ``Lean.ofReduceNat, ``Lean.trustCompiler]
+  #[`Lean.ofReduceBool, `Lean.ofReduceNat, `Lean.trustCompiler]
 
 /-- `sorryAx` is not a trust extension — it is the unsoundness MARKER. Tracked
 separately because conflating "this proof is incomplete" with "this proof trusts

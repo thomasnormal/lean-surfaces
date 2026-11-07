@@ -7425,7 +7425,7 @@ Otherwise it is the MISSING form, which names the defaultless parameters
 the call did not reach: `missing 2 required positional arguments: 'j' and
 'prom'`. Reached only from a failing `arityOk`, so the list is non-empty
 by the caller's precondition. -/
-def arityErrorMsg (callee : String) (ps : List (String × Bool)) (given : Nat) : String :=
+def arityErrorMsg (callee : String) (ps : List (String × Bool)) («given» : Nat) : String :=
   let n := ps.length
   let required := (ps.filter (fun p => !p.2)).length
   if given > n then
@@ -7451,7 +7451,7 @@ higher than the field count. `Move(1)` is
 `<lambda>() missing 2 required positional arguments: 'j' and 'prom'`, and
 `Move(1,2,3,4)` is `<lambda>() takes 4 positional arguments but 5 were
 given`. -/
-def ntArityErrorMsg (fields : Array String) (given : Nat) : String :=
+def ntArityErrorMsg (fields : Array String) («given» : Nat) : String :=
   arityErrorMsg "<lambda>"
     (("_cls", false) :: fields.toList.map (fun f => (f, false))) (given + 1)
 

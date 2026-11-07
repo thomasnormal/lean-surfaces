@@ -686,8 +686,8 @@ Verilog-AMS support.
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 | `tools/check_private_names.py` | Private-name guard: no internal host, tool, organization or user path in any tracked file |
 
-Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned). The package depends on
-the matching Mathlib release (`lakefile.toml`). The Python and SystemVerilog
+Toolchain: `leanprover/lean4:v4.35.0` (pinned). The package depends on
+the matching Mathlib release, `v4.35.0` (`lakefile.toml`). The Python and SystemVerilog
 semantics use core Lean only; Mathlib is imported by the SPICE proof surface
 (exact algebra automation; its semantics, MNA solver, and generated
 certificates remain computable definitions over core `Rat`) and by two Python

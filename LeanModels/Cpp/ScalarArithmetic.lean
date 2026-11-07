@@ -83,6 +83,11 @@ def integralFormatOfEvidence (profile : TargetProfile) (type : CppTypeEvidence) 
     | throw (.unsupportedType .int)
   profile.format integer
 
+def integralConvertOfEvidence (profile : TargetProfile) (type : CppTypeEvidence)
+    (value : IntegralValue) : Except TypeResolutionError (IntegralResult IntegralValue) := do
+  let format ← integralFormatOfEvidence profile type
+  pure (integralConvert format value)
+
 def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
   | .ok value => .ok (map value)

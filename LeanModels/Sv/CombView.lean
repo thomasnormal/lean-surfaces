@@ -210,34 +210,22 @@ theorem canonInt32_of_range {v : Int} (h : -2147483648 ≤ v ∧ v < 2147483648)
 theorem evalIntExact_paramRef {E : IEnv} {n : String} {v : Int}
     (hm : E.int32 = true) (h : IEnv.intVal? E n = some v) :
     evalIntExact E (.paramRef n none) = .ok (canonInt 32 true v) := by
-  unfold evalIntExact
-  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
-  · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
-  · cases hx : E.vals.lookup n with
-    | none =>
-        by_cases hs : n ∈ E.stale
-        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs] at h
-        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs, hm]
-    | some x =>
-        have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
-        subst x
-        simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+  simp [evalIntExact, evalIntExactRec, h, hm]
 
 theorem evalIntExact_genvarRef {E : IEnv} {n : String} {v : Int}
     (hm : E.int32 = true) (h : IEnv.intVal? E n = some v) :
     evalIntExact E (.genvarRef n) = .ok (canonInt 32 true v) := by
-  unfold evalIntExact
-  rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
-  · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hv, hm]
-  · cases hx : E.vals.lookup n with
-    | none =>
-        by_cases hs : n ∈ E.stale
-        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs] at h
-        · simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hs, hm]
-    | some x =>
-        have heq : x = v := by simpa [IEnv.intVal?, hx, hn] using h
-        subst x
-        simp [evalIntExact, evalIntExactRec, IEnv.intVal?, hx, hn, hm]
+  simp [evalIntExact, evalIntExactRec, h, hm]
+
+/-! The exact view consumes the signed-32 `nvals` binding directly.  This
+guard keeps the public range premise visible: a representable symbolic value
+is the same value after the exact leaf fold, without falling back to the old
+unbounded `vals` path. -/
+example (v : Int) (hr : -2147483648 ≤ v ∧ v < 2147483648) :
+    evalIntExact
+        ({ nvals := [("N", (v, 32, true))], int32 := true } : IEnv)
+        (.paramRef "N" none) = .ok v := by
+  rw [evalIntExact_paramRef (hm := rfl) (h := by rfl), canonInt32_of_range hr]
 
 theorem isInt_paramRef_of_intVal {E : IEnv} {n : String} {v : Int}
     (h : E.intVal? n = some v) : (PExpr.paramRef n none).isInt E = true := by

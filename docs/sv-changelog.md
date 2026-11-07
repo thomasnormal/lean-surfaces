@@ -6555,3 +6555,8 @@ the defined sampling and NBA rules.
   `sem2/preempt_profile` records the loud refusal until ls-spec supplies the
   scheduler choice point.
 
+- The comb-view exact-`int` leaf proofs now consume `IEnv.intVal?` directly,
+  including signed-32 `nvals` bindings, and a symbolic range guard pins the
+  canonicalization premise. This keeps proof reductions on the exact
+  instantiation path without reopening the legacy unbounded lookup cases.
+

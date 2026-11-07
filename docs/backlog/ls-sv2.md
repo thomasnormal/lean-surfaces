@@ -4580,3 +4580,29 @@ was introduced.
 **DECIDED:** begin the memory-threaded strict invariant layer with ADDI, where
 the architectural memory transition is unchanged, before lifting store and
 load constructors.
+
+## 2026-11-07-ls-sv2-291 — lift SW RVFI invariant to threaded memory
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `rvfiCycleStepRefines_of_sw_memory` to
+`LeanModels/Refine/RvfiMem.lean`.  The constructor targets the
+`rvMemoryMachineWith` architectural machine and relates core state to
+`RvMemoryState`.  Its valid case requires the cycle input's memory view to
+equal the threaded architectural memory, then uses `swBoundary` to carry
+`swNext` together with the exact `storeVal` memory update and `swRetirement`.
+Invalid rows remain explicit ISA stutters.  The memory equality is visible at
+the store boundary, so a future loaded-core proof cannot silently update a
+stale memory snapshot.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiMem` passed (15 jobs).  The
+new theorem's axiom report contains only the existing
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** continue the memory-threaded strict invariant layer with the
+load constructor, preserving the explicit input-memory equality before
+threading the loaded value and unchanged memory.

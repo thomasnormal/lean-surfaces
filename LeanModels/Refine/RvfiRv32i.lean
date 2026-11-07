@@ -254,6 +254,20 @@ theorem Rv32iBoundary.toRetirement?_eq_some
   | illegal _ h => exact h.2
   | illegalCsr _ _ h => exact h.2
 
+/-- Every indexed family witness carries the generic packed-row facts.
+
+The family constructors retain the raw instruction predicate, but callers
+should not have to know each constructor's tuple layout to recover the
+wire-level validity and retirement.  The common optional-decoder theorem is
+the single source for these projections. -/
+theorem Rv32iBoundary.observation_spec
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    {post : RvMemoryState} {retirement : Retirement}
+    (h : Rv32iBoundary s input o post retirement) :
+    o.valid = true ∧ o.wellFormed ∧ retirement = o.toRetirement := by
+  exact (RvfiObservation.toRetirement?_eq_some_iff o).1
+    h.toRetirement?_eq_some
+
 /-! ## Indexed transition projection -/
 
 theorem Rv32iBoundary.rvMemoryMachineWith
@@ -330,12 +344,11 @@ theorem rvfiCycleStepRefines_of_rv32i_memory
           (post, retirement) := by
       rw [hstate]
       simpa [hmem] using hstepBoundary
-    have hsome := observation.toRetirement?_eq_some hv hwell
-    have hboundarySome := hboundary.toRetirement?_eq_some
-    have hto : observation.toRetirement = retirement :=
-      Option.some.inj (hsome.symm.trans hboundarySome)
+    have hspec := hboundary.observation_spec
+    have hwell' : observation.wellFormed := hspec.2.1
+    have hto : observation.toRetirement = retirement := hspec.2.2.symm
     simp only [hv]
-    exact ⟨post, retirement, hmem, hwell,
+    exact ⟨post, retirement, hmem, hwell',
       hto, hstepBoundary', hrel'⟩
   · have hv' : observation.valid = false := by
       cases hvalue : observation.valid with
@@ -347,6 +360,7 @@ theorem rvfiCycleStepRefines_of_rv32i_memory
     exact hrel'
 
 #print axioms LeanModels.Refine.Rv32iBoundary.rvMemoryMachineWith
+#print axioms LeanModels.Refine.Rv32iBoundary.observation_spec
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_rv32i_memory
 
 end LeanModels.Refine

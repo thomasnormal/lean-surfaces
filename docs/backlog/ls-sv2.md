@@ -5142,3 +5142,30 @@ extractor, or `LeanModels/Sv/**` file changed.
 constructor path into the single indexed family, with illegal CSR rows kept
 separate from undecodable rows.  The generated-member support remains with
 `ls-sv`; the next item is an owned refinement milestone.
+
+## 2026-11-07-ls-sv2-310 — project generic facts from every RV32I boundary witness
+
+The inbox and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item strengthens only
+the owned RVFI refinement layer.
+
+Added `Rv32iBoundary.observation_spec`, a family-level projection that derives
+`o.valid = true`, `o.wellFormed`, and `retirement = o.toRetirement` from any
+indexed `Rv32iBoundary` witness through the generic
+`RvfiObservation.toRetirement?_eq_some_iff` theorem.  The family cycle
+dispatcher now consumes that projection instead of unpacking each raw
+constructor's tuple layout when recovering the packed retirement.  The
+PicoRV32 README records this as the core-facing invariant interface.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i`, `lake build
+LeanModels.Refine`, and the PicoRV32 unified-boundary target pass under Lean
+4.35.0.  `python3 tools/docs_check.py`, `tools/backlog-index.sh --check`, and
+`git diff --check` pass.  The new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`; no `sorryAx` or new axiom was
+introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** keep the optional-decoder characterization as the
+single source for validity, well-formedness, and packed-retirement equality;
+the indexed family exposes it without constructor-specific projections.  The
+generated-member support remains with `ls-sv`; the next item is another owned
+refinement milestone.

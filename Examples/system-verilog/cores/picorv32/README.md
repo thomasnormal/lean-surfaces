@@ -448,6 +448,12 @@ obligation for a core proof.  The dispatcher is scoped to RV32I plus the
 admitted machine-mode system/CSR and trap cases; interrupts and M-extension
 operations remain outside this R2 boundary.
 
+Every indexed witness also exposes `Rv32iBoundary.observation_spec`, which
+recovers `valid = true`, `wellFormed`, and the equality between the packed
+row's decoded retirement and the indexed retirement.  This projection is
+derived from the generic `toRetirement?` characterization, so callers do not
+depend on the tuple layout of any individual family constructor.
+
 The instruction-specific contracts remain useful when a core invariant retains
 raw fields that the indexed family intentionally abstracts.  The adapters
 `addiBoundary_rv32i`, `luiBoundary_rv32i`, `auipcBoundary_rv32i`,

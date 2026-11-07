@@ -163,6 +163,15 @@ The same witness extends that state through the fourth `ADDI` in `fullState`:
 the final `pc` is 16, `x2` remains 5, `x3` is 6, `x0` remains 0, and the
 threaded memory is still `memFive`.
 
+The prefix witness now also exposes the full-window endpoint through the
+stateless adapter's `machineStateAfter` on the memory views produced by
+`threadRvInputs`.  Its `pinned_full_window_trace` theorem checks that the
+stateful machine emits exactly the four measured non-trapping retirements, and
+`pinned_full_window_observed` connects the normalized RVFI observations to
+that stateful trace.  Thus the final state and observed commit stream share
+one four-instruction certificate; no symbolic RTL refinement is claimed until
+the generated-memory loader wall is removed.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

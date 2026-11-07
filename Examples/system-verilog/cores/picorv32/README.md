@@ -448,6 +448,14 @@ obligation for a core proof.  The dispatcher is scoped to RV32I plus the
 admitted machine-mode system/CSR and trap cases; interrupts and M-extension
 operations remain outside this R2 boundary.
 
+The measured four-row prefix is instantiated in
+[`rvfi_rv32i_boundary.lean`](rvfi_rv32i_boundary.lean).  Its four theorems
+construct the indexed ALU/store/load witnesses, and
+`pinned_unified_machine_commits` applies the dispatcher projection to each
+threaded state transition.  This is a concrete boundary certificate for the
+captured rows; it does not discharge the symbolic PicoRV32 invariant while
+the upstream memory/generate loader refusal remains.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

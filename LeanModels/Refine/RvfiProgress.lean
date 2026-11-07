@@ -67,6 +67,11 @@ structure Rv32iPrefixRefinement {State : Type}
   certificate :
     Rv32iRvfiCycleTrace machine start coreState memoryState
       (schedulePrefix schedule boundary) program
+  program_inputs_eq :
+    rv32iProgramInputs memoryState program = schedulePrefix target k
+  program_state_eq :
+    rv32iProgramState memoryState program =
+      rvMemoryStateAfter profile memoryState (schedulePrefix target k)
   trace_eq :
     normalizeRvfiTrace? start
         (rvfiObservations machine coreState (schedulePrefix schedule boundary)) =
@@ -216,15 +221,54 @@ theorem rv32i_progress_refinement
       schedule target := by
   unfold Rv32iAllPrefixRefinement
   intro k
-  rcases rv32i_progress_trace_refines_state profile machine rel admit hstep
-      start coreState memoryState hrel hschedule progress k with
-    ⟨boundary, program, certificate, trace_eq, state_rel⟩
+  rcases progress k with ⟨boundary, htarget⟩
+  have hall : ∀ input ∈ schedulePrefix schedule boundary, admit input := by
+    intro input hmem
+    exact schedulePrefix_admit schedule admit hschedule boundary input hmem
+  obtain ⟨program, certificate, htrace, hfinal⟩ :=
+    rv32iRvfiCycleTrace_of_step_refines profile machine rel admit hstep
+      start coreState memoryState (schedulePrefix schedule boundary) hrel hall
+  have program_inputs_eq :
+      rv32iProgramInputs memoryState program = schedulePrefix target k := by
+    calc
+      rv32iProgramInputs memoryState program =
+          retireInputs machine.toCycleMachine coreState
+            (schedulePrefix schedule boundary) := certificate.retireInputs_eq.symm
+      _ = schedulePrefix target k := htarget
+  have program_state_eq :
+      rv32iProgramState memoryState program =
+        rvMemoryStateAfter profile memoryState (schedulePrefix target k) := by
+    calc
+      rv32iProgramState memoryState program =
+          machineStateAfter (rvMemoryMachineWith profile) memoryState
+            (rv32iProgramInputs memoryState program) :=
+        (rvMemoryMachineWith_rv32i_program_state profile memoryState program).symm
+      _ = machineStateAfter (rvMemoryMachineWith profile) memoryState
+            (schedulePrefix target k) := by rw [program_inputs_eq]
+      _ = rvMemoryStateAfter profile memoryState (schedulePrefix target k) := rfl
+  have trace_eq :
+      normalizeRvfiTrace? start
+          (rvfiObservations machine coreState
+            (schedulePrefix schedule boundary)) =
+        some (trace (rvMemoryMachineWith profile) memoryState
+          (schedulePrefix target k)) := by
+    calc
+      normalizeRvfiTrace? start
+          (rvfiObservations machine coreState
+            (schedulePrefix schedule boundary)) =
+          some (trace (rvMemoryMachineWith profile) memoryState
+            (retireInputs machine.toCycleMachine coreState
+              (schedulePrefix schedule boundary))) := htrace
+      _ = some (trace (rvMemoryMachineWith profile) memoryState
+            (schedulePrefix target k)) := by rw [htarget]
   exact ⟨{
     boundary := boundary
     program := program
     certificate := certificate
+    program_inputs_eq := program_inputs_eq
+    program_state_eq := program_state_eq
     trace_eq := trace_eq
-    state_rel := state_rel }⟩
+    state_rel := program_state_eq ▸ hfinal }⟩
 
 /-- The reset-specialized form of the R2 contract: RVFI order starts at zero,
 the core starts at its loaded-machine state, and the ISA starts at the

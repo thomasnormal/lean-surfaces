@@ -799,3 +799,10 @@ The implemented Zicsr program certificate in
 It retains old-value readback, source forms, WARL updates, arbitrary bubble
 inputs, and exact cycle transitions while preserving threaded data memory and
 composing at the core, architectural-state, and retirement-order boundaries.
+
+`LeanModels.Refine.RvfiIllegalProgram` adds the symbolic decode-failure trap
+surface.  It retains arbitrary undecodable words, exact illegal-instruction
+causes and handler pcs, bubble inputs, cycle transitions, and unchanged
+threaded data memory while composing at the same core, architectural-state,
+and retirement-order boundaries.  Unimplemented CSR rows remain covered by
+the separate raw illegal-CSR boundary.

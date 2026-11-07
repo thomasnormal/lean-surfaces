@@ -6173,3 +6173,40 @@ CSR readback and WARL state updates, actual cycle inputs, unchanged data
 memory, and core state transitions.  Unimplemented CSR addresses remain on
 the separate illegal-instruction boundary.  PicoRV32 remains parked at the
 existing unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-344 — add a symbolic RV32I illegal-instruction program certificate
+
+The implemented-row Zicsr certificate now keeps CSR lookup explicit.  The
+remaining trap family needed by the RV32I retirement surface is an undecodable
+word, whose illegal-instruction cause and handler transition must remain
+distinct from normal system operations and an unimplemented CSR row.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiIllegalProgram.lean`.  `IllegalInstruction` retains an
+undecodable fetched word and its decoder-failure proof.  The input,
+architectural-state, and retirement folds cover arbitrary illegal-word
+programs and expose append laws.  The stateful `rvMemoryMachineWith` bridge
+reuses the exact `isaStepWith_illegal`, `illegalNext`, and
+`illegalRetirement` semantics, preserving the precise illegal-instruction
+cause, trap handler pc, and unchanged threaded data memory.
+`IllegalRvfiTrace` and `IllegalRvfiCycleTrace` normalize raw RVFI
+observations, retain arbitrary bubble inputs and exact cycle-step equalities,
+identify retiring inputs, and compose at the exact core/state/retirement-order
+boundary.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiIllegalProgram.lean`, the
+umbrella `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize arbitrary undecodable-word trap streams while preserving exact
+illegal causes and handler transitions, actual cycle inputs, unchanged data
+memory, and core state transitions.  Unimplemented CSR addresses remain on
+their separate illegal-CSR boundary.  PicoRV32 remains parked at the existing
+unpacked `cpuregs` and unsupported-member/net-z loader walls.

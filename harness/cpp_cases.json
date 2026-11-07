@@ -2924,6 +2924,17 @@
     "rung": 7
   },
   {
+    "id": "translation.resolved-constructor-object-kind-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedConstructorObjectKindRefusal",
+    "cpp_source": "struct S { S(int); }; S::S(int) {} int f() { S value(1); return 0; }",
+    "expect": "refuse",
+    "rung": 7
+  },
+  {
     "id": "translation.resolved-constructor-missing-declaration-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

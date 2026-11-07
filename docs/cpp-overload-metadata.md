@@ -62,6 +62,9 @@ declaration kind evidence must be frontend text.
 A structured `ctor` object whose `kind` is an array is also refused; constructor
 declaration kind evidence must be frontend text.
 
+A structured `ctor` object whose `kind` is an object is also refused; constructor
+declaration kind evidence must be frontend text.
+
 A structured constructor handle with malformed string `id` is also refused;
 the artifact-local handle parser validates object and string forms uniformly.
 

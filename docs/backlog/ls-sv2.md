@@ -6032,3 +6032,37 @@ normalize arbitrary JAL/JALR retirement streams while preserving link values,
 JALR target-bit clearing, actual cycle inputs, and core-state transitions.
 PicoRV32 remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-340 — add a symbolic RV32I LUI/AUIPC program certificate
+
+The inbox and goal file were reread after item 339 was pushed.  JAL/JALR now
+have an exact compositional program surface; the remaining RV32I upper-immediate
+forms need their own distinct writeback contracts because LUI reads x0 while
+AUIPC reads the current pc.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiUpperProgram.lean`.  `UpperKind` distinguishes LUI and
+AUIPC and maps each form to its exact decoded instruction, next state, and
+retirement.  `UpperInstruction` retains the fetched word and decoder proof.
+The input, architectural-state, and retirement folds cover arbitrary mixtures
+of LUI/AUIPC and expose append laws.  The stateful `rvMemoryMachineWith`
+bridge reuses `isaStepWith_lui` and `isaStepWith_auipc`; raw
+`UpperRvfiTrace` and cycle-aware `UpperRvfiCycleTrace` certificates preserve
+arbitrary bubbles, actual cycle inputs, exact state transitions, and compose at
+the core/state/retirement-order boundary.  Updated both core READMEs and
+regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiUpperProgram.lean`, the
+49-job `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize arbitrary upper-immediate streams while preserving LUI's x0-based
+writeback, AUIPC's pc-based writeback, actual cycle inputs, and core-state
+transitions.  PicoRV32 remains parked at the existing unpacked `cpuregs` and
+unsupported-member/net-z loader walls.

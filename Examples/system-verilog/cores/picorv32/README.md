@@ -770,3 +770,10 @@ streams, including link writes and JALR target-bit clearing, with raw and
 cycle-aware RVFI certificates and append laws.  This remains generic
 refinement infrastructure; the pinned PicoRV32 RTL is still blocked by the
 unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+
+The upper-immediate program certificate in
+`LeanModels.Refine.RvfiUpperProgram` covers arbitrary LUI/AUIPC streams and
+retains their exact writeback values in raw and cycle-aware RVFI certificates.
+It is generic proof infrastructure; the pinned RTL remains parked at the
+existing loader walls.

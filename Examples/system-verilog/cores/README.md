@@ -259,3 +259,10 @@ cover arbitrary mixtures of the two jump forms.  `JumpRvfiTrace` and
 cycle-step equalities, and compose at the exact core, architectural-state, and
 retirement-order boundary.  The bridges use the existing JAL/JALR target and
 link-address semantics without introducing a second decoder.
+
+
+`LeanModels.Refine.RvfiUpperProgram` now provides the corresponding
+state-threaded LUI/AUIPC surface.  `UpperKind` keeps the two upper-immediate
+forms distinct, while the program folds and raw/cycle RVFI certificates reuse
+the exact writeback and pc semantics and compose at the same architectural and
+retirement-order boundaries.

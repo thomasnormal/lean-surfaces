@@ -56,6 +56,9 @@ The value and object evaluator now also carry a kernel agreement witness for
 the same binary-arithmetic callable, extending the earlier logical agreement
 check.
 
+The agreement battery also covers a compound-assignment callable, checking the
+same `CallableFunction` result through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -4090,3 +4090,22 @@ exercises this on the measured first/second window split.  No RTL, loader, or
 **DECIDED:** preserve normalization boundaries when composing windows, while
 using one strict refinement proof over the concatenated stream so no local
 window can silently weaken the raw valid-row obligation.
+
+## 2026-11-07-ls-sv2-265 — expose the normalized window-chain boundary
+
+The inboxes and goal file were reread before this item.  Generated-member
+support in the memory route remains an `ls-sv` dependency.
+
+Added `rvfiCycleStepRefines_normalized_chain` to
+`LeanModels/Refine/Rvfi.lean`.  It exposes both normalized windows separately:
+the first retirement equality and post-window relation, followed by the
+second retirement equality from the ISA state reached by the first window and
+the final relation.  The second proof therefore resumes at the exact
+state-threaded boundary rather than reconstructing the prefix.  The
+PicoRV32 witness `pinned_cycle_normalized_chain_refines_of` instantiates all
+four facts for the measured split, with separate admission premises for the
+two windows.  No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep the segmented boundary explicit in the generic contract.
+The concatenated theorem remains available, while loaded-core invariants can
+now discharge and reuse one normalized window at a time.

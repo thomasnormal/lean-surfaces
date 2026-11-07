@@ -164,6 +164,10 @@ premise.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.
+`rvfiCycleStepRefines_normalized_chain` additionally exposes the relation at
+that boundary and the second window's ISA state, while
+`pinned_cycle_normalized_chain_refines_of` instantiates those four segmented
+facts on the same measured split.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

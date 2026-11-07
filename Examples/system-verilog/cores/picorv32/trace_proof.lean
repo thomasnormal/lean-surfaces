@@ -336,6 +336,40 @@ theorem pinned_cycle_normalized_append_refines_of
     hrel hall pinned_cycle_first_window_normalize
     pinned_cycle_second_window_normalize
 
+theorem pinned_cycle_normalized_chain_refines_of
+    {rel : List RvfiObservation → ArchState → Prop}
+    {admit : Input → Prop}
+    (hstrict : RvfiCycleStepRefines pinnedCycleMachine rvMachine rel admit)
+    (hrel : rel pinnedCycleMachine.init rvMachine.init)
+    (hallFirst : ∀ i ∈ cycleFirstInputs, admit i)
+    (hallSecond : ∀ i ∈ cycleSecondInputs, admit i) :
+    (nontrapFirstExpected =
+      trace rvMachine rvMachine.init
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          pinnedCycleMachine.init cycleFirstInputs)) ∧
+    rel (rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init
+      cycleFirstInputs)
+      (machineStateAfter rvMachine rvMachine.init
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          pinnedCycleMachine.init cycleFirstInputs)) ∧
+    (nontrapSecondExpected =
+      trace rvMachine
+        (machineStateAfter rvMachine rvMachine.init
+          (retireInputs pinnedCycleMachine.toCycleMachine
+            pinnedCycleMachine.init cycleFirstInputs))
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          (rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init
+            cycleFirstInputs) cycleSecondInputs)) ∧
+    rel (rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init
+      (cycleFirstInputs ++ cycleSecondInputs))
+      (machineStateAfter rvMachine rvMachine.init
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          pinnedCycleMachine.init (cycleFirstInputs ++ cycleSecondInputs))) := by
+  exact rvfiCycleStepRefines_normalized_chain hstrict
+    pinnedCycleMachine.init rvMachine.init cycleFirstInputs cycleSecondInputs
+    hrel hallFirst hallSecond pinned_cycle_first_window_normalize
+    pinned_cycle_second_window_normalize
+
 theorem pinned_packet_observations_normalize :
     normalizeRvfiTrace? 0
         (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
@@ -5003,6 +5037,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_normalized_trace_refines_of
 #print axioms pinned_cycle_normalized_refines_of
 #print axioms pinned_cycle_normalized_append_refines_of
+#print axioms pinned_cycle_normalized_chain_refines_of
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_trace_refines_isa

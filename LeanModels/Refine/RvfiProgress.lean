@@ -50,6 +50,43 @@ theorem schedulePrefix_admit {α : Type} (schedule : Nat → α)
 
 /-! ## Mixed RV32I all-prefix theorem -/
 
+/-! The result below is the public stream-level shape of the R2 claim.  A
+loaded-core proof still supplies the indexed per-cycle invariant and the
+progress witness; this structure keeps the resulting certificate, normalized
+trace, and target-state relation together at each finite target prefix. -/
+
+/-- A single target-prefix witness for an all-prefix RV32I refinement. -/
+structure Rv32iPrefixRefinement {State : Type}
+    (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (schedule target : Nat → Input) (k : Nat) where
+  boundary : Nat
+  program : List Rv32iInstruction
+  certificate :
+    Rv32iRvfiCycleTrace machine start coreState memoryState
+      (schedulePrefix schedule boundary) program
+  trace_eq :
+    normalizeRvfiTrace? start
+        (rvfiObservations machine coreState (schedulePrefix schedule boundary)) =
+      some (trace (rvMemoryMachineWith profile) memoryState
+        (schedulePrefix target k))
+  state_rel :
+    rel (rvfiStateAfter machine coreState (schedulePrefix schedule boundary))
+      (rvMemoryStateAfter profile memoryState (schedulePrefix target k))
+
+/-- The all-prefix stream refinement exposed to a loaded-core theorem. -/
+def Rv32iAllPrefixRefinement {State : Type}
+    (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (schedule target : Nat → Input) : Prop :=
+  ∀ k : Nat,
+    Nonempty (Rv32iPrefixRefinement profile machine rel start coreState
+      memoryState schedule target k)
+
 /-- An indexed mixed per-cycle invariant plus explicit progress gives the
     stateful ISA trace for every finite target prefix.
 
@@ -161,7 +198,36 @@ theorem rv32i_progress_trace_refines_state
   refine ⟨n, program, certificate, htrace', ?_⟩
   exact hstate ▸ hfinal
 
+/-! The structure-valued form is the reusable R2 boundary. -/
+
+/-- The mixed RV32I invariant and progress witness establish the public
+all-prefix refinement contract. -/
+theorem rv32i_progress_refinement
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (hrel : rel coreState memoryState)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine coreState schedule target) :
+    Rv32iAllPrefixRefinement profile machine rel start coreState memoryState
+      schedule target := by
+  unfold Rv32iAllPrefixRefinement
+  intro k
+  rcases rv32i_progress_trace_refines_state profile machine rel admit hstep
+      start coreState memoryState hrel hschedule progress k with
+    ⟨boundary, program, certificate, trace_eq, state_rel⟩
+  exact ⟨{
+    boundary := boundary
+    program := program
+    certificate := certificate
+    trace_eq := trace_eq
+    state_rel := state_rel }⟩
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines_state
+#print axioms LeanModels.Refine.rv32i_progress_refinement

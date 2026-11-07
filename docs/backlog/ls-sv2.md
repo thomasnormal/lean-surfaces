@@ -6575,3 +6575,30 @@ and is erased, confirming that the request targets the referenced shape.
 specified by two independent generic members: referenced task metadata and
 net-z metadata.  Keep the symbolic ADDI invariant parked and do not extend the
 finite captured window until ls-sv admits the route.
+
+## 2026-11-07-ls-sv2-356 — expose the structure-valued all-prefix R2 contract
+
+The existing all-prefix theorem returned the exact target-state refinement, but
+only as nested existential binders.  A loaded-core proof should consume one
+named result per target prefix while retaining the indexed mixed certificate.
+
+**CHANGED:** Added `Rv32iPrefixRefinement` and
+`Rv32iAllPrefixRefinement` to `LeanModels/Refine/RvfiProgress.lean`.
+`rv32i_progress_refinement` constructs this structure-valued public boundary
+from the existing mixed per-cycle invariant and explicit progress witness.  A
+prefix record carries its cycle boundary, decoded program, raw RVFI
+certificate, normalized stateful trace equality, and relation to
+`rvMemoryStateAfter` on the target prefix.  The prior nested-existential
+theorem remains available as a compatibility projection.  No alternate ISA
+semantics, RTL, loader, extractor, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiProgress.lean` passes under
+Lean 4.35.0; the new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The wall probe, docs check, backlog
+index check, and diff check pass.  No `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** This is the reusable stream-level shape of the R2
+headline: a future real-core invariant can return one named refinement record
+for every target retirement prefix without reconstructing or extending a
+finite measured stream.  PicoRV32 remains parked at the referenced-task and
+net-z memory-route walls.

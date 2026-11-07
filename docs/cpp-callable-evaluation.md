@@ -68,6 +68,9 @@ selection on the same IR through both APIs.
 It also includes an initially-false `while` callable, checking control-shell
 agreement while preserving each evaluator's state threading.
 
+The agreement battery also includes a direct `switch` callable, checking case
+selection and return propagation through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

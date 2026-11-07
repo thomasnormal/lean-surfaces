@@ -40475,6 +40475,25 @@ def callableValueObjectWhileAgreementWitness : Bool :=
 
 #guard callableValueObjectWhileAgreementWitness
 
+def callableValueObjectSwitchAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .switch_ controlParameter [
+      {label := some 1, body := .return_ {
+        expression := CallableExpression.integer 11,
+        sourceType := intType, type := intType}},
+      {label := none, body := .return_ {
+        expression := CallableExpression.integer 22,
+        sourceType := intType, type := intType}}]}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 11 && objectValue == signed 11
+  | _, _ => false
+
+#guard callableValueObjectSwitchAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

@@ -623,6 +623,12 @@ concatenated cycle and program lists.  This is the reusable segmented proof
 shape for a future invariant, without treating a captured finite window as
 the theorem's domain.
 
+The companion fold laws `addiProgramInputs_append`,
+`addiProgramState_append`, and `addiProgramRetirements_append` expose the same
+join for inputs, architectural state, and semantic retirements.  A segmented
+proof can therefore rewrite either side of the certificate composition to the
+single whole-program folds before applying the stateful ISA equations.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

@@ -32192,10 +32192,28 @@ def convert_net_sym(sm, m):
     if _sym_net_z(m, dtype):
         if _SYM is None:
             return unsupported(sm, m, "NetSymbol:signed" if m.type.isSigned else "NetSymbol:net-z")
-        if lower_proc.net_driver_reason(sys.modules[__name__], sm, m, dtype) is not None:
+        net_reason = lower_proc.net_driver_reason(sys.modules[__name__], sm, m, dtype)
+        if net_reason is not None:
             if m.type.isSigned:
                 return unsupported(sm, m, "NetSymbol:signed")
             return unsupported(sm, m, "NetSymbol:net-z")
+        if _RETAIN_PROC_REWRITES:
+            # Preserve a source net that the default N2 path would turn into
+            # a variable.  The semantic declaration parser keeps `isNet`, but
+            # the frozen runtime still reports the unresolved net boundary.
+            result = {
+                "kind": "Net",
+                "span": sym_span(sm, m),
+                "name": m.name,
+                "width": dtype,
+                "init": convert_expr(sm, m.initializer) if m.initializer is not None else None,
+                "net_rewrite_retained": True,
+            }
+            if not m.type.isFourState:
+                result["two_state"] = True
+            if m.type.isSigned:
+                result["signed"] = True
+            return result
         # WP-PROC N2: a wire with exactly one continuous driver on every bit is the variable that driver assigns
         return lower_proc.net_variable(sys.modules[__name__], sm, m, dtype)
     init = m.initializer

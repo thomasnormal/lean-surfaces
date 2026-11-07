@@ -185,6 +185,11 @@ an implicit net, a child output connected to a whole net), `proc_net_param_n3/n4
 `net_width_outwire1` (a NET formal fed by a narrower output net: the extractor's `"net": true` marker was always the intended guard)
 and `acg_alias_wire` now reach the Lean guards; the undriven / partial / two-driver rows (`net_z_*`, `vg_initn`) are unchanged.
 
+With `--retain-proc-rewrites`, a single-driver net that N2 would convert to a
+variable remains a `Net` declaration with `net_rewrite_retained` metadata. The
+loader preserves the net flag and keeps the unresolved net semantics loud; the
+default one-driver conversion is unchanged.
+
 Finding, closed by the follow-up (changelog, register row `st-cont-strength`): in symbolic mode `_continuous_assignment_has_strength`
 reads source bytes that only the M0 path loads, so a strength on an `assign` was invisible: `assign (strong0, highz1) y = a;` on a `logic
 y` was extracted as a plain assignment (Icarus 12 reads z where a = 1, Xcelium ignores the strength on a variable, Yosys cannot read it).

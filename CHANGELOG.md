@@ -99,6 +99,10 @@
   defaults to the pinned 3.9 oracle, and survey fallback warnings remain
   covered by the runner tests.
 
+- Rechecked frontend admission and envelope freshness: Python ingestion rejects
+  foreign frontend families, and the committed corpus is fresh under CPython
+  3.9 with the gate's refusal/self-test paths intact.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

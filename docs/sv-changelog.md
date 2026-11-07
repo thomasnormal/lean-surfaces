@@ -6475,6 +6475,16 @@ default sample before the trace begins. This prevents simulator-style
 x-optimism (`!x` becoming true) in the E contract. `$rose` and `$fell` keep
 their sampled-value edge semantics.
 
+## 2026-11-07 — F1 sampled-value conversion follows §16.6
+
+Corrected the finite SVA evaluator after the rule-3 audit. Boolean evaluation
+now retains `Logic` through nested negation, conjunction, disjunction, and
+sampled-value functions, then converts x/z-only results to false once at the
+assertion boundary as IEEE 1800-2023 §16.6 requires. `$past`, `$rose`, `$fell`,
+and `$stable` return false at the first sampled tick; later `$rose`/`$fell`
+use the four-state §9.4.2 transition table. Missing signals and unsupported E
+expressions remain loud. The retained structured Slang AST path is unchanged.
+
 ## 2026-11-06 — typed-int `$clog2` localparams
 
 The comb summary's constant-expression path now keeps `$clog2` in the same

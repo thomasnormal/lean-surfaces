@@ -128,12 +128,12 @@ The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
 
-F1 requires a known sampled decision for the finite boolean contract. If an
-ordinary E expression, negation, `$past`, or `$stable` reads an unknown sampled
-value (including the default sample before the beginning of a trace), the
-contract returns a named `SVA:` error instead of taking the simulator's
-x-optimistic false branch. `$rose` and `$fell` retain their sampled-value edge
-definition, including the default unknown previous sample.
+F1 keeps the four-state sampled value until the assertion boundary. IEEE
+1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown
+value is never turned into a true result by `!`, `$past`, or `$stable`. Missing
+signals, unsupported expression evaluation, and timing failures remain named
+`SVA:` errors. `$rose` and `$fell` use the sampled-value edge table, with the
+first sampled tick forced false because it has no preceding sampled value.
 
 #### Downstream clean-room wall audit
 

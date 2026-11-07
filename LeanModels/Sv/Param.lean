@@ -723,9 +723,11 @@ def IEnv.intVal? (env : IEnv) (n : String) : Option Int :=
   match env.vals.lookup n with
   | some v => some v
   | none =>
-      match env.nvals.lookup n with
-      | some (v, 32, true) => some v
-      | _ => none
+      if n ∈ env.stale then none
+      else
+        match env.nvals.lookup n with
+        | some (v, 32, true) => some v
+        | _ => none
 
 @[simp] theorem IEnv.intVal?_bindVal_self (env : IEnv) (n : String) (v : Int) :
     IEnv.intVal? (env.bindVal n v) n = some v := by
@@ -733,7 +735,16 @@ def IEnv.intVal? (env : IEnv) (n : String) : Option Int :=
 
 theorem IEnv.intVal?_bindVal_ne {env : IEnv} {g n : String} (v : Int) (h : n ≠ g) :
     IEnv.intVal? (env.bindVal g v) n = IEnv.intVal? env n := by
-  simp [IEnv.intVal?, IEnv.bindVal, List.lookup, beq_false_of_ne h]
+  have hlookup : List.lookup n ((g, v) :: env.vals) = List.lookup n env.vals := by
+    simp [List.lookup, beq_false_of_ne h]
+  unfold IEnv.intVal?
+  change (match List.lookup n ((g, v) :: env.vals) with
+    | some x => some x
+    | none => if n ∈ env.stale then none else
+      match List.lookup n env.nvals with
+      | some (x, 32, true) => some x
+      | _ => none) = _
+  rw [hlookup]
 
 theorem IEnv.intVal?_cases {env : IEnv} {n : String} {v : Int}
     (h : IEnv.intVal? env n = some v) :
@@ -755,7 +766,11 @@ theorem IEnv.intVal?_cases {env : IEnv} {n : String} {v : Int}
           · subst w
             by_cases hs : s = true
             · subst s
-              have hx : x = v := by simpa [hv, hn] using h
+              have hstale : n ∉ env.stale := by
+                by_cases hbad : n ∈ env.stale
+                · simp [hv, hbad] at h
+                · exact hbad
+              have hx : x = v := by simpa [hv, hn, hstale] using h
               subst x
               refine ⟨32, true, ?_, rfl, rfl⟩
               rfl

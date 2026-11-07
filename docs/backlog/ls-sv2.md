@@ -6945,6 +6945,36 @@ with memory threading and retirement order remaining explicit proof
 obligations.  PicoRV32 remains parked at the approved task/net-z memory-route
 walls.
 
+## 2026-11-07-ls-sv2-373 — re-probe PicoRV32 after empty-task admission
+
+The owner lane admitted the source-shaped empty input-only task on the memory
+route, so the real PicoRV32 design needed to be re-extracted before any next
+generic R2 proof step.
+
+**MEASURED:** Re-extracted the unchanged YosysHQ source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` with owner-lane revision
+`855971661`.  The fresh 2,992,413-byte envelope has SHA-256
+`09cef9345dd855eaa4372ed65794e4a22412d47f0ae1fb848f10e73abb024f52`; it
+contains 26 parameters, 216 declarations, 43 processes, and three generate
+entries.  The ordinary route's exact first refusal remains
+`unsupported "Instantiate" "decl 'cpuregs': unpacked array storage outside E
+(UnpackedDecl:memory)"`.  At the default parameters, the memory-route metadata
+now marks `task empty_statement` as `SubroutineSymbol:empty-task`, then retains
+`NetSymbol:net-z` for `pcpi_mul_wr` at `picorv32.v:257`; the route still returns
+`unsupported "Instantiate" "memory cycle route does not yet admit unsupported
+module members"`.
+
+**CHANGED:** Updated the PicoRV32 README and this backlog entry with the
+post-admission frontier.  The existing `walls/net_z_memory.sv` clean-room
+fixture already covers the remaining generic member shape, so no new request,
+RTL adaptation, loader change, extractor change, or finite captured-window
+theorem was added.
+
+**JUDGED / DECIDED:** The referenced task is no longer the memory route's
+first retained wall.  PicoRV32 remains parked at the approved unsupported
+module-member/net-z boundary; continue only after the owner lane admits that
+generic construct.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

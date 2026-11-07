@@ -10530,3 +10530,21 @@ replacement for the source class statement.
 DECIDED: retain structured class statements and creation-purity checks; replace
 qualified method indexing with a runtime class namespace only when full class
 object semantics are implemented.
+
+## 2026-11-07-pycomplete-423 — recheck structured extractor try handling
+
+The extractor try-lowering audit remains closed. `convert_stmt(ast.Try)` carries
+the body, structured handler names/body, and an explicit `try_unsupported`
+reason for `else`, `finally`, multiple-handler, non-name-handler, and generator
+frame forms. `Raise.exc` also retains zero-argument constructor calls. No nested
+`Try`, reordered finalizer, synthetic success flag, identifier-keyed `Stop`
+shortcut, or `raise N()` replacement is emitted.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 163 passed, including structured-and-loud try/raise cases |
+| Runtime boundary | unsupported cleanup/handler/generator forms refuse before changing control flow |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: preserve `Try` and `Raise` source nodes and let interpreters decide
+admitted forms; model full cleanup and handler protocols before widening them.

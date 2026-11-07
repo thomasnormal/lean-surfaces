@@ -49,6 +49,10 @@
   admit a deleted `def`/`class`/namedtuple as a no-op; definition deletes stay
   loud until runtime bindings exist.
 
+- Rechecked trace-clock readings: zero-argument `time.time()` remains loud
+  while the explicit integer trace awaits a binary64 representation; argument
+  arity and dead-clock rows retain their measured behavior.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

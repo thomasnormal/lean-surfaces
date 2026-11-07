@@ -10275,6 +10275,24 @@ iterables retain their existing cursor semantics.
 DECIDED: keep creation-time iterator validation in the lowering until native
 generator-expression semantics replace it.
 
+## 2026-11-07-pycomplete-452 — audit generator capture and creation iteration
+
+The paired high-priority generator-expression findings are already fixed in the
+current tree. The capture census counts unpacking, walrus stores, and `del`
+rebinding before admitting the by-value lowering; the rebinding witness stays
+loud. The synthesized generator-expression path validates the outer iterator at
+creation, so scalar sources raise at the same point as CPython.
+
+| Measurement | Result |
+|---|---|
+| Capture witness | `genexp_capture_rebinding.py`: loud refusal; CPython 3.9 raises the captured-name error |
+| Creation witness | `genexp_iter_creation.py`: 1/1 MATCH with CPython 3.9.25 `TypeError` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-capture-census` and `py-genexp-iter-deferred` as
+already fixed; retain conservative loudness until native generator-expression
+nodes replace the lowering.
+
 ## 2026-11-07-pycomplete-407 — recheck list-comprehension shadowing
 
 The list-comprehension shadowing finding is already closed by the source-node

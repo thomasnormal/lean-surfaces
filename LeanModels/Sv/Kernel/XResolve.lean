@@ -188,6 +188,12 @@ theorem ResolvedDecision.agrees {source result : LVec}
     LVec.condTrue source = LVec.condTrue result :=
   h.known.abstract h.resolves
 
+theorem ResolvedDecision.branch_eq {source result : LVec} {α : Type}
+    (h : ResolvedDecision source result) (thenBranch elseBranch : α) :
+    (if LVec.condTrue source then thenBranch else elseBranch) =
+      (if LVec.condTrue result then thenBranch else elseBranch) := by
+  rw [h.agrees]
+
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4
 #guard (LVec.concretizations (LVec.toTwoState (LVec.xVec 2))).length == 1

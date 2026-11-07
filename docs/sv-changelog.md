@@ -314,6 +314,16 @@ The retained `cover property` spelling now has a direct parser guard, checking
 that the source kind and constructed E check are both `cover`.
 The corresponding `assume property` spelling is guarded as `.assume` as well.
 
+The retained SVA expression adapter now carries unbased unsized literals as
+four-state fills (`'0`, `'1`, `'x`, and `'z`) at the self-determined operand
+width. `sem2/sva_unbased_literal` proves the `'0` assertion on both a passing
+and a failing sampled trace, and the source is accepted by Verilator's SVA
+front end. Other unsupported assertion expressions remain named boundaries.
+Re-running the pinned OpenTitan `prim_fifo_sync` assertion VIP retains all 27
+properties and reduces its unsupported-node census from 56 to 29 by removing
+the 27 unbased-literal nodes; the remaining nodes are independent loader
+walls.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

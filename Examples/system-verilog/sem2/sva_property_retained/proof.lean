@@ -16,7 +16,8 @@ private def edge (clk rstn a b : Nat) : CycleObs PortSample :=
       ("a", LVec.ofNat 1 a), ("b", LVec.ofNat 1 b)] } }
 
 private def trace : List (CycleObs PortSample) :=
-  [edge 0 1 1 0, edge 1 1 1 1, edge 0 1 0 0, edge 1 1 0 1]
+  [edge 0 1 1 0, edge 1 1 1 1, edge 0 1 0 0, edge 1 1 0 1,
+   edge 0 1 0 0, edge 1 1 0 1]
 
 #guard retained.pdesign.properties.length == 3
 #guard match retained.pdesign.properties[0]? with
@@ -30,17 +31,17 @@ private def trace : List (CycleObs PortSample) :=
   | none => false
 #guard match retained.pdesign.properties[0]? with
   | some p => match SvaContract.ofProperty ({} : IEnv) [] p with
-    | .ok c => c.eval (SvaContract.portRegion trace) == .ok true
+    | .ok c => match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 #guard match retained.pdesign.properties[1]? with
   | some p => match SvaContract.ofProperty ({} : IEnv) [] p with
-    | .ok c => c.eval (SvaContract.portRegion trace) == .ok true
+    | .ok c => match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 #guard match retained.pdesign.properties[2]? with
   | some p => match SvaContract.ofProperty ({} : IEnv) [] p with
-    | .ok c => c.eval (SvaContract.portRegion trace) == .ok true
+    | .ok c => match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 

@@ -137,6 +137,20 @@
       "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
     },
     {
+      "name": "sva_unbased_literal",
+      "example": "sem2/sva_unbased_literal",
+      "top": "sva_unbased_literal",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0000"},
+        {"a": "0000"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: the finite SVA bridge retains an unbased unsized '0 literal as a four-state Fill at the expression width; the passing assertion trace is simulator-checkable when Verilator is selected."
+    },
+    {
       "name": "async_mem_fifo",
       "example": "seq_mem",
       "top": "async_mem_fifo",

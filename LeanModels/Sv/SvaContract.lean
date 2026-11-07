@@ -45,12 +45,18 @@ The extractor has already parsed the Slang assertion tree.  This bridge only
 instantiates its `PExpr` leaves into `Expr2`; it never inspects source text.
 -/
 
+def instantiateExpr (env : IEnv) (elems : List (String × Nat)) (value : PExpr) : Expr2 :=
+  -- SVA leaves are self-determined expressions. Supplying that width as the
+  -- instantiation context preserves ordinary identifiers while giving
+  -- unbased unsized fills (`'0`, `'1`, `'x`, `'z`) their required width.
+  instExpr2 env elems (selfWidth2 env elems value) value
+
 def instantiateBool (env : IEnv) (elems : List (String × Nat)) : PSvaBool → Except String SvaBool
-  | .expr value => .ok (.expr (instExpr2 env elems none value))
-  | .past cycles value => .ok (.past cycles (.expr (instExpr2 env elems none value)))
-  | .rose value => .ok (.roseExpr (instExpr2 env elems none value))
-  | .fell value => .ok (.fellExpr (instExpr2 env elems none value))
-  | .stable value => .ok (.stableExpr (instExpr2 env elems none value))
+  | .expr value => .ok (.expr (instantiateExpr env elems value))
+  | .past cycles value => .ok (.past cycles (.expr (instantiateExpr env elems value)))
+  | .rose value => .ok (.roseExpr (instantiateExpr env elems value))
+  | .fell value => .ok (.fellExpr (instantiateExpr env elems value))
+  | .stable value => .ok (.stableExpr (instantiateExpr env elems value))
 
 def instantiateSeq (env : IEnv) (elems : List (String × Nat)) : PSvaSeq → Except String SvaSeq
   | .atom test => .atom <$> instantiateBool env elems test

@@ -108,10 +108,104 @@ theorem AddiRvfiCycleTrace.toRv32i_trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
   exact certificate.toRv32i.trace_refines profile
 
+/-! ## Lifting an ADDI invariant to the mixed per-cycle obligation -/
+
+/-- An order-aware, memory-threaded ADDI invariant discharges the unified
+mixed RV32I cycle obligation.
+
+The extra order premise is explicit because `RvfiCycleStepRefines` is the
+raw strict contract, while `Rv32iCycleStepRefines` also indexes each valid
+row by its retirement order.  The proof constructs the decoded
+`AddiInstruction` from the boundary's parser-derived decode equality, then
+uses the instruction embedding above; no row or input is reconstructed from
+a captured trace.
+-/
+theorem rv32iCycleStepRefines_of_addi_memory
+    {State : Type}
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ w rd rs1 imm,
+          input.memory = memoryState.memory ∧
+          observation.addiBoundary memoryState.arch input w rd rs1 imm ∧
+          rel state'
+            { arch := addiNext memoryState.arch rd rs1 imm,
+              memory := memoryState.memory }
+      else rel state' memoryState)
+    (horder : ∀ (start : Nat) (state : State)
+      (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (_, observation) := machine.step state input
+      if observation.valid then observation.order = start else True) :
+    Rv32iCycleStepRefines machine rel admit := by
+  intro start state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  have horderCase := horder start state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase horderCase ⊢
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ w rd rs1 imm,
+        input.memory = memoryState.memory ∧
+        observation.addiBoundary memoryState.arch input w rd rs1 imm ∧
+        rel state'
+          { arch := addiNext memoryState.arch rd rs1 imm,
+            memory := memoryState.memory } := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨w, rd, rs1, imm, hmem, hboundary, hrel'⟩
+    have horder' : observation.order = start := by
+      simpa [hv] using horderCase
+    have hdecode : Fetched.decode (.word w) =
+        some (.alu .add rd (.reg rs1) (.imm imm)) :=
+      hboundary.1.2.2.1
+    let instruction : AddiInstruction :=
+      { word := w, rd := rd, rs1 := rs1, imm := imm, decode := hdecode }
+    have hinput : input = addiProgramInput memoryState.memory instruction := by
+      cases input with
+      | mk fetched memory irq =>
+          have hfetched : fetched = .word w := by
+            simpa using hboundary.1.2.1
+          have hirq : irq = 0 := by
+            simpa using hboundary.1.1
+          cases hfetched
+          cases hmem
+          cases hirq
+          rfl
+    have hboundaryAlu :=
+      RvfiObservation.addiBoundary_rv32i w rd rs1 imm hboundary
+    have hboundary' :
+        Rv32iBoundary memoryState.arch
+          input observation
+          (rv32iProgramStep memoryState instruction.toRv32i)
+          (rv32iProgramRetirement memoryState instruction.toRv32i) := by
+      rw [addi_toRv32i_step, addi_toRv32i_retirement]
+      rw [← hinput]
+      simpa [instruction, AddiInstruction.toAlu, addiNext, aluNext,
+        addiRetirement, aluRetirement, addiEffects, aluEffects, src1Val,
+        src2Val, aluSem, hmem] using
+        hboundaryAlu
+    simp only [hv]
+    refine ⟨instruction.toRv32i, ?_, horder', hboundary', ?_⟩
+    · rw [hinput]
+      exact addi_toRv32i_input memoryState instruction
+    · rw [addi_toRv32i_step]
+      exact hrel'
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    simp only [hv]
+    exact hrel'
+
 #print axioms LeanModels.Refine.addi_toRv32i_input
 #print axioms LeanModels.Refine.addi_toRv32i_step
 #print axioms LeanModels.Refine.addi_toRv32i_retirement
 #print axioms LeanModels.Refine.AddiRvfiCycleTrace.toRv32i
 #print axioms LeanModels.Refine.AddiRvfiCycleTrace.toRv32i_trace_refines
+#print axioms LeanModels.Refine.rv32iCycleStepRefines_of_addi_memory
 
 end LeanModels.Refine

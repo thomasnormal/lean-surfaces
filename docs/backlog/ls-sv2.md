@@ -6738,3 +6738,31 @@ mixed cycle certificate consumed by the R2 all-prefix/reset contracts.  The
 adapter retains the parser-derived decoder proof and the original boundary at
 the same state, so it does not choose a new instruction interpretation.
 PicoRV32 remains parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-362 — lift the ADDI invariant into the mixed step obligation
+
+The ADDI certificate adapter now reached the mixed cycle certificate, but a
+loaded-core proof still had to restate its per-cycle invariant in the mixed
+`Rv32iCycleStepRefines` shape.  That restatement would risk losing either the
+raw input equality or the order tag needed by the mixed certificate.
+
+**CHANGED:** Added `rv32iCycleStepRefines_of_addi_memory` to
+`LeanModels/Refine/RvfiAddiMixed.lean`.  From the memory-threaded ADDI valid
+row/post-state obligation and a separate order equation for valid rows, it
+constructs the mixed per-cycle obligation.  The proof constructs the indexed
+`AddiInstruction` from the boundary's exact decoder equality, maps it through
+the `.alu` embedding, and retains the original input, order, boundary, and
+post-state relation.  No row is decoded from a captured stream and no
+finite-window theorem is added.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0 (57/57 jobs); the new declarations report only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check pass.  No semantics, RTL, loader,
+extractor, or SV file changed; no `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** The isolated ADDI invariant can now discharge the same
+mixed per-cycle obligation consumed by `rv32iRvfiCycleTrace_of_step` and the
+from-reset all-prefix theorem, with retirement order remaining an explicit
+proof obligation.  PicoRV32 remains parked at the approved task/net-z
+memory-route walls.

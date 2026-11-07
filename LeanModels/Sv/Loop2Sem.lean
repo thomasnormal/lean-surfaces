@@ -47,11 +47,14 @@ theorem sem_single {d : PDesign} {args : List Int} {env : IEnv} {sd : List DeclT
     (hadm : B.combAdmits (fun n => (env.withDecls decls).widths.lookup n) = true)
     (hdrv : driversOk d.declNames d.inputNames [.alwaysComb B] = true) :
     d.instantiateGD2 args = ⟨d.name, decls.toArray, #[.alwaysComb B]⟩ := by
-  have hag' : ∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.vals.lookup n = some (envVal env n) :=
+  have hag' : ∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.intVal? n = some (envVal env n) :=
     fun dt hdt n hn => by
       obtain ⟨v, hv⟩ := Option.isSome_iff_exists.mp
         (List.all_eq_true.mp hag n (List.mem_flatMap.mpr ⟨dt, hdt, hn⟩))
-      rw [hv, envVal_of_lookup hv]
+      have hi : env.intVal? n = some v := by
+        simp [IEnv.intVal?, hv]
+      rw [envVal_of_lookup hv]
+      exact hi
   subst hdecls
   have h4 : expandList2 (env.withDecls (sd.map (·.toDecl (envVal env))))
       (sd.map fun dt => (dt.name, dt.elemW (envVal env))) (PDesign.surfaceFuel args) d.generates =

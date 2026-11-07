@@ -816,7 +816,10 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
   | .genvarRef n =>
       match env.vals.lookup n with
       | some v => intLit2 ctx v
-      | none => .unsupported "GenvarRef:unbound" n
+      | none =>
+          match env.nvals.lookup n with
+          | some (v, _, _) => intLit2 ctx v
+          | none => .unsupported "GenvarRef:unbound" n
   | .enumRef ty mem pkg =>
       match env.enumMember ty mem pkg with
       | some v => .lit v

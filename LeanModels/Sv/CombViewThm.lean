@@ -1922,10 +1922,10 @@ theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
       simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
     rw [e1]
     refine RdOK.fitDiv ?_ false _ _
-    rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
-    · simp [instExpr2, intLit2, IEnv.intVal?, hv, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
-    · cases hx : E.vals.lookup g <;>
-        simp [instExpr2, intLit2, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+    cases hx : E.vals.lookup g <;>
+      cases hn : E.nvals.lookup g <;>
+      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
+      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   · have hb : E.intVal? n = some (σ n) := C.agree n (hp n rfl)
     have e1 : instDivOperand2 E elems false c (.paramRef n none) =
         fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.paramRef n none)) := by
@@ -1934,10 +1934,11 @@ theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
       · cases hx : E.vals.lookup n <;> simp [instDivOperand2, instExpr2, IEnv.intVal?, hx, hn]
     rw [e1]
     refine RdOK.fitDiv ?_ false _ _
-    rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
-    · simp [instExpr2, intLit2, IEnv.intVal?, hv, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
-    · cases hx : E.vals.lookup n <;>
-        simp [instExpr2, intLit2, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+    cases hx : E.vals.lookup n <;>
+      cases hn' : E.nvals.lookup n <;>
+      by_cases hs : n ∈ E.stale <;>
+      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn', hs, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
+      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   · exact rd_shOpd C h' hacc false c
 
 /-- … and of the left operand of a shift (the marker is transparent). -/

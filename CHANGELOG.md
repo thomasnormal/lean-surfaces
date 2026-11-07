@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for constructor handle objects with null ids;
+  frontend identity remains string-typed.
+
 - Added a recorded refusal for constructor handle objects with Boolean ids;
   frontend identity remains string-typed.
 

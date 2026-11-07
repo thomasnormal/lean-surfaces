@@ -597,15 +597,17 @@ theorem rvfiCycleStepRefines_of_step
       exact hrel'
 
 /-! The optional cycle contract can be lifted back to the raw RVFI contract
-when a separate wire invariant proves that every valid row is well formed.
-Without this premise the optional adapter could turn a malformed valid row
-into `none`, so the reverse direction would be unsound. -/
-theorem cycleStepRefines_to_rvfiCycleStepRefines
+when a separate wire invariant proves that every valid row is well formed on
+related, admitted states.  Without this premise the optional adapter could
+turn a malformed valid row into `none`, so the reverse direction would be
+unsound. -/
+theorem cycleStepRefines_to_rvfiCycleStepRefines_of_rel
     {State IsaState : Type}
     {machine : RvfiCycleMachine State} {isa : Machine IsaState}
     {rel : State → IsaState → Prop} {admit : Input → Prop}
     (h : CycleStepRefines machine.toCycleMachine isa rel admit)
-    (hwell : ∀ (state : State) (input : Input),
+    (hwell : ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
       (machine.step state input).2.valid = true →
       (machine.step state input).2.wellFormed) :
     RvfiCycleStepRefines machine isa rel admit := by
@@ -619,7 +621,7 @@ theorem cycleStepRefines_to_rvfiCycleStepRefines
   · have hwell' : observation.wellFormed := by
       have hvalid : (machine.step state input).2.valid = true := by
         simpa [hstep] using hv
-      have hwellRaw := hwell state input hvalid
+      have hwellRaw := hwell state isaState input hrel hadmit hvalid
       simpa [hstep] using hwellRaw
     have hsome : observation.toRetirement? = some observation.toRetirement :=
       observation.toRetirement?_eq_some hv hwell'
@@ -633,6 +635,20 @@ theorem cycleStepRefines_to_rvfiCycleStepRefines
       simp [RvfiObservation.toRetirement?, hv']
     rw [hnone] at hcycle
     exact Or.inr ⟨hv', hcycle⟩
+
+/-! A global raw-row invariant is a convenient specialization of the
+relation-aware bridge above. -/
+theorem cycleStepRefines_to_rvfiCycleStepRefines
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : CycleStepRefines machine.toCycleMachine isa rel admit)
+    (hwell : ∀ (state : State) (input : Input),
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed) :
+    RvfiCycleStepRefines machine isa rel admit := by
+  exact cycleStepRefines_to_rvfiCycleStepRefines_of_rel h
+    (fun state _ input _ _ hvalid => hwell state input hvalid)
 
 /-! With the raw well-formedness invariant in hand, the optional and strict
 cycle contracts are equivalent.  The invariant is retained as an explicit
@@ -1343,6 +1359,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
+#print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines
 #print axioms LeanModels.Refine.cycleStepRefines_iff_rvfiCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_iff_step

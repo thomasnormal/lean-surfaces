@@ -138,13 +138,12 @@ private def evaluateInteger (profile : TargetProfile) (typed : TypedCallableExpr
 private def evaluateSizeOf (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
-  let format ← formatFor profile typed.type
-  let some integer := integralTypeOfEvidence operandType
-    | throw (.unsupportedType operandType)
-  let bytes ← match integralSizeBytes profile integer with
-    | .ok value => pure value
-    | .error reason => throw (mapFormatError reason)
-  pure (.ok {format, value := Int.ofNat bytes})
+  (integralSizeValueOfEvidence profile typed.type operandType).map
+    (fun value => .ok value)
+    |>.mapError fun reason =>
+      match reason with
+      | .unsupportedType _ => .unsupportedType operandType
+      | other => mapFormatError other
 
 private def evaluateAlignOf (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) :

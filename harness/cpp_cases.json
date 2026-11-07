@@ -5272,6 +5272,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-integral-size-agreement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIntegralSizeAgreement",
+    "cpp_source": "int size_witness(int value) { return sizeof(int); } bool callable_witness() { return size_witness(0) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

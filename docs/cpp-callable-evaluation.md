@@ -33,6 +33,9 @@ its own state update path.
 Typed integer-literal construction is shared before each evaluator applies its
 own invalid-value and error handling.
 
+Typed `sizeof` value construction is shared as well; unsupported operand types
+remain loud in each evaluator's error domain.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

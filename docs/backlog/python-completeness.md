@@ -11028,3 +11028,19 @@ globals, annotation ordering, oversized repetition, and global-yield targets.
 
 DECIDED: retain every measured edge as a matching row or documented loud
 boundary; add future rows only when a new semantic edge is measured.
+
+## 2026-11-07-pycomplete-450 — recheck parameterized float-round worker
+
+The float-round audit remains closed. Both interpreter surfaces dispatch
+through the single `roundFloatNDigits` worker, which handles positive and
+negative CPython decimal cutoffs, zero digits, signed zero, and exact ratio
+rounding. The earlier one-definition-per-digit chain is absent.
+
+| Measurement | Result |
+|---|---|
+| Worker census | one `roundFloatNDigits`; no `roundDigits*` family |
+| Boundary battery | `harness/test_float_boundary.py`: 3 passed |
+| Semantic change | none; this packet records the existing parameterized worker |
+
+DECIDED: keep the parameterized worker and extend its boundary rows when
+CPython cutoff behavior changes; do not unroll new digit cases.

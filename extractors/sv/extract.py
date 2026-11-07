@@ -26199,6 +26199,61 @@ def _sva_integer(node):
         return None
 
 
+def _sva_vector_literal(node):
+    """Convert a sized based literal in a sampled SVA expression.
+
+    Slang keeps ``1'b0`` and friends as ``IntegerVectorExpression`` nodes,
+    separate from decimal ``IntegerLiteralExpression``. Preserve the
+    declared width and four-state digits in the existing PExpr Literal shape.
+    """
+    if not isinstance(node, dict) or node.get("kind") != "IntegerVectorExpression":
+        return None
+    try:
+        width = int((node.get("size") or {}).get("text", ""), 10)
+    except (TypeError, ValueError):
+        return None
+    if width <= 0:
+        return None
+    base = ((node.get("base") or {}).get("text", "") or "").lower()
+    raw = ((node.get("value") or {}).get("text", "") or "").replace("_", "").lower()
+    if not raw or base not in ("'b", "'o", "'d", "'h"):
+        return None
+    if base == "'b":
+        if any(c not in "01xz" for c in raw):
+            return None
+        bits = raw
+    elif base == "'o":
+        table = {"0": "000", "1": "001", "2": "010", "3": "011",
+                 "4": "100", "5": "101", "6": "110", "7": "111",
+                 "x": "xxx", "z": "zzz"}
+        if any(c not in table for c in raw):
+            return None
+        bits = "".join(table[c] for c in raw)
+    elif base == "'h":
+        table = {str(i): format(i, "04b") for i in range(10)}
+        table.update({c: format(10 + i, "04b") for i, c in enumerate("abcdef")})
+        table.update({"x": "xxxx", "z": "zzzz"})
+        if any(c not in table for c in raw):
+            return None
+        bits = "".join(table[c] for c in raw)
+    else:
+        if set(raw) <= {"x"}:
+            bits = "x" * width
+        elif set(raw) <= {"z"}:
+            bits = "z" * width
+        else:
+            try:
+                n = int(raw, 10)
+            except ValueError:
+                return None
+            bits = format(n & ((1 << width) - 1), "0%db" % width)
+    if len(bits) < width:
+        bits = bits[0] * (width - len(bits)) + bits if bits[0] in "xz" else bits.rjust(width, "0")
+    else:
+        bits = bits[-width:]
+    return {"kind": "Literal", "span": None, "width": width, "bits": bits}
+
+
 def _sva_scoped_name(node):
     """Return a qualified value path from Slang's nested ``ScopedName``.
 
@@ -26255,10 +26310,25 @@ def _sva_pexpr(node):
             return {"kind": "Unsupported", "sv_kind": kind,
                     "text": "selector outside element-select fragment"}
         bit = selector.get("selector") or {}
-        if bit.get("kind") != "BitSelect":
+        selector_kind = bit.get("kind")
+        if selector_kind == "BitSelect":
+            index = _sva_pexpr(bit.get("expr"))
+        elif selector_kind in ("AscendingRangeSelect", "DescendingRangeSelect"):
+            left = _sva_pexpr(bit.get("left"))
+            width = _sva_pexpr(bit.get("right"))
+            one = {"kind": "Int", "value": 1}
+            span = {"kind": "Binary", "op": "-", "left": width, "right": one}
+            if selector_kind == "AscendingRangeSelect":
+                msb = {"kind": "Binary", "op": "+", "left": left, "right": span}
+                lsb = left
+            else:
+                msb = left
+                lsb = {"kind": "Binary", "op": "-", "left": left, "right": span}
+            return {"kind": "PartSel", "value": {"kind": "Ident", "name": base},
+                    "msb": msb, "lsb": lsb}
+        else:
             return {"kind": "Unsupported", "sv_kind": kind,
-                    "text": "selector outside bit-select fragment"}
-        index = _sva_pexpr(bit.get("expr"))
+                    "text": "selector outside bit/part-select fragment"}
         unpacked = base in _SVA_UNPACKED_NAMES
         if not unpacked:
             try:
@@ -26275,6 +26345,12 @@ def _sva_pexpr(node):
         if value is not None:
             return {"kind": "Int", "value": value}
         return {"kind": "Unsupported", "sv_kind": kind, "text": "integer literal"}
+    if kind == "IntegerVectorExpression":
+        literal = _sva_vector_literal(node)
+        if literal is not None:
+            return literal
+        return {"kind": "Unsupported", "sv_kind": kind,
+                "text": "sized vector literal"}
     if kind == "UnbasedUnsizedLiteralExpression":
         raw = (node.get("literal", {}).get("text", "") or "").lower()
         if raw in ("'0", "'1", "'x", "'z"):

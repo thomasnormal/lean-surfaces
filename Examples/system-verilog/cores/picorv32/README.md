@@ -584,6 +584,28 @@ existing `nontrapExpected` certificate.
 `pinnedWindowS4`; `pinned_window_final_architecture` records its concrete
 pc and register values for the measured input stream.
 
+## Symbolic ADDI program certificate
+
+`LeanModels.Refine.RvfiAddiProgram` now carries the ADDI boundary through an
+arbitrary program length.  `AddiInstruction` retains the original word and a
+`Fetched.decode` proof; `addiProgramState`, `addiProgramInputs`, and
+`addiProgramRetirements` are the corresponding architectural folds.  The
+profile-parametric `rvMemoryMachineWith_addi_program_state` and
+`rvMemoryMachineWith_addi_program_trace` theorems prove the state and
+retirement equations for every ADDI list, with unchanged threaded memory and
+with `addiProgramState_preserves_WF` preserving the x0 invariant.
+
+`AddiRvfiTrace` is the core-facing certificate: it permits arbitrary invalid
+RVFI bubbles and requires each retiring row to carry the indexed
+`Rv32iBoundary` for the next ADDI post-state and retirement.  Its
+`toRvfiTraceRefines`, `normalize`, and `trace_refines` theorems turn that
+inductive invariant into an order-checked normalized stream equal to the
+stateful ISA trace.  This is quantified over every ADDI program and every
+bubble placement; it is refinement infrastructure for the eventual loaded
+PicoRV32 state relation, not a finite capture or a PicoRV32 model.  The
+actual RTL instantiation remains parked at the unpacked `cpuregs` and
+unsupported-member/net-z loader walls recorded above.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

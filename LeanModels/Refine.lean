@@ -22,6 +22,7 @@ import LeanModels.Refine.RvfiSystem
 import LeanModels.Refine.RvfiCsr
 import LeanModels.Refine.RvfiTrap
 import LeanModels.Refine.RvfiRv32i
+import LeanModels.Refine.RvfiAddiProgram
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

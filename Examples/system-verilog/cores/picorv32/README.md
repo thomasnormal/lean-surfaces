@@ -182,6 +182,9 @@ loaded-core invariant and input-admission obligations.
 `normalizeRvfiTrace?_wellFormed` independently classifies every row in a
 successful raw certificate as either an invalid bubble or a well-formed valid
 row, without using the optional-adapter theorem.
+`normalizeRvfiTrace?_eq_none_iff` gives the failure-side companion: a `none`
+result is exactly the absence of any order/decode certificate, so malformed
+valid rows and order gaps cannot be reinterpreted as an empty stream.
 At the single-row adapter boundary,
 `RvfiObservation.toRetirement?_eq_some_iff` characterizes a successful decode
 as `valid ∧ wellFormed` together with equality to the observation's concrete

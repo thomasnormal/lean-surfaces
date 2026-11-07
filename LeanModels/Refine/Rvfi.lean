@@ -269,6 +269,24 @@ theorem normalizeRvfiTrace?_iff {start : Nat} {observations : List RvfiObservati
     | retire hvalid horder hretirement htail ih =>
         simp [normalizeRvfiTrace?, hvalid, horder, hretirement, ih]
 
+/-- A failed executable normalization has no proof-facing retirement-order
+certificate.  This keeps malformed valid rows and order gaps loud instead of
+allowing a caller to treat `none` as an empty retirement stream. -/
+theorem normalizeRvfiTrace?_eq_none_iff {start : Nat}
+    {observations : List RvfiObservation} :
+    normalizeRvfiTrace? start observations = none ↔
+      ¬ ∃ retirements, RvfiTraceRefines start observations retirements := by
+  constructor
+  · intro hnone ⟨retirements, htrace⟩
+    have hsome := (normalizeRvfiTrace?_iff).2 htrace
+    rw [hnone] at hsome
+    cases hsome
+  · intro hno
+    cases hnorm : normalizeRvfiTrace? start observations with
+    | none => simpa using hnorm
+    | some retirements =>
+        exact False.elim (hno ⟨retirements, (normalizeRvfiTrace?_iff).1 hnorm⟩)
+
 /-! A successful normalization classifies every raw row: invalid rows are
 explicit bubbles, while every valid row is well formed.  This is proved
 directly from the executable checker rather than through the certificate
@@ -1467,6 +1485,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.wellFormed_of_toRetirement?_eq_some
 #print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_some_iff
 #print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_none_iff
+#print axioms LeanModels.Refine.normalizeRvfiTrace?_eq_none_iff
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step

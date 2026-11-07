@@ -41,11 +41,6 @@ private def frameFailure (frame : IntegralObjectFrame) (reason : FrameError) :
     Outcome α :=
   failure frame (mapFrameError reason)
 
-private def builtinIntegralType : CppTypeEvidence → Option CppIntType
-  | .builtin type => some type
-  | .qualified _ _ base => builtinIntegralType base
-  | _ => none
-
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Option IntegralFormat :=
   (integralFormatOfEvidence profile type).toOption
@@ -196,8 +191,8 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     | .ok rightValue =>
                         let combined := match leftValue, rightValue with
                           | .ok leftValue, .ok rightValue =>
-                              match builtinIntegralType left.sourceType,
-                                  builtinIntegralType right.sourceType with
+                              match integralTypeOfEvidence left.sourceType,
+                                  integralTypeOfEvidence right.sourceType with
                               | some leftType, some rightType =>
                                   integralBinaryUsual profile operation leftType rightType
                                     leftValue rightValue
@@ -321,8 +316,8 @@ mutual
                             match read.result with
                             | .error reason => frameFailure read.frame reason
                             | .ok (.ok current) =>
-                                let combined := match builtinIntegralType binding.type,
-                                    builtinIntegralType expression.sourceType with
+                                let combined := match integralTypeOfEvidence binding.type,
+                                    integralTypeOfEvidence expression.sourceType with
                                   | some leftType, some rightType =>
                                       bindIntegralResultValue
                                         (integralBinaryUsual profile operation leftType rightType

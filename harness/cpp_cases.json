@@ -18919,5 +18919,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-shared-type-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSharedTypeAgreementWitness",
+    "cpp_source": "bool type_witness() { return 1 + 1 == 2; } bool callable_witness() { return type_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

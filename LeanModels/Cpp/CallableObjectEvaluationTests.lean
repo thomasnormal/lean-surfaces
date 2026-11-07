@@ -40486,4 +40486,11 @@ def callableSharedFormatAgreementWitness : Bool :=
 
 #guard callableSharedFormatAgreementWitness
 
+def callableSharedTypeAgreementWitness : Bool :=
+  integralTypeOfEvidence intType == some .int &&
+    integralTypeOfEvidence (.qualified true false intType) == some .int &&
+    integralTypeOfEvidence (.record (handle "0x99")) == none
+
+#guard callableSharedTypeAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

@@ -49,23 +49,29 @@ def instantiateExpr (env : IEnv) (elems : List (String × Nat)) (value : PExpr) 
   -- SVA leaves are self-determined expressions. Supplying that width as the
   -- instantiation context preserves ordinary identifiers while giving
   -- unbased unsized fills (`'0`, `'1`, `'x`, `'z`) their required width.
-  instExpr2 env elems (selfWidth2 env elems value) value
+  let allElems := elems ++ env.widths
+  instExpr2 env allElems (selfWidth2 env allElems value) value
 
-def svaValueWidth (env : IEnv) (elems : List (String × Nat)) : PSvaValue → Option Nat
-  | .current value | .past _ value => selfWidth2 env elems value
-  | .binary _ left right =>
-      match svaValueWidth env elems left, svaValueWidth env elems right with
+def svaValueWidth (env : IEnv) (elems : List (String × Nat)) : PSvaValue → Option Nat :=
+  let allElems := elems ++ env.widths
+  let rec width : PSvaValue → Option Nat
+    | .current value | .past _ value => selfWidth2 env allElems value
+    | .binary _ left right =>
+      match width left, width right with
       | some a, some b => some (max a b)
       | some a, none => some a
       | none, some b => some b
       | none, none => none
+  width
 
 def instantiateValueAt (env : IEnv) (elems : List (String × Nat))
-    (ctx : Option Nat) : PSvaValue → SvaValue
-  | .current value => .current (instExpr2 env elems ctx value)
-  | .past cycles value => .past cycles (instExpr2 env elems ctx value)
-  | .binary op left right => .binary op
-      (instantiateValueAt env elems ctx left) (instantiateValueAt env elems ctx right)
+    (ctx : Option Nat) : PSvaValue → SvaValue := by
+  let allElems := elems ++ env.widths
+  let rec go : PSvaValue → SvaValue
+    | .current value => .current (instExpr2 env allElems ctx value)
+    | .past cycles value => .past cycles (instExpr2 env allElems ctx value)
+    | .binary op left right => .binary op (go left) (go right)
+  exact go
 
 def instantiateValue (env : IEnv) (elems : List (String × Nat)) (value : PSvaValue) : SvaValue :=
   instantiateValueAt env elems (svaValueWidth env elems value) value

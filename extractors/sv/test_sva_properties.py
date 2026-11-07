@@ -94,10 +94,10 @@ endmodule
             src.write_text(source)
             extract.process_symbolic("top", [str(src)], [], str(out))
             prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
-        expr = prop["ast"]["property"]["body"]["test"]["expr"]
-        self.assertEqual(expr["op"], "==")
-        self.assertEqual(expr["left"], {"kind": "Ident", "name": "u.flag"})
-        self.assertEqual(expr["right"], {"kind": "Ident", "name": "a"})
+        test = prop["ast"]["property"]["body"]["test"]
+        self.assertEqual(test["kind"], "SvaValueEq")
+        self.assertEqual(test["left"]["expr"], {"kind": "Ident", "name": "u.flag"})
+        self.assertEqual(test["right"]["expr"], {"kind": "Ident", "name": "a"})
 
     def test_reduction_expression_uses_existing_reduce_vocabulary(self):
         source = """module top(input logic clk, input logic [3:0] a, output logic q);
@@ -111,10 +111,31 @@ endmodule
             src.write_text(source)
             extract.process_symbolic("top", [str(src)], [], str(out))
             prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
-        expr = prop["ast"]["property"]["body"]["test"]["expr"]
-        self.assertEqual(expr["left"], {
+        test = prop["ast"]["property"]["body"]["test"]
+        self.assertEqual(test["kind"], "SvaValueEq")
+        self.assertEqual(test["left"]["expr"], {
             "kind": "Reduce", "op": "|",
             "operand": {"kind": "Ident", "name": "a"},
+        })
+
+    def test_dynamic_packed_select_is_source_shaped(self):
+        source = """module top(input logic clk, input logic [3:0] a,
+  input logic [1:0] i, output logic q);
+  assign q = a[i];
+  assert property (@(posedge clk) a[i] == q);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "select.sv"
+            out = Path(directory) / "select.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        test = prop["ast"]["property"]["body"]["test"]
+        self.assertEqual(test["kind"], "SvaValueEq")
+        self.assertEqual(test["left"]["expr"], {
+            "kind": "BitSel", "value": {"kind": "Ident", "name": "a"},
+            "index": {"kind": "Ident", "name": "i"},
         })
 
 

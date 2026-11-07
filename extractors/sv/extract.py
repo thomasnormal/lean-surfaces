@@ -26148,6 +26148,33 @@ def _convert_syscall(sm, s, e):
 # Processes
 # ---------------------------------------------------------------------------
 
+_SVA_UNPACKED_NAMES = set()
+_SVA_SCOPE = None
+
+
+def _sva_unpacked_names(statement):
+    """Names whose semantic declarations carry an unpacked dimension.
+
+    Slang's syntax JSON uses the same ``IdentifierSelectName`` wrapper for a
+    packed bit select and an unpacked element select.  The owning scope is
+    available on the elaborated assertion symbol, so keep this small piece of
+    type information while converting its expression tree.  The envelope then
+    uses `ArraySel` for the source-shaped unpacked access and `BitSel` for a
+    packed vector access.
+    """
+    result = set()
+    try:
+        for symbol in statement.parentScope:
+            name = getattr(symbol, "name", "")
+            if not name:
+                continue
+            if "$[" in str(getattr(symbol, "type", "")):
+                result.add(name)
+    except Exception:
+        pass
+    return result
+
+
 def _sva_unwrap(node):
     """Strip Slang's syntax wrappers around an assertion expression."""
     while isinstance(node, dict) and node.get("kind") in (
@@ -26217,6 +26244,32 @@ def _sva_pexpr(node):
             return {"kind": "Ident", "name": name}
         return {"kind": "Unsupported", "sv_kind": kind,
                 "text": "malformed scoped name"}
+    if kind == "IdentifierSelectName":
+        base = (node.get("identifier") or {}).get("text", "")
+        selectors = node.get("selectors") or []
+        if len(selectors) != 1:
+            return {"kind": "Unsupported", "sv_kind": kind,
+                    "text": "nested or multiple selectors"}
+        selector = selectors[0]
+        if selector.get("kind") != "ElementSelect":
+            return {"kind": "Unsupported", "sv_kind": kind,
+                    "text": "selector outside element-select fragment"}
+        bit = selector.get("selector") or {}
+        if bit.get("kind") != "BitSelect":
+            return {"kind": "Unsupported", "sv_kind": kind,
+                    "text": "selector outside bit-select fragment"}
+        index = _sva_pexpr(bit.get("expr"))
+        unpacked = base in _SVA_UNPACKED_NAMES
+        if not unpacked:
+            try:
+                symbol = _SVA_SCOPE.lookupName(base) if _SVA_SCOPE is not None else None
+                unpacked = "$[" in str(getattr(symbol, "type", ""))
+            except Exception:
+                pass
+        if unpacked:
+            return {"kind": "ArraySel", "name": base, "indices": [index]}
+        return {"kind": "BitSel", "value": {"kind": "Ident", "name": base},
+                "index": index}
     if kind == "IntegerLiteralExpression":
         value = _sva_integer(node)
         if value is not None:
@@ -26379,8 +26432,14 @@ def _sva_bool(node):
             if cycles is not None and cycles >= 0:
                 return {"kind": "SvaPast", "cycles": cycles,
                         "expr": _sva_pexpr(args[0])}
-    if isinstance(node, dict) and node.get("kind") in (
-            "EqualityExpression", "CaseEqualityExpression"):
+    if isinstance(node, dict) and node.get("kind") == "EqualityExpression":
+        left, right = node.get("left"), node.get("right")
+        # Equality is context-determined (§11.8.2): the SVA value route keeps
+        # both operands and widens them to their common sampled width. This is
+        # also needed for a dynamic bit select compared with a wider signal.
+        return {"kind": "SvaValueEq", "left": _sva_value(left),
+                "right": _sva_value(right)}
+    if isinstance(node, dict) and node.get("kind") == "CaseEqualityExpression":
         left, right = node.get("left"), node.get("right")
         if _sva_has_past(left) or _sva_has_past(right):
             return {"kind": "SvaValueEq", "left": _sva_value(left),
@@ -26418,6 +26477,11 @@ def _sva_seq(node):
 
 
 def _sva_property_ast(statement):
+    global _SVA_UNPACKED_NAMES, _SVA_SCOPE
+    previous_unpacked = _SVA_UNPACKED_NAMES
+    previous_scope = _SVA_SCOPE
+    _SVA_UNPACKED_NAMES = _sva_unpacked_names(statement)
+    _SVA_SCOPE = statement.parentScope
     data = json.loads(statement.syntax.to_json())
     spec = data.get("statement", {}).get("propertySpec", {})
     clocking = spec.get("clocking", {})
@@ -26427,12 +26491,16 @@ def _sva_property_ast(statement):
             "negedge" if edge_kind == "NegEdgeKeyword" else "any")
     clock = event.get("expr", {}).get("identifier", {}).get("text")
     if not clock:
+        _SVA_UNPACKED_NAMES = previous_unpacked
+        _SVA_SCOPE = previous_scope
         return None
     statement_kind = data.get("statement", {}).get("kind", "")
     p_kind = ("assert" if statement_kind == "AssertPropertyStatement" else
               "assume" if statement_kind == "AssumePropertyStatement" else
               "cover" if statement_kind == "CoverPropertyStatement" else None)
     if p_kind is None:
+        _SVA_UNPACKED_NAMES = previous_unpacked
+        _SVA_SCOPE = previous_scope
         return None
     root = _sva_unwrap(spec.get("expr"))
     if isinstance(root, dict) and root.get("kind") == "ImplicationPropertyExpr":
@@ -26447,8 +26515,11 @@ def _sva_property_ast(statement):
     if disable is not None:
         prop = {"kind": "SvaDisable", "guard": _sva_bool(disable.get("expr")),
                 "body": prop}
-    return {"kind": "SvaCheck", "property_kind": p_kind, "edge": edge,
-            "clock": clock, "property": prop}
+    result = {"kind": "SvaCheck", "property_kind": p_kind, "edge": edge,
+              "clock": clock, "property": prop}
+    _SVA_UNPACKED_NAMES = previous_unpacked
+    _SVA_SCOPE = previous_scope
+    return result
 
 
 def _convert_concurrent_property(sm, m, path=()):

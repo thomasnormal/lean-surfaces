@@ -37,6 +37,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-ls-sv2-250` |  | exercise the ADDI boundary after state threading | ls-sv2 |
 | `2026-11-07-ls-sv2-249` |  | bridge the raw ADDI boundary to one ISA step | ls-sv2 |
 | `2026-11-07-ls-sv2-248` |  | add the raw RVFI ADDI boundary predicate | ls-sv2 |
+| `2026-11-06-pycomplete-396` |  | refresh stale pinned envelopes | python-completeness |
 | `2026-11-06-pycomplete-395` |  | recheck general ingestion rewrites | python-completeness |
 | `2026-11-06-pycomplete-394` |  | remove stale display lowering machinery | python-completeness |
 | `2026-11-06-pycomplete-393` |  | retain structured try and raise nodes | python-completeness |

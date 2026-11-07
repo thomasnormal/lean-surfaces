@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refreshed the two stale Python lab envelopes found by the pinned frontend freshness gate; the committed envelope set is fresh again.
+
 - Namedtuple table recognition now requires the structured benign import to
   precede every candidate. A candidate written before
   `from collections import namedtuple` stays on the loud runtime path, so

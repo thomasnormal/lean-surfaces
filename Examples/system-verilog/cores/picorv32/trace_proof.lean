@@ -298,6 +298,24 @@ theorem pinned_cycle_normalized_trace_refines_of
     pinnedCycleMachine.init rvMachine.init cycleInputs hrel hall
     pinned_cycle_observations_normalize
 
+theorem pinned_cycle_normalized_refines_of
+    {rel : List RvfiObservation → ArchState → Prop}
+    {admit : Input → Prop}
+    (hstrict : RvfiCycleStepRefines pinnedCycleMachine rvMachine rel admit)
+    (hrel : rel pinnedCycleMachine.init rvMachine.init)
+    (hall : ∀ i ∈ cycleInputs, admit i) :
+    (nontrapExpected =
+      trace rvMachine rvMachine.init
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          pinnedCycleMachine.init cycleInputs)) ∧
+    rel (rvfiStateAfter pinnedCycleMachine pinnedCycleMachine.init cycleInputs)
+      (machineStateAfter rvMachine rvMachine.init
+        (retireInputs pinnedCycleMachine.toCycleMachine
+          pinnedCycleMachine.init cycleInputs)) := by
+  exact rvfiCycleStepRefines_normalized hstrict
+    pinnedCycleMachine.init rvMachine.init cycleInputs hrel hall
+    pinned_cycle_observations_normalize
+
 theorem pinned_packet_observations_normalize :
     normalizeRvfiTrace? 0
         (rvfiPacketObservations pinnedPacketMachine pinnedPacketMachine.init
@@ -4963,6 +4981,7 @@ theorem pinned_nontrap_observed_trace_refines_isa :
 #print axioms pinned_cycle_windows_rob_append
 #print axioms pinned_cycle_windows_rob_refines_isa_of
 #print axioms pinned_cycle_normalized_trace_refines_of
+#print axioms pinned_cycle_normalized_refines_of
 #print axioms pinned_cycle_trace
 #print axioms pinned_rob_trace
 #print axioms pinned_rob_trace_refines_isa

@@ -80,6 +80,14 @@ single selected trace is then recorded as a classified refinement choice,
 rather than used to alter the E rule. The same distinction applies to S and J
 when their output is compared with a four-state source row.
 
+The interim testing boundary is explicit. Until the resolution judgment is
+threaded through execution, known-value rows may remain equality tests, but an
+unknown-sensitive row must either carry a `DecisionKnown` witness or remain a
+loud refusal. No current `⊨₂` theorem may treat the simulator's selected trace
+as the E result. A future membership harness will check that the selected
+trace is one allowed by H and will report the simulator, synthesizer, or
+formal-tool choice as a refinement observation.
+
 ## Clocks and asynchronous inputs
 
 Multiple clocks are an environment and scheduling choice, not a preferred
@@ -138,6 +146,17 @@ surface so the migration cannot silently omit a proof route:
 * `Surface`, `Observe`, `Obs_run2`, and the `Models2`/contract bridges expose
   traces or edge decisions to the proof layer. `Comb2Proc` and `CombKnownBits`
   also contain Boolean projection lemmas consumed by the comb tactics.
+
+The migration order is therefore: (1) add the resolved step relation beside
+`cycleStep2` and connect §6.11 through `TwoStateBoundary`; (2) lift that
+relation through `runFrom2`, `Runs2`, and `⊨₂`, proving that the old judgments
+are their known-state projection; (3) replace the direct projections in
+`Observe`, `Sva`, `Surface`, and contracts; and (4) move the comb and memory
+proof bridges to the same relation. The current interim rule is the cheap
+sufficient boundary: every decision, dynamic select/index, assertion sample,
+and two-state conversion used by a theorem must be known, or that theorem
+refuses by name. This rule applies even where the executable evaluator still
+has its historical `condTrue` else branch.
 
 Each consumer must either carry the witness or move to the resolved relation;
 the inventory is intentionally broader than the current `run2` path because

@@ -138,53 +138,85 @@ The `caseEq` constructor is intentionally a signal-oriented first fragment:
 its operands must both be `signal` nodes. Other forms remain a named error,
 rather than evaluating an invented expression language.
 -/
-def SvaBool.evalChecked (trace : List SvState) (index : Nat) : SvaBool → Except String Bool
+/-! SVA's sampled boolean conversion is 4-state until the assertion result is
+observed: an unknown expression is converted to false at the property boundary
+(IEEE 1800-2023 §16.6).  Keeping the intermediate `Logic` value is essential
+for `!x`, `$past`, and the sampled edge functions; converting each leaf to
+`Bool` would turn `!x` into a false positive. -/
+
+def boolLogic (value : LVec) : Logic :=
+  if value.condTrue then .l1 else if value.isKnownZero then .l0 else .lx
+
+def exprAt (trace : List SvState) (index : Nat) (value : Expr2) :
+    Except String (Option LVec) :=
+  match trace[index]? with
+  | none => .ok none
+  | some state =>
+      match evalPure2 state value with
+      | .ok v => .ok (some v)
+      | .timeout => .error "SVA: expression evaluation timed out"
+      | .unsupported msg => .error s!"SVA: {msg}"
+
+def signalStable (trace : List SvState) (index : Nat) (name : String) : Except String Bool :=
+  if index == 0 then .ok false
+  else return caseEqual (← signalAt trace (index - 1) name) (← signalAt trace index name)
+
+def exprStable (trace : List SvState) (index : Nat) (value : Expr2) : Except String Bool :=
+  if index == 0 then .ok false
+  else return caseEqual (← exprAt trace (index - 1) value) (← exprAt trace index value)
+
+def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except String (Option Logic)
   | .caseEq (.signal left) (.signal right) =>
-      return caseEqual (← signalAt trace index left) (← signalAt trace index right)
+      return some (if caseEqual (← signalAt trace index left) (← signalAt trace index right)
+        then .l1 else .l0)
   | .caseEq _ _ => .error "SVA: case equality currently requires signal operands"
-  | .lit value => .ok value
-  | .signal name => boolValue <$> signalAt trace index name
-  | .expr value => do
-      match (← exprLogicAt trace index value) with
-      | some .l1 => .ok true
-      | some .l0 => .ok false
-      | some .lx | some .lz =>
-          .error "SVA: boolean expression evaluated to unknown; require a known sampled decision"
-      | none => .ok false
-  | .not (.signal name) => do
-      match (← logicAt trace index name) with
-      | some .l0 => .ok true
-      | some .l1 => .ok false
-      | some .lx | some .lz =>
-          .error "SVA: negation operand evaluated to unknown; require a known sampled decision"
-      | none => .ok false
-  | .not arg => return !(← arg.evalChecked trace index)
-  | .and left right => return (← left.evalChecked trace index) && (← right.evalChecked trace index)
-  | .or left right => return (← left.evalChecked trace index) || (← right.evalChecked trace index)
+  | .lit value => .ok (some (if value then .l1 else .l0))
+  | .signal name => return (← signalAt trace index name).map boolLogic
+  | .expr value => return (← exprAt trace index value).map boolLogic
+  | .not arg => return (← arg.evalLogic trace index).map (fun v => Logic.not v)
+  | .and left right => do
+      let l ← left.evalLogic trace index
+      let r ← right.evalLogic trace index
+      return match l, r with
+      | some a, some b => some (Logic.and a b)
+      | _, _ => none
+  | .or left right => do
+      let l ← left.evalLogic trace index
+      let r ← right.evalLogic trace index
+      return match l, r with
+      | some a, some b => some (Logic.or a b)
+      | _, _ => none
   | .past cycles arg =>
-      if cycles ≤ index then arg.evalChecked trace (index - cycles)
-      else .error "SVA: $past reads the default unknown sampled value"
-  | .rose name => edgeValue svaRose trace index name
-  | .fell name => edgeValue svaFell trace index name
-  | .roseExpr value => edgeExprValue svaRose trace index value
-  | .fellExpr value => edgeExprValue svaFell trace index value
-  | .stableExpr value =>
-      if index == 0 then
-        .error "SVA: $stable reads the default unknown sampled value"
-      else do
-        let previous ← exprLogicAt trace (index - 1) value
-        let current ← exprLogicAt trace index value
-        match previous, current with
-        | some old, some new =>
-            if old.isKnown && new.isKnown then .ok (old == new)
-            else .error "SVA: $stable reads an unknown sampled value"
-        | _, _ => .ok false
-  | .stable name =>
-      if index == 0 then .ok false
-      else do
-        let previous ← signalAt trace (index - 1) name
-        let current ← signalAt trace index name
-        return caseEqual previous current
+      if cycles ≤ index then arg.evalLogic trace (index - cycles) else .ok (some .lx)
+  | .rose name => do
+      if index == 0 then return some .l0
+      let hit ← edgeValue svaRose trace index name
+      return some (if hit then .l1 else .l0)
+  | .fell name => do
+      if index == 0 then return some .l0
+      let hit ← edgeValue svaFell trace index name
+      return some (if hit then .l1 else .l0)
+  | .roseExpr value => do
+      if index == 0 then return some .l0
+      let hit ← edgeExprValue svaRose trace index value
+      return some (if hit then .l1 else .l0)
+  | .fellExpr value => do
+      if index == 0 then return some .l0
+      let hit ← edgeExprValue svaFell trace index value
+      return some (if hit then .l1 else .l0)
+  | .stableExpr value => do
+      let hit ← exprStable trace index value
+      return some (if hit then .l1 else .l0)
+  | .stable name => do
+      let hit ← signalStable trace index name
+      return some (if hit then .l1 else .l0)
+
+/-- Apply §16.6's x/z-as-false conversion once, at the assertion boundary. -/
+def SvaBool.evalChecked (trace : List SvState) (index : Nat) (value : SvaBool) :
+    Except String Bool := do
+  return match ← value.evalLogic trace index with
+  | some .l1 => true
+  | _ => false
 
 /-! ## Finite sequence and property evaluation -/
 
@@ -318,22 +350,19 @@ private def svaCover : SvaCheck :=
     property := .always (.range 0 1 (.atom (.rose "a"))) }
 
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption == some true
-#guard (SvaCheck.evalRegion svaTrace svaPast).toOption.isNone
+#guard (SvaCheck.evalRegion svaTrace svaPast).toOption == some true
 #guard (SvaCheck.evalRegion svaTrace svaCover).toOption == some true
-#guard match SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a")) with
-  | .error _ => true
-  | .ok _ => false
-#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a"))).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .lx .l0, svaState .l0 .l1 .l0] 1 (.rose "a")).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .lx .l0, svaState .l0 .l0 .l0] 1 (.fell "a")).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .l0 .l0, svaState .l0 .l1 .l0] 1 (.rose "a")).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .l0 .l0, svaState .l0 .lx .l0] 1 (.rose "a")).toOption == some false
 #guard (SvaBool.evalChecked [svaState .l0 .l1 .l0, svaState .l0 .lx .l0] 1 (.fell "a")).toOption == some false
-#guard match SvaBool.evalChecked [svaState .l0 .l1 .l0] 0
-  (.past 1 (.expr (.ident "a"))) with
-  | .error _ => true
-  | .ok _ => false
-#guard match SvaBool.evalChecked [svaState .l0 .lx .l0] 0
-  (.stableExpr (.ident "a")) with
-  | .error _ => true
-  | .ok _ => false
+#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0
+  (.past 1 (.expr (.ident "a")))).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .lx .l0] 0
+  (.stableExpr (.ident "a"))).toOption == some false
 #guard (SvaSeq.matches [svaState .l1 .l1 .l0] 0 (.delay 1 (.atom (.signal "a")))).toOption == some false
 #guard (SvaCheck.evalRegion svaTrace svaImplication).toOption ==
   (SvaCheck.evalRegion svaTraceFinalChanged svaImplication).toOption

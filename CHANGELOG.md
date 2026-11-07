@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for scalar structured overloaded-operator declaration
+  kind evidence; frontend declaration kinds remain string-typed.
+
 - Added a recorded refusal for scalar structured ordinary-call declaration kind
   evidence; frontend declaration kinds remain string-typed.
 

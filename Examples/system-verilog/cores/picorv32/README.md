@@ -129,7 +129,9 @@ row's `toRetirement?` is the corresponding `addiRetirement`.  The concrete
 reset-state witness [`rvfi_addi_boundary.lean`](rvfi_addi_boundary.lean)
 applies this predicate to PicoRV32's measured `addi x1, x0, 5` row and also
 checks x0 and memory preservation.  It remains a boundary certificate for the
-measured stream; the symbolic RTL proof still waits on the generic loader wall.
+measured stream; the same witness now derives the exact `isaStepMemWith` result
+and the `rvMachineWith` commit from the raw predicate, while the symbolic RTL
+proof still waits on the generic loader wall.
 
 ## Finite ISA trace witness
 

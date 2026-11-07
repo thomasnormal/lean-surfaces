@@ -142,6 +142,9 @@ the artifact-local handle parser validates object and string forms uniformly.
 A structured ordinary-call handle whose `id` is Boolean is also refused; the
 artifact-local identity remains string-typed and is never scalar-coerced.
 
+A structured ordinary-call handle whose `id` is null is also refused; a
+frontend handle must carry a string identity.
+
 A scalar ordinary-call `referencedDecl` value is also refused; declaration
 identity is never coerced from a number or Boolean.
 

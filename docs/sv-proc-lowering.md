@@ -134,15 +134,15 @@ one, exactly as the same body of an `always_comb`).
 |---|---|
 | R1 | no edge term and no `iff` in the event control; the body is `Block`/`If`/`Case`/blocking assignments only (a nonblocking assignment, a delay, a system task, a nested event control is refused) |
 | R2 | an explicit list names every signal the body reads, as a plain signal (a select or an expression in the list is refused); a signal that a COMPLETE earlier assignment of the body defines is not an input and need not be listed. The simulators wake on the list, Yosys synthesizes the function: a list that misses a read is a tools split |
-| R3 | the body reads at least one signal it does not write, and every such signal is 4-state, integral and a module signal: an `@*` block does not run at time zero, so a block whose inputs are 2-state (driven to the initial value: no event) or that reads nothing would leave its targets x in a simulator while the model computes them |
+| R3 | the body reads at least one signal it does not write, and every such signal is 4-state, integral and a module signal: an `@*` block does not run at time zero, so a block whose inputs are 2-state (driven to the initial value: no event), reads nothing, or has a continuous time-zero driver would leave its targets x in a simulator while the model computes them; the continuous-driver case is now a named refusal until the active-region ordering is modelled |
 | R4 | a called function reads no module signal it does not receive as an argument (Verilog-2001 `@*` does not wake on those reads, `always_comb` does); decided on slang's tree, transitively through the called functions |
 | R5 | every target is assigned on every path (Yosys `proc` infers a latch SILENTLY for `@*`, where `always_comb` is an error), and no target, or window of one, is read before a complete assignment defines it. Coverage is by bit window for a target of literal width whose range is `[W-1:0]` (the windows an unrolled loop leaves), by whole assignment otherwise; an `if` covers what both arms cover, a `case` only with a `default` |
 | R6 | no other process writes a target (slang's `MultipleAlwaysAssigns` does not fire for `@*`: slang's driver table is asked, `AnalysisManager.getDrivers`) and no target has a declaration initializer |
 
 Recorded over-refusals: a `case` that covers every value without a `default`, a read of a partly written target through a non-literal
-index, a target written in two processes on disjoint bits. Recorded residue (a claim not made): an input that is driven only at time
-zero and never changes again (a constant `assign`) is a time-zero race between the driver and the block in the simulators; every
-row's stimulus is applied at time 0 of the testbench, which is where the Xcelium pin observes it.
+index, a target written in two processes on disjoint bits. The former time-zero residue is now covered by R3: a continuous driver
+feeding an `@*` input produces `TimedStatement:ImplicitEventControl`/`EventListControl` with a named time-zero-driver explanation,
+so the model no longer selects one active-region ordering.
 
 Rows: `proc_star` (implicit, an explicit list, a single-event list, a `case` with a default, a temporary written first, a ripple chain
 through the windows an unrolled loop wrote) and `proc_star_param_n3/n4/n8` (whole assignments at every width).

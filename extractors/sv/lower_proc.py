@@ -58,6 +58,8 @@ def compound_assignment(ex, sm, expression, span_node=None):
     if ex.BINARY_OPS.get(expression.op) not in _COMPOUND_OPS:
         return None
     lhs = expression.left
+    if getattr(ex, "_sym_runtime_unpacked_lhs", lambda _: False)(lhs):
+        return None
     references = []
     ex._visit_selected_expression(
         expression.right,
@@ -715,6 +717,17 @@ def _star_rules(ex, sm, m, converted, listed, form):
         if not info.fourstate:
             return ("R3: `%s` is a 2-state signal: driven to its initial value it produces no event, so an `@*` "
                     "block would not run at time zero (always_comb does)" % name)
+        # §9.2.2.2.2 does not run an `always @*` body at time zero.  A
+        # signal whose only source is a continuous driver can therefore race:
+        # the driver and the level-sensitive block are both scheduled at
+        # time zero, and the block may miss the one transition entirely.
+        # Keep this source-shaped boundary loud until the event scheduler
+        # models that initial active-region ordering.
+        for driver in _drivers(ex, info.symbol):
+            owner = driver.containingSymbol
+            if type(owner).__name__ == "ContinuousAssignSymbol":
+                return ("R3: `%s` has a continuous time-zero driver; `always @*` does not run at time zero "
+                        "and its first wake-up is scheduler-dependent (always_comb does)" % name)
     # R2
     if form == "list":
         for name in star.ext:

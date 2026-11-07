@@ -5194,3 +5194,28 @@ no `sorryAx` or new axiom was introduced.  No RTL, loader, extractor, or
 wire facts at this boundary, so a loaded-core invariant cannot state the same
 well-formedness obligation twice.  The generated-member support remains with
 `ls-sv`; the next item is another owned refinement milestone.
+
+## 2026-11-07-ls-sv2-312 — certify a finite indexed RVFI cycle witness
+
+The inbox and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item adds only a
+finite core-facing consumer of the owned indexed boundary.
+
+Added `pinnedAddiCycleMachine`, `pinnedAddiCycleRel`, and
+`pinned_addi_cycle_refines` to the PicoRV32 RV32I boundary witness.  The
+one-bit machine emits the measured ADDI RVFI row on its first cycle and an
+explicit invalid bubble after that.  The proof discharges the generic
+`rvfiCycleStepRefines_of_rv32i_memory` obligation with the indexed
+`Rv32iBoundary` witness, its threaded ADDI post-state, and relation stuttering
+on the bubble; the finite machine is a cycle-boundary witness, not a symbolic
+claim about the blocked PicoRV32 RTL.
+
+**MEASURED:** the focused PicoRV32 boundary build passes under Lean 4.35.0;
+the new theorem reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint, with no `sorryAx` or new
+axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** retain invalid RVFI cycles as explicit ISA stutters and
+make the first concrete consumer use the indexed family directly.  The
+symbolic core invariant remains parked at the upstream generated-member and
+unpacked-memory refusals.

@@ -19,6 +19,7 @@ open Examples.«system-verilog».cores.picorv32.rvfi_lw_boundary
 open Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary
 open Examples.«system-verilog».cores.picorv32.rvfi_proof
 open Examples.«system-verilog».cores.picorv32.rvfi_sw_boundary
+open Examples.«system-verilog».cores.picorv32.trace_proof
 
 theorem pinned_addi_unified :
     Rv32iBoundary (ArchState.init 0) addiInput addi1
@@ -98,11 +99,58 @@ theorem pinned_unified_machine_commits :
     pinned_load_unified.rvMemoryMachineWith cv32e40pProfile,
     pinned_addi2_unified.rvMemoryMachineWith cv32e40pProfile⟩
 
+/-! ## A finite core-facing cycle obligation -/
+
+/-- A one-bit finite machine that emits the measured ADDI row once and then
+stutters.  The input admission predicate below pins the measured parcel; the
+machine shape is only a concrete consumer of the generic cycle constructor,
+not a model of PicoRV32's blocked RTL. -/
+def pinnedAddiCycleMachine : RvfiCycleMachine Bool where
+  init := false
+  step done _ :=
+    if done then (true, bubbleObservation) else (true, addi1)
+
+def pinnedAddiCycleRel (done : Bool) (state : RvMemoryState) : Prop :=
+  if done then
+    state =
+      { arch := aluNext (ArchState.init 0) .add 1 (.reg 0) (.imm 5),
+        memory := addiInput.memory }
+  else state = { arch := ArchState.init 0, memory := addiInput.memory }
+
+def pinnedAddiCycleAdmit (input : Input) : Prop := input = addiInput
+
+theorem pinned_addi_cycle_refines :
+    RvfiCycleStepRefines pinnedAddiCycleMachine
+      (rvMemoryMachineWith cv32e40pProfile)
+      pinnedAddiCycleRel pinnedAddiCycleAdmit := by
+  apply rvfiCycleStepRefines_of_rv32i_memory cv32e40pProfile
+    pinnedAddiCycleMachine pinnedAddiCycleRel pinnedAddiCycleAdmit
+  · rfl
+  · intro state memoryState input hrel hadmit
+    cases state with
+    | false =>
+        have hinput : input = addiInput := hadmit
+        subst input
+        have hmem : memoryState =
+            { arch := ArchState.init 0, memory := addiInput.memory } := by
+          simpa [pinnedAddiCycleRel] using hrel
+        subst memoryState
+        simp only [pinnedAddiCycleMachine]
+        refine ⟨
+          { arch := aluNext (ArchState.init 0) .add 1 (.reg 0) (.imm 5),
+            memory := addiInput.memory },
+          aluRetirement (ArchState.init 0) addiInput .add 1 (.reg 0) (.imm 5),
+          by simp, pinned_addi_unified, ?_⟩
+        simp [pinnedAddiCycleRel]
+    | true =>
+        simpa [pinnedAddiCycleMachine, bubbleObservation] using hrel
+
 #print axioms pinned_addi_unified
 #print axioms pinned_store_unified
 #print axioms pinned_load_unified
 #print axioms pinned_addi2_unified
 #print axioms pinned_unified_boundary_window
 #print axioms pinned_unified_machine_commits
+#print axioms pinned_addi_cycle_refines
 
 end Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary

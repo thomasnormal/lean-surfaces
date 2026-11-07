@@ -3913,3 +3913,22 @@ certificate.
 linked through the existing `threadRvInputs` contract.  This gives the future
 loaded-core invariant one window-level state/trace target without inventing a
 second memory model or claiming symbolic RTL refinement.
+
+## 2026-11-07-ls-sv2-256 — bridge raw ADDI rows into the stateful machine
+
+The inboxes were reread before this item.  The owner lane's generated-member
+memory-route refusal is unchanged, so this item remains in the owned RVFI and
+stateful-memory contracts.
+
+Added `RvfiObservation.addiBoundary_rvMemoryMachineWith` to the raw ADDI
+predicate.  It consumes the same fetched/decode/interrupt-free facts as the
+existing stateless bridge, applies the exact profile-parametric ADDI step to
+`{ arch := s, memory := input.memory }`, and proves that the returned memory
+is unchanged while the architectural state and retirement are `addiNext` and
+`addiRetirement`.  The PicoRV32 witness exercises the theorem both at reset
+and for the measured `ADDI x3, x2, 1` row after the ADDI/SW/LW prefix.
+
+**DECIDED:** keep the raw RVFI predicate as the sole premise for both the
+stateless and stateful ADDI bridges.  A future loaded-core invariant can now
+consume a row while retaining its memory relation, with no duplicate semantic
+step or hidden memory replacement.

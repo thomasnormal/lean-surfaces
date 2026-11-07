@@ -88,6 +88,16 @@ theorem pinned_addi_machine_commit :
     cv32e40pProfile addi1 (ArchState.init 0) addiInput
       0x00500093 1 0 5 pinned_addi_boundary
 
+theorem pinned_addi_stateful_machine_commit :
+    (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := ArchState.init 0, memory := addiInput.memory } addiInput =
+      ({ arch := addiNext (ArchState.init 0) 1 0 5,
+          memory := addiInput.memory },
+        addiRetirement (ArchState.init 0) addiInput 1 0 5) := by
+  exact RvfiObservation.addiBoundary_rvMemoryMachineWith
+    cv32e40pProfile addi1 (ArchState.init 0) addiInput
+      0x00500093 1 0 5 pinned_addi_boundary
+
 theorem pinned_addi2_state :
     addi2State.pc = 12 ∧ addi2State.readReg 2 = 5 ∧
       addi2State.readReg 0 = 0 := by
@@ -108,6 +118,16 @@ theorem pinned_addi2_isa_step :
     cv32e40pProfile addi2Raw addi2State addi2Input
       0x00110193 3 2 1 pinned_addi2_boundary
 
+theorem pinned_addi2_stateful_machine_commit :
+    (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := addi2State, memory := addi2Input.memory } addi2Input =
+      ({ arch := addiNext addi2State 3 2 1,
+          memory := addi2Input.memory },
+        addiRetirement addi2State addi2Input 3 2 1) := by
+  exact RvfiObservation.addiBoundary_rvMemoryMachineWith
+    cv32e40pProfile addi2Raw addi2State addi2Input
+      0x00110193 3 2 1 pinned_addi2_boundary
+
 #guard addiInput.fetched = .word 0x00500093
 #guard addi1.toRetirement? == some
   (addiRetirement (ArchState.init 0) addiInput 1 0 5)
@@ -120,8 +140,10 @@ theorem pinned_addi2_isa_step :
 #print axioms pinned_addi_x0_preserved
 #print axioms pinned_addi_isa_step
 #print axioms pinned_addi_machine_commit
+#print axioms pinned_addi_stateful_machine_commit
 #print axioms pinned_addi2_state
 #print axioms pinned_addi2_boundary
 #print axioms pinned_addi2_isa_step
+#print axioms pinned_addi2_stateful_machine_commit
 
 end Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary

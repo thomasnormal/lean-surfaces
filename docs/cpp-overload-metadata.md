@@ -50,6 +50,9 @@ agree.
 A structured `ctor` object that omits `kind` is also refused; constructor
 metadata does not infer a missing evidence field from the declaration table.
 
+A structured `ctor` object whose `kind` is scalar is also refused; constructor
+declaration kind evidence must be frontend text.
+
 A structured constructor handle with malformed string `id` is also refused;
 the artifact-local handle parser validates object and string forms uniformly.
 

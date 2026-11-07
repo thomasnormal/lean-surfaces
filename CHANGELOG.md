@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for scalar structured constructor declaration kind
+  evidence; frontend declaration kinds remain string-typed.
+
 - Added a recorded refusal for numeric scalar-valued constructor `ctor` fields;
   constructor identity is never coerced from numeric JSON data.
 

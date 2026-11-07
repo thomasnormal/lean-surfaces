@@ -121,7 +121,9 @@ concretization choice.
 four-state destination receives a source concretization, while a two-state
 destination receives the unique `TwoStateBoundary` result. This is the next
 interface for wiring declaration conversion into E without changing the
-current evaluator.
+current evaluator. `typedResolution_decision_agrees` now connects that
+value-set boundary to `DecisionKnown`: a known condition has the same branch
+result in the abstract and resolved states.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

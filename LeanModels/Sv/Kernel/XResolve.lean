@@ -78,7 +78,7 @@ theorem twoStateBoundary_width {source result : LVec}
   simp [LVec.toTwoState, LVec.width]
 
 def TypedResolution (fourState : Bool) (source result : LVec) : Prop :=
-  if fourState then LVec.Resolves source result else TwoStateBoundary source result
+  if fourState then result ∈ LVec.concretizations source else TwoStateBoundary source result
 
 theorem typedResolution_twoState_unique {source result result' : LVec}
     (h : TypedResolution false source result)
@@ -168,6 +168,12 @@ theorem DecisionKnown.abstract {v : LVec} (h : DecisionKnown v)
     {w : LVec} (hw : w ∈ LVec.concretizations v) :
     LVec.condTrue v = LVec.condTrue w :=
   (h w w hw hw).1
+
+theorem typedResolution_decision_agrees {source result : LVec}
+    (hknown : DecisionKnown source)
+    (hres : TypedResolution true source result) :
+    LVec.condTrue source = LVec.condTrue result := by
+  exact hknown.abstract hres
 
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4

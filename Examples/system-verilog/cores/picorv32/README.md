@@ -659,6 +659,11 @@ and architectural state, and covers the concatenated cycle and program lists.
 The ALU input, state, and retirement fold append laws expose the same join for
 a later loaded-core invariant; this does not promote the finite PicoRV32
 witness or bypass its current loader walls.
+The stateful-machine bridges
+`rvMemoryMachineWith_alu_program_state_append` and
+`rvMemoryMachineWith_alu_program_trace_append` expose the same split directly:
+the first segment's threaded memory-machine state is the second segment's
+starting state.
 
 ## Zicsr boundary
 

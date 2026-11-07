@@ -178,3 +178,7 @@ prefixes while concatenating ALU programs.  The machine-aware
 first segment's next retirement order and receives its threaded core and
 architectural states.  The corresponding ALU input, state, and retirement
 fold append laws expose the same join for a segmented loaded-core proof.
+The stateful-machine bridges `rvMemoryMachineWith_alu_program_state_append`
+and `rvMemoryMachineWith_alu_program_trace_append` expose the corresponding
+`machineStateAfter` and retirement-trace splits directly, with the first
+segment's threaded state feeding the second.

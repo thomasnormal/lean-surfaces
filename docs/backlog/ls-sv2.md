@@ -5244,3 +5244,26 @@ axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
 before claiming the finite strict witness refines an ISA trace.  Keep the
 finite endpoint separate from the future symbolic core invariant, which is
 still parked at the upstream generated-member and unpacked-memory refusals.
+
+## 2026-11-07-ls-sv2-314 — retain the finite RVFI post-window relation
+
+The inbox and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item projects the
+finite trace result together with its carried state relation.
+
+Added `pinned_addi_cycle_normalized_refines`.  Applying the generic strict
+`rvfiCycleStepRefines_normalized` theorem to the two-cycle ADDI window now
+returns both the normalized retirement/ISA-trace equality and the relation
+between the RVFI machine's post-window state and the stateful ISA machine's
+post-window state.  The relation records the expected ADDI architectural
+state after the bubble has stuttered.
+
+**MEASURED:** the focused PicoRV32 boundary build passes under Lean 4.35.0;
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint, with no `sorryAx` or new
+axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** carry the post-window relation alongside every finite
+trace claim, so a later core invariant can resume from the exact state rather
+than only from an output list.  Keep the symbolic invariant parked at the
+upstream generated-member and unpacked-memory refusals.

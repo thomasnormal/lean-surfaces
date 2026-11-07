@@ -172,6 +172,28 @@ theorem pinned_addi_cycle_trace_refines :
       simpa [pinnedAddiCycleInputs, pinnedAddiCycleAdmit] using hinput)
     pinned_addi_cycle_observations_normalize
 
+theorem pinned_addi_cycle_normalized_refines :
+    (pinnedAddiCycleRetirements =
+      trace (rvMemoryMachineWith cv32e40pProfile)
+        (rvMemoryMachineWith cv32e40pProfile).init
+        (retireInputs pinnedAddiCycleMachine.toCycleMachine
+          pinnedAddiCycleMachine.init pinnedAddiCycleInputs)) ∧
+    pinnedAddiCycleRel
+      (rvfiStateAfter pinnedAddiCycleMachine
+        pinnedAddiCycleMachine.init pinnedAddiCycleInputs)
+      (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+        (rvMemoryMachineWith cv32e40pProfile).init
+        (retireInputs pinnedAddiCycleMachine.toCycleMachine
+          pinnedAddiCycleMachine.init pinnedAddiCycleInputs)) := by
+  exact rvfiCycleStepRefines_normalized
+    pinned_addi_cycle_refines pinnedAddiCycleMachine.init
+    (rvMemoryMachineWith cv32e40pProfile).init pinnedAddiCycleInputs
+    (by rfl)
+    (by
+      intro input hinput
+      simpa [pinnedAddiCycleInputs, pinnedAddiCycleAdmit] using hinput)
+    pinned_addi_cycle_observations_normalize
+
 #print axioms pinned_addi_unified
 #print axioms pinned_store_unified
 #print axioms pinned_load_unified
@@ -181,5 +203,6 @@ theorem pinned_addi_cycle_trace_refines :
 #print axioms pinned_addi_cycle_refines
 #print axioms pinned_addi_cycle_observations_normalize
 #print axioms pinned_addi_cycle_trace_refines
+#print axioms pinned_addi_cycle_normalized_refines
 
 end Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary

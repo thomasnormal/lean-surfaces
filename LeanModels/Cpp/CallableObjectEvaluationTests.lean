@@ -40493,4 +40493,22 @@ def callableSharedTypeAgreementWitness : Bool :=
 
 #guard callableSharedTypeAgreementWitness
 
+def callableObjectCallRefusalCauseWitness : Except String Unit :=
+  let callee : CallableCallee := {
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := .integer 1, sourceType := intType, type := intType}}
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := .call callee [], sourceType := intType, type := intType}}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .error .unsupportedCall => .error "unsupportedCall"
+  | _ => .ok ()
+
+#guard callableObjectCallRefusalCauseWitness matches .error _
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

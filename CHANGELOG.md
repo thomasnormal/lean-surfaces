@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Named the object evaluator's direct-call refusal `unsupportedCall` and added
+  a differential refusal witness with a dedicated harness renderer.
+
 - Centralized integral type extraction in `ScalarArithmetic` for both callable
   evaluators and added a builtin/qualified/non-integral witness.
 

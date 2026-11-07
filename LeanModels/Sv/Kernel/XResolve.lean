@@ -60,6 +60,10 @@ choices. -/
 def TwoStateBoundary (source result : LVec) : Prop :=
   result = source.toTwoState
 
+/-- The typed value-set boundary used by E. Four-state destinations retain a
+source concretization; two-state destinations use the deterministic §6.11
+conversion. The destination's `fourState` bit is passed explicitly here so
+this relation stays independent of the AST and declaration records. -/
 theorem twoStateBoundary_total (source : LVec) :
     TwoStateBoundary source source.toTwoState := rfl
 
@@ -72,6 +76,18 @@ theorem twoStateBoundary_width {source result : LVec}
     (h : TwoStateBoundary source result) : result.width = source.width := by
   cases h
   simp [LVec.toTwoState, LVec.width]
+
+def TypedResolution (fourState : Bool) (source result : LVec) : Prop :=
+  if fourState then LVec.Resolves source result else TwoStateBoundary source result
+
+theorem typedResolution_twoState_unique {source result result' : LVec}
+    (h : TypedResolution false source result)
+    (h' : TypedResolution false source result') : result = result' := by
+  exact twoStateBoundary_unique h h'
+
+theorem typedResolution_twoState_total (source : LVec) :
+    TypedResolution false source source.toTwoState := by
+  exact twoStateBoundary_total source
 
 /-- A decision is known when every correlated concretization gives the same
 boolean result. This is deliberately weaker than requiring every source bit

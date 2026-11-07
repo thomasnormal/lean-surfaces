@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1174 entries across 18 lanes.** Regenerate with
+**1175 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -59,6 +59,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-328` |  | tie the symbolic ALU certificate to cycle inputs | ls-sv2 |
 | `2026-11-07-ls-sv2-327` |  | add a symbolic RV32I ALU program certificate | ls-sv2 |
 | `2026-11-07-ls-sv2-326` |  | expose symbolic ADDI fold append laws | ls-sv2 |
 | `2026-11-07-ls-sv2-325` |  | compose symbolic ADDI cycle certificates | ls-sv2 |

@@ -276,6 +276,130 @@ theorem AluRvfiTrace.trace_refines
         (aluProgramInputs memory program)) := by
       rw [rvMemoryMachineWith_alu_program_trace]
 
+/-! ## Input-aware cycle certificate -/
+
+/-- The ALU invariant tied to an actual packed-RVFI cycle machine.  Bubble
+cycles may carry any input; a retiring cycle must present the exact ALU input
+whose memory view it reports. -/
+inductive AluRvfiCycleTrace {State : Type}
+    (machine : RvfiCycleMachine State) (memory : Memory) :
+    Nat → State → ArchState → List Input → List AluInstruction → Prop where
+  | nil (start : Nat) (coreState : State) (state : ArchState) :
+      AluRvfiCycleTrace machine memory start coreState state [] []
+  | bubble {start : Nat} {coreState coreState' : State}
+      {state : ArchState} {cycleInput : Input} {cycles : List Input}
+      {program : List AluInstruction} {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hvalid : observation.valid = false)
+      (tail : AluRvfiCycleTrace machine memory start coreState' state
+        cycles program) :
+      AluRvfiCycleTrace machine memory start coreState state
+        (cycleInput :: cycles) program
+  | retire {start : Nat} {coreState coreState' : State}
+      {state : ArchState} {cycleInput : Input} {cycles : List Input}
+      {instruction : AluInstruction} {program : List AluInstruction}
+      {observation : RvfiObservation}
+      (hstep : machine.step coreState cycleInput = (coreState', observation))
+      (hinput : cycleInput = aluProgramInput memory instruction)
+      (horder : observation.order = start)
+      (boundary :
+        Rv32iBoundary state (aluProgramInput memory instruction) observation
+          { arch := aluNext state instruction.op instruction.rd instruction.src1
+              instruction.src2,
+            memory := memory }
+          (aluRetirement state (aluProgramInput memory instruction)
+            instruction.op instruction.rd instruction.src1 instruction.src2))
+      (tail : AluRvfiCycleTrace machine memory (start + 1) coreState'
+        (aluNext state instruction.op instruction.rd instruction.src1
+          instruction.src2)
+        cycles program) :
+      AluRvfiCycleTrace machine memory start coreState state
+        (cycleInput :: cycles) (instruction :: program)
+
+/-- An input-aware ALU certificate normalizes the observations emitted by its
+actual cycle machine to the symbolic program's retirement stream. -/
+theorem AluRvfiCycleTrace.normalize
+    {State : Type} {machine : RvfiCycleMachine State} {memory : Memory}
+    {start : Nat} {coreState : State} {state : ArchState}
+    {cycles : List Input} {program : List AluInstruction}
+    (certificate : AluRvfiCycleTrace machine memory start coreState state
+      cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (aluProgramRetirements memory state program) := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | bubble hstep hvalid tail ih =>
+      simp only [rvfiObservations, hstep]
+      simp [normalizeRvfiTrace?, hvalid, ih]
+  | retire hstep hinput horder boundary tail ih =>
+      simp only [rvfiObservations, hstep]
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      simp [normalizeRvfiTrace?, aluProgramRetirements, hspec.1,
+        horder, hretirement, ih]
+
+/-- The cycle inputs retained by an input-aware ALU certificate are exactly
+the symbolic program inputs; bubbles are removed by the optional adapter. -/
+theorem AluRvfiCycleTrace.retireInputs_eq
+    {State : Type} {machine : RvfiCycleMachine State} {memory : Memory}
+    {start : Nat} {coreState : State} {state : ArchState}
+    {cycles : List Input} {program : List AluInstruction}
+    (certificate : AluRvfiCycleTrace machine memory start coreState state
+      cycles program) :
+    retireInputs machine.toCycleMachine coreState cycles =
+      aluProgramInputs memory program := by
+  induction certificate with
+  | nil start coreState state => rfl
+  | @bubble start coreState coreState' state cycleInput cycles program
+      observation hstep hvalid tail ih =>
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', none) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep,
+          RvfiObservation.toRetirement?, hvalid]
+      simp only [retireInputs, hstep']
+      exact ih
+  | @retire start coreState coreState' state cycleInput cycles
+      instruction program observation hstep hinput horder boundary tail ih =>
+      have hspec := boundary.observation_spec
+      have hretirement := boundary.toRetirement?_eq_some
+      have hstep' :
+          machine.toCycleMachine.step coreState cycleInput =
+            (coreState', some (aluRetirement state
+              (aluProgramInput memory instruction)
+              instruction.op instruction.rd instruction.src1 instruction.src2)) := by
+        simp [RvfiCycleMachine.toCycleMachine, hstep, hretirement]
+      simp only [retireInputs, hstep']
+      rw [hinput]
+      simpa [aluProgramInputs] using ih
+
+/-- Direct core-stream theorem: an input-aware ALU certificate relates the
+normalized packed observations to the stateful ISA trace on the machine's own
+retiring inputs. -/
+theorem AluRvfiCycleTrace.trace_refines
+    {State : Type} (profile : PlatformProfile)
+    {machine : RvfiCycleMachine State} {memory : Memory}
+    {start : Nat} {coreState : State} {state : ArchState}
+    {cycles : List Input} {program : List AluInstruction}
+    (certificate : AluRvfiCycleTrace machine memory start coreState state
+      cycles program) :
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+      some (trace (rvMemoryMachineWith profile)
+        { arch := state, memory := memory }
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+  calc
+    normalizeRvfiTrace? start (rvfiObservations machine coreState cycles) =
+        some (aluProgramRetirements memory state program) :=
+      certificate.normalize
+    _ = some (trace (rvMemoryMachineWith profile)
+        { arch := state, memory := memory }
+        (aluProgramInputs memory program)) := by
+      rw [rvMemoryMachineWith_alu_program_trace]
+    _ = some (trace (rvMemoryMachineWith profile)
+        { arch := state, memory := memory }
+        (retireInputs machine.toCycleMachine coreState cycles)) := by
+      rw [certificate.retireInputs_eq]
+
 #print axioms LeanModels.Refine.aluNext_preserves_x0
 #print axioms LeanModels.Refine.aluNext_preserves_WF
 #print axioms LeanModels.Refine.aluProgramState_preserves_WF
@@ -288,5 +412,8 @@ theorem AluRvfiTrace.trace_refines
 #print axioms LeanModels.Refine.AluRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.AluRvfiTrace.normalize
 #print axioms LeanModels.Refine.AluRvfiTrace.trace_refines
+#print axioms LeanModels.Refine.AluRvfiCycleTrace.normalize
+#print axioms LeanModels.Refine.AluRvfiCycleTrace.retireInputs_eq
+#print axioms LeanModels.Refine.AluRvfiCycleTrace.trace_refines
 
 end LeanModels.Refine

@@ -642,9 +642,13 @@ profile-parametric ISA machine.
 `AluRvfiTrace` accepts arbitrary invalid bubbles and requires an indexed
 `Rv32iBoundary.alu` witness for every retiring row, so its `normalize` and
 `trace_refines` theorems give the stateful ISA trace for any ALU program and
-bubble schedule.  The certificate is generic refinement infrastructure; the
-PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
-unsupported-member/net-z loader walls.
+bubble schedule.  `AluRvfiCycleTrace` ties the same certificate to an actual
+`RvfiCycleMachine`: bubble inputs remain arbitrary, while each retiring input
+is exactly the corresponding `aluProgramInput`; its `normalize`,
+`retireInputs_eq`, and `trace_refines` projections use the machine's own cycle
+stream.  The certificate is generic refinement infrastructure; the PicoRV32
+RTL remains parked at the existing unpacked `cpuregs` and unsupported-member/
+net-z loader walls.
 
 ## Zicsr boundary
 

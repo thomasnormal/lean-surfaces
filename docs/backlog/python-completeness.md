@@ -10254,3 +10254,20 @@ syntax therefore cannot become a lookup of a user-bound `list` name.
 
 DECIDED: keep list-comprehension syntax source-level and loud until native
 comprehension evaluation is implemented.
+
+## 2026-11-07-pycomplete-408 — recheck augmented-repeat semantics
+
+The augmented-repeat audit finding is already closed. The
+`lowerBoundaryAugRepeat` ingestion rewrite is absent; `AugAssign` reaches the
+existing in-place semantics, preserving alias-visible heap-list mutation and
+the `*=` operator's error path. The public boundary list case remains a loud
+frontier as documented.
+
+| Measurement | Result |
+|---|---|
+| List alias witness | `list_aug_repeat_script.py` MATCHES CPython 3.9.25 (`True [1, 2, 1, 2]`) |
+| Ingestion | no shape-specific augmented-repeat rewrite remains |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: keep ordinary `AugAssign` semantics and refuse only the already
+documented boundary mutation shape.

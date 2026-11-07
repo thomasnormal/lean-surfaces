@@ -352,6 +352,16 @@ left unconstrained because fences read and write no architectural register.
 `fenceNext` while preserving threaded byte memory, and keeps invalid rows as
 explicit ISA stutters.
 
+The generic memory boundary now covers every RV32I byte, halfword, and word
+load/store through `MemOp`.  Loads retain their signed or zero-extended result
+in the architectural writeback and RVFI read data, while stores retain their
+source-register data and exact width mask.  `memBoundary` connects those raw
+fields to the shared `memNext`/`memAfter` equations, and
+`rvfiCycleStepRefines_of_mem_memory` carries the corresponding load-preserve or
+store-update through the threaded byte-memory relation; invalid rows remain
+explicit ISA stutters.  The earlier `SW`/`LW` predicates remain as measured
+word-width specializations.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

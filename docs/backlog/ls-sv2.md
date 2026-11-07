@@ -3805,3 +3805,29 @@ profile-parametric `isaStepMemWith` result for that non-reset state.
 **DECIDED:** use the same raw-to-ISA predicate at reset and after a measured
 memory-affecting prefix; keep state threading in the architectural machine
 until the loaded PicoRV32 invariant can supply its own related state.
+
+## 2026-11-07-ls-sv2-251 — establish the RV32I SW memory boundary
+
+The inboxes were reread before this item.  The generated-member memory route
+is still blocked in the owner lane, so this item advances the owned ISA/RVFI
+contract needed for the measured PicoRV32 memory prefix.
+
+Added `LeanModels/Refine/Rv32iMem.lean` with the exact profile-parametric
+`SW` equations: the architectural state advances by four bytes without a
+register update, the effect is one word write at `rs1 + imm` carrying `rs2`,
+and `isaStepMemWith` applies that write through the byte-addressed
+`storeVal`.  Added `LeanModels/Refine/RvfiMem.lean` with
+`RvfiObservation.swBoundary`, which keeps the fetched decode, both source
+register reads, effective address, `wmask = 0b1111`, write data, no register
+write, and no trap alongside equality with `swRetirement`.
+
+Added `rvfi_sw_boundary.lean` for the measured `SW x1, 0x100(x0)` row after
+the first ADDI.  It computes the threaded state (`pc = 4`, `x1 = 5`, `x0 = 0`)
+and proves the raw predicate, exact `storeVal` transition, and generic
+`rvMachineWith` commit.  The theorem reports contain only the existing
+`propext`/`Quot.sound` boundary and no `sorryAx`.
+
+**DECIDED:** make the store boundary explicit before adding the load boundary;
+the future loaded-core invariant must establish these raw source and memory
+facts from PicoRV32's actual RVFI row.  No RTL, loader, or `LeanModels/Sv/**`
+file changed.

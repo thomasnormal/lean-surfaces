@@ -139,6 +139,13 @@ The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `x2 = 5`, and `x0 = 0`, and applies the same raw-to-ISA step bridge at that
 non-reset boundary.
 
+[`rvfi_sw_boundary.lean`](rvfi_sw_boundary.lean) applies the corresponding
+profile-parametric raw boundary to the measured `SW x1, 0x100(x0)` row.  Its
+`RvfiObservation.swBoundary` predicate checks both source reads, the word
+write mask and payload, the effective address, and the absence of a register
+write or trap.  The state-threaded witness starts after the first ADDI and
+derives the exact `storeVal` memory transition and `swRetirement` commit.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

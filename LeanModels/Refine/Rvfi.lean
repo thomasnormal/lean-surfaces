@@ -651,9 +651,26 @@ theorem cycleStepRefines_to_rvfiCycleStepRefines
     (fun state _ input _ _ hvalid => hwell state input hvalid)
 
 /-! With the raw well-formedness invariant in hand, the optional and strict
-cycle contracts are equivalent.  The invariant is retained as an explicit
-premise because the strict-to-optional direction alone does not establish it.
--/
+cycle contracts are equivalent.  The relation-aware form matches the
+invariant available in a loaded-core proof. -/
+theorem cycleStepRefines_iff_rvfiCycleStepRefines_of_rel
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (hwell : ∀ (state : State) (isaState : IsaState) (input : Input),
+      rel state isaState → admit input →
+      (machine.step state input).2.valid = true →
+      (machine.step state input).2.wellFormed) :
+    CycleStepRefines machine.toCycleMachine isa rel admit ↔
+      RvfiCycleStepRefines machine isa rel admit := by
+  constructor
+  · intro h
+    exact cycleStepRefines_to_rvfiCycleStepRefines_of_rel h hwell
+  · intro h
+    exact rvfiCycleStepRefines_toCycleStepRefines h
+
+/-! The global-row equivalence is a convenience specialization of the
+relation-aware statement. -/
 theorem cycleStepRefines_iff_rvfiCycleStepRefines
     {State IsaState : Type}
     {machine : RvfiCycleMachine State} {isa : Machine IsaState}
@@ -663,11 +680,8 @@ theorem cycleStepRefines_iff_rvfiCycleStepRefines
       (machine.step state input).2.wellFormed) :
     CycleStepRefines machine.toCycleMachine isa rel admit ↔
       RvfiCycleStepRefines machine isa rel admit := by
-  constructor
-  · intro h
-    exact cycleStepRefines_to_rvfiCycleStepRefines h hwell
-  · intro h
-    exact rvfiCycleStepRefines_toCycleStepRefines h
+  exact cycleStepRefines_iff_rvfiCycleStepRefines_of_rel
+    (fun state _ input _ _ hvalid => hwell state input hvalid)
 
 /-! The strict contract and the total raw-cycle case split are equivalent.
 This form lets a loaded-core proof work entirely with packed fields and defer
@@ -1361,6 +1375,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_step
 #print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_to_rvfiCycleStepRefines
+#print axioms LeanModels.Refine.cycleStepRefines_iff_rvfiCycleStepRefines_of_rel
 #print axioms LeanModels.Refine.cycleStepRefines_iff_rvfiCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_iff_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines

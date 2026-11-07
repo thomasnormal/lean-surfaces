@@ -4379,3 +4379,20 @@ file changed.
 
 **DECIDED:** use relation-aware wire invariants at the raw RVFI boundary, with
 the global premise retained only as a convenience specialization.
+
+## 2026-11-07-ls-sv2-281 — characterize optional and strict RVFI relation-aware
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_iff_rvfiCycleStepRefines_of_rel` to
+`LeanModels/Refine/Rvfi.lean`.  Under a well-formedness premise restricted to
+related core/ISA states and admitted inputs, the optional cycle contract and
+the strict packed RVFI contract are equivalent.  The existing global-row
+equivalence now delegates to this theorem, preserving its API while allowing
+loaded-core invariants to stay reachability-sensitive.  Malformed valid rows
+remain excluded from the bridge.  Updated the PicoRV32 README; no RTL,
+loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** make the relation-aware invariant the canonical equivalence
+boundary and retain the all-state form only as a convenience specialization.

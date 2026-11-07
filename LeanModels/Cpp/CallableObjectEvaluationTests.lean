@@ -40443,4 +40443,12 @@ def callableSharedSizeAgreementWitness : Bool :=
 
 #guard callableSharedSizeAgreementWitness
 
+def callableSharedAlignAgreementWitness : Bool :=
+  integralAlignValueOfEvidence .lp64 intType shortType matches .ok ⟨.signed 32, 2⟩ &&
+    integralAlignValueOfEvidence .lp64 intType (.qualified true false shortType)
+      matches .ok ⟨.signed 32, 2⟩ &&
+    integralAlignValueOfEvidence .lp64 intType (.record (handle "0x99")) matches .error _
+
+#guard callableSharedAlignAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

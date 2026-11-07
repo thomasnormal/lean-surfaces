@@ -11126,3 +11126,22 @@ fuel. The AST `ListComp` arm remains loud until `Obs`, `PayloadBlind`, and
 
 DECIDED: prove fuel monotonicity for these two helpers next, then thread the
 new hypotheses through `Obs.fuelMono` before enabling the AST arm.
+
+## 2026-11-07-pycomplete-455 — prove proof-side ListComp helper monotonicity
+
+`Obs.lean` now proves fuel monotonicity for both proof-side helpers. The filter
+walk uses the existing `fuelMono` expression projection at each test, and the
+element walk composes assignment reflexivity, filter monotonicity, element
+expression monotonicity, and its own lower-fuel induction. The main `fuelMono`
+conjunction and the AST arm remain unchanged; these are standalone transport
+lemmas ready to be threaded into that conjunction.
+
+| Measurement | Result |
+|---|---|
+| Proof target | `lake build LeanModels.Python.Obs` passes |
+| New lemmas | `evalListCompIfs_fuelMono`, `evalListCompStep_fuelMono` |
+| Semantic change | none; ListComp still refuses in the proof evaluator |
+
+DECIDED: item complete. Before the next item I will reread the inbox and add
+the two helper projections to `fuelMono`, then use them to replace the proof
+interpreter's ListComp refusal.

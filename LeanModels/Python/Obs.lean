@@ -2221,6 +2221,71 @@ theorem fuelMono (fuel : Nat) :
           (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
           fun st flow => ?_
         cases flow <;> exact Run.le_refl _
+
+/-! Fuel transport for the proof-side ListComp seam. These helpers sit after
+the main mutual theorem so they can use its existing `evalExpr` projection. -/
+
+theorem evalListCompIfs_fuelMono (fuel : Nat) :
+    ∀ (m : Module) (st : FrameState) (ifs : List Expr) (fuel' : Nat),
+      fuel ≤ fuel' →
+      evalListCompIfs m fuel st ifs ⊑ʳ evalListCompIfs m fuel' st ifs := by
+  induction fuel with
+  | zero =>
+      intro m st ifs fuel' _
+      left
+      simp [evalListCompIfs]
+  | succ fuel ih =>
+      intro m st ifs fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ fuel' =>
+          have hk : fuel ≤ fuel' := Nat.le_of_succ_le_succ hf
+          cases ifs with
+          | nil => exact Run.le_refl _
+          | cons test rest =>
+              simp only [evalListCompIfs]
+              refine Run.le_bind ((fuelMono fuel).1 m st test fuel' hk) ?_
+              intro st tv
+              refine Run.le_bind (Run.le_refl _) ?_
+              intro st keep
+              cases keep with
+              | false => exact Run.le_refl _
+              | true => exact ih m st rest fuel' hk
+
+theorem evalListCompStep_fuelMono (fuel : Nat) :
+    ∀ (m : Module) (st : FrameState) (saved : Env) (elt target : Expr)
+      (ifs : List Expr) (xs acc : List RVal) (fuel' : Nat),
+      fuel ≤ fuel' →
+      evalListCompStep m fuel st saved elt target ifs xs acc ⊑ʳ
+        evalListCompStep m fuel' st saved elt target ifs xs acc := by
+  induction fuel with
+  | zero =>
+      intro m st saved elt target ifs xs acc fuel' _
+      left
+      simp [evalListCompStep]
+  | succ fuel ih =>
+      intro m st saved elt target ifs xs acc fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ fuel' =>
+          have hk : fuel ≤ fuel' := Nat.le_of_succ_le_succ hf
+          cases xs with
+          | nil => exact Run.le_refl _
+          | cons x rest =>
+              simp only [evalListCompStep]
+              refine Run.le_bind (Run.le_refl _) ?_
+              intro st env
+              refine Run.le_bind
+                (evalListCompIfs_fuelMono fuel m { st with locals := env }
+                  ifs fuel' hk) ?_
+              intro st keep
+              cases keep with
+              | false => exact ih m st saved elt target ifs rest acc fuel' hk
+              | true =>
+                  refine Run.le_bind ((fuelMono fuel).1 m st elt fuel' hk) ?_
+                  intro st v
+                  exact ih m st saved elt target ifs rest (v :: acc) fuel' hk
+
 /-! ## Per-function corollaries (the `FuelMono` statement shape) -/
 
 private theorem mono_of_le {α : Type} {x y r : Res α}

@@ -947,7 +947,11 @@ The JAL/JALR certificate is likewise connected to the mixed surface by
 `JumpInstruction.toRv32i` and `JumpRvfiCycleTrace.toRv32i` in
 `LeanModels.Refine.RvfiJumpMixed`.  The adapter preserves jump decoder proofs,
 cycle inputs, bubbles, order tags, and indexed boundaries while using the
-existing mixed `.jump` constructor.
+existing mixed `.jump` constructor.  Its
+`rv32iCycleStepRefines_of_jump_memory` bridge accepts the memory-threaded JAL
+or JALR row invariant and explicit valid-row order, preserving the exact
+input, indexed boundary, post-state relation, and invalid-row stutter for the
+mixed per-cycle contract.
 
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an

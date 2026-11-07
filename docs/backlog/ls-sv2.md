@@ -6918,6 +6918,33 @@ surface as ADDI and upper-immediate instructions, retaining JALR's exact
 register-base and low-bit-clearing semantics.  PicoRV32 remains parked at the
 approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-372 — lift the jump invariant into the mixed step obligation
+
+The jump certificate now crosses into the mixed RV32I family, but a
+loaded-core invariant still needed a per-cycle bridge that retained whether a
+valid row was JAL or JALR and its explicit retirement order.
+
+**CHANGED:** Added `rv32iCycleStepRefines_of_jump_memory` to
+`LeanModels/Refine/RvfiJumpMixed.lean`.  From the memory-threaded jump
+valid-row/post-state obligation and a separate order equation for valid rows,
+it constructs the mixed per-cycle obligation.  The proof preserves the
+decoder-backed `JumpInstruction`, exact input and memory equations, indexed
+JAL/JALR boundary, post-state relation, and invalid-row ISA stutter.  Updated
+the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0; the new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check pass.  No semantics, RTL, loader,
+extractor, or finite captured-window theorem changed; no `sorryAx` or new
+axiom was introduced.
+
+**JUDGED / DECIDED:** An eventual JAL/JALR core invariant can now discharge
+the same mixed per-cycle obligation consumed by the all-prefix reset theorem,
+with memory threading and retirement order remaining explicit proof
+obligations.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

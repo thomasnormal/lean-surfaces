@@ -138,6 +138,78 @@ theorem JumpRvfiCycleTrace.toRv32i_trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
   exact certificate.toRv32i.trace_refines profile
 
+/-! ## Lifting a jump invariant to the mixed per-cycle obligation -/
+
+/-- An order-aware, memory-threaded jump invariant discharges the unified
+mixed RV32I cycle obligation.  The instruction witness retains its decoder
+proof and selects either the exact JAL or JALR boundary. -/
+theorem rv32iCycleStepRefines_of_jump_memory
+    {State : Type}
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ instruction : JumpInstruction,
+          input.memory = memoryState.memory ∧
+          observation.jumpBoundary memoryState.arch input instruction ∧
+          rel state'
+            { arch := JumpKind.next memoryState.arch instruction.kind,
+              memory := memoryState.memory }
+      else rel state' memoryState)
+    (horder : ∀ (start : Nat) (state : State)
+      (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (_, observation) := machine.step state input
+      if observation.valid then observation.order = start else True) :
+    Rv32iCycleStepRefines machine rel admit := by
+  intro start state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  have horderCase := horder start state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase horderCase ⊢
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ instruction : JumpInstruction,
+        input.memory = memoryState.memory ∧
+        observation.jumpBoundary memoryState.arch input instruction ∧
+        rel state'
+          { arch := JumpKind.next memoryState.arch instruction.kind,
+            memory := memoryState.memory } := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨instruction, hmem, hboundary, hrel'⟩
+    have horder' : observation.order = start := by
+      simpa [hv] using horderCase
+    have hinput : input = jumpProgramInput memoryState.memory instruction := by
+      have hinput' := RvfiObservation.jumpBoundary_input instruction hboundary
+      rw [hmem] at hinput'
+      exact hinput'
+    have hboundary' :
+        Rv32iBoundary memoryState.arch
+          input observation
+          (rv32iProgramStep memoryState instruction.toRv32i)
+          (rv32iProgramRetirement memoryState instruction.toRv32i) := by
+      rw [jump_toRv32i_step, jump_toRv32i_retirement]
+      rw [← hinput]
+      simpa [hmem] using
+        (RvfiObservation.jumpBoundary_rv32i instruction hboundary)
+    simp only [hv]
+    refine ⟨instruction.toRv32i, ?_, horder', hboundary', ?_⟩
+    · calc
+        input = jumpProgramInput memoryState.memory instruction := hinput
+        _ = rv32iProgramInput memoryState instruction.toRv32i :=
+          (jump_toRv32i_input memoryState instruction).symm
+    · rw [jump_toRv32i_step]
+      exact hrel'
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    simp only [hv]
+    exact hrel'
+
 #print axioms LeanModels.Refine.JumpInstruction.toRv32i
 #print axioms LeanModels.Refine.RvfiObservation.jumpBoundary
 #print axioms LeanModels.Refine.RvfiObservation.jumpBoundary_input
@@ -147,5 +219,6 @@ theorem JumpRvfiCycleTrace.toRv32i_trace_refines
 #print axioms LeanModels.Refine.jump_toRv32i_retirement
 #print axioms LeanModels.Refine.JumpRvfiCycleTrace.toRv32i
 #print axioms LeanModels.Refine.JumpRvfiCycleTrace.toRv32i_trace_refines
+#print axioms LeanModels.Refine.rv32iCycleStepRefines_of_jump_memory
 
 end LeanModels.Refine

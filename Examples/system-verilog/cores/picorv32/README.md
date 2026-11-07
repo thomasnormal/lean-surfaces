@@ -649,6 +649,9 @@ is exactly the corresponding `aluProgramInput`; its `normalize`,
 stream.  The certificate is generic refinement infrastructure; the PicoRV32
 RTL remains parked at the existing unpacked `cpuregs` and unsupported-member/
 net-z loader walls.
+`AluRvfiTrace.append` composes raw observation certificates at the next
+retirement order and folded architectural state, retaining arbitrary bubble
+prefixes while concatenating ALU programs.  The machine-aware
 `AluRvfiCycleTrace.append` composes two such certificates at the exact
 `rvfiStateAfter`/`aluProgramState` boundary.  The second segment starts at
 `start + firstProgram.length`, with the first segment's post-cycle core state

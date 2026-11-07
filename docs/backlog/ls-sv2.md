@@ -5729,3 +5729,32 @@ ALU stream while preserving the actual core state, architectural state, and
 retirement order at each join; no captured window is promoted to the
 theorem's domain.  PicoRV32 remains parked at the existing unpacked `cpuregs`
 and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-330 — compose raw symbolic ALU certificates
+
+The inbox and goal file were reread after item 329 was pushed.  The
+machine-aware ALU certificate now composes, but its raw observation-level
+counterpart still required a separate induction for segmented proofs.
+
+**CHANGED:** Added `AluRvfiTrace.append` to
+`LeanModels/Refine/RvfiAluProgram.lean`.  Given a first certificate and a
+second certificate whose order starts at `start + firstProgram.length` and
+whose architectural state is `aluProgramState state firstProgram`, the theorem
+constructs the certificate for concatenated observations and programs.  The
+proof preserves arbitrary invalid bubbles, the indexed ALU boundary at every
+retirement, the next-order index, and the folded architectural state.  Updated
+both core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL, loader,
+extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAluProgram.lean` passes and
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new
+axiom was introduced.  The umbrella refinement build, focused PicoRV32
+boundary compile, docs check, backlog-index check, and `git diff --check` are
+the validation gates for this item.
+
+**JUDGED / DECIDED:** A segmented loaded-core proof can now compose its raw
+ALU observation certificates before adding the machine-state association;
+arbitrary bubbles and retirement order remain explicit.  PicoRV32 remains
+parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
+walls.

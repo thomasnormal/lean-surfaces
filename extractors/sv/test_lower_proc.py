@@ -843,6 +843,16 @@ class NetsAsVariables(Base):
         y = [p for p in m["ports"] if p["name"] == "y"][0]
         self.assertEqual((y["dir"], y["net_as_variable"]), ("out", True))          # `output [3:0] y` is a net port
 
+    def test_retain_proc_rewrites_keeps_single_driver_net(self):
+        m = self.module(
+            "module t (input logic [3:0] a, b, output logic [3:0] y); "
+            "wire [3:0] w; assign w = a & b; assign y = w; endmodule",
+            retain_proc_rewrites=True)
+        w = self.decl(m, "w")
+        self.assertEqual(w["kind"], "Net")
+        self.assertTrue(w["net_rewrite_retained"])
+        self.assertNotIn("net_as_variable", w)
+
     def test_output_wire_and_scalar_and_implicit_nets(self):
         m = self.top("assign t1 = a[0]; assign y1 = t1;", ports="input [3:0] a, output wire y1")
         self.assertEqual(sv_kinds(m), [])

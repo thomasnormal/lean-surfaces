@@ -6574,3 +6574,8 @@ the defined sampling and NBA rules.
   `always @*`/event-list conversion to `AlwaysComb` is unchanged, and the
   retained node loads as a named event-list Unsupported boundary.
 
+- The retain mode also keeps a single-driver `wire` as a `Net` declaration
+  rather than applying N2's net-to-variable rewrite. The default one-driver
+  conversion remains unchanged and the retained net stays a loud semantic
+  boundary.
+

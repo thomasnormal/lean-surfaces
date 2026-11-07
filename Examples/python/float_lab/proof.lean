@@ -11,7 +11,7 @@ set_option maxRecDepth 8192
 set_option exponentiation.threshold 2048
 
 private theorem initial_world :
-    initWorld float_lab = (⟨#[], [], [], []⟩ : World) := by
+    initWorld float_lab = (⟨#[], [], [], [], 0⟩ : World) := by
   rfl
 
 private theorem floatCastArgsH_str (h : Heap) (s : String) :

@@ -7300,3 +7300,30 @@ captured-window theorem was edited; no oracle result is claimed.
 advance the closure, but public master is not green.  Hold the PicoRV32 R2
 re-probe until `Loop2`, signed proof-side cast/instantiation checks, and the
 SVA row are repaired and landed; do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-382 — recheck the settled cycle and signed repairs
+
+Item 382 reread both inboxes and the goal, then reran the owner closure
+sequentially after the local `CycleMachine` and signed proof edits settled.
+
+**MEASURED:** The owner’s local `CycleMachine` bridge builds and
+`rcycle_run2` reports only `[propext, Classical.choice, Quot.sound]`.  The
+signed `remainder` and `division` proof files now preserve the parser’s
+`.cast true` source shape and explicitly prove the current `T2:Cast` refusal;
+both build.  `ClockGuard0`, `SelfCheck`, `CombView`, `Comb2`, `Comb2Proc`,
+`CycleMachine`, signed `remainder`, signed `division`, and `ripple_add` all
+build.  Exactly two targets remain red: `Loop2.lean:885` fails to discharge the
+new `run2ClockGuard d = Res.ok ()` premise of `Terminates2.of_invariant`, with
+`Loop2.lean:1057` consequently reporting `sorryAx`; and the stale
+`sem2/sva_select/proof.lean:21` guard fails.  A standalone probe of that exact
+loaded property/observation expression evaluates to `Except.ok false`.
+
+**CHANGED:** Routed the two precise residual failures as a dated
+`REQUEST ls-sv:` and added this backlog entry.  No ls-sv-owned source,
+semantics, loader, extractor, RTL, or finite captured-window theorem was
+edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The cycle and signed proof repairs are locally sound, but
+public master is not green until `Loop2` threads the guard without an axiom and
+the SVA proof-side row records the measured false result.  Hold the PicoRV32
+R2 re-probe until those changes land and the import closure passes.

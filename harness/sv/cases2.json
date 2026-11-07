@@ -197,6 +197,16 @@
       "measured": "2026-11-07: $onehot0 retains the finite four-state at-most-one-known-one predicate."
     },
     {
+      "name": "sva_past_cmp",
+      "example": "sem2/sva_past_cmp",
+      "top": "sva_past_cmp",
+      "clock": "clk",
+      "signals": ["a", "b", "q"],
+      "stimulus": [{"a": "0001", "b": "0010"}, {"a": "0100", "b": "0011"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: sampled order comparisons retain a finite $past operand in the existing SVA value tree."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

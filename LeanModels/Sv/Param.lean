@@ -560,6 +560,7 @@ inductive PSvaBool where
   | or (left right : PSvaBool)
   | isUnknown (value : PExpr)
   | oneHot0 (value : PExpr)
+  | valueCmp (op : BinOp) (left right : PSvaValue)
   | past (cycles : Nat) (value : PExpr)
   | rose (value : PExpr)
   | fell (value : PExpr)

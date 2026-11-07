@@ -26460,6 +26460,15 @@ def _sva_bool(node):
         if _sva_has_past(left) or _sva_has_past(right):
             return {"kind": "SvaValueEq", "left": _sva_value(left),
                     "right": _sva_value(right)}
+    comparisons = {
+        "LessThanExpression": "<", "LessThanEqualExpression": "<=",
+        "GreaterThanExpression": ">", "GreaterThanEqualExpression": ">=",
+    }
+    if isinstance(node, dict) and node.get("kind") in comparisons:
+        if _sva_has_past(node.get("left")) or _sva_has_past(node.get("right")):
+            return {"kind": "SvaValueCmp", "op": comparisons[node["kind"]],
+                    "left": _sva_value(node.get("left")),
+                    "right": _sva_value(node.get("right"))}
     return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
 
 

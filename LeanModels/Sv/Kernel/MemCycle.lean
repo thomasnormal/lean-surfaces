@@ -422,7 +422,7 @@ def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (q : MemPending) : PProcess → Res (MemCycleState × MemPending)
   | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body _ =>
       execMemStmt d fuel st q body
-  | .alwaysComb _ => .unsupported "AlwaysComb:memory cycle route"
+  | .alwaysComb body => execMemStmt d fuel st q body
   | .assign target e => do
       let v ← evalMemExpr d fuel st (d.env.widths.lookup target) e
       let some dc := d.decls.find? (·.name == target)
@@ -489,6 +489,12 @@ def memStep (d : MemDesign2) (fuel : Nat) (inputs : SvState)
                 let scalar := SvState.set st.scalar target
                   (old.insertAt 0 (v.resizeU dc.width))
                 return { st with scalar }
+    | .alwaysComb _ =>
+        match runMemProcess d fuel st ([], []) p with
+        | .ok (st', ([], [])) => .ok st'
+        | .ok (_, _) => .unsupported "AlwaysComb:memory cycle route does not admit NBA"
+        | .unsupported e => .unsupported e
+        | .timeout => .timeout
     | _ => .ok st
 
 def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)

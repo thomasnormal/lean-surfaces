@@ -298,6 +298,21 @@
       "measured": "2026-11-07: a parameter-sized one-rank register memory retains dynamic read/write ArraySel nodes; MemState resolves known indices, reads x for unknown indices, and drops unknown/out-of-range writes. Lean and Icarus agree over three cycles."
     },
     {
+      "name": "unpacked_memory_comb_read",
+      "example": "sem2/unpacked_memory_comb",
+      "top": "unpacked_memory_comb",
+      "memory": true,
+      "params": {"N": 4},
+      "signals": ["widx", "ridx", "q"],
+      "clock": "clk",
+      "stimulus": [
+        {"we": "0", "widx": "00", "ridx": "00", "d": "00000000"},
+        {"we": "1", "widx": "10", "ridx": "10", "d": "10100101"},
+        {"we": "0", "widx": "00", "ridx": "10", "d": "00000000"}
+      ],
+      "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted."
+    },
+    {
       "name": "signed_index_read",
       "example": "sem2/signed_index/a1",
       "file": "a1_signed_idx",

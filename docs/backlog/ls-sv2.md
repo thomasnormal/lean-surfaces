@@ -3952,3 +3952,22 @@ operation it uses.
 stateful bridge and expose the memory transition explicitly.  This preserves
 the exact load/store view needed by the eventual loaded-core invariant and
 avoids a second memory semantics or implicit bus-data substitution.
+
+## 2026-11-07-ls-sv2-258 — bundle the raw and stateful window certificate
+
+The inboxes were reread before this item.  The generated-member memory-route
+wall remains with `ls-sv`, so this item stays in the owned RVFI/stateful-memory
+layer.
+
+Added `pinned_raw_stateful_window_certificate` to
+`rvfi_prefix_boundary.lean`.  Its first component retains the four measured
+raw RVFI predicates (`ADDI`, `SW`, `LW`, and the post-prefix `ADDI`); its
+second component gives the corresponding `rvMemoryMachineWith` state and
+retirement equations.  The focused proof compiles with only the existing
+`propext`/`Quot.sound` boundary and no `sorryAx`.
+
+**DECIDED:** expose one reusable concrete certificate that lets a future
+loaded-core invariant consume both the wire-level facts and the exact
+state-threaded memory transition for the complete measured window.  The
+invalid proposition `#guard` was removed; no RTL, loader, or
+`LeanModels/Sv/**` file changed.

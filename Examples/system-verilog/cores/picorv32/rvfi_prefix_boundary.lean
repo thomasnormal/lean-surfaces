@@ -1,5 +1,8 @@
 import LeanModels.Refine.MemoryMachine
 import LeanModels.Refine.RvfiMem
+import Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary
+import Examples.«system-verilog».cores.picorv32.rvfi_sw_boundary
+import Examples.«system-verilog».cores.picorv32.rvfi_lw_boundary
 import Examples.«system-verilog».cores.picorv32.trace_proof
 
 /-!
@@ -14,7 +17,11 @@ namespace Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary
 
 open LeanModels.Rv
 open LeanModels.Refine
+open Examples.«system-verilog».cores.picorv32.rvfi_proof
 open Examples.«system-verilog».cores.picorv32.trace_proof
+open Examples.«system-verilog».cores.picorv32.rvfi_addi_boundary
+open Examples.«system-verilog».cores.picorv32.rvfi_sw_boundary
+open Examples.«system-verilog».cores.picorv32.rvfi_lw_boundary
 
 def prefixS0 : ArchState := ArchState.init 0
 def prefixS1 : ArchState := addiNext prefixS0 1 0 5
@@ -215,6 +222,47 @@ theorem pinned_full_window_observed :
   rw [pinned_nontrap_trace_certificate]
   decide
 
+/-- One bundled certificate for every measured non-trapping row.  The first
+component retains the raw RVFI predicates; the second component gives the
+corresponding stateful machine commits, so a future loaded-core proof can
+consume the whole window without choosing between a wire-level and a memory
+level premise. -/
+theorem pinned_raw_stateful_window_certificate :
+    (RvfiObservation.addiBoundary (ArchState.init 0) addiInput addi1
+        0x00500093 1 0 5 ∧
+      RvfiObservation.swBoundary storeState storeInput storeRaw
+        0x10102023 0 1 0x100 ∧
+      RvfiObservation.lwBoundary loadState loadInput loadRaw
+        0x10002103 2 0 0x100 ∧
+      RvfiObservation.addiBoundary addi2State addi2Input addi2Raw
+        0x00110193 3 2 1) ∧
+    ((rvMemoryMachineWith cv32e40pProfile).step
+        { arch := ArchState.init 0, memory := addiInput.memory } addiInput =
+      ({ arch := addiNext (ArchState.init 0) 1 0 5,
+          memory := addiInput.memory },
+        addiRetirement (ArchState.init 0) addiInput 1 0 5) ∧
+      (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := storeState, memory := storeInput.memory } storeInput =
+      ({ arch := swNext storeState,
+          memory := storeVal storeInput.memory .word 0x100 5 },
+        swRetirement storeState storeInput 0 1 0x100) ∧
+      (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := loadState, memory := loadInput.memory } loadInput =
+      ({ arch := lwNext loadState loadInput.memory 2 0 0x100,
+          memory := loadInput.memory },
+        lwRetirement loadState loadInput 2 0 0x100) ∧
+      (rvMemoryMachineWith cv32e40pProfile).step
+        { arch := addi2State, memory := addi2Input.memory } addi2Input =
+      ({ arch := addiNext addi2State 3 2 1,
+          memory := addi2Input.memory },
+        addiRetirement addi2State addi2Input 3 2 1)) := by
+  exact ⟨⟨pinned_addi_boundary, pinned_store_boundary,
+    pinned_load_boundary, pinned_addi2_boundary⟩,
+    ⟨pinned_addi_stateful_machine_commit,
+      pinned_store_stateful_machine_commit,
+      pinned_load_stateful_machine_commit,
+      pinned_addi2_stateful_machine_commit⟩⟩
+
 #guard prefixState.arch.pc = 12
 #guard prefixState.arch.readReg 2 = 5
 #guard prefixState.arch.readReg 0 = 0
@@ -235,5 +283,6 @@ theorem pinned_full_window_observed :
 #print axioms pinned_full_state_machine
 #print axioms pinned_full_window_trace
 #print axioms pinned_full_window_observed
+#print axioms pinned_raw_stateful_window_certificate
 
 end Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary

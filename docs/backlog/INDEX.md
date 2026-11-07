@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1049 entries across 18 lanes.** Regenerate with
+**1050 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-ls-sv2-258` |  | bundle the raw and stateful window certificate | ls-sv2 |
 | `2026-11-07-ls-sv2-257` |  | bridge raw SW and LW rows into the stateful machine | ls-sv2 |
 | `2026-11-07-ls-sv2-256` |  | bridge raw ADDI rows into the stateful machine | ls-sv2 |
 | `2026-11-07-ls-sv2-255` |  | connect the full stateful window to the observed trace | ls-sv2 |

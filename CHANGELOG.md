@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a unary arithmetic
+  callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a compound
+  assignment callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a binary
+  arithmetic callable and native differential row.
+
+- Named the object evaluator's direct-call refusal `unsupportedCall` and added
+  a differential refusal witness with a dedicated harness renderer.
+
 - Centralized integral type extraction in `ScalarArithmetic` for both callable
   evaluators and added a builtin/qualified/non-integral witness.
 

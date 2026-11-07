@@ -1342,7 +1342,14 @@ theorem fuelMono (fuel : Nat) :
           simp only [evalExpr]; exact Run.le_refl _
         | listComp elt tgt it ifs wb _ =>
           simp only [evalExpr]
-          exact Run.le_refl _
+          split
+          · exact Run.le_refl _
+          · refine Run.le_bind (ihE m st it k hk) fun st src => ?_
+            cases hvals : listCompValues st.world.heap src with
+            | unsupported msg => exact Run.le_refl _
+            | exn e => exact Run.le_refl _
+            | timeout => exact Run.le_refl _
+            | ok xs => exact ihLCStep m st st.locals elt tgt ifs.toList xs [] k hk
         | list elts _ =>
           simp only [evalExpr]
           exact Run.le_bind (ihEs m st elts.toList k hk) fun st vs => Run.le_refl _

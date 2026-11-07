@@ -11164,3 +11164,39 @@ surfaces are updated.
 DECIDED: item complete. Before the next item I will reread the inbox and use
 the new `fuelMono` projections to replace the proof interpreter's ListComp arm,
 then repair the remaining proof consumers.
+
+## 2026-11-07-pycomplete-457 — enable proof-interpreter ListComp
+
+The proof interpreter's `evalExpr` ListComp arm now evaluates the ordinary
+one-generator slice through `listCompValues` and the fuel-threaded stepper.
+Walrus filters remain loud, generator sources remain loud, and the same
+heap-list/string/tuple/range inventory is used as the monadic surface. The
+`Obs` ListComp induction case uses the appended `fuelMono` helper projection,
+so the proof theorem surface now tracks the live evaluator.
+
+| Measurement | Result |
+|---|---|
+| Full runner build | `lake build leanmodels-run` passes all 40 jobs |
+| Proof differential slice | 18 rows: 16 matches, 2 refusals, 0 failures |
+| Semantic change | proof interpreter ordinary ListComp is live; nested generator and walrus boundaries remain loud |
+
+DECIDED: item complete. Before the next item I will reread the inbox and
+transport this new AST arm through `PayloadBlind` and `ClockErase`, then run
+the full proof and monadic checks.
+
+## 2026-11-07-pycomplete-458 — transport ListComp through ClockErase
+
+Clock erasure now includes the ListComp filter and element walkers as final
+conjunction fields. The AST case uses the shared iterable dispatch and the
+stepper erasure hypothesis; walrus and generator-source refusals remain
+clock-independent loud outcomes. Existing projection paths remain stable.
+
+| Measurement | Result |
+|---|---|
+| Clock-erasure target | `lake build LeanModels.Python.ClockErase` passes |
+| Added transport | `CEListCompIfs`, `CEListCompStep`, successor proofs, and `clockErase` projections |
+| Semantic change | no new boundary; ordinary ListComp remains live |
+
+DECIDED: item complete. Before the next item I will reread the inbox and
+transport the same ListComp arm through `PayloadBlind`, then run the complete
+runner and proof checks.

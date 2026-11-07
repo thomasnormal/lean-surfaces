@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 1596 | 1579 | 0 | 7 | 0 | 10 |
+| 1600 | 1582 | 0 | 8 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -1610,6 +1610,10 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-shared-conversion-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-shared-format-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-shared-type-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-object-call-refusal-cause` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `statement.callable-value-object-arithmetic-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-value-object-compound-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-value-object-unary-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 
 ## Grammar census
 

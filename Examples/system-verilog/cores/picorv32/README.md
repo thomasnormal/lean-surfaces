@@ -913,6 +913,70 @@ core-facing one-step form: a valid row must identify an `Rv32iInstruction`,
 its exact input, indexed post-state, and retirement, while invalid rows remain
 ISA stutters.
 
+The ADDI-only certificate is now connected to this mixed surface by
+`AddiInstruction.toRv32i` and
+`AddiRvfiCycleTrace.toRv32i` in
+`LeanModels.Refine.RvfiAddiMixed`.  The adapter preserves the original cycle
+inputs, bubbles, order tags, decoder proofs, and indexed boundary at the same
+architectural state; it only changes the instruction-family view to the
+unified `.alu` constructor.  Thus an eventual loaded-core ADDI invariant can
+feed the mixed R2 theorem without reconstructing a retirement stream.  This
+is generic certificate plumbing, not a claim about the currently blocked
+PicoRV32 RTL.
+
+The same mixed adapter is available for the upper-immediate family in
+`LeanModels.Refine.RvfiUpperMixed`.  `UpperInstruction.toRv32i` maps LUI and
+AUIPC to their exact `.alu` forms, and `UpperRvfiCycleTrace.toRv32i` preserves
+the source certificate's bubbles, cycle inputs, order tags, decoder proofs,
+and indexed boundaries.  It does not choose a new decode or alter the
+PicoRV32 source.
+`rv32iCycleStepRefines_of_upper_memory` is the corresponding core-facing
+bridge: an upper-boundary witness and explicit order equation become the
+unified mixed per-cycle obligation while preserving the memory-threaded
+post-state relation.
+The dependent upper step and order premises can be carried as the named
+`Rv32iUpperInvariant`; its `toMixedStep` method in
+`LeanModels.Refine.RvfiUpperProgress` feeds the same mixed R2 theorem without
+repeating those predicates.
+The packaged reset entry points are
+`rv32i_reset_upper_refines_of_invariant` and
+`rv32i_reset_upper_stream_refines_of_invariant`; they retain either the full
+prefix certificate or only the committed stream and final relation.
+
+The JAL/JALR certificate is likewise connected to the mixed surface by
+`JumpInstruction.toRv32i` and `JumpRvfiCycleTrace.toRv32i` in
+`LeanModels.Refine.RvfiJumpMixed`.  The adapter preserves jump decoder proofs,
+cycle inputs, bubbles, order tags, and indexed boundaries while using the
+existing mixed `.jump` constructor.  Its
+`rv32iCycleStepRefines_of_jump_memory` bridge accepts the memory-threaded JAL
+or JALR row invariant and explicit valid-row order, preserving the exact
+input, indexed boundary, post-state relation, and invalid-row stutter for the
+mixed per-cycle contract.
+
+`rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
+Given the ADDI row boundary, threaded-memory post-state relation, and an
+explicit order equation for valid rows, it constructs the mixed
+`Rv32iCycleStepRefines` obligation.  The order premise stays separate because
+the strict raw RVFI contract does not itself assign an order index.  The
+bridge builds its `AddiInstruction` from the boundary's decoder equality and
+preserves the exact input and indexed boundary.
+
+`rv32i_reset_addi_stream_refines` composes that bridge with the generic
+from-reset progress theorem.  Once a loaded core supplies the ADDI invariant,
+the reset relation, admitted schedule, and explicit progress witness, this
+single theorem returns the exact committed stream and post-state relation for
+every finite target retirement prefix.
+The structure-valued `rv32i_reset_addi_refines` entry point retains the same
+contract's decoded program, raw certificate, target equations, and normalized
+trace for callers that need those proof fields.
+The repeated ADDI step and order premises can be carried as the named
+`Rv32iAddiInvariant`; its `toMixedStep` method and
+`rv32i_reset_addi_refines_of_invariant` wrapper provide the same two reset
+entry points without restating those dependent predicates.
+The direct-stream projection is also available as
+`rv32i_reset_addi_stream_refines_of_invariant`, so a caller that only needs
+the committed trace and final relation can keep the invariant packaged.
+
 ## Constructing mixed cycle certificates from an invariant
 
 The generic `Rv32iCycleStepRefines` contract and

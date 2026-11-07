@@ -6708,3 +6708,323 @@ introduced.
 shape: exact committed trace equality plus the post-state relation for every
 finite target retirement prefix.  PicoRV32 remains parked at the approved
 task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-361 — embed ADDI certificates in the mixed RV32I surface
+
+The ADDI-only cycle certificate was already strong enough to retain actual
+cycle inputs, bubbles, order tags, and indexed post-state boundaries, but it
+could not be passed directly to the unified mixed RV32I theorem.  A loaded
+core's first instruction-class invariant needs that bridge without rebuilding
+the retirement stream or introducing a finite captured window.
+
+**CHANGED:** Added `LeanModels.Refine.RvfiAddiMixed`.  It maps each decoded
+`AddiInstruction` to the corresponding `.alu` `Rv32iInstruction`, proves the
+input, state-step, and retirement equations, and maps every
+`AddiRvfiCycleTrace` constructor to an `Rv32iRvfiCycleTrace` over the same
+cycle list.  `AddiRvfiCycleTrace.toRv32i_trace_refines` exposes the resulting
+stateful trace theorem.  The refinement umbrella imports the new module, and
+the PicoRV32 README records how a future ADDI invariant feeds the mixed R2
+surface.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0; the declarations report only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check also pass.  No semantics, RTL,
+loader, extractor, or finite captured-window theorem changed; no `sorryAx` or
+new axiom was introduced.
+
+**JUDGED / DECIDED:** The first symbolic ADDI certificate now feeds the same
+mixed cycle certificate consumed by the R2 all-prefix/reset contracts.  The
+adapter retains the parser-derived decoder proof and the original boundary at
+the same state, so it does not choose a new instruction interpretation.
+PicoRV32 remains parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-365 — package the ADDI reset invariant
+
+The ADDI reset entry points repeated two dependent predicates: the
+memory-threaded valid-row/post-state obligation and the separate RVFI order
+obligation.  A loaded-core proof should be able to carry those obligations as
+one named invariant while preserving the existing explicit fields.
+
+**CHANGED:** Added `Rv32iAddiInvariant` to
+`LeanModels/Refine/RvfiAddiProgress.lean`, with `step` and `order` fields, and
+proved `Rv32iAddiInvariant.toMixedStep`.  Added
+`rv32i_reset_addi_refines_of_invariant`, which feeds the packaged invariant to
+the existing structure-valued reset contract.  The original explicit-premise
+entry points remain available, and the PicoRV32 README documents both forms.
+
+**MEASURED:** The focused module compiles under Lean 4.35.0 and reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The umbrella build, PicoRV32 wall
+probe, docs check, backlog index check, and diff check all pass.  No semantics,
+RTL, loader, extractor, or finite captured-window theorem changed; no `sorryAx`
+or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded PicoRV32 proof can now export one named
+ADDI invariant and hand it to either the mixed step theorem or the full
+from-reset contract without duplicating its dependent predicates.  PicoRV32
+remains parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-366 — expose the packaged ADDI stream contract
+
+The named `Rv32iAddiInvariant` now feeds the structure-valued reset theorem,
+but callers interested only in the public committed stream still had to
+project that result or restate the two invariant fields.
+
+**CHANGED:** Added
+`rv32i_reset_addi_stream_refines_of_invariant` to
+`LeanModels/Refine/RvfiAddiProgress.lean`.  It consumes the packaged ADDI
+invariant, reset relation, admitted schedule, and all-prefix progress witness
+and returns the exact committed `cycleTrace` equality plus the final
+core-to-ISA relation for every target prefix.  The explicit-premise and
+structure-valued entry points remain available.  Updated the PicoRV32 README
+and backlog index.
+
+**MEASURED:** The focused module, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declaration reports only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core proof can carry one named ADDI
+invariant directly to either the full reset certificate or its public stream
+projection.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
+## 2026-11-07-ls-sv2-367 — embed upper-immediate certificates in mixed RV32I
+
+The unified RV32I certificate already admits LUI and AUIPC through its ALU
+family, while `RvfiUpperProgram` retained those instructions in a dedicated
+upper-immediate certificate.  A future loaded-core proof needs to cross that
+boundary without rebuilding rows or losing decoder evidence.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiUpperMixed.lean`.  It defines the
+structure-preserving `UpperInstruction.toRv32i` embedding, proves the exact
+input, state-step, and retirement equations, and maps every
+`UpperRvfiCycleTrace` constructor to a mixed `Rv32iRvfiCycleTrace` over the
+same cycle list.  The adapter retains bubbles, actual cycle inputs, order tags,
+decoder proofs, and indexed boundaries.  Imported it from the refinement
+umbrella and documented the bridge in the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** LUI/AUIPC certificates now feed the same mixed RV32I
+surface as ADDI, so later per-cycle upper invariants can reuse the existing
+from-reset contracts.  PicoRV32 remains parked at the approved task/net-z
+memory-route walls.
+
+## 2026-11-07-ls-sv2-368 — lift the upper invariant into the mixed step obligation
+
+The upper-immediate certificate now crosses into the mixed RV32I family, but a
+loaded-core invariant still needed a per-cycle bridge that retained whether a
+valid row was LUI or AUIPC and its explicit retirement order.
+
+**CHANGED:** Added `RvfiObservation.upperBoundary`, its input and mixed-boundary
+lemmas, and `rv32iCycleStepRefines_of_upper_memory` in
+`LeanModels/Refine/RvfiUpperMixed.lean`.  The bridge accepts an
+`UpperInstruction` witness with its parser-derived decoder proof, preserves the
+exact input and indexed post-state, and maps invalid rows to ISA stutters.  It
+does not infer a row from a captured stream or choose a retirement order.
+Updated the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** An eventual LUI/AUIPC core invariant can now discharge
+the same mixed per-cycle obligation consumed by the all-prefix reset theorem,
+with memory threading and order remaining explicit proof obligations.
+PicoRV32 remains parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-369 — package the upper-immediate invariant
+
+The upper mixed-step bridge still required callers to repeat the dependent
+LUI/AUIPC row and order predicates at every theorem application.  The ADDI
+family already had a named invariant package for this boundary.
+
+**CHANGED:** Added `Rv32iUpperInvariant` and its `toMixedStep` theorem in
+`LeanModels/Refine/RvfiUpperProgress.lean`.  The package retains the decoded
+`UpperInstruction` witness, memory-threaded post-state, and explicit RVFI
+order equation, then delegates to `rv32iCycleStepRefines_of_upper_memory`.
+Imported it from the refinement umbrella and documented the API in the
+PicoRV32 README and backlog index.
+
+**MEASURED:** The focused package, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declaration reports only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core proof can now carry one named
+LUI/AUIPC invariant into the mixed per-cycle theorem, matching the ADDI proof
+shape while preserving decode evidence and order obligations.  PicoRV32
+remains parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-370 — compose the upper invariant with reset progress
+
+The named upper-immediate invariant now discharges one mixed cycle, but a
+loaded-core proof still needed to wire its step and order fields into the
+generic from-reset all-prefix contract manually.
+
+**CHANGED:** Added explicit and packaged reset forms in
+`LeanModels/Refine/RvfiUpperProgress.lean`:
+`rv32i_reset_upper_refines`,
+`rv32i_reset_upper_refines_of_invariant`,
+`rv32i_reset_upper_stream_refines`, and
+`rv32i_reset_upper_stream_refines_of_invariant`.  They compose the upper
+bridge with the existing reset refinement, preserving the full prefix
+certificate or exposing the exact committed `cycleTrace` and final relation.
+Updated the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused package, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core LUI/AUIPC invariant now has the same
+end-to-end from-reset API as the ADDI invariant, with progress and schedule
+remaining explicit premises.  PicoRV32 remains parked at the approved
+task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-371 — embed jump certificates in mixed RV32I
+
+The unified RV32I certificate already admits JAL and JALR through its jump
+family, while `RvfiJumpProgram` retained those instructions in a dedicated
+jump certificate.  A future loaded-core proof needs to cross that boundary
+without rebuilding rows or losing the JALR target semantics.
+
+**CHANGED:** Added `LeanModels/Refine/RvfiJumpMixed.lean`.  It defines the
+structure-preserving `JumpInstruction.toRv32i` embedding, proves the exact
+input, state-step, and retirement equations, and maps every
+`JumpRvfiCycleTrace` constructor to a mixed `Rv32iRvfiCycleTrace` over the
+same cycle list.  The adapter retains bubbles, actual cycle inputs, order tags,
+decoder proofs, and indexed boundaries.  Imported it from the refinement
+umbrella and updated the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** JAL/JALR certificates now feed the same mixed RV32I
+surface as ADDI and upper-immediate instructions, retaining JALR's exact
+register-base and low-bit-clearing semantics.  PicoRV32 remains parked at the
+approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-372 — lift the jump invariant into the mixed step obligation
+
+The jump certificate now crosses into the mixed RV32I family, but a
+loaded-core invariant still needed a per-cycle bridge that retained whether a
+valid row was JAL or JALR and its explicit retirement order.
+
+**CHANGED:** Added `rv32iCycleStepRefines_of_jump_memory` to
+`LeanModels/Refine/RvfiJumpMixed.lean`.  From the memory-threaded jump
+valid-row/post-state obligation and a separate order equation for valid rows,
+it constructs the mixed per-cycle obligation.  The proof preserves the
+decoder-backed `JumpInstruction`, exact input and memory equations, indexed
+JAL/JALR boundary, post-state relation, and invalid-row ISA stutter.  Updated
+the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0; the new theorem reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check pass.  No semantics, RTL, loader,
+extractor, or finite captured-window theorem changed; no `sorryAx` or new
+axiom was introduced.
+
+**JUDGED / DECIDED:** An eventual JAL/JALR core invariant can now discharge
+the same mixed per-cycle obligation consumed by the all-prefix reset theorem,
+with memory threading and retirement order remaining explicit proof
+obligations.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
+## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
+
+The ADDI reset theorem returned the direct committed stream and post-state
+relation, but a loaded-core proof may also need the decoded program and raw
+cycle certificate retained at each target prefix.  The generic reset contract
+already carries those fields; the ADDI composition should expose it directly.
+
+**CHANGED:** Added `rv32i_reset_addi_refines` to
+`LeanModels/Refine/RvfiAddiProgress.lean`.  It composes the ADDI mixed-step
+bridge with `rv32i_reset_refinement` and returns `Rv32iResetRefinement`, so
+each prefix retains its boundary, decoded program, parser-derived certificate,
+program input/state equations, normalized trace, committed cycle trace, and
+post-state relation.  The existing stream projection remains available, and
+the PicoRV32 README records both entry points.
+
+**MEASURED:** The focused theorem and `lake build LeanModels.Refine` pass under
+Lean 4.35.0 (58/58 jobs); the declarations report only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check also pass.  No semantics, RTL,
+loader, extractor, or finite captured-window theorem changed; no `sorryAx` or
+new axiom was introduced.
+
+**JUDGED / DECIDED:** An eventual loaded-core ADDI invariant can now consume
+either the direct observable reset stream or the full structure-valued reset
+certificate without rebuilding the progress calculation.  PicoRV32 remains
+parked at the approved task/net-z memory-route walls.
+
+## 2026-11-07-ls-sv2-363 — compose the ADDI invariant with reset progress
+
+The ADDI invariant could now discharge the mixed per-cycle obligation, while
+the generic reset theorem could consume a mixed obligation and a progress
+witness.  A first instruction-class result should expose their composition as
+one end-to-end contract so a loaded-core proof does not manually duplicate
+the wiring.
+
+**CHANGED:** Added `rv32i_reset_addi_stream_refines` in
+`LeanModels/Refine/RvfiAddiProgress.lean`.  It composes
+`rv32iCycleStepRefines_of_addi_memory` with
+`rv32i_reset_stream_refines`, retaining the reset relation, pointwise input
+admission, explicit valid-row order equation, and independent target-prefix
+progress witness.  The result is the exact committed `cycleTrace` equality
+and post-state simulation relation for every finite target prefix.  The
+refinement umbrella and PicoRV32 README now expose this complete ADDI-only
+entry point.
+
+**MEASURED:** The focused theorem compiles under Lean 4.35.0 and reports only
+`propext`/`Classical.choice`/`Quot.sound`; the umbrella build, PicoRV32 wall
+probe, docs check, backlog index check, and diff check are the remaining
+validation gates.  No semantics, RTL, loader, extractor, or finite
+captured-window theorem changed; no `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** The first instruction-class invariant now has a direct
+from-reset, all-prefix stream contract with no alternate semantics or guessed
+schedule.  PicoRV32 remains parked at the approved task/net-z memory-route
+walls.
+
+## 2026-11-07-ls-sv2-362 — lift the ADDI invariant into the mixed step obligation
+
+The ADDI certificate adapter now reached the mixed cycle certificate, but a
+loaded-core proof still had to restate its per-cycle invariant in the mixed
+`Rv32iCycleStepRefines` shape.  That restatement would risk losing either the
+raw input equality or the order tag needed by the mixed certificate.
+
+**CHANGED:** Added `rv32iCycleStepRefines_of_addi_memory` to
+`LeanModels/Refine/RvfiAddiMixed.lean`.  From the memory-threaded ADDI valid
+row/post-state obligation and a separate order equation for valid rows, it
+constructs the mixed per-cycle obligation.  The proof constructs the indexed
+`AddiInstruction` from the boundary's exact decoder equality, maps it through
+the `.alu` embedding, and retains the original input, order, boundary, and
+post-state relation.  No row is decoded from a captured stream and no
+finite-window theorem is added.
+
+**MEASURED:** The focused adapter and `lake build LeanModels.Refine` pass under
+Lean 4.35.0 (57/57 jobs); the new declarations report only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs
+check, backlog index check, and diff check pass.  No semantics, RTL, loader,
+extractor, or SV file changed; no `sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** The isolated ADDI invariant can now discharge the same
+mixed per-cycle obligation consumed by `rv32iRvfiCycleTrace_of_step` and the
+from-reset all-prefix theorem, with retirement order remaining an explicit
+proof obligation.  PicoRV32 remains parked at the approved task/net-z
+memory-route walls.

@@ -48,6 +48,20 @@ including qualified builtin evidence and unsupported-type refusal.
 Integral type extraction is shared through `integralTypeOfEvidence`; qualified
 builtins unwrap structurally while non-integral evidence remains loud.
 
+The object evaluator's direct-call boundary now reports its dedicated
+`unsupportedCall` cause; the differential harness records that refusal without
+discarding the diagnostic in the Lean witness.
+
+The value and object evaluator now also carry a kernel agreement witness for
+the same binary-arithmetic callable, extending the earlier logical agreement
+check.
+
+The agreement battery also covers a compound-assignment callable, checking the
+same `CallableFunction` result through both evaluator APIs.
+
+It now covers a unary arithmetic callable as well, extending the same-IR
+agreement check across both expression evaluator layers.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

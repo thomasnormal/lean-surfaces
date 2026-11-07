@@ -792,6 +792,17 @@ abbrev CECallClosure (fuel : Nat) : Prop :=
     ClockErasedW (callClosure m fuel w name params ao lo ig body cap args)
       (fun tr => callClosure m fuel (w.withClock tr) name params ao lo ig body cap args)
 
+abbrev CEListCompIfs (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (ifs : List Expr), st.world.clock = [] →
+    ClockErasedF (evalListCompIfs m fuel st ifs)
+      (fun tr => evalListCompIfs m fuel (st.withClock tr) ifs)
+
+abbrev CEListCompStep (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (saved : Env) (elt target : Expr)
+    (ifs : List Expr) (xs acc : List RVal), st.world.clock = [] →
+    ClockErasedF (evalListCompStep m fuel st saved elt target ifs xs acc)
+      (fun tr => evalListCompStep m fuel (st.withClock tr) saved elt target ifs xs acc)
+
 /-- The whole-block statement, fuelMono's conjunct order. -/
 abbrev CE (fuel : Nat) : Prop :=
   CEEvalExpr fuel ∧ CEEvalExprs fuel ∧ CEEvalBoolChain fuel ∧
@@ -799,12 +810,45 @@ abbrev CE (fuel : Nat) : Prop :=
   CEExecWhile fuel ∧ CECallIn fuel ∧ CEExecFor fuel ∧ CEEvalDictItems fuel ∧
   CEExecForList fuel ∧ CEExecAttrCall fuel ∧ CEStepIter fuel ∧
   CEExecGen fuel ∧ CEExecForGen fuel ∧ CEDrainIter fuel ∧
-  CEAnyAllIter fuel ∧ CECallClosure fuel
+  CEAnyAllIter fuel ∧ CECallClosure fuel ∧
+  CEListCompIfs fuel ∧ CEListCompStep fuel
 
 /-! ## The succ-step arm lemmas -/
 
 section Arms
 variable {fuel : Nat}
+
+theorem ceListCompIfs_succ (ih : CE fuel) : CEListCompIfs (fuel + 1) := by
+  obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
+    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure, ihLCIfs, ihLCStep⟩ := ih
+  intro m st ifs h
+  cases ifs with
+  | nil => exact .ok h _
+  | cons test rest =>
+    refine .bind (ihE m st test h) fun s tv hs => ?_
+    refine .bind (.liftRes hs _) fun s2 keep hs2 => ?_
+    cases keep with
+    | false => exact .ok hs2 _
+    | true => exact ihLCIfs m s2 rest hs2
+
+theorem ceListCompStep_succ (ih : CE fuel) : CEListCompStep (fuel + 1) := by
+  obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
+    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure, ihLCIfs, ihLCStep⟩ := ih
+  intro m st saved elt target ifs xs acc h
+  cases xs with
+  | nil =>
+    refine ClockErasedF.of_seed (fun tr => ?_) ?_
+    · cases st with
+      | mk w l => cases w with | mk hp g so c d => rfl
+    · simp [FrameState.withClock_self h]
+  | cons x rest =>
+    refine .bind (.liftRes h _) fun s env hs => ?_
+    refine .bind (ihLCIfs m { s with locals := env } ifs hs) fun s2 keep hs2 => ?_
+    cases keep with
+    | false => exact ihLCStep m s2 saved elt target ifs rest acc hs2
+    | true =>
+      refine .bind (ihE m s2 elt hs2) fun s3 v hs3 => ?_
+      exact ihLCStep m s3 saved elt target ifs rest (v :: acc) hs3
 
 theorem ceEvalExprs_succ (ih : CE fuel) : CEEvalExprs (fuel + 1) := by
   obtain ⟨ihE, ihEs, -⟩ := ih
@@ -951,12 +995,10 @@ theorem ceCallIn_succ (ih : CE fuel) : CECallIn (fuel + 1) := by
     refine .ite .unsupported (.ite .unsupported (.ite (.exn h _) (.ite ?_ ?_)))
     · exact .of_seed (fun tr => by simp [World.withClock])
         (by simp only [World.withClock_self h])
-    · by_cases hd : w.callDepth + 1 >= pythonRecursionLimit
-      · simp [hd]
-        exact .exn h _
-      · simp [hd]
-        refine ClockErasedW.leaveCallDepth (ClockErasedF.toWorld
-          (.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+    · by_cases htop : w.callDepth == pythonTopCallDepth
+      · simp [htop]
+        refine ClockErasedW.finishCallAt w.callDepth (ClockErasedF.toWorld
+          (.bind (ihSs m ⟨{ w with callDepth := 1 },
               markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩ f.body.toList h)
             fun s flow hs => ?_))
         cases flow with
@@ -964,6 +1006,19 @@ theorem ceCallIn_succ (ih : CE fuel) : CECallIn (fuel + 1) := by
         | next => exact .ok hs _
         | brk => exact .unsupported
         | cont => exact .unsupported
+      · by_cases hd : w.callDepth + 1 >= pythonRecursionLimit
+        · simp [htop, hd]
+          exact .exn h _
+        · simp [htop, hd]
+          refine ClockErasedW.leaveCallDepth (ClockErasedF.toWorld
+            (.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+                markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩ f.body.toList h)
+              fun s flow hs => ?_))
+          cases flow with
+          | ret v => exact .ok hs _
+          | next => exact .ok hs _
+          | brk => exact .unsupported
+          | cont => exact .unsupported
 
 theorem ceCallClosure_succ (ih : CE fuel) : CECallClosure (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, -⟩ := ih
@@ -1308,7 +1363,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
 
 theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
-    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure⟩ := ih
+    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure, ihLCIfs, ihLCStep⟩ := ih
   intro m st s h
   cases s with
   | annNoValue name sp =>
@@ -2028,7 +2083,7 @@ theorem ceExecAttrCall_succ (ih : CE fuel) : CEExecAttrCall (fuel + 1) := by
 set_option maxHeartbeats 1600000 in
 theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
-    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure⟩ := ih
+    ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure, ihLCIfs, ihLCStep⟩ := ih
   intro m st e h
   cases e with
   | constant cv sp => simp only [evalExpr]; exact .ok h _
@@ -2157,7 +2212,16 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
         | mk hp g so c => rfl)
       (by first | rfl | simp [FrameState.withClock_self hs5, hs5])
   | genExp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
-  | listComp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
+  | listComp elt target iter ifs wb sp =>
+    simp only [evalExpr]
+    split
+    · exact .unsupported
+    · refine .bind (ihE m st iter h) fun s src hs => ?_
+      cases hv : listCompValues s.world.heap src with
+      | unsupported msg => simp only [hv]; exact .unsupported
+      | exn e => simp only [hv, FrameState.withClock_world, World.withClock_heap]; exact .exn hs _
+      | timeout => simp only [hv, FrameState.withClock_world, World.withClock_heap]; exact .timeout
+      | ok xs => simp only [hv, FrameState.withClock_world, World.withClock_heap]; exact ihLCStep m s s.locals elt target ifs.toList xs [] hs
   | unsupported pyKind txt sp => simp only [evalExpr]; exact .unsupported
   | call f args kwargs cu sp =>
     cases cu with
@@ -3395,7 +3459,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
 
 /-- The zero-fuel base: every member is `.timeout`, the relation's bottom. -/
 theorem ceZero : CE 0 := by
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact fun m st e _ => by simp only [evalExpr]; exact .timeout
   · exact fun m st es _ => by simp only [evalExprs]; exact .timeout
   · exact fun m st op e rest _ => by simp only [evalBoolChain]; exact .timeout
@@ -3415,6 +3479,9 @@ theorem ceZero : CE 0 := by
   · exact fun m w a isAll _ => by simp only [anyAllIter]; exact .timeout
   · exact fun m w name params ao lo ig body cap args _ => by
       simp only [callClosure]; exact .timeout
+  · exact fun m st ifs _ => by simp only [evalListCompIfs]; exact .timeout
+  · exact fun m st saved elt target ifs xs acc _ => by
+      simp only [evalListCompStep]; exact .timeout
 
 /-- **CLOCK ERASURE** (docs/memory-model.md §clock erasure): for every
 interpreter function and every input whose world carries the EMPTY clock
@@ -3432,7 +3499,8 @@ theorem clockErase : ∀ fuel, CE fuel := by
       ceExecWhile_succ ih, ceCallIn_succ ih, ceExecFor_succ ih,
       ceEvalDictItems_succ ih, ceExecForList_succ ih, ceExecAttrCall_succ ih,
       ceStepIter_succ ih, ceExecGen_succ ih, ceExecForGen_succ ih,
-      ceDrainIter_succ ih, ceAnyAllIter_succ ih, ceCallClosure_succ ih⟩
+      ceDrainIter_succ ih, ceAnyAllIter_succ ih, ceCallClosure_succ ih,
+      ceListCompIfs_succ ih, ceListCompStep_succ ih⟩
 
 /-! ### Per-member projections (the fuelMono `_mono` discipline):
 consume the induction through these, never by hand-counting `.2`s. -/
@@ -3489,7 +3557,7 @@ theorem anyAllIter_clockErased (fuel : Nat) : CEAnyAllIter fuel :=
   (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 
 theorem callClosure_clockErased (fuel : Nat) : CECallClosure fuel :=
-  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 
 /-! ## The public boundary corollaries -/
 

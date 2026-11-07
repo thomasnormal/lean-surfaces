@@ -11,6 +11,7 @@ inductive CallableObjectEvaluationError where
   | unsupportedArgument (reason : IntegralUnsupported)
   | argumentTypeMismatch (declaration : FrontendHandle)
   | unsupportedOperator (operator : String)
+  | unsupportedCall
   | voidResultRequiresResultAPI
   | returnTypeMismatch
   | missingReturn
@@ -238,7 +239,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                       | .ok result => success rightResult.frame result
               | .ok result => success leftResult.frame result
           | none => success frame (.unsupported .unresolvedArithmeticConversions)
-      | .call _ _ => success frame (.unsupported .unresolvedArithmeticConversions)
+      | .call _ _ => failure frame .unsupportedCall
 termination_by structural fuel
 
 /-- The callback already has smaller fuel; fallthrough itself descends the clause list. -/

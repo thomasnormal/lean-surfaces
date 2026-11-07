@@ -16,11 +16,14 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1233 entries across 18 lanes.** Regenerate with
+**1248 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-458` |  | transport ListComp through ClockErase | python-completeness |
+| `2026-11-07-pycomplete-457` |  | enable proof-interpreter ListComp | python-completeness |
+| `2026-11-07-pycomplete-456` |  | thread ListComp helpers through fuelMono | python-completeness |
 | `2026-11-07-pycomplete-455` |  | prove proof-side ListComp helper monotonicity | python-completeness |
 | `2026-11-07-pycomplete-454` |  | add proof-side ListComp stepper seam | python-completeness |
 | `2026-11-07-pycomplete-453` |  | price proof-interpreter ListComp transport | python-completeness |
@@ -85,6 +88,18 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-372` |  | lift the jump invariant into the mixed step obligation | ls-sv2 |
+| `2026-11-07-ls-sv2-371` |  | embed jump certificates in mixed RV32I | ls-sv2 |
+| `2026-11-07-ls-sv2-370` |  | compose the upper invariant with reset progress | ls-sv2 |
+| `2026-11-07-ls-sv2-369` |  | package the upper-immediate invariant | ls-sv2 |
+| `2026-11-07-ls-sv2-368` |  | lift the upper invariant into the mixed step obligation | ls-sv2 |
+| `2026-11-07-ls-sv2-367` |  | embed upper-immediate certificates in mixed RV32I | ls-sv2 |
+| `2026-11-07-ls-sv2-366` |  | expose the packaged ADDI stream contract | ls-sv2 |
+| `2026-11-07-ls-sv2-365` |  | package the ADDI reset invariant | ls-sv2 |
+| `2026-11-07-ls-sv2-364` |  | expose the structure-valued ADDI reset contract | ls-sv2 |
+| `2026-11-07-ls-sv2-363` |  | compose the ADDI invariant with reset progress | ls-sv2 |
+| `2026-11-07-ls-sv2-362` |  | lift the ADDI invariant into the mixed step obligation | ls-sv2 |
+| `2026-11-07-ls-sv2-361` |  | embed ADDI certificates in the mixed RV32I surface | ls-sv2 |
 | `2026-11-07-ls-sv2-360` |  | expose the direct reset stream theorem | ls-sv2 |
 | `2026-11-07-ls-sv2-359` |  | expose the committed cycle stream | ls-sv2 |
 | `2026-11-07-ls-sv2-358` |  | expose target-input and target-state equations | ls-sv2 |

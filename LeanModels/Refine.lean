@@ -23,11 +23,15 @@ import LeanModels.Refine.RvfiCsr
 import LeanModels.Refine.RvfiTrap
 import LeanModels.Refine.RvfiRv32i
 import LeanModels.Refine.RvfiAddiProgram
+import LeanModels.Refine.RvfiAddiMixed
 import LeanModels.Refine.RvfiAluProgram
 import LeanModels.Refine.RvfiMemProgram
 import LeanModels.Refine.RvfiBranchProgram
 import LeanModels.Refine.RvfiJumpProgram
+import LeanModels.Refine.RvfiJumpMixed
 import LeanModels.Refine.RvfiUpperProgram
+import LeanModels.Refine.RvfiUpperMixed
+import LeanModels.Refine.RvfiUpperProgress
 import LeanModels.Refine.RvfiFenceProgram
 import LeanModels.Refine.RvfiSystemProgram
 import LeanModels.Refine.RvfiCsrProgram
@@ -35,6 +39,7 @@ import LeanModels.Refine.RvfiIllegalProgram
 import LeanModels.Refine.RvfiTrapProgram
 import LeanModels.Refine.RvfiRv32iProgram
 import LeanModels.Refine.RvfiProgress
+import LeanModels.Refine.RvfiAddiProgress
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

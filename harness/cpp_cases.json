@@ -18931,5 +18931,54 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-object-call-refusal-cause",
+    "kind": "statement",
+    "corpus": "callable safety regression",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableObjectCallRefusalCauseWitness",
+    "render": "refusal",
+    "cpp_source": "int helper_call() { return 1; } bool callable_witness() { return helper_call() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-arithmetic-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectArithmeticAgreementWitness",
+    "cpp_source": "int arithmetic_witness(int value) { return value + 3; } bool callable_witness() { return arithmetic_witness(7) == 10; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-compound-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCompoundAgreementWitness",
+    "cpp_source": "int compound_witness(int value) { value += 3; return value; } bool callable_witness() { return compound_witness(7) == 10; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-unary-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectUnaryAgreementWitness",
+    "cpp_source": "int unary_witness(int value) { return -value; } bool callable_witness() { return unary_witness(7) == -7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

@@ -4127,3 +4127,20 @@ Updated the PicoRV32 README and backlog/index.  No RTL, loader, or
 **DECIDED:** make the strict raw-row boundary expose the concrete packed
 retirement directly.  Future loaded-core invariants can consume validity and
 well-formedness as proved facts instead of reopening the optional adapter.
+
+## 2026-11-07-ls-sv2-267 — project invalid RVFI rows to stuttering
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_invalid_step` to `LeanModels/Refine/Rvfi.lean`.
+For a strict-contract cycle known to have `valid = false`, it directly
+transports the core relation across the cycle and leaves the ISA state
+unchanged.  This is the bubble-side companion to the valid-row projection,
+and the PicoRV32 README records the pair as the per-cycle raw boundary.  No
+RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** expose both strict branches as named projections.  Loaded-core
+proofs can now handle every raw cycle through explicit valid-retirement or
+invalid-stutter facts without reopening the contract's branch or silently
+dropping a row.

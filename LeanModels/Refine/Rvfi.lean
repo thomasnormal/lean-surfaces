@@ -407,6 +407,25 @@ theorem rvfiCycleStepRefines_valid_step
     exact Option.some.inj (hsome.symm.trans hretirement)
   exact ⟨hwell, hrel', hto.trans hcommit⟩
 
+/-- An invalid RVFI row is an explicit bubble: the strict contract carries the
+core relation across the cycle while the ISA state stutters. -/
+theorem rvfiCycleStepRefines_invalid_step
+    {State IsaState : Type}
+    {machine : RvfiCycleMachine State} {isa : Machine IsaState}
+    {rel : State → IsaState → Prop} {admit : Input → Prop}
+    (h : RvfiCycleStepRefines machine isa rel admit)
+    (state : State) (isaState : IsaState) (input : Input)
+    (hrel : rel state isaState) (hadmit : admit input)
+    (hinvalid : (machine.step state input).2.valid = false) :
+    rel (machine.step state input).1 isaState := by
+  rcases hstep : machine.step state input with ⟨state', observation⟩
+  have hinvalid' : observation.valid = false := by
+    simpa [hstep] using hinvalid
+  have hs := h.2 state isaState input hrel hadmit
+  simp only [hstep] at hs ⊢
+  rw [hinvalid'] at hs
+  exact hs
+
 @[simp] theorem RvfiCycleMachine.toCycleMachine_init {State : Type}
     (machine : RvfiCycleMachine State) :
     machine.toCycleMachine.init = machine.init := rfl
@@ -942,6 +961,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_invalid_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_trace_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_stateAfter_refines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_trace_refines

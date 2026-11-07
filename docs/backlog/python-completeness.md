@@ -10587,6 +10587,24 @@ DECIDED: keep integer trace readings as explicit future input but refuse any
 zero-argument clock value until the trace carries binary64 readings; preserve
 real-value oracle comparison.
 
+## 2026-11-07-pycomplete-461 — audit trace-clock reading type
+
+The high-priority `py-clock-int-reading` finding is already fixed by the
+explicit clock boundary. Integer trace entries are not exposed as Python
+integers; zero-argument `time.time()` reads refuse because the current world
+trace cannot represent CPython binary64 values. The differential oracle runs
+the source program with real clock values, while comparison and arithmetic
+controls remain admitted where no reading is consumed.
+
+| Measurement | Result |
+|---|---|
+| Clock battery | 12 rows: 8 whitelisted refusals, 4 MATCH, 0 failures |
+| Oracle | CPython 3.9.25 with real `time.time()` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-clock-int-reading` as already fixed; retain integer trace
+input as a future explicit boundary until binary64 replay is modeled.
+
 ## 2026-11-07-pycomplete-416 — structure benign import admission
 
 The text-keyed semantics audit had one extractor residue despite the structured

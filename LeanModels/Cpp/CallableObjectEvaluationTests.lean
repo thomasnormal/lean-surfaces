@@ -189,6 +189,13 @@ def callableCompoundOperatorAgreement : Bool :=
 
 #guard callableCompoundOperatorAgreement
 
+def callableIntegralResultMappingAgreement : Bool :=
+  mapIntegralResultValue (IntegralResult.ok (7 : Nat)) (fun value => value + 1) == .ok 8 &&
+    mapIntegralResultValue (IntegralResult.undefined .signedOverflow) (fun value : Nat => value + 1)
+      matches .undefined .signedOverflow
+
+#guard callableIntegralResultMappingAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

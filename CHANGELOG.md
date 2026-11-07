@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Centralized `IntegralResult` mapping in `ScalarArithmetic` for both callable
+  evaluators and added a propagation agreement witness.
+
 - Centralized compound-assignment operator decoding in `ScalarArithmetic` for
   both callable evaluators and added a representative agreement witness.
 

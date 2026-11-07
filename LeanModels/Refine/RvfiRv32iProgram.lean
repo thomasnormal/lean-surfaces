@@ -583,6 +583,29 @@ theorem Rv32iRvfiCycleTrace.trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
       rw [certificate.retireInputs_eq]
 
+/-- The mixed step invariant and a finite-window admission proof compose
+directly to the normalized stateful ISA trace and the final relation. -/
+theorem rv32iRvfiCycleTrace_of_step_refines
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (cycles : List Input) (hrel : rel coreState memoryState)
+    (hall : ∀ input ∈ cycles, admit input) :
+    ∃ program : List Rv32iInstruction,
+      ∃ _certificate :
+        Rv32iRvfiCycleTrace machine start coreState memoryState cycles program,
+        normalizeRvfiTrace? start
+            (rvfiObservations machine coreState cycles) =
+          some (trace (rvMemoryMachineWith profile) memoryState
+            (retireInputs machine.toCycleMachine coreState cycles)) ∧
+        rel (rvfiStateAfter machine coreState cycles)
+          (rv32iProgramState memoryState program) := by
+  obtain ⟨program, certificate, hfinal⟩ := rv32iRvfiCycleTrace_of_step
+    machine rel admit hstep start coreState memoryState cycles hrel hall
+  exact ⟨program, certificate, certificate.trace_refines profile, hfinal⟩
+
 theorem Rv32iRvfiCycleTrace.append
     {State : Type} {machine : RvfiCycleMachine State}
     {start : Nat} {coreState : State} {state : RvMemoryState}
@@ -618,6 +641,7 @@ theorem Rv32iRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_rv32i_program
 #print axioms LeanModels.Refine.rv32iRvfiCycleTrace_of_step
+#print axioms LeanModels.Refine.rv32iRvfiCycleTrace_of_step_refines
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.normalize
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.trace_refines

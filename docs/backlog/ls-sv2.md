@@ -6419,3 +6419,34 @@ result is claimed: this item measures loader admission only.
 PicoRV32-specific rewrites.  The owner lane now has exact minimal repros for
 both walls; keep the real-core symbolic invariant parked until its loader
 admission changes.  Do not extend the finite captured window.
+
+## 2026-11-07-ls-sv2-351 — expose end-to-end mixed-window refinement
+
+The indexed mixed step invariant now constructs a cycle certificate, but a
+loaded-core proof still had to call that constructor and the certificate's
+trace theorem separately.  The next reusable R2 surface is one quantified
+corollary that exposes the normalized ISA trace and the final relation
+together.
+
+**CHANGED:** Added `rv32iRvfiCycleTrace_of_step_refines` to
+`LeanModels/Refine/RvfiRv32iProgram.lean`.  Given an indexed mixed step
+invariant, a starting relation, and admission for any finite cycle input list,
+it returns a `Rv32iRvfiCycleTrace`, the exact normalized equality to
+`trace (rvMemoryMachineWith profile) ... (retireInputs ...)`, and the final
+relation to `rv32iProgramState`.  The theorem reuses the existing certificate
+constructor and stateful trace bridge; it introduces no alternate semantics.
+Updated both core READMEs and regenerated `docs/backlog/INDEX.md`.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean`,
+`lake build LeanModels.Refine`, the focused PicoRV32 boundary compile,
+`lake env lean Examples/system-verilog/cores/picorv32/walls/probe.lean`,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The new declaration reports only
+the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now state one
+end-to-end theorem for every admitted finite mixed cycle window, with the
+certificate, normalized ISA trace, and post-window relation available at the
+same boundary.  PicoRV32 remains parked at the two requested loader walls.

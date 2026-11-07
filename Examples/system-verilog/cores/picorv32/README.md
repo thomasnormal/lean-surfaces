@@ -877,6 +877,11 @@ core relation to the mixed architectural state.  PicoRV32 itself remains
 parked at the existing loader walls, so this adds no finite captured-window
 claim.
 
+`rv32iRvfiCycleTrace_of_step_refines` packages the same result for a future
+loaded-core proof: from the indexed step invariant and an admitted finite
+window it returns the mixed certificate, its normalized equality to the
+stateful ISA trace, and the final core-to-ISA relation together.
+
 ## Clean-room repros for the two current walls
 
 The owner-lane request for the remaining PicoRV32 walls is backed by two

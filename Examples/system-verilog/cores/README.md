@@ -288,3 +288,9 @@ row-lookup proof; raw and cycle-aware certificates preserve CSR readback,
 WARL state updates, arbitrary bubbles, actual inputs, and the unchanged data
 memory while composing at the same boundaries.  An absent CSR row remains
 outside this certificate and follows the illegal-instruction boundary.
+
+`LeanModels.Refine.RvfiIllegalProgram` supplies the corresponding
+decode-failure trap certificate.  `IllegalInstruction` retains an undecodable
+word and its proof; raw and cycle-aware certificates preserve the precise
+illegal-instruction cause, trap handler transition, arbitrary bubbles, actual
+inputs, unchanged data memory, and compositional core/state/order boundaries.

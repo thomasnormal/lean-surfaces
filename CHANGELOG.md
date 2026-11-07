@@ -13,6 +13,9 @@
   `callFunction` now starts at the ordinary zero-depth world, matching the
   stateful `CallsIn` frame and keeping the recursion guard in the body.
 
+- Updated the remaining Python proof fixtures and generator guard for the
+  five-field `World` record introduced by the recursion-limit model.
+
 - Rechecked the position-independent module definition boundary: forward
   function-body calls and duplicate module definitions remain loud rather than
   answering through the static table.

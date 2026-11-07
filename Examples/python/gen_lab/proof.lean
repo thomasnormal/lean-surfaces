@@ -447,7 +447,7 @@ theorem naturals_prefix (w : World) (c : Nat) :
 generator behind the `total(5) = 10` differential row seen directly; the
 `stepGenN` line is `naturals_prefix` at four values. -/
 
-private def w0 : World := ⟨#[], [], [], []⟩
+private def w0 : World := ⟨#[], [], [], [], 0⟩
 
 #guard drainGen gen_lab 256 ⟨w0, uptoEntry 5⟩ uptoCont
   == .ok ⟨w0, uptoEnv 5 5⟩ [.int 0, .int 1, .int 2, .int 3, .int 4]

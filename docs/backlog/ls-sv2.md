@@ -3831,3 +3831,27 @@ and proves the raw predicate, exact `storeVal` transition, and generic
 the future loaded-core invariant must establish these raw source and memory
 facts from PicoRV32's actual RVFI row.  No RTL, loader, or `LeanModels/Sv/**`
 file changed.
+
+## 2026-11-07-ls-sv2-252 — establish the RV32I LW memory boundary
+
+The inboxes were reread before this item.  The generated-member memory route
+is still parked with `ls-sv`, so this item completes the owned contract for
+the measured load in the PicoRV32 prefix.
+
+Extended `LeanModels/Refine/Rv32iMem.lean` with the exact unsigned word-load
+state, read effect, retirement, profile-parametric step, memory-threaded
+step, and `rvMachineWith` equations.  Extended `LeanModels/Refine/RvfiMem.lean`
+with `RvfiObservation.lwBoundary`, retaining the source read, destination
+writeback, effective address, `rmask = 0b1111`, returned memory data, clear
+write mask, no trap, and semantic retirement equality.
+
+Added `rvfi_lw_boundary.lean` for the measured `LW x2, 0x100(x0)` row after
+the ADDI/SW prefix.  It proves the threaded state (`pc = 8`, `x1 = 5`,
+`x0 = 0`), the raw boundary, the exact load result from `memFive`, and the
+generic `rvMachineWith` commit.  The new theorem reports contain only the
+existing `propext`/`Quot.sound` boundary and no `sorryAx`.
+
+**DECIDED:** keep the load memory view explicit in both the architectural
+state equation and the raw predicate; the eventual core invariant must relate
+PicoRV32's returned bus data to this `loadVal` result.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.

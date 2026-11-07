@@ -146,6 +146,13 @@ write mask and payload, the effective address, and the absence of a register
 write or trap.  The state-threaded witness starts after the first ADDI and
 derives the exact `storeVal` memory transition and `swRetirement` commit.
 
+[`rvfi_lw_boundary.lean`](rvfi_lw_boundary.lean) completes that prefix with
+the measured `LW x2, 0x100(x0)` row.  `RvfiObservation.lwBoundary` checks the
+word read mask, address and returned data, the source read and destination
+writeback, and the unchanged memory result.  Its witness threads the state
+through the first two instructions and consumes the explicit memory view
+where address `0x100` contains 5.
+
 ## Finite ISA trace witness
 
 [`trace_proof.lean`](trace_proof.lean) feeds the first four non-trapping RVFI

@@ -664,6 +664,31 @@ theorem pinned_window_trace_refines_measured :
       rw [pinned_window_trace_refines, pinned_window_retire_inputs]
     _ = nontrapExpected := pinned_full_window_trace
 
+theorem pinned_window_done_eq (state : RvMemoryState)
+    (h : PinnedWindowRel .done state) : state = pinnedWindowS4 := by
+  cases h
+  rfl
+
+theorem pinned_window_final_state :
+    machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+      (rvMemoryMachineWith cv32e40pProfile).init
+      (retireInputs pinnedWindowMachine.toCycleMachine
+        pinnedWindowMachine.init pinnedWindowInputs) = pinnedWindowS4 := by
+  have hrel := pinned_window_normalized_refines.2
+  rw [pinned_window_final_phase] at hrel
+  exact pinned_window_done_eq _ hrel
+
+theorem pinned_window_final_architecture :
+    (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+      (rvMemoryMachineWith cv32e40pProfile).init nontrapInputs).arch.pc = 16 ∧
+    (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+      (rvMemoryMachineWith cv32e40pProfile).init nontrapInputs).arch.readReg 2 = 5 ∧
+    (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+      (rvMemoryMachineWith cv32e40pProfile).init nontrapInputs).arch.readReg 3 = 6 ∧
+    (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+      (rvMemoryMachineWith cv32e40pProfile).init nontrapInputs).arch.readReg 0 = 0 := by
+  decide
+
 #print axioms pinned_addi_unified
 #print axioms pinned_store_unified
 #print axioms pinned_load_unified
@@ -685,5 +710,8 @@ theorem pinned_window_trace_refines_measured :
 #print axioms pinned_window_final_phase
 #print axioms pinned_window_retirements_measured
 #print axioms pinned_window_trace_refines_measured
+#print axioms pinned_window_done_eq
+#print axioms pinned_window_final_state
+#print axioms pinned_window_final_architecture
 
 end Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary

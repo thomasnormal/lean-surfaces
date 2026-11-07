@@ -527,6 +527,11 @@ identifies the phase machine's retained instruction inputs with
 `pinned_window_trace_refines_measured` connects the normalized list to the
 existing `nontrapExpected` certificate.
 
+`pinned_window_final_state` inverts the final relation through
+`pinned_window_done_eq` and identifies the stateful ISA endpoint with
+`pinnedWindowS4`; `pinned_window_final_architecture` records its concrete
+pc and register values for the measured input stream.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

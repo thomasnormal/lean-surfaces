@@ -5380,3 +5380,28 @@ loader, extractor, or `LeanModels/Sv/**` file changed.
 **JUDGED / DECIDED:** keep the finite phase witness tied to the measured
 capture through explicit input, phase, and retirement endpoints; the symbolic
 PicoRV32 invariant remains parked at the loader refusals with `ls-sv`.
+
+## 2026-11-07-ls-sv2-319 — expose the exact finite state endpoint
+
+The inbox and goal file were reread before this item.  The generated-member
+and unpacked-register-memory refusals remain upstream `ls-sv` walls, so this
+item makes the carried relation's final state directly consumable.
+
+Added `pinned_window_done_eq`, `pinned_window_final_state`, and
+`pinned_window_final_architecture`.  The first inverts a `.done` relation to
+the exact `pinnedWindowS4` state; the second applies that inversion to the
+normalized eight-cycle witness; and the third computes the measured endpoint
+pc and register values (`pc = 16`, `x2 = 5`, `x3 = 6`, `x0 = 0`) for the
+four-row `nontrapInputs` stream.
+
+**MEASURED:** the focused PicoRV32 boundary target, `lake build
+LeanModels.Refine`, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  The three endpoint declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** expose exact phase/state data alongside the abstract
+relation so a future loaded-core invariant can resume at the measured state;
+keep the symbolic PicoRV32 proof parked at the loader refusals with `ls-sv`.

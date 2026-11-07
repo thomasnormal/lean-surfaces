@@ -4109,3 +4109,21 @@ two windows.  No RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** keep the segmented boundary explicit in the generic contract.
 The concatenated theorem remains available, while loaded-core invariants can
 now discharge and reuse one normalized window at a time.
+
+## 2026-11-07-ls-sv2-266 — project valid RVFI rows to concrete retirements
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_valid_step` to `LeanModels/Refine/Rvfi.lean`.
+For a strict-contract cycle known to have `valid = true`, it proves the raw
+observation is `wellFormed`, transports the state relation through that cycle,
+and identifies the observation's concrete `toRetirement` with the ISA step's
+retirement.  The proof uses a direct `Bool` split on the executable
+well-formedness flag, so the theorem adds no classical-choice dependency.
+Updated the PicoRV32 README and backlog/index.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** make the strict raw-row boundary expose the concrete packed
+retirement directly.  Future loaded-core invariants can consume validity and
+well-formedness as proved facts instead of reopening the optional adapter.

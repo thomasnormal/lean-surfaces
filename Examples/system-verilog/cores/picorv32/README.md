@@ -144,6 +144,11 @@ matches the ISA step; a malformed valid row cannot be silently projected to a
 bubble.  `rvfiCycleStepRefines_toCycleStepRefines` transports this strict raw
 contract to the existing cycle bridge, so a loaded-core invariant can be
 proved against packed fields first and use the trace/state theorems afterward.
+`rvfiCycleStepRefines_valid_step` projects a valid cycle to the row's
+`wellFormed` proof, post-cycle relation, and equality between the concrete
+packed retirement and the ISA retirement.  It is the direct raw-row boundary
+for a loaded-core invariant and does not infer validity from the optional
+adapter.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.

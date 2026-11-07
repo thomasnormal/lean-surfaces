@@ -4909,3 +4909,37 @@ was introduced.
 the admitted non-CSR system family, with trap causes and the WFI stutter
 explicit at the raw boundary.  Continue the owned refinement layer while
 generated-member memory support remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-302 — add the RV32I Zicsr RVFI boundary
+
+The inboxes and goal file were reread before this item.  The owner-approved
+CombView migration and generated-member memory route remain in `LeanModels/Sv/**`
+with `ls-sv`, so this item advances the owned generic refinement layer.
+
+Added `LeanModels/Refine/Rv32iCsr.lean` with `CsrOpKind`, the shared
+`csrOld`/`csrWriteValue`/`csrNext`/`csrEffects`/`csrRetirement` equations, and
+profile-parametric ISA, threaded-memory, and machine bridges.  The row lookup
+is an explicit premise: implemented machine-mode rows use the exact
+`csrRmw`/`csrWrites` rule and each row's WARL legalizer, while an unimplemented
+address remains the ISA's illegal-instruction path.  Added
+`LeanModels/Refine/RvfiCsr.lean` with register-source readback, old CSR value
+written to `rd`, sequential pc, no-memory/no-trap fields, and the
+`rvfiCycleStepRefines_of_csr_memory` constructor that carries the CSR-file
+update through `RvMemoryState`.
+
+The boundary is scoped to `irq = 0` and the six implemented CV32E40P machine
+CSRs (`mstatus`, `mie`, `mtvec`, `mscratch`, `mepc`, `mcause`).  Immediate CSR
+forms leave packed source-register fields unconstrained because they have no
+architectural `rs1` read.  Interrupt dispatch and illegal-CSR trap rows remain
+separate boundaries.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iCsr`,
+`lake build LeanModels.Refine.RvfiCsr`, and the umbrella refinement build pass.
+The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  The docs, backlog-index, and diff checks pass.
+
+**JUDGED / DECIDED:** keep all three Zicsr operations and both register/
+immediate source forms under one row-parametric boundary.  Do not invent a
+CSR result for an address absent from `csrTable`; the existing ISA step's
+illegal-instruction trap remains the loud behavior.

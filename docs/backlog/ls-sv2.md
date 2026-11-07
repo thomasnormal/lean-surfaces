@@ -5036,3 +5036,32 @@ changed.
 consumer of the indexed family, keeping the proof stateful and instruction
 class preserving.  The next step remains an owned generic/core-facing
 milestone while the upstream generated-member support stays with `ls-sv`.
+
+## 2026-11-07-ls-sv2-306 — adapt specialized RVFI contracts into the indexed family
+
+The inboxes and goal file were reread before this item.  The owner-lane
+generated-member memory refusal remains unchanged, so this item keeps the
+semantic work in the owned refinement layer and does not adapt PicoRV32 RTL.
+
+`LeanModels.Refine.RvfiRv32i` now imports the instruction-specific ADDI,
+upper-immediate, and word-memory contracts and provides
+`addiBoundary_rv32i`, `luiBoundary_rv32i`, `auipcBoundary_rv32i`,
+`swBoundary_rv32i`, and `lwBoundary_rv32i`.  Each theorem converts the raw
+specialized predicate into the matching indexed `Rv32iBoundary` constructor;
+the post `RvMemoryState` and `Retirement` indices are definitionally the same
+ones used by the generic family.  The adapters retain the specialized raw
+fields for core invariants while ensuring all instruction classes consume one
+dispatcher and one stateful machine projection.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i` passes under Lean
+4.35.0.  The umbrella refinement build and PicoRV32 unified-boundary target,
+the documentation check, backlog-index check, and `git diff --check` also pass.
+The new declarations carry only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** keep specialized predicates as raw-field contracts and
+make their conversion to `Rv32iBoundary` explicit, rather than duplicating a
+second family dispatcher.  The next item remains an owned generic/core-facing
+milestone while generated-member support stays with `ls-sv`.

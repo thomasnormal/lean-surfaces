@@ -6,6 +6,9 @@ import LeanModels.Refine.RvfiBranch
 import LeanModels.Refine.RvfiAlu
 import LeanModels.Refine.RvfiMemAll
 import LeanModels.Refine.RvfiCsr
+import LeanModels.Refine.RvfiAddi
+import LeanModels.Refine.RvfiUpper
+import LeanModels.Refine.RvfiMem
 
 /-!
 # Unified RV32I RVFI boundary
@@ -77,6 +80,83 @@ inductive Rv32iBoundary (s : ArchState) (input : Input)
       Rv32iBoundary s input o
         { arch := illegalNext s, memory := input.memory }
         (illegalRetirement s input)
+
+/-! ## Specialized-boundary adapters -/
+
+theorem RvfiObservation.addiBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.addiBoundary s input w rd rs1 imm) :
+    Rv32iBoundary s input o
+      { arch := aluNext s .add rd (.reg rs1) (.imm imm),
+        memory := input.memory }
+      (aluRetirement s input .add rd (.reg rs1) (.imm imm)) := by
+  apply Rv32iBoundary.alu w .add rd (.reg rs1) (.imm imm)
+  simpa [RvfiObservation.addiBoundary, RvfiObservation.aluBoundary,
+    RvfiObservation.addiFields, RvfiObservation.aluFields,
+    aluSrc1Fields, aluSrc2Fields, addiNext, aluNext,
+    addiRetirement, aluRetirement, addiEffects, aluEffects,
+    src1Val, src2Val, aluSem, and_assoc] using h
+
+theorem RvfiObservation.luiBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd : Reg) (imm : Word)
+    (h : o.luiBoundary s input w rd imm) :
+    Rv32iBoundary s input o
+      { arch := aluNext s .add rd (.reg 0) (.imm imm),
+        memory := input.memory }
+      (aluRetirement s input .add rd (.reg 0) (.imm imm)) := by
+  apply Rv32iBoundary.alu w .add rd (.reg 0) (.imm imm)
+  simpa [RvfiObservation.luiBoundary, RvfiObservation.aluBoundary,
+    RvfiObservation.luiFields, RvfiObservation.aluFields,
+    aluSrc1Fields, aluSrc2Fields, luiNext, aluNext,
+    luiRetirement, aluRetirement, luiEffects, aluEffects,
+    src1Val, src2Val, aluSem, and_assoc] using h
+
+theorem RvfiObservation.auipcBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd : Reg) (imm : Word)
+    (h : o.auipcBoundary s input w rd imm) :
+    Rv32iBoundary s input o
+      { arch := aluNext s .add rd .pc (.imm imm),
+        memory := input.memory }
+      (aluRetirement s input .add rd .pc (.imm imm)) := by
+  apply Rv32iBoundary.alu w .add rd .pc (.imm imm)
+  simpa [RvfiObservation.auipcBoundary, RvfiObservation.aluBoundary,
+    RvfiObservation.auipcFields, RvfiObservation.aluFields,
+    aluSrc1Fields, aluSrc2Fields, auipcNext, aluNext,
+    auipcRetirement, aluRetirement, auipcEffects, aluEffects,
+    src1Val, src2Val, aluSem, and_assoc] using h
+
+theorem RvfiObservation.swBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rs1 rs2 : Reg) (imm : Word)
+    (h : o.swBoundary s input w rs1 rs2 imm) :
+    Rv32iBoundary s input o
+      { arch := memNext s input.memory (.store .word) rs2 rs1 imm,
+        memory := memAfter input.memory s (.store .word) rs2 rs1 imm }
+      (memRetirement s input (.store .word) rs2 rs1 imm) := by
+  apply Rv32iBoundary.mem w (.store .word) rs2 rs1 imm
+  simpa [RvfiObservation.swBoundary, RvfiObservation.memBoundary,
+    RvfiObservation.swFields, RvfiObservation.memFields,
+    MemOp.toInstr, MemOp.toDir, MemOp.width, loadVal, maskOfWidth,
+    swNext, memNext, swRetirement, memRetirement,
+    swEffects, memEffects, memAfter, and_assoc] using h
+
+theorem RvfiObservation.lwBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd rs1 : Reg) (imm : Word)
+    (h : o.lwBoundary s input w rd rs1 imm) :
+    Rv32iBoundary s input o
+      { arch := memNext s input.memory (.load true .word) rd rs1 imm,
+        memory := memAfter input.memory s (.load true .word) rd rs1 imm }
+      (memRetirement s input (.load true .word) rd rs1 imm) := by
+  apply Rv32iBoundary.mem w (.load true .word) rd rs1 imm
+  simpa [RvfiObservation.lwBoundary, RvfiObservation.memBoundary,
+    RvfiObservation.lwFields, RvfiObservation.memFields,
+    MemOp.toInstr, MemOp.toDir, MemOp.width, loadVal, maskOfWidth,
+    lwNext, memNext, lwRetirement, memRetirement,
+    lwEffects, memEffects, memAfter, and_assoc] using h
 
 theorem Rv32iBoundary.toRetirement?_eq_some
     {s : ArchState} {input : Input} {o : RvfiObservation}

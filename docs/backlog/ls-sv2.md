@@ -6628,3 +6628,30 @@ introduced.
 finish-line shape from reset without manually instantiating the arbitrary-state
 contract.  The real core remains parked at the two approved memory-route
 walls; the Sem2 multi-clock wall in the inbox remains ls-sv's later item.
+
+## 2026-11-07-ls-sv2-358 — expose target-input and target-state equations
+
+The structure-valued prefix record retained the certificate, trace, and final
+relation, but it did not expose the equations connecting its decoded mixed
+program to the target schedule.  Those equations are the bridge a loaded-core
+proof needs to consume the certificate without reconstructing the progress
+calculation.
+
+**CHANGED:** Added `program_inputs_eq` and `program_state_eq` fields to
+`Rv32iPrefixRefinement`.  `rv32i_progress_refinement` now constructs both
+fields from the certificate's exact `retireInputs_eq`, the target progress
+witness, and `rvMemoryMachineWith_rv32i_program_state`; the state relation and
+normalized trace remain at the same cycle boundary.  Updated the PicoRV32
+README and backlog index.  No semantics, RTL, loader, extractor, or finite
+captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiProgress.lean` passes under
+Lean 4.35.0, with the new theorem reporting only
+`propext`/`Classical.choice`/`Quot.sound`.  The refinement umbrella build, wall
+probe, docs check, backlog index check, and diff check pass.  No `sorryAx` or
+new axiom was introduced.
+
+**JUDGED / DECIDED:** The public prefix certificate now carries the exact
+decoded-program-to-target equations needed by the from-reset R2 theorem.  The
+PicoRV32 core remains parked at the two approved memory-route walls; the Sem2
+multi-clock item remains deferred to ls-sv.

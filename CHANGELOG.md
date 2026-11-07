@@ -11,6 +11,9 @@
 - Docs: clarify that the monadic refinement edge currently covers the shared
   pure workers, while control and script adequacy remain explicit debt.
 
+- Docs: record the remaining namedtuple static-table boundary and its
+  source-order guard; runtime namedtuple construction remains future work.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

@@ -69,6 +69,10 @@
   guarded, later live shadows remain dynamic, and identity/forward hazards stay
   loud until first-class function objects replace the copied table entries.
 
+- Rechecked trailing definition deletion: ingestion preserves every `del`
+  statement and the script surface refuses static `def`/`class`/namedtuple
+  tombstones instead of rewriting them to `pass`.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

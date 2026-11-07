@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-420` |  | recheck trailing definition deletion nodes | python-completeness |
 | `2026-11-07-pycomplete-419` |  | recheck module-level callable alias boundaries | python-completeness |
 | `2026-11-07-pycomplete-418` |  | recheck namedtuple recognition boundaries | python-completeness |
 | `2026-11-07-pycomplete-417` |  | recheck the two-interpreter refinement edge | python-completeness |

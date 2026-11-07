@@ -4429,3 +4429,19 @@ PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**` file changed.
 
 **DECIDED:** keep adjacent optional-window proofs reachability-sensitive while
 retaining the stronger all-state API for compatibility.
+
+## 2026-11-07-ls-sv2-284 — expose relation-aware optional RVFI chain composition
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_normalized_chain_of_rel` to
+`LeanModels/Refine/Rvfi.lean`.  The optional segmented-window theorem now
+accepts a well-formedness invariant only on the related states and admitted
+inputs that the proof reaches, while exposing the first boundary, middle
+relation, second ISA trace, and final relation.  The existing global-row chain
+theorem delegates to it.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** preserve the exact middle state boundary in a reachability-
+sensitive optional API and retain the all-state form for compatibility.

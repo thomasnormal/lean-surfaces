@@ -211,8 +211,11 @@ adjacent optional windows while restricting the wire invariant to related,
 admitted states.  The global-row `cycleStepRefines_normalized_append`
 specialization remains available, including the exact raw-state boundary
 between windows.
-`cycleStepRefines_normalized_chain` additionally exposes the intermediate
-relation and second ISA state needed to resume a segmented optional proof.
+`cycleStepRefines_normalized_chain_of_rel` additionally exposes the
+intermediate relation and second ISA state needed to resume a segmented
+optional proof while keeping the wire invariant reachability-sensitive.  The
+global-row `cycleStepRefines_normalized_chain` specialization remains
+available.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.

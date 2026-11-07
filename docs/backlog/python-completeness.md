@@ -10989,6 +10989,22 @@ does not consume a call frame.
 DECIDED: retain the pinned default recursion limit and active-depth unwind;
 keep `sys.setrecursionlimit` outside the tier until it is an explicit oracle.
 
+## 2026-11-07-pycomplete-449 — audit recursion-limit finding against current tier
+
+The high-priority audit finding `py-no-recursion-limit` is closed by the
+existing active-depth implementation. Rechecking the reported witness against
+the pinned CPython 3.9 oracle found no divergence: the closed-function model
+raises `RecursionError` at the same boundary and restores depth after a call.
+
+| Measurement | Result |
+|---|---|
+| Focused proof-interpreter differential | `depth(100)` and `depth(1000)`: 2/2 MATCH |
+| Pinned oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-no-recursion-limit` as already fixed; retain the remaining
+scope boundary that `sys.setrecursionlimit` is not modeled.
+
 ## 2026-11-07-pycomplete-448 — rebase float proof over call depth
 
 The Lean 4.35 fixture audit's remaining Python failure was in

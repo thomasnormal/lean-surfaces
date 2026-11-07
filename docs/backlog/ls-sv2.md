@@ -4844,3 +4844,34 @@ system-operation family with an explicit `FenceKind`, preserving the
 operation at the raw boundary even though the commit-level retirement has no
 system-op field; continue with the next owned RV32I boundary while the
 generated-member memory route remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-300 — add the generic RV32I memory RVFI boundary
+
+The inboxes and goal file were reread before this item.  CombView migration
+and generated-member memory support remain `ls-sv` work, so this item stays in
+the owned generic RISC-V refinement layer and does not touch `LeanModels/Sv/**`.
+
+Added `LeanModels/Refine/Rv32iMemAll.lean` with `MemOp` and shared
+`memNext`/`memEffects`/`memAfter`/`memRetirement` equations for LB/LBU, LH/LHU,
+LW, SB, SH, and SW, together with profile-parametric ISA, threaded-memory, and
+machine bridges.  Added `LeanModels/Refine/RvfiMemAll.lean` with the raw
+`RvfiObservation.memBoundary` contract and
+`rvfiCycleStepRefines_of_mem_memory`.  Loads preserve signed or zero-extended
+writeback and read data; stores preserve the source register, exact byte mask,
+and `storeVal` update.  Valid rows carry the load-preserve or store-update
+through `RvMemoryState`, while invalid rows remain explicit ISA stutters.  The
+umbrella import and PicoRV32 README were updated; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.Rv32iMemAll`,
+`lake build LeanModels.Refine.RvfiMemAll`, `lake build LeanModels.Refine`, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**JUDGED / DECIDED:** keep all six RV32I memory forms under one `MemOp`
+boundary, with load signedness explicit and store data represented by the
+instruction's second source register.  Continue the owned refinement layer
+while generated-member memory support remains with `ls-sv`.

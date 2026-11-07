@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a unary arithmetic
+  callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a compound
   assignment callable and native differential row.
 

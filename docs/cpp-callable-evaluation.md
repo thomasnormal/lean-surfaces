@@ -59,6 +59,9 @@ check.
 The agreement battery also covers a compound-assignment callable, checking the
 same `CallableFunction` result through both evaluator APIs.
 
+It now covers a unary arithmetic callable as well, extending the same-IR
+agreement check across both expression evaluator layers.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -10205,3 +10205,20 @@ remain differential matches.
 
 DECIDED: keep lexical declarations structured from the approved AST through
 execution; no text fallback is admissible.
+
+## 2026-11-07-pycomplete-405 — recheck generator capture census
+
+The generator-capture audit finding is already closed by the structured
+`bodyAssigns`/`exprAssigns` census. Unpacking, walrus stores, and `del` are
+counted before admitting the by-value lowering, so the measured stale-capture
+shape is loud. The creation-time `GET_ITER` guard is also present for the
+outermost iterable, preserving CPython's error timing for a scalar source.
+
+| Measurement | Result |
+|---|---|
+| Rebinding witness | `genexp_capture_rebinding.py` is loud; CPython 3.9 raises the captured-name error |
+| Creation-time witness | `genexp_iter_creation.py` MATCHES CPython 3.9's `TypeError` |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain the conservative capture admission and creation-time iterator
+guard until native generator-expression semantics replace the lowering.

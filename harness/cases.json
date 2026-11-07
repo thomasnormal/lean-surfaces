@@ -589,7 +589,7 @@
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_max_empty", "args": [[]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_any", "args": [[1], [0]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_all", "args": [[1], [0]], "expect": "match"},
-  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_set_len", "args": [[7], [3]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_set_len", "args": [[7], [3]], "expect": "unsupported", "note": "set(dict) construction is loud even when the caller only observes length; dict-source table order is not modeled"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_str_keys", "args": [[7]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_bool_int_collision", "args": [[7], [1]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_empty", "args": [[]], "expect": "match"},

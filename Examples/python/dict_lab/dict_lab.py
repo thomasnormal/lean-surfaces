@@ -312,8 +312,8 @@ def keys_all(a):
 
 
 def keys_set_len(a):
-    # set() over the keys: already distinct, and set membership is
-    # order-blind, so nothing about order is claimed
+    # set() over dict keys uses CPython's distinct pre-sized merge path;
+    # the tier refuses the source even when this caller only asks for length
     d = {3: 0, 1: 0, a: 0}
     return len(set(d))
 

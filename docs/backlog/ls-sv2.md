@@ -5477,3 +5477,45 @@ is a documentation-only synchronization; no RTL, loader, extractor,
 PicoRV32 frontier, while leaving the symbolic ADDI invariant parked until a
 loaded real-core state can be related through the remaining unpacked-memory and
 module-member walls.
+
+## 2026-11-07-ls-sv2-322 — re-probe PicoRV32 after dynamic memory admission
+
+The inbox and goal file were reread before this item.  `github/master` advanced
+to `cb99d49c69db72421ab3c7b16447b47311f60890`, which admits dynamic
+parameterized register memories in the generic memory route, so the pinned
+PicoRV32 source was freshly extracted and loaded against that exact revision.
+
+The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461` (ISC, no RTL changes).  The fresh
+envelope is 2,992,406 bytes with SHA-256
+`bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c`.  The
+declaration loads as a 26-parameter family with 216 declarations, 43 processes,
+and three generate entries.  The ordinary semantic family still first refuses
+the unpacked register file at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now reaches its existing top-level unsupported-member gate
+before it can exercise the newly admitted dynamic-memory path:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire` at
+`picorv32.v:257`.  This is an existing generic boundary, so no new
+`REQUEST ls-sv:` repro is filed and no symbolic ADDI invariant is claimed.
+
+**MEASURED:** fresh extraction and both loader probes passed far enough to emit
+the exact refusals above; the focused refinement/core targets, docs check,
+backlog-index check, and `git diff --check` pass.  No RTL, loader, extractor,
+or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** dynamic parameterized-memory admission does not move the
+PicoRV32 proof frontier until the existing unsupported module member/net-z
+boundary is cleared.  Keep the R2 work parked there and do not add another
+finite captured-window theorem.

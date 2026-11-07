@@ -90,6 +90,34 @@ The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the
 not a new generate-member shape, so no additional `REQUEST ls-sv` repro is
 filed.  The symbolic PicoRV32 invariant remains parked at these loader walls.
 
+## 2026-11-07 re-probe after dynamic parameterized-memory admission
+
+`github/master` advanced to `cb99d49c6` (`[ls-sv] admit dynamic parameterized
+register memories`) after the previous probe.  The pinned source was extracted
+again without any RTL change:
+
+```text
+source commit: ef203c2b0a3fb793280f5114941416c425c5b461
+ls-sv revision: cb99d49c69db72421ab3c7b16447b47311f60890
+envelope: bbdf7aee9e200a35f228adfa891eeaa10addb3b1608f3776f0bd9d61c42d4f9c
+size: 2,992,406 bytes
+```
+
+The declaration still loads as a 26-parameter family (216 declarations, 43
+processes, three generate entries).  The ordinary semantic family still first
+refuses `cpuregs` at `picorv32.v:203` with the same unpacked-memory message.
+The memory route reaches its existing top-level unsupported-member gate before
+it can exercise the newly admitted dynamic register-memory path:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+Its first retained member remains `NetSymbol:net-z` for `pcpi_mul_wr`, the
+`wire` at `picorv32.v:257`.  This is an existing generic boundary, so no new
+clean-room request is filed and no symbolic ADDI invariant is claimed.
+
 ## Generated-member clean-room repro
 
 The generic route is independently confirmed by the clean-room fixtures in

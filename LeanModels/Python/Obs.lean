@@ -184,6 +184,20 @@ theorem Run.le_toWorld {α : Type} {x x' : Run FrameState α}
   · subst h; exact Or.inl rfl
   · subst h; exact Or.inr rfl
 
+/-! The active-frame unwind is a pure outcome map, so it preserves the flat
+fuel order just like the existing state projections. -/
+theorem Run.le_leaveCallDepth {α : Type} {x x' : Run World α}
+    (h : x ⊑ʳ x') : Run.leaveCallDepth x ⊑ʳ Run.leaveCallDepth x' := by
+  rcases h with h | h
+  · subst h; exact Or.inl rfl
+  · subst h; exact Or.inr rfl
+
+theorem Run.le_finishCallAt {α : Type} (depth : Nat) {x x' : Run World α}
+    (h : x ⊑ʳ x') : Run.finishCallAt depth x ⊑ʳ Run.finishCallAt depth x' := by
+  rcases h with h | h
+  · subst h; exact Or.inl rfl
+  · subst h; exact Or.inr rfl
+
 /-- Congruence of `⊑`→`⊑ʳ` under `Run.liftRes` (the fueled helper splice:
 `evalCompareOpH` is fuel-dependent since H1-proper). -/
 theorem Run.le_liftRes {σ α : Type} {s : σ} {x y : Res α} (h : x ⊑ y) :
@@ -1806,15 +1820,28 @@ theorem fuelMono (fuel : Nat) :
         | some f =>
           -- argsOk / localsOk / arity guards, then the H4 generator
           -- branch (allocation only — fuel-independent)
-          refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-            (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)))
-          refine Run.le_toWorld
-            (Run.le_bind
-              (ihSs m
-                ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
-                f.body.toList k hk)
-              fun st flow => ?_)
-          cases flow <;> exact Run.le_refl _
+          refine Run.le_ite (Run.le_refl _) ?_
+          refine Run.le_ite (Run.le_refl _) ?_
+          refine Run.le_ite (Run.le_refl _) ?_
+          refine Run.le_ite (Run.le_refl _) ?_
+          refine Run.le_ite ?_ ?_
+          · refine Run.le_finishCallAt w.callDepth (Run.le_toWorld
+                (Run.le_bind
+                  (ihSs m
+                    ⟨{ w with callDepth := 0 },
+                      markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+                    f.body.toList k hk)
+                  fun st flow => ?_))
+            cases flow <;> exact Run.le_refl _
+          · refine Run.le_ite (Run.le_refl _) ?_
+            refine Run.le_leaveCallDepth (Run.le_toWorld
+                (Run.le_bind
+                  (ihSs m
+                    ⟨{ w with callDepth := w.callDepth + 1 },
+                      markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+                    f.body.toList k hk)
+                  fun st flow => ?_))
+            cases flow <;> exact Run.le_refl _
     -- execFor
     · intro m st target xs body fuel' hf
       cases fuel' with
@@ -2399,7 +2426,10 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     ∀ fuel' ≥ fuel, callFunction m fname args fuel' = r := by
   intro fuel' hf
   unfold callFunction at h ⊢
-  rcases (fuelMono fuel).2.2.2.2.2.2.2.1 m (initWorld m) fname
+  let w0 : World := { initWorld m with callDepth := pythonTopCallDepth }
+  change Run.toPublic fuel (callIn m fuel w0 fname (RVal.thawArgs args)) = r at h
+  change Run.toPublic fuel' (callIn m fuel' w0 fname (RVal.thawArgs args)) = r
+  rcases (fuelMono fuel).2.2.2.2.2.2.2.1 m w0 fname
       (RVal.thawArgs args) fuel' hf with hto | heq
   · -- The inner run timed out at `fuel`: then the public result was
     -- `.timeout`, contradicting `hr`.
@@ -2407,7 +2437,7 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     exact absurd h.symm (by simpa using hr)
   · rw [← heq]
     have hle := Run.toPublic_mono
-      (x := callIn m fuel (initWorld m) fname (RVal.thawArgs args)) hf
+      (x := callIn m fuel w0 fname (RVal.thawArgs args)) hf
     rw [h] at hle
     exact (Res.le_eq hle hr).symm
 
@@ -2519,6 +2549,38 @@ theorem toWorld {α : Type} {w : World} {x : Run FrameState α}
   rw [Run.toWorld_eq_ok] at he
   obtain ⟨st, hx', rfl⟩ := he
   exact h st a hx'
+
+/-! The call body runs one level below its caller and returns after restoring
+the caller's active-frame count. -/
+theorem leaveCallDepth {α : Type} {w : World} {x : Run World α}
+    (h : Run.OkW (· = { w with callDepth := w.callDepth + 1 }) x) :
+    Run.OkW (· = w) (Run.leaveCallDepth x) := by
+  cases x with
+  | ok s v =>
+      intro w' a he
+      simp only [Run.leaveCallDepth] at he
+      cases he
+      have hs := h s v rfl
+      subst s
+      simp
+  | exn s e => exact Run.OkW.exn
+  | timeout => exact Run.OkW.timeout
+  | unsupported msg => exact Run.OkW.unsupported
+
+theorem finishCallAt {α : Type} {w : World} {depth : Nat} {x : Run World α}
+    (h : Run.OkW (· = { w with callDepth := 0 }) x) :
+    Run.OkW (· = { w with callDepth := depth }) (Run.finishCallAt depth x) := by
+  cases x with
+  | ok s v =>
+      intro w' a he
+      simp only [Run.finishCallAt] at he
+      cases he
+      have hs := h s v rfl
+      subst s
+      simp
+  | exn s e => exact Run.OkW.exn
+  | timeout => exact Run.OkW.timeout
+  | unsupported msg => exact Run.OkW.unsupported
 
 end Run.OkW
 
@@ -3591,18 +3653,34 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         -- generator defs — `Module.heapFree`'s third conjunct), so the
         -- allocating branch is rewritten away before the walk
         simp only [findFunction_notGen hm hff, Bool.false_eq_true, if_false]
-        refine .ite .unsupported (.ite .unsupported (.ite .exn ?_))
-        refine Run.OkW.toWorld ?_
-        refine .bind
-          (ihSs
-            ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
-            f.body.toList
-          (findFunction_heapFree hm hff)) fun st₁ flow h₁ => ?_
-        cases flow with
-        | ret v => exact .okF h₁ _
-        | next => exact .okF h₁ _
-        | brk => exact .unsupported
-        | cont => exact .unsupported
+        refine .ite .unsupported (.ite .unsupported (.ite .exn
+          (.ite ?_ (.ite .exn ?_))))
+        · apply Run.OkW.finishCallAt (w := w) (depth := w.callDepth)
+          refine Run.OkW.toWorld ?_
+          refine .bind
+            (ihSs
+              ⟨{ w with callDepth := 0 },
+                markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList
+            (findFunction_heapFree hm hff)) fun st₁ flow h₁ => ?_
+          cases flow with
+          | ret v => exact .okF h₁ _
+          | next => exact .okF h₁ _
+          | brk => exact .unsupported
+          | cont => exact .unsupported
+        · apply Run.OkW.leaveCallDepth (w := w)
+          refine Run.OkW.toWorld ?_
+          refine .bind
+            (ihSs
+              ⟨{ w with callDepth := w.callDepth + 1 },
+                markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList
+            (findFunction_heapFree hm hff)) fun st₁ flow h₁ => ?_
+          cases flow with
+          | ret v => exact .okF h₁ _
+          | next => exact .okF h₁ _
+          | brk => exact .unsupported
+          | cont => exact .unsupported
     -- execFor
     · intro st target xs body hbody
       cases xs with

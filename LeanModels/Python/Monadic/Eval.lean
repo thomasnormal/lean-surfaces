@@ -2374,6 +2374,33 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
     | .brk   => refuse "'break' outside loop"
     | .cont  => refuse "'continue' outside loop"
 
+/-! Restore the active-frame count when a module-level call returns or raises.
+The model's raise channel retains the world, so the exception handler must
+perform the same unwind as the normal path. Model refusals and timeouts carry
+no state and therefore need no cleanup. -/
+def leaveCallM {α : Type} (action : SemW α) : SemW α :=
+  tryCatch
+    (do
+      let value ← action
+      modify fun w => { w with callDepth := w.callDepth.pred }
+      pure value)
+    (fun e => do
+      modify fun w => { w with callDepth := w.callDepth.pred }
+      raisePy e)
+
+def finishCallM {α : Type} (depth : Nat) (action : SemW α) : SemW α :=
+  tryCatch
+    (do
+      let value ← action
+      modify fun w => { w with callDepth := depth }
+      pure value)
+    (fun e => do
+      modify fun w => { w with callDepth := depth }
+      raisePy e)
+
+def finishTopCallM {α : Type} (action : SemW α) : SemW α :=
+  finishCallM pythonTopCallDepth action
+
 /-! ## §3 THE FUELED KNOT — structural on FUEL, and the only place fuel is spent -/
 
 /-- Enter a module-level function. The guard ORDER is the trunk's: parameter
@@ -2424,12 +2451,21 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
       pure (.ref w.heap.size)
     else do
       let w ← get
-      if w.callDepth >= pythonRecursionLimit then
+      if w.callDepth == pythonTopCallDepth then
+        set { w with callDepth := 0 }
+        let flow ← finishCallM w.callDepth (inWorld (globalCallEnv w f.params args f.body f.hasGlobal)
+          (execOpenList K m f.body.toList))
+        match flow with
+        | .ret v => pure v
+        | .next  => pure .none
+        | .brk   => refuse "'break' outside loop"
+        | .cont  => refuse "'continue' outside loop"
+      else if w.callDepth + 1 >= pythonRecursionLimit then
         raisePy .recursionError
       else
         set { w with callDepth := w.callDepth + 1 }
-        let flow ← inWorld (globalCallEnv w f.params args f.body f.hasGlobal)
-          (execOpenList K m f.body.toList)
+        let flow ← leaveCallM (inWorld (globalCallEnv w f.params args f.body f.hasGlobal)
+          (execOpenList K m f.body.toList))
         match flow with
         | .ret v => pure v
         | .next  => pure .none
@@ -2563,7 +2599,7 @@ harness learns anything about the rebuild beyond one flag. -/
 /-- The differential battery's entry point, typed exactly as `callIn`. -/
 def callInMono (m : Module) (fuel : Nat) (w : World) (fname : String)
     (args : Array RVal) : Run World RVal :=
-  toRun ((kont m fuel).call fname args) w
+  toRun ((kont m fuel).call fname args) { w with callDepth := pythonTopCallDepth }
 
 /-! ### §4.1 THE CLASS THE PUBLIC WRAPPER ERASES
 
@@ -2588,7 +2624,7 @@ makes any additive field a failure; the field appears only under
 /-- The runner boundary's INNER value — the one `toRun` is a projection of. -/
 def callInRaw (m : Module) (fuel : Nat) (w : World) (fname : String)
     (args : Array RVal) : HaltWith Unit Unit (Except PyErr RVal × World) :=
-  (kont m fuel).call fname args w
+  (kont m fuel).call fname args { w with callDepth := pythonTopCallDepth }
 
 /-- `Run`'s view of an inner value: `toRun`, written as a function of the
 already-applied run so both projections can share one execution. -/
@@ -2606,7 +2642,7 @@ theorem callInMono_eq_ofHalt (m : Module) (fuel : Nat) (w : World)
     (fname : String) (args : Array RVal) :
     callInMono m fuel w fname args = ofHalt (callInRaw m fuel w fname args) := by
   simp only [callInMono, toRun, callInRaw, ofHalt]
-  rcases h : (kont m fuel).call fname args w with l | ⟨r, w'⟩
+  rcases h : (kont m fuel).call fname args { w with callDepth := pythonTopCallDepth } with l | ⟨r, w'⟩
   · cases l <;> rfl
   · cases r <;> rfl
 

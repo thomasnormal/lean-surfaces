@@ -10222,3 +10222,19 @@ outermost iterable, preserving CPython's error timing for a scalar source.
 
 DECIDED: retain the conservative capture admission and creation-time iterator
 guard until native generator-expression semantics replace the lowering.
+
+## 2026-11-07-pycomplete-406 — recheck generator creation-time iteration
+
+The separate deferred-`iter()` audit finding is already closed by the
+`genInitCont` creation guard. Synthesized generator expressions validate and
+initialize the outer iterator before returning the generator object; scalar
+receivers therefore raise the faithful `TypeError` at creation, while admitted
+iterables retain their existing cursor semantics.
+
+| Measurement | Result |
+|---|---|
+| Scalar outer source | `genexp_iter_creation.py` MATCHES CPython 3.9's `TypeError` |
+| Semantic change | none; this packet records a verified existing guard |
+
+DECIDED: keep creation-time iterator validation in the lowering until native
+generator-expression semantics replace it.

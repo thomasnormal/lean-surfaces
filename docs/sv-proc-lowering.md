@@ -47,17 +47,15 @@ Rows: `proc_compound` (whole, bit, part, run-time index, a clmul accumulate, a p
 
 ## X1. Loop header forms
 
-Master's unroll (`_sym_for_values`) takes a source-pure counted loop whose header declares ONE `int` iterator with a literal
+The retained `For` path takes a source-pure counted loop whose header declares ONE `int` iterator with a literal
 initializer, compares it with a literal and steps it by a literal. X1 admits the spellings real Verilog-2001 code uses for
 the same loops: the iterator declared OUTSIDE the header (`integer i; ... for (i = 0; i < 8; i = i + 1)`), the step `i += c` /
 `i -= c`, and the comparisons `<=` and `>=`.
 
-An iterator declared outside the header is a variable of the module (or the block), and the unroll binds it to an `Int` per
-iteration without ever writing it, which is exact only if nothing else can observe it: a read after the loop sees the loop's
-final value (not computed), a read before it sees x. The census (`_iterator_census`) therefore requires every reference to the
-iterator to lie inside a loop that iterates it, the type to be `int`/`integer` (32-bit signed: the trace the unroll computes),
-and the symbol not to be a port; when it holds the declaration is dead and is erased (`erased_iterator`), else the loop stays the
-loud `ForLoopStatement`. Master's declared-iterator form is returned unchanged.
+The source iterator and its declaration stay in the retained header; no
+compile-time binding or declaration erasure is performed. A parameter-bound
+header is instantiated by the semantic tier's trip schema, while a literal
+header is represented by the same `For` node and has no extraction cap.
 
 Rows: `proc_loop_forms` (module-level `integer` shared by several loops, `<=`, `>=`, `+=`, `i--`), `proc_loop_forms_local` (a
 block-local iterator), `proc_loop_forms2` (declared headers refused by master only for the operator name, a stride-2 loop), and
@@ -83,12 +81,10 @@ stride at parameter point `N = 5`.
 
 ### Retaining literal loops
 
-The default extractor path still unrolls literal-bound loops for the existing
-closed-form proofs. `extract.py --top T --retain-loops` instead emits the same
-`For` node used by parameter-bound loops, with `GenvarRef` uses in the body; no
-literal iteration cap is consulted by this extraction mode. The differential
-row `proc_loop_forms_retained` runs the same source and stimulus as a retained
-loop, alongside the default `proc_loop_forms` unrolled row.
+The extractor emits the same `For` node used by parameter-bound loops by
+default. `extract.py --top T --retain-loops` remains a compatibility spelling;
+no literal iteration cap is consulted by either path. Differential rows use
+the retained source structure directly.
 
 `Param2.forValues2` now derives structural fuel from the instantiated linear
 comparison and step, including the final false-condition check. It therefore

@@ -65,16 +65,15 @@ class TestLoops(unittest.TestCase):
                               loop("value=0;", post=post) + " endmodule")
             self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
-    def test_symbolic_literal_bounded_for_unrolls(self):
+    def test_symbolic_literal_bounded_for_is_retained(self):
         design = symbolic(
             "module divider #(parameter W=4) (input logic [W-1:0] a, "
             "output logic [W-1:0] y); always_comb begin "
             "for (int i=0; i<4; i++) y[i] = a[i]; end endmodule")
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
-        unrolled = [n for n in nodes(design)
-                    if n.get("symbolic_for_unrolled")]
-        self.assertEqual([n.get("symbolic_for_iterations") for n in unrolled], [4])
-        self.assertFalse(any(n.get("kind") == "LocalDecl" for n in unrolled[0].get("stmts", [])))
+        retained = [n for n in nodes(design) if n.get("kind") == "For"]
+        self.assertEqual(len(retained), 1)
+        self.assertTrue(retained[0].get("symbolic_for_retained"))
 
     def test_symbolic_parameter_bound_is_retained(self):
         design = symbolic(

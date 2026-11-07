@@ -6509,6 +6509,10 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- Literal counted procedural loops are now retained as source-shaped `For`
+  nodes by default, matching parameter-bound loops; `--retain-loops` remains
+  a compatibility spelling. Extraction no longer consults a literal-trip cap.
+
 - Self-check concatenated blocking targets with dynamic selectors or aliasing
   leaves are now refused as `AssignmentExpression:target` instead of fixing
   a right-to-left order. Static disjoint leaves retain the explicit

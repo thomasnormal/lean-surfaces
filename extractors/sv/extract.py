@@ -313,9 +313,10 @@ def _sv_code_source(source):
 # Every symbolic-mode behavior change in the shared converters is guarded
 # by `_SYM is not None`, keeping single-file output byte-identical.
 _SYM = None
-# `--retain-loops` keeps literal counted loops in the same `For` vocabulary as
-# parameter-bound loops. The default remains the source-pure unroll path.
-_RETAIN_LOOPS = False
+# Literal counted loops stay in the same `For` vocabulary as parameter-bound
+# loops. Retention is the source-preserving default; the CLI flag remains as a
+# compatibility spelling for callers that already pass it explicitly.
+_RETAIN_LOOPS = True
 # Symbolic procedural-loop unrolling binds a finite loop iterator to a
 # source-pure integer while its body is converted.  Keep this separate from
 # ``SymCtx.genvars``: a procedural iterator is a runtime local in SystemVerilog
@@ -34034,7 +34035,7 @@ def convert_module_sym(sm, inst):
 
 
 def process_symbolic(top, sources, incdirs, out_path, probed=False,
-                     retain_loops=False):
+                     retain_loops=True):
     """`--top` mode: compile all sources as ONE slang compilation (name
     resolution across packages/files) and emit the top module in the
     extended symbolic vocabulary as one sv-0.2 envelope. `probed`: the
@@ -34326,7 +34327,7 @@ def _probe_strip_spans(node):
 
 
 def write_probe_sidecar(top, sources, incdirs, out_path, points,
-                        retain_loops=False):
+                        retain_loops=True):
     """Extract `top` at every probe point (`parse_probe_points`) and write
     the sidecar next to the envelope `out_path` (already written at the
     defaults). Returns the sidecar path. Each point holds its overrides,
@@ -34518,9 +34519,9 @@ def main(argv=None):
                         "parameter point (slang paramOverrides) and write the "
                         "cross-check sidecar <envelope minus .json>.probes.json "
                         "(the envelope itself is unchanged)")
-    parser.add_argument("--retain-loops", action="store_true",
+    parser.add_argument("--retain-loops", action="store_true", default=True,
                         help="symbolic mode: retain literal counted for-loops "
-                        "as For nodes instead of unrolling them")
+                        "as For nodes (the default)")
     args = parser.parse_args(argv)
 
     try:

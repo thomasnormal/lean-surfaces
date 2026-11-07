@@ -10642,3 +10642,19 @@ than leaving a hidden mismatch.
 
 DECIDED: keep every measured edge as a differential row or explicit loud
 whitelist; do not infer agreement from a coincidental hash/order case.
+
+## 2026-11-07-pycomplete-429 — recheck the parameterized float-round worker
+
+The unrolled float-round audit is closed. Both interpreters dispatch through a
+single `roundFloatNDigits` worker with CPython's positive/negative cutoff rules;
+no `roundFloatOne`/`roundDigitsOne` family remains. Proof transport uses the
+same parameterized worker rather than adding a branch per new digit value.
+
+| Measurement | Result |
+|---|---|
+| Boundary battery | `harness/test_float_boundary.py`: 3 passed |
+| Worker census | one `roundFloatNDigits`, plus the value/zero helpers; zero `roundDigits*` definitions |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain the parameterized worker and add boundary rows for future
+CPython cutoff changes instead of unrolling new digit cases.

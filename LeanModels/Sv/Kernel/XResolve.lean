@@ -98,6 +98,14 @@ def DecisionKnown (v : LVec) : Prop :=
   ∀ w z, w ∈ LVec.concretizations v → z ∈ LVec.concretizations v →
     LVec.condTrue v = LVec.condTrue w ∧ LVec.condTrue w = LVec.condTrue z
 
+/-- A resolved branch decision: the concrete value is tied to the source
+through the correlated relation, and the source condition is known to agree
+across all such values. This is the proof object a future E branch step can
+consume without consulting x-optimistic `condTrue` directly. -/
+structure ResolvedDecision (source result : LVec) : Prop where
+  resolves : result ∈ LVec.concretizations source
+  known : DecisionKnown source
+
 private theorem mem_resolveBits : ∀ (bs : List Logic) (cs : List Logic),
     cs ∈ resolveBits bs → bitListResolves bs cs
   | [], cs, h => by
@@ -174,6 +182,11 @@ theorem typedResolution_decision_agrees {source result : LVec}
     (hres : TypedResolution true source result) :
     LVec.condTrue source = LVec.condTrue result := by
   exact hknown.abstract hres
+
+theorem ResolvedDecision.agrees {source result : LVec}
+    (h : ResolvedDecision source result) :
+    LVec.condTrue source = LVec.condTrue result :=
+  h.known.abstract h.resolves
 
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4

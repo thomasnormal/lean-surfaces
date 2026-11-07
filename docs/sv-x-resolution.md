@@ -123,7 +123,8 @@ destination receives the unique `TwoStateBoundary` result. This is the next
 interface for wiring declaration conversion into E without changing the
 current evaluator. `typedResolution_decision_agrees` now connects that
 value-set boundary to `DecisionKnown`: a known condition has the same branch
-result in the abstract and resolved states.
+result in the abstract and resolved states. `ResolvedDecision` packages those
+two premises as the object a future E branch step will consume.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

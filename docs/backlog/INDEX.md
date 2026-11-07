@@ -16,11 +16,26 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1180 entries across 18 lanes.** Regenerate with
+**1196 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-444` |  | recheck CI concurrency and job bounds | python-completeness |
+| `2026-11-07-pycomplete-443` |  | recheck parameterized float-round worker | python-completeness |
+| `2026-11-07-pycomplete-442` |  | recheck differential edge coverage | python-completeness |
+| `2026-11-07-pycomplete-441` |  | recheck frontend admission and envelope freshness | python-completeness |
+| `2026-11-07-pycomplete-440` |  | recheck leanpy frontend and oracle pinning | python-completeness |
+| `2026-11-07-pycomplete-439` |  | recheck remaining ingestion bridges | python-completeness |
+| `2026-11-07-pycomplete-438` |  | recheck display and starred extraction boundaries | python-completeness |
+| `2026-11-07-pycomplete-437` |  | recheck structured extractor try handling | python-completeness |
+| `2026-11-07-pycomplete-436` |  | recheck structured class statement boundary | python-completeness |
+| `2026-11-07-pycomplete-435` |  | recheck structured yield-from delegation | python-completeness |
+| `2026-11-07-pycomplete-434` |  | recheck trailing definition deletion | python-completeness |
+| `2026-11-07-pycomplete-433` |  | recheck module-level callable aliases | python-completeness |
+| `2026-11-07-pycomplete-432` |  | recheck namedtuple recognition boundary | python-completeness |
+| `2026-11-07-pycomplete-431` |  | recheck the two-interpreter refinement edge | python-completeness |
+| `2026-11-07-pycomplete-430` |  | recheck structured semantic inputs | python-completeness |
 | `2026-11-07-pycomplete-429` |  | recheck the parameterized float-round worker | python-completeness |
 | `2026-11-07-pycomplete-428` |  | recheck differential edge coverage | python-completeness |
 | `2026-11-07-pycomplete-427` |  | recheck frontend admission and envelope freshness | python-completeness |
@@ -59,6 +74,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-334` |  | re-probe PicoRV32 on current ls-sv master | ls-sv2 |
 | `2026-11-07-ls-sv2-333` |  | add a raw symbolic memory certificate | ls-sv2 |
 | `2026-11-07-ls-sv2-332` |  | add symbolic RV32I memory-program folds | ls-sv2 |
 | `2026-11-07-ls-sv2-331` |  | expose stateful ALU program append bridges | ls-sv2 |

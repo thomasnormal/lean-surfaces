@@ -197,3 +197,31 @@ the result with the profile-parametric stateful ISA trace for the same
 threaded memory program.  This is generic refinement infrastructure; the
 PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
+
+## Current PicoRV32 re-probe on `github/master` 43a471fe3
+
+The pinned YosysHQ source was freshly extracted again on 2026-11-07 without
+RTL changes.  The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the current envelope is 2,992,422
+bytes with SHA-256
+`bbb534099237338b0c945ef56634407d9918a03f802a3fb1e11753d920a245be`.
+
+At the recorded default parameters, the ordinary semantic route's exact first
+refusal is:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route advances past generated members but first refuses:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is the net-z wire `pcpi_mul_wr` at
+`picorv32.v:257`.  This confirms the existing unpacked-memory and
+unsupported-member/net-z walls; no new clean-room request or core adaptation
+is justified.

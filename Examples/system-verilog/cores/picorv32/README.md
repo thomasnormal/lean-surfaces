@@ -118,6 +118,38 @@ Its first retained member remains `NetSymbol:net-z` for `pcpi_mul_wr`, the
 `wire` at `picorv32.v:257`.  This is an existing generic boundary, so no new
 clean-room request is filed and no symbolic ADDI invariant is claimed.
 
+## 2026-11-07 re-probe on current `github/master`
+
+The pinned source was extracted once more without any RTL change.  This probe
+uses `github/master` revision `43a471fe3dc36b4b2f14fa0ef9d566c25101c962`:
+
+```text
+source commit: ef203c2b0a3fb793280f5114941416c425c5b461
+envelope: bbb534099237338b0c945ef56634407d9918a03f802a3fb1e11753d920a245be
+size: 2,992,422 bytes
+```
+
+The declaration still loads as a 26-parameter family.  At the default
+parameters, the ordinary semantic route's exact first refusal remains at
+`picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now reaches its existing unsupported-module-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+Its first retained member is still the net-z wire `pcpi_mul_wr` at
+`picorv32.v:257`.  Generated members are therefore not the current wall; no
+new `REQUEST ls-sv:` repro, RTL adaptation, or finite-window extension is
+justified.
+
 ## Generated-member clean-room repro
 
 The generic route is independently confirmed by the clean-room fixtures in

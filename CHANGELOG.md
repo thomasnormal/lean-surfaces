@@ -108,6 +108,10 @@
   recursion, scoping, annotation, and oversized-materialization witnesses with
   zero failures.
 
+- Rechecked the parameterized float-round worker: the per-digit family remains
+  retired, with one `roundFloatNDigits` dispatch and boundary tests covering
+  large and negative `ndigits` values.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

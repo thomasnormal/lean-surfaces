@@ -1080,6 +1080,8 @@ WHITELIST_CLASS.update({
     'round_lab::round_float_general': 'builtin.round',
     'set_lab::comprehension': 'comprehension.lowering',
     'set_lab::copy_order': 'set.order',
+    'set_lab::from_dict_order': 'set.order',
+    'set_lab::from_dict_order_wide': 'set.order',
     'set_lab::intersection_order': 'set.order',
     'set_lab::iter_order': 'set.order',
     'set_lab::iter_order': 'set.order',
@@ -1118,6 +1120,7 @@ WHITELIST_CLASS.update({
     'tuple_repeat::repeat_left_length': 'op.Mult-repetition',
     'tuple_repeat::repeat_right_length': 'op.Mult-repetition',
     'tuple_repeat::repeat_right_length': 'op.Mult-repetition',
+    'dict_lab::keys_set_len': 'set.order',
 })
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

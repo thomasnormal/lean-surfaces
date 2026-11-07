@@ -5267,3 +5267,38 @@ axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
 trace claim, so a later core invariant can resume from the exact state rather
 than only from an output list.  Keep the symbolic invariant parked at the
 upstream generated-member and unpacked-memory refusals.
+
+## 2026-11-07-ls-sv2-315 — certify the measured four-row RVFI prefix
+
+The inbox and goal file were reread before this item.  The generated-member
+and unpacked-register-memory refusals remain upstream `ls-sv` walls, so this
+item extends only the owned finite RVFI boundary plumbing.
+
+Added `PinnedWindowPhase`, `pinnedWindowMachine`, `PinnedWindowRel`, and
+`pinned_window_cycle_refines` to the PicoRV32 witness.  The finite machine
+accepts the measured bubble/ADDI/bubble/SW/bubble/LW/bubble/ADDI2 sequence and
+stutters on admitted mismatches.  Each valid phase is discharged through the
+single indexed `Rv32iBoundary` dispatcher; the load phase explicitly proves
+that the threaded post-store memory is the measured `memFive` view.  The
+window state relation retains the architectural and memory endpoints from
+`pinnedWindowS0` through `pinnedWindowS4`.
+
+`pinned_window_observations_normalize` gives the executable raw-row
+certificate, and the strict cycle theorem now covers all four measured
+retirements rather than only the first ADDI.  The proof is a finite boundary
+witness for the captured RVFI stream; it does not claim the symbolic
+PicoRV32 RTL invariant while the upstream loader refusals remain.
+
+**MEASURED:** the focused PicoRV32 boundary target, `lake build
+LeanModels.Refine`, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  The new store-memory helper, normalization theorem, and
+`pinned_window_cycle_refines` report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** retain the eight-cycle phase witness and its carried
+memory relation as the next concrete resume point for a loaded-core invariant;
+keep generated-member and unpacked-memory support explicitly parked with
+`ls-sv`.

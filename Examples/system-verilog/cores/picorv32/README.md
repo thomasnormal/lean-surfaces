@@ -496,6 +496,18 @@ retain the post-window relation as well: after the two cycles, the finite RVFI
 state is related to the stateful ISA machine's state by the expected ADDI
 architectural post-state.
 
+The same boundary file now carries `pinnedWindowMachine`, a finite strict
+cycle witness for the measured eight-cycle prefix: bubble, ADDI, bubble, SW,
+bubble, LW, bubble, and the second ADDI.  `pinned_window_cycle_refines`
+discharges every phase through the indexed RV32I memory dispatcher, including
+the threaded store-to-load memory equality, and
+`pinned_window_observations_normalize` certifies that the raw rows normalize
+to the four measured retirements.  The phase relation records each
+architectural and memory endpoint through `pinnedWindowS0`--`pinnedWindowS4`.
+This is still a finite boundary certificate for the captured stream; it does
+not claim the symbolic PicoRV32 RTL invariant while the upstream loader
+refusals remain.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

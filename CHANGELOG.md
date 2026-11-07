@@ -16,6 +16,9 @@
 - Updated the remaining Python proof fixtures and generator guard for the
   five-field `World` record introduced by the recursion-limit model.
 
+- Rebased the exception-ancestor proof's handler normalization onto the
+  structured primary and bare-handler predicates.
+
 - Rechecked the position-independent module definition boundary: forward
   function-body calls and duplicate module definitions remain loud rather than
   answering through the static table.

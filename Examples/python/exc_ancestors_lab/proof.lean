@@ -28,7 +28,7 @@ theorem caught_arithmetic_identity_total (value : PyInt) :
   refine ⟨64, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [exc_ancestors_lab, excHandlerNames, excHandlerTuple,
+  py_simp [exc_ancestors_lab, excHandlerNames, excHandlerTuple, excHandlerBare, excHandlerPrimary,
     excHandlerAdmitted, excHandlerMatches, floorDiv_ne_bitAnd, floorDiv_ne_mult,
     len_ne_lenMult, str_ne_fstring, str_ne_starArg, str_ne_starTuple,
     str_ne_starList, lenMultBuiltinName, funsHeapFree, FunctionDefn.heapFree,

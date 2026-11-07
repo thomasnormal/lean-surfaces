@@ -710,6 +710,12 @@ certificate is generic and state-threaded;
 the loaded PicoRV32 invariant remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
 
+`MemRvfiCycleTrace` now retains the actual `RvfiCycleMachine` step and input
+for every cycle.  Bubble inputs stay arbitrary; a retiring input is tied to
+the corresponding `memProgramInput`, and its `normalize`, `retireInputs_eq`,
+and `trace_refines` projections connect the machine's own stream to the
+stateful ISA memory trace.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

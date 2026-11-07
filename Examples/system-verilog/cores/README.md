@@ -200,6 +200,12 @@ memory state.  This is generic refinement infrastructure; the
 PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
 
+`MemRvfiCycleTrace` ties the same certificate to an actual
+`RvfiCycleMachine`: bubble inputs remain arbitrary, while each retiring input
+is definitionally the corresponding `memProgramInput`.  Its normalization,
+`retireInputs_eq`, and `trace_refines` projections expose the machine's own
+cycle stream to a future loaded-core invariant.
+
 ## Current PicoRV32 re-probe on `github/master` 43a471fe3
 
 The pinned YosysHQ source was freshly extracted again on 2026-11-07 without

@@ -2795,6 +2795,17 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-empty-parentheses-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallEmptyParenRefusal",
+    "cpp_source": "int g(int value) { return value; } int f(int value) { return (g)(value); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.resolved-call-cast-kind-mismatch-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

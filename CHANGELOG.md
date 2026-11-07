@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for empty parenthesized ordinary-call callees; wrapper
+  metadata cannot manufacture a selected declaration.
+
 - Added a recorded refusal for empty parenthesized overloaded-operator callees;
   wrapper metadata cannot manufacture a selected declaration.
 

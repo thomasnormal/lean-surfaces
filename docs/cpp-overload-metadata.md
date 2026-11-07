@@ -121,6 +121,9 @@ parentheses by reparsing source text.
 A parenthesis wrapper with more than one child is refused; the metadata gate
 never chooses one child from a malformed frontend node.
 
+An empty parenthesis wrapper is also refused; the call gate does not manufacture
+a selected declaration when the frontend supplies no child.
+
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 

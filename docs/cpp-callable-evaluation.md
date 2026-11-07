@@ -48,6 +48,10 @@ including qualified builtin evidence and unsupported-type refusal.
 Integral type extraction is shared through `integralTypeOfEvidence`; qualified
 builtins unwrap structurally while non-integral evidence remains loud.
 
+The object evaluator's direct-call boundary now reports its dedicated
+`unsupportedCall` cause; the differential harness records that refusal without
+discarding the diagnostic in the Lean witness.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

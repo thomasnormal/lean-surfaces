@@ -18931,5 +18931,18 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-object-call-refusal-cause",
+    "kind": "statement",
+    "corpus": "callable safety regression",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableObjectCallRefusalCauseWitness",
+    "render": "refusal",
+    "cpp_source": "int helper_call() { return 1; } bool callable_witness() { return helper_call() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
   }
 ]

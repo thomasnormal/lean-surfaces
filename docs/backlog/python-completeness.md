@@ -11108,3 +11108,21 @@ stepper and its filter walk, then thread those lemmas through `Obs`,
 DECIDED: land the monadic evaluator and rows first; make proof-interpreter
 ListComp transport its own item with explicit stepper induction, then widen
 only after all three proof consumers build.
+
+## 2026-11-07-pycomplete-454 — add proof-side ListComp stepper seam
+
+The proof interpreter now has a fuel-recursive `evalListCompIfs` filter walk and
+`evalListCompStep` element/target/allocation walk after the main mutual block.
+Keeping these definitions outside the block is deliberate: `evalExpr` is then
+an ordinary constant, while the helpers recurse structurally on their own
+fuel. The AST `ListComp` arm remains loud until `Obs`, `PayloadBlind`, and
+`ClockErase` transport lemmas are complete.
+
+| Measurement | Result |
+|---|---|
+| Semantics build | `lake build LeanModels.Python.Semantics` passes |
+| Main evaluator behavior | unchanged; `ListComp` still refuses in `evalExpr` |
+| Semantic change | none; proof-side stepping infrastructure only |
+
+DECIDED: prove fuel monotonicity for these two helpers next, then thread the
+new hypotheses through `Obs.fuelMono` before enabling the AST arm.

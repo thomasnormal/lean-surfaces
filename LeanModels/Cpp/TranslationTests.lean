@@ -3271,6 +3271,28 @@ def resolvedCallBooleanKindRefusal : Except String Unit := do
   let _ ← admitResolvedCallExpression resolvedCallBooleanKindTranslation [0]
   pure ()
 
+private def resolvedCallNullKindTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0xbe"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0xbf"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .object [
+              ("id", .string "0xc0"), ("kind", .null)
+            ])
+          ]
+        ])
+      ]
+    ])
+  ]}
+
+def resolvedCallNullKindRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallNullKindTranslation [0]
+  pure ()
+
 private def resolvedCallCastKindMismatchTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -3856,6 +3878,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedCallObjectIdRefusal matches .error _
 #guard resolvedCallScalarKindRefusal matches .error _
 #guard resolvedCallBooleanKindRefusal matches .error _
+#guard resolvedCallNullKindRefusal matches .error _
 #guard resolvedCallCastKindMismatchRefusal matches .error _
 #guard resolvedCallMethodTranslationWitnessOk
 #guard resolvedCallStringNonCallableRefusal matches .error _

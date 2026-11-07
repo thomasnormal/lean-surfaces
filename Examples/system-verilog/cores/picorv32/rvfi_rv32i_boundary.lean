@@ -586,6 +586,30 @@ theorem pinned_window_cycle_refines :
         simp [pinnedWindowMachine, bubbleObservation]
         exact PinnedWindowRel.done
 
+theorem pinned_window_initial_rel :
+    PinnedWindowRel pinnedWindowMachine.init
+      (rvMemoryMachineWith cv32e40pProfile).init := by
+  simpa [pinnedWindowMachine, pinnedWindowS0, addiInput,
+    rvMemoryMachineWith] using PinnedWindowRel.bubble0
+
+theorem pinned_window_inputs_admit :
+    ∀ input ∈ pinnedWindowInputs, pinnedWindowAdmit input := by
+  intro input hinput
+  simp only [pinnedWindowInputs, List.mem_cons, List.not_mem_nil,
+    or_false] at hinput
+  rcases hinput with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨Or.inl rfl, rfl⟩
+  · refine ⟨?_, rfl⟩
+    left
+    funext x
+    rfl
+  · exact ⟨Or.inl rfl, rfl⟩
+  · exact ⟨Or.inl rfl, rfl⟩
+  · exact ⟨Or.inl rfl, rfl⟩
+  · exact ⟨Or.inr rfl, rfl⟩
+  · exact ⟨Or.inl rfl, rfl⟩
+  · exact ⟨Or.inr rfl, rfl⟩
+
 theorem pinned_window_trace_refines :
     pinnedWindowRetirements =
       trace (rvMemoryMachineWith cv32e40pProfile)
@@ -595,25 +619,26 @@ theorem pinned_window_trace_refines :
   exact rvfiCycleStepRefines_normalized_trace_refines
     pinned_window_cycle_refines pinnedWindowMachine.init
     (rvMemoryMachineWith cv32e40pProfile).init pinnedWindowInputs
-    (by
-      simpa [pinnedWindowMachine, pinnedWindowS0, addiInput,
-        rvMemoryMachineWith] using PinnedWindowRel.bubble0)
-    (by
-      intro input hinput
-      simp only [pinnedWindowInputs, List.mem_cons, List.not_mem_nil,
-        or_false] at hinput
-      rcases hinput with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
-      · exact ⟨Or.inl rfl, rfl⟩
-      · refine ⟨?_, rfl⟩
-        left
-        funext x
-        rfl
-      · exact ⟨Or.inl rfl, rfl⟩
-      · exact ⟨Or.inl rfl, rfl⟩
-      · exact ⟨Or.inl rfl, rfl⟩
-      · exact ⟨Or.inr rfl, rfl⟩
-      · exact ⟨Or.inl rfl, rfl⟩
-      · exact ⟨Or.inr rfl, rfl⟩)
+    pinned_window_initial_rel pinned_window_inputs_admit
+    pinned_window_observations_normalize
+
+theorem pinned_window_normalized_refines :
+    (pinnedWindowRetirements =
+      trace (rvMemoryMachineWith cv32e40pProfile)
+        (rvMemoryMachineWith cv32e40pProfile).init
+        (retireInputs pinnedWindowMachine.toCycleMachine
+          pinnedWindowMachine.init pinnedWindowInputs)) ∧
+    PinnedWindowRel
+      (rvfiStateAfter pinnedWindowMachine
+        pinnedWindowMachine.init pinnedWindowInputs)
+      (machineStateAfter (rvMemoryMachineWith cv32e40pProfile)
+        (rvMemoryMachineWith cv32e40pProfile).init
+        (retireInputs pinnedWindowMachine.toCycleMachine
+          pinnedWindowMachine.init pinnedWindowInputs)) := by
+  exact rvfiCycleStepRefines_normalized
+    pinned_window_cycle_refines pinnedWindowMachine.init
+    (rvMemoryMachineWith cv32e40pProfile).init pinnedWindowInputs
+    pinned_window_initial_rel pinned_window_inputs_admit
     pinned_window_observations_normalize
 
 #print axioms pinned_addi_unified
@@ -630,5 +655,8 @@ theorem pinned_window_trace_refines :
 #print axioms pinned_window_observations_normalize
 #print axioms pinned_window_cycle_refines
 #print axioms pinned_window_trace_refines
+#print axioms pinned_window_normalized_refines
+#print axioms pinned_window_initial_rel
+#print axioms pinned_window_inputs_admit
 
 end Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary

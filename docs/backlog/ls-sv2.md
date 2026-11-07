@@ -5328,3 +5328,29 @@ changed.
 **JUDGED / DECIDED:** keep the normalized trace equality and the strict
 phase/state witness as separate reusable endpoints; the symbolic PicoRV32
 invariant remains parked at the loader refusals with `ls-sv`.
+
+## 2026-11-07-ls-sv2-317 — retain the normalized four-row post-state relation
+
+The inbox and goal file were reread before this item.  The generated-member
+and unpacked-register-memory refusals remain upstream `ls-sv` walls, so this
+item carries the completed finite trace witness through its state endpoint.
+
+Added `pinned_window_normalized_refines` to the PicoRV32 boundary witness.
+The theorem applies `rvfiCycleStepRefines_normalized` to the measured
+eight-cycle phase machine and returns both the normalized four-retirement ISA
+trace equality and the final `PinnedWindowRel.done` relation.  The initial
+relation and the admission proof for all eight scheduled inputs are factored
+into `pinned_window_initial_rel` and `pinned_window_inputs_admit`, so both
+trace-level endpoints share the same finite obligations.
+
+**MEASURED:** the focused PicoRV32 boundary target, `lake build
+LeanModels.Refine`, `python3 tools/docs_check.py`,
+`tools/backlog-index.sh --check`, and `git diff --check` pass under Lean
+4.35.0.  `pinned_window_normalized_refines` reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** retain the paired trace/state theorem as the finite
+resume point for a future loaded-core invariant; keep the symbolic PicoRV32
+proof parked at the loader refusals with `ls-sv`.

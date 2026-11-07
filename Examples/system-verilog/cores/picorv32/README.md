@@ -183,6 +183,9 @@ At the single-row adapter boundary,
 as `valid ∧ wellFormed` together with equality to the observation's concrete
 retirement, so callers can invert or introduce the option without reopening
 its executable branches.
+The companion `RvfiObservation.toRetirement?_eq_none_iff` records the other
+outcome: `none` means either an invalid bubble or a malformed row, so a strict
+contract must still carry the separate well-formedness obligation.
 `normalizeRvfiCycleTrace_input_length` additionally proves that a successful
 normalization has exactly as many retained retiring inputs as decoded
 retirements, and `pinned_cycle_normalized_input_length` records that count for

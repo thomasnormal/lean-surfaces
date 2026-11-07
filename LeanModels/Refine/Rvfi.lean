@@ -166,6 +166,31 @@ theorem RvfiObservation.toRetirement?_eq_some_iff
   · rintro ⟨hvalid, hwell, rfl⟩
     exact o.toRetirement?_eq_some hvalid hwell
 
+theorem RvfiObservation.toRetirement?_eq_none_iff
+    (o : RvfiObservation) :
+    o.toRetirement? = none ↔ o.valid = false ∨ ¬ o.wellFormed := by
+  constructor
+  · intro hnone
+    cases hvalid : o.valid with
+    | false => exact Or.inl rfl
+    | true =>
+        right
+        intro hwell
+        have hsome := o.toRetirement?_eq_some hvalid hwell
+        rw [hnone] at hsome
+        cases hsome
+  · intro hbad
+    rcases hbad with hvalid | hwell
+    · simp [RvfiObservation.toRetirement?, hvalid]
+    · cases hvalid : o.valid with
+      | false => simp [RvfiObservation.toRetirement?, hvalid]
+      | true =>
+          have hnot : o.wellFormedB ≠ true := by
+            intro hvalue
+            apply hwell
+            exact hvalue
+          simp [RvfiObservation.toRetirement?, hvalid, hnot]
+
 /-! ## Finite RVFI traces and retirement order -/
 
 /-- A finite packed trace certificate.  Invalid RVFI cycles are bubbles and do
@@ -1186,6 +1211,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
 #print axioms LeanModels.Refine.RvfiObservation.wellFormed_of_toRetirement?_eq_some
 #print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_some_iff
+#print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_none_iff
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step

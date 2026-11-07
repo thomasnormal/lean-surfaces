@@ -137,6 +137,12 @@ The raw ADDI predicate also has a stateful-machine bridge.  The reset and
 post-prefix witnesses use `RvfiObservation.addiBoundary_rvMemoryMachineWith`
 to show that the row's commit leaves its explicit byte-memory state unchanged
 while producing the exact `addiNext` architectural state and retirement.
+`rvfiCycleStepRefines_of_addi_memory` lifts that boundary to a strict
+cycle-level invariant over `RvMemoryState`: it requires the cycle input's
+memory view to equal the threaded architectural memory, then carries the
+updated architectural state and unchanged memory through the relation.  This
+keeps the memory equality visible at the point where a loaded-core proof will
+consume it.
 
 The generic RVFI layer now also exposes `RvfiCycleStepRefines`.  Its valid
 cycle branch requires the raw observation to normalize to a retirement that

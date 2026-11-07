@@ -343,6 +343,15 @@ explicit ISA stutters.  The contract is generic over all ten RV32I ALU
 operations, so a loaded-core invariant can specialize it by the decoded
 operation rather than duplicating ten wire predicates.
 
+The fence boundary covers both `fence` and `fence.i` through the explicit
+`FenceKind` parameter.  `RvfiObservation.fenceBoundary` requires the decoded
+system operation, sequential `pc + 4`, a valid well-formed row, and no
+register, data-memory, or trap effect; unspecified RVFI register payloads are
+left unconstrained because fences read and write no architectural register.
+`rvfiCycleStepRefines_of_fence_memory` carries a valid row through
+`fenceNext` while preserving threaded byte memory, and keeps invalid rows as
+explicit ISA stutters.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

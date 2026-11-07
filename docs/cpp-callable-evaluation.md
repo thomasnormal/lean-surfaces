@@ -12,6 +12,10 @@ Compound-assignment spellings use the same shared binary operation decoder
 before the value evaluator or object frame performs its own read, conversion,
 and store steps.
 
+`IntegralResult` map and bind propagation are shared helpers as well, so
+invalid, undefined, and unsupported outcomes cross evaluator boundaries
+without being collapsed into success.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

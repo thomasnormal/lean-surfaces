@@ -40397,4 +40397,15 @@ def callableSharedCompoundOperatorAgreementWitness : Bool :=
 
 #guard callableSharedCompoundOperatorAgreementWitness
 
+def callableSharedIntegralResultAgreementWitness : Bool :=
+  mapIntegralResultValue (.ok 3 : IntegralResult Nat) (fun value => value + 1) == .ok 4 &&
+    mapIntegralResultValue (.unsupported .unresolvedArithmeticConversions)
+      (fun value : Nat => value + 1) matches .unsupported _ &&
+    bindIntegralResultValue (.ok 3 : IntegralResult Nat)
+      (fun value => .ok (value + 1)) == .ok 4 &&
+    bindIntegralResultValue (.undefined .signedOverflow)
+      (fun value : Nat => .ok (value + 1)) matches .undefined _
+
+#guard callableSharedIntegralResultAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

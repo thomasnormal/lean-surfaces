@@ -51,21 +51,12 @@ private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
   builtinIntegralType type |>.bind fun integer =>
     (profile.format integer).toOption
 
-private def mapIntegralResult (result : IntegralResult IntegralValue)
-    (convert : IntegralValue → IntegralResult IntegralValue) :
-    IntegralResult IntegralValue :=
-  match result with
-  | .ok value => convert value
-  | .invalid reason => .invalid reason
-  | .undefined reason => .undefined reason
-  | .unsupported reason => .unsupported reason
-
 private def mapOutcome (outcome : Outcome (IntegralResult IntegralValue))
     (convert : IntegralValue → IntegralResult IntegralValue) :
     Outcome (IntegralResult IntegralValue) :=
   match outcome.result with
   | .error reason => failure outcome.frame reason
-  | .ok result => success outcome.frame (mapIntegralResult result convert)
+  | .ok result => success outcome.frame (bindIntegralResultValue result convert)
 
 private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
     (value : IntegralValue) : IntegralResult IntegralValue :=
@@ -136,8 +127,8 @@ private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
       match usualArithmeticType profile integer .int with
       | .error _ => .unsupported .unresolvedArithmeticConversions
       | .ok common =>
-          mapIntegralResult (convertTo profile (.builtin common) old) fun operand =>
-            mapIntegralResult (integralBinary operation operand ⟨operand.format, 1⟩)
+          bindIntegralResultValue (convertTo profile (.builtin common) old) fun operand =>
+            bindIntegralResultValue (integralBinary operation operand ⟨operand.format, 1⟩)
               (convertTo profile type)
 
 private def evalParameter (fuel : Nat) (profile : TargetProfile)
@@ -149,7 +140,7 @@ private def evalParameter (fuel : Nat) (profile : TargetProfile)
       let read := frame.evaluate fuel (.read declaration)
       match read.result with
       | .error reason => frameFailure read.frame reason
-      | .ok result => success read.frame (mapIntegralResult result (convertTo profile typed.type))
+      | .ok result => success read.frame (bindIntegralResultValue result (convertTo profile typed.type))
 
 private def evalIncrement (fuel : Nat) (profile : TargetProfile)
     (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
@@ -178,9 +169,9 @@ private def evalIncrement (fuel : Nat) (profile : TargetProfile)
                             (if isPostfix then old else value))
                   | result =>
                       success current.frame
-                        (mapIntegralResult result (convertTo profile typed.type))
+                        (bindIntegralResultValue result (convertTo profile typed.type))
           | result =>
-              success current.frame (mapIntegralResult result (convertTo profile typed.type))
+              success current.frame (bindIntegralResultValue result (convertTo profile typed.type))
   | _ => failure frame (.unsupportedOperator operator)
 
 private def evalExpression (fuel : Nat) (profile : TargetProfile)
@@ -219,8 +210,8 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
               match evaluated.result with
               | .error reason => failure evaluated.frame reason
               | .ok result =>
-                  success evaluated.frame (mapIntegralResult result fun value =>
-                    mapIntegralResult (integralUnary operation value)
+                  success evaluated.frame (bindIntegralResultValue result fun value =>
+                    bindIntegralResultValue (integralUnary operation value)
                       (convertTo profile typed.type))
       | .binary operator left right =>
           match integralBinaryOfString operator with
@@ -250,7 +241,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                           | .unsupported reason, _ | _, .unsupported reason =>
                               .unsupported reason
                         success rightResult.frame
-                          (mapIntegralResult combined (convertTo profile typed.type))
+                          (bindIntegralResultValue combined (convertTo profile typed.type))
       | .conditional condition whenTrue whenFalse =>
           let conditionResult := evalExpression fuel profile frame condition
           match conditionResult.result with
@@ -367,7 +358,7 @@ mutual
                                 let combined := match builtinIntegralType binding.type,
                                     builtinIntegralType expression.sourceType with
                                   | some leftType, some rightType =>
-                                      mapIntegralResult
+                                      bindIntegralResultValue
                                         (integralBinaryUsual profile operation leftType rightType
                                           current rightValue)
                                         (fun value => convertTo profile binding.type value)

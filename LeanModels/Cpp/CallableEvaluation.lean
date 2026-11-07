@@ -220,13 +220,6 @@ private def evaluateSwitchClauses
       | .break_ updated => pure (.normal updated)
       | .returned _ _ | .failed _ _ | .continue_ _ | .goto_ _ _ => pure result
 
-private def mapIntegralResult (result : IntegralResult α) (map : α → β) : IntegralResult β :=
-  match result with
-  | .ok value => .ok (map value)
-  | .invalid reason => .invalid reason
-  | .undefined reason => .undefined reason
-  | .unsupported reason => .unsupported reason
-
 mutual
   private def evaluateCallArguments (fuel : Nat) (profile : TargetProfile)
       (parameters : List CallableParameter) (arguments : List IntegralValue)
@@ -248,7 +241,7 @@ mutual
                   | .undefined reason => .undefined reason
                   | .unsupported reason => .unsupported reason,
                   finalArguments)
-            | result => pure (mapIntegralResult result (fun _ => []), updated)
+            | result => pure (mapIntegralResultValue result (fun _ => []), updated)
 
   termination_by structural fuel
 
@@ -373,7 +366,7 @@ mutual
                     if value.format == expected then pure (called, afterArguments)
                     else .error .expressionTypeMismatch
                 | result => pure (result, afterArguments)
-            | result => pure (mapIntegralResult result (fun _ => default), afterArguments)
+            | result => pure (mapIntegralResultValue result (fun _ => default), afterArguments)
         | .binary operator left right => do
             if left.expression.hasEffects || right.expression.hasEffects then
               throw .unsequencedEffects

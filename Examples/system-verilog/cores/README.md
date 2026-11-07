@@ -348,3 +348,15 @@ The companion `rvfiCycleStepRefines_of_rv32i_program` constructor packages the
 core-facing one-step invariant: each valid row identifies one mixed
 instruction, its exact input, indexed post-state, and retirement; invalid rows
 remain explicit ISA stutters.
+
+## Constructing mixed cycle certificates from an invariant
+
+`LeanModels.Refine.RvfiRv32iProgram` now defines
+`Rv32iCycleStepRefines` and `rv32iRvfiCycleTrace_of_step`.  A loaded-core
+invariant supplies the current order tag, exact cycle input, indexed mixed
+boundary, and relation update for each valid row; invalid rows carry the
+relation across an ISA stutter.  The constructor then produces a certificate
+for every admitted finite cycle window, retaining every bubble input and core
+state transition and threading the final relation to the mixed program state.
+This is generic refinement infrastructure and does not model or extend a
+finite PicoRV32 capture.

@@ -6358,3 +6358,29 @@ once over the mixed RV32I union while preserving exact family identity, input
 memory, architectural post-state, retirement, and bubble behavior.  PicoRV32
 remains parked at the unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
+
+## 2026-11-07-ls-sv2-349 — construct mixed cycle certificates from an invariant
+
+The mixed RV32I dispatcher now discharges one raw cycle, but a loaded-core
+proof also needs to turn that per-cycle invariant into an arbitrary finite
+certificate while retaining bubbles, actual cycle inputs, core state, and the
+retirement order tag.
+
+**CHANGED:** Added `Rv32iCycleStepRefines` and
+`rv32iRvfiCycleTrace_of_step` to `LeanModels/Refine/RvfiRv32iProgram.lean`.
+The per-cycle contract requires an exact mixed instruction/input witness,
+order equality, indexed `Rv32iBoundary`, and relation update for valid rows;
+invalid rows carry the relation across an ISA stutter.  Induction over any
+admitted input window constructs `Rv32iRvfiCycleTrace`, increments the order
+only on retirement, preserves every bubble and core transition, and proves the
+final relation against `rv32iProgramState`.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean` passes
+under Lean 4.35.0 with only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No RTL, loader,
+extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now construct the
+mixed cycle certificate required by the existing normalization and trace
+refinement theorems for every admitted finite window.  PicoRV32 remains parked
+at the unpacked `cpuregs` and unsupported-member/net-z loader walls.

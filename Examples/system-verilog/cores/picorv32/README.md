@@ -865,3 +865,14 @@ The companion `rvfiCycleStepRefines_of_rv32i_program` constructor is the
 core-facing one-step form: a valid row must identify an `Rv32iInstruction`,
 its exact input, indexed post-state, and retirement, while invalid rows remain
 ISA stutters.
+
+## Constructing mixed cycle certificates from an invariant
+
+The generic `Rv32iCycleStepRefines` contract and
+`rv32iRvfiCycleTrace_of_step` constructor now turn a loaded-core invariant into
+an arbitrary finite mixed RV32I cycle certificate.  Every valid row retains
+its order tag, exact cycle input, indexed post-state, and retirement; bubbles
+retain their inputs and core transitions.  The constructor threads the final
+core relation to the mixed architectural state.  PicoRV32 itself remains
+parked at the existing loader walls, so this adds no finite captured-window
+claim.

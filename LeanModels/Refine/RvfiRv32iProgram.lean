@@ -305,6 +305,34 @@ theorem rvfiCycleStepRefines_of_rv32i_program
     simp only [hv]
     exact hrel'
 
+/-! ## Constructing a mixed cycle certificate from a core invariant -/
+
+/- A loaded-core proof usually establishes the indexed family witness while
+   stepping the actual core.  The order tag is a separate wire invariant, so
+   keep it explicit here rather than hiding it in the optional retirement
+   adapter. -/
+
+/-- The per-cycle obligation needed to expose a mixed RV32I certificate.
+
+The witness retains the exact cycle order, input, indexed post-state, and
+retirement.  Invalid rows carry the core relation across an ISA stutter. -/
+def Rv32iCycleStepRefines {State : Type}
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop) : Prop :=
+  ∀ (start : Nat) (state : State) (memoryState : RvMemoryState)
+    (input : Input),
+    rel state memoryState → admit input →
+    let (state', observation) := machine.step state input
+    if observation.valid then
+      ∃ instruction,
+        input = rv32iProgramInput memoryState instruction ∧
+        observation.order = start ∧
+        Rv32iBoundary memoryState.arch input observation
+          (rv32iProgramStep memoryState instruction)
+          (rv32iProgramRetirement memoryState instruction) ∧
+        rel state' (rv32iProgramStep memoryState instruction)
+    else rel state' memoryState
+
 /-! ## Raw RVFI certificate -/
 
 /-- A raw RVFI stream for an arbitrary mixed RV32I program. -/
@@ -423,6 +451,71 @@ inductive Rv32iRvfiCycleTrace {State : Type}
       Rv32iRvfiCycleTrace machine start coreState state
         (cycleInput :: cycles) (instruction :: program)
 
+/-- An ordered mixed step invariant constructs a certificate for every finite
+cycle window.  The resulting program is the exact sequence of valid rows;
+bubbles retain their inputs and core transitions, and the final relation is
+threaded to the mixed architectural state. -/
+theorem rv32iRvfiCycleTrace_of_step
+    {State : Type} (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (cycles : List Input) (hrel : rel coreState memoryState)
+    (hall : ∀ input ∈ cycles, admit input) :
+    ∃ program : List Rv32iInstruction,
+      Rv32iRvfiCycleTrace machine start coreState memoryState cycles program ∧
+      rel (rvfiStateAfter machine coreState cycles)
+        (rv32iProgramState memoryState program) := by
+  induction cycles generalizing start coreState memoryState with
+  | nil =>
+      refine ⟨[], .nil start coreState memoryState, ?_⟩
+      simpa [rvfiStateAfter, rv32iProgramState] using hrel
+  | cons input cycles ih =>
+      have hadmit : admit input := hall input (by simp)
+      have htail : ∀ input' ∈ cycles, admit input' := by
+        intro input' hmem
+        exact hall input' (by simp [hmem])
+      have hcase := hstep start coreState memoryState input hrel hadmit
+      cases hmachine : machine.step coreState input with
+      | mk coreState' observation =>
+          simp only [hmachine] at hcase
+          by_cases hv : observation.valid = true
+          · have hcase' : ∃ instruction,
+                input = rv32iProgramInput memoryState instruction ∧
+                observation.order = start ∧
+                Rv32iBoundary memoryState.arch input observation
+                  (rv32iProgramStep memoryState instruction)
+                  (rv32iProgramRetirement memoryState instruction) ∧
+                rel coreState' (rv32iProgramStep memoryState instruction) := by
+              simpa [hv] using hcase
+            rcases hcase' with
+              ⟨instruction, hinput, horder, hboundary, hrel'⟩
+            obtain ⟨program, htrace, hfinal⟩ :=
+              ih (start := start + 1) (coreState := coreState')
+                (memoryState := rv32iProgramStep memoryState instruction)
+                hrel' htail
+            have hboundary' :
+                Rv32iBoundary memoryState.arch
+                  (rv32iProgramInput memoryState instruction) observation
+                  (rv32iProgramStep memoryState instruction)
+                  (rv32iProgramRetirement memoryState instruction) := by
+              simpa [hinput] using hboundary
+            refine ⟨instruction :: program, ?_, ?_⟩
+            · exact .retire hmachine hinput horder hboundary' htrace
+            · simpa [rvfiStateAfter, rv32iProgramState, hmachine] using hfinal
+          · have hv' : observation.valid = false := by
+              cases hvalue : observation.valid with
+              | false => exact rfl
+              | true => exact False.elim (hv hvalue)
+            have hrel' : rel coreState' memoryState := by
+              simpa [hv, hv'] using hcase
+            obtain ⟨program, htrace, hfinal⟩ :=
+              ih (start := start) (coreState := coreState')
+                (memoryState := memoryState) hrel' htail
+            refine ⟨program, ?_, ?_⟩
+            · exact .bubble hmachine hv' htrace
+            · simpa [rvfiStateAfter, hmachine] using hfinal
+
 theorem Rv32iRvfiCycleTrace.normalize
     {State : Type} {machine : RvfiCycleMachine State}
     {start : Nat} {coreState : State} {state : RvMemoryState}
@@ -524,6 +617,7 @@ theorem Rv32iRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_rv32i_program
+#print axioms LeanModels.Refine.rv32iRvfiCycleTrace_of_step
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.normalize
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.trace_refines

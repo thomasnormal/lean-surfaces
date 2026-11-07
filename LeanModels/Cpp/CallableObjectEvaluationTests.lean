@@ -40461,4 +40461,11 @@ def callableSharedIncrementValueAgreementWitness : Bool :=
 
 #guard callableSharedIncrementValueAgreementWitness
 
+def callableSharedNullComparisonAgreementWitness : Bool :=
+  integralNullComparison "==" == some (integralBoolean true) &&
+    integralNullComparison "!=" == some (integralBoolean false) &&
+    integralNullComparison "<" == none
+
+#guard callableSharedNullComparisonAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

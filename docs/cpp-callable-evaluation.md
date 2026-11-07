@@ -36,6 +36,9 @@ boundary as well, preserving each evaluator's error surface.
 Promoted increment/decrement arithmetic is shared through
 `integralIncrementValue`; parameter/list state updates remain evaluator-owned.
 
+Null-pointer comparison decoding for `==` and `!=` is shared through
+`ScalarArithmetic`, with unsupported spellings still loud in each evaluator.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

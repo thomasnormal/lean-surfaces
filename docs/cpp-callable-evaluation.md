@@ -42,6 +42,9 @@ Null-pointer comparison decoding for `==` and `!=` is shared through
 Evidence-to-value conversion now uses one profile/type boundary in
 `ScalarArithmetic`; evaluator-specific error domains remain at the call sites.
 
+Profile format selection is likewise shared through `integralFormatOfEvidence`,
+including qualified builtin evidence and unsupported-type refusal.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

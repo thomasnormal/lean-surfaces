@@ -48,6 +48,19 @@ def integralUnaryOfString : String → Option IntegralUnary
   | "!" => some .logicalNot
   | _ => none
 
+def integralCompoundBinaryOfString : String → Option IntegralBinary
+  | "+=" => some .add
+  | "-=" => some .subtract
+  | "*=" => some .multiply
+  | "/=" => some .divide
+  | "%=" => some .remainder
+  | "&=" => some .bitAnd
+  | "|=" => some .bitOr
+  | "^=" => some .bitXor
+  | "<<=" => some .shiftLeft
+  | ">>=" => some .shiftRight
+  | _ => none
+
 private def mapIntegralResult (result : IntegralResult IntegralValue)
     (continuation : IntegralValue → IntegralResult IntegralValue) :
     IntegralResult IntegralValue :=

@@ -309,9 +309,41 @@ theorem rv32i_reset_refinement
   exact rv32i_progress_refinement profile machine rel admit hstep
     0 machine.init (rvMemoryMachineWith profile).init hinit hschedule progress
 
+/-- Direct committed-stream projection of the reset contract.  This is the
+consumer-facing form when the raw certificate and decoded program are not
+needed: each target prefix has a concrete cycle boundary whose committed
+retirement stream is the stateful ISA trace and whose retained core state is
+related to the target ISA state. -/
+theorem rv32i_reset_stream_refines
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine machine.init schedule target) :
+    ∀ k : Nat, ∃ boundary : Nat,
+      cycleTrace machine.toCycleMachine machine.init
+          (schedulePrefix schedule boundary) =
+        trace (rvMemoryMachineWith profile)
+          (rvMemoryMachineWith profile).init (schedulePrefix target k) ∧
+      rel (rvfiStateAfter machine machine.init
+          (schedulePrefix schedule boundary))
+        (rvMemoryStateAfter profile (rvMemoryMachineWith profile).init
+          (schedulePrefix target k)) := by
+  intro k
+  have hcontract := rv32i_reset_refinement profile machine rel admit hstep
+    hinit hschedule progress
+  change ∀ k : Nat, Nonempty (Rv32iPrefixRefinement profile machine rel 0
+    machine.init (rvMemoryMachineWith profile).init schedule target k) at hcontract
+  rcases hcontract k with ⟨record⟩
+  exact ⟨record.boundary, record.cycle_trace_eq, record.state_rel⟩
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines_state
 #print axioms LeanModels.Refine.rv32i_progress_refinement
 #print axioms LeanModels.Refine.rv32i_reset_refinement
+#print axioms LeanModels.Refine.rv32i_reset_stream_refines

@@ -6681,3 +6681,30 @@ new axiom was introduced.
 committed retirement stream required by R2, alongside its raw RVFI
 normalization, target equations, and state relation.  PicoRV32 remains parked
 at the two approved memory-route walls.
+
+## 2026-11-07-ls-sv2-360 — expose the direct reset stream theorem
+
+The reset contract now returns a named prefix record, but a final core theorem
+consumer often needs only the committed stream and the post-state simulation
+relation.  Requiring every consumer to unpack the certificate record obscures
+the exact R2 statement.
+
+**CHANGED:** Added `rv32i_reset_stream_refines` to
+`LeanModels/Refine/RvfiProgress.lean`.  From the indexed mixed step invariant,
+reset relation, pointwise admission, and explicit progress witness it returns,
+for every target prefix, a cycle boundary whose exact committed `cycleTrace`
+equals the stateful ISA trace and whose retained core state relates to
+`rvMemoryStateAfter`.  It is a projection of `rv32i_reset_refinement`; no
+second semantics or guessed stream is introduced.  Updated the PicoRV32 README
+and backlog index.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiProgress.lean` and the
+refinement umbrella build pass under Lean 4.35.0; the declaration reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The PicoRV32 wall probe, docs check,
+backlog index check, and diff check pass.  No `sorryAx` or new axiom was
+introduced.
+
+**JUDGED / DECIDED:** The public R2 API now has the direct from-reset theorem
+shape: exact committed trace equality plus the post-state relation for every
+finite target retirement prefix.  PicoRV32 remains parked at the approved
+task/net-z memory-route walls.

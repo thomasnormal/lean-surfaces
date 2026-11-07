@@ -962,6 +962,9 @@ state, the stateful ISA machine's reset state, and RVFI order zero.
 `rv32i_reset_refinement` is the direct entry point for the finish-line claim:
 the core invariant, reset relation, admitted schedule, and explicit progress
 witness produce the all-prefix result from reset.
+`rv32i_reset_stream_refines` projects the same contract to the committed
+stream and post-state relation for callers that do not need the decoded
+certificate.
 
 ## Clean-room repros for the two current walls
 

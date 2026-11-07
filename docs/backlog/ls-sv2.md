@@ -6739,6 +6739,31 @@ adapter retains the parser-derived decoder proof and the original boundary at
 the same state, so it does not choose a new instruction interpretation.
 PicoRV32 remains parked at the approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-365 — package the ADDI reset invariant
+
+The ADDI reset entry points repeated two dependent predicates: the
+memory-threaded valid-row/post-state obligation and the separate RVFI order
+obligation.  A loaded-core proof should be able to carry those obligations as
+one named invariant while preserving the existing explicit fields.
+
+**CHANGED:** Added `Rv32iAddiInvariant` to
+`LeanModels/Refine/RvfiAddiProgress.lean`, with `step` and `order` fields, and
+proved `Rv32iAddiInvariant.toMixedStep`.  Added
+`rv32i_reset_addi_refines_of_invariant`, which feeds the packaged invariant to
+the existing structure-valued reset contract.  The original explicit-premise
+entry points remain available, and the PicoRV32 README documents both forms.
+
+**MEASURED:** The focused module compiles under Lean 4.35.0 and reports only
+`propext`/`Classical.choice`/`Quot.sound`.  The umbrella build, PicoRV32 wall
+probe, docs check, backlog index check, and diff check all pass.  No semantics,
+RTL, loader, extractor, or finite captured-window theorem changed; no `sorryAx`
+or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded PicoRV32 proof can now export one named
+ADDI invariant and hand it to either the mixed step theorem or the full
+from-reset contract without duplicating its dependent predicates.  PicoRV32
+remains parked at the approved task/net-z memory-route walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

@@ -940,6 +940,10 @@ every finite target retirement prefix.
 The structure-valued `rv32i_reset_addi_refines` entry point retains the same
 contract's decoded program, raw certificate, target equations, and normalized
 trace for callers that need those proof fields.
+The repeated ADDI step and order premises can be carried as the named
+`Rv32iAddiInvariant`; its `toMixedStep` method and
+`rv32i_reset_addi_refines_of_invariant` wrapper provide the same two reset
+entry points without restating those dependent predicates.
 
 ## Constructing mixed cycle certificates from an invariant
 

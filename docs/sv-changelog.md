@@ -26,6 +26,12 @@ and `$stable`. Each proof consumes the structured property AST emitted by the
 extractor; no property text is reparsed. These are kernel trace checks, with
 Xcelium result rows still pending from the property-result harness.
 
+The E combinational bridge now consumes `ResolvedDecision` for an
+`always_comb` conditional through `Core0Resolve`, matching the existing edge
+bridge. The source evaluator, AST, and fuel remain unchanged; callers must
+provide the correlated known-value witness before relating a branch to a
+concrete resolution.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

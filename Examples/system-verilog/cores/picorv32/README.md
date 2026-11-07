@@ -153,6 +153,10 @@ normalized retirement list's equality with the ISA trace.  The conditional
 `pinned_cycle_normalized_trace_refines_of` witness fixes that composition on
 the measured eight-cycle window; its hypotheses are exactly the future
 loaded-core invariant and input-admission obligations.
+`normalizeRvfiCycleTrace_input_length` additionally proves that a successful
+normalization has exactly as many retained retiring inputs as decoded
+retirements, and `pinned_cycle_normalized_input_length` records that count for
+the measured window.
 
 The witness also reconstructs the measured `ADDI x3, x2, 1` row after the
 `ADDI/SW/LW` prefix.  It retains the source fields (`rs1_addr = 2`,

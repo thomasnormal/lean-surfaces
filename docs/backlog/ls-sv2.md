@@ -4036,3 +4036,21 @@ the eventual loaded-core invariant must discharge.  No RTL, loader, or
 obligations, with one theorem composing them at the loaded-core boundary.  A
 successful wire certificate now leads directly to the ISA trace without a
 manual optional-retirement adapter step.
+
+## 2026-11-07-ls-sv2-262 — certify normalized RVFI retirement counts
+
+The inboxes were reread before this item.  No newer lane-specific request was
+present: generated members in the memory route remain an `ls-sv` dependency.
+
+Added the generic `cycleTrace_length_eq_retireInputs_length` lemma to
+`LeanModels/Refine/Cycle.lean`, then lifted it through
+`normalizeRvfiCycleTrace_input_length` in `LeanModels/Refine/Rvfi.lean`.
+Whenever raw RVFI normalization succeeds, the retained cycle inputs and the
+decoded retirement list therefore have identical lengths.  The PicoRV32 trace
+witness records this fact for the measured bubble/interleaved eight-cycle
+window, providing the order-count premise needed by adjacent-window proofs.
+No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep retirement-count transport as a generic cycle fact and make
+normalization consume it, rather than deriving counts from a particular core's
+order fields or from a filtered list implementation.

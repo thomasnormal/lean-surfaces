@@ -881,6 +881,20 @@ PicoRV32 adaptation or new clean-room request is justified by this re-probe.
 The symbolic ADDI invariant remains parked until the unsupported-member/net-z
 route is admitted.
 
+## Referenced task wall in the memory route
+
+The full-core `pdesign.others` list now starts with the retained
+`SubroutineSymbol:Subroutine` for `task empty_statement` at `picorv32.v:214`,
+because the non-formal `` `assert`` macro references that task.  A task that is
+merely declared is erased; the source-shaped clean-room fixture
+[`task_memory.sv`](walls/task_memory.sv) references it from an `always_ff`
+beside a parameterized memory.  Its 8,757-byte envelope has SHA-256
+`00d83299b2cfab4e1209c9f82e86b6e00a1dc5f9cc547aa0c2b53f5d7ffc38d6`, and the
+memory route returns the same named unsupported-module-member refusal while
+retaining the task metadata.  [`probe.lean`](walls/probe.lean) guards this
+result.  This is a generic loader wall requested from ls-sv; PicoRV32 remains
+unmodified and the symbolic ADDI proof stays parked.
+
 ## Mixed RV32I program certificate
 
 `LeanModels.Refine.RvfiRv32iProgram` now combines the admitted ALU, branch,

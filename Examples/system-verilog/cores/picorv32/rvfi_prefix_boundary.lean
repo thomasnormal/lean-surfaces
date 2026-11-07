@@ -185,6 +185,36 @@ theorem pinned_full_state :
   simp only [addiNext, ArchState.readReg, ArchState.writeReg]
   simp [hpc, h2, h0, hmem]
 
+/-- The concrete stateful window ends at the same architectural state as the
+stateless adapter after it has been given the memory views threaded from the
+initial byte memory.  This is the state endpoint that a loaded-core relation
+will consume after connecting its RVFI memory port to `threadRvInputs`. -/
+theorem pinned_full_state_machine :
+    fullState.arch = machineStateAfter (rvMachineWith cv32e40pProfile)
+      rvMachine.init
+      (threadRvInputs cv32e40pProfile rvMachine.init memZero nontrapInputs) := by
+  change (rvMemoryStateAfter cv32e40pProfile
+      { arch := rvMachine.init, memory := memZero } nontrapInputs).arch = _
+  exact rvMemoryStateAfter_arch cv32e40pProfile rvMachine.init memZero nontrapInputs
+
+/-- The stateful memory machine produces exactly the four measured
+non-trapping retirements, so its final state and its commit stream are one
+window-level certificate. -/
+theorem pinned_full_window_trace :
+    trace (rvMemoryMachineWith cv32e40pProfile)
+        { arch := rvMachine.init, memory := memZero } nontrapInputs =
+      nontrapExpected := by
+  decide
+
+/-- The normalized measured RVFI observations are the same trace when the
+memory views are threaded through the stateful machine. -/
+theorem pinned_full_window_observed :
+    normalizeRvfiTrace? 0 nontrapObservations = some
+      (trace (rvMemoryMachineWith cv32e40pProfile)
+        { arch := rvMachine.init, memory := memZero } nontrapInputs) := by
+  rw [pinned_nontrap_trace_certificate]
+  decide
+
 #guard prefixState.arch.pc = 12
 #guard prefixState.arch.readReg 2 = 5
 #guard prefixState.arch.readReg 0 = 0
@@ -192,10 +222,18 @@ theorem pinned_full_state :
 #guard fullState.arch.readReg 2 = 5
 #guard fullState.arch.readReg 3 = 6
 #guard fullState.arch.readReg 0 = 0
+#guard trace (rvMemoryMachineWith cv32e40pProfile)
+  { arch := rvMachine.init, memory := memZero } nontrapInputs == nontrapExpected
+#guard normalizeRvfiTrace? 0 nontrapObservations == some
+  (trace (rvMemoryMachineWith cv32e40pProfile)
+    { arch := rvMachine.init, memory := memZero } nontrapInputs)
 
 #print axioms pinned_prefix_architecture
 #print axioms pinned_prefix_memory
 #print axioms pinned_prefix_state
 #print axioms pinned_full_state
+#print axioms pinned_full_state_machine
+#print axioms pinned_full_window_trace
+#print axioms pinned_full_window_observed
 
 end Examples.«system-verilog».cores.picorv32.rvfi_prefix_boundary

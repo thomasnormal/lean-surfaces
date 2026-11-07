@@ -192,6 +192,10 @@ the boolean tree. The clean-room `sem2/sva_past_logic` witness covers the
 conjunction form; the remaining arbiter invocation walls are system calls,
 arithmetic temporal terms, and shifts. The arbiter property-expression census
 falls from 9 to 6, with five system-call invocations and one shift remaining.
+`$isunknown(expr)` now maps to an explicit sampled knownness predicate that
+returns true exactly when the evaluated vector contains x/z. The clean-room
+`sem2/sva_isunknown` witness covers the form; the arbiter census falls from 6
+to 3, leaving `$onehot0` and two other system-call boundaries plus the shift.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

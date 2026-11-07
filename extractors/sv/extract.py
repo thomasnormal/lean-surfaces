@@ -26433,6 +26433,8 @@ def _sva_bool(node):
         name = left.get("systemIdentifier", {}).get("text", "")
         args = [p.get("expr") for p in node.get("arguments", {}).get("parameters", [])
                 if isinstance(p, dict) and p.get("kind") == "OrderedArgument"]
+        if name == "$isunknown" and len(args) == 1:
+            return {"kind": "SvaIsUnknown", "expr": _sva_pexpr(args[0])}
         if name in ("$rose", "$fell", "$stable") and len(args) == 1:
             return {"kind": {"$rose": "SvaRose", "$fell": "SvaFell",
                               "$stable": "SvaStable"}[name],

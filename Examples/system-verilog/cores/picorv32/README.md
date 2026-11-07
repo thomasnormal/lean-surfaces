@@ -456,3 +456,16 @@ implemented CV32E40P machine-mode table (`mstatus`, `mie`, `mtvec`,
 `mscratch`, `mepc`, and `mcause`).  CSR addresses outside that table and
 interrupt-dispatch rows remain separate boundaries.
 
+## Illegal-instruction traps
+
+`LeanModels.Refine.Rv32iTrap` and `LeanModels.Refine.RvfiTrap` keep malformed
+words as explicit trap commits.  `illegalBoundary` requires a decode failure,
+the exact `illegalInstr` cause, the handler pc from `trapEnter`, and clear
+register/data-memory effects.  A decoded Zicsr word whose address is absent
+from `csrTable` uses the separate `illegalCsrBoundary`; its source and
+destination payloads remain unconstrained because the ISA traps before the
+CSR operation reads or writes state.  The two
+`rvfiCycleStepRefines_of_*_memory` constructors carry the trap state through
+`RvMemoryState` while preserving byte memory.  Interrupt-dispatch rows remain
+outside the no-interrupt subset.
+

@@ -40434,6 +40434,100 @@ def callableValueObjectUnaryAgreementWitness : Bool :=
 
 #guard callableValueObjectUnaryAgreementWitness
 
+def callableValueObjectConditionalAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.conditional
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 8,
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 9,
+          sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 8 && objectValue == signed 8
+  | _, _ => false
+
+#guard callableValueObjectConditionalAgreementWitness
+
+def callableValueObjectWhileAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.whileLoop
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := .builtin .boolean}
+        .skip)
+      (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 0 && objectValue == signed 0
+  | _, _ => false
+
+#guard callableValueObjectWhileAgreementWitness
+
+def callableValueObjectSwitchAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .switch_ controlParameter [
+      {label := some 1, body := .return_ {
+        expression := CallableExpression.integer 11,
+        sourceType := intType, type := intType}},
+      {label := none, body := .return_ {
+        expression := CallableExpression.integer 22,
+        sourceType := intType, type := intType}}]}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 11 && objectValue == signed 11
+  | _, _ => false
+
+#guard callableValueObjectSwitchAgreementWitness
+
+def callableValueObjectDoWhileAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.doWhile controlStep controlParameter)
+      (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 0 && objectValue == signed 0
+  | _, _ => false
+
+#guard callableValueObjectDoWhileAgreementWitness
+
+def callableValueObjectForAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.forLoop .skip controlParameter controlStep .skip)
+      (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 0 && objectValue == signed 0
+  | _, _ => false
+
+#guard callableValueObjectForAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

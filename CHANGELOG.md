@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a decrementing
+  `for` callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a `do-while`
+  callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a direct
+  `switch` callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with an initially-false
+  `while` callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a conditional
+  expression callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a unary arithmetic
   callable and native differential row.
 

@@ -62,6 +62,21 @@ same `CallableFunction` result through both evaluator APIs.
 It now covers a unary arithmetic callable as well, extending the same-IR
 agreement check across both expression evaluator layers.
 
+The battery now includes a conditional-expression callable, checking branch
+selection on the same IR through both APIs.
+
+It also includes an initially-false `while` callable, checking control-shell
+agreement while preserving each evaluator's state threading.
+
+The agreement battery also includes a direct `switch` callable, checking case
+selection and return propagation through both evaluator APIs.
+
+It also includes a `do-while` callable, checking one mandatory body execution
+and the subsequent condition through both evaluator APIs.
+
+The battery also includes a decrementing `for` callable, checking initializer,
+condition, body, step, and return state through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1248 entries across 18 lanes.** Regenerate with
+**1259 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -85,9 +85,20 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-397` |  | refresh generated Python coverage | python-completeness |
 | `2026-11-07-pycomplete-387` |  | recheck the two-interpreter refinement edge | python-completeness |
 | `2026-11-07-pycomplete-386` |  | recheck text-keyed semantic residues | python-completeness |
+| `2026-11-07-ls-sv2-383` |  | recheck the local Loop2 guard repair | ls-sv2 |
+| `2026-11-07-ls-sv2-382` |  | recheck the settled cycle and signed repairs | ls-sv2 |
+| `2026-11-07-ls-sv2-381` |  | recheck the published net/comb repair | ls-sv2 |
+| `2026-11-07-ls-sv2-380` |  | recheck the owner’s local import repair progress | ls-sv2 |
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
+| `2026-11-07-ls-sv2-379` |  | hold for the residual owner import closure | ls-sv2 |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
+| `2026-11-07-ls-sv2-378` |  | recheck the owner-lane v4.35 import repair | ls-sv2 |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-377` |  | file the urgent owner-lane build repair request | ls-sv2 |
+| `2026-11-07-ls-sv2-376` |  | re-probe PicoRV32 after task admission | ls-sv2 |
+| `2026-11-07-ls-sv2-375` |  | audit the R2 headline ISA surface | ls-sv2 |
+| `2026-11-07-ls-sv2-374` |  | bound ISA-side work to the R2 headline | ls-sv2 |
+| `2026-11-07-ls-sv2-373` |  | re-probe PicoRV32 after empty-task admission | ls-sv2 |
 | `2026-11-07-ls-sv2-372` |  | lift the jump invariant into the mixed step obligation | ls-sv2 |
 | `2026-11-07-ls-sv2-371` |  | embed jump certificates in mixed RV32I | ls-sv2 |
 | `2026-11-07-ls-sv2-370` |  | compose the upper invariant with reset progress | ls-sv2 |

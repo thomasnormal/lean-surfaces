@@ -13,6 +13,10 @@ set_option maxRecDepth 100000 in
 load_design_sv2 task_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/task_memory.sv.json"
 
+set_option maxRecDepth 100000 in
+load_design_sv2 task_memory_comments_wall
+  from "Examples/system-verilog/cores/picorv32/walls/task_memory_comments.sv.json"
+
 #guard match (unpacked_cpuregs_wall.sem 32).processes with
   | #[.unsupported "Instantiate"
       "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
@@ -35,6 +39,15 @@ private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
   [("SubroutineSymbol:Subroutine", "task empty_statement;\n    begin end\n  endtask")]
 
 #guard match (task_memory_wall.pdesign.instantiateMemD2 [4]).processes with
+  | [.unsupported "Instantiate"
+      "memory cycle route does not yet admit unsupported module members"] => true
+  | _ => false
+
+#guard task_memory_comments_wall.pdesign.others ==
+  [("SubroutineSymbol:Subroutine",
+    "task empty_statement;\n    // This task is used by the `assert directive in non-formal mode to\n    // avoid empty statement (which are unsupported by plain Verilog syntax).\n    begin end\n  endtask")]
+
+#guard match (task_memory_comments_wall.pdesign.instantiateMemD2 [4]).processes with
   | [.unsupported "Instantiate"
       "memory cycle route does not yet admit unsupported module members"] => true
   | _ => false

@@ -6945,6 +6945,171 @@ with memory threading and retirement order remaining explicit proof
 obligations.  PicoRV32 remains parked at the approved task/net-z memory-route
 walls.
 
+## 2026-11-07-ls-sv2-373 — re-probe PicoRV32 after empty-task admission
+
+The owner lane admitted the source-shaped empty input-only task on the memory
+route, so the real PicoRV32 design needed to be re-extracted before any next
+generic R2 proof step.
+
+**MEASURED:** Re-extracted the unchanged YosysHQ source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` with owner-lane revision
+`855971661`.  The fresh 2,992,413-byte envelope has SHA-256
+`09cef9345dd855eaa4372ed65794e4a22412d47f0ae1fb848f10e73abb024f52`; it
+contains 26 parameters, 216 declarations, 43 processes, and three generate
+entries.  The ordinary route's exact first refusal remains
+`unsupported "Instantiate" "decl 'cpuregs': unpacked array storage outside E
+(UnpackedDecl:memory)"`.  At the default parameters, the memory-route metadata
+now marks `task empty_statement` as `SubroutineSymbol:empty-task`, then retains
+`NetSymbol:net-z` for `pcpi_mul_wr` at `picorv32.v:257`; the route still returns
+`unsupported "Instantiate" "memory cycle route does not yet admit unsupported
+module members"`.
+
+**CHANGED:** Updated the PicoRV32 README and this backlog entry with the
+post-admission frontier.  The existing `walls/net_z_memory.sv` clean-room
+fixture already covers the remaining generic member shape, so no new request,
+RTL adaptation, loader change, extractor change, or finite captured-window
+theorem was added.
+
+**JUDGED / DECIDED:** The referenced task is no longer the memory route's
+first retained wall.  PicoRV32 remains parked at the approved unsupported
+module-member/net-z boundary; continue only after the owner lane admits that
+generic construct.
+
+## 2026-11-07-ls-sv2-374 — bound ISA-side work to the R2 headline
+
+The owner requested a stop to the recent sequence of alternate packaging and
+instruction-family re-exports.  The from-reset theorem should grow only when
+an ISA-side fact below is missing from the headline proof.
+
+**ISA-SIDE FACTS THE HEADLINE CONSUMES:**
+
+- `RvMemoryState`, `PlatformProfile`, `rvMemoryMachineWith`, and
+  `rvMemoryStateAfter` define the stateful RV32I machine and its threaded byte
+  memory.
+- `Rv32iInstruction` together with `rv32iProgramInput`,
+  `rv32iProgramStep`, and `rv32iProgramRetirement` identifies one decoded
+  instruction's exact input, post-state, and retirement.
+- `Rv32iBoundary` and `RvfiObservation.toRetirement?_eq_some` connect a valid
+  raw RVFI row to that exact retirement and indexed post-state.
+- `rvMemoryMachineWith_rv32i_step` proves the one-instruction stateful ISA
+  transition equation.
+- `rvMemoryMachineWith_rv32i_program_state` and
+  `rvMemoryMachineWith_rv32i_program_trace` fold those equations over a mixed
+  decoded program.
+- `Rv32iRvfiCycleTrace.retireInputs_eq` identifies the certificate's retiring
+  cycle inputs with the decoded program inputs, and
+  `Rv32iRvfiCycleTrace.trace_refines` identifies its normalized rows with the
+  stateful ISA trace.
+
+**DECISION:** The reset relation, admitted schedule, progress witness, and
+loaded-core per-cycle invariant are core-side premises of
+`rv32i_reset_refinement`, not reasons to add more ISA-side wrappers.  Future
+lemmas are in scope only when they establish one line above; no alternate
+packaging or per-instruction duplicate is planned.
+
+## 2026-11-07-ls-sv2-375 — audit the R2 headline ISA surface
+
+The six-line consumption list from item 374 needed a compiled API check before
+the ISA lane could be held.  The check must qualify `PlatformProfile` through
+`LeanModels.Rv`; the stateful machine and refinement declarations themselves
+remain in `LeanModels.Refine`.
+
+**MEASURED:** A temporary Lean 4.35.0 probe importing `LeanModels.Refine`,
+opening `LeanModels.Refine` and `LeanModels.Rv`, successfully resolves every
+listed declaration: `RvMemoryState`, `PlatformProfile`,
+`rvMemoryMachineWith`, `rvMemoryStateAfter`, the mixed `Rv32iInstruction`
+input/step/retirement functions, the `Rv32iBoundary` retirement and machine
+bridges, the one-step and mixed program state/trace equations,
+`Rv32iRvfiCycleTrace.retireInputs_eq`,
+`Rv32iRvfiCycleTrace.trace_refines`, and `rv32i_reset_refinement`.
+
+**CHANGED:** No ISA or refinement source changed.  This entry records that the
+headline API is present and typechecks with the intended namespace; it is an
+audit/hold result rather than another wrapper theorem.
+
+**JUDGED / DECIDED:** No missing ISA-side fact justifies item 375 work.  Hold
+further ISA packaging while PicoRV32 remains blocked by the retained task/net-z
+memory-route wall, and resume with an exact re-probe after that owner-lane wall
+changes.  Do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-376 — re-probe PicoRV32 after task admission
+
+The owner lane's task admission had landed on the current master, so item 376
+re-ran the full real-core probe and added a source-shaped regression for the
+task's comment-bearing form.  The probe was run with the approved Slang
+extractor and `load_design_sv2`; the upstream RTL was not edited.
+
+**MEASURED:** The unchanged YosysHQ source at commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` was freshly extracted with the
+clean owner-lane commit `68cbae253` (the public `origin/master` at `6914a9f78`
+still predates that task admission).  The 2,991,505-byte envelope has SHA-256
+`94e22334ce1502feb0123ca2c99e20a17d59787ab682b7c69f79537d9ae3d8d8` and
+contains 26 parameters, 216 declarations, 43 processes, and three generate
+entries.  The ordinary route's exact first refusal remains:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory-route metadata retains `SubroutineSymbol:empty-task` for the
+referenced `empty_statement` declaration, followed by the eight disabled PCPI
+`NetSymbol:net-z` entries, including `pcpi_mul_wr` at
+`picorv32.v:257`.  `instantiateMemD2` therefore returns exactly:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+As a clean-room check of the source shape, the new
+`walls/task_memory_comments.sv` fixture (8,936-byte envelope,
+SHA-256 `630bc3c5fcf792c4e96dc676ac3ef76ba5e2ae66ceee5eeb573a28954207e65e`)
+retains the same `SubroutineSymbol:Subroutine` metadata and the same loud
+memory-route refusal.  The existing admitted task fixture remains green, so
+the admission is correctly limited to the source-shaped empty task recognized
+by the extractor; comments do not silently broaden the route.
+
+**CHANGED:** Added the comment-bearing clean-room task fixture and exact guards
+to `Examples/system-verilog/cores/picorv32/walls/probe.lean`.  Updated no
+semantics, loader, extractor, RTL, or finite captured-window theorem.
+
+**JUDGED / DECIDED:** On the owner lane, the referenced task is admitted only
+for its exact source-shaped empty input-only form.  PicoRV32's first
+memory-route wall is still the generic unsupported-member/net-z boundary (with
+ordinary `cpuregs` refusal unchanged).  No new `REQUEST ls-sv:` is needed
+because the fixture is already covered by the routed task boundary and net-z
+request.  Do not treat the stale public-master probe as evidence that task
+admission is absent; re-probe again when the owner lane's change reaches
+`origin/master`.
+
+## 2026-11-07-ls-sv2-377 — file the urgent owner-lane build repair request
+
+The inbox reported a red `origin/master` import closure after the recent
+SystemVerilog v4.35 migration.  Item 377 reproduced that state before doing
+any further R2 work.
+
+**MEASURED:** On Lean 4.35.0, a clean
+`lake build LeanModels.Sv.ClockGuard0 LeanModels.Sv.SelfCheck` at public commit
+`26b804266` fails in `ClockGuard0.lean:55-60` and `SelfCheck.lean:2283-2288`
+with `unexpected identifier; expected '}'` for multiline `Design` literals.
+`SelfCheck.lean:1402` independently fails because
+`Res.unsupported "Initial:order" msg` supplies two strings while the
+constructor accepts one.  The same build also reports the downstream stale
+`CombView`/`Comb2Base` net metadata obligation and the four example blockers
+listed in the inbox (`ripple_add`, `remainder`, `division`, and
+`sem2/sva_select`).
+
+**CHANGED:** Filed a dated `REQUEST ls-sv:` in the shared inbox with the exact
+files, lines, measured errors, and preservation requirements.  No owner-lane
+source was edited; no semantics or core theorem changed.
+
+**JUDGED / DECIDED:** The red import closure takes priority over item-2
+PicoRV32 progress.  ls-sv must repair its owned syntax, refusal arity, stale
+net metadata proof, and dependent example pins before an R2 proof can provide
+meaningful validation.  Item 377 has no oracle result and does not add a
+finite captured-window theorem.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state
@@ -7028,3 +7193,174 @@ mixed per-cycle obligation consumed by `rv32iRvfiCycleTrace_of_step` and the
 from-reset all-prefix theorem, with retirement order remaining an explicit
 proof obligation.  PicoRV32 remains parked at the approved task/net-z
 memory-route walls.
+
+## 2026-11-07-ls-sv2-378 — recheck the owner-lane v4.35 import repair
+
+The owner lane answered the first two parts of item 377 in commit `7fbcb69ef`
+(`[ls-sv] repair v4.35 guard fixtures`).  Item 378 re-read both inboxes and the
+goal, then checked that repair on the owner worktree before doing any R2 work.
+
+**MEASURED:** On Lean 4.35.0, `lake build LeanModels.Sv.ClockGuard0
+LeanModels.Sv.SelfCheck` passes at `7fbcb69ef`.  The commit preserves the three
+clock guards by moving the multiline `Design` literals into named definitions,
+and combines the initial-order refusal kind and message into the one-string
+`Res.unsupported` contract.  The owner worktree still has uncommitted
+`Comb2`/`CombView`/`Sem2` changes for the net metadata and clock guard.
+
+A fresh dependent target build remains red.  `Comb2Proc.lean:2642` leaves
+`∃ a, run2ClockGuard d₂ = Res.ok a` unsolved after the guard is threaded through
+`Terminates2.of_acyclic`; `CycleMachine.lean:145` passes a `runObs2` result where
+`rcycle_runFrom` requires a `runFromObs2` result, and `#print axioms rcycle_run2`
+reports `sorryAx`.  The signed `remainder` and `division` proof files still have
+stale source pins and their signed guards fail (remainder lines 65, 66, 68;
+division lines 111, 112, 114).  `ripple_add` and `sem2/sva_select` are no longer
+among the target failures.  The required failures are exactly `CycleMachine`,
+`Comb2Proc`, signed `remainder`, and signed `division`.
+
+**CHANGED:** Added this measured recheck to the lane backlog and routed a
+follow-up `REQUEST ls-sv:` with the exact residual errors.  No ls-sv-owned
+source, semantics, loader, extractor, RTL, or finite captured-window theorem
+was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The v4.35 guard syntax and refusal-arity repair is valid,
+but the public import closure is not yet green because the owner branch has not
+landed the residual clock-guard bridge, cycle-machine bridge, and signed proof
+pin repairs.  Hold PicoRV32 R2 work until those owner changes reach
+`origin/master`; do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-379 — hold for the residual owner import closure
+
+Item 379 reread both inboxes and the goal, then checked the owner branch and
+public master before attempting another core probe.  The inbox still requires
+the residual `Comb2Proc`, `CycleMachine`, signed `remainder`, and signed
+`division` repairs from item 378.
+
+**MEASURED:** `origin/fleet/vipng/sklansky-wip` remains at `7fbcb69ef`, and
+`origin/master` remains at the ls-sv2 publication `2cea454b0`; no owner repair
+has landed.  Therefore the previously measured target failures are still the
+latest evidence, and a fresh PicoRV32 load would only repeat a stale public
+closure.  No new build or oracle result is claimed.
+
+**JUDGED / DECIDED:** Hold item 379 at the external owner-lane boundary.  Do not
+edit ls-sv-owned files, add a finite captured-window theorem, or re-probe the
+core until the requested repair reaches `origin/master` and its import closure
+is green.  The existing precise follow-up `REQUEST ls-sv:` remains the active
+handoff.
+
+## 2026-11-07-ls-sv2-380 — recheck the owner’s local import repair progress
+
+Item 380 re-read both inboxes and the goal, inspected the uncommitted owner
+worktree, and reran the focused owner-lane targets.  This is a progress check,
+not a core probe: public master still has not received the repair.
+
+**MEASURED:** The owner worktree now modifies `Comb2Proc.lean` in addition to
+`Comb2.lean`, `CombView.lean`, and `Sem2.lean`.  With those local changes,
+`lake build LeanModels.Sv.ClockGuard0 LeanModels.Sv.SelfCheck
+LeanModels.Sv.Comb2Proc LeanModels.Sv.CycleMachine` passes the first three
+modules and fails only at `CycleMachine.lean:145`: `runObs2` output is still
+being passed where `rcycle_runFrom` requires a `runFromObs2` result at
+`initState2`; `rcycle_run2` still reports `sorryAx`.  A fresh signed-target
+build still fails at the stale source pins and signed guards in `remainder`
+and `division` (remainder 65, 66, 68; division 111, 112, 114).  No public
+repair has landed: `origin/master` remains `a610d869d` and the owner remote
+remains `7fbcb69ef`.
+
+**CHANGED:** Routed the updated residual set as a dated `REQUEST ls-sv:` and
+added this backlog entry.  No ls-sv-owned source, semantics, loader, extractor,
+RTL, or finite captured-window theorem was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The owner’s local work has cleared `Comb2Proc`, so that
+part of the previous request is no longer blocking locally.  Hold the public
+R2 re-probe until the owner lands the remaining `CycleMachine` and signed proof
+repairs and the import closure is green on `origin/master`.
+
+## 2026-11-07-ls-sv2-381 — recheck the published net/comb repair
+
+Item 381 reread both inboxes and the goal, observed owner commit `4b308092c`,
+and reran the requested owner import closure with the owner’s uncommitted
+`CycleMachine` and signed-proof edits.
+
+**MEASURED:** `ClockGuard0`, `SelfCheck`, `CombView`, `Comb2`, `Comb2Proc`,
+and the local `CycleMachine` bridge build.  The bridge removes the prior
+`rcycle_run2` `sorryAx`; its axiom report is now
+`[propext, Classical.choice, Quot.sound]`.  The downstream closure remains
+red: `Loop2.lean:885` receives a `run2ClockGuard d = Res.ok () → Terminates2 d`
+from `Terminates2.of_invariant` but needs `Terminates2 d`, and `Loop2.lean:1057`
+therefore reports a `sorryAx` dependency.  Signed `remainder` and `division`
+source pins now include `.cast true`, but their instantiation proofs leave
+`False` at remainder line 40 and division line 42, and signed guards still fail
+at remainder 66, 67, 69 and division 112, 113, 115.  The `sem2/sva_select`
+guard at line 21 remains false.  `ripple_add` now builds.
+
+**CHANGED:** Routed the exact residual `REQUEST ls-sv:` and added this backlog
+entry.  No ls-sv-owned source, semantics, loader, extractor, RTL, or finite
+captured-window theorem was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The published net/comb repair and local cycle bridge
+advance the closure, but public master is not green.  Hold the PicoRV32 R2
+re-probe until `Loop2`, signed proof-side cast/instantiation checks, and the
+SVA row are repaired and landed; do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-382 — recheck the settled cycle and signed repairs
+
+Item 382 reread both inboxes and the goal, then reran the owner closure
+sequentially after the local `CycleMachine` and signed proof edits settled.
+
+**MEASURED:** The owner’s local `CycleMachine` bridge builds and
+`rcycle_run2` reports only `[propext, Classical.choice, Quot.sound]`.  The
+signed `remainder` and `division` proof files now preserve the parser’s
+`.cast true` source shape and explicitly prove the current `T2:Cast` refusal;
+both build.  `ClockGuard0`, `SelfCheck`, `CombView`, `Comb2`, `Comb2Proc`,
+`CycleMachine`, signed `remainder`, signed `division`, and `ripple_add` all
+build.  Exactly two targets remain red: `Loop2.lean:885` fails to discharge the
+new `run2ClockGuard d = Res.ok ()` premise of `Terminates2.of_invariant`, with
+`Loop2.lean:1057` consequently reporting `sorryAx`; and the stale
+`sem2/sva_select/proof.lean:21` guard fails.  A standalone probe of that exact
+loaded property/observation expression evaluates to `Except.ok false`.
+
+**CHANGED:** Routed the two precise residual failures as a dated
+`REQUEST ls-sv:` and added this backlog entry.  No ls-sv-owned source,
+semantics, loader, extractor, RTL, or finite captured-window theorem was
+edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The cycle and signed proof repairs are locally sound, but
+public master is not green until `Loop2` threads the guard without an axiom and
+the SVA proof-side row records the measured false result.  Hold the PicoRV32
+R2 re-probe until those changes land and the import closure passes.
+
+## 2026-11-07-ls-sv2-383 — recheck the local Loop2 guard repair
+
+Item 383 reread both inboxes and the goal, then reran the two targets changed in
+the owner worktree.  The owner public branch remains `4b308092c`; the worktree
+still contains uncommitted `Loop2` and proof-side edits, so this is a local
+repair check rather than a public-closure or core probe.
+
+**MEASURED:** On Lean 4.35.0,
+`lake build LeanModels.Sv.Loop2
+Examples.«system-verilog».sem2.sva_select.proof` now builds
+`sem2.sva_select.proof`; its exact loaded-property row is `.ok false`, as
+measured in the previous standalone probe.  `LeanModels.Sv.Loop2` still fails
+at line 891 with the unsolved indexed-array obligation
+
+```text
+⊢ ∀ (x : Nat) (x_1 : x < d.processes.size),
+    (match d.processes[x] with
+      | Process2.unsupported svKind text =>
+          svKind.startsWith "SignalEventControl:"
+      | _ => false) = false
+```
+
+Consequently `SingleComb.terminates` still depends on `sorryAx`.  The public
+owner branch remains `4b308092c` and public `origin/master` remains `31f9c79e6`.
+No PicoRV32 load or oracle result is claimed.
+
+**CHANGED:** Routed the exact remaining indexed-array guard obligation as a
+dated `REQUEST ls-sv:` and added this backlog entry.  No ls-sv-owned source,
+semantics, loader, extractor, RTL, or finite captured-window theorem was
+edited.
+
+**JUDGED / DECIDED:** The SVA proof-side update is locally complete, but the
+Loop2 guard bridge is not.  Hold the PicoRV32 R2 re-probe until the owner
+discharges `run2ClockGuard d = Res.ok ()` in `SingleComb.terminates`, removes
+the `sorryAx`, lands the repair on public master, and the import closure passes.
+Do not add finite captured-window lemmas.

@@ -18980,5 +18980,65 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-conditional-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectConditionalAgreementWitness",
+    "cpp_source": "int conditional_witness(int value) { return value ? 8 : 9; } bool callable_witness() { return conditional_witness(1) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-while-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectWhileAgreementWitness",
+    "cpp_source": "int while_witness(int value) { while (value) {} return value; } bool callable_witness() { return while_witness(0) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-switch-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectSwitchAgreementWitness",
+    "cpp_source": "int switch_witness(int value) { switch (value) { case 1: return 11; default: return 22; } } bool callable_witness() { return switch_witness(1) == 11; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-do-while-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectDoWhileAgreementWitness",
+    "cpp_source": "int do_while_witness(int value) { do { --value; } while (value); return value; } bool callable_witness() { return do_while_witness(1) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-for-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectForAgreementWitness",
+    "cpp_source": "int for_witness(int value) { for (; value; --value) {} return value; } bool callable_witness() { return for_witness(1) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

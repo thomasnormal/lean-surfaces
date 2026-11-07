@@ -881,7 +881,7 @@ PicoRV32 adaptation or new clean-room request is justified by this re-probe.
 The symbolic ADDI invariant remains parked until the unsupported-member/net-z
 route is admitted.
 
-## Referenced task wall in the memory route
+## Referenced task wall in the memory route (before admission)
 
 The full-core `pdesign.others` list now starts with the retained
 `SubroutineSymbol:Subroutine` for `task empty_statement` at `picorv32.v:214`,
@@ -894,6 +894,71 @@ memory route returns the same named unsupported-module-member refusal while
 retaining the task metadata.  [`probe.lean`](walls/probe.lean) guards this
 result.  This is a generic loader wall requested from ls-sv; PicoRV32 remains
 unmodified and the symbolic ADDI proof stays parked.
+
+## 2026-11-07 re-probe after empty-task admission
+
+The current owner-lane revision `855971661` admits the source-shaped empty
+input-only task in the memory route.  Re-extracting the unchanged YosysHQ
+source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` produces a 2,992,413-byte
+envelope with SHA-256
+`09cef9345dd855eaa4372ed65794e4a22412d47f0ae1fb848f10e73abb024f52`.
+The declaration still has 26 parameters, 216 declarations, 43 processes, and
+three generate entries.
+
+The ordinary route remains loud at the same first refusal:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+At the default parameters, `pdesign.others` now marks
+`task empty_statement` as `SubroutineSymbol:empty-task`; the next retained
+member is the undriven `NetSymbol:net-z` `pcpi_mul_wr` at `picorv32.v:257`.
+The memory route therefore still returns:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The existing clean-room [`net_z_memory.sv`](walls/net_z_memory.sv) fixture
+covers this remaining generic member shape, so no new request or RTL
+adaptation is justified by the re-probe.  The symbolic ADDI invariant remains
+parked at the unsupported-member/net-z wall.
+
+## 2026-11-07 re-probe on the owner lane after task admission
+
+The public `origin/master` at `6914a9f78` still predates the task admission, so
+this probe uses the clean owner-lane commit `68cbae253` and keeps that revision
+separate from the public-master result.  The pinned YosysHQ source was
+re-extracted without RTL changes:
+
+```text
+source commit: ef203c2b0a3fb793280f5114941416c425c5b461
+envelope: 2,991,505 bytes
+envelope SHA-256: 94e22334ce1502feb0123ca2c99e20a17d59787ab682b7c69f79537d9ae3d8d8
+```
+
+The declaration remains a 26-parameter family with 216 declarations, 43
+processes and three generate entries.  At the default parameters, the
+ordinary route still refuses `cpuregs` exactly as above.  The memory-route
+metadata now marks `task empty_statement` as `SubroutineSymbol:empty-task`,
+then retains the disabled-PCPI `NetSymbol:net-z` entries, including
+`pcpi_mul_wr` at `picorv32.v:257`; `instantiateMemD2` returns:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The clean-room [`task_memory_comments.sv`](walls/task_memory_comments.sv)
+fixture confirms the admission boundary is source-shaped: adding comments to
+the task leaves `SubroutineSymbol:Subroutine` metadata and the same loud
+unsupported-member refusal.  Its envelope is 8,936 bytes with SHA-256
+`630bc3c5fcf792c4e96dc676ac3ef76ba5e2ae66ceee5eeb573a28954207e65e`.
+PicoRV32 remains parked at the generic unsupported-member/net-z wall.
 
 ## Mixed RV32I program certificate
 

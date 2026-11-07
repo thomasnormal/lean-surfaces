@@ -94,6 +94,74 @@ theorem rv32i_progress_trace_refines
     _ = some (trace (rvMemoryMachineWith profile) memoryState
           (schedulePrefix target k)) := by rw [htarget]
 
+/-! The state form below ties the existential mixed program back to the
+target's own stateful ISA execution.  This is the form a whole-core theorem
+usually consumes: the final relation is stated over the target prefix rather
+than over an auxiliary decoder list. -/
+
+/-- The all-prefix mixed RVFI result with the final relation expressed over
+the stateful ISA machine run on the target retirement-input prefix. -/
+theorem rv32i_progress_trace_refines_state
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hstep : Rv32iCycleStepRefines machine rel admit)
+    (start : Nat) (coreState : State) (memoryState : RvMemoryState)
+    (hrel : rel coreState memoryState)
+    {schedule target : Nat → Input}
+    (hschedule : ∀ n, admit (schedule n))
+    (progress : Rv32iRetiresTarget machine coreState schedule target) :
+    ∀ k : Nat, ∃ n : Nat, ∃ program : List Rv32iInstruction,
+      ∃ _certificate :
+        Rv32iRvfiCycleTrace machine start coreState memoryState
+          (schedulePrefix schedule n) program,
+        normalizeRvfiTrace? start
+            (rvfiObservations machine coreState (schedulePrefix schedule n)) =
+          some (trace (rvMemoryMachineWith profile) memoryState
+            (schedulePrefix target k)) ∧
+        rel (rvfiStateAfter machine coreState (schedulePrefix schedule n))
+          (rvMemoryStateAfter profile memoryState (schedulePrefix target k)) := by
+  intro k
+  rcases progress k with ⟨n, htarget⟩
+  have hall : ∀ input ∈ schedulePrefix schedule n, admit input := by
+    intro input hmem
+    exact schedulePrefix_admit schedule admit hschedule n input hmem
+  obtain ⟨program, certificate, htrace, hfinal⟩ :=
+    rv32iRvfiCycleTrace_of_step_refines profile machine rel admit hstep
+      start coreState memoryState (schedulePrefix schedule n) hrel hall
+  have hinputs : rv32iProgramInputs memoryState program =
+      schedulePrefix target k := by
+    calc
+      rv32iProgramInputs memoryState program =
+          retireInputs machine.toCycleMachine coreState
+            (schedulePrefix schedule n) := certificate.retireInputs_eq.symm
+      _ = schedulePrefix target k := htarget
+  have hstate : rv32iProgramState memoryState program =
+      rvMemoryStateAfter profile memoryState (schedulePrefix target k) := by
+    calc
+      rv32iProgramState memoryState program =
+          machineStateAfter (rvMemoryMachineWith profile) memoryState
+            (rv32iProgramInputs memoryState program) :=
+        (rvMemoryMachineWith_rv32i_program_state profile memoryState program).symm
+      _ = machineStateAfter (rvMemoryMachineWith profile) memoryState
+            (schedulePrefix target k) := by rw [hinputs]
+      _ = rvMemoryStateAfter profile memoryState (schedulePrefix target k) := rfl
+  have htrace' : normalizeRvfiTrace? start
+        (rvfiObservations machine coreState (schedulePrefix schedule n)) =
+      some (trace (rvMemoryMachineWith profile) memoryState
+        (schedulePrefix target k)) := by
+    calc
+      normalizeRvfiTrace? start
+          (rvfiObservations machine coreState (schedulePrefix schedule n)) =
+          some (trace (rvMemoryMachineWith profile) memoryState
+            (retireInputs machine.toCycleMachine coreState
+              (schedulePrefix schedule n))) := htrace
+      _ = some (trace (rvMemoryMachineWith profile) memoryState
+            (schedulePrefix target k)) := by rw [htarget]
+  refine ⟨n, program, certificate, htrace', ?_⟩
+  exact hstate ▸ hfinal
+
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.rv32i_progress_trace_refines
+#print axioms LeanModels.Refine.rv32i_progress_trace_refines_state

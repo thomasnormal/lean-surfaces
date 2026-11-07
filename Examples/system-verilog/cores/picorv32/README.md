@@ -938,6 +938,10 @@ The dependent upper step and order premises can be carried as the named
 `Rv32iUpperInvariant`; its `toMixedStep` method in
 `LeanModels.Refine.RvfiUpperProgress` feeds the same mixed R2 theorem without
 repeating those predicates.
+The packaged reset entry points are
+`rv32i_reset_upper_refines_of_invariant` and
+`rv32i_reset_upper_stream_refines_of_invariant`; they retain either the full
+prefix certificate or only the committed stream and final relation.
 
 `rv32iCycleStepRefines_of_addi_memory` is the corresponding invariant bridge.
 Given the ADDI row boundary, threaded-memory post-state relation, and an

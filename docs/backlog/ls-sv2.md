@@ -6865,6 +6865,33 @@ LUI/AUIPC invariant into the mixed per-cycle theorem, matching the ADDI proof
 shape while preserving decode evidence and order obligations.  PicoRV32
 remains parked at the approved task/net-z memory-route walls.
 
+## 2026-11-07-ls-sv2-370 — compose the upper invariant with reset progress
+
+The named upper-immediate invariant now discharges one mixed cycle, but a
+loaded-core proof still needed to wire its step and order fields into the
+generic from-reset all-prefix contract manually.
+
+**CHANGED:** Added explicit and packaged reset forms in
+`LeanModels/Refine/RvfiUpperProgress.lean`:
+`rv32i_reset_upper_refines`,
+`rv32i_reset_upper_refines_of_invariant`,
+`rv32i_reset_upper_stream_refines`, and
+`rv32i_reset_upper_stream_refines_of_invariant`.  They compose the upper
+bridge with the existing reset refinement, preserving the full prefix
+certificate or exposing the exact committed `cycleTrace` and final relation.
+Updated the PicoRV32 README and backlog index.
+
+**MEASURED:** The focused package, umbrella refinement build, docs check,
+backlog index check, and diff check pass under Lean 4.35.0.  The new
+declarations report only `propext`/`Classical.choice`/`Quot.sound`; no
+`sorryAx` or new axiom was introduced.  No semantics, RTL, loader, extractor,
+or finite captured-window theorem changed.
+
+**JUDGED / DECIDED:** A future loaded-core LUI/AUIPC invariant now has the same
+end-to-end from-reset API as the ADDI invariant, with progress and schedule
+remaining explicit premises.  PicoRV32 remains parked at the approved
+task/net-z memory-route walls.
+
 ## 2026-11-07-ls-sv2-364 — expose the structure-valued ADDI reset contract
 
 The ADDI reset theorem returned the direct committed stream and post-state

@@ -4685,3 +4685,31 @@ was introduced.
 **DECIDED:** keep extending the generic threaded RVFI boundary with the next
 RV32I instruction family while the generated-member memory route remains with
 `ls-sv`.
+
+## 2026-11-07-ls-sv2-295 — add the RV32I AUIPC boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Extended `LeanModels/Refine/Rv32iUpper.lean` with the profile-parametric AUIPC
+state/effects equations (`auipcNext`, `auipcEffects`, and `auipcRetirement`)
+and the `isaStepWith`, memory-threaded, and `rvMachineWith` bridge theorems.
+Extended `LeanModels/Refine/RvfiUpper.lean` with the raw
+`RvfiObservation.auipcFields`/`auipcBoundary` predicate, stateless and
+memory-threaded machine bridges, and `rvfiCycleStepRefines_of_auipc_memory`.
+The raw contract identifies the pc-based ALU decode, keeps the RVFI source
+register fields at zero, carries the exact no-memory retirement, and preserves
+threaded byte memory; invalid rows remain explicit ISA stutters.  Updated the
+PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiUpper` passed (17 jobs),
+`lake build LeanModels.Refine` passed, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** continue the generic threaded RVFI boundary with the next RV32I
+instruction family while generated-member memory support remains with `ls-sv`.

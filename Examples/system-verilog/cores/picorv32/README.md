@@ -292,6 +292,13 @@ row to `luiRetirement`.  The valid cycle case advances the threaded
 `rvMemoryMachineWith` state through `luiNext` while preserving byte memory;
 invalid rows remain explicit ISA stutters.
 
+The same upper-immediate boundary now covers RV32I `AUIPC` through
+`RvfiObservation.auipcBoundary` and
+`rvfiCycleStepRefines_of_auipc_memory`.  AUIPC uses the architectural pc as
+its first ALU operand, so its raw contract keeps the RVFI source-register
+fields at zero while tying the destination writeback to `pc + imm`; the
+threaded byte memory remains unchanged.
+
 The generic `rvfiCycleStepRefines_of_sw_memory` constructor now lifts the
 store boundary to the same threaded-memory contract as ADDI.  A valid row must
 show that its input memory view is the current architectural memory, satisfy

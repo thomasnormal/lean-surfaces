@@ -4144,3 +4144,21 @@ RTL, loader, or `LeanModels/Sv/**` file changed.
 proofs can now handle every raw cycle through explicit valid-retirement or
 invalid-stutter facts without reopening the contract's branch or silently
 dropping a row.
+
+## 2026-11-07-ls-sv2-268 — certify well-formed rows in normalized streams
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added the adapter inversion lemma
+`RvfiObservation.wellFormed_of_toRetirement?_eq_some` and
+`normalizeRvfiTrace?_wellFormed` to `LeanModels/Refine/Rvfi.lean`.  A
+successful executable normalization now proves, for every raw row, either
+`valid = false` or `wellFormed`; the proof follows the checker directly and
+does not use the existing classical certificate-equivalence theorem.  The
+strict valid-row projection reuses the inversion lemma.  Updated the PicoRV32
+README and backlog/index.  No RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**DECIDED:** make raw normalization itself carry the wire well-formedness
+certificate.  The loaded-core proof can now separate malformed-valid refusal
+from explicit bubbles before applying architectural refinement.

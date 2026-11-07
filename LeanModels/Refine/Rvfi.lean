@@ -129,6 +129,19 @@ theorem RvfiObservation.toRetirement?_eq_some (o : RvfiObservation)
   simp [RvfiObservation.toRetirement?, hvalid]
   exact hwell
 
+theorem RvfiObservation.wellFormed_of_toRetirement?_eq_some
+    (o : RvfiObservation) {retirement : Retirement}
+    (hvalid : o.valid = true)
+    (hretirement : o.toRetirement? = some retirement) :
+    o.wellFormed := by
+  cases hvalue : o.wellFormedB with
+  | false =>
+      have hnone : o.toRetirement? = none := by
+        simp [RvfiObservation.toRetirement?, hvalid, hvalue]
+      rw [hnone] at hretirement
+      cases hretirement
+  | true => exact hvalue
+
 /-! ## Finite RVFI traces and retirement order -/
 
 /-- A finite packed trace certificate.  Invalid RVFI cycles are bubbles and do
@@ -206,6 +219,53 @@ theorem normalizeRvfiTrace?_iff {start : Nat} {observations : List RvfiObservati
         simp [normalizeRvfiTrace?, hvalid, ih]
     | retire hvalid horder hretirement htail ih =>
         simp [normalizeRvfiTrace?, hvalid, horder, hretirement, ih]
+
+/-! A successful normalization classifies every raw row: invalid rows are
+explicit bubbles, while every valid row is well formed.  This is proved
+directly from the executable checker rather than through the certificate
+equivalence, whose existential direction is intentionally more general. -/
+theorem normalizeRvfiTrace?_wellFormed {start : Nat}
+    {observations : List RvfiObservation} {retirements : List Retirement}
+    (h : normalizeRvfiTrace? start observations = some retirements) :
+    ∀ observation, observation ∈ observations →
+      observation.valid = false ∨ observation.wellFormed := by
+  induction observations generalizing start retirements with
+  | nil =>
+      simp [normalizeRvfiTrace?] at h
+      cases h
+      intro observation hmem
+      simp at hmem
+  | cons observation observations ih =>
+      by_cases hv : observation.valid = true
+      · simp [normalizeRvfiTrace?, hv] at h
+        by_cases ho : observation.order = start
+        · simp [ho] at h
+          cases hret : observation.toRetirement? with
+          | none => simp [hret] at h
+          | some retirement =>
+              cases htail : normalizeRvfiTrace? (start + 1) observations with
+              | none => simp [hret, htail] at h
+              | some tail =>
+                  simp [hret, htail] at h
+                  cases h
+                  have hwell :=
+                    observation.wellFormed_of_toRetirement?_eq_some hv hret
+                  intro candidate hmem
+                  simp only [List.mem_cons] at hmem
+                  rcases hmem with rfl | hmem
+                  · exact Or.inr hwell
+                  · exact ih htail candidate hmem
+        · simp [ho] at h
+      · have hv' : observation.valid = false := by
+          cases hvalue : observation.valid with
+          | false => exact rfl
+          | true => exact False.elim (hv hvalue)
+        simp [normalizeRvfiTrace?, hv'] at h
+        intro candidate hmem
+        simp only [List.mem_cons] at hmem
+        rcases hmem with rfl | hmem
+        · exact Or.inl hv'
+        · exact ih h candidate hmem
 
 /-- Normalization is compositional across finite observation windows.  The
 second window starts after the number of retirements in the first, so bubbles
@@ -393,14 +453,8 @@ theorem rvfiCycleStepRefines_valid_step
   simp only [hstep, hisa] at hs ⊢
   rw [hvalid'] at hs
   rcases hs with ⟨retirement, hretirement, hrel', hcommit⟩
-  have hwell : observation.wellFormed := by
-    cases hvalue : observation.wellFormedB with
-    | false =>
-        have hnone : observation.toRetirement? = none := by
-          simp [RvfiObservation.toRetirement?, hvalid', hvalue]
-        rw [hnone] at hretirement
-        cases hretirement
-    | true => exact hvalue
+  have hwell : observation.wellFormed :=
+    observation.wellFormed_of_toRetirement?_eq_some hvalid' hretirement
   have hsome : observation.toRetirement? = some observation.toRetirement :=
     observation.toRetirement?_eq_some hvalid' hwell
   have hto : observation.toRetirement = retirement := by
@@ -958,6 +1012,7 @@ theorem Retirement.toRvfi?_bind_toRetirement? (r : Retirement)
 end LeanModels.Refine
 
 #print axioms LeanModels.Refine.RvfiObservation.ofRetirement_toRetirement?
+#print axioms LeanModels.Refine.RvfiObservation.wellFormed_of_toRetirement?_eq_some
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step
@@ -969,6 +1024,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_append
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_normalized_chain
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_iff
+#print axioms LeanModels.Refine.normalizeRvfiTrace?_wellFormed
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_append
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_filterMap
 #print axioms LeanModels.Refine.RvfiCycleMachine.toCycleMachine_stateAfter

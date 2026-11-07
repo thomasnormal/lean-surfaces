@@ -7227,3 +7227,22 @@ but the public import closure is not yet green because the owner branch has not
 landed the residual clock-guard bridge, cycle-machine bridge, and signed proof
 pin repairs.  Hold PicoRV32 R2 work until those owner changes reach
 `origin/master`; do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-379 — hold for the residual owner import closure
+
+Item 379 reread both inboxes and the goal, then checked the owner branch and
+public master before attempting another core probe.  The inbox still requires
+the residual `Comb2Proc`, `CycleMachine`, signed `remainder`, and signed
+`division` repairs from item 378.
+
+**MEASURED:** `origin/fleet/vipng/sklansky-wip` remains at `7fbcb69ef`, and
+`origin/master` remains at the ls-sv2 publication `2cea454b0`; no owner repair
+has landed.  Therefore the previously measured target failures are still the
+latest evidence, and a fresh PicoRV32 load would only repeat a stale public
+closure.  No new build or oracle result is claimed.
+
+**JUDGED / DECIDED:** Hold item 379 at the external owner-lane boundary.  Do not
+edit ls-sv-owned files, add a finite captured-window theorem, or re-probe the
+core until the requested repair reaches `origin/master` and its import closure
+is green.  The existing precise follow-up `REQUEST ls-sv:` remains the active
+handoff.

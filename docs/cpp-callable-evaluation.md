@@ -4,6 +4,10 @@ Logical operator spelling and the left operand's short-circuit decision are
 shared through `ScalarArithmetic`; each evaluator retains its own frame and
 error handling after that pure boundary.
 
+Unary and binary operator spellings now use the same `ScalarArithmetic`
+decoders in both evaluator layers; unknown spellings still reach each layer's
+existing loud refusal.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

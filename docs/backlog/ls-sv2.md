@@ -4655,3 +4655,33 @@ was introduced.
 **DECIDED:** use the generic stateful boundary for the next decoded RV32I
 instruction family, retaining the explicit memory equality and raw retirement
 obligations at every class-specific wrapper.
+
+## 2026-11-07-ls-sv2-294 — add the RV32I LUI boundary
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned
+generic RVFI and RISC-V refinement layers.
+
+Added `LeanModels/Refine/Rv32iUpper.lean` with the profile-parametric LUI
+state/effects equations (`luiNext`, `luiEffects`, and `luiRetirement`) and
+the corresponding `isaStepWith`, memory-threaded, and `rvMachineWith` bridge
+theorems.  Added `LeanModels/Refine/RvfiUpper.lean` with the raw
+`RvfiObservation.luiFields`/`luiBoundary` predicate and the
+`rvfiCycleStepRefines_of_lui_memory` constructor.  A valid row identifies the
+decoded U-immediate through the explicit x0 source read, carries the exact
+no-memory retirement through `rvMemoryMachineWith`, and preserves the threaded
+byte memory; invalid rows remain explicit ISA stutters.  Updated the PicoRV32
+README and the umbrella import; no RTL, loader, or `LeanModels/Sv/**` file
+changed.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiUpper` passed (17 jobs),
+`lake build LeanModels.Refine` passed, and
+`lake build 'Examples.«system-verilog».cores.picorv32.trace_proof'` passed.
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` passed.  The new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` boundary; no `sorryAx` or new axiom
+was introduced.
+
+**DECIDED:** keep extending the generic threaded RVFI boundary with the next
+RV32I instruction family while the generated-member memory route remains with
+`ls-sv`.

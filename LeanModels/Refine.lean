@@ -1,8 +1,10 @@
 import LeanModels.Refine.Commit
 import LeanModels.Refine.Rv32i
+import LeanModels.Refine.Rv32iUpper
 import LeanModels.Refine.Rv32iMem
 import LeanModels.Refine.RvfiAddi
 import LeanModels.Refine.RvfiMem
+import LeanModels.Refine.RvfiUpper
 import LeanModels.Refine.Bus
 import LeanModels.Refine.Cycle
 import LeanModels.Refine.Flush

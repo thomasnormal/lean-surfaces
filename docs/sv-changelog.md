@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Qualified SVA signal paths
+
+SVA expressions now preserve nested instance and generate names as a single
+observation-environment key, so a property such as `u.g.flag == a` remains
+qualified through the E contract. The clean-room `sem2/sva_scoped` witness and
+Verilator differential row cover the form; package and unavailable paths stay
+loud.
+
 ## Alias-flow core split
 
 The `always_comb` continuous-copy alias walk now lives in the lower-level

@@ -171,6 +171,11 @@ Finite literal `inside` sets now lower to case-equality disjunctions with
 width-directed fills. The clean-room `sem2/sva_inside` witness and Verilator
 row cover the admitted membership form; the VIP census falls to 10 residual
 nodes, with no retained-property loss.
+Qualified signal paths in SVA expressions now retain their elaborated
+instance/generate spelling as one observation key (for example
+`u.g.flag`). The clean-room `sem2/sva_scoped` witness and Verilator row cover
+the path form; the VIP census falls to 9 residual nodes, with the remaining
+walls outside the finite SVA value fragment.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

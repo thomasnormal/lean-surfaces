@@ -206,6 +206,10 @@ is definitionally the corresponding `memProgramInput`.  Its normalization,
 `retireInputs_eq`, and `trace_refines` projections expose the machine's own
 cycle stream to a future loaded-core invariant.
 
+`MemRvfiCycleTrace.append` composes two such certificates at the exact
+`rvfiStateAfter`/`memProgramState` boundary, carrying the first segment's
+core state, byte memory, and next retirement order into the second segment.
+
 ## Current PicoRV32 re-probe on `github/master` 43a471fe3
 
 The pinned YosysHQ source was freshly extracted again on 2026-11-07 without

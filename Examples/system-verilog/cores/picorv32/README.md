@@ -715,6 +715,9 @@ for every cycle.  Bubble inputs stay arbitrary; a retiring input is tied to
 the corresponding `memProgramInput`, and its `normalize`, `retireInputs_eq`,
 and `trace_refines` projections connect the machine's own stream to the
 stateful ISA memory trace.
+`MemRvfiCycleTrace.append` composes adjacent input-aware certificates at the
+exact `rvfiStateAfter`/`memProgramState` boundary, preserving the core state,
+threaded byte memory, and next retirement order.
 
 ## Zicsr boundary
 

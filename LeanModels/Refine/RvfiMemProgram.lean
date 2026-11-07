@@ -409,6 +409,38 @@ theorem MemRvfiCycleTrace.trace_refines
         (retireInputs machine.toCycleMachine coreState cycles)) := by
       rw [certificate.retireInputs_eq]
 
+/-! ## Composing input-aware cycle certificates -/
+
+/-- Input-aware memory certificates compose at the exact core-state,
+threaded-memory, and retirement-order boundary produced by the first program
+chunk. -/
+theorem MemRvfiCycleTrace.append
+    {State : Type} {machine : RvfiCycleMachine State}
+    {start : Nat} {coreState : State} {state : RvMemoryState}
+    {firstCycles secondCycles : List Input}
+    {firstProgram secondProgram : List MemInstruction}
+    (first : MemRvfiCycleTrace machine start coreState state
+      firstCycles firstProgram)
+    (second : MemRvfiCycleTrace machine
+      (start + firstProgram.length)
+      (rvfiStateAfter machine coreState firstCycles)
+      (memProgramState state firstProgram)
+      secondCycles secondProgram) :
+    MemRvfiCycleTrace machine start coreState state
+      (firstCycles ++ secondCycles) (firstProgram ++ secondProgram) := by
+  induction first with
+  | nil start coreState state =>
+      simpa [rvfiStateAfter, memProgramState] using second
+  | bubble hstep hvalid tail ih =>
+      refine MemRvfiCycleTrace.bubble hstep hvalid ?_
+      apply ih
+      simpa [rvfiStateAfter, hstep] using second
+  | retire hstep hinput horder boundary tail ih =>
+      refine MemRvfiCycleTrace.retire hstep hinput horder boundary ?_
+      apply ih
+      simpa [rvfiStateAfter, memProgramState, hstep, List.length_cons,
+        Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using second
+
 #print axioms LeanModels.Refine.memProgramInputs_append
 #print axioms LeanModels.Refine.memProgramState_append
 #print axioms LeanModels.Refine.memProgramRetirements_append
@@ -424,5 +456,6 @@ theorem MemRvfiCycleTrace.trace_refines
 #print axioms LeanModels.Refine.MemRvfiCycleTrace.normalize
 #print axioms LeanModels.Refine.MemRvfiCycleTrace.retireInputs_eq
 #print axioms LeanModels.Refine.MemRvfiCycleTrace.trace_refines
+#print axioms LeanModels.Refine.MemRvfiCycleTrace.append
 
 end LeanModels.Refine

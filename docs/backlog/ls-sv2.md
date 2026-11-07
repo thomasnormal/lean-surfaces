@@ -5936,3 +5936,31 @@ cycle machine's input list and state transitions for arbitrary mixed loads and
 stores, rather than reconstructing inputs from observations.  PicoRV32 remains
 parked at the existing unpacked `cpuregs` and unsupported-member/net-z loader
 walls.
+
+## 2026-11-07-ls-sv2-337 — compose input-aware memory certificates
+
+The inbox and goal file were reread after item 336 was pushed.  The
+cycle-aware memory certificate now retains actual inputs and state transitions;
+the next boundary is to compose two such certificates without reconstructing
+the machine state by hand.
+
+**CHANGED:** Added `MemRvfiCycleTrace.append` to
+`LeanModels/Refine/RvfiMemProgram.lean`.  The theorem composes adjacent
+certificates at the exact `rvfiStateAfter`/`memProgramState` boundary, carrying
+the first segment's core state, threaded byte memory, and next retirement order
+into the second segment.  Arbitrary bubble inputs, cycle-step equalities,
+retiring inputs, and indexed memory boundaries remain explicit.  Updated both
+core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL, loader,
+extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiMemProgram.lean` passes and
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new axiom
+was introduced.  The umbrella refinement build, focused PicoRV32 boundary
+compile, docs check, backlog-index check, and `git diff --check` are the
+validation gates for this item.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can segment a real
+cycle-machine memory stream and resume at the exact core, architectural-memory,
+and retirement-order boundary.  PicoRV32 remains parked at the existing
+unpacked `cpuregs` and unsupported-member/net-z loader walls.

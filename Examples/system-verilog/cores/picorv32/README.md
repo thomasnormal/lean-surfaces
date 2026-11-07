@@ -149,6 +149,8 @@ proved against packed fields first and use the trace/state theorems afterward.
 packed retirement and the ISA retirement.  It is the direct raw-row boundary
 for a loaded-core invariant and does not infer validity from the optional
 adapter.
+The dual `rvfiCycleStepRefines_invalid_step` projection exposes an invalid
+row as an explicit bubble and carries the relation while the ISA stutters.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.

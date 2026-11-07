@@ -458,7 +458,8 @@ fact while consuming the same stateful dispatcher as the generic row cases.
 
 The measured four-row prefix is instantiated in
 [`rvfi_rv32i_boundary.lean`](rvfi_rv32i_boundary.lean).  Its four theorems
-construct the indexed ALU/store/load witnesses, and
+consume the measured specialized ADDI/SW/LW predicates through the indexed
+adapters, constructing the corresponding ALU/store/load witnesses, and
 `pinned_unified_machine_commits` applies the dispatcher projection to each
 threaded state transition.  This is a concrete boundary certificate for the
 captured rows; it does not discharge the symbolic PicoRV32 invariant while

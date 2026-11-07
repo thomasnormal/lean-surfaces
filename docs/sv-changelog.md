@@ -32,6 +32,11 @@ and other system calls remain loud.
 known-one count rule. The `sem2/sva_onehot0` witness and Verilator row cover
 the form; the arbiter property-expression census falls from 3 to 2.
 
+`$countones(expr)` now has an explicit sampled four-state known-one count;
+x/z bits contribute zero. The `sem2/sva_countones` witness and Verilator row
+cover the retained SVA value form. The pinned `prim_packer` property census
+loses its eight `$countones` invocation walls; eight unrelated nodes remain.
+
 Finite sampled order comparisons now retain temporal operands as
 `SvaValueCmp`. The `sem2/sva_past_cmp` witness and Verilator row cover
 `a > $past(b)`; the arbiter remains at two independent walls for the

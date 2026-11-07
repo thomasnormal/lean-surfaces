@@ -197,6 +197,23 @@
       "measured": "2026-11-07: $onehot0 retains the finite four-state at-most-one-known-one predicate."
     },
     {
+      "name": "sva_countones",
+      "example": "sem2/sva_countones",
+      "top": "sva_countones",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0001"},
+        {"a": "0011"},
+        {"a": "0111"},
+        {"a": "10xz"},
+        {"a": "zzzz"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: $countones retains the finite four-state known-one count in the sampled SVA value tree; x/z bits contribute zero."
+    },
+    {
       "name": "sva_past_cmp",
       "example": "sem2/sva_past_cmp",
       "top": "sva_past_cmp",

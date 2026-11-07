@@ -30,6 +30,7 @@ live signal lookup. -/
 inductive SvaValue where
   | current (value : Expr2)
   | past (cycles : Nat) (value : Expr2)
+  | countOnes (value : Expr2)
   | binary (op : BinOp) (left right : SvaValue)
 deriving Repr, Inhabited
 
@@ -184,6 +185,9 @@ def SvaValue.eval (trace : List SvState) (index : Nat) : SvaValue →
   | .current value => exprAt trace index value
   | .past cycles value =>
       if cycles ≤ index then exprAt trace (index - cycles) value else .ok none
+  | .countOnes value => do
+      let some v ← exprAt trace index value | .ok none
+      .ok (some (LVec.ofNat 32 (v.bits.toList.countP (fun b => b == Logic.l1))))
   | .binary op left right => do
       let some l ← left.eval trace index | .ok none
       let some r ← right.eval trace index | .ok none

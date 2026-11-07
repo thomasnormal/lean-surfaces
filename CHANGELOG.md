@@ -29,6 +29,9 @@
 - Docs: record that extractor `Try`/`Raise` nodes retain structured clauses;
   shape-specific handler and finalizer lowerings remain absent.
 
+- Docs: record the structured display/comprehension boundaries and the limited
+  measured starred-target/call slices.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

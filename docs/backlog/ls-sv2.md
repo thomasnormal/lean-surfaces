@@ -6384,3 +6384,38 @@ extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
 mixed cycle certificate required by the existing normalization and trace
 refinement theorems for every admitted finite window.  PicoRV32 remains parked
 at the unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-350 — file the two current PicoRV32 loader walls
+
+The inbox correction required a clean-room request for each current PicoRV32
+wall before more R2 certificates.  Both fixtures use the approved Slang
+extractor, keep parameterized memory source-shaped, and make no RTL
+adaptation.
+
+**REQUEST ls-sv:** Added
+`Examples/system-verilog/cores/picorv32/walls/unpacked_cpuregs.sv` and
+`net_z_memory.sv`, their generated envelopes, and `probe.lean` to the owner
+inbox.  The first fixture has a run-time indexed `cpuregs` read/write and its
+14,071-byte envelope has SHA-256
+`8d6c16562fa48475c8ecd4eb83ec52ebadfdf01b99222fd6cabee3950db6decd`; ordinary
+`sem 32` returns exactly
+`unsupported "Instantiate" "decl 'cpuregs': unpacked array storage outside E
+(UnpackedDecl:memory)"`.  The second has an undriven `wire pcpi_mul_wr;` beside
+a parameter-sized memory; its 7,792-byte envelope has SHA-256
+`d040779e40a76d13d2fedcf826dd02726fca0565560a724f3173b1331024de09`,
+`pdesign.others` retains `NetSymbol:net-z`, and `instantiateMemD2 [4]` returns
+exactly
+`unsupported "Instantiate" "memory cycle route does not yet admit unsupported
+module members"`.
+
+**MEASURED:** `lake env lean
+Examples/system-verilog/cores/picorv32/walls/probe.lean` passes with guards
+for both refusal messages and the retained net-z member.  The generated
+source hashes are `03e4699e…` and `64ef56ba…`; `python3 tools/docs_check.py`,
+`./tools/backlog-index.sh --check`, and `git diff --check` pass.  No oracle
+result is claimed: this item measures loader admission only.
+
+**JUDGED / DECIDED:** These are generic SystemVerilog constructs, not
+PicoRV32-specific rewrites.  The owner lane now has exact minimal repros for
+both walls; keep the real-core symbolic invariant parked until its loader
+admission changes.  Do not extend the finite captured window.

@@ -876,3 +876,36 @@ retain their inputs and core transitions.  The constructor threads the final
 core relation to the mixed architectural state.  PicoRV32 itself remains
 parked at the existing loader walls, so this adds no finite captured-window
 claim.
+
+## Clean-room repros for the two current walls
+
+The owner-lane request for the remaining PicoRV32 walls is backed by two
+minimal source-shaped fixtures in [`walls/`](walls/).  They use the approved
+Slang extractor and preserve the parameterized memory structure; neither is a
+PicoRV32 adaptation.
+
+[`unpacked_cpuregs.sv`](walls/unpacked_cpuregs.sv) has a run-time indexed
+register file read and write.  Its 14,071-byte envelope has SHA-256
+`8d6c16562fa48475c8ecd4eb83ec52ebadfdf01b99222fd6cabee3950db6decd`, and the
+ordinary route at `sem 32` returns the exact first refusal:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+[`net_z_memory.sv`](walls/net_z_memory.sv) places the undriven plain
+`wire pcpi_mul_wr;` beside a parameter-sized memory.  Its 7,792-byte envelope
+has SHA-256
+`d040779e40a76d13d2fedcf826dd02726fca0565560a724f3173b1331024de09`;
+`pdesign.others` retains `NetSymbol:net-z` for `pcpi_mul_wr`, and
+`instantiateMemD2 [4]` returns:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+[`probe.lean`](walls/probe.lean) guards both exact results.  The corresponding
+dated `REQUEST ls-sv:` asks the owner lane to admit these constructs with exact
+IEEE 1800 semantics while preserving loud refusal outside the supported shape.

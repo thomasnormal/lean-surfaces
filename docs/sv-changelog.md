@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Run2 guard and undriven-net proof repair
+
+The one-clock `run2` guard is now threaded through its structural proof
+lemmas and fuel monotonicity theorem, so multi-clock and implicit-clock
+refusals remain sound after the guard was added. Startup-state shape proofs
+also preserve the declared z value and width of undriven nets.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

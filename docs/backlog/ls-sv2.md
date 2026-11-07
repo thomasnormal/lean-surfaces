@@ -7246,3 +7246,30 @@ edit ls-sv-owned files, add a finite captured-window theorem, or re-probe the
 core until the requested repair reaches `origin/master` and its import closure
 is green.  The existing precise follow-up `REQUEST ls-sv:` remains the active
 handoff.
+
+## 2026-11-07-ls-sv2-380 — recheck the owner’s local import repair progress
+
+Item 380 re-read both inboxes and the goal, inspected the uncommitted owner
+worktree, and reran the focused owner-lane targets.  This is a progress check,
+not a core probe: public master still has not received the repair.
+
+**MEASURED:** The owner worktree now modifies `Comb2Proc.lean` in addition to
+`Comb2.lean`, `CombView.lean`, and `Sem2.lean`.  With those local changes,
+`lake build LeanModels.Sv.ClockGuard0 LeanModels.Sv.SelfCheck
+LeanModels.Sv.Comb2Proc LeanModels.Sv.CycleMachine` passes the first three
+modules and fails only at `CycleMachine.lean:145`: `runObs2` output is still
+being passed where `rcycle_runFrom` requires a `runFromObs2` result at
+`initState2`; `rcycle_run2` still reports `sorryAx`.  A fresh signed-target
+build still fails at the stale source pins and signed guards in `remainder`
+and `division` (remainder 65, 66, 68; division 111, 112, 114).  No public
+repair has landed: `origin/master` remains `a610d869d` and the owner remote
+remains `7fbcb69ef`.
+
+**CHANGED:** Routed the updated residual set as a dated `REQUEST ls-sv:` and
+added this backlog entry.  No ls-sv-owned source, semantics, loader, extractor,
+RTL, or finite captured-window theorem was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The owner’s local work has cleared `Comb2Proc`, so that
+part of the previous request is no longer blocking locally.  Hold the public
+R2 re-probe until the owner lands the remaining `CycleMachine` and signed proof
+repairs and the import closure is green on `origin/master`.

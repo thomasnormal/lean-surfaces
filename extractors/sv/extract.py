@@ -26213,6 +26213,15 @@ def _sva_pexpr(node):
         "SubtractExpression": "-", "MultiplyExpression": "*",
         "DivideExpression": "/", "ModExpression": "%",
     }
+    if kind == "LogicalImplicationExpression":
+        return {"kind": "Binary", "op": "||",
+                "left": {"kind": "Unary", "op": "!",
+                         "operand": _sva_pexpr(node.get("left"))},
+                "right": _sva_pexpr(node.get("right"))}
+    if kind == "LogicalEquivalenceExpression":
+        return {"kind": "Binary", "op": "==",
+                "left": _sva_pexpr(node.get("left")),
+                "right": _sva_pexpr(node.get("right"))}
     if kind in binary_ops:
         return {"kind": "Binary", "op": binary_ops[kind],
                 "left": _sva_pexpr(node.get("left")),

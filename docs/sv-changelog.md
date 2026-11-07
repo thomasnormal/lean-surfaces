@@ -328,6 +328,12 @@ The SVA source adapter also unwraps `ParenthesizedPropertyExpr` before it
 classifies implications and delayed sequences. The same pinned VIP now has 18
 residual unsupported nodes, with all 27 assertion properties still retained.
 
+Finite SVA logical implication (`->`) and equivalence (`<->`) expressions now
+lower to the existing sampled boolean operators. The clean-room
+`sem2/sva_logical_ops` witness and Verilator row cover both forms. The pinned
+`prim_fifo_sync` VIP retains all 27 properties with 15 residual unsupported
+nodes; nested `$past` expressions remain a named boundary.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

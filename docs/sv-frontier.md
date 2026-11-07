@@ -156,6 +156,12 @@ for later target-enabling packets.
 Parenthesized property expressions now unwrap before implication and sequence
 classification; the same VIP's residual census falls to 18 nodes without
 losing any retained property.
+Logical implication (`->`) and equivalence (`<->`) inside finite property
+expressions now map to the existing four-state boolean layer. The clean-room
+`sem2/sva_logical_ops` witness covers both a passing and failing trace, with a
+Verilator differential row. The pinned VIP census falls to 15 residual nodes;
+the four remaining invocation nodes are `$past` values nested inside arithmetic
+comparisons and remain the next expression wall.
 
 F1 keeps the four-state sampled value until the assertion boundary. IEEE
 1800-2023 §16.6 then converts an x/z-only boolean result to false; an unknown

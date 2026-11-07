@@ -6293,3 +6293,38 @@ memory-route wall.  The real-core R2 proof remains parked at the unpacked
 `cpuregs` memory and the unsupported-module-member/net-z boundary.  The next
 useful step is to resume the symbolic ADDI invariant only after that loader
 boundary changes.
+
+## 2026-11-07-ls-sv2-347 — add a mixed RV32I program certificate
+
+The per-family certificates now cover every currently admitted RV32I family,
+but a loaded core retires a mixed stream.  The next reusable R2 surface is one
+indexed program union that keeps family identity, state threading, and actual
+RVFI inputs together.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiRv32iProgram.lean`.  `Rv32iInstruction` is an indexed
+union of ALU, conditional branch, JAL/JALR, memory, fence, system,
+implemented-CSR, and the two illegal/trap shapes.  The mixed input, state,
+retirement, and byte-memory folds have append laws.  The stateful machine
+bridge dispatches each constructor to its existing exact family theorem.
+`Rv32iRvfiTrace` and `Rv32iRvfiCycleTrace` normalize arbitrary bubble streams,
+retain actual retiring inputs and cycle steps, and compose at the exact
+architectural state, byte-memory, core-state, and retirement-order boundaries.
+Updated both core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL,
+loader, extractor, `LeanModels/Sv/**`, or finite captured-window theorem
+changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean`, the
+umbrella `lake build LeanModels.Refine` (55/55 jobs), the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 14 new theorems report only
+the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.  The focused boundary emits only its
+pre-existing unused-simp/deprecation warnings.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now classify every
+retiring RVFI row through one mixed certificate while preserving the exact
+family transition, threaded byte memory, bubble schedule, and segment
+boundary.  PicoRV32 remains parked at its existing unpacked `cpuregs` and
+unsupported-module-member/net-z loader walls.

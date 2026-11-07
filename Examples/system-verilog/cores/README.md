@@ -332,3 +332,14 @@ Its first retained member is `NetSymbol:net-z` for `pcpi_mul_wr` at
 `picorv32.v:257`.  No new clean-room request or core adaptation is justified;
 the symbolic ADDI invariant remains parked at the unpacked `cpuregs` and
 unsupported-member/net-z walls.
+
+## Mixed RV32I program certificate
+
+`LeanModels.Refine.RvfiRv32iProgram` combines the admitted ALU, branch, jump,
+memory, fence, system, implemented-CSR, and illegal/trap families in one
+`Rv32iInstruction` union.  The mixed input, state, byte-memory, and retirement
+folds expose append boundaries for arbitrary programs.  Its raw and
+cycle-aware RVFI certificates consume the indexed `Rv32iBoundary`, preserve
+bubbles and actual retiring inputs, and identify the normalized observations
+with the stateful RV32I machine trace.  PicoRV32 remains blocked at the
+unpacked `cpuregs` and unsupported-member/net-z loader boundaries.

@@ -226,6 +226,11 @@ structure ListCompCont where
   acc : List RVal
   savedLocals : Env
 
+inductive ListCompReq where
+  | start (elt target iter : Expr) (ifs : Array Expr)
+      (walrus : Array (String × Expr))
+  | step (state : ListCompCont)
+
 structure Kont where
   /-- The fuel level this `Kont` sits at. It is NOT a recursion argument here —
   the fueled recursion is on `kont`'s own `Nat` — but the trunk's fuel-TAKING
@@ -309,7 +314,7 @@ structure Kont where
   /-- Execute a nested statement body through the successor continuation. -/
   withBody : List Stmt → SemF RFlow
   /-- Advance one element of a one-generator list comprehension. -/
-  listComp : ListCompCont → SemF RVal
+  listComp : ListCompReq → SemF RVal
 
 /-- The fuel-exhausted continuation: every fueled operation is `.timeout`.
 This is `kont m 0`, and it is the ONLY source of `.timeout` in the rebuild —

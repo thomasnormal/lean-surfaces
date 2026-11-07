@@ -1354,8 +1354,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       sliceHeapM cv lv uv sv
   | .genExp .. =>
       refuse "this generator expression is outside the tier (ingestion could not lower it to a generator function; docs/memory-model.md §generator semantics)"
-  | .listComp .. =>
-      refuse "list comprehension semantics are outside the tier"
+  | .listComp elt target iter ifs walrus _ =>
+      K.listComp (.start elt target iter ifs walrus)
   | .unsupported pyKind _ _ => refuse s!"unsupported expression '{pyKind}'"
   termination_by structural e => e
 
@@ -2005,10 +2005,36 @@ def listCompAt (K : Kont) (m : Module) : ListCompCont → SemF RVal
           let keep ← listCompIfs K m c.ifs
           if keep then do
             let x ← evalOpen K m c.elt
-            K.listComp { c with rest := rest, acc := x :: c.acc }
+            K.listComp (.step { c with rest := rest, acc := x :: c.acc })
           else
-            K.listComp { c with rest := rest }
+            K.listComp (.step { c with rest := rest })
   termination_by structural c.rest
+
+def listCompReqAt (K : Kont) (m : Module) : ListCompReq → SemF RVal
+  | .step c => listCompAt K m c
+  | .start elt target iter ifs walrus => do
+      if !walrus.isEmpty then
+        refuse "list comprehension walrus bindings are outside the tier"
+      else
+        let source ← evalOpen K m iter
+        let xs ← match source with
+          | .ref a =>
+              match Heap.get? (← frameHeap) a with
+              | some (.generator ..) =>
+                  refuse "list comprehension over a generator requires lazy stepping (outside the one-generator slice)"
+              | _ => iterValues K m "list" false source
+          | _ => iterValues K m "list" false source
+        let saved ← get
+        -- A comprehension has its own target scope. Restore the caller's
+        -- locals on normal completion and on a Python exception; heap effects
+        -- remain retained by the surrounding frame state.
+        tryCatch
+          (K.listComp (.step
+            { elt := elt, target := target, ifs := ifs.toList,
+              rest := xs, acc := [], savedLocals := saved.locals }))
+          (fun e => do
+            envPut saved.locals
+            raisePy e)
 
 /-! ## §2.6 THE DICT LOCKSTEP — the one walk that could not be a block member
 
@@ -2622,7 +2648,7 @@ def kont (m : Module) : Nat → Kont
       drainIter := fun a => drainIterAt (kont m fuel) a
       anyAllIter := fun a b => anyAllIterAt (kont m fuel) a b
       withBody := fun body => execOpenList (kont m fuel) m body
-      listComp := fun c => listCompAt (kont m fuel) m c }
+      listComp := fun c => listCompReqAt (kont m fuel) m c }
   termination_by structural fuel => fuel
 
 
@@ -2746,6 +2772,19 @@ order's whole point, and the property `StateT` outside `ExceptT` cannot state. -
 #guard (match toRun (evalOpen K0 emptyModule
           (.list #[.constant (.int 1) sp0, .constant (.int 2) sp0] sp0)) st0 with
         | .ok s v => v == .ref 0 && s.world.heap.size == 1
+        | _ => false)
+
+/- A one-generator list comprehension steps through the fueled continuation,
+allocates a fresh heap list, and restores the caller's target binding. -/
+#guard (match toRun (evalOpen K0 emptyModule
+          (.listComp
+            (.binOp (.name "x" sp0) .add (.constant (.int 1) sp0) sp0)
+            (.name "x" sp0)
+            (.tuple #[.constant (.int 1) sp0, .constant (.int 2) sp0] sp0)
+            #[] #[] sp0)) st0 with
+        | .ok s (.ref 0) =>
+            Env.lookup s.locals "x" == some (.int 7) &&
+            Heap.get? s.world.heap 0 == some (.list #[.int 2, .int 3])
         | _ => false)
 
 /- Statement execution: `y = x * 3` binds 21 in the frame's locals. -/

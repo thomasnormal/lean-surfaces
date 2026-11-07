@@ -10952,3 +10952,19 @@ obligations, not four-field constructor failures.
 
 DECIDED: retain the landed fixture and handler repairs; treat remaining float
 proof obligations as a separate proof-maintenance item.
+
+## 2026-11-07-pycomplete-446 — repair journal clock stamps
+
+The coordinator's clock lint identified seven Python-lane journal headings
+that had been written with future rounded times. Their bodies are unchanged;
+each heading now carries the literal UTC value returned by `date -u` while the
+repair was written, and the entries remain in their original order.
+
+| Measurement | Result |
+|---|---|
+| Corrected headings | 7 (ingestion bridges through CI recheck) |
+| Timestamp source | `date -u +%FT%TZ` at repair time |
+| Semantic change | none; journal metadata only |
+
+DECIDED: keep journal headings tied to the box clock and use
+`journal-append.sh` for subsequent entries.

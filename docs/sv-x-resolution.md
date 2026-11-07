@@ -114,6 +114,9 @@ concretizations of a condition agree on `condTrue`, and
 proofs; `DecisionKnown.abstract` exposes the agreement with the abstract
 condition for each concretization. It is a predicate and theorem only; execution remains behind the
 boundary above until the state and trace relation is connected.
+`TwoStateBoundary` separately records §6.11's deterministic x/z-to-zero
+conversion and proves its result is unique and width-preserving; it is not a
+concretization choice.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

@@ -10934,3 +10934,21 @@ superseded pushes and hung jobs from occupying the hosted runner queue.
 
 DECIDED: retain the per-ref cancellation and explicit job timeouts; no workflow
 logic change is needed in this recheck.
+
+## 2026-11-07-pycomplete-445 — recheck Lean 4.35 Python fixture repairs
+
+The post-bump fixture item is already complete on current master. The four
+reported Python proof fixtures use the five-field `World` literal, and the
+exception-ancestor proof has the structured handler normalization. Focused
+managed builds of `decimal_render.proof` and `exc_ancestors_lab.proof` pass;
+the remaining `float_lab.proof` errors are independent call-depth proof-simp
+obligations, not four-field constructor failures.
+
+| Measurement | Result |
+|---|---|
+| Five-field search | no remaining four-field `World` literals in Python fixtures |
+| Focused builds | decimal-render and exception-ancestor proof targets pass under Lean 4.35 |
+| Semantic change | none; this packet records a verified existing master repair |
+
+DECIDED: retain the landed fixture and handler repairs; treat remaining float
+proof obligations as a separate proof-maintenance item.

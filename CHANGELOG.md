@@ -53,6 +53,10 @@
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.
 
+- Python: recheck the Lean 4.35 fixture and exception-proof repairs after the
+  master bump; the five-field world literals and handler normalization are
+  already present on current master.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

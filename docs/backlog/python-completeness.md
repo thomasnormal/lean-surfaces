@@ -10864,3 +10864,20 @@ fallback.
 
 DECIDED: retain independent pinned frontend and oracle controls with visible
 fallback warnings rather than silent version drift.
+
+## 2026-11-07-pycomplete-441 — recheck frontend admission and envelope freshness
+
+The frontend audit is closed at ingestion and in the committed-artifact gate.
+Envelope parsing retains frontend name/version metadata and rejects anything
+outside the pinned `cpython-ast` 3.9 family before module parsing. The freshness
+instrument re-extracts with the pinned frontend, compares source hashes, and
+refuses when the frontend is absent or mismatched.
+
+| Measurement | Result |
+|---|---|
+| Python freshness | `envelope_fresh.py --tier python`: FRESH 82, STALE 0 |
+| Gate self-test | 27/27 checks pass, including stale, foreign, absent-frontend, and off-tree cases |
+| Semantic change | none; this packet records the existing admission and freshness gates |
+
+DECIDED: retain family-level CPython 3.9 admission and make freshness a
+required check before committed envelopes enter theorem or runner surfaces.

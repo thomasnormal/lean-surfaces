@@ -38,6 +38,9 @@
 - Docs: record the pinned leanpy frontend/oracle behavior and visible fallback
   warnings.
 
+- Docs: record frontend metadata admission and envelope freshness as enforced
+  gates.
+
 - Added the remaining measured dictionary-source set witnesses to the loud
   differential whitelist, including the length-only `set(d.keys())` path.
 

@@ -235,19 +235,15 @@ def SvaBool.evalLogic (trace : List SvState) (index : Nat) : SvaBool → Except 
   | .past cycles arg =>
       if cycles ≤ index then arg.evalLogic trace (index - cycles) else .ok (some .lx)
   | .rose name => do
-      if index == 0 then return some .l0
       let hit ← edgeValue svaRose trace index name
       return some (if hit then .l1 else .l0)
   | .fell name => do
-      if index == 0 then return some .l0
       let hit ← edgeValue svaFell trace index name
       return some (if hit then .l1 else .l0)
   | .roseExpr value => do
-      if index == 0 then return some .l0
       let hit ← edgeExprValue svaRose trace index value
       return some (if hit then .l1 else .l0)
   | .fellExpr value => do
-      if index == 0 then return some .l0
       let hit ← edgeExprValue svaFell trace index value
       return some (if hit then .l1 else .l0)
   | .stableExpr value => do
@@ -399,7 +395,8 @@ private def svaCover : SvaCheck :=
 #guard (SvaCheck.evalRegion svaTrace svaPast).toOption == some true
 #guard (SvaCheck.evalRegion svaTrace svaCover).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .lx .l0] 0 (.not (.signal "a"))).toOption == some false
-#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some false
+#guard (SvaBool.evalChecked [svaState .l0 .l1 .l0] 0 (.rose "a")).toOption == some true
+#guard (SvaBool.evalChecked [svaState .l0 .l0 .l0] 0 (.fell "a")).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .lx .l0, svaState .l0 .l1 .l0] 1 (.rose "a")).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .lx .l0, svaState .l0 .l0 .l0] 1 (.fell "a")).toOption == some true
 #guard (SvaBool.evalChecked [svaState .l0 .l0 .l0, svaState .l0 .l1 .l0] 1 (.rose "a")).toOption == some true

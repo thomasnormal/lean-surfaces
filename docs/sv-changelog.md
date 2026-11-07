@@ -38,6 +38,11 @@ The x-resolution note now records the post-PicoRV32 interim boundary and the
 deterministic §6.11 conversion. Resolution will be lifted through E steps,
 `Runs2`/`⊨₂`, observations and contracts, then comb and memory proof bridges.
 
+The structured SVA adapter now leaves ordinary `&&`, `||`, and `!` expressions
+in the existing `Expr2` four-state evaluator; only sampled-value calls retain
+SVA wrapper nodes. The first sampled `$rose`/`$fell` comparison uses the
+default unknown sample, so a first `1` is a rose and a first `0` is a fell.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

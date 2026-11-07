@@ -266,3 +266,11 @@ state-threaded LUI/AUIPC surface.  `UpperKind` keeps the two upper-immediate
 forms distinct, while the program folds and raw/cycle RVFI certificates reuse
 the exact writeback and pc semantics and compose at the same architectural and
 retirement-order boundaries.
+
+`LeanModels.Refine.RvfiFenceProgram` provides the matching state-threaded
+`FENCE`/`FENCE.I` surface.  `FenceInstruction` retains the decoded fence kind
+and fetched word; raw and cycle-aware certificates normalize arbitrary bubble
+streams, retain the actual cycle inputs, and compose at the exact core,
+architectural-state, and retirement-order boundaries.  Fence execution keeps
+the threaded data memory unchanged through the existing profile-parametric
+RV32I machine.

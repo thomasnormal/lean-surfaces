@@ -777,3 +777,11 @@ The upper-immediate program certificate in
 retains their exact writeback values in raw and cycle-aware RVFI certificates.
 It is generic proof infrastructure; the pinned RTL remains parked at the
 existing loader walls.
+
+The fence program certificate in `LeanModels.Refine.RvfiFenceProgram` covers
+arbitrary decoded `FENCE` and `FENCE.I` streams.  Its raw and cycle-aware
+certificates retain arbitrary bubble inputs and exact machine transitions,
+normalize to the stateful RV32I fence trace, and compose at the architectural,
+core-state, and retirement-order boundaries.  Fence instructions preserve the
+threaded data memory; PicoRV32 remains parked at the existing unpacked-memory
+and unsupported-member/net-z loader walls.

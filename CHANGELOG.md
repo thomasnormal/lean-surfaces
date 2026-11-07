@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for null-valued ordinary-call `referencedDecl`
+  evidence; declaration identity requires object or string handle data.
+
 - Added a recorded refusal for empty parenthesized ordinary-call callees; wrapper
   metadata cannot manufacture a selected declaration.
 

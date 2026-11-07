@@ -2806,6 +2806,17 @@
     "rung": 3
   },
   {
+    "id": "translation.resolved-call-null-reference-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedCallNullReferenceRefusal",
+    "cpp_source": "int g(); int f() { return g(); }",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "translation.resolved-call-cast-kind-mismatch-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

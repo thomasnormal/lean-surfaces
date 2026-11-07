@@ -5065,3 +5065,27 @@ changed.
 make their conversion to `Rv32iBoundary` explicit, rather than duplicating a
 second family dispatcher.  The next item remains an owned generic/core-facing
 milestone while generated-member support stays with `ls-sv`.
+
+## 2026-11-07-ls-sv2-307 — consume specialized RVFI adapters in the PicoRV32 witness
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory refusal is still an upstream `ls-sv` wall, so this item validates the
+owned adapter layer on the unchanged pinned RVFI capture.
+
+Updated `Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` so
+the four measured non-trapping rows construct their indexed witnesses through
+`addiBoundary_rv32i`, `swBoundary_rv32i`, and `lwBoundary_rv32i`.  The
+stateful `pinned_unified_machine_commits` theorem therefore consumes the same
+specialized raw-field predicates that a future core invariant will retain,
+then projects each result through the single `Rv32iBoundary` dispatcher.
+
+**MEASURED:** the focused PicoRV32 unified-boundary build passes under Lean
+4.35.0; the adapters preserve the existing six theorem axiom footprints and
+the four-row state/memory equations.  No RTL, loader, extractor, or
+`LeanModels/Sv/**` file changed.  The umbrella build, docs check, backlog-index
+check, and `git diff --check` are the remaining item gates.
+
+**JUDGED / DECIDED:** make the concrete witness exercise the specialized
+adapter API rather than duplicating its raw-to-generic simplification.  Keep
+the generic family as the only stateful dispatcher; the next item remains an
+owned refinement milestone while generated-member support stays with `ls-sv`.

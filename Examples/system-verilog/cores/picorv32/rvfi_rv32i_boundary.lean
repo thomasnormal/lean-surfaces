@@ -25,46 +25,32 @@ theorem pinned_addi_unified :
       { arch := aluNext (ArchState.init 0) .add 1 (.reg 0) (.imm 5),
         memory := addiInput.memory }
       (aluRetirement (ArchState.init 0) addiInput .add 1 (.reg 0) (.imm 5)) := by
-  apply Rv32iBoundary.alu 0x00500093 .add 1 (.reg 0) (.imm 5)
-  simpa [RvfiObservation.addiBoundary, RvfiObservation.aluBoundary,
-    RvfiObservation.addiFields, RvfiObservation.aluFields,
-    aluSrc1Fields, aluSrc2Fields, addiNext, aluNext,
-    addiRetirement, aluRetirement, addiEffects, aluEffects,
-    src1Val, src2Val, aluSem,
-    and_assoc] using pinned_addi_boundary
+  exact RvfiObservation.addiBoundary_rv32i
+    0x00500093 1 0 5 pinned_addi_boundary
 
 theorem pinned_store_unified :
     Rv32iBoundary storeState storeInput storeRaw
       { arch := memNext storeState storeInput.memory (.store .word) 1 0 0x100,
         memory := memAfter storeInput.memory storeState (.store .word) 1 0 0x100 }
       (memRetirement storeState storeInput (.store .word) 1 0 0x100) := by
-  apply Rv32iBoundary.mem 0x10102023 (.store .word) 1 0 0x100
-  unfold RvfiObservation.memBoundary RvfiObservation.memFields
-  unfold RvfiObservation.wellFormed RvfiObservation.toRetirement?
-  decide
+  exact RvfiObservation.swBoundary_rv32i
+    0x10102023 0 1 0x100 pinned_store_boundary
 
 theorem pinned_load_unified :
     Rv32iBoundary loadState loadInput loadRaw
       { arch := memNext loadState loadInput.memory (.load true .word) 2 0 0x100,
         memory := memAfter loadInput.memory loadState (.load true .word) 2 0 0x100 }
       (memRetirement loadState loadInput (.load true .word) 2 0 0x100) := by
-  apply Rv32iBoundary.mem 0x10002103 (.load true .word) 2 0 0x100
-  unfold RvfiObservation.memBoundary RvfiObservation.memFields
-  unfold RvfiObservation.wellFormed RvfiObservation.toRetirement?
-  decide
+  exact RvfiObservation.lwBoundary_rv32i
+    0x10002103 2 0 0x100 pinned_load_boundary
 
 theorem pinned_addi2_unified :
     Rv32iBoundary addi2State addi2Input addi2Raw
       { arch := aluNext addi2State .add 3 (.reg 2) (.imm 1),
         memory := addi2Input.memory }
       (aluRetirement addi2State addi2Input .add 3 (.reg 2) (.imm 1)) := by
-  apply Rv32iBoundary.alu 0x00110193 .add 3 (.reg 2) (.imm 1)
-  simpa [RvfiObservation.addiBoundary, RvfiObservation.aluBoundary,
-    RvfiObservation.addiFields, RvfiObservation.aluFields,
-    aluSrc1Fields, aluSrc2Fields, addiNext, aluNext,
-    addiRetirement, aluRetirement, addiEffects, aluEffects,
-    src1Val, src2Val, aluSem,
-    and_assoc] using pinned_addi2_boundary
+  exact RvfiObservation.addiBoundary_rv32i
+    0x00110193 3 2 1 pinned_addi2_boundary
 
 theorem pinned_unified_boundary_window :
     Rv32iBoundary (ArchState.init 0) addiInput addi1

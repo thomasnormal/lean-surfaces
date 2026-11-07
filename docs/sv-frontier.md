@@ -87,6 +87,10 @@ symbolic envelope retains both `ArraySel` operations; E evaluates known
 indices against `MemState`, returns all-x for an unknown read, and drops an
 unknown or out-of-range write. Its three-cycle trace matches Icarus. Nested
 memories, compound memory expressions, and hierarchy remain loud.
+The PicoRV32 R2 item is now started from the re-probe's generic walls. A
+source-shaped `always_comb` memory read is admitted after the sequential
+`MemState` commit; `sem2/unpacked_memory_comb` covers this exact form. The
+memory route still refuses unsupported module members such as `net-z` wires.
 
 ### Initial ROM loading remains an explicit F4 boundary
 

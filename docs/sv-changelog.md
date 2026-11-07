@@ -195,6 +195,9 @@ resolved at issue time against the scalar state; known indices update one
 are no-ops. `sem2/unpacked_register_memory` and its Icarus row cover the
 three-cycle read-after-write trace; nested and compound memory forms remain
 loud.
+The R2 memory route now also executes a source-shaped `always_comb` blocking
+read after sequential memory commits. The `sem2/unpacked_memory_comb` witness
+and direct Icarus row cover this form; NBA in `always_comb` remains loud.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

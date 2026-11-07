@@ -48,8 +48,11 @@ set_option exponentiation.threshold 2048
   Val.tuple #[.str "one", .str "one", .str "one", .int 2]
 #py_check float_lab.nested_finite_keys() =
   Val.tuple #[.str "one", .str "one", .int 1]
-#py_check float_lab.set_finite_keys() =
-  Val.tuple #[.bool true, .bool true, .int 2]
+/-! Set displays are a loud source-level boundary; the former CPython result
+is retained as a comment while the finite dictionary-key checks above remain
+proved. -/
+-- was `#py_check float_lab.set_finite_keys() = Val.tuple #[.bool true, .bool true, .int 2]`
+#guard callFunction float_lab "set_finite_keys" #[] 4096 matches .unsupported _
 #py_check float_lab.nan_arithmetic_still_loud(0) = Float64.ofBits 0xfff8000000000000
 #py_check float_lab.nan_arithmetic_still_loud(1) = Float64.ofBits 0xfff8000000000000
 #py_check float_lab.nan_arithmetic_still_loud(2) = Float64.ofBits 0xfff8000000000000

@@ -115,7 +115,8 @@ private def indep : Design2 :=
       .alwaysFF "clk" (.nbaAssign (.ident "r") (.ident "b"))] }
 
 private def dep : Design2 :=
-  { indep with name := "preempt_dep"
+  { indep with
+    name := "preempt_dep"
     processes := #[
       .alwaysFF "clk" (.nbaAssign (.ident "q") (.ident "a")),
       .alwaysFF "clk" (.nbaAssign (.ident "r") (.ident "q"))] }

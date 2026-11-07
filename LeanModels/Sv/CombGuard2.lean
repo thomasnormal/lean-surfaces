@@ -241,11 +241,12 @@ def Lhs2.mustW (wd : String → Option Nat) : Lhs2 → List BWin
   | .concat _ => []
 
 mutual
-/-- The bits a statement may write (on some path). Nonblocking assignments
-write nothing during the run. -/
+/-- The bits a statement may write (on some path). For the preemption profile,
+    an NBA target is still a cross-process write even though its publication
+    is deferred to the NBA region. -/
 def Stmt2.mayW (wd : String → Option Nat) : Stmt2 → List BWin
   | .blockingAssign t _ => t.mayW wd
-  | .nbaAssign _ _ => []
+  | .nbaAssign t _ => t.mayW wd
   | .ifStmt _ a b => a.mayW wd ++ Stmt2.optMayW wd b
   | .block ss => Stmt2.listMayW wd ss.toList
   | .caseStmt _ its d _ _ => CaseItem2.listMayW wd its.toList ++ Stmt2.optMayW wd d

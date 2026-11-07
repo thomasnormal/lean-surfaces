@@ -8,7 +8,7 @@ sigma and optional probe arguments are accepted for harness compatibility.
 
 import Lean
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel
+import LeanModels.Sv.Kernel.MemCycle
 
 open Lean (Json)
 open LeanModels.Sv
@@ -67,6 +67,12 @@ def parseEntry (d : MemDesign2) (j : Json) : Except String SvState := do
       return st
   | _ => .error "stimulus entry is not an object"
 
+def addClock : Option String → Nat → List SvState → List SvState
+  | _, _, [] => []
+  | none, _, s :: rest => s :: addClock none 0 rest
+  | some name, i, s :: rest =>
+      SvState.set s name (LVec.ofNat 1 (i % 2)) :: addClock (some name) (i + 1) rest
+
 end SvMemHarness
 
 open SvMemHarness in
@@ -92,7 +98,9 @@ def main (argv : List String) : IO UInt32 := do
           | .ok d => pure d
           | .timeout => .error "instantiateMem2: timeout"
           | .unsupported m => .error s!"instantiateMem2: {m}"
-        let stim ← (← getArr case "stimulus").toList.mapM (parseEntry d)
+        let stim0 ← (← getArr case "stimulus").toList.mapM (parseEntry d)
+        let clock := (getOpt case "clock").bind (·.getStr?.toOption)
+        let stim := addClock clock 0 stim0
         let signals ← (← getArr case "signals").toList.mapM (·.getStr?)
         let fuel := (getOpt cj "fuel").bind (·.getNat?.toOption) |>.getD 1000
         pure (d, stim, signals, fuel)

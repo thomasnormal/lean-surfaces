@@ -171,10 +171,11 @@
       "memory": true,
       "params": {"N": 4},
       "signals": ["waddr", "raddr", "q"],
+      "clock": "clk",
       "stimulus": [
-        {"clk": "0", "we": "0", "waddr": "00", "raddr": "00", "d": "00000000"},
-        {"clk": "1", "we": "1", "waddr": "10", "raddr": "10", "d": "10100101"},
-        {"clk": "0", "we": "0", "waddr": "00", "raddr": "10", "d": "00000000"}
+        {"we": "0", "waddr": "00", "raddr": "00", "d": "00000000"},
+        {"we": "1", "waddr": "10", "raddr": "10", "d": "10100101"},
+        {"we": "0", "waddr": "00", "raddr": "10", "d": "00000000"}
       ],
       "measured": "2026-11-07: a parameter-sized one-rank register memory retains dynamic read/write ArraySel nodes; MemState resolves known indices, reads x for unknown indices, and drops unknown/out-of-range writes. Lean and Icarus agree over three cycles."
     },

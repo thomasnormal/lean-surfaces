@@ -4072,3 +4072,21 @@ as the hypothesis the loaded-core proof must establish.  No RTL, loader, or
 **DECIDED:** expose one complete raw-to-ISA/state boundary for a loaded-core
 window, but keep trace normalization and step refinement as separate premises
 inside its proof so malformed valid rows remain loud.
+
+## 2026-11-07-ls-sv2-264 — compose strict normalized RVFI windows
+
+The inboxes were reread before this item.  No newer lane-specific request was
+present: generated-member support in the memory route remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_normalized_append` to
+`LeanModels/Refine/Rvfi.lean`.  It combines two successful raw normalization
+certificates, with the second certificate starting at the first retirement
+count, and applies the strict contract to the concatenated cycle stream.  The
+result retains both the concatenated ISA trace equality and the final
+state relation.  The PicoRV32 witness `pinned_cycle_normalized_append_refines_of`
+exercises this on the measured first/second window split.  No RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** preserve normalization boundaries when composing windows, while
+using one strict refinement proof over the concatenated stream so no local
+window can silently weaken the raw valid-row obligation.

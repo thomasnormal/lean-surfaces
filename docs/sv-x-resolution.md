@@ -117,6 +117,11 @@ boundary above until the state and trace relation is connected.
 `TwoStateBoundary` separately records §6.11's deterministic x/z-to-zero
 conversion and proves its result is unique and width-preserving; it is not a
 concretization choice.
+`TypedResolution` combines the two cases at the value-set boundary: a
+four-state destination receives a source concretization, while a two-state
+destination receives the unique `TwoStateBoundary` result. This is the next
+interface for wiring declaration conversion into E without changing the
+current evaluator.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

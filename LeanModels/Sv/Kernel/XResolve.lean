@@ -53,6 +53,15 @@ def LVec.Resolves (abstract concrete : LVec) : Prop :=
   abstract.bits.toList.length = concrete.bits.toList.length ∧
     bitListResolves abstract.bits.toList concrete.bits.toList
 
+/-- A decision is known when every correlated concretization gives the same
+boolean result. This is deliberately weaker than requiring every source bit
+to be known: `1'bx` is definitely true for a nonzero test, while `1'b0x` is
+not. The predicate is proof-facing; it does not change the four-state
+evaluator or silently choose a branch. -/
+def DecisionKnown (v : LVec) : Prop :=
+  ∀ w z, w ∈ LVec.concretizations v → z ∈ LVec.concretizations v →
+    LVec.condTrue v = LVec.condTrue w ∧ LVec.condTrue w = LVec.condTrue z
+
 private theorem mem_resolveBits : ∀ (bs : List Logic) (cs : List Logic),
     cs ∈ resolveBits bs → bitListResolves bs cs
   | [], cs, h => by
@@ -107,9 +116,25 @@ theorem concretizations_of_known {v : LVec}
   rw [resolveBits_known _ h]
   simp [Array.toArray_toList]
 
+theorem decisionKnown_of_allKnown {v : LVec}
+    (h : v.bits.toList.all Logic.isKnown = true) : DecisionKnown v := by
+  intro w z hw hz
+  rw [concretizations_of_known h] at hw hz
+  simp_all [DecisionKnown]
+
+theorem DecisionKnown.same {v : LVec} (h : DecisionKnown v)
+    {w z : LVec} (hw : w ∈ LVec.concretizations v)
+    (hz : z ∈ LVec.concretizations v) :
+    LVec.condTrue w = LVec.condTrue z :=
+  (h w z hw hz).2
+
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4
 #guard (LVec.concretizations (LVec.toTwoState (LVec.xVec 2))).length == 1
+
+example : DecisionKnown (LVec.ofNat 3 5) := by
+  apply decisionKnown_of_allKnown
+  decide
 
 #print axioms mem_concretizations_resolves
 #print axioms concretizations_of_known

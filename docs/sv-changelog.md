@@ -239,6 +239,9 @@ quantifies correlated 0/1 concretizations, decisions and dynamic selects must
 carry a known-value witness or remain loud. Existing `condTrue` x-optimism is
 not a proof rule; the migration plan and its current call sites are listed in
 `docs/sv-x-resolution.md`.
+The kernel now exposes `DecisionKnown` over correlated concretizations and a
+known-state theorem, without changing execution until the refinement relation
+is connected to E.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

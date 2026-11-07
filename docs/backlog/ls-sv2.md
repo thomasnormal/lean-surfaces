@@ -5698,3 +5698,34 @@ compile, docs check, backlog-index check, and `git diff --check` also pass.
 cycle machine and its inputs, not a reconstructed observation schedule, for
 any ALU program and bubble placement.  PicoRV32 remains parked at its existing
 unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-329 — compose symbolic ALU cycle certificates
+
+The inbox and goal file were reread after item 328 was pushed.  The
+input-aware ALU certificate now retains the exact cycle boundary, so the next
+generic step is to compose two certified program segments without reopening
+their machine or architectural state.
+
+**CHANGED:** Added `AluRvfiCycleTrace.append` to
+`LeanModels/Refine/RvfiAluProgram.lean`.  Given a first certificate and a
+second certificate whose order starts at `start + firstProgram.length`, whose
+core state is `rvfiStateAfter machine coreState firstCycles`, and whose
+architectural state is `aluProgramState state firstProgram`, the theorem
+constructs the certificate for the concatenated cycle and program lists.  The
+proof threads arbitrary bubbles, exact `RvfiCycleMachine.step` equalities, the
+next-order index, and the folded ALU state through the join.  Updated both
+core READMEs and regenerated `docs/backlog/INDEX.md`.  No RTL, loader,
+extractor, `LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiAluProgram.lean` passes and
+the new declaration reports only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint.  No `sorryAx` or new
+axiom was introduced.  The umbrella refinement build, focused PicoRV32
+boundary compile, docs check, backlog-index check, and `git diff --check` are
+the validation gates for this item.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can segment an unbounded
+ALU stream while preserving the actual core state, architectural state, and
+retirement order at each join; no captured window is promoted to the
+theorem's domain.  PicoRV32 remains parked at the existing unpacked `cpuregs`
+and unsupported-member/net-z loader walls.

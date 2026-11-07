@@ -649,6 +649,13 @@ is exactly the corresponding `aluProgramInput`; its `normalize`,
 stream.  The certificate is generic refinement infrastructure; the PicoRV32
 RTL remains parked at the existing unpacked `cpuregs` and unsupported-member/
 net-z loader walls.
+`AluRvfiCycleTrace.append` composes two such certificates at the exact
+`rvfiStateAfter`/`aluProgramState` boundary.  The second segment starts at
+`start + firstProgram.length`, with the first segment's post-cycle core state
+and architectural state, and covers the concatenated cycle and program lists.
+The ALU input, state, and retirement fold append laws expose the same join for
+a later loaded-core invariant; this does not promote the finite PicoRV32
+witness or bypass its current loader walls.
 
 ## Zicsr boundary
 

@@ -170,3 +170,8 @@ immediate, pc-based, and upper-immediate operand shapes.
 Its `AluRvfiCycleTrace` extension retains actual cycle-step equalities and
 retiring inputs, then normalizes the machine's own cycle stream to the same
 stateful ALU trace.
+`AluRvfiCycleTrace.append` composes two such certificates at the exact
+`rvfiStateAfter`/`aluProgramState` boundary: the second segment starts at the
+first segment's next retirement order and receives its threaded core and
+architectural states.  The corresponding ALU input, state, and retirement
+fold append laws expose the same join for a segmented loaded-core proof.

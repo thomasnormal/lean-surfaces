@@ -4445,3 +4445,19 @@ theorem delegates to it.  Updated the PicoRV32 README; no RTL, loader, or
 
 **DECIDED:** preserve the exact middle state boundary in a reachability-
 sensitive optional API and retain the all-state form for compatibility.
+
+## 2026-11-07-ls-sv2-285 — characterize failed RVFI trace normalization
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `normalizeRvfiTrace?_eq_none_iff` to `LeanModels/Refine/Rvfi.lean`.
+The executable normalizer returns `none` exactly when no
+`RvfiTraceRefines` certificate exists for the raw observation window.  This
+failure-side theorem makes the loud boundary explicit: an order gap,
+malformed valid row, or failed tail cannot be silently treated as an empty
+retirement stream.  Updated the PicoRV32 README; no RTL, loader, or
+`LeanModels/Sv/**` file changed.
+
+**DECIDED:** keep normalization failure proof-visible as absence of a valid
+order/decode certificate rather than exposing a fabricated fallback stream.

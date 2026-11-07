@@ -159,6 +159,13 @@ def callableValueObjectBinaryAgreement : Bool :=
 
 #guard callableValueObjectBinaryAgreement
 
+def callableIntegralTypeEvidenceAgreement : Bool :=
+  integralTypeOfEvidence (.qualified true false intType) == some .int &&
+    integralTypeOfEvidence (.builtin .unsignedLong) == some .unsignedLong &&
+    integralTypeOfEvidence (.record (handle "0x99")) == none
+
+#guard callableIntegralTypeEvidenceAgreement
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

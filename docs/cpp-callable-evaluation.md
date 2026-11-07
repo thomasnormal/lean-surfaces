@@ -8,6 +8,10 @@ API and refuse through its dedicated call boundary.
 Unary and binary operator strings are decoded by the shared ScalarArithmetic
 mapping used by both evaluator layers.
 
+Integral type extraction is likewise shared; qualified builtin evidence unwraps
+to its builtin type, while records and other non-integral evidence remain
+unsupported.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

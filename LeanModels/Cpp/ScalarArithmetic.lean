@@ -1,7 +1,13 @@
 import LeanModels.Cpp.Types
 import LeanModels.Cpp.Integral
+import LeanModels.Cpp.TypeEvidence
 
 namespace LeanModels.Cpp
+
+def integralTypeOfEvidence : CppTypeEvidence → Option CppIntType
+  | .builtin type => some type
+  | .qualified _ _ base => integralTypeOfEvidence base
+  | _ => none
 
 def integralBinaryOfString : String → Option IntegralBinary
   | "+" => some .add

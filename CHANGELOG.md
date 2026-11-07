@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centralized integral type extraction in ScalarArithmetic for both callable
+  evaluators and added a kernel agreement witness for builtin, qualified, and
+  non-integral evidence.
+
 - Centralized callable unary and binary operator decoding in
   ScalarArithmetic; both evaluator layers now use the shared mapping, with a
   cross-evaluator binary agreement witness.

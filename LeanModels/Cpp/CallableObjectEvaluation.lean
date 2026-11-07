@@ -45,14 +45,9 @@ private def frameFailure (frame : IntegralObjectFrame) (reason : FrameError) :
     Outcome α :=
   failure frame (mapFrameError reason)
 
-private def builtinIntegralType : CppTypeEvidence → Option CppIntType
-  | .builtin type => some type
-  | .qualified _ _ base => builtinIntegralType base
-  | _ => none
-
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Option IntegralFormat :=
-  builtinIntegralType type |>.bind fun integer =>
+  integralTypeOfEvidence type |>.bind fun integer =>
     (profile.format integer).toOption
 
 private def mapIntegralResult (result : IntegralResult IntegralValue)
@@ -84,7 +79,7 @@ private def literalValue (profile : TargetProfile) (typed : TypedCallableExpress
 
 private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
-  match builtinIntegralType operandType, formatFor profile typed.type with
+  match integralTypeOfEvidence operandType, formatFor profile typed.type with
   | some integer, some format =>
       match integralSizeBytes profile integer with
       | .ok bytes => .ok {format, value := Int.ofNat bytes}
@@ -93,7 +88,7 @@ private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpressi
 
 private def alignOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
     (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
-  match builtinIntegralType operandType, formatFor profile typed.type with
+  match integralTypeOfEvidence operandType, formatFor profile typed.type with
   | some integer, some format =>
       match integralAlignBytes profile integer with
       | .ok bytes => .ok {format, value := Int.ofNat bytes}
@@ -147,7 +142,7 @@ private def finishResult (frame : IntegralObjectFrame)
 
 private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
     (operation : IntegralBinary) (old : IntegralValue) : IntegralResult IntegralValue :=
-  match builtinIntegralType type with
+  match integralTypeOfEvidence type with
   | none | some .boolean => .unsupported .unresolvedArithmeticConversions
   | some integer =>
       match usualArithmeticType profile integer .int with
@@ -256,8 +251,8 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     | .ok rightValue =>
                         let combined := match leftValue, rightValue with
                           | .ok leftValue, .ok rightValue =>
-                              match builtinIntegralType left.sourceType,
-                                  builtinIntegralType right.sourceType with
+                              match integralTypeOfEvidence left.sourceType,
+                                  integralTypeOfEvidence right.sourceType with
                               | some leftType, some rightType =>
                                   integralBinaryUsual profile operation leftType rightType
                                     leftValue rightValue
@@ -382,8 +377,8 @@ mutual
                             match read.result with
                             | .error reason => frameFailure read.frame reason
                             | .ok (.ok current) =>
-                                let combined := match builtinIntegralType binding.type,
-                                    builtinIntegralType expression.sourceType with
+                                let combined := match integralTypeOfEvidence binding.type,
+                                    integralTypeOfEvidence expression.sourceType with
                                   | some leftType, some rightType =>
                                       mapIntegralResult
                                         (integralBinaryUsual profile operation leftType rightType

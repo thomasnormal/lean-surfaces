@@ -21,11 +21,6 @@ inductive CallableEvaluationError where
   | fuelExhausted
   deriving Repr, BEq, Inhabited
 
-private def builtinIntegralType : CppTypeEvidence → Option CppIntType
-  | .builtin type => some type
-  | .qualified _ _ base => builtinIntegralType base
-  | _ => none
-
 private def mapFormatError (reason : TypeResolutionError) : CallableEvaluationError :=
   match reason with
   | .invalidProfile => .invalidProfile
@@ -33,7 +28,7 @@ private def mapFormatError (reason : TypeResolutionError) : CallableEvaluationEr
 
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Except CallableEvaluationError IntegralFormat :=
-  match builtinIntegralType type with
+  match integralTypeOfEvidence type with
   | none => .error (.unsupportedType type)
   | some integer =>
       match profile.format integer with
@@ -144,7 +139,7 @@ private def evaluateSizeOf (profile : TargetProfile) (typed : TypedCallableExpre
     (operandType : CppTypeEvidence) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   let format ← formatFor profile typed.type
-  let some integer := builtinIntegralType operandType
+  let some integer := integralTypeOfEvidence operandType
     | throw (.unsupportedType operandType)
   let bytes ← match integralSizeBytes profile integer with
     | .ok value => pure value
@@ -155,7 +150,7 @@ private def evaluateAlignOf (profile : TargetProfile) (typed : TypedCallableExpr
     (operandType : CppTypeEvidence) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   let format ← formatFor profile typed.type
-  let some integer := builtinIntegralType operandType
+  let some integer := integralTypeOfEvidence operandType
     | throw (.unsupportedType operandType)
   let bytes ← match integralAlignBytes profile integer with
     | .ok value => pure value
@@ -384,9 +379,9 @@ mutual
             let (rightResult, _) ← evaluateTyped fuel profile parameters arguments right
             match leftResult, rightResult with
             | .ok leftValue, .ok rightValue =>
-                let some leftType := builtinIntegralType left.sourceType
+                let some leftType := integralTypeOfEvidence left.sourceType
                   | throw (.unsupportedType left.sourceType)
-                let some rightType := builtinIntegralType right.sourceType
+                let some rightType := integralTypeOfEvidence right.sourceType
                   | throw (.unsupportedType right.sourceType)
                 let result := integralBinaryUsual profile operation leftType rightType
                   leftValue rightValue
@@ -465,9 +460,9 @@ mutual
                 parameter.declaration == declaration)
                 | throw (.missingParameter declaration)
               let current ← parameterValue parameters afterExpression declaration
-              let some leftType := builtinIntegralType parameter.type
+              let some leftType := integralTypeOfEvidence parameter.type
                 | throw (.unsupportedType parameter.type)
-              let some rightType := builtinIntegralType expression.sourceType
+              let some rightType := integralTypeOfEvidence expression.sourceType
                 | throw (.unsupportedType expression.sourceType)
               let combined := integralBinaryUsual profile operation leftType rightType
                 current rightValue

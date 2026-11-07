@@ -2947,6 +2947,26 @@ def resolvedCallNullReferenceRefusal : Except String Unit := do
   let _ ← admitResolvedCallExpression resolvedCallNullReferenceTranslation [0]
   pure ()
 
+private def resolvedCallArrayReferenceTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "0x3d"), ("kind", .string "CallExpr"),
+        ("inner", .array [
+          .object [
+            ("id", .string "0x3e"), ("kind", .string "DeclRefExpr"),
+            ("referencedDecl", .array [])
+          ]
+        ])
+      ]
+    ])
+  ]}
+
+def resolvedCallArrayReferenceRefusal : Except String Unit := do
+  let _ ← admitResolvedCallExpression resolvedCallArrayReferenceTranslation [0]
+  pure ()
+
 private def resolvedCallCastKindMismatchTranslation : Artifact := {emptyTranslation with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
@@ -3524,6 +3544,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard resolvedCallMalformedParenRefusal matches .error _
 #guard resolvedCallEmptyParenRefusal matches .error _
 #guard resolvedCallNullReferenceRefusal matches .error _
+#guard resolvedCallArrayReferenceRefusal matches .error _
 #guard resolvedCallCastKindMismatchRefusal matches .error _
 #guard resolvedCallMethodTranslationWitnessOk
 #guard resolvedCallStringNonCallableRefusal matches .error _

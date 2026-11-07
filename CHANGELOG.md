@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a recorded refusal for array-valued ordinary-call `referencedDecl`
+  evidence; declaration identity is never reconstructed from an arbitrary JSON
+  container.
+
 - Added a recorded refusal for null-valued overloaded-operator `referencedDecl`
   evidence; operator identity requires object or string handle data.
 

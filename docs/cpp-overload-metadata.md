@@ -127,6 +127,9 @@ a selected declaration when the frontend supplies no child.
 A null-valued ordinary-call `referencedDecl` is also refused; declaration
 identity requires object or string handle evidence.
 
+A non-object, non-string ordinary-call `referencedDecl` array is also refused;
+declaration identity is never reconstructed from an arbitrary JSON container.
+
 A structured ordinary-call `referencedDecl` object missing `id` is also refused;
 the call gate requires a complete retained handle.
 

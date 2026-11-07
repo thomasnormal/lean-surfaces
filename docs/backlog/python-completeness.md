@@ -11183,3 +11183,20 @@ so the proof theorem surface now tracks the live evaluator.
 DECIDED: item complete. Before the next item I will reread the inbox and
 transport this new AST arm through `PayloadBlind` and `ClockErase`, then run
 the full proof and monadic checks.
+
+## 2026-11-07-pycomplete-458 — transport ListComp through ClockErase
+
+Clock erasure now includes the ListComp filter and element walkers as final
+conjunction fields. The AST case uses the shared iterable dispatch and the
+stepper erasure hypothesis; walrus and generator-source refusals remain
+clock-independent loud outcomes. Existing projection paths remain stable.
+
+| Measurement | Result |
+|---|---|
+| Clock-erasure target | `lake build LeanModels.Python.ClockErase` passes |
+| Added transport | `CEListCompIfs`, `CEListCompStep`, successor proofs, and `clockErase` projections |
+| Semantic change | no new boundary; ordinary ListComp remains live |
+
+DECIDED: item complete. Before the next item I will reread the inbox and
+transport the same ListComp arm through `PayloadBlind`, then run the complete
+runner and proof checks.

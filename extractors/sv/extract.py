@@ -13174,6 +13174,21 @@ def _convert_sym_call_expr(sm, e):
         # order case lookup in the ordinary expression tree; malformed,
         # effectful, or point-dependent forms return their named refusal.
         return _convert_enum_method(sm, e)
+    if (_SYM is not None and _RETAIN_PROC_REWRITES
+            and not getattr(e, "isSystemCall", False)):
+        # Keep user-function calls source-shaped until the retained AST has a
+        # call node.  The normal path below performs only the narrow pure
+        # inlining contract; this mode must not silently erase that boundary.
+        args = [convert_expr(sm, arg) for arg in list(e.arguments)]
+        return {
+            "kind": "FunctionCall",
+            "span": node_span(sm, e),
+            "name": getattr(getattr(e, "subroutine", None), "name", None)
+                    or getattr(e, "subroutineName", ""),
+            "args": args,
+            "width": e.type.bitWidth,
+            "symbolic_user_function_retained": True,
+        }
     bit_query = _convert_sym_bit_query(sm, e)
     if bit_query is not None:
         return bit_query

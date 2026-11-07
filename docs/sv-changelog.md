@@ -6579,3 +6579,7 @@ the defined sampling and NBA rules.
   conversion remains unchanged and the retained net stays a loud semantic
   boundary.
 
+- Source-declared user-function calls now have a retain-mode `FunctionCall`
+  envelope twin. They load as the named `CallExpression:user-function`
+  boundary while the default pure-function inliner remains unchanged.
+

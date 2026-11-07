@@ -59,6 +59,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-07-pycomplete-379` |  | expression-yield target boundary | python-completeness |
 | `2026-11-07-pycomplete-378` |  | augmented-repeat rewrite recheck | python-completeness |
 | `2026-11-07-pycomplete-377` |  | list-comprehension shadow boundary | python-completeness |
+| `2026-11-07-ls-sv2-308` |  | expose control-flow RVFI adapters in the indexed family | ls-sv2 |
 | `2026-11-07-ls-sv2-307` |  | consume specialized RVFI adapters in the PicoRV32 witness | ls-sv2 |
 | `2026-11-07-ls-sv2-306` |  | adapt specialized RVFI contracts into the indexed family | ls-sv2 |
 | `2026-11-07-ls-sv2-305` |  | instantiate the unified RV32I boundary on PicoRV32 | ls-sv2 |

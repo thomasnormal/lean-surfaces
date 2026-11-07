@@ -158,6 +158,36 @@ theorem RvfiObservation.lwBoundary_rv32i
     lwNext, memNext, lwRetirement, memRetirement,
     lwEffects, memEffects, memAfter, and_assoc] using h
 
+theorem RvfiObservation.branchBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (cond : BranchCond) (rs1 rs2 : Reg) (offset : Word)
+    (h : o.branchBoundary s input w cond rs1 rs2 offset) :
+    Rv32iBoundary s input o
+      { arch := branchNext s cond rs1 rs2 offset,
+        memory := input.memory }
+      (branchRetirement s input cond rs1 rs2 offset) := by
+  exact Rv32iBoundary.branch w cond rs1 rs2 offset h
+
+theorem RvfiObservation.jalBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd : Reg) (offset : Word)
+    (h : o.jalBoundary s input w rd offset) :
+    Rv32iBoundary s input o
+      { arch := jalNext s rd offset,
+        memory := input.memory }
+      (jalRetirement s input rd offset) := by
+  exact Rv32iBoundary.jal w rd offset h
+
+theorem RvfiObservation.jalrBoundary_rv32i
+    {s : ArchState} {input : Input} {o : RvfiObservation}
+    (w : Word) (rd rs1 : Reg) (offset : Word)
+    (h : o.jalrBoundary s input w rd rs1 offset) :
+    Rv32iBoundary s input o
+      { arch := jalrNext s rd rs1 offset,
+        memory := input.memory }
+      (jalrRetirement s input rd rs1 offset) := by
+  exact Rv32iBoundary.jalr w rd rs1 offset h
+
 theorem Rv32iBoundary.toRetirement?_eq_some
     {s : ArchState} {input : Input} {o : RvfiObservation}
     {post : RvMemoryState} {retirement : Retirement}

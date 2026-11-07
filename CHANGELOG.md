@@ -14,6 +14,10 @@
   the approved AST arrays, with no source-text reparsing or 200-character
   truncation path.
 
+- Rechecked generator-expression capture and creation-time iteration guards:
+  unsafe rebinding remains loud, and non-iterable outer sources raise before
+  the first resume.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

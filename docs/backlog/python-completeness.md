@@ -10302,3 +10302,23 @@ source-shape guessing.
 | Semantic change | none; this packet records a verified existing fix |
 
 DECIDED: retain direct structured `AnnAssign` semantics and its scope gate.
+
+## 2026-11-07-pycomplete-411 — recheck length-only repetition removal
+
+The `len(seq * n)` audit finding is already closed by the ordinary
+multiplication path and the follow-up proof cleanup. Approved ingestion no
+longer calls `lowerLenRepeatPairs` or creates `<lenmult>` for source syntax;
+the compatibility worker is reachable only from hand-built synthetic ASTs.
+Oversized materialization remains an explicit loud boundary instead of
+returning a fabricated length.
+
+| Measurement | Result |
+|---|---|
+| Oversized string witness | `len_repeat_oversize.py` is LOUD with the pinned CPython 3.9.25 exit-1 boundary |
+| Ordinary materialization | `string_repeat.py` and `tuple_repeat.py` MATCH CPython 3.9.25 |
+| Source audit | no active `lowerLenRepeatPairs` definition or ingestion call |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain ordinary sequence multiplication followed by `len`; refuse
+products whose materialization exceeds the modeled allocation budget until
+allocation and memory outcomes are represented.

@@ -10455,3 +10455,24 @@ an architectural rule-2 item rather than a new rewrite to add here.
 DECIDED: retain the guarded static value-like namedtuple tier and its loud
 unsafe candidates; schedule a native runtime class representation before
 removing the ingestion table.
+
+## 2026-11-07-pycomplete-419 — recheck module-level callable alias boundaries
+
+The module-level alias audit remains guarded in the current static dispatch
+slice. An alias target must be an earlier definition or admitted alias, each
+name has one source-order binding, rebinding hazards stay loud, and script-view
+poisoning makes a later live assignment visible inside callees. Identity and
+forward-reference observations still refuse because the copied table entry is
+not a first-class function object; replacing it is the recorded rule-2
+architecture item.
+
+| Measurement | Result |
+|---|---|
+| Alias script | `alias_script.py` MATCHES CPython 3.9.25 |
+| Shadow/rebound | `alias_rebound.py` and `alias_rebound_callee.py` MATCH, including the faithful `TypeError` |
+| Forward definition | `alias_before_def.py` MATCHES the CPython `NameError` boundary |
+| Semantic change | none; this packet records the existing guarded slice |
+
+DECIDED: retain guarded static callable aliases, dynamic later shadows, and
+loud identity/forward hazards; schedule first-class function values before
+removing `recognizeDefAliases`.

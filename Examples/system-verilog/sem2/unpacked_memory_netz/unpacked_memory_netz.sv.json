@@ -269,23 +269,6 @@
                 }
               }
             ]
-          },
-          {
-            "kind": "Net",
-            "span": {
-              "line": 9,
-              "col": 8,
-              "end_line": 9,
-              "end_col": 19
-            },
-            "name": "pcpi_mul_wr",
-            "width": {
-              "kind": "PackedType",
-              "packed": [],
-              "resolved": 1
-            },
-            "init": null,
-            "net_z": true
           }
         ],
         "processes": [
@@ -394,7 +377,19 @@
           }
         ],
         "generates": [],
-        "others": []
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 9,
+              "col": 8,
+              "end_line": 9,
+              "end_col": 19
+            },
+            "sv_kind": "NetSymbol:net-z",
+            "text": "pcpi_mul_wr"
+          }
+        ]
       }
     ],
     "others": []

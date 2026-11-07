@@ -32483,16 +32483,6 @@ def convert_net_sym(sm, m):
             return unsupported(sm, m, "NetSymbol:signed" if m.type.isSigned else "NetSymbol:net-z")
         net_reason = lower_proc.net_driver_reason(sys.modules[__name__], sm, m, dtype)
         if net_reason is not None:
-            if net_reason == "no driver: the net reads z" and not m.type.isSigned:
-                result = {
-                    "kind": "Net",
-                    "span": sym_span(sm, m),
-                    "name": m.name,
-                    "width": dtype,
-                    "init": None,
-                    "net_z": True,
-                }
-                return result
             if m.type.isSigned:
                 return unsupported(sm, m, "NetSymbol:signed")
             return unsupported(sm, m, "NetSymbol:net-z")
@@ -34322,6 +34312,14 @@ def convert_module_sym(sm, inst):
                              else convert_net_sym(sm, m))
                 if isinstance(converted, list):
                     decls.extend(converted)
+                elif (isinstance(converted, dict)
+                      and converted.get("kind") == "Unsupported"
+                      and converted.get("sv_kind") == "NetSymbol:net-z"):
+                    # A declaration-level boundary is module metadata, not a
+                    # declaration with a fabricated storage slot.  Keeping it
+                    # in `others` lets the semantic and memory routes report
+                    # the exact named refusal while preserving source order.
+                    others.append(converted)
                 else:
                     decls.append(converted)
                 processes.extend(lower_proc.take_pending())     # WP-PROC N2: a net declaration assignment

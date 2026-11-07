@@ -321,7 +321,7 @@
       "signals": ["q"],
       "clock": "clk",
       "stimulus": [{"d": "00000000"}, {"d": "10100101"}],
-      "measured": "2026-11-07: an undriven four-state wire is retained as a net declaration and initializes to z in the memory route; partially driven/resolved nets remain loud."
+      "measured": "2026-11-07: an undriven four-state wire is retained as NetSymbol:net-z metadata and the memory route preserves its named unsupported-module-member refusal until net resolution is represented."
     },
     {
       "name": "signed_index_read",

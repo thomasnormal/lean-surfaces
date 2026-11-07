@@ -14,6 +14,12 @@ load_design_sv2 net_z_memory_wall
       "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
   | _ => false
 
+private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
+  unpacked_cpuregs_wall.pdesign.instantiateMemD2 [32]
+
+#guard cpuregsMem.memDecls.length == 1
+#guard cpuregsMem.processes.length == 2
+
 #guard match (net_z_memory_wall.pdesign.instantiateMemD2 [4]).processes with
   | [.unsupported "Instantiate"
       "memory cycle route does not yet admit unsupported module members"] => true

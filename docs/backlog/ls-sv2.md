@@ -5008,3 +5008,31 @@ optional dispatcher, so a loaded-core invariant cannot erase which instruction
 class supplied its post-state or retirement.  Continue with the next owned
 generic refinement obligation while the generated-member memory support
 remains with `ls-sv`.
+
+## 2026-11-07-ls-sv2-305 — instantiate the unified RV32I boundary on PicoRV32
+
+The inboxes and goal file were reread before this item.  The owner-lane
+generated-member memory refusal remains unchanged, so this item exercises the
+new dispatcher on the real pinned PicoRV32 RVFI capture without adapting the
+RTL or claiming a symbolic core invariant.
+
+Added `Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean`.  The
+four measured non-trapping rows (`ADDI`, `SW`, `LW`, `ADDI`) are each
+constructed as an indexed `Rv32iBoundary` witness.  The theorem
+`pinned_unified_boundary_window` bundles those witnesses, retaining each
+threaded `RvMemoryState` and `Retirement`; `pinned_unified_machine_commits`
+then applies `Rv32iBoundary.rvMemoryMachineWith` to all four rows and proves
+the exact stateful machine equations.  The specialized raw witnesses remain
+available, but the concrete window now consumes the single family dispatcher.
+
+**MEASURED:** `lake build
+Examples.«system-verilog».cores.picorv32.rvfi_rv32i_boundary` passes.  The six
+new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint; no `sorryAx` or new axiom
+was introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file
+changed.
+
+**JUDGED / DECIDED:** use the four-row measured prefix as the first concrete
+consumer of the indexed family, keeping the proof stateful and instruction
+class preserving.  The next step remains an owned generic/core-facing
+milestone while the upstream generated-member support stays with `ls-sv`.

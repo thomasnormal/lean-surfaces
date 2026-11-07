@@ -10552,6 +10552,22 @@ DECIDED: retain loud refusal for module `def`/`class`/namedtuple/alias deletion
 until definitions become runtime bindings; benign-import deletion remains the
 only static no-op.
 
+## 2026-11-07-pycomplete-460 — audit static definition-delete no-op census
+
+The high-priority `py-static-del-noop-census` finding is already fixed. The
+static no-op predicate excludes every function, class, namedtuple, and alias
+definition, so a function-body call or exception handler cannot survive a
+module-level deletion through the position-independent tables.
+
+| Measurement | Result |
+|---|---|
+| Delete-call witnesses | `del_def_mid_script.py` and `del_def_call.py`: 2/2 expected loud refusals |
+| Oracle | CPython 3.9.25 raises after the deleted definition is reached |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-static-del-noop-census` as already fixed; retain loud
+definition deletion until runtime-bound definition objects exist.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

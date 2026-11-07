@@ -43,6 +43,10 @@ in the existing `Expr2` four-state evaluator; only sampled-value calls retain
 SVA wrapper nodes. The first sampled `$rose`/`$fell` comparison uses the
 default unknown sample, so a first `1` is a rose and a first `0` is a fell.
 
+The v4.35 import roots are green again: ClockGuard0 and SelfCheck now use
+parser-stable named guard fixtures, and the initial-order refusal passes its
+message as the single `Res.unsupported` payload.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

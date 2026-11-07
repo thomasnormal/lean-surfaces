@@ -156,6 +156,10 @@ selected declaration when the frontend supplies no child.
 A null-valued overloaded-operator `referencedDecl` is also refused; operator
 identity requires object or string handle evidence.
 
+A non-object, non-string overloaded-operator `referencedDecl` array is also
+refused; operator identity is never reconstructed from an arbitrary JSON
+container.
+
 A malformed string operator handle is a recorded refusal; operator metadata does
 not normalize arbitrary text into an artifact identity.
 

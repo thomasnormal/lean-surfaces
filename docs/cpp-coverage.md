@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1667 | 0 | 1593 | 0 | 64 | 0 | 10 |
+| 1668 | 0 | 1593 | 0 | 65 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -221,6 +221,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.resolved-operator-malformed-parentheses-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-empty-parentheses-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-null-reference-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `translation.resolved-operator-array-reference-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-malformed-string-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `translation.resolved-operator-method-string-identity` | 8 | `ok` | `NATIVE` | **WITNESS** | hand-built Lean IR witness; native source check is separate |
 | `translation.resolved-operator-cast-kind-mismatch-refusal` | 8 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |

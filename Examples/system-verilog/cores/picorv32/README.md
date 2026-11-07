@@ -491,6 +491,11 @@ decoding checker.  `pinned_addi_cycle_trace_refines` then applies
 retirement is exactly the profile-parametric ISA ADDI step; the bubble supplies
 no ISA input.
 
+`pinned_addi_cycle_normalized_refines` uses the paired normalized theorem to
+retain the post-window relation as well: after the two cycles, the finite RVFI
+state is related to the stateful ISA machine's state by the expected ADDI
+architectural post-state.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

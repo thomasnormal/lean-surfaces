@@ -5,5 +5,5 @@ module sva_unbased_literal (
   output logic q
 );
   assign q = (a == 4'b0);
-  assert property (@(posedge clk) a == '0);
+  assert property (@(posedge clk) (a == '0));
 endmodule

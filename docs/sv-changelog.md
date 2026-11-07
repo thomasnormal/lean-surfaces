@@ -324,6 +324,10 @@ properties and reduces its unsupported-node census from 56 to 29 by removing
 the 27 unbased-literal nodes; the remaining nodes are independent loader
 walls.
 
+The SVA source adapter also unwraps `ParenthesizedPropertyExpr` before it
+classifies implications and delayed sequences. The same pinned VIP now has 18
+residual unsupported nodes, with all 27 assertion properties still retained.
+
 ## F1: prove the SVA sampling refinement
 
 The finite SVA evaluator now has kernel-checked `clockSamples_final_irrel` and

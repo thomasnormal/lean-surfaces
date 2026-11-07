@@ -26152,7 +26152,7 @@ def _sva_unwrap(node):
     """Strip Slang's syntax wrappers around an assertion expression."""
     while isinstance(node, dict) and node.get("kind") in (
             "SimplePropertyExpr", "SimpleSequenceExpr", "ParenthesizedExpression",
-            "PropertyExpr", "SequenceExpr"):
+        "ParenthesizedPropertyExpr", "PropertyExpr", "SequenceExpr"):
         node = node.get("expr", node.get("expression"))
     return node
 
@@ -26292,7 +26292,7 @@ def _sva_property_ast(statement):
               "cover" if statement_kind == "CoverPropertyStatement" else None)
     if p_kind is None:
         return None
-    root = spec.get("expr")
+    root = _sva_unwrap(spec.get("expr"))
     if isinstance(root, dict) and root.get("kind") == "ImplicationPropertyExpr":
         op = root.get("op", {}).get("kind")
         prop_kind = "SvaNonoverlap" if op == "OrEqualsArrow" else "SvaImplication"

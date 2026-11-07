@@ -1,6 +1,9 @@
 """Discarded zero-argument integer time queries are inert at time zero."""
 
 import unittest
+import json
+import tempfile
+from pathlib import Path
 
 from pyslang.ast import Compilation
 from pyslang.syntax import SyntaxTree
@@ -64,6 +67,23 @@ class TimeQueryStatements(unittest.TestCase):
         self.assertEqual(marks, ["$timeunit", "$timeprecision"])
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
+
+    def test_symbolic_time_scale_queries_are_loud_without_scope_metadata(self):
+        # The symbolic path must not read a comment or the last directive in
+        # the raw buffer.  Module `timeunit` declarations and inherited
+        # compilation-unit scales are scope data; until that metadata is
+        # threaded through, retain a named refusal.
+        source = ("`timescale 1ns/1ps\nmodule top (output logic [31:0] y); timeunit 1us; "
+                  "timeprecision 1ns; "
+                  "assign y = $timeunit; // `timescale 1ms/1us\nendmodule")
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "fixture.sv"
+            out = Path(directory) / "fixture.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            envelope = json.loads(out.read_text())
+        self.assertTrue(any(node.get("sv_kind", "").startswith("CallExpression")
+                            for node in nodes(envelope)))
 
 
 if __name__ == "__main__":

@@ -6480,3 +6480,37 @@ the explicit progress assumption needed to state refinement over every
 finite prefix of an infinite run.  PicoRV32 remains parked at the unpacked
 `cpuregs` and unsupported-member/net-z loader walls; no finite window was
 extended.
+
+## 2026-11-07-ls-sv2-353 — re-probe PicoRV32 after `cpuregs` admission
+
+The owner lane's `43f0d0fa4` changes the memory route: the source-shaped
+unpacked register file is now admitted there, while the ordinary flat semantic
+route intentionally keeps its existing refusal.  The current frontier needed
+an exact re-probe before more R2 work.
+
+**CHANGED:** Re-extracted the unchanged pinned YosysHQ source with the current
+Slang extractor and re-ran both routes at the default parameter point.  The
+fresh envelope is 2,992,406 bytes with SHA-256
+`9826ebcc33d28777483f347c0f864bdcc59b84b255eee18bdab105e0bc805311`; the
+source remains commit `ef203c2b0a3fb793280f5114941416c425c5b461`.  The
+ordinary `sem` route still refuses `cpuregs` with
+`decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)`.  The
+memory route now passes that register-file shape and reaches
+`memory cycle route does not yet admit unsupported module members`; the
+retained metadata includes the undriven `pcpi_mul_wr` net and other disabled
+PCPI net-z declarations.  Updated the PicoRV32 README.  No RTL adaptation,
+loader/extractor change, finite captured-window theorem, or new `REQUEST ls-sv:`
+repro was added.
+
+**MEASURED:** The temporary current-master probe compiled with
+`lake env lean /tmp/picorv32_item353_probe.lean` and printed the exact default
+arguments, 26 parameters, 216 declarations, 43 processes, three generate
+entries, both refusal messages, and the retained metadata.  The source
+envelope was regenerated with `python3 extractors/sv/extract.py --top picorv32`;
+the focused wall guards, `python3 tools/docs_check.py`,
+`./tools/backlog-index.sh --check`, and `git diff --check` pass.
+
+**JUDGED / DECIDED:** The generated-member and unpacked-memory dependency has
+moved for the memory route, but the real core is still blocked by generic
+unsupported module members/net-z.  Keep the symbolic ADDI invariant parked;
+do not extend the finite captured window or adapt PicoRV32.

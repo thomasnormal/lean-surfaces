@@ -1,0 +1,164 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_assume_disable",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv",
+      "sha256": "39405a782466ed78ee8be96b1c658cb6c19e36caf71a0846167472efc6de6840"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "sva_assume_disable",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 39,
+              "end_line": 2,
+              "end_col": 42
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 44,
+              "end_line": 2,
+              "end_col": 47
+            },
+            "name": "rst",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 49,
+              "end_line": 2,
+              "end_col": 54
+            },
+            "name": "valid",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 56,
+              "end_line": 2,
+              "end_col": 60
+            },
+            "name": "data",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 79
+            },
+            "name": "",
+            "property_kind": "assume",
+            "clock": "clk",
+            "text": "assume property (@(posedge clk) disable iff (!rst) valid |-> $stable(data));",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assume",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaDisable",
+                "guard": {
+                  "kind": "SvaNot",
+                  "arg": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "rst"
+                    }
+                  }
+                },
+                "body": {
+                  "kind": "SvaImplication",
+                  "antecedent": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "valid"
+                      }
+                    }
+                  },
+                  "consequent": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaStable",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "data"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

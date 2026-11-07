@@ -20,6 +20,12 @@ The first E edge bridge now consumes `ResolvedDecision`: a source-shaped
 `always_ff` conditional can be related to the branch selected by a concrete
 resolution, while the existing evaluator and AST remain unchanged.
 
+The F1 contract path now has clean-room envelope proofs for finite delayed
+assertions and covers, `|->`/`|=>`, `$rose`, finite `$past`, `disable iff`,
+and `$stable`. Each proof consumes the structured property AST emitted by the
+extractor; no property text is reparsed. These are kernel trace checks, with
+Xcelium result rows still pending from the property-result harness.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

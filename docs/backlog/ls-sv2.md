@@ -5642,6 +5642,42 @@ certificate append theorem or the whole-program folds without a hand-written
 list normalization.  PicoRV32 remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
 
+## 2026-11-07-ls-sv2-342 — add a symbolic RV32I system-operation program certificate
+
+The fence program surface now covers `FENCE`/`FENCE.I`; the remaining
+non-CSR system operations in the no-interrupt R2 subset are `ECALL`, `EBREAK`,
+`MRET`, and `WFI`.  Their trap, return, and stutter transitions must remain
+distinct while sharing the state-threaded RV32I certificate shape.
+
+**CHANGED:** Added and imported
+`LeanModels/Refine/RvfiSystemProgram.lean`.  `SystemInstruction` retains the
+fetched word, semantic `SysKind`, and decoder proof.  The input,
+architectural-state, and retirement folds cover arbitrary mixtures of
+`ECALL`, `EBREAK`, `MRET`, and `WFI` and expose append laws.  The stateful
+`rvMemoryMachineWith` bridge reuses the exact `isaStepWith_system`,
+`systemNext`, and `systemRetirement` semantics, preserving trap causes,
+handler/return pcs, the no-wake WFI rule, and threaded data memory.
+`SystemRvfiTrace` and `SystemRvfiCycleTrace` normalize raw RVFI observations,
+retain arbitrary bubble inputs and exact cycle-step equalities, identify
+retiring inputs, and compose at the exact core/state/retirement-order
+boundary.  Updated both core READMEs and regenerated `docs/backlog/INDEX.md`.
+No RTL, loader, extractor, `LeanModels/Sv/**`, or finite captured-window
+theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiSystemProgram.lean`, the
+umbrella `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize arbitrary no-interrupt system-operation streams while preserving
+exact trap and return effects, WFI stutter behavior, actual cycle inputs,
+unchanged data memory, and core state transitions.  PicoRV32 remains parked
+at the existing unpacked `cpuregs` and unsupported-member/net-z loader walls.
+
 ## 2026-11-07-ls-sv2-327 — add a symbolic RV32I ALU program certificate
 
 The inbox and goal file were reread after item 326 was pushed.  The ADDI

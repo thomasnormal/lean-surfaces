@@ -225,6 +225,30 @@ private def enumSetterEvidence : Option IntegralMemberEnumSetter :=
       | .error _ => none
   | none => none
 
+private partial def qualifyEnumSpelling : Raw → Raw
+  | .null => .null
+  | .bool value => .bool value
+  | .number value => .number value
+  | .string value => .string value
+  | .array values => .array (values.map qualifyEnumSpelling)
+  | .object fields => .object (fields.map fun (name, value) =>
+      if name == "qualType" && value == rawText "XMLError" then
+        (name, rawText "Other::XMLError")
+      else (name, qualifyEnumSpelling value))
+
+def enumSetterQualifiedSpellingRefusal : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumSetter.admit
+          {enumSetterProbeWith (enumSetterRight "0x15") with
+            ast := qualifyEnumSpelling (enumSetterProbeWith (enumSetterRight "0x15")).ast}
+          methodHandle representation with
+      | .error .fieldTypeMismatch => false
+      | _ => true
+  | none => false
+
+#guard !enumSetterQualifiedSpellingRefusal
+
 private def enumSetterAccepted : Bool :=
   match enumSetterEvidence with
   | some setter =>

@@ -4360,6 +4360,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-enum-setter-qualified-spelling-refusal",
+    "kind": "expression",
+    "corpus": "rung-7 refusal",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "enumSetterQualifiedSpellingRefusal",
+    "cpp_source": "enum Error { ok = 0, failed = 7 }; struct Owner { Error value = failed; void set(Error error) { value = error; } }; bool callable_witness() { Owner owner; owner.set(failed); return owner.value == failed; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 7
+  },
+  {
     "id": "expression.member-enum-argument-value-evidence",
     "kind": "expression",
     "corpus": "rung-7 witness",

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a differential refusal witness for qualified enum setter spellings
+  without structured identity evidence.
+
 - Added a recorded refusal for object structured constructor declaration kind
   evidence; frontend declaration kinds remain string-typed.
 

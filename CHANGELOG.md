@@ -81,6 +81,10 @@
   the statement boundary, while qualified method indexing remains the
   intentional dispatch representation and effectful creation stays loud.
 
+- Rechecked extractor `try` handling: handler, `else`, `finally`, generator,
+  and raise nodes stay structured with explicit loud reasons; no nested-try,
+  reordered-finalizer, synthetic-flag, or `raise N()` rewrite remains.
+
 - Added a kernel-checked `PyLe.foldlM` congruence and wired it into the monadic proof walkers for stateful list folds.
 
 - Preserved list comprehensions as structured `ListComp` nodes through extraction and ingestion; evaluation remains a loud explicit boundary instead of a shadowable `list` call, with proof walkers and differential witnesses updated.

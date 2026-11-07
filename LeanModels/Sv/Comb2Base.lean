@@ -1889,8 +1889,9 @@ value then squashed to 2-state for a 2-state declaration. -/
 theorem lookup_initState2 (d : Design2) (n : String) :
     SvState.lookup (initState2 d) n =
       (d.decls.toList.find? fun dc => dc.name == n).map
-        fun dc => if dc.twoState then (dc.init.getD (LVec.xVec dc.width)).toTwoState
-          else dc.init.getD (LVec.xVec dc.width) := by
+        fun dc =>
+          let value := dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)
+          if dc.twoState then value.toTwoState else value := by
   unfold initState2
   generalize d.decls.toList = ds
   induction ds with
@@ -1912,12 +1913,15 @@ theorem StateShape.of_initState2 {d : Design2} (hd : CombDesign d) :
   obtain ⟨dc, hf, rfl⟩ := Design2.declWidth_eq_some_iff.mp hdw
   have hname : dc.name = n := by simpa using List.find?_some hf
   have hmem := List.mem_of_find?_eq_some hf
-  have hw0 : (dc.init.getD (LVec.xVec dc.width)).width = dc.width := by
+  let value := dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)
+  have hw0 : value.width = dc.width := by
     cases hi : dc.init with
-    | none => simp
-    | some v => simp [hd.initWidth n ⟨i, lo, w, hW⟩ dc hmem hname v hi]
-  refine ⟨if dc.twoState then (dc.init.getD (LVec.xVec dc.width)).toTwoState
-      else dc.init.getD (LVec.xVec dc.width), by rw [lookup_initState2, hf]; rfl, ?_⟩
+    | none =>
+      change (dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)).width = dc.width
+      rw [hi]
+      cases hnet : dc.isNet <;> simp [hnet, LVec.replicate, LVec.xVec, LVec.width]
+    | some v => simp [value, hi, hd.initWidth n ⟨i, lo, w, hW⟩ dc hmem hname v hi]
+  refine ⟨if dc.twoState then value.toTwoState else value, by rw [lookup_initState2, hf]; rfl, ?_⟩
   rw [hdw]
   by_cases h2 : dc.twoState = true
   · simp [h2, LVec.toTwoState, LVec.width] at hw0 ⊢

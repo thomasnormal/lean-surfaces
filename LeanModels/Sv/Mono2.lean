@@ -635,14 +635,19 @@ theorem run2_le (d : Design2) (σ : ScheduleOracle) {fuel fuel' : Nat}
     (h : fuel ≤ fuel') (stim : List SvState) :
     run2 d σ fuel stim ⊑ run2 d σ fuel' stim :=
 by
-  simp only [run2]
-  refine Res.le_bind (runFrom2_le d σ h stim (initState2 d) 0) ?_
-  intro tr
-  by_cases hq : d.processes.toList.any Process2.hasQualifiedCase = true
-  · simp only [if_pos hq]
-    exact Res.le_bind (validateTraceChecks2_le h d tr) (fun _ => Res.le_refl _)
-  · simp only [if_neg hq]
-    exact Res.le_refl _
+  unfold run2
+  cases hg : run2ClockGuard d with
+  | timeout => exact Res.le_refl _
+  | unsupported msg => exact Res.le_refl _
+  | ok u =>
+      simp only [hg, Res.ok_bind]
+      refine Res.le_bind (runFrom2_le d σ h stim (initState2 d) 0) ?_
+      intro tr
+      by_cases hq : d.processes.toList.any Process2.hasQualifiedCase = true
+      · simp only [hq, if_true]
+        exact Res.le_bind (validateTraceChecks2_le h d tr) (fun _ => Res.le_refl _)
+      · simp only [hq, Bool.not_eq_true, if_false]
+        exact Res.le_refl _
 
 /-! ## Per-function corollaries (implication and threshold forms) -/
 

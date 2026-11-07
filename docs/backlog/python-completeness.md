@@ -10167,3 +10167,23 @@ while ordinary nested frames enter and leave the active counter; this keeps
 existing body triples at the `initWorld` state shape. The module shell's
 existing reset remains the statement boundary. The legacy clock-erasure proof
 file still has unrelated pre-existing set/value case gaps.
+
+## 2026-11-07-pycomplete-403 — recheck position-independent definition tables
+
+The audit's static-table finding is already closed in this tree by
+`defsReachableBefore`, which rejects a function body that reaches a later
+module definition and rejects duplicate module function names. The direct
+forward-reference and redefinition fixtures remain intentionally loud because
+the split `Module.functions` table cannot represent CPython's sequential
+binding. The per-name admission still runs the interleaved definition fixture
+where every reached definition is bound before its use.
+
+| Measurement | Result |
+|---|---|
+| Forward fixture | `def_table_forward.py` is loud; CPython 3.9 raises `NameError` |
+| Redefinition fixture | `def_table_rebind.py` is loud; CPython 3.9 prints `1` then `2` |
+| Interleaving fixture | `interleave_script.py` MATCHES CPython 3.9 (`start`, `8`, `6`, `end`) |
+| Semantic change | none; this packet records a verified existing guard |
+
+DECIDED: retain the conservative loud boundary until definitions become
+runtime bindings; do not loosen admission based on direct top-level names only.

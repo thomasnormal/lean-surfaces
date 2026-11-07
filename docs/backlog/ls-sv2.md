@@ -5847,3 +5847,33 @@ state-threaded stream containing arbitrary mixed loads and stores, including
 store-to-load memory effects, without reconstructing its observation schedule.
 PicoRV32 remains parked at the existing unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-334 — re-probe PicoRV32 on current ls-sv master
+
+The inbox and goal file were reread after item 333 was pushed.  The inbox
+requires a fresh PicoRV32 load after the generated-member route changes, so
+the pinned source was extracted and loaded before choosing another refinement
+surface.
+
+**MEASURED:** The unchanged YosysHQ source at
+`ef203c2b0a3fb793280f5114941416c425c5b461` was extracted with current
+`github/master` revision `43a471fe3dc36b4b2f14fa0ef9d566c25101c962`.  The
+envelope is 2,992,422 bytes with SHA-256
+`bbb534099237338b0c945ef56634407d9918a03f802a3fb1e11753d920a245be`.  The
+declaration loads as a 26-parameter family.  The ordinary semantic route's
+exact first refusal is `unsupported "Instantiate" "decl 'cpuregs': unpacked
+array storage outside E (UnpackedDecl:memory)"` at `picorv32.v:203`.  The
+memory route's exact first refusal is `unsupported "Instantiate" "memory cycle
+route does not yet admit unsupported module members"`; its first retained
+member is the net-z wire `pcpi_mul_wr` at `picorv32.v:257`.
+
+**CHANGED:** Refreshed both core READMEs and regenerated
+`docs/backlog/INDEX.md` with the current envelope and exact refusal messages.
+No RTL, loader, extractor, `LeanModels/Sv/**`, or finite captured-window
+theorem changed; no new `REQUEST ls-sv:` repro is justified because the wall is
+the existing unsupported-member/net-z boundary.
+
+**JUDGED / DECIDED:** Generated members are still past the memory route's
+first wall.  The symbolic PicoRV32 invariant remains parked at the existing
+unpacked `cpuregs` and unsupported-member/net-z boundaries; proceed with owned
+generic refinement infrastructure while ls-sv addresses that wall.

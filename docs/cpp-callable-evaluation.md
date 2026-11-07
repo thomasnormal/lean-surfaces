@@ -1,5 +1,10 @@
 # C++ callable statement evaluation
 
+The value-only \`evaluateCallable\` and stateful
+\`evaluateCallableObject\` APIs have a kernel agreement witness for a pure
+local callable. Calls requiring caller-owned storage remain in the object-frame
+API and refuse through its dedicated call boundary.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

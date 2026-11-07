@@ -5152,6 +5152,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectAgreement",
+    "cpp_source": "int local_witness(int value) { int local = 4; return local; } bool callable_witness() { return local_witness(7) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

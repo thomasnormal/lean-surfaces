@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a kernel agreement witness for the value-only and object-frame
+  evaluators on a pure local callable.
+
 - Added a differential refusal witness for qualified direct enum argument
   spellings without structured identity evidence.
 

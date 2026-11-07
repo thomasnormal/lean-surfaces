@@ -435,6 +435,19 @@ first ends at order 1; the second starts at order 2, and
 four-row normalized stream.  This is the chunking rule a streamed RVFI capture
 can use without resetting the architectural order.
 
+## Unified RV32I RVFI dispatcher
+
+`LeanModels.Refine.RvfiRv32i` unifies the raw RVFI contracts into the indexed
+`Rv32iBoundary` family.  Its index is the post-`RvMemoryState` and
+`Retirement`, so a loaded-core invariant retains the exact architectural
+transition supplied by an ALU, branch, jump, memory, fence, system, CSR, or
+trap row.  `Rv32iBoundary.rvMemoryMachineWith` projects any family witness to
+the corresponding profile-parametric memory-threaded ISA step, and
+`rvfiCycleStepRefines_of_rv32i_memory` packages the one-cycle invariant
+obligation for a core proof.  The dispatcher is scoped to RV32I plus the
+admitted machine-mode system/CSR and trap cases; interrupts and M-extension
+operations remain outside this R2 boundary.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

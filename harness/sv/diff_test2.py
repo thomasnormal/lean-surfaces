@@ -101,7 +101,7 @@ from oracle_disagreements import (HarnessError, SimulatorError, check_declaratio
 # Dependency order matters: each may import the previous ones.
 SV_LEAN_MODULES = ["Basic", "Ast", "Semantics", "Obs", "Sem2", "CombGuard2",
                    "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "CombAlias2",
-                   "ClockGuard2", "Ingest2"]
+                   "ClockGuard2", "Ingest2", "PreemptGuard2"]
 
 SIGMA_NAMES = ("src", "rev")
 

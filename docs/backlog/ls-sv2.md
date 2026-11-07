@@ -5998,3 +5998,37 @@ normalize an arbitrary conditional-branch stream, including taken and
 fall-through targets, while preserving the machine's actual cycle inputs and
 state transitions.  PicoRV32 remains parked at the existing unpacked
 `cpuregs` and unsupported-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-339 — add a symbolic RV32I JAL/JALR program certificate
+
+The inbox and goal file were reread after item 338 was pushed.  Conditional
+branches now have a compositional program certificate; the next uncovered
+control-transfer family is the decoded JAL/JALR pair, whose link writes and
+JALR low-bit clearing must remain explicit.
+
+**CHANGED:** Added and imported `LeanModels/Refine/RvfiJumpProgram.lean`.
+`JumpKind` distinguishes JAL and JALR while retaining their exact operands;
+`JumpInstruction` retains the fetched word and decoder proof.  The input,
+architectural-state, and retirement folds cover arbitrary mixtures of both
+forms and expose append laws.  The stateful `rvMemoryMachineWith` bridge
+reuses `isaStepWith_jal` and `isaStepWith_jalr`, with no second decoder or
+simplified target semantics.  `JumpRvfiTrace` and `JumpRvfiCycleTrace`
+normalize raw RVFI observations, retain arbitrary bubble inputs and exact
+cycle-step equalities, identify retiring inputs, and compose at the exact
+core/state/retirement-order boundary.  Updated both core READMEs and
+regenerated `docs/backlog/INDEX.md`.  No RTL, loader, extractor,
+`LeanModels/Sv/**`, or finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiJumpProgram.lean`, the
+48-job `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The 17 new declarations report
+only the established `propext`/`Classical.choice`/`Quot.sound` footprint; no
+`sorryAx` or new axiom was introduced.
+
+**JUDGED / DECIDED:** A future loaded-core invariant can now segment and
+normalize arbitrary JAL/JALR retirement streams while preserving link values,
+JALR target-bit clearing, actual cycle inputs, and core-state transitions.
+PicoRV32 remains parked at the existing unpacked `cpuregs` and
+unsupported-member/net-z loader walls.

@@ -762,3 +762,11 @@ RVFI certificates with append laws.  The certificate is generic refinement
 infrastructure and does not claim a symbolic PicoRV32 invariant while the
 pinned RTL remains blocked by the unpacked `cpuregs` and
 unsupported-member/net-z loader walls.
+
+
+The reusable jump-family surface is provided by
+`LeanModels.Refine.RvfiJumpProgram`.  It covers arbitrary decoded JAL and JALR
+streams, including link writes and JALR target-bit clearing, with raw and
+cycle-aware RVFI certificates and append laws.  This remains generic
+refinement infrastructure; the pinned PicoRV32 RTL is still blocked by the
+unpacked `cpuregs` and unsupported-member/net-z loader walls.

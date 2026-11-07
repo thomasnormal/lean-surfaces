@@ -284,6 +284,14 @@ show input-memory equality, `wellFormed`, its concrete retirement, the exact
 explicit stutters.  The ADDI/SW/LW constructors below specialize this contract
 with their decoded wire predicates.
 
+The `RvfiObservation.luiBoundary` predicate and
+`rvfiCycleStepRefines_of_lui_memory` add the same stateful contract for RV32I
+LUI.  Its raw fields identify the decoded U-immediate operation through the
+explicit x0 source read, require the no-memory/no-trap RVFI facts, and tie the
+row to `luiRetirement`.  The valid cycle case advances the threaded
+`rvMemoryMachineWith` state through `luiNext` while preserving byte memory;
+invalid rows remain explicit ISA stutters.
+
 The generic `rvfiCycleStepRefines_of_sw_memory` constructor now lifts the
 store boundary to the same threaded-memory contract as ADDI.  A valid row must
 show that its input memory view is the current architectural memory, satisfy

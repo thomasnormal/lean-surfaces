@@ -5219,3 +5219,28 @@ axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
 make the first concrete consumer use the indexed family directly.  The
 symbolic core invariant remains parked at the upstream generated-member and
 unpacked-memory refusals.
+
+## 2026-11-07-ls-sv2-313 — carry the finite RVFI witness through normalization
+
+The inbox and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item composes the
+finite witness with the existing owned trace bridge.
+
+Added `pinnedAddiCycleInputs`, `pinnedAddiCycleRetirements`,
+`pinned_addi_cycle_observations_normalize`, and
+`pinned_addi_cycle_trace_refines`.  The two-cycle window (the measured ADDI
+row followed by its invalid bubble) now has an executable order/decoding
+certificate, and `rvfiCycleStepRefines_normalized_trace_refines` carries the
+strict indexed contract through to the profile-parametric ISA trace.  The
+resulting endpoint is the exact ADDI retirement; the invalid cycle contributes
+no ISA input.
+
+**MEASURED:** the focused PicoRV32 boundary build passes under Lean 4.35.0;
+all three new declarations report only the established
+`propext`/`Classical.choice`/`Quot.sound` footprint, with no `sorryAx` or new
+axiom.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** require a successful raw normalization certificate
+before claiming the finite strict witness refines an ISA trace.  Keep the
+finite endpoint separate from the future symbolic core invariant, which is
+still parked at the upstream generated-member and unpacked-memory refusals.

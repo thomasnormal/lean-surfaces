@@ -285,6 +285,13 @@ show that its input memory view is the current architectural memory, satisfy
 equality therefore stays visible at the point where a loaded-core invariant
 consumes the store case.
 
+The companion `rvfiCycleStepRefines_of_lw_memory` constructor lifts the load
+boundary as well.  Its valid case requires the same input-memory equality and
+`lwBoundary`, then carries the relation through `lwNext` with the loaded value
+and unchanged byte memory, matching `lwRetirement`; invalid rows remain
+explicit ISA stutters.  This completes the threaded-memory constructors for
+the measured ADDI/SW/LW prefix.
+
 The prefix witness bundles all four raw RVFI predicates with their four
 stateful-machine commit equations in `pinned_raw_stateful_window_certificate`.
 This is the concrete window certificate a future loaded-core invariant can

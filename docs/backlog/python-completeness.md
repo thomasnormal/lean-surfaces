@@ -11465,6 +11465,23 @@ globals, annotation ordering, oversized repetition, and global-yield targets.
 DECIDED: retain every measured edge as a matching row or documented loud
 boundary; add future rows only when a new semantic edge is measured.
 
+## 2026-11-07-pycomplete-473 — audit differential row coverage gaps
+
+The low `py-row-coverage-gaps` finding is already addressed by the pinned
+differential rows and script fixtures. The battery includes the non-cancelling
+negative set hash, set copy/dict/intersection constructions, non-iterable
+genexp creation, recursion-limit depth, ListComp shadowing, long globals,
+oversized repetition, annotation order, and global-yield boundaries.
+
+| Measurement | Result |
+|---|---|
+| Pinned script corpus | 158 scripts: 142 completed-and-matched, 16 explicit loud, 0 failed |
+| Focus rows | negative hash `-5`, set construction paths, and all named audit scripts present |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-row-coverage-gaps` as already fixed; add future rows only
+when a new semantic edge is measured.
+
 ## 2026-11-07-pycomplete-450 — recheck parameterized float-round worker
 
 The float-round audit remains closed. Both interpreter surfaces dispatch

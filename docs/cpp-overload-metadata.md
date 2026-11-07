@@ -69,6 +69,9 @@ recorded refusal; constructor identity does not trust the handle alone.
 A scalar-valued `ctor` field is also a recorded refusal; selected constructor
 evidence must be an object or a valid handle string.
 
+A numeric scalar-valued `ctor` field is also refused; constructor identity is
+never coerced from numeric JSON data.
+
 A syntactically valid constructor handle absent from the artifact declaration
 table is also a recorded refusal; the handle must resolve to retained evidence.
 

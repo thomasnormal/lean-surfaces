@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a recorded refusal for numeric scalar-valued constructor `ctor` fields;
+  constructor identity is never coerced from numeric JSON data.
+
 - Added a recorded refusal for constructor handle objects with object ids;
   frontend identity remains string-typed.
 

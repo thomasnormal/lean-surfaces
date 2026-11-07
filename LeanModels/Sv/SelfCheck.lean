@@ -1248,6 +1248,37 @@ structure Design where
   requiresTimeZero : Bool := false
 deriving Repr, Inhabited
 
+/-! ## Time-zero initial-process order guard -/
+
+abbrev InitialAccess := List String × List String
+
+def SProc.initialAccess : SProc → Option InitialAccess
+  | .initial body => some (body.readNames, body.writeNames)
+  | _ => none
+
+def InitialAccess.conflicts (a b : InitialAccess) : Bool :=
+  a.2.any (b.1.contains ·) || b.2.any (a.1.contains ·) ||
+    a.2.any (b.2.contains ·)
+
+def firstInitialConflict : List (Nat × InitialAccess) → Option (Nat × Nat)
+  | [] => none
+  | (i, a) :: rest =>
+      match rest.find? (fun (_, b) => a.conflicts b) with
+      | some (j, _) => some (i, j)
+      | none => firstInitialConflict rest
+
+/-- A source-order fold is sound only when initial blocks are independent.
+The self-check tier has no time-zero `ScheduleOracle`; refuse a pair whose
+read/write or write/write sets could observe the order instead of selecting
+the textual order as semantics. -/
+def Design.initialOrderReport (d : Design) : Option String :=
+  let accesses := d.procs.toList.zipIdx.filterMap fun (p, i) =>
+    p.initialAccess.map (i, ·)
+  match firstInitialConflict accesses with
+  | none => none
+  | some (i, j) =>
+      some s!"initial processes {i} and {j} have overlapping read/write state; IEEE 1800-2023 §4.7/§9.2.1 leaves time-zero order open, so the self-check result is refused"
+
 /-- Initialize declarations in order (later initializers may read earlier
 signals; reading a not-yet-declared one is loud via `readSignal`). -/
 def initDecls (fuel : Nat) : List SDecl → SvState → Res SvState
@@ -1367,6 +1398,8 @@ time 0 (source order), collecting the rendered `$display` output lines.
 initials — after the last possible output, so it is dropped here. -/
 def runSelfCheck (d : Design) (fuel : Nat)
     (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) : Res (List String) := do
+  if let some msg := d.initialOrderReport then
+    return ← .unsupported "Initial:order" msg
   if let some tag := d.procs.findSome? fun p =>
       match p with
       | .other svKind _ => some svKind
@@ -2241,6 +2274,20 @@ private def displayPass : SStmt :=
       .m0 (.nbaAssign "a" (.lit (.ofNat 4 2))),
       .sysCall false (some "%0d") #[(.m0 (.ident "a"), false)]])] } 1000
   == .ok ["1"]
+
+-- Time-zero order guard: independent initials remain runnable, while a
+-- writer/read pair is refused instead of selecting source order.
+private def initWriteA : SStmt := .m0 (.blockingAssign "a" (.lit (.ofNat 1 1)))
+private def initReadA : SStmt :=
+  .sysCall false (some "%0d") #[(.m0 (.ident "a"), false)]
+#guard ({ name := "indep", decls := #[],
+  procs := #[.initial initWriteA,
+             .initial (.m0 (.blockingAssign "b" (.lit (.ofNat 1 1))))] } : Design).initialOrderReport == none
+#guard ({ name := "dep", decls := #[],
+  procs := #[.initial initWriteA, .initial initReadA] } : Design).initialOrderReport.isSome
+#guard (runSelfCheck
+  { name := "dep", decls := #[], procs := #[.initial initWriteA, .initial initReadA] }
+  1000).toOption == none
 
 end Tests
 

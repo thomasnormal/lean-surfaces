@@ -207,6 +207,16 @@
       "measured": "2026-11-07: sampled order comparisons retain a finite $past operand in the existing SVA value tree."
     },
     {
+      "name": "sva_shift",
+      "example": "sem2/sva_shift",
+      "top": "sva_shift",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [{"a": "0001"}, {"a": "0010"}],
+      "verilator_only": true,
+      "measured": "2026-11-07: fixed-width shift expressions retain the existing SVA value-binary path; parameter-sized casts remain loud."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

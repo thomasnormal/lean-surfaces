@@ -34,7 +34,12 @@ the form; the arbiter property-expression census falls from 3 to 2.
 
 Finite sampled order comparisons now retain temporal operands as
 `SvaValueCmp`. The `sem2/sva_past_cmp` witness and Verilator row cover
-`a > $past(b)`; the arbiter property-expression census falls from 2 to 1.
+`a > $past(b)`; the arbiter remains at two independent walls for the
+parameter-sized cast and one system invocation.
+
+Fixed-width SVA shifts now use the existing sampled value-binary route. The
+`sem2/sva_shift` witness covers `a << 1`; parameter-sized casts remain loud
+until their width context is represented.
 
 ## Alias-flow core split
 

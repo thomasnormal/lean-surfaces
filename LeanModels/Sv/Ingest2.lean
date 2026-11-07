@@ -320,11 +320,15 @@ partial def parsePSvaValue (j : Json) : Except String PSvaValue := do
         return .past (← getNatField j "cycles") (← parsePExpr (← getField j "expr"))
     | "SvaValueBinary" =>
         let op ← parseSymBinOp (← getStrField j "op")
-        let .m0 bop := op
-          | throw "SVA value binary operator is outside the finite value fragment"
-        return .binary bop
-          (← parsePSvaValue (← getField j "left"))
-          (← parsePSvaValue (← getField j "right"))
+        let left ← parsePSvaValue (← getField j "left")
+        let right ← parsePSvaValue (← getField j "right")
+        match op with
+        | .m0 bop => return .binary bop left right
+        | .shl => return .binary (.shl false) left right
+        | .shr => return .binary (.shr false) left right
+        | .ashl => return .binary (.ashl false) left right
+        | .ashr => return .binary (.ashr false) left right
+        | _ => throw "SVA value binary operator is outside the finite value fragment"
     | other => throw s!"unknown SVA value kind {other.quote}"
 
 partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
@@ -350,6 +354,10 @@ partial def parsePSvaBool (j : Json) : Except String PSvaBool := do
         let sop ← parseSymBinOp (← getStrField j "op")
         let op ← match sop with
           | .m0 b => pure b
+          | .shl => pure (.shl false)
+          | .shr => pure (.shr false)
+          | .ashl => pure (.ashl false)
+          | .ashr => pure (.ashr false)
           | _ => throw "SVA value comparison requires an ordinary comparison"
         return (PSvaBool.valueCmp op
           (← parsePSvaValue (← getField j "left"))

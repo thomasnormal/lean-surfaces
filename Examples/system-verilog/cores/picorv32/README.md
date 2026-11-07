@@ -476,6 +476,14 @@ threaded state transition.  This is a concrete boundary certificate for the
 captured rows; it does not discharge the symbolic PicoRV32 invariant while
 the upstream memory/generate loader refusal remains.
 
+The same file contains `pinnedAddiCycleMachine`, a finite core-facing cycle
+machine that emits the measured ADDI row once and then an invalid bubble.
+`pinned_addi_cycle_refines` proves its strict packed-cycle obligation through
+`rvfiCycleStepRefines_of_rv32i_memory`, using the indexed boundary's threaded
+post-state and retaining relation stuttering for the bubble.  This is finite
+proof plumbing for the RVFI boundary; it does not stand in for the symbolic
+PicoRV32 RTL invariant while the upstream loader refusals remain.
+
 ## Zicsr boundary
 
 The generic refinement layer now covers the implemented machine-mode Zicsr

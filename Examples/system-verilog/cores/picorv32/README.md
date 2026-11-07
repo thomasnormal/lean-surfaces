@@ -277,6 +277,13 @@ The store and load witnesses now also apply their raw predicates directly to
 while the load retains the supplied byte memory.  Both stateful commits keep
 the raw RVFI row and the architectural memory transition in one theorem.
 
+The generic `rvfiCycleStepRefines_of_memory_step` constructor exposes the
+stateful raw boundary without fixing an instruction family.  A valid row must
+show input-memory equality, `wellFormed`, its concrete retirement, the exact
+`rvMemoryMachineWith` step, and the related post-state; invalid rows remain
+explicit stutters.  The ADDI/SW/LW constructors below specialize this contract
+with their decoded wire predicates.
+
 The generic `rvfiCycleStepRefines_of_sw_memory` constructor now lifts the
 store boundary to the same threaded-memory contract as ADDI.  A valid row must
 show that its input memory view is the current architectural memory, satisfy

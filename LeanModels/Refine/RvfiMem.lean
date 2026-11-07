@@ -254,6 +254,71 @@ theorem RvfiObservation.lwBoundary_rvMemoryMachineWith
   rw [isaStepWith_lw profile s input.memory w rd rs1 imm hdecode]
   rfl
 
+/-! ## Generic memory-threaded cycle case
+
+This constructor is the stateful boundary for a loaded-core invariant whose
+wire proof already identifies the architectural step.  It keeps the raw
+input-memory equality and concrete retirement visible without choosing an
+instruction family. -/
+
+theorem rvfiCycleStepRefines_of_memory_step
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ memoryState' retirement,
+          input.memory = memoryState.memory ∧
+          observation.wellFormed ∧
+          observation.toRetirement = retirement ∧
+          (rvMemoryMachineWith profile).step memoryState input =
+            (memoryState', retirement) ∧
+          rel state' memoryState'
+      else rel state' memoryState) :
+    RvfiCycleStepRefines machine (rvMemoryMachineWith profile) rel admit := by
+  apply rvfiCycleStepRefines_of_step hinit
+  intro state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase
+  rcases hisa : (rvMemoryMachineWith profile).step memoryState input with
+    ⟨memoryState', retirement⟩
+  simp only
+  change (observation.valid = true ∧ observation.wellFormed ∧
+      rel state' memoryState' ∧ observation.toRetirement = retirement) ∨
+    (observation.valid = false ∧ rel state' memoryState)
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ memoryState' retirement,
+        input.memory = memoryState.memory ∧
+        observation.wellFormed ∧
+        observation.toRetirement = retirement ∧
+        (rvMemoryMachineWith profile).step memoryState input =
+          (memoryState', retirement) ∧
+        rel state' memoryState' := by
+      simpa [hv] using hcase
+    rcases hcase' with
+      ⟨memoryState'', retirement', hmem, hwell, hto', hstep', hrel'⟩
+    have hpair : (memoryState', retirement) =
+        (memoryState'', retirement') := by
+      rw [← hisa, hstep']
+    have hstate' : memoryState' = memoryState'' := congrArg Prod.fst hpair
+    have hretirement : retirement = retirement' :=
+      congrArg Prod.snd hpair
+    rw [hstate', hretirement]
+    left
+    exact ⟨hv, hwell, hrel', hto'⟩
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    right
+    exact ⟨hv', hrel'⟩
+
 /-! ## Core-facing store cycle case
 
 The strict packed-cycle contract can consume the measured store row directly.
@@ -571,6 +636,7 @@ theorem rvfiCycleStepRefines_of_lw
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_isaStepMemWith
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMachineWith
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMemoryMachineWith
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_memory_step
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_sw
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_sw_memory
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_lw_memory

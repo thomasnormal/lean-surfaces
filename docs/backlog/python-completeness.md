@@ -10826,3 +10826,23 @@ markers with dedicated interpreter cases.
 DECIDED: keep display/comprehension syntax source-level and loud until native
 nodes exist; retain only the measured positional-star and flat-star-target
 slices with their unspellable markers.
+
+## 2026-11-07-pycomplete-439 — recheck remaining ingestion bridges
+
+The general ingestion audit is split between retired shape rewrites and
+explicit compatibility bridges. Removed list-comprehension, display, raise-
+cause, yield-from, and try lowerings have no active path. Remaining f-string
+format workers, multi-item `with` nesting, delete-target markers, chained
+assignment splitting, consuming dict-view markers, and synthetic
+`TypeErrorHandler` markers are documented representation debt with dedicated
+loud or guarded interpreter cases. No new source-shape rewrite was added in
+this recheck.
+
+| Measurement | Result |
+|---|---|
+| Source audit | retired helper paths remain absent; residual markers are named and unspellable where they reach resolution |
+| Differential controls | existing f-string, with, chain, delete, and dict-view rows retain pinned MATCH/LOUD outcomes |
+| Semantic change | none; this packet records the current compatibility bridges |
+
+DECIDED: preserve the remaining bridges only as explicit debt and replace each
+with a native source-node semantic case before widening admission.

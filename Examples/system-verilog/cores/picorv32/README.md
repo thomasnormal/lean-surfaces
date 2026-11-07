@@ -200,6 +200,8 @@ premise and normalization certificate directly into the same ISA trace
 equality, without requiring callers to rebuild the strict contract by hand.
 `cycleStepRefines_normalized` exposes that equality together with the carried
 post-window relation for the same optional proof shape.
+`cycleStepRefines_normalized_append` carries the paired result across adjacent
+optional windows, including the exact raw-state boundary between them.
 `rvfiCycleStepRefines_normalized_append` carries the same pair across adjacent
 normalized windows, and `pinned_cycle_normalized_append_refines_of` exercises
 the first/second measured window split with its carried order offset.

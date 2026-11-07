@@ -11113,6 +11113,49 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
 
 end
 
+/-! ## Proof-side ListComp stepping
+
+The proof interpreter's AST arm remains loud while its transport proofs are
+being added.  These helpers live after the main mutual block deliberately:
+`evalExpr` is now an ordinary constant, so the comprehension walk can recurse
+on its own fuel without changing the main recursion knot. -/
+
+open scoped Run in
+def evalListCompIfs (m : Module) (fuel : Nat) (st : FrameState)
+    (ifs : List Expr) : Run FrameState Bool :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match ifs with
+    | [] => .ok st true
+    | test :: rest =>
+      evalExpr m fuel st test ⤳ fun st tv =>
+      Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st keep =>
+      if keep then evalListCompIfs m fuel st rest else .ok st false
+  termination_by structural fuel
+
+open scoped Run in
+def evalListCompStep (m : Module) (fuel : Nat) (st : FrameState) (saved : Env)
+    (elt target : Expr) (ifs : List Expr) (xs acc : List RVal) :
+    Run FrameState RVal :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match xs with
+    | [] =>
+      let st' := { st with world :=
+        { st.world with heap := st.world.heap.push (.list acc.reverse.toArray) } }
+      .ok { st' with locals := saved } (.ref st.world.heap.size)
+    | x :: rest =>
+      Run.liftRes st (assignToH st.world.heap st.locals target x) ⤳ fun st env =>
+      evalListCompIfs m fuel { st with locals := env } ifs ⤳ fun st keep =>
+      if keep then
+        evalExpr m fuel st elt ⤳ fun st v =>
+        evalListCompStep m fuel st saved elt target ifs rest (v :: acc)
+      else
+        evalListCompStep m fuel st saved elt target ifs rest acc
+  termination_by structural fuel
+
 /-! ## The public boundary (docs/memory-model.md v2, call layering) -/
 
 /-! ## Module-init EXECUTION (pass 3, docs/memory-model.md §module-init

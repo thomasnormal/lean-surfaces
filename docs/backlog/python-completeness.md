@@ -10408,6 +10408,21 @@ source-shape guessing.
 
 DECIDED: retain direct structured `AnnAssign` semantics and its scope gate.
 
+## 2026-11-07-pycomplete-456 — audit non-simple annotation ordering
+
+The high-priority `py-annassign-nonsimple-order` finding is already fixed by
+the structured, scope-aware `AnnAssign` path. The value and target store happen
+before module annotation evaluation, while function-scope annotations are
+skipped, matching CPython's compiler behavior.
+
+| Measurement | Result |
+|---|---|
+| Focused annotation scripts | 5/5 MATCH against CPython 3.9.25, including `ann_nonsimple_order.py` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-annassign-nonsimple-order` as already fixed; retain direct
+structured `AnnAssign` semantics and the scope gate.
+
 ## 2026-11-07-pycomplete-411 — recheck length-only repetition removal
 
 The `len(seq * n)` audit finding is already closed by the ordinary

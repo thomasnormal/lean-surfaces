@@ -10271,3 +10271,19 @@ frontier as documented.
 
 DECIDED: keep ordinary `AugAssign` semantics and refuse only the already
 documented boundary mutation shape.
+
+## 2026-11-07-pycomplete-409 — recheck dead yield-target handling
+
+The dead-yield target audit finding is already closed by the extractor's
+structured `YieldAssign:global-or-nonlocal` boundary. A global or nonlocal
+target is refused before the expression-position yield can drop its resumed
+store; the narrow local dead-yield admission remains separate.
+
+| Measurement | Result |
+|---|---|
+| Global target witness | `yield_global_target.py` is loud; CPython 3.9 runs and prints its result |
+| Boundary | structured `unsupported statement 'YieldAssign:global-or-nonlocal'` |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: retain the loud global/nonlocal target boundary until a send-aware
+yield-expression frame is implemented.

@@ -9012,14 +9012,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok { st with world :=
                                      { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                                (.ref st.world.heap.size)
-                           -- §L53 rung 3b: the KEYS, already distinct under the
-                           -- dict-key doctrine, so setDedup is a no-op that is
-                           -- still RUN rather than assumed away
-                           | some (.dict es _) =>
-                             Run.liftRes st (setDedup st.world.heap fuel [] (dictKeys es).toList) ⤳ fun st ds =>
-                             .ok { st with world :=
-                                     { st.world with heap := st.world.heap.push (.pyset ds.toArray) } }
-                               (.ref st.world.heap.size)
+                           -- A dict's iterator order is live-table order, and
+                           -- CPython's set(dict) uses a distinct pre-sized
+                           -- merge path. Replaying the keys as sequential
+                           -- insertions can therefore answer a wrong order;
+                           -- refuse the construction before a set escapes.
+                           | some (.dict _ _) =>
+                             .unsupported "set construction from a dict is outside the tier (dict-source table order is not modeled)"
                            | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")

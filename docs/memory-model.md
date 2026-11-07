@@ -1294,11 +1294,12 @@ rewritten into a call of the name `set`. Starred display
 unpacking and multi-clause/async set comprehensions remain loud.
 Iterable coverage: a str (its code points), a value tuple, a
 namedtuple (class-erased elements), a boundary list, a heap list,
-another set (a fresh already-deduplicated copy), and a GENERATOR —
+and a GENERATOR —
 which DRAINS, like `sorted` (so `set` leaves `heapFree`
 syntactically). A dict argument is refused loudly (`set(d)` walks the
 keys — live dict iteration is out of tier); non-iterables are the
-faithful `TypeError`. Dedup is `setDedup`: the fueled
+faithful `TypeError`. Another set or dictionary view is also refused because
+its source table layout is not modeled. Dedup is `setDedup`: the fueled
 `heapContainsScan` decides duplicates by VALUE equality through
 `heapEq` (the `==` doctrine — bool/int identified, so
 `set([1, True])` has ONE element, first occurrence kept), and

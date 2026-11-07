@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-07-pycomplete-412` |  | refuse dictionary-source set table order | python-completeness |
 | `2026-11-07-pycomplete-411` |  | recheck length-only repetition removal | python-completeness |
 | `2026-11-07-pycomplete-410` |  | recheck non-simple annotation order | python-completeness |
 | `2026-11-07-pycomplete-409` |  | recheck dead yield-target handling | python-completeness |

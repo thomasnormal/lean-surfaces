@@ -580,11 +580,17 @@ theorem fuelMono (fuel : Nat) :
         (ao lo ig : Bool) (body : Array Stmt) (cap : REnv) (args : Array RVal)
         (fuel' : Nat), fuel ≤ fuel' →
       callClosure m fuel w name params ao lo ig body cap args ⊑ʳ
-        callClosure m fuel' w name params ao lo ig body cap args) := by
+        callClosure m fuel' w name params ao lo ig body cap args) ∧
+    (∀ (m : Module) (st : FrameState) (ifs : List Expr) (fuel' : Nat),
+      fuel ≤ fuel' → evalListCompIfs m fuel st ifs ⊑ʳ evalListCompIfs m fuel' st ifs) ∧
+    (∀ (m : Module) (st : FrameState) (saved : Env) (elt target : Expr)
+      (ifs : List Expr) (xs acc : List RVal) (fuel' : Nat), fuel ≤ fuel' →
+      evalListCompStep m fuel st saved elt target ifs xs acc ⊑ʳ
+        evalListCompStep m fuel' st saved elt target ifs xs acc) := by
   induction fuel with
   | zero =>
     -- Fuel 0 is `.timeout` everywhere, the bottom of `⊑ʳ`.
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · exact fun m st e fuel' _ => Or.inl (by simp [evalExpr])
     · exact fun m st es fuel' _ => Or.inl (by simp [evalExprs])
     · exact fun m st op e rest fuel' _ => Or.inl (by simp [evalBoolChain])
@@ -604,10 +610,13 @@ theorem fuelMono (fuel : Nat) :
     · exact fun m w a isAll fuel' _ => Or.inl (by simp [anyAllIter])
     · exact fun m w name params ao lo ig body cap args fuel' _ =>
         Or.inl (by simp [callClosure])
+    · exact fun m st ifs fuel' _ => Or.inl (by simp [evalListCompIfs])
+    · exact fun m st saved elt target ifs xs acc fuel' _ =>
+        Or.inl (by simp [evalListCompStep])
   | succ fuel ih =>
     obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
-      ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure⟩ := ih
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure, ihLCIfs, ihLCStep⟩ := ih
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     -- evalExpr
     · intro m st e fuel' hf
       cases fuel' with
@@ -2221,6 +2230,39 @@ theorem fuelMono (fuel : Nat) :
           (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
           fun st flow => ?_
         cases flow <;> exact Run.le_refl _
+    -- proof-side ListComp filter walk
+    · intro m st ifs fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        cases ifs with
+        | nil => exact Run.le_refl _
+        | cons test rest =>
+          simp only [evalListCompIfs]
+          refine Run.le_bind (ihE m st test k hk) fun st tv => ?_
+          refine Run.le_bind (Run.le_refl _) fun st keep => ?_
+          cases keep with
+          | false => exact Run.le_refl _
+          | true => exact ihLCIfs m st rest k hk
+    -- proof-side ListComp element walk
+    · intro m st saved elt target ifs xs acc fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        cases xs with
+        | nil => exact Run.le_refl _
+        | cons x rest =>
+          simp only [evalListCompStep]
+          refine Run.le_bind (Run.le_refl _) fun st env => ?_
+          refine Run.le_bind
+            (ihLCIfs m { st with locals := env } ifs k hk) fun st keep => ?_
+          cases keep with
+          | false => exact ihLCStep m st saved elt target ifs rest acc k hk
+          | true =>
+            refine Run.le_bind (ihE m st elt k hk) fun st v => ?_
+            exact ihLCStep m st saved elt target ifs rest (v :: acc) k hk
 
 /-! Fuel transport for the proof-side ListComp seam. These helpers sit after
 the main mutual theorem so they can use its existing `evalExpr` projection. -/
@@ -2426,7 +2468,7 @@ theorem callClosure_mono {m : Module} {fuel : Nat} {w : World} {name : String}
     (h : callClosure m fuel w name params ao lo ig body cap args = r)
     (hr : r ≠ .timeout) (fuel' : Nat) (hf : fuel ≤ fuel') :
     callClosure m fuel' w name params ao lo ig body cap args = r :=
-  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
     m w name params ao lo ig body cap args fuel' hf) h hr
 
 mutual

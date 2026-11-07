@@ -11145,3 +11145,22 @@ lemmas ready to be threaded into that conjunction.
 DECIDED: item complete. Before the next item I will reread the inbox and add
 the two helper projections to `fuelMono`, then use them to replace the proof
 interpreter's ListComp refusal.
+
+## 2026-11-07-pycomplete-456 — thread ListComp helpers through fuelMono
+
+`Obs.fuelMono` now carries two appended projections for the proof-side
+ListComp filter and element walkers. Existing projection paths remain stable;
+the new fields are last, and the induction supplies their lower-fuel
+hypotheses directly. The standalone helper lemmas remain as named corollaries,
+while the AST arm is still loud until the payload-blindness and clock-erasure
+surfaces are updated.
+
+| Measurement | Result |
+|---|---|
+| Proof target | `lake build LeanModels.Python.Obs` passes |
+| Projection change | two fields appended after `callClosure`; prior paths preserved |
+| Semantic change | none; proof interpreter ListComp refusal unchanged |
+
+DECIDED: item complete. Before the next item I will reread the inbox and use
+the new `fuelMono` projections to replace the proof interpreter's ListComp arm,
+then repair the remaining proof consumers.

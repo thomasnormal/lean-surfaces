@@ -10479,6 +10479,24 @@ from a heap dict or dictionary view before the set can be iterated. The narrow
 DECIDED: keep dictionary and dictionary-view set construction outside the tier
 until CPython's pre-sized merge and resize transitions are represented.
 
+## 2026-11-07-pycomplete-458 — audit signed set iteration order
+
+The high-priority `py-set-iteration-order` finding is already handled by
+conservative set-order admission. The model refuses negative hashes, copied
+sets, dictionary-source construction, and intersection paths whose CPython
+table layout is not represented; the admitted nonnegative direct insertion row
+still matches.
+
+| Measurement | Result |
+|---|---|
+| Focused set rows | 1 MATCH (`iter_order(7)`), 6 expected refusals, 0 failures |
+| Oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-set-iteration-order` as already fixed by loud refusal of
+unmodeled table-construction paths; retain the narrow admitted direct-insertion
+surface.
+
 ## 2026-11-07-pycomplete-413 — recheck shape-specific ingestion rewrite removal
 
 The shape-specific audit finding remains closed in current `Json.lean`. The

@@ -48,6 +48,13 @@ def memDeclOf? : List PDecl → String → Option PDecl
 def memDeclsOf (d : PDesign) : List PDecl :=
   d.decls.filter fun pd => !pd.unpackedDims.isEmpty
 
+/-- Referenced empty input-only tasks are retained as source metadata by the
+extractor, while their calls are represented by the existing empty statement
+node.  Every other unsupported module member remains a loud memory-route
+boundary. -/
+def memAllowedOther (entry : String × String) : Bool :=
+  entry.1 == "SubroutineSymbol:empty-task"
+
 /-! ## Generate labels
 
 Generate bodies keep their source `PProcess` until this adapter is
@@ -204,7 +211,7 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   if args.length != d.params.length then
     .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
   let env ← d.paramEnv2 args
-  if !d.others.isEmpty then
+  if d.others.any fun entry => !memAllowedOther entry then
     .unsupported "memory cycle route does not yet admit unsupported module members"
   let decls ← scalarDeclsMem env d.decls
   let generated ← memExpandList env iterFuel [] d.generates

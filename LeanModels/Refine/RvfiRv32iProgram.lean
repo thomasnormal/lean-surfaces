@@ -253,6 +253,58 @@ theorem rvMemoryMachineWith_rv32i_program_trace_append
           (rv32iProgramInputs (rv32iProgramState state first) second) := by
   rw [rv32iProgramInputs_append, machineTrace_append]
 
+/-! ## Core-facing mixed dispatcher -/
+
+/-- A loaded core can discharge the strict cycle contract by identifying the
+family instruction represented by each valid row.  The input equality keeps
+the exact fetched word, irq bit, and threaded memory at the invariant boundary;
+the indexed mixed boundary then supplies the ISA post-state and retirement.
+Invalid rows remain explicit ISA stutters through the generic dispatcher. -/
+theorem rvfiCycleStepRefines_of_rv32i_program
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ instruction,
+          input = rv32iProgramInput memoryState instruction ∧
+          Rv32iBoundary memoryState.arch input observation
+            (rv32iProgramStep memoryState instruction)
+            (rv32iProgramRetirement memoryState instruction) ∧
+          rel state' (rv32iProgramStep memoryState instruction)
+      else rel state' memoryState) :
+    RvfiCycleStepRefines machine (rvMemoryMachineWith profile) rel admit := by
+  refine rvfiCycleStepRefines_of_rv32i_memory profile machine rel admit hinit ?_
+  intro state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase ⊢
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ instruction,
+        input = rv32iProgramInput memoryState instruction ∧
+        Rv32iBoundary memoryState.arch input observation
+          (rv32iProgramStep memoryState instruction)
+          (rv32iProgramRetirement memoryState instruction) ∧
+        rel state' (rv32iProgramStep memoryState instruction) := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨instruction, hinput, hboundary, hrel'⟩
+    simp only [hv]
+    refine ⟨rv32iProgramStep memoryState instruction,
+      rv32iProgramRetirement memoryState instruction, ?_, hboundary, hrel'⟩
+    rw [hinput]
+    cases instruction <;> rfl
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    simp only [hv]
+    exact hrel'
+
 /-! ## Raw RVFI certificate -/
 
 /-- A raw RVFI stream for an arbitrary mixed RV32I program. -/
@@ -471,6 +523,7 @@ theorem Rv32iRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_step
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_rv32i_program
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.toRvfiTraceRefines
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.normalize
 #print axioms LeanModels.Refine.Rv32iRvfiTrace.trace_refines

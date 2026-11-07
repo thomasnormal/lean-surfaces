@@ -860,3 +860,8 @@ arbitrary bubble cycles and actual retiring inputs, and normalize the mixed
 stream to the stateful RV32I machine trace.  This is generic refinement
 infrastructure; the pinned PicoRV32 RTL remains parked at the loader walls
 above.
+
+The companion `rvfiCycleStepRefines_of_rv32i_program` constructor is the
+core-facing one-step form: a valid row must identify an `Rv32iInstruction`,
+its exact input, indexed post-state, and retirement, while invalid rows remain
+ISA stutters.

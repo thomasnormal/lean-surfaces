@@ -6328,3 +6328,33 @@ retiring RVFI row through one mixed certificate while preserving the exact
 family transition, threaded byte memory, bubble schedule, and segment
 boundary.  PicoRV32 remains parked at its existing unpacked `cpuregs` and
 unsupported-module-member/net-z loader walls.
+
+## 2026-11-07-ls-sv2-348 — expose the mixed RV32I core-facing dispatcher
+
+The mixed program certificate identifies the stateful trace, but a loaded-core
+invariant still needs a one-step constructor that turns its family choice into
+the strict raw-cycle refinement contract.
+
+**CHANGED:** Added `rvfiCycleStepRefines_of_rv32i_program` to
+`LeanModels/Refine/RvfiRv32iProgram.lean`.  Its valid-row premise identifies
+one `Rv32iInstruction`, requires the exact `rv32iProgramInput`, and supplies
+the indexed `Rv32iBoundary` at `rv32iProgramStep` and
+`rv32iProgramRetirement`; the constructor derives the threaded memory equality
+and delegates invalid-row stuttering and malformed-valid rejection to the
+existing generic dispatcher.  Updated both core READMEs and regenerated
+`docs/backlog/INDEX.md`.  No RTL, loader, extractor, `LeanModels/Sv/**`, or
+finite captured-window theorem changed.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean`, the
+umbrella `lake build LeanModels.Refine`, the focused
+`Examples/system-verilog/cores/picorv32/rvfi_rv32i_boundary.lean` compile,
+`python3 tools/docs_check.py`, `./tools/backlog-index.sh --check`, and
+`git diff --check` pass under Lean 4.35.0.  The new declaration reports only
+`propext`/`Classical.choice`/`Quot.sound`; no `sorryAx` or new axiom was
+introduced.  The focused boundary retains only its existing warnings.
+
+**JUDGED / DECIDED:** A real-core proof can now state its valid-row invariant
+once over the mixed RV32I union while preserving exact family identity, input
+memory, architectural post-state, retirement, and bubble behavior.  PicoRV32
+remains parked at the unpacked `cpuregs` and unsupported-member/net-z loader
+walls.

@@ -7193,3 +7193,37 @@ mixed per-cycle obligation consumed by `rv32iRvfiCycleTrace_of_step` and the
 from-reset all-prefix theorem, with retirement order remaining an explicit
 proof obligation.  PicoRV32 remains parked at the approved task/net-z
 memory-route walls.
+
+## 2026-11-07-ls-sv2-378 — recheck the owner-lane v4.35 import repair
+
+The owner lane answered the first two parts of item 377 in commit `7fbcb69ef`
+(`[ls-sv] repair v4.35 guard fixtures`).  Item 378 re-read both inboxes and the
+goal, then checked that repair on the owner worktree before doing any R2 work.
+
+**MEASURED:** On Lean 4.35.0, `lake build LeanModels.Sv.ClockGuard0
+LeanModels.Sv.SelfCheck` passes at `7fbcb69ef`.  The commit preserves the three
+clock guards by moving the multiline `Design` literals into named definitions,
+and combines the initial-order refusal kind and message into the one-string
+`Res.unsupported` contract.  The owner worktree still has uncommitted
+`Comb2`/`CombView`/`Sem2` changes for the net metadata and clock guard.
+
+A fresh dependent target build remains red.  `Comb2Proc.lean:2642` leaves
+`∃ a, run2ClockGuard d₂ = Res.ok a` unsolved after the guard is threaded through
+`Terminates2.of_acyclic`; `CycleMachine.lean:145` passes a `runObs2` result where
+`rcycle_runFrom` requires a `runFromObs2` result, and `#print axioms rcycle_run2`
+reports `sorryAx`.  The signed `remainder` and `division` proof files still have
+stale source pins and their signed guards fail (remainder lines 65, 66, 68;
+division lines 111, 112, 114).  `ripple_add` and `sem2/sva_select` are no longer
+among the target failures.  The required failures are exactly `CycleMachine`,
+`Comb2Proc`, signed `remainder`, and signed `division`.
+
+**CHANGED:** Added this measured recheck to the lane backlog and routed a
+follow-up `REQUEST ls-sv:` with the exact residual errors.  No ls-sv-owned
+source, semantics, loader, extractor, RTL, or finite captured-window theorem
+was edited; no oracle result is claimed.
+
+**JUDGED / DECIDED:** The v4.35 guard syntax and refusal-arity repair is valid,
+but the public import closure is not yet green because the owner branch has not
+landed the residual clock-guard bridge, cycle-machine bridge, and signed proof
+pin repairs.  Hold PicoRV32 R2 work until those owner changes reach
+`origin/master`; do not add finite captured-window lemmas.

@@ -10516,6 +10516,24 @@ DECIDED: preserve source statement structure and keep unsupported callable,
 active-exception, and budget boundaries loud until their native semantics are
 modeled.
 
+## 2026-11-07-pycomplete-459 — audit shape-specific ingestion rewrites
+
+The high-priority `py-shape-specific-ingestion-rewrites` finding is already
+closed in the current ingestion path. The five reported pair rewrites have no
+active definitions or call sites: builtin alias, dead value, immediate
+genexp-drain, length-only repetition, and direct bare-reraise. Their source
+statements remain structured and reach ordinary value, generator, allocation,
+or active-exception semantics.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five helper names absent from active ingestion |
+| Differential boundary | existing alias, generator, and bare-reraise rows retain MATCH or loud outcomes |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-shape-specific-ingestion-rewrites` as already fixed; keep
+unsupported callable, active-exception, and allocation-budget boundaries loud.
+
 ## 2026-11-07-pycomplete-414 — recheck the static definition-delete census
 
 The static definition-delete audit finding is already closed by the current

@@ -5089,3 +5089,29 @@ check, and `git diff --check` are the remaining item gates.
 adapter API rather than duplicating its raw-to-generic simplification.  Keep
 the generic family as the only stateful dispatcher; the next item remains an
 owned refinement milestone while generated-member support stays with `ls-sv`.
+
+## 2026-11-07-ls-sv2-308 — expose control-flow RVFI adapters in the indexed family
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory refusal remains an upstream `ls-sv` wall, so this item extends only the
+owned generic refinement layer.
+
+`LeanModels.Refine.RvfiRv32i` now exposes
+`branchBoundary_rv32i`, `jalBoundary_rv32i`, and `jalrBoundary_rv32i`.  These
+adapters retain the existing specialized branch and jump raw-field contracts
+while constructing the indexed `Rv32iBoundary` control-flow cases.  Their
+indices preserve the exact branch target, link writeback, JALR low-bit-cleared
+target, threaded memory, and retirement supplied by the corresponding ISA
+equations; no second control-flow dispatcher is introduced.
+
+**MEASURED:** `lake build LeanModels.Refine.RvfiRv32i` passes under Lean
+4.35.0.  The umbrella refinement build, PicoRV32 unified-boundary target,
+documentation check, backlog-index check, and `git diff --check` also pass.
+The new constructor wrappers are axiom-free, and no `sorryAx` or new axiom was
+introduced.  No RTL, loader, extractor, or `LeanModels/Sv/**` file changed.
+
+**JUDGED / DECIDED:** keep branch, JAL, and JALR raw contracts directly
+constructible as indexed family witnesses, so future core invariants can retain
+wire fields without duplicating stateful transition logic.  The next item
+remains an owned refinement milestone while generated-member support stays with
+`ls-sv`.

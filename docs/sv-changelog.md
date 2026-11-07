@@ -6509,6 +6509,11 @@ the defined sampling and NBA rules.
 
 ## 2026-11-07
 
+- Port-width extraction now preserves net input selects and narrower child
+  outputs into wider parent NET targets, so `Hier2.connProcs` refuses the
+  Xcelium/Icarus-width split as `PortConn:net-width`. Added a hierarchical
+  clean-room refusal row.
+
 - The legacy M0 JSON loader and runner now refuse two-clock and data-clocked
   designs (`Clock:multiple` / `Clock:implicit`) instead of firing every edge
   process on every implicit cycle. Clean-room refusal rows cover both shapes.

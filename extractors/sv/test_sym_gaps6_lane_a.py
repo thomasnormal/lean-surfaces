@@ -8,11 +8,12 @@ undriven (z). The extractor does not know the widths at every point, so it only
 MARKS the shape on the connection (`"net": true` on a CONNECTED input port
 connection); `Hier2.lean` `connProcs` is loud (`PortConn:net-width`) where the
 actual is narrower than the port. Marked: a net formal (no `var`, 4-state)
-and a bare reference to a net (a `wire`, an `input`/`inout` port without
-`var`, an `output wire` or implicit-type `output`) whose declared widths are
-not both fixed with the formal not wider. Not marked: variable actuals
-(`logic`, and an `output logic` / `output reg` / `output var logic` port: an
-output with an explicit data type is a VARIABLE, 23.2.2.3), part-/bit-selects,
+and a bare reference or constant select of a net (a `wire`, an `input`/`inout`
+port without `var`, an `output wire` or implicit-type `output`) whose declared
+widths are not both fixed with the formal not wider. Narrow child outputs into
+whole parent NET targets are marked as the output-direction twin. Not marked:
+variable actuals (`logic`, and an `output logic` / `output reg` / `output var
+logic` port: an output with an explicit data type is a VARIABLE, 23.2.2.3),
 constants and expressions, `var` formals, 2-state formals, fixed widths with
 the formal at most as wide as the actual.
 
@@ -110,12 +111,12 @@ endmodule
             with self.subTest(actual=actual):
                 self.assertNotIn("net", self.conn("child_fixed u (.i(%s), .p(p));" % actual))
 
-    def test_selects_are_not_marked(self):
+    def test_selects_of_net_actuals_are_marked(self):
         # Xcelium z-fills a full-range part select and a constant bit select
-        # too (audit H1 matrix); not marked yet -- a recorded gap.
+        # too (audit H1 matrix); preserve the net shape for Lean's refusal.
         for actual in ("s[1:0]", "s[1]"):
             with self.subTest(actual=actual):
-                self.assertNotIn("net", self.conn("child_fixed u (.i(%s), .p(p));" % actual))
+                self.assertIs(self.conn("child_fixed u (.i(%s), .p(p));" % actual).get("net"), True)
 
     def test_var_formal_is_not_marked(self):
         self.assertNotIn("net", self.conn("child_var u (.i(s), .p(p));"))
@@ -220,6 +221,35 @@ module top (input var logic [1:0] o, output logic [5:0] p);
 endmodule
 """
         self.assertNotIn("net", input_conns(extract_sym(src, "top"))["u"]["i"])
+
+
+class NetBoundOutputTarget(unittest.TestCase):
+    """A narrower child output into a wider parent NET target is the output
+    direction twin of H1.  Preserve a named refusal rather than lowering it
+    to a zero-extended continuous assignment."""
+
+    def test_narrow_output_into_whole_net_is_refused(self):
+        src = """
+module child_out (input logic [1:0] i, output logic [1:0] p);
+  assign p = i;
+endmodule
+module top (input logic [1:0] s, output wire [5:0] o);
+  child_out u (.i(s), .p(o));
+endmodule
+"""
+        env = extract_sym(src, "top")
+        self.assertIn("PortConnection:net-width", sv_kinds(env))
+
+    def test_variable_output_target_remains_admitted(self):
+        src = """
+module child_out (input logic [1:0] i, output logic [1:0] p);
+  assign p = i;
+endmodule
+module top (input logic [1:0] s, output logic [5:0] o);
+  child_out u (.i(s), .p(o));
+endmodule
+"""
+        self.assertNotIn("PortConnection:net-width", sv_kinds(extract_sym(src, "top")))
 
 
 class WideIndex(unittest.TestCase):

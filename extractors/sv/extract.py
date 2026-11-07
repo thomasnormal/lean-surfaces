@@ -33194,15 +33194,38 @@ def _sym_vector_width_fixed(sm, t, type_syntax):
                and (dim.get("lsb") or {}).get("kind") == "Int" for dim in dims)
 
 
+def _sym_net_actual_symbol(e):
+    """Return the net symbol behind a bare value or a constant select.
+
+    Slang wraps both forms in conversions when the formal is wider.  A
+    full-range/bit select still denotes a window of the same net for the
+    Xcelium net-collapsing rule; it must not silently become the zero-filled
+    `assign` shape.
+    """
+    op = e
+    while (type(op).__name__ == "ConversionExpression"
+           and op.conversionKind in (ConversionKind.Implicit,
+                                     ConversionKind.Propagated)):
+        op = op.operand
+    if type(op).__name__ == "NamedValueExpression":
+        return op.symbol
+    if type(op).__name__ in ("RangeSelectExpression", "ElementSelectExpression"):
+        base = getattr(op, "value", None)
+        if base is None:
+            base = getattr(op, "left", None)
+        return _sym_net_actual_symbol(base) if base is not None else None
+    return None
+
+
 def _sym_net_bound_actual(sm, port, e):
     """Round 6 (H1, 2026-10-29): whether an INPUT port connection is the one
     shape Xcelium 24.03-s004 binds BIT FOR BIT instead of as a continuous
     assignment: a NET formal (`_sym_port_is_net`; a `var` or 2-state formal
-    is a variable and is zero-extended by every tool) fed by a BARE reference
-    to a NET actual (`_sym_symbol_net_kind`; the implicit conversions slang
-    wraps around a mismatched width are peeled, so `.i(s)` into a wider port
-    is recognised; a variable actual, a part- or bit-select, a constant and
-    any expression are not). When the actual is narrower the formal's high
+    is a variable and is zero-extended by every tool) fed by a reference or
+    constant select of a NET actual (`_sym_symbol_net_kind`; the implicit
+    conversions slang wraps around a mismatched width are peeled, so `.i(s)`
+    into a wider port is recognised). Constants and computed expressions are
+    not net connections. When the actual is narrower the formal's high
     bits stay undriven (z, warning CUVMPW) in Xcelium where IEEE 1800-2023
     §23.3.3/§10.7 — and Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang —
     zero-extend (`PortConn:net-width`, Hier2.lean). Whether it IS narrower
@@ -33215,15 +33238,15 @@ def _sym_net_bound_actual(sm, port, e):
             return False
         if not _sym_four_state_vector(port.type):
             return False
+        sym = _sym_net_actual_symbol(e)
+        if sym is None or not _sym_symbol_net_kind(sym):
+            return False
         op = e
         while (type(op).__name__ == "ConversionExpression"
                and op.conversionKind in (ConversionKind.Implicit,
                                          ConversionKind.Propagated)):
             op = op.operand
-        if type(op).__name__ != "NamedValueExpression":
-            return False
-        sym = op.symbol
-        if not _sym_symbol_net_kind(sym) or not _sym_four_state_vector(op.type):
+        if not _sym_four_state_vector(op.type):
             return False
         if (_sym_vector_width_fixed(sm, port.type,
                                     _decl_type_syntax(getattr(port, "internalSymbol", None)))
@@ -33231,6 +33254,33 @@ def _sym_net_bound_actual(sm, port, e):
                 and int(port.type.bitWidth) <= int(op.type.bitWidth)):
             return False
         return True
+    except Exception:
+        return False
+
+
+def _sym_net_output_target(sm, port, left):
+    """Whether an output formal drives a narrower whole/selected NET target.
+
+    Xcelium leaves the target's high bits undriven in this net-collapsing
+    shape.  `PConn.output` has no net marker, so the extractor emits a named
+    refusal before the target is lowered; variable targets remain unchanged.
+    """
+    try:
+        # The child output may be a variable; the split is caused by the
+        # *parent target* being a NET, whose undriven high bits stay z.
+        if not _sym_four_state_vector(port.type):
+            return False
+        sym = _sym_net_actual_symbol(left)
+        if sym is None or not _sym_symbol_net_kind(sym):
+            return False
+        if not _sym_four_state_vector(left.type):
+            return False
+        if (_sym_vector_width_fixed(sm, port.type,
+                                    _decl_type_syntax(getattr(port, "internalSymbol", None)))
+                and _sym_vector_width_fixed(sm, left.type, _decl_type_syntax(sym))
+                and int(left.type.bitWidth) <= int(port.type.bitWidth)):
+            return False
+        return int(port.type.bitWidth) < int(left.type.bitWidth)
     except Exception:
         return False
 
@@ -33294,6 +33344,10 @@ def _sym_port_conn(sm, m, pc):
     if type(e).__name__ != "AssignmentExpression":
         return unsupported(sm, m, "PortConnection:" + type(e).__name__, pname)
     left = e.left
+    if _sym_net_output_target(sm, port, left):
+        return unsupported(
+            sm, m, "PortConnection:net-width",
+            pname + ": output port drives a narrower net target")
     initialized = _sym_initialized_target_info(left)
     if initialized is not None:
         # An output connection is a continuous driver of its actual: the

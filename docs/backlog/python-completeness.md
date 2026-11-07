@@ -11137,6 +11137,24 @@ shortcut, or `raise N()` replacement is emitted.
 DECIDED: preserve `Try` and `Raise` source nodes; model full cleanup and handler
 protocols before widening admission.
 
+## 2026-11-07-pycomplete-468 — audit extractor try lowerings
+
+The medium `py-extractor-try-lowerings` finding is already fixed. The approved
+extractor preserves `Try` and `Raise` nodes, carries structured handler names
+and bodies, and records unsupported `else`, `finally`, multiple-handler,
+non-name-handler, and generator-frame forms as explicit reasons. The retired
+nested-try, finalizer-reordering, synthetic-success-flag, identifier-keyed
+`Stop`, and `raise N()` rewrites have no active path.
+
+| Measurement | Result |
+|---|---|
+| Extractor regression suite | 163/163 tests passed under CPython 3.9.25 |
+| Runtime boundary | unsupported cleanup/handler/generator forms remain loud |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-extractor-try-lowerings` as already fixed; retain explicit
+structured refusals until full cleanup and handler protocols are modeled.
+
 ## 2026-11-07-pycomplete-438 — recheck display and starred extraction boundaries
 
 The display-lowering audit is split into explicit source-node boundaries and

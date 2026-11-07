@@ -4162,3 +4162,23 @@ README and backlog/index.  No RTL, loader, or `LeanModels/Sv/**` file changed.
 **DECIDED:** make raw normalization itself carry the wire well-formedness
 certificate.  The loaded-core proof can now separate malformed-valid refusal
 from explicit bubbles before applying architectural refinement.
+
+## 2026-11-07-ls-sv2-269 — dispatch strict RVFI cycles
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `rvfiCycleStepRefines_step` to `LeanModels/Refine/Rvfi.lean`.  It is a
+total per-cycle projection of the strict packed-cycle contract: the valid
+disjunct carries the raw validity bit, well-formedness, post-step relation,
+and concrete retirement equality, while the invalid disjunct carries the
+invalid bit and the stuttering relation.  Its proof dispatches through the
+named `rvfiCycleStepRefines_valid_step` and
+`rvfiCycleStepRefines_invalid_step` projections, so callers have one branch
+point that cannot silently reinterpret a malformed valid row as a bubble.
+Updated the PicoRV32 README.  No RTL, loader, or `LeanModels/Sv/**` file
+changed.
+
+**DECIDED:** expose one exhaustive raw-cycle boundary for loaded-core
+invariants while retaining the two branch-specific projections as the
+implementation and proof obligations.

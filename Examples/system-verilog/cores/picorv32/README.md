@@ -151,6 +151,9 @@ for a loaded-core invariant and does not infer validity from the optional
 adapter.
 The dual `rvfiCycleStepRefines_invalid_step` projection exposes an invalid
 row as an explicit bubble and carries the relation while the ISA stutters.
+The combined `rvfiCycleStepRefines_step` projection dispatches every raw cycle
+to exactly one of those two branches, retaining the validity bit alongside
+the corresponding well-formed retirement or stutter relation.
 The companion `rvfiCycleStepRefines_trace_refines` and
 `rvfiCycleStepRefines_stateAfter_refines` wrappers expose those trace and
 post-window-state results directly from the strict contract.

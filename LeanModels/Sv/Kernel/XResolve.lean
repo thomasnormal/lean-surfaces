@@ -128,6 +128,11 @@ theorem DecisionKnown.same {v : LVec} (h : DecisionKnown v)
     LVec.condTrue w = LVec.condTrue z :=
   (h w z hw hz).2
 
+theorem DecisionKnown.abstract {v : LVec} (h : DecisionKnown v)
+    {w : LVec} (hw : w ∈ LVec.concretizations v) :
+    LVec.condTrue v = LVec.condTrue w :=
+  (h w w hw hw).1
+
 #guard (LVec.concretizations (LVec.ofNat 3 5)).length == 1
 #guard (LVec.concretizations (LVec.xVec 2)).length == 4
 #guard (LVec.concretizations (LVec.toTwoState (LVec.xVec 2))).length == 1
@@ -135,6 +140,11 @@ theorem DecisionKnown.same {v : LVec} (h : DecisionKnown v)
 example : DecisionKnown (LVec.ofNat 3 5) := by
   apply decisionKnown_of_allKnown
   decide
+
+example : ∀ w ∈ LVec.concretizations (LVec.ofNat 3 5),
+    LVec.condTrue (LVec.ofNat 3 5) = LVec.condTrue w := by
+  intro w hw
+  exact DecisionKnown.abstract (decisionKnown_of_allKnown (v := LVec.ofNat 3 5) (by decide)) hw
 
 #print axioms mem_concretizations_resolves
 #print axioms concretizations_of_known

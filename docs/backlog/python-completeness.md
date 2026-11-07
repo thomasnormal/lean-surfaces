@@ -10476,3 +10476,20 @@ architecture item.
 DECIDED: retain guarded static callable aliases, dynamic later shadows, and
 loud identity/forward hazards; schedule first-class function values before
 removing `recognizeDefAliases`.
+
+## 2026-11-07-pycomplete-420 — recheck trailing definition deletion nodes
+
+The trailing-delete rewrite remains absent from current ingestion: `parseStmt`
+keeps every bare-name `Delete` as `.delStmt`, and both script executors refuse a
+static `def`/`class`/namedtuple/alias tombstone before inventing a missing table
+entry. The static deletion rule therefore does not depend on whether the
+statement happens to be at the end of the module.
+
+| Measurement | Result |
+|---|---|
+| Trailing opcode-shaped delete | `del_trailing_script.py` is LOUD; CPython 3.9.25 exits 0 after its output |
+| Mid/partial deletes | `del_def_mid_script.py` and `del_partial_script.py` remain LOUD with CPython's side effects |
+| Semantic change | none; this packet records a verified existing fix |
+
+DECIDED: preserve all trailing definition deletes as source nodes and keep the
+static-table tombstone boundary loud until definitions become runtime bindings.

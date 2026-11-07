@@ -157,10 +157,12 @@ the corresponding well-formed retirement or stutter relation.
 Its dual constructor `rvfiCycleStepRefines_of_step` packages the same
 exhaustive case split into the strict contract, including the valid row's
 existential optional-retirement witness.
-The reverse bridge `cycleStepRefines_to_rvfiCycleStepRefines` lifts an existing
-optional `CycleStepRefines` proof when a separate wire invariant proves every
-valid raw row well formed.  That premise is explicit: without it, the optional
-adapter could hide a malformed valid row as a bubble.
+The reverse bridge `cycleStepRefines_to_rvfiCycleStepRefines_of_rel` lifts an
+existing optional `CycleStepRefines` proof when a separate wire invariant
+proves every valid raw row well formed on related, admitted states.  The global
+specialization `cycleStepRefines_to_rvfiCycleStepRefines` is available when a
+stronger all-state premise is convenient.  Both premises are explicit:
+without one, the optional adapter could hide a malformed valid row as a bubble.
 Under this invariant, `cycleStepRefines_iff_rvfiCycleStepRefines` packages the
 two directions as an equivalence, so a loaded-core proof may choose the
 optional or raw contract without changing its wire obligations.

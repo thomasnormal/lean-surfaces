@@ -4360,3 +4360,22 @@ strict chain boundary.  Updated the PicoRV32 README; no RTL, loader, or
 **DECIDED:** preserve the segmented state boundary in the optional API so a
 loaded-core invariant can resume at the second raw window without rebuilding
 the prefix proof.
+
+## 2026-11-07-ls-sv2-280 — make the optional-to-strict RVFI bridge relation-aware
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`.
+
+Added `cycleStepRefines_to_rvfiCycleStepRefines_of_rel` to
+`LeanModels/Refine/Rvfi.lean`.  The optional-to-strict lift now accepts the
+well-formedness invariant in the form a loaded-core proof naturally supplies:
+for a related core/ISA state and admitted input, every valid raw row is
+well formed.  The previous global-row theorem remains as a specialization, so
+existing callers keep their API while invariant proofs avoid proving facts
+about unreachable machine states.  The malformed-valid obligation remains
+explicit and is still required before an optional `none` can become a strict
+bubble.  Updated the PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**`
+file changed.
+
+**DECIDED:** use relation-aware wire invariants at the raw RVFI boundary, with
+the global premise retained only as a convenience specialization.

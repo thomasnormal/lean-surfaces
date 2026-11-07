@@ -188,3 +188,12 @@ surface.  `MemInstruction` retains a generic RV32I load/store operation and
 decoder proof; its input, state, and retirement folds thread the byte memory
 through mixed programs.  The stateful-machine equations and append bridges
 reuse the existing `memNext`, `memAfter`, and `Rv32iBoundary.mem` semantics.
+
+`MemRvfiTrace` is the raw certificate for that surface.  It admits arbitrary
+invalid RVFI bubbles and requires the next retirement order plus an indexed
+`Rv32iBoundary` witness for every load/store row.  Its normalization theorem
+feeds the existing order-checked RVFI normalizer, and `trace_refines` identifies
+the result with the profile-parametric stateful ISA trace for the same
+threaded memory program.  This is generic refinement infrastructure; the
+PicoRV32 RTL remains parked at the existing unpacked `cpuregs` and
+unsupported-member/net-z loader walls.

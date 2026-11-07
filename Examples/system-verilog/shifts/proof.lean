@@ -45,28 +45,28 @@ theorem logical_left_instantiation (width amountWidth : Nat) :
       .binary (.shl false) (.ident "value") (.ident "amount") := by
   unfold shiftExpr
   rw [logical_left_source]
-  simp [instExpr2, instDivOperand2, divOperandWidth2, fitDivOperand2, List.lookup]
+  simp [instExpr2, instDivOperand2, divOperandWidth2, shiftAmtWidth2, fitDivOperand2, List.lookup]
 
 theorem logical_right_instantiation (width amountWidth : Nat) :
     shiftExpr "logical_right" width amountWidth =
       .binary (.shr false) (.ident "value") (.ident "amount") := by
   unfold shiftExpr
   rw [logical_right_source]
-  simp [instExpr2, instDivOperand2, divOperandWidth2, fitDivOperand2, List.lookup]
+  simp [instExpr2, instDivOperand2, divOperandWidth2, shiftAmtWidth2, fitDivOperand2, List.lookup]
 
 theorem arithmetic_left_instantiation (width amountWidth : Nat) :
     shiftExpr "arithmetic_left" width amountWidth =
       .binary (.ashl false) (.ident "value") (.ident "amount") := by
   unfold shiftExpr
   rw [arithmetic_left_source]
-  simp [instExpr2, instDivOperand2, divOperandWidth2, fitDivOperand2, List.lookup]
+  simp [instExpr2, instDivOperand2, divOperandWidth2, shiftAmtWidth2, fitDivOperand2, List.lookup]
 
 theorem arithmetic_right_instantiation (width amountWidth : Nat) :
     shiftExpr "arithmetic_right" width amountWidth =
       .binary (.ashr true) (.ident "value") (.ident "amount") := by
   unfold shiftExpr
   rw [arithmetic_right_source]
-  simp [instExpr2, instDivOperand2, divOperandWidth2, fitDivOperand2, List.lookup]
+  simp [instExpr2, instDivOperand2, divOperandWidth2, shiftAmtWidth2, fitDivOperand2, List.lookup]
 
 theorem logical_left (value amount : LVec) :
     runShift "logical_left" value amount = .ok (value.shl amount) := by

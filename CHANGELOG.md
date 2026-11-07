@@ -59,6 +59,10 @@
 
 - Docs: recheck the CPython 3.9 recursion-limit model, including active-depth
   restoration across returns, raises, and sibling calls.
+
+- Python: rebase the `float_lab` proof's symbolic execution over the active
+  call-depth guard and structured import resolution; the real float example
+  proof and spec build cleanly under Lean 4.35.
 - Centralized logical `&&`/`||` decoding and short-circuit decisions in
   `ScalarArithmetic` for both callable evaluators and added a value/object
   agreement witness.

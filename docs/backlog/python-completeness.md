@@ -10988,3 +10988,24 @@ does not consume a call frame.
 
 DECIDED: retain the pinned default recursion limit and active-depth unwind;
 keep `sys.setrecursionlimit` outside the tier until it is an explicit oracle.
+
+## 2026-11-07-pycomplete-448 — rebase float proof over call depth
+
+The Lean 4.35 fixture audit's remaining Python failure was in
+`Examples/python/float_lab/proof.lean`: symbolic execution stopped at the
+new `World.callDepth` guard and the structured benign-import table. The proof
+now supplies the exact call-depth transports and structured import reduction
+to its affected `py_simp` calls. The caught zero-division theorem reduces
+directly at its existing bounded fuel, preserving the theorem statement and
+the refusal for set displays.
+
+| Measurement | Result |
+|---|---|
+| Proof build | `Examples.python.float_lab.proof`: 19 jobs passed |
+| Spec build | `Examples.python.float_lab.spec`: 21 jobs passed |
+| Axiom check | no `sorryAx`; only the existing standard Lean axioms appear |
+| Documentation | `python3 tools/docs_check.py`: 89/89 marked blocks |
+| Semantic change | proof transport only; no interpreter or AST changes |
+
+DECIDED: retain the call-depth and structured-import proof reductions as the
+canonical Lean 4.35 fixture maintenance; keep the float semantics unchanged.

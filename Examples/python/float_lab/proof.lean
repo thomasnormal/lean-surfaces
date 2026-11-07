@@ -91,7 +91,9 @@ theorem augmented :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
     addStep, subtractStep, multiplyStep, negateStep]
   rfl
 
@@ -109,7 +111,9 @@ theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
     Float64.arithmetic_sub_self, finite, notNaN, notInvalid]
 
 theorem constructor_identity (value : PyFloat) :
@@ -132,7 +136,9 @@ theorem constructor_unicode :
   unfold callFunction
   rw [initial_world]
   rw [callIn.eq_2]
-  py_simp [float_lab, floatCastArgs, floatCastVal, floatCastArgsH_str, parsed,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, floatCastArgs, floatCastVal, floatCastArgsH_str, parsed,
     float_ne_fstring, float_ne_lenMult, float_ne_starArg, float_ne_starTuple,
     float_ne_starList, funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList,
     Stmt.heapFree, Expr.heapFreeList, Expr.heapFree, moduleGenFree,
@@ -161,7 +167,9 @@ theorem constructor_invalid_caught :
   unfold callFunction
   rw [initial_world]
   rw [callIn.eq_2]
-  py_simp [float_lab, failure, floatCastArgsH_str,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, failure, floatCastArgsH_str,
     float_ne_fstring, float_ne_lenMult, float_ne_starArg, float_ne_starTuple,
     float_ne_starList, funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList,
     Stmt.heapFree, Expr.heapFreeList, Expr.heapFree, moduleGenFree,
@@ -171,8 +179,9 @@ theorem constructor_invalid_caught :
     lenMultBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, isPyBuiltinName, flattenStarRun,
     flattenStarCallArgs, Env.lookup, lookupG, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB, excHandlerNames, excHandlerTuple, excHandlerAdmitted, excHandlerMatches,
-    userExcCatches, classAtExc, builtinExcNameCatches]
+    Run.toPublic, RVal.freezeB, excHandlerNames, excHandlerTuple, excHandlerBare,
+    excHandlerPrimary, excHandlerAdmitted, excHandlerMatches, dynamicShadowHandlerName,
+    userExcCatches, classAtExc, builtinExcNameCatches, builtinExcCatches]
 
 
 theorem infinity_literal :
@@ -227,7 +236,9 @@ theorem floor_tenth :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
 
 theorem remainder_tenth :
     float_lab.remainder_tenth() ==> Float64.ofBits 0x3fb9999999999996 := by
@@ -237,7 +248,9 @@ theorem remainder_tenth :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
 
 theorem floor_infinite :
     float_lab.floor_infinite() ==> Float64.ofBits 0xbff0000000000000 := by
@@ -248,7 +261,9 @@ theorem floor_infinite :
   unfold callFunction
   rw [initial_world]
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, floatCastArgsH_str,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, floatCastArgsH_str,
     floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
     Float64.ofBits, floorStep, parsed,
     float_ne_fstring, float_ne_lenMult, float_ne_starArg, float_ne_starTuple,
@@ -272,7 +287,9 @@ theorem remainder_infinite :
   unfold callFunction
   rw [initial_world]
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, floatCastArgsH_str,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, floatCastArgsH_str,
     floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
     Float64.ofBits, floorStep, parsed,
     float_ne_fstring, float_ne_lenMult, float_ne_starArg, float_ne_starTuple,
@@ -304,7 +321,9 @@ theorem floor_nan_pair :
   rw [callIn.eq_2]
   have nanStep : Float64.floorRemWithNaN ⟨0x7ff8000000000001⟩ ⟨0x3ff0000000000000⟩ =
       .ok (⟨0x7ff8000000000001⟩, ⟨0x7ff8000000000001⟩) := rfl
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber,
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber,
     Float64.ofBits, nanStep,
     divmod_ne_fstring, divmod_ne_lenMult, divmod_ne_starArg,
     divmod_ne_starTuple, divmod_ne_starList, funsHeapFree,
@@ -333,30 +352,13 @@ theorem floor_augmented :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep, remainderStep]
+  py_simp [pythonRecursionLimit, pythonTopCallDepth, Run.finishCallAt, Run.leaveCallDepth,
+    benignImportBindsStructured,
+    float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep, remainderStep]
 
 theorem floor_zero_caught :
     float_lab.floor_zero_caught(2) ==> (23 : PyInt) := by
-  have negateStep : (⟨0⟩ : Float64).neg = ⟨0x8000000000000000⟩ := rfl
-  have zeroStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x8000000000000000⟩ =
-      .error .zeroDivision := rfl
-  refine ⟨64, ?_⟩
-  unfold callFunction
-  rw [initial_world]
-  rw [callIn.eq_2]
-  py_simp [float_lab, evalBinOpH, setLikeRefH, divmodArgs, evalFloatDivmod,
-    floatNumber, negateStep, zeroStep,
-    divmod_ne_fstring, divmod_ne_lenMult, divmod_ne_starArg,
-    divmod_ne_starTuple, divmod_ne_starList, funsHeapFree,
-    FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
-    Expr.heapFreeList, Expr.heapFree, moduleGenFree, funsGenAllocFree,
-    Stmt.genAllocFree, Stmt.genAllocFreeList, topLevelDefFree,
-    Stmt.defFreeList, Stmt.defFree, starArgBuiltinName, starListBuiltinName,
-    starTupleBuiltinName, fstringFormatBuiltinName, lenMultBuiltinName,
-    hasUnboundLocal, unboundLocalMarker, isLoweredBuiltinName,
-    isPyBuiltinName, flattenStarRun, flattenStarCallArgs, Env.lookup,
-    lookupG, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB, excHandlerNames, excHandlerTuple, excHandlerAdmitted, excHandlerMatches,
-    userExcCatches, classAtExc, builtinExcNameCatches]
+  exact ⟨64, rfl⟩
 
 
 #print axioms floor_tenth

@@ -10342,6 +10342,23 @@ frontier as documented.
 DECIDED: keep ordinary `AugAssign` semantics and refuse only the already
 documented boundary mutation shape.
 
+## 2026-11-07-pycomplete-454 — audit boundary augmented-repeat rewrite
+
+The high-priority `py-boundary-augrepeat-rewrite` finding is already fixed.
+The shape-specific ingestion rewrite is absent, so ordinary `AugAssign` keeps
+in-place heap-list behavior and the operator-specific error path. The public
+boundary list mutation remains an explicit refusal because boundary aliasing is
+not yet wired.
+
+| Measurement | Result |
+|---|---|
+| Module alias witness | `list_aug_repeat_script.py`: MATCH, `True [1, 2, 1, 2]` |
+| Boundary behavior | list `*=` remains loud as documented |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-boundary-augrepeat-rewrite` as already fixed; retain the
+boundary aliasing refusal until the thawed heap-list argument path is wired.
+
 ## 2026-11-07-pycomplete-409 — recheck dead yield-target handling
 
 The dead-yield target audit finding is already closed by the extractor's

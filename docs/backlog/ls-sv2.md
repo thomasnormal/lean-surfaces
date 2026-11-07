@@ -4461,3 +4461,24 @@ retirement stream.  Updated the PicoRV32 README; no RTL, loader, or
 
 **DECIDED:** keep normalization failure proof-visible as absence of a valid
 order/decode certificate rather than exposing a fabricated fallback stream.
+
+## 2026-11-07-ls-sv2-286 — make RVFI normalization certificates functional
+
+The inboxes and goal file were reread before this item.  The generated-member
+memory-route refusal remains with `ls-sv`; this item stays in the owned generic
+RVFI boundary.
+
+Added `RvfiTraceRefines.functional` to `LeanModels/Refine/Rvfi.lean`.  For a
+fixed starting order and raw observation window, two proof-facing RVFI
+normalization certificates now imply equality of their retirement lists.  The
+proof goes through the executable normalizer equivalence, so it introduces no
+second trace semantics and keeps malformed rows and order gaps loud.
+Updated the PicoRV32 README; no RTL, loader, or `LeanModels/Sv/**` file changed.
+
+**MEASURED:** `lake build LeanModels.Refine` passed all 24 jobs.  The theorem's
+axiom report contains only the existing `propext`/`Classical.choice`/
+`Quot.sound` boundary; no `sorryAx` or new axiom was introduced.
+
+**DECIDED:** treat a successful raw normalization certificate as a functional
+boundary, so later loaded-core proofs can transport it without selecting among
+competing retirement streams.

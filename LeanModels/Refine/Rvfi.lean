@@ -287,6 +287,19 @@ theorem normalizeRvfiTrace?_eq_none_iff {start : Nat}
     | some retirements =>
         exact False.elim (hno ⟨retirements, (normalizeRvfiTrace?_iff).1 hnorm⟩)
 
+/-! A raw RVFI window has at most one proof-facing retirement stream.  This
+functional property is useful when a loaded-core invariant supplies a
+certificate independently of the executable normalizer: the certificate may
+be transported without introducing a second, potentially different stream. -/
+theorem RvfiTraceRefines.functional {start : Nat}
+    {observations : List RvfiObservation} {first second : List Retirement}
+    (hfirst : RvfiTraceRefines start observations first)
+    (hsecond : RvfiTraceRefines start observations second) :
+    first = second := by
+  have hfirst' := (normalizeRvfiTrace?_iff).2 hfirst
+  have hsecond' := (normalizeRvfiTrace?_iff).2 hsecond
+  exact Option.some.inj (hfirst'.symm.trans hsecond')
+
 /-! A successful normalization classifies every raw row: invalid rows are
 explicit bubbles, while every valid row is well formed.  This is proved
 directly from the executable checker rather than through the certificate
@@ -1486,6 +1499,7 @@ end LeanModels.Refine
 #print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_some_iff
 #print axioms LeanModels.Refine.RvfiObservation.toRetirement?_eq_none_iff
 #print axioms LeanModels.Refine.normalizeRvfiTrace?_eq_none_iff
+#print axioms LeanModels.Refine.RvfiTraceRefines.functional
 #print axioms LeanModels.Refine.Retirement.toRvfi?_bind_toRetirement?
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_toCycleStepRefines
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_valid_step

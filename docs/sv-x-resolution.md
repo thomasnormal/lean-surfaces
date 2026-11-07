@@ -111,7 +111,8 @@ The first kernel-facing fragment is now present in
 `LeanModels.Sv.Kernel.XResolve`: `DecisionKnown v` states that all correlated
 concretizations of a condition agree on `condTrue`, and
 `decisionKnown_of_allKnown` proves the cheap sufficient case used by current
-proofs. It is a predicate and theorem only; execution remains behind the
+proofs; `DecisionKnown.abstract` exposes the agreement with the abstract
+condition for each concretization. It is a predicate and theorem only; execution remains behind the
 boundary above until the state and trace relation is connected.
 
 The first regression witnesses are the clean-room designs measured by the

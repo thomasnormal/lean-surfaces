@@ -413,6 +413,91 @@ theorem rvfiCycleStepRefines_of_sw_memory
     right
     exact ⟨hv', hrel'⟩
 
+/-! ## Memory-threaded load cycle case
+
+The stateful load constructor keeps the input-memory equality visible before
+the raw load boundary is consumed.  The resulting relation carries the loaded
+register value and the unchanged byte memory together. -/
+
+theorem rvfiCycleStepRefines_of_lw_memory
+    {State : Type} (profile : PlatformProfile)
+    (machine : RvfiCycleMachine State)
+    (rel : State → RvMemoryState → Prop) (admit : Input → Prop)
+    (hinit : rel machine.init (rvMemoryMachineWith profile).init)
+    (hstep : ∀ (state : State) (memoryState : RvMemoryState) (input : Input),
+      rel state memoryState → admit input →
+      let (state', observation) := machine.step state input
+      if observation.valid then
+        ∃ w rd rs1 imm,
+          input.memory = memoryState.memory ∧
+          observation.lwBoundary memoryState.arch input w rd rs1 imm ∧
+          rel state'
+            { arch := lwNext memoryState.arch memoryState.memory rd rs1 imm,
+              memory := memoryState.memory }
+      else rel state' memoryState) :
+    RvfiCycleStepRefines machine (rvMemoryMachineWith profile) rel admit := by
+  apply rvfiCycleStepRefines_of_step hinit
+  intro state memoryState input hrel hadmit
+  have hcase := hstep state memoryState input hrel hadmit
+  rcases hmachine : machine.step state input with ⟨state', observation⟩
+  simp only [hmachine] at hcase
+  rcases hisa : (rvMemoryMachineWith profile).step memoryState input with
+    ⟨memoryState', retirement⟩
+  simp only
+  change (observation.valid = true ∧ observation.wellFormed ∧
+      rel state' memoryState' ∧ observation.toRetirement = retirement) ∨
+    (observation.valid = false ∧ rel state' memoryState)
+  by_cases hv : observation.valid = true
+  · have hcase' : ∃ w rd rs1 imm,
+        input.memory = memoryState.memory ∧
+        observation.lwBoundary memoryState.arch input w rd rs1 imm ∧
+        rel state'
+          { arch := lwNext memoryState.arch memoryState.memory rd rs1 imm,
+            memory := memoryState.memory } := by
+      simpa [hv] using hcase
+    rcases hcase' with ⟨w, rd, rs1, imm, hmem, hboundary, hrel'⟩
+    have hwell : observation.wellFormed := by
+      exact hboundary.1.2.2.2.2.1
+    have hto : observation.toRetirement =
+        lwRetirement memoryState.arch input rd rs1 imm := by
+      have hsome := observation.toRetirement?_eq_some hv hwell
+      exact Option.some.inj (hsome.symm.trans hboundary.2)
+    have hstate : memoryState =
+        { arch := memoryState.arch, memory := input.memory } := by
+      cases memoryState with
+      | mk arch memory => simp [hmem]
+    have hstepLw := observation.lwBoundary_rvMemoryMachineWith
+      profile memoryState.arch input w rd rs1 imm hboundary
+    have hstepLw' :
+        (rvMemoryMachineWith profile).step memoryState input =
+          ({ arch := lwNext memoryState.arch memoryState.memory rd rs1 imm,
+             memory := memoryState.memory },
+            lwRetirement memoryState.arch input rd rs1 imm) := by
+      rw [hstate]
+      simpa [hmem] using hstepLw
+    have hpair : (memoryState', retirement) =
+        ({ arch := lwNext memoryState.arch memoryState.memory rd rs1 imm,
+           memory := memoryState.memory },
+          lwRetirement memoryState.arch input rd rs1 imm) := by
+      rw [← hisa, hstepLw']
+    have hstate' : memoryState' =
+        { arch := lwNext memoryState.arch memoryState.memory rd rs1 imm,
+          memory := memoryState.memory } := congrArg Prod.fst hpair
+    have hretirement : retirement =
+        lwRetirement memoryState.arch input rd rs1 imm :=
+      congrArg Prod.snd hpair
+    rw [hstate', hretirement]
+    left
+    exact ⟨hv, hwell, hrel', hto⟩
+  · have hv' : observation.valid = false := by
+      cases hvalue : observation.valid with
+      | false => exact rfl
+      | true => exact False.elim (hv hvalue)
+    have hrel' : rel state' memoryState := by
+      simpa [hv, hv'] using hcase
+    right
+    exact ⟨hv', hrel'⟩
+
 /-! ## Core-facing load cycle case
 
 The load constructor keeps the memory view in the raw boundary: the valid
@@ -488,6 +573,7 @@ theorem rvfiCycleStepRefines_of_lw
 #print axioms LeanModels.Refine.RvfiObservation.lwBoundary_rvMemoryMachineWith
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_sw
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_sw_memory
+#print axioms LeanModels.Refine.rvfiCycleStepRefines_of_lw_memory
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_lw
 
 end LeanModels.Refine

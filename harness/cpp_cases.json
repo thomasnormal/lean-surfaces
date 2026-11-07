@@ -2347,6 +2347,17 @@
     "rung": 8
   },
   {
+    "id": "translation.resolved-operator-boolean-kind-refusal",
+    "kind": "translation",
+    "corpus": "translation refusal",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "resolvedOperatorBooleanKindRefusal",
+    "cpp_source": "struct S {}; S operator+(S, S); int f(S a, S b) { return 0; }",
+    "expect": "refuse",
+    "rung": 8
+  },
+  {
     "id": "translation.resolved-operator-malformed-string-refusal",
     "kind": "translation",
     "corpus": "translation refusal",

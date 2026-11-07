@@ -166,6 +166,12 @@ theorem decisionKnown_of_allKnown {v : LVec}
   rw [concretizations_of_known h] at hw hz
   simp_all [DecisionKnown]
 
+theorem ResolvedDecision.of_allKnown {source result : LVec}
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hres : result ∈ LVec.concretizations source) :
+    ResolvedDecision source result :=
+  ⟨hres, decisionKnown_of_allKnown hknown⟩
+
 theorem DecisionKnown.same {v : LVec} (h : DecisionKnown v)
     {w z : LVec} (hw : w ∈ LVec.concretizations v)
     (hz : z ∈ LVec.concretizations v) :

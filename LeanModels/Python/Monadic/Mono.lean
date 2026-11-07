@@ -96,6 +96,22 @@ theorem PyLe.bind {σ α β : Type} {x x' : PyM σ α} {f f' : α → PyM σ β}
       | error e => right; rfl
       | ok a => exact PyLe_iff.mp (hf a) s'
 
+theorem PyLe.foldlM {σ α β : Type} {f f' : β → α → PyM σ β}
+    (hf : ∀ b a, f b a ⊑ₚ f' b a) :
+    ∀ (xs : List α) (init : β),
+      List.foldlM f init xs ⊑ₚ List.foldlM f' init xs := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro init
+      exact PyLe.refl' _
+  | cons x xs ih =>
+      intro init
+      simp only [List.foldlM]
+      apply PyLe.bind (hf init x)
+      intro next
+      exact ih next
+
 /-! `Functor.map` is the pure bind shape of this stack.  Keeping its
 congruence explicit lets the fuel-free walker close mapped argument-splices
 without unfolding the entire `StateT`/`ExceptT` implementation. -/
@@ -214,6 +230,7 @@ macro_rules
            | (with_reducible exact PyLe.refl' _)
            | (($leaf); done)
            | apply PyLe.bind
+           | apply PyLe.foldlM
            | apply PyLe.ite
            | apply PyLe.tryCatch
            | apply PyLe.inFrame
@@ -232,6 +249,7 @@ macro_rules
            | (with_reducible exact PyLe.refl' _)
            | (($leaf); done)
            | apply PyLe.bind
+           | apply PyLe.foldlM
            | apply PyLe.ite
            | apply PyLe.tryCatch
            | apply PyLe.inFrame

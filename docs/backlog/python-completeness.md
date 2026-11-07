@@ -10101,3 +10101,21 @@ added parser and extractor regression checks.
 
 DECIDED: keep `ListComp` source-level and loud until a native comprehension
 node and evaluator exist; ingestion no longer invents a builtin lookup.
+
+## 2026-11-07-pycomplete-400 — prove monadic fold monotonicity
+
+The native list-comprehension proof surface needs a congruence for the eager
+stateful accumulator used by the monadic evaluator. Added `PyLe.foldlM`, an
+induction over the folded list that composes the pointwise callback relation
+with `PyLe.bind`, and registered it in both `mono_with` walkers. This is a
+reusable proof combinator; it does not alter runtime behavior or weaken the
+approximation order.
+
+| Measurement | Result |
+|---|---|
+| Proof build | managed `lake build LeanModels.Python.Monadic.Mono`: 15 jobs passed |
+| Axiom check | the new theorem depends only on the existing `PyLe` relation and `propext` through `PyLe.bind` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep list-fold sequencing explicit in the proof layer; use the new
+congruence when the native `ListComp` evaluator is reintroduced.

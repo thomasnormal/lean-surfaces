@@ -1256,3 +1256,45 @@ and evaluates it once, before the first stimulus. With `a=2'b11` on that first
 cycle, `q` is still `2'b0x`, proving the time-zero read of the initially
 unknown input and the unsigned zero-extension. The exact source process,
 initializer expression, and result are guarded in [`walls/probe.lean`](walls/probe.lean).
+## 2026-11-08 re-probe after parametric x/z admission (`0050a0d69`)
+
+The owner change `0050a0d69` is now in public master.  I re-extracted the
+unchanged YosysHQ source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` with the approved extractor.  The
+1.986-second extraction is byte-for-byte stable at 2,991,505 bytes:
+
+```text
+source SHA-256:   0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622
+envelope SHA-256: f636b29a893e51275f200d685b1feee4f2047f3c33fa733d0eb42b3f8c3e855c
+```
+
+`load_design_sv2` accepts the envelope.  The literal `PDesign` has one module,
+26 parameters, 18 localparams, 216 declarations, 43 processes, three generate
+entries, and 32 retained `others` entries.  At the pinned defaults
+`[1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,
+4294967295, 0, 16, 4294967295]`, both `instantiateD2` and the generated
+`.sem` family still return the exact ordinary-route refusal:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now admits the PCPI net-z members and the
+`IntegerLiteral:unsized-xz-parametric` `'bx` member.  The first remaining
+metadata entry is `ConversionExpression:xz-literal-parametric` at
+`picorv32.v:1132`, the `1'bx` in `decoded_imm <= 1'bx;`.  `instantiateMemD2`
+therefore returns the exact generic wall:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The failed `MemDesign2` has zero scalar and memory declarations and one
+unsupported process.  This is a new conversion-shaped generic wall, so a
+minimal source-shaped repro was filed in the ls-sv inbox (source SHA-256
+`70551f62db7d87b2ffb047376efd61e801d8c0b7c5ad0ee6fc49f2b082c5f0c6`, envelope
+SHA-256 `aa3007af985290e03c15ba2a35a8a58b02b324631a6505661ac8824afa1ea01c`).
+No RTL adaptation or symbolic ADDI invariant is claimed; re-probe after the
+conversion wall is admitted.

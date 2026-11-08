@@ -7651,3 +7651,67 @@ but no core currently loads on the memory route.  Wait for the generic
 declaration-initializer or constant-width repair; if the owner admits one,
 re-probe all three and start the ADDI invariant only for the first admitted
 core.
+
+## 2026-11-08-ls-sv2-407 — re-probe PicoRV32 after parametric x/z admission
+
+The inbox was reread first.  Public master contains ls-sv's `0050a0d69`
+(`sv: admit parametric xz literals in memory route`), so I re-extracted and
+reloaded the unchanged pinned PicoRV32 source before deciding whether the R2
+step invariant could start.
+
+**MEASURED:** The source is YosysHQ `picorv32` commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`.  The approved extractor took
+1.986 seconds and emitted a byte-for-byte stable 2,991,505-byte envelope.
+The source SHA-256 is
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`; the
+external envelope SHA-256 is
+`f636b29a893e51275f200d685b1feee4f2047f3c33fa733d0eb42b3f8c3e855c`.
+`load_design_sv2` accepts the envelope.  Its literal `PDesign` has one module,
+26 parameters, 18 localparams, 216 declarations, 43 processes, three generate
+entries, and 32 retained metadata entries.
+
+At the recorded defaults, both `instantiateD2` and the generated `.sem` family
+return the ordinary-route refusal:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route admits the eight PCPI `NetSymbol:net-z` members and the
+`IntegerLiteral:unsized-xz-parametric` `'bx` member admitted by `0050a0d69`.
+Its first remaining denied metadata is
+`ConversionExpression:xz-literal-parametric` at `picorv32.v:1132`, the
+source statement `decoded_imm <= 1'bx;`.  `instantiateMemD2` returns exactly:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The returned failed `MemDesign2` has zero scalar and memory declarations and
+one unsupported process.  The fresh clean-room repro is a parameter-sized
+memory assigned `'bx`; its source SHA-256 is
+`70551f62db7d87b2ffb047376efd61e801d8c0b7c5ad0ee6fc49f2b082c5f0c6` and its
+pyslang-11 envelope SHA-256 is
+`aa3007af985290e03c15ba2a35a8a58b02b324631a6505661ac8824afa1ea01c`.  The
+repro retains `ConversionExpression:xz-literal-parametric` before
+`IntegerLiteral:unsized-xz-parametric`, and the memory probe reproduces the
+same loud wall.
+
+**CHANGED:** Updated both PicoRV32 status READMEs with the current envelope,
+counts, route results, source construct, and hashes.  Filed a new
+`REQUEST ls-sv:` in the owner inbox for the conversion-shaped generic wall.
+No RTL, extractor, generated envelope, ls-sv-owned semantics, or finite
+captured-window lemma was edited.
+
+**VALIDATION:** Rebuilt `LeanModels.Sv.Kernel.MemCycle`, then ran the official
+PicoRV32 wall probe and the external owner0050 probe; both passed.  The latter
+checks `load_design_sv2`, `instantiateD2`, `.sem`, `instantiateMemD2`, the
+parameter/module/process counts, and the exact refusal strings.  `git diff
+--check` passed before the documentation commit.
+
+**JUDGED / DECIDED:** PicoRV32 still does not load on an admitted memory route,
+so the symbolic `ADDI` invariant remains parked.  Re-probe after the owner
+admits `ConversionExpression:xz-literal-parametric`; then repeat the smaller
+core census after the declaration-initializer repair.

@@ -488,3 +488,31 @@ request was filed in the ls-sv inbox.  The external repro is
 `c6fd179b1c79448ed81918ef4b2d8f2b79b6cdbc891c96cbf10b8a08443351da` and
 pyslang-11 envelope SHA-256
 `6a649ad976ea82f8698cea10a41df120710f2a39fe07c90dbe4bc1cb66920cb6`.
+
+## 2026-11-08 PicoRV32 re-probe after parametric x/z admission (`0050a0d69`)
+
+The owner change `0050a0d69` is on public master.  Re-extracting the unchanged
+PicoRV32 source commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` produces a byte-for-byte stable
+2,991,505-byte envelope (source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`, envelope
+SHA-256
+`f636b29a893e51275f200d685b1feee4f2047f3c33fa733d0eb42b3f8c3e855c`).
+`load_design_sv2` accepts one module with 26 parameters, 18 localparams, 216
+declarations, 43 processes, three generate entries, and 32 retained metadata
+entries.
+
+At the recorded defaults, `instantiateD2` and `.sem` still stop at the
+ordinary-route `cpuregs` unpacked-memory refusal.  The memory route admits the
+PCPI net-z members and the unsized parametric `'bx` marker, then stops at
+`ConversionExpression:xz-literal-parametric` for `1'bx` in
+`picorv32.v:1132` (`decoded_imm <= 1'bx;`) with the exact result:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+This conversion-shaped wall is a new generic instance; a clean-room
+parameter-sized memory repro was filed with ls-sv.  No candidate core currently
+loads on the memory route, so the symbolic ADDI invariant remains parked.

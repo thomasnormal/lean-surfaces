@@ -88,12 +88,13 @@ closed form keeps `Inv`, every schedule and every stimulus completes (for a desi
 `case`: master's `run2` runs the qualified-case trace check, `Terminates2.of_invariant`'s `hnoq`). -/
 theorem terminates (hC : REdgeRun2 d enc Inv pre post n) {x0 : X} (h0 : initState2 d = enc x0)
     (hI0 : Inv x0) (hpost : ∀ x e, Inv x → Inv (post x e))
-    (hnq : d.processes.toList.any Process2.hasQualifiedCase = false) : Terminates2 d :=
+    (hnq : d.processes.toList.any Process2.hasQualifiedCase = false)
+    (hclock : run2ClockGuard d = .ok ()) : Terminates2 d :=
   Terminates2.of_invariant (fun st => ∃ x, Inv x ∧ st = enc x) ⟨x0, hI0, h0⟩ (fun σ =>
     ⟨0 + n, fun e st k ⟨x, hx, hst⟩ => by
       subst hst
       obtain ⟨-, k', hk⟩ := hC σ e x k 0 hx
-      exact ⟨_, k', hk, post x e, hpost x e hx, rfl⟩⟩) hnq
+      exact ⟨_, k', hk, post x e, hpost x e hx, rfl⟩⟩) hnq hclock
 
 /-- **R-CYCLE from the closed form**: a cycle machine `m` with an abstraction `abs` between the
 encoded state and (store, held inputs) that the closed form respects (both samples are `m.out`, and

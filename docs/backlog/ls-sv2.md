@@ -7586,3 +7586,28 @@ was added.
 mixed decoder-evidence projection rather than opening each family constructor.
 Continue only with the remaining listed headline facts; keep the symbolic
 PicoRV32 proof parked at the owner loader wall.
+
+## 2026-11-08-ls-sv2-393 — state the mixed result through `rvMemoryStateAfter`
+
+Item 393 closes the stateful-machine form of the second bounded headline
+fact.  `rvMemoryStateAfter_rv32i_program` states directly that threading
+`rvMemoryMachineWith profile` over the mixed program inputs yields
+`rv32iProgramState`; it uses the existing per-step mixed machine theorem and
+does not introduce another state representation.  The mixed trace law already
+has the direct `trace (rvMemoryMachineWith profile)` form required by the
+headline.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean` passes on
+Lean 4.35.0.  The new theorem has the standard
+`[propext, Classical.choice, Quot.sound]` footprint and no `sorryAx` or custom
+axiom.  No loaded-core or oracle result is claimed.
+
+**CHANGED:** Added the direct state-after theorem and its axiom print to
+`LeanModels/Refine/RvfiRv32iProgram.lean`; no alternative state package,
+per-instruction wrapper, RTL, loader, extractor, or finite captured-window
+lemma was added.
+
+**JUDGED / DECIDED:** The R2 headline's target-state equation now names the
+public state function it consumes.  Continue only with a genuinely missing
+fact from the bounded list; keep PicoRV32 parked at the unchanged owner
+loader wall.

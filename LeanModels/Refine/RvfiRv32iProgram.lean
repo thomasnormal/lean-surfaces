@@ -276,6 +276,15 @@ theorem rvMemoryMachineWith_rv32i_program_state
       simpa [rv32iProgramState] using
         (ih (state := rv32iProgramStep state instruction))
 
+/-- The mixed program state is the stateful machine's public
+`rvMemoryStateAfter` result, in the exact form consumed by the R2 headline. -/
+theorem rvMemoryStateAfter_rv32i_program
+    (profile : PlatformProfile) (state : RvMemoryState)
+    (program : List Rv32iInstruction) :
+    rvMemoryStateAfter profile state (rv32iProgramInputs state program) =
+      rv32iProgramState state program := by
+  exact rvMemoryMachineWith_rv32i_program_state profile state program
+
 theorem rvMemoryMachineWith_rv32i_program_trace
     (profile : PlatformProfile) (state : RvMemoryState)
     (program : List Rv32iInstruction) :
@@ -708,6 +717,7 @@ theorem Rv32iRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rv32iProgramInput_fetched
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_step
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_state
+#print axioms LeanModels.Refine.rvMemoryStateAfter_rv32i_program
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace
 #print axioms LeanModels.Refine.rvfiCycleStepRefines_of_rv32i_program
 #print axioms LeanModels.Refine.rv32iRvfiCycleTrace_of_step

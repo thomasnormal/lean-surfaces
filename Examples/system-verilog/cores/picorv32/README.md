@@ -1221,3 +1221,21 @@ first denied metadata is the already catalogued `IntegerLiteral:unsized-xz-param
 `'bx`, after the admitted net-z members.  No duplicate `REQUEST ls-sv:` is
 filed; the symbolic ADDI invariant remains parked at the existing generic
 unpacked-memory and parametric-x/z walls.
+
+## 2026-11-08 re-probe after parametric x/z admission
+
+The memory-cycle adapter now admits the exact
+`IntegerLiteral:unsized-xz-parametric` member marker for this source-shaped
+write. The ordinary route still refuses the parameter-sized `mem` declaration
+because it is outside the flat E store, while `instantiateMemD2 [4]` retains
+the two source processes:
+
+```text
+assign q = mem[0]
+assign mem[0] = 'bx
+```
+
+The memory state preserves the literal as unknown data. A one-cycle `runMem2`
+trace therefore reads `q` as 32 bits of `x`, as guarded in
+[`walls/probe.lean`](walls/probe.lean). Other unsupported module members and
+all unrelated x/z shapes remain loud.

@@ -73,6 +73,13 @@ private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
   | _ => false
 
 #guard match (xz_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+  | [.assign "q" (.arrayElem "mem" [.int 0]),
+      .assignL (.arrayElem "mem" [.int 0]) (.lit _)] => true
+  | _ => false
+
+-- The admitted unsized `'bx` remains an x-valued memory cell and therefore
+-- produces x on the continuous read; it is never turned into a convenient 0.
+#guard match LeanModels.Sv.Kernel.runMem2 (xz_memory_wall.pdesign.instantiateMemD2 [4]) 32
+    [[("clk", LeanModels.Sv.LVec.lit "0")]] with
+  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 32)
   | _ => false

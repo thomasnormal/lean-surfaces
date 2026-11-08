@@ -53,7 +53,8 @@ extractor, while their calls are represented by the existing empty statement
 node.  Every other unsupported module member remains a loud memory-route
 boundary. -/
 def memAllowedOther (entry : String × String) : Bool :=
-  entry.1 == "SubroutineSymbol:empty-task" || entry.1 == "NetSymbol:net-z"
+  entry.1 == "SubroutineSymbol:empty-task" || entry.1 == "NetSymbol:net-z" ||
+    entry.1 == "IntegerLiteral:unsized-xz-parametric"
 
 /-- Source-shaped scalar declarations for memory-route members that have no
 runtime process body.  An undriven wire is a one-bit z-valued net (§6.6), so

@@ -2952,17 +2952,20 @@ private def checkDecls (env : IEnv) : List PDecl → List String
             | some r => if r == w then tail
                         else s!"decl '{pd.name}': our width {w} ≠ resolved {r}" :: tail
             | none => tail
-      else match instDecl env pd with
-      | .ok dc =>
+      else match pd.type.width env with
+      | .error e => [s!"decl '{pd.name}': {e}"]
+      | .ok w =>
+          -- A runtime declaration initializer is source-shaped state at
+          -- time zero, not defaults metadata. Keep the width differential
+          -- check here; flat M0 instantiation remains loud, while the
+          -- source-shaped memory route evaluates the retained expression.
           let tail := checkDecls
-            { env with widths := (pd.name, dc.width) :: env.widths } rest
+            { env with widths := (pd.name, w) :: env.widths } rest
           match pd.type.resolved? with
           | some r =>
-              if r == dc.width then tail
-              else s!"decl '{pd.name}': our width {dc.width} ≠ resolved {r}" :: tail
+              if r == w then tail
+              else s!"decl '{pd.name}': our width {w} ≠ resolved {r}" :: tail
           | none => tail
-      | .timeout => [s!"decl '{pd.name}': timeout"]
-      | .unsupported e => [e]
 
 private def checkGenerates (env : IEnv) (iterFuel : Nat) : List GenItem → List String
   | [] => []

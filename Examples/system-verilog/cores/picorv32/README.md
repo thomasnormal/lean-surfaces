@@ -1239,3 +1239,20 @@ The memory state preserves the literal as unknown data. A one-cycle `runMem2`
 trace therefore reads `q` as 32 bits of `x`, as guarded in
 [`walls/probe.lean`](walls/probe.lean). Other unsupported module members and
 all unrelated x/z shapes remain loud.
+
+## 2026-11-08 nonliteral declaration initializer
+
+The clean-room [`nonliteral_initializer.sv`](walls/nonliteral_initializer.sv)
+fixture isolates a source-shaped declaration initializer:
+
+```text
+logic [1:0] t = a;
+assign q = t;
+```
+
+The ordinary flat semantic family remains a loud `Instantiate` design for this
+shape. The memory-cycle route retains the lowered `Resize(Ident a)` initializer
+and evaluates it once, before the first stimulus. With `a=2'b11` on that first
+cycle, `q` is still `2'b0x`, proving the time-zero read of the initially
+unknown input and the unsigned zero-extension. The exact source process,
+initializer expression, and result are guarded in [`walls/probe.lean`](walls/probe.lean).

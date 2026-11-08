@@ -81,6 +81,11 @@ kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
 
+The memory route also retains scalar declaration initializers that read
+signals. The `nonliteral_initializer` clean-room fixture evaluates
+`logic [1:0] t = a` before the first input sample, so an initial `a=2'b11`
+stimulus still observes `q=2'b0x`; the ordinary flat route remains loud.
+
 The memory route also preserves the exact parametric x/z literal marker used
 by a retained cell driver. In the clean-room `xz_memory` fixture, `'bx`
 remains an unknown-valued `PExpr.lit` and the one-cycle read is all-x at the

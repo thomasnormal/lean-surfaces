@@ -30,6 +30,9 @@ structure MemDesign2 where
   env : IEnv
   decls : List Decl
   memDecls : List PDecl
+  /-- Runtime declaration initializers, evaluated in source order before the
+      first input sample. Literal initializers remain on `Decl`. -/
+  initializers : List (String × Expr2)
   processes : List PProcess
 deriving Repr, Inhabited
 
@@ -198,8 +201,27 @@ def memExpandIters (env : IEnv) (iterFuel : Nat) (vals : List (String × Int))
   termination_by vs body => (sizeOf body, vs.length)
 end
 
-def scalarDeclsMem (env : IEnv) : List PDecl → Res (List Decl)
-  | [] => .ok []
+def instDeclMem (env : IEnv) (pd : PDecl) : Res (Decl × Option (String × Expr2)) :=
+  if !pd.unpackedDims.isEmpty then
+    .unsupported s!"decl '{pd.name}': unpacked array storage outside E (UnpackedDecl:memory)"
+  else match pd.type.width env with
+  | .error e => .unsupported s!"decl '{pd.name}': {e}"
+  | .ok w =>
+      let base : Decl :=
+        { name := pd.name, width := w, isSigned := pd.isSigned,
+          isNet := pd.isNet, twoState := pd.twoState,
+          isInput := pd.isInput, isOutput := pd.isOutput }
+      match pd.init with
+      | none => .ok (base, none)
+      | some ie =>
+          if pd.isNet then
+            .unsupported s!"decl '{pd.name}': non-literal net initializer is a continuous driver outside E"
+          else match instExpr2 env [] (some w) ie with
+            | .lit v => .ok ({ base with init := some v }, none)
+            | e => .ok (base, some (pd.name, e))
+
+def scalarDeclsMem (env : IEnv) : List PDecl → Res (List Decl × List (String × Expr2))
+  | [] => .ok ([], [])
   | pd :: rest =>
       match pd.type.width env with
       | .error e => .unsupported s!"decl '{pd.name}': {e}"
@@ -209,13 +231,12 @@ def scalarDeclsMem (env : IEnv) : List PDecl → Res (List Decl)
             match pd.memShape? env with
             | .error e => .unsupported e
             | .ok _ => scalarDeclsMem env' rest
-          else
-            match instDecl env pd with
+          else match instDeclMem env pd with
             | .unsupported e => .unsupported e
             | .timeout => .timeout
-            | .ok dc =>
+            | .ok (dc, init?) =>
                 match scalarDeclsMem env' rest with
-                | .ok ds => .ok (dc :: ds)
+                | .ok (ds, is) => .ok (dc :: ds, init?.toList ++ is)
                 | .unsupported e => .unsupported e
                 | .timeout => .timeout
 
@@ -226,21 +247,21 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   let env ← d.paramEnv2 args
   if d.others.any fun entry => !memAllowedOther entry then
     .unsupported "memory cycle route does not yet admit unsupported module members"
-  let scalarDecls ← scalarDeclsMem env d.decls
+  let (scalarDecls, initializers) ← scalarDeclsMem env d.decls
   let decls := scalarDecls ++ memOtherDecls d.others
   let generated ← memExpandList env iterFuel [] d.generates
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
   return { name := d.name, env := envP, decls, memDecls := memDeclsOf d,
-           processes := d.processes ++ generated }
+           initializers, processes := d.processes ++ generated }
 
 def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
   match instantiateMem2 d args (PDesign.surfaceFuel args) with
   | .ok m => m
   | .timeout =>
-      { name := d.name, env := {}, decls := [], memDecls := [], processes :=
+      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], processes :=
           [.unsupported "Instantiate" "memory cycle route exhausted executor fuel"] }
   | .unsupported msg =>
-      { name := d.name, env := {}, decls := [], memDecls := [], processes :=
+      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], processes :=
           [.unsupported "Instantiate" msg] }
 
 def MemDesign2.initState (d : MemDesign2) : MemCycleState :=
@@ -251,6 +272,18 @@ def MemDesign2.initState (d : MemDesign2) : MemCycleState :=
       match pd.memShape? d.env with
       | .ok (some shape) => shape
       | _ => { name := pd.name, elemWidth := 0, msb := 0, lsb := 0 })) }
+
+def MemDesign2.initStateRes (d : MemDesign2) : Res MemCycleState :=
+  let rec go (st : MemCycleState) : List (String × Expr2) → Res MemCycleState
+    | [] => .ok st
+    | (name, expr) :: rest =>
+        match d.decls.find? (·.name == name) with
+        | none => .unsupported s!"initializer target '{name}' is not declared"
+        | some dc => do
+            let v ← evalPure2 st.scalar expr
+            let value := if dc.twoState then v.toTwoState else v.resizeU dc.width
+            go { st with scalar := SvState.set st.scalar name value } rest
+  go d.initState d.initializers
 
 def MemDesign2.applyInputs (d : MemDesign2) (inputs : SvState)
     (st : MemCycleState) : MemCycleState :=
@@ -533,7 +566,9 @@ def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       return st'.scalar :: tr
 
 def runMem2 (d : MemDesign2) (fuel : Nat) (stim : List SvState) : Res (List SvState) :=
-  runMemFrom d fuel d.initState stim
+  do
+    let st ← d.initStateRes
+    runMemFrom d fuel st stim
 
 private def memProbeDecl : PDecl :=
   { name := "mem", type := .packed [⟨.int 7, .int 0⟩] (some 8),
@@ -546,7 +581,7 @@ private def memProbeDesign : MemDesign2 :=
       { name := "rstn", width := 1, isInput := true },
       { name := "d", width := 8, isInput := true },
       { name := "q", width := 8, isOutput := true }],
-    memDecls := [memProbeDecl], processes := [] }
+    memDecls := [memProbeDecl], initializers := [], processes := [] }
 
 #guard (MemState.read memProbeDesign.initState.memory "mem" 0).isSome
 #guard runMem2 memProbeDesign 8 [] == .ok []

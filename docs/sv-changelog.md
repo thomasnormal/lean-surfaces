@@ -36,7 +36,15 @@ accepted them on the same ground as `xnor_n` (2026-11-08).
 fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
 4f3866fb7, and only from the range premise above.
 
-## Parametric x/z literals in the memory route
+## Nonliteral declaration initializers in the memory route
+
+The source-shaped memory adapter now retains nonliteral scalar declaration
+initializers as `(name, Expr2)` entries and evaluates them once, in declaration
+order, before the first input sample. The clean-room `nonliteral_initializer`
+fixture records `logic [1:0] t = a`: with `a=2'b11` on the first cycle, the
+output remains `2'b0x`, matching the time-zero unknown input and unsigned
+extension. The ordinary flat `Design2` route remains loud for this shape.
+
 
 The source-shaped memory cycle adapter now admits the extractor's exact
 `IntegerLiteral:unsized-xz-parametric` member marker. An unsized `'bx` write

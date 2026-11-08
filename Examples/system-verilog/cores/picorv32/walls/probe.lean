@@ -21,6 +21,10 @@ set_option maxRecDepth 100000 in
 load_design_sv2 xz_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/xz_memory.sv.json"
 
+set_option maxRecDepth 100000 in
+load_design_sv2 nonliteral_initializer_wall
+  from "Examples/system-verilog/cores/picorv32/walls/nonliteral_initializer.sv.json"
+
 #guard match (unpacked_cpuregs_wall.sem 32).processes with
   | #[.unsupported "Instantiate"
       "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
@@ -82,4 +86,21 @@ private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
 #guard match LeanModels.Sv.Kernel.runMem2 (xz_memory_wall.pdesign.instantiateMemD2 [4]) 32
     [[("clk", LeanModels.Sv.LVec.lit "0")]] with
   | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 32)
+  | _ => false
+
+-- The ordinary flat family remains loud at this declaration boundary, while
+-- the source-shaped memory route retains and executes the initializer once
+-- before its first input sample.
+#guard match nonliteral_initializer_wall.sem.processes with
+  | #[.unsupported "Instantiate" _] => true
+  | _ => false
+
+#guard match (nonliteral_initializer_wall.pdesign.instantiateMemD2 []).initializers with
+  | [("t", .resize 2 (.ident "a"))] => true
+  | _ => false
+
+#guard match LeanModels.Sv.Kernel.runMem2
+    (nonliteral_initializer_wall.pdesign.instantiateMemD2 []) 32
+    [[("a", LeanModels.Sv.LVec.lit "11")]] with
+  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.lit "0x")
   | _ => false

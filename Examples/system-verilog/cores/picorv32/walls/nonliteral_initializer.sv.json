@@ -1,0 +1,194 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "nonliteral_initializer",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/cores/picorv32/walls/nonliteral_initializer.sv",
+      "sha256": "9374347efafb8dac33046ec1b8d255f4017c6f45d8ebd7fade236f588f258bdd"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "nonliteral_initializer",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 43,
+              "end_line": 2,
+              "end_col": 44
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 65,
+              "end_line": 2,
+              "end_col": 66
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 60,
+                      "end_line": 2,
+                      "end_col": 61
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 62,
+                      "end_line": 2,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 20
+            },
+            "name": "t",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 10,
+                      "end_line": 3,
+                      "end_col": 11
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 12,
+                      "end_line": 3,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Resize",
+              "span": {
+                "line": 3,
+                "col": 19,
+                "end_line": 3,
+                "end_col": 20
+              },
+              "width": 2,
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 19,
+                  "end_line": 3,
+                  "end_col": 20
+                },
+                "width": 1,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 4,
+              "col": 10,
+              "end_line": 4,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 4,
+                "end_col": 11
+              },
+              "width": 2,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 4,
+                "col": 14,
+                "end_line": 4,
+                "end_col": 15
+              },
+              "width": 2,
+              "name": "t"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

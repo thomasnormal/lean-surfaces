@@ -32,8 +32,8 @@ theorem caught_type_identity_total (value : PyInt) :
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal,
     isLoweredBuiltinName, isPyBuiltinName, flattenStarRun, flattenStarCallArgs,
-    userExcCatches, classAtExc, builtinExcNameCatches, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB]
+    userExcCatches, classAtExc, builtinExcNameCatches, Run.bind, Run.leaveCallDepth, Run.liftRes,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
   rfl
 
 theorem tuple_handler :
@@ -47,8 +47,8 @@ theorem tuple_handler :
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal,
     isLoweredBuiltinName, isPyBuiltinName, flattenStarRun, flattenStarCallArgs,
-    userExcCatches, classAtExc, builtinExcNameCatches, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB]
+    userExcCatches, classAtExc, builtinExcNameCatches, Run.bind, Run.leaveCallDepth, Run.liftRes,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 #print axioms caught_type_identity_total
 

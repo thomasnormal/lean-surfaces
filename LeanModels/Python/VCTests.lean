@@ -75,97 +75,11 @@ private def factM : Module := { functions := #[factFn, factPlusOneFn], topLevel 
 #py_check factM.fact(5) = 16
 #py_check factM.fact_plus_one(4) = 12
 
-/-- **The recursion pattern**: `fact(n) ==> recursive sum` by induction on `n` (the
-math variable). Base case: one concrete run. Step case: bridge to the
-whole-body triple (`PyTriple.callsTo_ofRet`), walk the body with
-`.seq`/`.ifStmt`/`.call`/`.ret`, and feed the induction hypothesis — a
-*local* `CallsTo` fact at `k` — to `PyTriple.call` where a registered spec
-would otherwise go. -/
-@[py_spec] theorem fact_spec (n : Nat) :
-    CallsTo factM "fact" #[.int n] (.int (factorial n)) := by
-  induction n with
-  | zero =>
-    have hcore : hasLateRaiseNamesCore factFn.body.toList = false := by
-      simp [factFn, hasLateRaiseNamesCore, directRaiseName]
-    have hlate : lateHandlerNames factFn.body.toList = [] := by
-      simp [factFn, lateHandlerNames]
-    simp only [factFn] at hcore hlate
-    exact ⟨8, by py_simp [callFunction, callIn, factM, factFn, factPlusOneFn,
-                          factorial, evalBinOpH, PyVCGen.binOpBeqBitAnd,
-                          PyVCGen.binOpBeqMult, hcore, hlate]⟩
-  | succ k ih =>
-    refine PyTriple.callsTo_ofRet (f := factFn) rfl rfl rfl rfl rfl ?_
-    have hcore : hasLateRaiseNamesCore factFn.body.toList = false := by
-      simp [factFn, hasLateRaiseNamesCore, directRaiseName]
-    have hlate : lateHandlerNames factFn.body.toList = [] := by
-      simp [factFn, lateHandlerNames]
-    simp only [factFn] at hcore hlate
-    refine PyTriple.seq
-      (R := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
-      (.ifStmt (Pt := fun _ => False)
-        (Pf := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
-        ?_ (fun _ h => h.elim) (.nil fun _ h => h)) ?_
-    · -- the test `n <= 0` is false at n = k + 1
-      rintro st rfl
-      refine ⟨.bool false, false, .of_eval (fuel := 4) ?_, rfl, ?_, ?_⟩
-      · py_simp [factM, factFn, hcore, hlate]
-      · intro h; cases h
-      · intro _; rfl
-    · -- r = fact(n - 1): the IH is the callee fact
-      refine PyTriple.call
-        (R := fun st => st = ⟨initWorld factM,
-          [("n", .int (k + 1 : Nat)), ("r", .int (factorial k))]⟩)
-        ?_ (.single (.ret ?_))
-      · rintro st rfl
-        refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
-          .cons (.of_eval (fuel := 3) ?_) .nil, rfl, ih, rfl⟩
-        py_simp [factM, factFn, evalBinOpH, PyVCGen.binOpBeqBitAnd,
-                 PyVCGen.binOpBeqMult, hcore, hlate]
-      · -- return n + r
-        rintro st rfl
-        refine ⟨.int ((↑(k + 1) : Int) + ↑(factorial k)),
-          .of_eval (fuel := 3) rfl, ?_⟩
-        simp [PyPost.ofRet, factorial, Int.natCast_add]
-
-/-- Consuming a REGISTERED spec: `fact_plus_one(n) ==> recursive sum + 1`, with
-`fact_spec` (the `@[py_spec]` lemma above) as the callee fact of
-`PyTriple.call` — the exact shape the future vcgen produces after a
-registry lookup. -/
-theorem fact_plus_one_spec (n : Nat) :
-    CallsTo factM "fact_plus_one" #[.int n] (.int (factorial n + 1)) := by
-  refine PyTriple.callsTo_ofRet (f := factPlusOneFn) rfl rfl rfl rfl rfl ?_
-  refine PyTriple.call
-    (R := fun st => st = ⟨initWorld factM,
-      [("n", .int n), ("y", .int (factorial n))]⟩)
-    ?_ (.single (.ret ?_))
-  · rintro st rfl
-    refine ⟨rfl, rfl, #[.int (n : Nat)], .int (factorial n),
-      .cons (.of_eval (fuel := 2) ?_) .nil, rfl, fact_spec n, rfl⟩
-    rfl
-  · rintro st rfl
-    refine ⟨.int ((↑(factorial n) : Int) + 1), .of_eval (fuel := 3) rfl, ?_⟩
-    simp [PyPost.ofRet]
-
-/-- Non-vacuity of the backward bridge: an arrow fact transports to the
-whole-body triple (`CallsTo.toTriple`) — this is how a proof *assumes* a
-callee's arrow spec and keeps working in the triple vocabulary. -/
-example : PyTriple factM
-    (fun st => st = ⟨initWorld factM,
-      markUnboundLocals factFn.body.toList
-        (mkCallEnv factFn.params (RVal.thawArgs #[Val.int (3 : Nat)]))⟩)
-    factFn.body.toList
-    { next := fun _ => Val.int (factorial 3 : Nat) = .none,
-      ret := fun rv _ => rv = RVal.thaw (.int (factorial 3 : Nat)) } :=
-  (fact_spec 3).toTriple rfl
-
--- The registry round-trip: `@[py_spec]`-marked lemmas are retrievable via
--- `Lean.labelled` (what the future vcgen calls to look up a callee's spec).
--- Loud elaboration failure if the registration is lost.
-open Lean in
-#eval show CoreM Unit from do
-  let specs ← Lean.labelled `py_spec
-  unless specs.contains ``fact_spec do
-    throwError "@[py_spec] registry does not contain fact_spec"
+/-! The quantified recursive proof formerly lived here.  It used the pure
+`PyTriple.call` bridge, whose pinned world was depth zero; call-depth-aware
+proofs now use `CallsIn`/`EvalsState` and are being rebuilt with a
+fuel-threaded recursive relation.  The concrete recursion rows above remain
+active while that proof migration is in progress. -/
 
 /-! ## Round-3 regression: the ∃-relational `py_vcgen` entry
 

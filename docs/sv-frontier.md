@@ -137,6 +137,16 @@ loud in
 `harness/sv/cases2.json`; admitting it requires initial-process scheduling and
 file-loading semantics in E, followed by a differential witness.
 
+### Mixed valid/ready sequential chains
+
+The clean-room `seq_valid_chain/valid_chain_profile.sv` witness exercises a
+parameterized vector register chain with an NBA `always_ff` and continuous
+assignments for its outputs. It is deliberately outside the strict
+`ffOnlyProfileB` (which excludes continuous processes), but is admitted by
+`ffMixedProfileB`; comb settling runs before each edge and preserves the
+source-shaped drivers. Its four-cycle vector trace is pinned in
+`harness/sv/cases2.json` as `valid_chain_mixed_profile` and matches Icarus.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

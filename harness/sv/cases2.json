@@ -87,6 +87,21 @@
       "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge."
     },
     {
+      "name": "valid_chain_mixed_profile",
+      "example": "seq_valid_chain",
+      "top": "valid_chain_profile",
+      "params": {"W": 8},
+      "clock": "clk",
+      "signals": ["rst", "valid_i", "ready_i", "data_i", "valid_o", "data_o"],
+      "stimulus": [
+        {"rst": "0", "valid_i": "1", "ready_i": "1", "data_i": "10100101"},
+        {"rst": "0", "valid_i": "1", "ready_i": "1", "data_i": "10100101"},
+        {"rst": "0", "valid_i": "0", "ready_i": "1", "data_i": "01011010"},
+        {"rst": "0", "valid_i": "0", "ready_i": "1", "data_i": "01011010"}
+      ],
+      "measured": "A valid/ready vector register chain has continuous output drivers beside its NBA always_ff; ffOnlyProfileB is intentionally false, while ffMixedProfileB settles the assigns before each edge and matches the reference trace."
+    },
+    {
       "name": "user_function_eval",
       "example": "seq_function",
       "top": "function_call_eval",

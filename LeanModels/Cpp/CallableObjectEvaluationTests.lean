@@ -41002,6 +41002,25 @@ def callableValueObjectShiftLeftAgreementWitness : Bool :=
 
 #guard callableValueObjectShiftLeftAgreementWitness
 
+def callableValueObjectShiftRightAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.binary ">>"
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 1,
+          sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 8],
+      evaluateCallableObject 32 .lp64 function [signed 8] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 4 && objectValue == signed 4
+  | _, _ => false
+
+#guard callableValueObjectShiftRightAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

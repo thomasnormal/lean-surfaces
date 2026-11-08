@@ -130,36 +130,27 @@ an alias) and therefore leaves `Expr.heapFree`. -/
 
 /-! Since the extractor stopped lowering comprehensions
 (`docs/backlog/python-completeness.md` §2026-11-06-pycomplete-361),
-`ListComp` is a loud `Unsupported` leaf again: the comprehension rows below
-refuse, and `lc_squares` is back in the heap-free fragment (the leaf refuses
-before anything is allocated). `list_of`/`list_empty` (the `list(…)`
-constructor) still answer. The CPython answers these checks pinned are kept
-in the `-- was` comments; `harness/cases.json` expects `unsupported` for
-these functions. -/
+`ListComp` is live again: the comprehension rows below evaluate to fresh
+lists, while `list_of`/`list_empty` (the `list(…)` constructor) still answer.
+The guards below pin the model's concrete list values; the differential rows
+in `harness/cases.json` pin the same behavior against CPython 3.9. -/
 
--- was `#guard callFunction iter_lab "lc_squares" #[.int 5] 4096 == .ok (.list #[.int 0, .int 1, .int 4, .int 9, .int 16])`
-#guard callFunction iter_lab "lc_squares" #[.int 5] 4096 matches
-  .unsupported "unsupported expression 'ListComp'"
--- was `#guard callFunction iter_lab "lc_squares" #[.int 0] 4096 == .ok (.list #[])`
-#guard callFunction iter_lab "lc_squares" #[.int 0] 4096 matches
-  .unsupported "unsupported expression 'ListComp'"
--- was `#guard callFunction iter_lab "lc_filter" #[.str "abcb"] 4096 == .ok (.list #[.str "a", .str "c"])`
-#guard callFunction iter_lab "lc_filter" #[.str "abcb"] 4096 matches
-  .unsupported "unsupported expression 'ListComp'"
--- was `#guard callFunction iter_lab "lc_capture" #[.str "abc", .int 1] 4096 == .ok (.list #[.int 98, .int 99, .int 100])`
-#guard callFunction iter_lab "lc_capture" #[.str "abc", .int 1] 4096 matches
-  .unsupported "unsupported expression 'ListComp'"
+#guard callFunction iter_lab "lc_squares" #[.int 5] 4096
+  == .ok (.list #[.int 0, .int 1, .int 4, .int 9, .int 16])
+#guard callFunction iter_lab "lc_squares" #[.int 0] 4096 == .ok (.list #[])
+#guard callFunction iter_lab "lc_filter" #[.str "abcb"] 4096
+  == .ok (.list #[.str "a", .str "c"])
+#guard callFunction iter_lab "lc_capture" #[.str "abc", .int 1] 4096
+  == .ok (.list #[.int 98, .int 99, .int 100])
 #guard callFunction iter_lab "list_of" #[.str "xy"] 4096
   == .ok (.list #[.str "x", .str "y"])
 #guard callFunction iter_lab "list_empty" #[] 4096 == .ok (.list #[])
 
 /-! A lowered comprehension left the heap-free fragment (it allocated). The
-`Unsupported` leaf that replaced the lowering allocates nothing, so
-`lc_squares` is heap-free again; this guard flips back when comprehensions
-get their own semantic case. -/
+List comprehensions allocate their result lists, so `lc_squares` is outside
+the heap-free fragment. -/
 
--- was `#guard !((findFunction iter_lab "lc_squares").any FunctionDefn.heapFree)`
-#guard (findFunction iter_lab "lc_squares").any FunctionDefn.heapFree
+#guard !((findFunction iter_lab "lc_squares").any FunctionDefn.heapFree)
 
 /-! ### the membership/`for`/`ord`/`chr` nodes stay in the heap-free
 fragment (they neither allocate nor mutate) — pinned per function, since

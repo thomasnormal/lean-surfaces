@@ -297,6 +297,14 @@ the finite concurrent-property envelope, and `s_eventually` remains an
 unbounded liveness operator outside F1 by design. These boundaries preserve a
 named refusal until their E meaning and refinement rule exist.
 
+The current clean-room F1 proof battery contains 18 retained SVA fixtures,
+covering finite assertions, assumptions, disable conditions, bounded ranges,
+sampled values, boolean composition, reductions, selectors, temporal
+comparisons, and sampled-value predicates. A combined Lean 4.35 build of all
+18 proof modules passes. The battery checks structured property ingestion and
+contract evaluation; it does not claim that the remaining OpenTitan design
+level loader walls are solved.
+
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
 processes. Their lexical generate labels are now carried in each property's

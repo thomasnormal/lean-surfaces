@@ -381,11 +381,22 @@ unsafe def aliasInertEq (tac : String) (D pd args : Lean.Expr) : MetaM Lean.Expr
   let hq ← mkFreshExprMVar hqTy
   try closeByDecide hq.mvarId! "not inert"
   catch _ =>
-    throwError "{tac}: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`), and the comb theorems are stated for the unguarded family `PDesign.instantiateGD2`. The tactics show that the guard keeps every process only for a design with no `always_comb` or with no continuous `assign` (`PDesign.aliasInert`, `CombAliasInert.lean`); this design has both, which is not covered yet"
+    throwError "{tac}: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`), and the comb theorems are stated for the unguarded family `PDesign.instantiateGD2`. Without a lowering in hand the tactics show that the guard keeps every process only for a design with no `always_comb` or with no continuous `assign` (`PDesign.aliasInert`, `CombAliasInert.lean`); this design has both, which is not covered yet (where `hl : (X.sem N).lowerComb = some d'` is in context, `sv_interface` and `sv_equations` read the guard off it)"
   let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
   let pf := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert) pd
     (← instantiateMVars hq) args
   mkExpectedTypeHint pf (← mkEq D D')
+
+/-- The equation `D = pd.instantiateGD2 args` from `hl : D.lowerComb = some d'`, for `D` the guarded family
+`pd.instantiateGDAlias2 args`: a guarded design that lowers is its own guard
+(`PDesign.instantiateGDAlias2_of_lowerComb`); no static check, every design. -/
+def aliasLowerEq (D pd args hl : Lean.Expr) : MetaM Lean.Expr := do
+  let some (_, _, rhs) := (← instantiateMVars (← inferType hl)).eq?
+    | throwError "sv_comb: internal error: the lowering hypothesis is not an equation"
+  unless rhs.isAppOfArity ``Option.some 2 do
+    throwError "sv_comb: internal error: the lowering hypothesis is not `… = some d'`"
+  let pf := mkAppN (mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2_of_lowerComb) #[pd, args, rhs.appArg!, hl]
+  mkExpectedTypeHint pf (← mkEq D (mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args))
 
 /-- Replace the design `D` by `D'` in the target of `g` along `hA : D = D'` (every occurrence). -/
 def rewriteDesign (g : MVarId) (hA : Lean.Expr) : MetaM MVarId := do

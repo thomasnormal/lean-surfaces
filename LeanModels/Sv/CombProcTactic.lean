@@ -761,13 +761,14 @@ unsafe def runSvInterfaceL : TacticM Unit := do
         throwError "sv_interface: structural check failed:\n  {"\n  ".intercalate probs}"
       let pdId := mkIdent pdName
       let keyI := mkIdent `key
-      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59) is restated at the unguarded one
-      -- (`aliasInertEq`), and so is `hl`
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59) is restated at the unguarded one, and so is `hl`;
+      -- `hl` itself says the guard kept every process (`aliasLowerEq`)
       let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
       let hlI ← if aliased then
-          let hA ← aliasInertEq "sv_interface" D pd args
+          let hlE := (← getLocalDeclFromUserName hlN).toExpr
+          let hA ← aliasLowerEq D pd args hlE
           replaceMainGoal [← rewriteDesign goal hA]
-          Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName hlN).toExpr D hA)
+          Term.exprToSyntax (← transportDesign hlE D hA)
         else
           let ty' := ty.replace fun e => if e == D then some D' else none
           replaceMainGoal [← goal.replaceTargetDefEq ty']
@@ -998,11 +999,11 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       let eqAtN ← withRepl hasRepl replL keyI (← `(tactic| svL_eq_norm_at $keyI))
       let normR : TSyntax `tactic ←
         if hasRepl then `(tactic| (svL_norm; (try simp only [$replL,*]); try svL_norm)) else `(tactic| svL_norm)
-      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): `hl` restated at the unguarded family
-      -- (`aliasInertEq`); the other four are about the lowered design `d'`
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): `hl` restated at the unguarded family, which `hl`
+      -- itself shows it is (`aliasLowerEq`); the other four are about the lowered design `d'`
       let hlI ← if aliased then
-          let hA ← aliasInertEq "sv_equations" X pd args
-          Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName hlN).toExpr X hA)
+          let hlE := (← getLocalDeclFromUserName hlN).toExpr
+          Term.exprToSyntax (← transportDesign hlE X (← aliasLowerEq X pd args hlE))
         else pure (mkIdent hlN)
       let hcI := mkIdent hcN
       let haI := mkIdent haN

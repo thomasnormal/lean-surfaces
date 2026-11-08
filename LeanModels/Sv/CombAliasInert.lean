@@ -1,5 +1,6 @@
 import LeanModels.Sv.ProcNoQualified
 import LeanModels.Sv.CombAlias2Sound
+import LeanModels.Sv.Comb2Proc
 
 /-!
 # The `always_comb` alias guard is inert on the designs the comb tactics read
@@ -23,9 +24,12 @@ The instantiation step is `allProcs_instantiateGD2`: a property of `Process2` th
 process has and that the instantiation of every source process passing a check `f` has, holds for every process of
 `d.instantiateGD2 args` (the shape of `NoQ.sem_noQ`, `ProcNoQualified.lean`, generic in the property).
 
-A design with BOTH an `always_comb` and a continuous assignment is not decided here: whether one of its bodies reads
-a copy of what it writes depends on the windows, at the parameter point. The tactics refuse such a design with a
-message that says so instead of proving a goal about the unguarded family.
+Where the design is known to lower (`hl : (X.sem N).lowerComb = some d'`, what the `always_comb` forms of
+`sv_interface` and `sv_equations` take), no check is needed at all: an `always_comb` the guard refuses becomes an
+`unsupported` process, which does not lower (`PDesign.instantiateGDAlias2_of_lowerComb`). The one remaining case is
+the `always_comb` form of `sv_structure`, which must PROVE the lowering: for a design with BOTH an `always_comb`
+and a continuous assignment, whether a body reads a copy of what it writes depends on the windows at the parameter
+point, which this module does not decide; the tactic refuses such a design with a message that says so.
 -/
 
 namespace LeanModels.Sv
@@ -188,6 +192,57 @@ theorem PDesign.instantiateGDAlias2_of_aliasInert {d : PDesign} (h : d.aliasIner
       (allProcs_instantiateGD2 (P := fun p => ∀ t e, p ≠ .assign t e) (fun _ _ _ _ => by simp)
         inst_noAssign h args)
 
+/-! ## A guarded design that lowers
+
+Where the design in hand is known to LOWER (`hl : (X.sem N).lowerComb = some d'`, the hypothesis of the
+`always_comb` forms of `sv_interface` and `sv_equations`), no static check is needed: the guard turns an
+`always_comb` it refuses into an `unsupported` process, which does not lower, so a guarded design that lowers was
+its own guard. This covers every design, an `always_comb` beside a continuous assignment included. -/
+
+theorem AliasInert.lowerProcs_some {d : Design2} : ∀ (ps : List Process2) {qs : List Process2},
+    d.lowerProcs ps = some qs → ∀ p ∈ ps, ∃ r, p.lowerComb d = some r
+  | [], _, _, p, hp => absurd hp List.not_mem_nil
+  | p :: ps, qs, h, x, hx => by
+      unfold Design2.lowerProcs at h
+      cases hp : p.lowerComb d with
+      | none => simp [hp] at h
+      | some r =>
+          cases hr : d.lowerProcs ps with
+          | none => simp [hp, hr] at h
+          | some rs =>
+              rcases List.mem_cons.mp hx with rfl | hx
+              · exact ⟨r, hp⟩
+              · exact AliasInert.lowerProcs_some ps hr x hx
+
+/-- **A guarded design that lowers is its own guard.** -/
+theorem Design2.aliasGuard_of_lowerComb {m d' : Design2} (h : m.aliasGuard.lowerComb = some d') :
+    m.aliasGuard = m := by
+  have hps : ∃ qs, m.aliasGuard.lowerProcs m.aliasGuard.processes.toList = some qs := by
+    unfold Design2.lowerComb at h
+    cases hq : m.aliasGuard.lowerProcs m.aliasGuard.processes.toList with
+    | none => simp [hq] at h
+    | some qs => exact ⟨qs, rfl⟩
+  obtain ⟨qs, hqs⟩ := hps
+  have hall := AliasInert.lowerProcs_some _ hqs
+  apply Design2.aliasGuard_of_admits
+  intro b hb
+  have hmem : aliasGuardProc m.name m.combWd (aliasFlows m.combWd m.processes.toList) (.alwaysComb b) ∈
+      m.aliasGuard.processes.toList := by
+    rw [Design2.aliasGuard_processes]
+    exact List.mem_map.mpr ⟨_, hb, rfl⟩
+  obtain ⟨r, hr⟩ := hall _ hmem
+  cases hv : b.aliasViol m.combWd (aliasFlows m.combWd m.processes.toList) [] with
+  | none => rfl
+  | some W =>
+      rw [aliasGuardProc_of_viol hv] at hr
+      simp [Process2.lowerComb] at hr
+
+/-- … for the semantic family: `X.sem N` lowers, so it is the unguarded family. -/
+theorem PDesign.instantiateGDAlias2_of_lowerComb {d : PDesign} {args : List Int} {d' : Design2}
+    (h : (d.instantiateGDAlias2 args).lowerComb = some d') :
+    d.instantiateGDAlias2 args = d.instantiateGD2 args :=
+  Design2.aliasGuard_of_lowerComb h
+
 /-! ## Pins -/
 
 /--
@@ -196,5 +251,12 @@ info: 'LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert' depends on axiom
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms PDesign.instantiateGDAlias2_of_aliasInert
+
+/--
+info: 'LeanModels.Sv.PDesign.instantiateGDAlias2_of_lowerComb' depends on axioms: [propext, Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PDesign.instantiateGDAlias2_of_lowerComb
 
 end LeanModels.Sv

@@ -1,5 +1,14 @@
 # Unknown-bit resolution in E
 
+## 2026-11-08 interim consumer rule
+
+Until the concretization relation is wired through execution, every theorem
+that branches on a possibly unknown condition, performs a two-state
+conversion, evaluates an unknown-sensitive select, or observes an assertion
+sample must provide `DecisionKnown` (or an equivalent all-known premise). If
+it cannot, the theorem remains a named refusal. The executable `condTrue`
+else branch is not a proof rule.
+
 Status: **design decision; implementation pending**. Until the relation is
 wired through E, the approved proof boundary is the cheap sufficient condition
 that every branch, conditional select, dynamic index, and assertion decision

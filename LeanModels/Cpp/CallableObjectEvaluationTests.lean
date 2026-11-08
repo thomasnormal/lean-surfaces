@@ -40907,6 +40907,25 @@ def callableValueObjectDivisionAgreementWitness : Bool :=
 
 #guard callableValueObjectDivisionAgreementWitness
 
+def callableValueObjectModuloAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.binary "%"
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 3,
+          sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 1 && objectValue == signed 1
+  | _, _ => false
+
+#guard callableValueObjectModuloAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

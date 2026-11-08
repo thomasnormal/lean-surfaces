@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1295 entries across 18 lanes.** Regenerate with
+**1296 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-08-pycomplete-458` |  | retire stale depth-zero recursive proof fixture | python-completeness |
+| `2026-11-08-ls-sv2-403` |  | scout smaller real RV32I cores while PicoRV32 waits | ls-sv2 |
 | `2026-11-08-ls-sv2-393` |  | state the mixed result through `rvMemoryStateAfter` | ls-sv2 |
 | `2026-11-08-ls-sv2-392` |  | expose mixed decoder evidence at one boundary | ls-sv2 |
 | `2026-11-08-ls-sv2-391` |  | inventory the R2 headline's consumed facts | ls-sv2 |

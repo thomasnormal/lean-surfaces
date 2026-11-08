@@ -7611,3 +7611,43 @@ lemma was added.
 public state function it consumes.  Continue only with a genuinely missing
 fact from the bounded list; keep PicoRV32 parked at the unchanged owner
 loader wall.
+
+
+## 2026-11-08-ls-sv2-403 — scout smaller real RV32I cores while PicoRV32 waits
+
+The inbox was reread first.  While PicoRV32 waits on the owner lane's
+parametric `'bx` request, the pinned upstream Quark, SERV and DarkRISCV cores
+were extracted without RTL changes and checked on both the ordinary semantic
+route and the memory route.  None reaches an admitted cycle design.
+
+**MEASURED:** Quark (BrunoLevy/learn-fpga `f5ada24ae6cca67d99889daec2c4ee44a6e59417`)
+extracts `FemtoRV32` from its one source file into a 751,470-byte envelope
+(`9a97d6736c30221e580f898673adb6fcaa49931d24eec1494d006e040bdfc1ce`), with
+one module and 48 static `Unsupported` nodes.  `load_design_sv2` refuses at
+`localparam 'FETCH_INSTR': Constant:untyped-width`; both route probes return
+the same loud `Instantiate` refusal.  SERV (olofk/serv
+`f200eb2ed7b69ac1c6b8eddd47654522aeee5ce8`) extracts the 17-file `serv.core`
+set as 14 modules into 2,055,412 bytes
+(`ea713d68c00b6bc3cc4e892de56bf1ccc74d1ba2dcc9dc30abb9a317c64c7a64`), with
+71 static nodes.  Its load gate first refuses `parameter 'RF_WIDTH' default:
+Constant:untyped-width`; supplying the recorded defaults to both routes leaves
+the same wall at `localparam 'CSR_REGS'`.  DarkRISCV
+(darklife/darkriscv `bb6b483cc61a2886a0602c7e62b14f5995ddfbb9`) extracts the
+`darkriscv.v` top into a 1,227,921-byte one-module envelope
+(`38b3c3253f79b006aac7a547d9c61fce31c86dfe26994a990ce324bd1ce321cf`), with
+one static node.  Both routes stop at `decl 'FLUSH': non-literal initializer
+outside the M0 tier`.
+
+**CHANGED:** Added the scouting measurements, provenance and licences to
+`Examples/system-verilog/cores/README.md`.  Filed `REQUEST ls-sv:` for the
+DarkRISCV real-core instance using the external minimal envelope
+(source `c6fd179b1c79448ed81918ef4b2d8f2b79b6cdbc891c96cbf10b8a08443351da`,
+envelope `6a649ad976ea82f8698cea10a41df120710f2a39fe07c90dbe4bc1cb66920cb6`).
+No loader, extractor, semantics, RTL, proof, or generated envelope in the
+repository was edited.
+
+**JUDGED / DECIDED:** DarkRISCV is the nearest next candidate by this census,
+but no core currently loads on the memory route.  Wait for the generic
+declaration-initializer or constant-width repair; if the owner admits one,
+re-probe all three and start the ADDI invariant only for the first admitted
+core.

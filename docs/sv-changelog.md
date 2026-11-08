@@ -36,7 +36,15 @@ accepted them on the same ground as `xnor_n` (2026-11-08).
 fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
 4f3866fb7, and only from the range premise above.
 
-## Parametric x/z conversion in the memory route
+## Source-shaped module instance nodes
+
+`HierarchyNode2` adds a no-flattening composition handle for module instances.
+The parent `Design2` core stays separate, while each retained node carries its
+child `PDesign`, parameter point, and source `PConn` list. Instance-free nodes
+reuse `run2`; instance-bearing nodes receive the named
+`Instance:hierarchy` refusal until the E composition executor is connected.
+The clean-room `hierarchy_instance` probe pins this boundary.
+
 
 The source-shaped memory adapter now admits the exact
 `ConversionExpression:xz-literal-parametric` marker alongside the previously

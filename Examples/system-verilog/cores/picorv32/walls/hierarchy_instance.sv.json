@@ -1,0 +1,220 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "hierarchy_instance",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/cores/picorv32/walls/hierarchy_instance.sv",
+      "sha256": "694cd66af895908e9498a1f6eff12257bdef3fee942f9ce68bf8aef14855d9a7"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "hierarchy_instance",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 38,
+              "end_line": 4,
+              "end_col": 39
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 53,
+              "end_line": 4,
+              "end_col": 54
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "net_as_variable": true
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 5,
+              "col": 8,
+              "end_line": 5,
+              "end_col": 28
+            },
+            "name": "u_leaf",
+            "module": "leaf",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 5,
+                  "col": 18,
+                  "end_line": 5,
+                  "end_col": 19
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 18,
+                    "end_line": 5,
+                    "end_col": 19
+                  },
+                  "width": 1,
+                  "name": "a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 5,
+                  "col": 25,
+                  "end_line": 5,
+                  "end_col": 26
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 25,
+                    "end_line": 5,
+                    "end_col": 26
+                  },
+                  "width": 1,
+                  "name": "y"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 3,
+          "end_col": 10
+        },
+        "name": "leaf",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 24,
+              "end_line": 1,
+              "end_col": 25
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 39,
+              "end_line": 1,
+              "end_col": 40
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "net_as_variable": true
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 10,
+                "end_line": 2,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 14,
+                "end_line": 2,
+                "end_col": 15
+              },
+              "width": 1,
+              "name": "a"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

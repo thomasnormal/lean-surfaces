@@ -81,6 +81,12 @@ kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
 
+The E route now has a source-shaped hierarchy handle: `HierarchyNode2`
+retains each instance, child `PDesign`, parameter point, and §23.3.3 port
+connections beside the parent's own `Design2` core. No child signal or process
+is hoisted. Instance-free nodes use `run2`; instance-bearing nodes remain a
+named composition obligation until their cycle executor is wired.
+
 The memory route also admits the exact parametric x/z conversion marker on a
 retained cell driver. In `xz_conversion_memory`, the source `'bx` remains an
 unknown site and a 16-bit instantiated cell reads all x; the ordinary flat

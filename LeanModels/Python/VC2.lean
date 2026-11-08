@@ -519,7 +519,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     cases hff : findFunction m fname with
     | none =>
       have h1 := hc (tc + 1) (by omega)
-      rw [callIn, hff] at h1
+      rw [LeanModels.Python.callIn, hff] at h1
       cases h1
     | some f => simp
   refine ⟨ta + tc + 1, ?_⟩
@@ -537,6 +537,98 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
         simpa [flattenStarCallArgs] using ih
   simp [evalExpr, flattenStarRun, Run.withLocals, hlocal, hglob, hfn, hnt, hstar,
     Module.heapFree_funs hm, findClass_heapFree hm fname, ha', hc'', hflat]
+
+/-! ## Stateful call expressions
+
+`EvalsTo` is intentionally pinned to one frame state.  A nested call in the
+depth-aware interpreter can return a changed world, so the proof layer needs a
+small effectful twin for the call splice.  The relation is kept local to this
+module rather than changing the established pure surface. -/
+
+def EvalsState (m : Module) (st : FrameState) (e : Expr) (v : RVal)
+    (st' : FrameState) : Prop :=
+  ∃ fuel, evalExpr m fuel st e = .ok st' v
+
+namespace EvalsState
+
+theorem at_least {m : Module} {st st' : FrameState} {e : Expr} {v : RVal}
+    (h : EvalsState m st e v st') :
+    ∃ fuel, ∀ F ≥ fuel, evalExpr m F st e = .ok st' v := by
+  obtain ⟨fuel, hrun⟩ := h
+  exact ⟨fuel, fun F hF => evalExpr_mono hrun (by simp) F hF⟩
+
+theorem callIn {m : Module} {st : FrameState} {fname : String}
+    {argEs : Array Expr} {args : Array Val} {v : Val} {after : World}
+    {sp sp' : Span}
+    (hlocal : Env.lookup st.locals fname = Option.none)
+    (hargs : EvalsToList m st argEs.toList
+      (RVal.thawList args.toList))
+    (hspec : CallsIn m st.world fname (RVal.thawArgs args) after
+      (RVal.thaw v))
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl)
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
+    EvalsState m st
+      (.call (.name fname sp) argEs #[] Option.none sp') (RVal.thaw v)
+      ⟨after, st.locals⟩ := by
+  obtain ⟨w, locals⟩ := st
+  obtain ⟨ta, ha⟩ := hargs.at_least
+  obtain ⟨tc, hc⟩ := hspec.at_least
+  have hfn : (findFunction m fname).isSome = true := by
+    cases hff : findFunction m fname with
+    | none =>
+      have h1 := hc (tc + 1) (by omega)
+      rw [LeanModels.Python.callIn, hff] at h1
+      simp at h1
+    | some f => simp
+  have hflat : flattenStarCallArgs (RVal.thawList args.toList) =
+      RVal.thawList args.toList := by
+    induction args.toList with
+    | nil => rfl
+    | cons x xs ih =>
+      cases x <;> simp [RVal.thawList, flattenStarCallArgs,
+        List.flatMap_cons, RVal.thaw] <;>
+        simpa [flattenStarCallArgs] using ih
+  refine ⟨ta + tc + 1, ?_⟩
+  have ha' := ha (ta + tc) (by omega)
+  have hc' := hc (ta + tc) (by omega)
+  have hc'' : LeanModels.Python.callIn m (ta + tc) w fname
+      (RVal.thawList args.toList).toArray = .ok after (RVal.thaw v) := by
+    simpa [RVal.thawArgs] using hc'
+  simp [evalExpr, flattenStarRun, Run.withLocals, RVal.thawArgs, hlocal, hglob,
+    hfn, hnt, hstar, Module.heapFree_funs hm, findClass_heapFree hm fname,
+    ha', hc'', hflat]
+
+end EvalsState
+
+/-! A stateful call assignment is the interprocedural splice used by the
+depth-aware proof surface. The caller's locals survive the call; only the
+world and the newly assigned name change. -/
+
+theorem PyStmtTriple.callState {m : Module} {P : FrameState → Prop}
+    {Q : PyPost} {x fname : String} {argEs : Array Expr}
+    {spx spf spc spa : Span}
+    (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
+        ∃ args after v,
+          EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
+          CallsIn m st.world fname (RVal.thawArgs args) after (RVal.thaw v) ∧
+          Q.next ⟨after, Env.set st.locals x (RVal.thaw v)⟩)
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl)
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
+    PyStmtTriple m P
+      (.assign #[.name x spx]
+        (.call (.name fname spf) argEs #[] Option.none spc) spa) Q := by
+  intro st hP
+  obtain ⟨hlocal, args, after, v, hargs, hcall, hQ⟩ := h st hP
+  have hev := EvalsState.callIn (sp := spf) (sp' := spc)
+    hlocal hargs hcall hglob hnt hm hstar
+  obtain ⟨te, he⟩ := hev.at_least
+  refine ⟨te + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  simpa [execStmt, he F' (by omega), assignToH, hQ]
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-state, the callee name unshadowed, the pinned public world, the
@@ -624,11 +716,12 @@ theorem PyTriple.callsTo_arityOk {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v }) :
     CallsTo m fname args v := by
   obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
   have hrt := hrun t (Nat.le_refl t)
+  have hdepth : (initWorld m).callDepth = 0 := by simp [initWorld]
   cases r with
   | ok st' flow =>
     cases flow with
@@ -637,13 +730,13 @@ theorem PyTriple.callsTo_arityOk {m : Module} {fname : String}
       refine ⟨t + 1, ?_⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hv, RVal.freezeB]
+      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hv, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth, Run.toPublic_ok, RVal.freezeB]
     | ret rv =>
       have hv : rv = RVal.thaw v := hr
       refine ⟨t + 1, ?_⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hv, RVal.freezeB_thaw]
+      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hv, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth, Run.toPublic_ok, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
   | exn st' e => exact hr.elim
@@ -661,7 +754,7 @@ theorem PyTriple.callsTo {m : Module} {fname : String} {f : FunctionDefn}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v }) :
     CallsTo m fname args v :=
   PyTriple.callsTo_arityOk hf hargsOk hlocalsOk hgen
@@ -677,7 +770,7 @@ theorem PyTriple.callsTo_ofRet_arityOk {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         (.ofRet fun rv _ => rv = RVal.thaw v)) :
     CallsTo m fname args v :=
   PyTriple.callsTo_arityOk hf hargsOk hlocalsOk hgen harity
@@ -695,7 +788,7 @@ theorem PyTriple.callsTo_ofRet {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         (.ofRet fun rv _ => rv = RVal.thaw v)) :
     CallsTo m fname args v :=
   PyTriple.callsTo_ofRet_arityOk hf hargsOk hlocalsOk hgen
@@ -712,7 +805,7 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     (h : CallsTo m fname args v)
     (hgen : f.isGenerator = false := by first | rfl | decide)
     (hv : Val.listFree v = true := by first | rfl | decide) :
-    PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
       { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
@@ -732,35 +825,32 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     | false => simp [hao, hlo, har] at hc
     | true =>
     simp only [hao, hlo, hgen, har, Bool.not_true, Bool.false_eq_true, if_false] at hc
-    cases hex : execStmts m fu ((⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList with
+    have hdepth : (initWorld m).callDepth = 0 := by simp [initWorld]
+    cases hex : execStmts m fu ((⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList with
     | ok st1 flow =>
-      rw [hex] at hc
       cases flow with
       | next =>
-        simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        have hvn : v = .none := by
-          have hcn : Run.toPublic (fu + 1)
-              (Run.ok st1.world (RVal.thaw Val.none)) = .ok v := hc
-          rw [Run.toPublic_thaw] at hcn
-          exact (Res.ok.inj hcn).symm
+        simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit,
+          Run.leaveCallDepth, Run.toPublic_ok] at hc
+        have hvn : v = .none := (Res.ok.inj hc).symm
         refine PyTriple.of_exec fun st hst => ⟨fu, ?_⟩
         subst hst
         rw [hex]
         simpa using hvn
       | ret rv =>
-        simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        have hrv : rv = RVal.thaw v := by
-          rw [Run.toPublic_ok] at hc
-          exact RVal.eq_thaw_of_freezeB st1.world.heap (fu + 1) rv hc hv
+        simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit,
+          Run.leaveCallDepth, Run.toPublic_ok] at hc
+        have hrv : rv = RVal.thaw v :=
+          RVal.eq_thaw_of_freezeB st1.world.heap (fu + 1) rv hc hv
         refine PyTriple.of_exec fun st hst => ⟨fu, ?_⟩
         subst hst
         rw [hex]
         simpa using hrv
-      | brk => simp at hc
-      | cont => simp at hc
-    | exn st1 e => rw [hex] at hc; simp at hc
-    | timeout => rw [hex] at hc; simp at hc
-    | unsupported msg => rw [hex] at hc; simp at hc
+      | brk => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+      | cont => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+    | exn st1 e => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+    | timeout => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+    | unsupported msg => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
 
 /-- **The value-side bridge**, both directions: `fname(args) ==> v`
 (`CallsTo`, also the elaboration of `⇓`) iff the whole-function triple. -/
@@ -772,7 +862,7 @@ theorem callsTo_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
     (harity : args.size = f.params.size)
     (hv : Val.listFree v = true := by first | rfl | decide) :
     CallsTo m fname args v ↔
-      PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+      PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } :=
   ⟨fun h => h.toTriple hf hgen hv, fun h => h.callsTo hf hargsOk hlocalsOk hgen harity⟩
 
@@ -786,11 +876,12 @@ theorem PyTriple.raises_arityOk {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e }) :
     Raises m fname args e := by
   obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
   have hrt := hrun t (Nat.le_refl t)
+  have hdepth : (initWorld m).callDepth = 0 := by simp [initWorld]
   cases r with
   | ok st' flow =>
     cases flow with
@@ -803,7 +894,7 @@ theorem PyTriple.raises_arityOk {m : Module} {fname : String}
     refine ⟨t + 1, ?_⟩
     unfold callFunction
     rw [callIn]
-    simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, he]
+    simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth, Run.toPublic_exn, he]
   | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
   | unsupported msg => exact hr.elim
 
@@ -815,7 +906,7 @@ theorem PyTriple.raises {m : Module} {fname : String} {f : FunctionDefn}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e }) :
     Raises m fname args e :=
   PyTriple.raises_arityOk hf hargsOk hlocalsOk hgen
@@ -832,7 +923,7 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : Raises m fname args e) :
-    PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+    PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
       { next := fun _ => False, err := fun e' _ => e' = e } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
@@ -845,29 +936,28 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     simp only [RVal.thawArgs_size] at hc
     simp only [hf, hargsOk, hlocalsOk, hgen, har, Bool.not_true,
                Bool.false_eq_true, if_false] at hc
-    cases hex : execStmts m fu ((⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList with
+    have hdepth : (initWorld m).callDepth = 0 := by simp [initWorld]
+    cases hex : execStmts m fu ((⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList with
     | ok st1 flow =>
-      rw [hex] at hc
       cases flow with
       | next =>
-        simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        exact absurd hc Run.toPublic_ok_ne_exn
+        simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+        exact (RVal.freezeB_ne_exn st1.world.heap (fu + 1) RVal.none e hc).elim
       | ret rv =>
-        simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        exact absurd hc Run.toPublic_ok_ne_exn
-      | brk => simp at hc
-      | cont => simp at hc
+        simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+        exact (RVal.freezeB_ne_exn st1.world.heap (fu + 1) rv e hc).elim
+      | brk => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+      | cont => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
     | exn st1 e' =>
-      rw [hex] at hc
-      simp only [Run.exn_bind, Run.toWorld_exn] at hc
-      have he : e' = e := (Res.exn.inj hc)
+      simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+      have he : e' = e := hc
       subst he
       refine PyTriple.of_exec fun st hst => ⟨fu, ?_⟩
       subst hst
       rw [hex]
       exact rfl
-    | timeout => rw [hex] at hc; simp at hc
-    | unsupported msg => rw [hex] at hc; simp at hc
+    | timeout => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
+    | unsupported msg => simp [hex, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth] at hc
 
 /-- **The raise-side bridge**, both directions: `fname(args) ==>! e`
 (`Raises`) iff the whole-function triple through the `err` arm. -/
@@ -878,7 +968,7 @@ theorem raises_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size) :
     Raises m fname args e ↔
-      PyTriple m (fun st => st = (⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
+      PyTriple m (fun st => st = (⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e } :=
   ⟨fun h => h.toTriple hf hargsOk hlocalsOk hgen harity,
    fun h => h.raises hf hargsOk hlocalsOk hgen harity⟩

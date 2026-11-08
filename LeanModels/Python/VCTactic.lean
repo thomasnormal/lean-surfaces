@@ -476,13 +476,14 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
     ∃ v, CallsTo m fname args v ∧ Φ v := by
   obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
   have hrt := hrun t (Nat.le_refl t)
+  have hdepth : (initWorld m).callDepth = 0 := by simp [initWorld]
   cases r with
   | ok st' flow =>
     cases flow with
@@ -492,7 +493,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
       refine ⟨v, ⟨t + 1, ?_⟩, hΦ⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, RVal.freezeB_thaw]
+      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
   | exn st' e => exact hr.elim
@@ -509,7 +510,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
@@ -535,7 +536,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
@@ -560,7 +561,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
+        (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :

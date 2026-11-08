@@ -9934,6 +9934,59 @@ DECIDED: keep structured AST fields as the only semantic inputs; diagnostic
 text on unsupported nodes may remain for loud error reporting but is not
 parsed or used to decide supported behavior.
 
+## 2026-11-07-pycomplete-462 — audit text-keyed semantic residues
+
+The medium `py-text-keyed-semantics` finding is already closed. Supported
+semantic decisions consume structured AST fields for globals, nonlocals,
+value-less annotations, imports, and exception-handler names. The remaining
+`Unsupported.text` and extractor `unparse_truncated` path are diagnostic-only
+payloads and are never parsed to admit or evaluate a supported construct.
+
+| Measurement | Result |
+|---|---|
+| Extractor regression suite | 163/163 tests passed under CPython 3.9.25 |
+| Semantic search | no active `splitOn`, `annNoValueName`, `nonlocalNamesText`, `importBinds`, `globalNamesText`, or `excHandlerNamesAux` consumers in Lean Python semantics |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-text-keyed-semantics` as already fixed; keep structured AST
+fields as the only supported semantic inputs.
+
+## 2026-11-07-pycomplete-462 — audit two-interpreter refinement edge
+
+The medium `py-two-interpreters` finding remains an active architectural debt,
+not a stale report. The monadic rebuild has kernel-checked pure-worker bridges
+(`twinAgrees_liftRes` and `twinAgrees_binOp`) and the proof interpreter is still
+checked separately with `--proof-interpreter`, but no control-level theorem yet
+relates the mutually recursive `Semantics.lean` runs to the monadic evaluator or
+script layer. The correct action is to preserve this explicit boundary rather
+than claim that differential agreement establishes theorem adequacy.
+
+| Measurement | Result |
+|---|---|
+| Existing refinement edge | pure `Res`/`binOp` bridges present and kernel-checked |
+| Missing edge | control-level `evalExpr`/statement/script refinement theorem |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-two-interpreters` open as a named control-level adequacy
+milestone; do not broaden the claim beyond the existing pure-worker bridges.
+
+## 2026-11-07-pycomplete-463 — audit namedtuple static recognition
+
+The medium `py-namedtuple-recognition` finding remains open. Ingestion still
+recognizes the narrow benign-import plus assignment shape and rewrites those
+statements to `pass` while filling the static `Module.namedtuples` table. The
+admission is conservative and preserves unsafe source order as a loud refusal,
+but it remains a deep rewrite rather than a runtime `namedtuple` class value.
+
+| Measurement | Result |
+|---|---|
+| Admitted corpus | `namedtuple_script.py`: MATCH; handler/generator namedtuple rows also MATCH |
+| Ordering boundary | `namedtuple_import_order.py`: expected loud refusal; CPython 3.9 raises `NameError` |
+| Remaining debt | model `collections.namedtuple` at its statement and remove static recognition |
+
+DECIDED: keep `py-namedtuple-recognition` open as a medium ingestion/semantics
+milestone; do not broaden the static-table admission.
+
 ## 2026-11-07-pycomplete-387 — recheck the two-interpreter refinement edge
 
 The audit's claim that no `twinAgrees` theorem exists is stale. Current
@@ -10189,6 +10242,25 @@ where every reached definition is bound before its use.
 DECIDED: retain the conservative loud boundary until definitions become
 runtime bindings; do not loosen admission based on direct top-level names only.
 
+## 2026-11-07-pycomplete-450 — audit module-definition position independence
+
+The high-priority `py-def-table-position-independent` finding is already
+contained by the current script admission guard. A function body reaching a
+later module definition and a duplicate module function name both refuse before
+execution, avoiding a fabricated value from the static table. This preserves
+the correct CPython boundary while runtime-bound definition nodes remain future
+work.
+
+| Measurement | Result |
+|---|---|
+| Forward witness | `deadval3.py`: loud refusal; CPython 3.9 raises `NameError` |
+| Redefinition witness | `redef.py`: loud refusal; CPython 3.9 prints `1`, then `2` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-def-table-position-independent` as already fixed by a loud
+admission boundary; retain the conservative refusal until definitions become
+runtime bindings.
+
 ## 2026-11-07-pycomplete-404 — recheck structured global declarations
 
 The global-declaration audit finding is already closed in the current tree.
@@ -10206,6 +10278,22 @@ remain differential matches.
 
 DECIDED: keep lexical declarations structured from the approved AST through
 execution; no text fallback is admissible.
+
+## 2026-11-07-pycomplete-451 — audit structured global declaration handling
+
+The high-priority `py-global-text-truncation` finding is already fixed in the
+current tree. The extractor emits the approved AST name arrays, ingestion keeps
+them as structured declaration nodes, and both interpreters consume those
+arrays. No source-text fallback or truncation worker remains.
+
+| Measurement | Result |
+|---|---|
+| Long declaration script | `global_structured_script.py`: 1/1 MATCH, prints `5` |
+| Oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-global-text-truncation` as already fixed; keep structured
+lexical declarations as the only admitted path.
 
 ## 2026-11-07-pycomplete-405 — recheck generator capture census
 
@@ -10240,6 +10328,24 @@ iterables retain their existing cursor semantics.
 DECIDED: keep creation-time iterator validation in the lowering until native
 generator-expression semantics replace it.
 
+## 2026-11-07-pycomplete-452 — audit generator capture and creation iteration
+
+The paired high-priority generator-expression findings are already fixed in the
+current tree. The capture census counts unpacking, walrus stores, and `del`
+rebinding before admitting the by-value lowering; the rebinding witness stays
+loud. The synthesized generator-expression path validates the outer iterator at
+creation, so scalar sources raise at the same point as CPython.
+
+| Measurement | Result |
+|---|---|
+| Capture witness | `genexp_capture_rebinding.py`: loud refusal; CPython 3.9 raises the captured-name error |
+| Creation witness | `genexp_iter_creation.py`: 1/1 MATCH with CPython 3.9.25 `TypeError` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-capture-census` and `py-genexp-iter-deferred` as
+already fixed; retain conservative loudness until native generator-expression
+nodes replace the lowering.
+
 ## 2026-11-07-pycomplete-407 — recheck list-comprehension shadowing
 
 The list-comprehension shadowing finding is already closed by the source-node
@@ -10255,6 +10361,22 @@ syntax therefore cannot become a lookup of a user-bound `list` name.
 
 DECIDED: keep list-comprehension syntax source-level and loud until native
 comprehension evaluation is implemented.
+
+## 2026-11-07-pycomplete-453 — close ListComp shadowing audit after native evaluator
+
+The ListComp shadowing finding is now resolved by the native ordinary
+one-generator evaluator landed in this lane. Comprehensions evaluate their own
+AST node and never look up a user binding named `list`; the old script-corpus
+expectations were stale loud-boundary pins and are updated to the live behavior.
+
+| Measurement | Result |
+|---|---|
+| Shadow script | `listcomp_shadow.py`: MATCH against CPython 3.9.25 |
+| Ordinary script | `listcomp_script.py`: MATCH against CPython 3.9.25 |
+| Semantic change | harness expectations only; evaluator was already landed |
+
+DECIDED: close `py-listcomp-list-shadow`; retain the explicit loud boundaries
+for walrus filters and generator sources.
 
 ## 2026-11-07-pycomplete-408 — recheck augmented-repeat semantics
 
@@ -10273,6 +10395,23 @@ frontier as documented.
 DECIDED: keep ordinary `AugAssign` semantics and refuse only the already
 documented boundary mutation shape.
 
+## 2026-11-07-pycomplete-454 — audit boundary augmented-repeat rewrite
+
+The high-priority `py-boundary-augrepeat-rewrite` finding is already fixed.
+The shape-specific ingestion rewrite is absent, so ordinary `AugAssign` keeps
+in-place heap-list behavior and the operator-specific error path. The public
+boundary list mutation remains an explicit refusal because boundary aliasing is
+not yet wired.
+
+| Measurement | Result |
+|---|---|
+| Module alias witness | `list_aug_repeat_script.py`: MATCH, `True [1, 2, 1, 2]` |
+| Boundary behavior | list `*=` remains loud as documented |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-boundary-augrepeat-rewrite` as already fixed; retain the
+boundary aliasing refusal until the thawed heap-list argument path is wired.
+
 ## 2026-11-07-pycomplete-409 — recheck dead yield-target handling
 
 The dead-yield target audit finding is already closed by the extractor's
@@ -10289,6 +10428,24 @@ store; the narrow local dead-yield admission remains separate.
 DECIDED: retain the loud global/nonlocal target boundary until a send-aware
 yield-expression frame is implemented.
 
+## 2026-11-07-pycomplete-455 — audit dead yield-target drop
+
+The high-priority `py-dead-yield-target-drop` finding is already fixed. The
+extractor identifies expression-yield assignments whose targets are declared
+`global` or `nonlocal` and emits the structured
+`YieldAssign:global-or-nonlocal` refusal before the old dead-target lowering can
+drop the resumed store. The narrow local dead-yield shape remains separately
+admitted.
+
+| Measurement | Result |
+|---|---|
+| Global target witness | `yield_global_target.py`: expected loud refusal |
+| Oracle | CPython 3.9 runs the generator and prints its result |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-dead-yield-target-drop` as already fixed; retain the loud
+global/nonlocal boundary until a send-aware yield-expression frame exists.
+
 ## 2026-11-07-pycomplete-410 — recheck non-simple annotation order
 
 The annotated-assignment audit finding is already closed by the structured
@@ -10303,6 +10460,21 @@ source-shape guessing.
 | Semantic change | none; this packet records a verified existing fix |
 
 DECIDED: retain direct structured `AnnAssign` semantics and its scope gate.
+
+## 2026-11-07-pycomplete-456 — audit non-simple annotation ordering
+
+The high-priority `py-annassign-nonsimple-order` finding is already fixed by
+the structured, scope-aware `AnnAssign` path. The value and target store happen
+before module annotation evaluation, while function-scope annotations are
+skipped, matching CPython's compiler behavior.
+
+| Measurement | Result |
+|---|---|
+| Focused annotation scripts | 5/5 MATCH against CPython 3.9.25, including `ann_nonsimple_order.py` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-annassign-nonsimple-order` as already fixed; retain direct
+structured `AnnAssign` semantics and the scope gate.
 
 ## 2026-11-07-pycomplete-411 — recheck length-only repetition removal
 
@@ -10324,6 +10496,23 @@ DECIDED: retain ordinary sequence multiplication followed by `len`; refuse
 products whose materialization exceeds the modeled allocation budget until
 allocation and memory outcomes are represented.
 
+## 2026-11-07-pycomplete-457 — audit length-only repetition removal
+
+The high-priority `py-lenmult-length-only` finding is already fixed. Source
+ingestion no longer fuses `len(seq * n)` into a synthetic length worker;
+ordinary sequence multiplication is evaluated first, and oversized
+materialization stays loud rather than returning a length CPython cannot
+produce.
+
+| Measurement | Result |
+|---|---|
+| Oversized witness | `len_repeat_oversize.py`: expected loud exit-1 boundary |
+| Source audit | no active `lowerLenRepeatPairs` definition or ingestion call |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-lenmult-length-only` as already fixed; retain the explicit
+allocation-budget refusal until memory outcomes are modeled.
+
 ## 2026-11-07-pycomplete-412 — refuse dictionary-source set table order
 
 The integer-set audit exposed one remaining silent wrong answer after negative
@@ -10342,6 +10531,24 @@ from a heap dict or dictionary view before the set can be iterated. The narrow
 
 DECIDED: keep dictionary and dictionary-view set construction outside the tier
 until CPython's pre-sized merge and resize transitions are represented.
+
+## 2026-11-07-pycomplete-458 — audit signed set iteration order
+
+The high-priority `py-set-iteration-order` finding is already handled by
+conservative set-order admission. The model refuses negative hashes, copied
+sets, dictionary-source construction, and intersection paths whose CPython
+table layout is not represented; the admitted nonnegative direct insertion row
+still matches.
+
+| Measurement | Result |
+|---|---|
+| Focused set rows | 1 MATCH (`iter_order(7)`), 6 expected refusals, 0 failures |
+| Oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-set-iteration-order` as already fixed by loud refusal of
+unmodeled table-construction paths; retain the narrow admitted direct-insertion
+surface.
 
 ## 2026-11-07-pycomplete-413 — recheck shape-specific ingestion rewrite removal
 
@@ -10362,6 +10569,24 @@ DECIDED: preserve source statement structure and keep unsupported callable,
 active-exception, and budget boundaries loud until their native semantics are
 modeled.
 
+## 2026-11-07-pycomplete-459 — audit shape-specific ingestion rewrites
+
+The high-priority `py-shape-specific-ingestion-rewrites` finding is already
+closed in the current ingestion path. The five reported pair rewrites have no
+active definitions or call sites: builtin alias, dead value, immediate
+genexp-drain, length-only repetition, and direct bare-reraise. Their source
+statements remain structured and reach ordinary value, generator, allocation,
+or active-exception semantics.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five helper names absent from active ingestion |
+| Differential boundary | existing alias, generator, and bare-reraise rows retain MATCH or loud outcomes |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-shape-specific-ingestion-rewrites` as already fixed; keep
+unsupported callable, active-exception, and allocation-budget boundaries loud.
+
 ## 2026-11-07-pycomplete-414 — recheck the static definition-delete census
 
 The static definition-delete audit finding is already closed by the current
@@ -10379,6 +10604,22 @@ survive through the position-independent tables.
 DECIDED: retain loud refusal for module `def`/`class`/namedtuple/alias deletion
 until definitions become runtime bindings; benign-import deletion remains the
 only static no-op.
+
+## 2026-11-07-pycomplete-460 — audit static definition-delete no-op census
+
+The high-priority `py-static-del-noop-census` finding is already fixed. The
+static no-op predicate excludes every function, class, namedtuple, and alias
+definition, so a function-body call or exception handler cannot survive a
+module-level deletion through the position-independent tables.
+
+| Measurement | Result |
+|---|---|
+| Delete-call witnesses | `del_def_mid_script.py` and `del_def_call.py`: 2/2 expected loud refusals |
+| Oracle | CPython 3.9.25 raises after the deleted definition is reached |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-static-del-noop-census` as already fixed; retain loud
+definition deletion until runtime-bound definition objects exist.
 
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
@@ -10398,6 +10639,24 @@ only the model's loud boundary is whitelisted.
 DECIDED: keep integer trace readings as explicit future input but refuse any
 zero-argument clock value until the trace carries binary64 readings; preserve
 real-value oracle comparison.
+
+## 2026-11-07-pycomplete-461 — audit trace-clock reading type
+
+The high-priority `py-clock-int-reading` finding is already fixed by the
+explicit clock boundary. Integer trace entries are not exposed as Python
+integers; zero-argument `time.time()` reads refuse because the current world
+trace cannot represent CPython binary64 values. The differential oracle runs
+the source program with real clock values, while comparison and arithmetic
+controls remain admitted where no reading is consumed.
+
+| Measurement | Result |
+|---|---|
+| Clock battery | 12 rows: 8 whitelisted refusals, 4 MATCH, 0 failures |
+| Oracle | CPython 3.9.25 with real `time.time()` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-clock-int-reading` as already fixed; retain integer trace
+input as a future explicit boundary until binary64 replay is modeled.
 
 ## 2026-11-07-pycomplete-416 — structure benign import admission
 
@@ -10733,6 +10992,24 @@ static alias when a later ordinary assignment shadows it.
 DECIDED: retain guarded static aliases and loud unsafe observations; schedule
 runtime function values before deleting the ingestion table pass.
 
+## 2026-11-07-pycomplete-464 — audit module-level function alias copying
+
+The medium `py-def-alias-copy` finding remains open. `recognizeDefAliases`
+still admits a guarded source-order alias by copying a function entry and
+rewriting the assignment to `pass`. The guards preserve measured callable
+dispatch and shadow/rebinding behavior, but function-object identity,
+`__name__`, and general first-class value semantics remain outside that static
+representation.
+
+| Measurement | Result |
+|---|---|
+| Alias battery | 4/4 MATCH against CPython 3.9.25 |
+| Remaining debt | runtime function objects and ordinary alias assignment |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-def-alias-copy` open as a medium runtime-value milestone; do
+not broaden the guarded static alias admission.
+
 ## 2026-11-07-pycomplete-434 — recheck trailing definition deletion
 
 The trailing-definition deletion rewrite is absent from current ingestion.
@@ -10749,6 +11026,23 @@ remain represented for ordinary names.
 
 DECIDED: preserve trailing definition deletes as source nodes and keep the
 static-table tombstone boundary loud until definitions become runtime bindings.
+
+## 2026-11-07-pycomplete-465 — audit trailing definition deletion rewrite
+
+The medium `py-trailing-del-rewrite` finding is already fixed. Ingestion keeps
+trailing bare-name `Delete` nodes; the script executor refuses a static
+function, class, namedtuple, or alias tombstone instead of rewriting the
+statement to `pass`, preserving source order and the explicit runtime-value
+boundary.
+
+| Measurement | Result |
+|---|---|
+| Trailing opcode witness | `del_trailing_script.py`: expected loud refusal |
+| Oracle | CPython 3.9 executes preceding output then exits successfully |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-trailing-del-rewrite` as already fixed; retain the loud
+static-definition deletion boundary until runtime bindings exist.
 
 ## 2026-11-07-pycomplete-435 — recheck structured yield-from delegation
 
@@ -10767,6 +11061,24 @@ return-value behavior remain outside the current tier.
 
 DECIDED: retain the structured delegation boundary and implement a PEP 380
 frame before admitting resumed `yield from` behavior.
+
+## 2026-11-07-pycomplete-466 — audit yield-from inlining
+
+The medium `py-yieldfrom-inline` finding is already fixed at the source and
+ingestion boundary. The approved extractor and JSON parser preserve
+`.yieldFromStmt`; the old synthetic target/`for` loop and `yieldFromName`
+helpers have no active path. The dedicated interpreter arm refuses unsupported
+delegation rather than pretending that a loop has PEP 380 send/throw/close or
+return-value semantics.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active yield-from loop synthesis or `yieldFromName` helper |
+| Boundary | dedicated `yieldFromStmt` refusal remains explicit |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-yieldfrom-inline` as already fixed; retain the structured
+delegation refusal until a PEP 380 frame is implemented.
 
 ## 2026-11-07-pycomplete-436 — recheck structured class statement boundary
 
@@ -10788,6 +11100,25 @@ DECIDED: retain structured class statements and creation-purity checks; replace
 qualified method indexing with a runtime class namespace only when full class
 object semantics are implemented.
 
+## 2026-11-07-pycomplete-467 — audit class method flattening
+
+The medium `py-method-flattening` finding remains open beyond the structured
+class-statement boundary. `ClassDef` is now retained as a source node and class
+creation effects are admitted or refused at the statement position, but methods
+are still flattened into qualified `C.method` function entries for the admitted
+protocol. This preserves current instance dispatch while leaving full class
+namespace, method-object identity, and class-body binding semantics as future
+runtime-class work.
+
+| Measurement | Result |
+|---|---|
+| Pure class witness | `class_script.py`: MATCH against CPython 3.9.25 |
+| Creation-effect witness | `cls_deco_script.py`: expected loud refusal |
+| Remaining debt | runtime class namespace and first-class method values |
+
+DECIDED: keep `py-method-flattening` open as a medium class-runtime milestone;
+retain qualified dispatch only for the conservative admitted protocol.
+
 ## 2026-11-07-pycomplete-437 — recheck structured extractor try handling
 
 The extractor try-lowering audit remains closed. `convert_stmt(ast.Try)` carries
@@ -10805,6 +11136,24 @@ shortcut, or `raise N()` replacement is emitted.
 
 DECIDED: preserve `Try` and `Raise` source nodes; model full cleanup and handler
 protocols before widening admission.
+
+## 2026-11-07-pycomplete-468 — audit extractor try lowerings
+
+The medium `py-extractor-try-lowerings` finding is already fixed. The approved
+extractor preserves `Try` and `Raise` nodes, carries structured handler names
+and bodies, and records unsupported `else`, `finally`, multiple-handler,
+non-name-handler, and generator-frame forms as explicit reasons. The retired
+nested-try, finalizer-reordering, synthetic-success-flag, identifier-keyed
+`Stop`, and `raise N()` rewrites have no active path.
+
+| Measurement | Result |
+|---|---|
+| Extractor regression suite | 163/163 tests passed under CPython 3.9.25 |
+| Runtime boundary | unsupported cleanup/handler/generator forms remain loud |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-extractor-try-lowerings` as already fixed; retain explicit
+structured refusals until full cleanup and handler protocols are modeled.
 
 ## 2026-11-07-pycomplete-438 — recheck display and starred extraction boundaries
 
@@ -10827,6 +11176,24 @@ DECIDED: keep display/comprehension syntax source-level and loud until native
 nodes exist; retain only the measured positional-star and flat-star-target
 slices with their unspellable markers.
 
+## 2026-11-07-pycomplete-469 — audit display/comprehension/starred rewrites
+
+The medium `py-extractor-display-lowerings` finding is already removed from the
+approved extractor path. Set and dict comprehensions, starred load displays,
+and unsupported nested starred forms remain structured loud nodes; ordinary
+ListComp now has its native evaluator and does not synthesize a `list` name.
+Admitted flat starred assignment/for targets and positional-star calls retain
+dedicated markers rather than user-visible builtin names.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active `lower_starred_display` or display-to-builtin call path |
+| Differential boundaries | ListComp shadow/ordinary scripts MATCH; set/dict/starred unsupported forms remain loud |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-extractor-display-lowerings` as already fixed; retain loud
+set/dict-comprehension and unsupported starred-display boundaries.
+
 ## 2026-11-07-pycomplete-439 — recheck remaining ingestion bridges
 
 The general ingestion audit is split between retired shape rewrites and
@@ -10847,6 +11214,26 @@ this recheck.
 DECIDED: preserve the remaining bridges only as explicit debt and replace each
 with a native source-node semantic case before widening admission.
 
+## 2026-11-07-pycomplete-470 — audit remaining general ingestion bridges
+
+The medium `py-general-ingestion-rewrites` finding remains partially open as
+representation debt. Retired list-comprehension, display, raise-cause,
+yield-from, and try rewrites are gone, but f-string format workers, multi-item
+`with` nesting, delete-target markers, chained-assignment splitting,
+consuming dict-view markers, and synthetic `TypeErrorHandler` markers still
+bridge source syntax to existing interpreter cases. Their names are explicit
+and their boundaries are tested, yet they are not all native source-node
+semantics under the new engineering rule.
+
+| Measurement | Result |
+|---|---|
+| Retired paths | absent from active ingestion |
+| Residual bridges | present and documented with dedicated loud/guarded cases |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-general-ingestion-rewrites` open as a medium source-node
+refactoring queue; do not widen any residual bridge without a native case.
+
 ## 2026-11-07-pycomplete-440 — recheck leanpy frontend and oracle pinning
 
 The runner pinning audit is closed. `tools/leanpy` re-execs extraction under
@@ -10865,6 +11252,22 @@ fallback.
 DECIDED: retain independent pinned frontend and oracle controls with visible
 fallback warnings rather than silent version drift.
 
+## 2026-11-07-pycomplete-471 — audit runner oracle and frontend pinning
+
+The low `py-leanpy-oracle-unpinned` finding is already fixed. `tools/leanpy`,
+`diff_test.py`, `script_corpus.py`, and `leanpy_survey.py` default to pinned
+CPython 3.9, re-execute under the pinned frontend, report both identities, and
+warn visibly when a fallback is required.
+
+| Measurement | Result |
+|---|---|
+| Runner tests | 11/11 `tools.test_leanpy` tests passed |
+| Identity behavior | frontend/oracle identity and fallback-warning tests pass |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-leanpy-oracle-unpinned` as already fixed; retain visible
+fallback warnings and independent frontend/oracle controls.
+
 ## 2026-11-07-pycomplete-441 — recheck frontend admission and envelope freshness
 
 The frontend audit is closed at ingestion and in the committed-artifact gate.
@@ -10881,6 +11284,23 @@ refuses when the frontend is absent or mismatched.
 
 DECIDED: retain family-level CPython 3.9 admission and make freshness a
 required check before committed envelopes enter theorem or runner surfaces.
+
+## 2026-11-07-pycomplete-472 — audit frontend-version admission and freshness
+
+The low `py-frontend-unchecked-stale-envelopes` finding is already fixed. JSON
+ingestion retains frontend family/version metadata and rejects envelopes outside
+the pinned CPython 3.9 AST family; the freshness instrument re-extracts with
+the pinned frontend and checks source hashes before committed envelopes enter
+the theorem or runner surfaces.
+
+| Measurement | Result |
+|---|---|
+| Python freshness | `envelope_fresh.py --tier python`: FRESH 83, STALE 0 |
+| Freshness self-test | 27/27 checks passed, including stale/foreign/absent/off-tree cases |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-frontend-unchecked-stale-envelopes` as already fixed; retain
+family-level CPython 3.9 admission and the freshness gate.
 
 ## 2026-11-07-pycomplete-442 — recheck differential edge coverage
 
@@ -10989,6 +11409,22 @@ does not consume a call frame.
 DECIDED: retain the pinned default recursion limit and active-depth unwind;
 keep `sys.setrecursionlimit` outside the tier until it is an explicit oracle.
 
+## 2026-11-07-pycomplete-449 — audit recursion-limit finding against current tier
+
+The high-priority audit finding `py-no-recursion-limit` is closed by the
+existing active-depth implementation. Rechecking the reported witness against
+the pinned CPython 3.9 oracle found no divergence: the closed-function model
+raises `RecursionError` at the same boundary and restores depth after a call.
+
+| Measurement | Result |
+|---|---|
+| Focused proof-interpreter differential | `depth(100)` and `depth(1000)`: 2/2 MATCH |
+| Pinned oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-no-recursion-limit` as already fixed; retain the remaining
+scope boundary that `sys.setrecursionlimit` is not modeled.
+
 ## 2026-11-07-pycomplete-448 — rebase float proof over call depth
 
 The Lean 4.35 fixture audit's remaining Python failure was in
@@ -11029,6 +11465,23 @@ globals, annotation ordering, oversized repetition, and global-yield targets.
 DECIDED: retain every measured edge as a matching row or documented loud
 boundary; add future rows only when a new semantic edge is measured.
 
+## 2026-11-07-pycomplete-473 — audit differential row coverage gaps
+
+The low `py-row-coverage-gaps` finding is already addressed by the pinned
+differential rows and script fixtures. The battery includes the non-cancelling
+negative set hash, set copy/dict/intersection constructions, non-iterable
+genexp creation, recursion-limit depth, ListComp shadowing, long globals,
+oversized repetition, annotation order, and global-yield boundaries.
+
+| Measurement | Result |
+|---|---|
+| Pinned script corpus | 158 scripts: 142 completed-and-matched, 16 explicit loud, 0 failed |
+| Focus rows | negative hash `-5`, set construction paths, and all named audit scripts present |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-row-coverage-gaps` as already fixed; add future rows only
+when a new semantic edge is measured.
+
 ## 2026-11-07-pycomplete-450 — recheck parameterized float-round worker
 
 The float-round audit remains closed. Both interpreter surfaces dispatch
@@ -11044,6 +11497,23 @@ rounding. The earlier one-definition-per-digit chain is absent.
 
 DECIDED: keep the parameterized worker and extend its boundary rows when
 CPython cutoff behavior changes; do not unroll new digit cases.
+
+## 2026-11-07-pycomplete-474 — audit float-round worker family
+
+The low `py-round-digits-unrolled` finding is already fixed. Both interpreter
+surfaces dispatch through the single parameterized `roundFloatNDigits` worker;
+the former per-digit worker family is absent. Positive and negative decimal
+cutoffs, zero digits, signed zero, and values beyond the old forty-digit range
+are handled by the shared worker and one proof boundary.
+
+| Measurement | Result |
+|---|---|
+| Round differential | 216 expanded cases: 215 MATCH, 1 expected refusal, 0 failures |
+| Worker census | one `roundFloatNDigits`; no `roundFloatOne`/`roundDigitsOne` family |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-round-digits-unrolled` as already fixed; retain the single
+parameterized worker and explicit unsupported integer boundary.
 
 ## 2026-11-07-pycomplete-451 — choose the next completeness milestone
 

@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Generated members in the memory route
+
+Parameterized unpacked wires now remain source-shaped `UnpackedDecl` nodes in
+the symbolic envelope. The memory instantiator expands generate-if/for bodies
+with their concrete genvar values, and generated unpacked-cell assignments are
+executed through the existing memory write path. The clean-room `genmem_if`
+and `genmem_for` fixtures now load and retain their generated cell drivers;
+the finite-cell scalar route remains unchanged.
+
 ## Lean 4.35 residual closure
 
 The v4.35 owner-lane repairs now include the exact run bridge from `runObs2`

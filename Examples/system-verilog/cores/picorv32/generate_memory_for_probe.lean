@@ -11,5 +11,9 @@ def memoryRoute :=
 #eval memoryRoute.processes
 
 #guard match memoryRoute.processes with
-  | [.unsupported "Instantiate" "memory cycle route does not yet admit unsupported module members"] => true
+  | [.assign "q" (.arrayElem "tap" [.int 0]),
+     .assignL (.arrayElem "tap" [.int 0]) (.arrayElem "mem" [.int 0]),
+     .assignL (.arrayElem "tap" [.int 1]) (.arrayElem "mem" [.int 1]),
+     .assignL (.arrayElem "tap" [.int 2]) (.arrayElem "mem" [.int 2]),
+     .assignL (.arrayElem "tap" [.int 3]) (.arrayElem "mem" [.int 3])] => true
   | _ => false

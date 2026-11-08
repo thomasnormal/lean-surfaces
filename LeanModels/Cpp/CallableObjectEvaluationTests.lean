@@ -40620,6 +40620,57 @@ def callableValueObjectGotoAgreementWitness : Bool :=
 
 #guard callableValueObjectGotoAgreementWitness
 
+def callableValueObjectAssignmentAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.assign (handle "0x10") {
+        expression := CallableExpression.integer 9,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 9 && objectValue == signed 9
+  | _, _ => false
+
+#guard callableValueObjectAssignmentAgreementWitness
+
+def callableValueObjectNullComparisonAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.nullComparison "==",
+      sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 1⟩ && objectValue == ⟨.boolean, 1⟩
+  | _, _ => false
+
+#guard callableValueObjectNullComparisonAgreementWitness
+
+def callableValueObjectSizeAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := unsignedLongType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.sizeOf intType,
+      sourceType := unsignedLongType, type := unsignedLongType}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 64, 4⟩ && objectValue == ⟨.unsigned 64, 4⟩
+  | _, _ => false
+
+#guard callableValueObjectSizeAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

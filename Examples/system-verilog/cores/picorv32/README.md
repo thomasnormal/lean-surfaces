@@ -881,6 +881,39 @@ clean-room request or core adaptation is justified; the symbolic ADDI
 invariant remains parked at the unpacked-memory and unsupported-member/net-z
 boundaries.
 
+## 2026-11-08 re-probe after undriven-net admission (`3d11ff8f7`)
+
+The pinned YosysHQ source was re-extracted without RTL changes against the
+owner lane's memory-route revision `3d11ff8f7` (the public merge was still
+pending at this probe).  The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the fresh envelope is 2,991,521
+bytes with SHA-256
+`5cf47d7aed28c2e63a0ab0dc3f3ac414f27fe326eab59ffe232b348bace45a3b`.
+
+The ordinary semantic route still first refuses the unpacked `cpuregs` memory
+at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route admits the eight source-shaped PCPI `NetSymbol:net-z`
+members, including `pcpi_mul_wr`, but then stops at the existing unsupported
+module-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first remaining denied member is the already catalogued parametric x/z
+literal `IntegerLiteral:unsized-xz-parametric` (`'bx`) at
+`picorv32.v:1038`.  The generic x/z refusal family already has its own
+fixtures and oracle records, so no duplicate clean-room request is filed.
+The symbolic ADDI invariant remains parked at the unpacked-memory and
+parametric-x/z boundaries.
+
 ## 2026-11-07 re-probe after `cpuregs` memory-route admission
 
 The current owner revision `43f0d0fa4` admits the source-shaped unpacked

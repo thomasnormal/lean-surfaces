@@ -19100,5 +19100,41 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-assignment-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectAssignmentAgreementWitness",
+    "cpp_source": "int assignment_agreement_witness(int value) { value = 9; return value; } bool callable_witness() { return assignment_agreement_witness(7) == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-null-comparison-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectNullComparisonAgreementWitness",
+    "cpp_source": "bool null_comparison_agreement_witness() { return nullptr == nullptr; } bool callable_witness() { return null_comparison_agreement_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-size-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectSizeAgreementWitness",
+    "cpp_source": "unsigned long size_agreement_witness() { return sizeof(int); } bool callable_witness() { return size_agreement_witness() == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

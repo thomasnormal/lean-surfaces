@@ -426,3 +426,20 @@ The companion `rv32iRvfiCycleTrace_of_step_refines` corollary now composes the
 indexed step invariant with any admitted finite cycle window.  It returns the
 mixed cycle certificate, the normalized equality to the stateful ISA trace,
 and the final core-to-ISA relation in one quantified result.
+
+## 2026-11-08 combined PicoRV32 memory/xz clean-room repro
+
+Item 389 adds the source-shaped fixture
+`Examples/system-verilog/cores/picorv32/walls/xz_memory.sv`.  It combines a
+parameter-sized unpacked memory with a continuous assignment of the unsized
+x/z literal `'bx`; it is a generic measurement fixture, not a rewrite of the
+pinned YosysHQ source and not a new owner-lane request.
+
+The approved pyslang-11 extractor emits a 9,020-byte envelope whose SHA-256 is
+`cc40cd919372a91246472303ea75f1a9bb6cb569af0e4f9ad15161507fb3a610` (source
+SHA-256 `b2f937bcacf45a96a2958dfc46c5b8239589dfcdc98c3e521f26bd4a04b0ed2f`).
+The exact probe records the ordinary unpacked-memory refusal, the retained
+`IntegerLiteral:unsized-xz-parametric`/`'bx` metadata, and the memory-route
+`memory cycle route does not yet admit unsupported module members` refusal.
+The owner-branch measurement at `3d11ff8f7` agrees and leaves the first denied
+member in the already catalogued parametric x/z family.

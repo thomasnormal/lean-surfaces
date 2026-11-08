@@ -176,6 +176,9 @@ comparison operator agreement through both evaluator APIs.
 It also includes a greater-than-or-equal comparison callable, checking
 comparison operator agreement through both evaluator APIs.
 
+The battery also includes compound subtraction assignment, checking parameter
+state updates through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -19436,5 +19436,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-compound-subtraction-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCompoundSubtractionAgreementWitness",
+    "cpp_source": "int compound_subtraction_agreement_witness(int value) { value -= 3; return value; } bool callable_witness() { return compound_subtraction_agreement_witness(7) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

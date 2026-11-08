@@ -46,10 +46,14 @@ so `py_prove` closes it in the proof module:
 ```lean
 -- Examples/python/arith/proof.lean (excerpt; docstrings elided)
 theorem floordiv_zero (a : PyInt) : arith.floordiv(a, 0) ==>! .zeroDivisionError := by
-  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 theorem mod_zero (a : PyInt) : arith.mod(a, 0) ==>! .zeroDivisionError := by
-  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 ```
 
 `==>!` elaborates to `Raises`: some fuel makes `callFunction` return exactly

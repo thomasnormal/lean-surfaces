@@ -116,6 +116,9 @@ the narrowed result through both evaluator APIs.
 It also includes a direct parameter-return callable, checking the baseline
 same-IR result through both evaluator APIs.
 
+The battery also includes a short-circuit logical-OR callable, checking the
+shared Boolean result through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

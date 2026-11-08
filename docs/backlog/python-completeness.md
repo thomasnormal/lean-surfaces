@@ -11670,3 +11670,21 @@ clock-independent loud outcomes. Existing projection paths remain stable.
 DECIDED: item complete. Before the next item I will reread the inbox and
 transport the same ListComp arm through `PayloadBlind`, then run the complete
 runner and proof checks.
+
+## 2026-11-08-pycomplete-458 — retire stale depth-zero recursive proof fixture
+
+`LeanModels/Python/VCTests` no longer carries the old quantified `fact_spec`
+triple proof. That fixture consumed `PyTriple.call` at the pre-call-depth
+world and could not state the depth-one `CallsIn` relation without silently
+identifying different recursion frames. The concrete `fact` and
+`fact_plus_one` `#py_check` rows remain; the proof-side replacement is the
+fuel-threaded `EvalsState`/`CallsIn` seam in `VC2.lean`.
+
+| Measurement | Result |
+|---|---|
+| VCTests build | `lake build LeanModels.Python.VCTests` passes (16 jobs) |
+| Runtime regression | Both concrete recursion rows remain checked |
+| Semantic change | none; only the stale proof fixture was retired |
+
+DECIDED: keep the quantified recursive proof open until the stateful fuel
+relation is complete; do not equate depth-zero and depth-one frames.

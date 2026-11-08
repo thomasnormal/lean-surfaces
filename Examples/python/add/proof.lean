@@ -16,7 +16,9 @@ load_program add from "Examples/python/add/add.json"
 
 /-- Total correctness: straight-line body, one `py_prove`. -/
 theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by
-  py_prove [add, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [add, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 /-- Determinism corollary of `add_total` — one `py_corollary`
 (Surface.lean). -/

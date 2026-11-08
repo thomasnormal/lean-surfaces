@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a safe integer
+  division callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a binary
   subtraction callable and native differential row.
 

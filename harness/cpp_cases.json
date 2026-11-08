@@ -19280,5 +19280,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-division-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectDivisionAgreementWitness",
+    "cpp_source": "int division_agreement_witness(int value) { return value / 3; } bool callable_witness() { return division_agreement_witness(7) == 2; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

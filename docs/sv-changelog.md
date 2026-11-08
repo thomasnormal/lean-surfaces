@@ -1,5 +1,23 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Exact 32-bit `int` parameters in the svGolf comb tactics
+
+The svGolf comb tactics (`sv_structure`, `sv_interface`, `sv_equations`, `sv_exhaustive`) now follow ls-sv's
+exact signed-32-bit `int` instantiation and its alias-guarded `X.sem` families (branch `int32-tactics`).
+`hag` reads parameters through `IEnv.intVal?` (90e4d0224). At a symbolic `int` parameter the instantiation
+holds `canonInt 32 true N`, so the tactics close `hag` from a range premise in context,
+`(hR : (N : Int) < 2147483648)` (4f3866fb7), and the theorems about `X.sem N` take that premise
+(b1b8ae934). Without it, the tactics say which value they could not place in range. The family readers
+accept `PDesign.instantiateGDAlias2` (4f3866fb7, 222d7f756). `sv_structure`'s `always_comb` form still
+refuses a design with an `always_comb` beside a continuous `assign`. `Comb2Base.lookup_initState2`
+follows the net-z `initState2` (07128fda5). `sv_exhaustive` passes the design explicitly (47b0568e3;
+example `sv_exhaustive_param`). `partsel_rev_instantiated` is stated at `psEnv32` (27149e35e).
+
+**Correction.** The message of 90e4d0224 says that the tactics close the `intVal?` form of `hag` "by
+`rfl`". That holds only at concrete arguments, where `canonInt` reduces. At a symbolic parameter `rfl`
+fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
+4f3866fb7, and only from the range premise above.
+
 ## Qualified SVA signal paths
 
 SVA expressions now preserve nested instance and generate names as a single

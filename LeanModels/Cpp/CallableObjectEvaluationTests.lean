@@ -40620,6 +40620,25 @@ def callableValueObjectGotoAgreementWitness : Bool :=
 
 #guard callableValueObjectGotoAgreementWitness
 
+def callableValueObjectAssignmentAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.assign (handle "0x10") {
+        expression := CallableExpression.integer 9,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 9 && objectValue == signed 9
+  | _, _ => false
+
+#guard callableValueObjectAssignmentAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

@@ -517,7 +517,8 @@ theorem ripple_correct_nat (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648
 
 /-- Non-vacuity, packaged: under every schedule and stimulus a completed run
 EXISTS, and it satisfies the correctness statement. -/
-example (N : Nat) (hN : 1 ≤ N) (σ : ScheduleOracle) (stim : List SvState) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (σ : ScheduleOracle) (stim : List SvState) :
     ∃ tr, Runs2 (ripple_add.sem N) σ stim tr ∧ ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

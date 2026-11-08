@@ -25,8 +25,7 @@ private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
 #guard cpuregsMem.processes.length == 2
 
 #guard match (net_z_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+  | [.assign "q" (.arrayElem "mem" [.int 0])] => true
   | _ => false
 
 #guard net_z_memory_wall.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]

@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Undriven nets in the memory route
+
+The memory-cycle adapter now admits the exact `NetSymbol:net-z` member shape
+as a one-bit z-initialized scalar net. Other unsupported module members remain
+loud. The PicoRV32 clean-room memory wall now retains `pcpi_mul_wr` and runs
+the `q = mem[0]` process through the memory route.
+
 ## Generated members in the memory route
 
 Parameterized unpacked wires now remain source-shaped `UnpackedDecl` nodes in

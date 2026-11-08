@@ -37,7 +37,9 @@ theorem caught_arithmetic_identity_total (value : PyInt) :
     unboundLocalMarker, dynamicShadowHandlerName, lateHandlerNames,
     hasLateRaiseNamesCore, hasLateRaiseNames, isLoweredBuiltinName, isPyBuiltinName,
     flattenStarRun, flattenStarCallArgs, userExcCatches, classAtExc,
-    builtinExcNameCatches, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
+    builtinExcNameCatches, pythonTopCallDepth, pythonRecursionLimit,
+    Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic, Run.toPublic_ok,
+    RVal.freezeB]
 
 #print axioms caught_arithmetic_identity_total
 

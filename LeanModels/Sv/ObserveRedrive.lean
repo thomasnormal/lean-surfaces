@@ -110,7 +110,17 @@ theorem runFromObs2_redrive {d : Design2} (hd : CombDesign d) {σ : ScheduleOrac
 theorem runObs2_redrive {d : Design2} (hd : CombDesign d) {σ : ScheduleOracle} {F : Nat}
     {stim : List SvState} {r : List (CycleObs SvState)} (h : runObs2 d σ F stim = .ok r) :
     runObs2 d σ F (r.map fun o => redriveEntry d o.pre) = .ok r :=
-  runFromObs2_redrive hd stim _ 0 r (StateShape.of_initState2 hd) h
+  by
+    have hg : run2ClockGuard d = .ok () := by
+      cases hq : run2ClockGuard d with
+      | ok u => simpa using hq
+      | timeout => simp [runObs2, hq] at h
+      | unsupported msg => simp [runObs2, hq] at h
+    have hfrom : runFromObs2 d σ F (initState2 d) 0 stim = .ok r := by
+      simpa [runObs2, hg] using h
+    have hredrive := runFromObs2_redrive hd stim (initState2 d) 0 r
+      (StateShape.of_initState2 hd) hfrom
+    simpa [runObs2, hg] using hredrive
 
 /-! ## A comb-profile design writes no input port
 

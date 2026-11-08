@@ -109,7 +109,14 @@ theorem Obs_run2.comb_samples {d : Design2} (hd : CombDesign d) {σ : ScheduleOr
     (CombEqs d o.pre ∧ StateShape d o.pre) ∧ (CombEqs d o.post ∧ StateShape d o.post) := by
   have hruns := Obs_run2.runs2_of_runs hd.noQualified hr
   obtain ⟨fuel, hrun⟩ := hr
-  obtain ⟨inputs, prev, kc, kc', -, hprev, hcyc⟩ := runFromObs2_cycle hrun ho
+  have hg : run2ClockGuard d = .ok () := by
+    cases hq : run2ClockGuard d with
+    | ok u => simpa using hq
+    | timeout => simp [runObs2, hq] at hrun
+    | unsupported msg => simp [runObs2, hq] at hrun
+  have hfrom : runFromObs2 d σ fuel (initState2 d) 0 stim = .ok r := by
+    simpa [runObs2, hg] using hrun
+  obtain ⟨inputs, prev, kc, kc', -, hprev, hcyc⟩ := runFromObs2_cycle hfrom ho
   have hsh : StateShape d prev := by
     cases c with
     | zero =>

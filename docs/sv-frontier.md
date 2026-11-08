@@ -90,16 +90,19 @@ memories, compound memory expressions, and hierarchy remain loud.
 The PicoRV32 R2 item is now started from the re-probe's generic walls. A
 source-shaped `always_comb` memory read is admitted after the sequential
 `MemState` commit; `sem2/unpacked_memory_comb` covers this exact form. The
-memory route still refuses unsupported module members such as `net-z` wires.
-The generic undriven-wire boundary remains source-shaped metadata: a plain
-four-state `wire` with no driver is retained in `pdesign.others`, and the
-memory route keeps its named unsupported-member refusal until net resolution is
-represented. `sem2/unpacked_memory_netz` guards this behavior.
+memory route admits the exact undriven `NetSymbol:net-z` member as a
+source-shaped one-bit z-initialized scalar net. Other unsupported module
+members remain loud. `sem2/unpacked_memory_netz` and the PicoRV32 wall probe
+guard this behavior.
 The item-2 clean-room PicoRV32 wall pair is pinned under
 `Examples/system-verilog/cores/picorv32/walls`: `unpacked_cpuregs` checks the
-ordinary unpacked-memory refusal, while `net_z_memory` checks the memory-route
-unsupported-member refusal and `NetSymbol:net-z` metadata. `walls/probe.lean`
-checks both exact messages.
+ordinary unpacked-memory refusal, while `net_z_memory` checks the retained
+z-initialized net and source-shaped memory process. `walls/probe.lean` checks
+both boundaries.
+The same route now admits a referenced source-shaped empty input-only task as
+metadata (`SubroutineSymbol:empty-task`) and executes its call as the existing
+empty statement. `task_memory` guards this exact no-op shape; tasks with
+outputs, defaults, timing, or nonempty bodies remain loud unsupported members.
 
 ### Initial ROM loading remains an explicit F4 boundary
 
@@ -153,11 +156,24 @@ remain explicit refusals. Simple `$past(signal)` maps to the sampled
 Simple `disable iff (reset)` guards map to `SvaProp.disable`.
 Simple boolean conjunctions and disjunctions map to `SvaBool.and` and
 `SvaBool.or`.
+When these operators contain no sampled-value call, the structured adapter
+keeps the whole boolean expression as an existing `PExpr`/`Expr2` tree, so
+`&&`, `||`, and `!` use the exact four-state evaluator (including `!x`).
+Only temporal calls such as `$past`, `$rose`, `$fell`, `$stable`, and the
+sampled predicates stay in the SVA wrapper.
 Simple case equality (`a === b`) maps to `SvaBool.caseEq`.
 Simple boolean negation (`!a`) maps to `SvaBool.not`.
 The retained `cover property` spelling is directly guarded through the same
 source-to-contract parser.
 The corresponding `assume property` spelling is guarded through the same path.
+The downstream clean-room F1 forms `sva_f1_finite`, `sva_f1_range`, and
+`sva_assume_disable` now load their structured Slang assertion trees and are
+checked as `SvaContract`s over sampled E observations. The first pair covers
+finite `##1`, bounded `##[1:3]`, `|->`, `|=>`, `$rose`, and finite `$past`,
+including an assertion and a cover property; the third covers `disable iff`
+with `$stable`. These are kernel acceptance rows over explicit pre/post
+traces; no Xcelium verdict is claimed by these source-shaped fixtures until
+the property-result harness is connected.
 Unbased unsized SVA literals (`'0`, `'1`, `'x`, and `'z`) are retained as
 width-directed fills in the expression tree. The clean-room
 `sem2/sva_unbased_literal` witness checks a passing and a failing sampled
@@ -199,6 +215,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 environment. The clean-room `sem2/sva_select` witness covers the sampled
 selector form; the arbiter property-expression census falls from 12 to 9,
 leaving only nested temporal calls and a shift expression.
+Indexed packed part-selects (`base +: width` and `base -: width`) now retain
+their source-shaped `PartSel` bounds, and sized based literals retain their
+declared width and x/z digits in the existing literal node. The clean-room
+`sem2/sva_indexed_part` witness covers both forms. On the pinned `prim_packer`
+set, its four dynamic-selector and four integer-vector property walls are
+removed; the remaining property nodes are outside this finite fragment.
 Boolean conjunction, disjunction, and negation now recurse through structured
 SVA leaves, so a finite `$past` operand remains a sampled `SvaPast` node inside
 the boolean tree. The clean-room `sem2/sva_past_logic` witness covers the
@@ -214,6 +236,12 @@ when at most one bit is one, while unknown vectors pass only when no more than
 one known one exists and no unknown can make the count exceed one. The clean
 `sem2/sva_onehot0` witness covers the admitted form; the arbiter census falls
 from 3 to 2, leaving one shift and one other invocation.
+`$countones(expr)` now maps to a sampled four-state known-one count, with x/z
+bits contributing zero as required by the SVA bit query. The clean-room
+`sem2/sva_countones` witness and Verilator row cover the retained value form.
+On the pinned `prim_packer` set, the eight `$countones` invocation walls are
+removed from the property AST; eight unrelated property nodes remain outside
+the finite value fragment.
 Sampled order comparisons (`<`, `<=`, `>`, `>=`) now retain temporal operands
 as `SvaValueCmp` and evaluate them at the sampled width. The clean-room
 `sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter remains at two
@@ -233,7 +261,8 @@ F1 keeps the four-state sampled value until the assertion boundary. IEEE
 value is never turned into a true result by `!`, `$past`, or `$stable`. Missing
 signals, unsupported expression evaluation, and timing failures remain named
 `SVA:` errors. `$rose` and `$fell` use the sampled-value edge table, with the
-first sampled tick forced false because it has no preceding sampled value.
+first sampled tick compared with the default unknown sample, so a first
+sampled `1` is a rose and a first sampled `0` is a fell.
 
 #### Downstream clean-room wall audit
 
@@ -267,6 +296,14 @@ requires an implication around a sequence. Immediate assertions remain outside
 the finite concurrent-property envelope, and `s_eventually` remains an
 unbounded liveness operator outside F1 by design. These boundaries preserve a
 named refusal until their E meaning and refinement rule exist.
+
+The current clean-room F1 proof battery contains 18 retained SVA fixtures,
+covering finite assertions, assumptions, disable conditions, bounded ranges,
+sampled values, boolean composition, reductions, selectors, temporal
+comparisons, and sampled-value predicates. A combined Lean 4.35 build of all
+18 proof modules passes. The battery checks structured property ingestion and
+contract evaluation; it does not claim that the remaining OpenTitan design
+level loader walls are solved.
 
 Assertions nested in a constant generate scope are retained in the same module
 metadata list, with the structural generate body left empty for executable
@@ -346,3 +383,9 @@ loader work waits behind the target census. Each rung records its before/after
 refusal census, adds differential rows, and lands only with a theorem or a
 loud named boundary. SVA properties are never silently treated as comments or
 plain procedural statements.
+
+The Sem2 one-clock transport refuses multi-clock designs and retained
+data-driven event controls before `edgePass2`; these shapes cannot be assigned
+one rising edge per stimulus entry. `clk_two` remains a `Clock:multiple`
+refusal, while `clk_two_instants` uses the exact `runMulti` instant route, and
+`clk_implicit` pins the `Clock:implicit` refusal.

@@ -142,7 +142,13 @@ theorem rcycle_run2 {d : Design2} (m : CycleMachine) (t : m.Tick) (hold : m.In �
     ∀ σ stim b, Obs_run2.Behaves d σ stim b →
       ∃ s, m.init s ∧ b = m.run t s (heldInputs hold i0 stim) := by
   rintro σ stim b ⟨r, ⟨F, hrun⟩, rfl⟩
-  exact ⟨s0, hs0, rcycle_runFrom m t hold R hcyc stim _ 0 s0 i0 r hR0 hrun⟩
+  have hrunFrom : runFromObs2 d σ F (initState2 d) 0 stim = .ok r := by
+    unfold runObs2 at hrun
+    cases hg : run2ClockGuard d with
+    | ok u => simpa [hg] using hrun
+    | timeout => simp [hg] at hrun
+    | unsupported msg => simp [hg] at hrun
+  exact ⟨s0, hs0, rcycle_runFrom m t hold R hcyc stim _ 0 s0 i0 r hR0 hrunFrom⟩
 
 /-- **Safety statements move from the machine to the design**: under R-CYCLE, a safety statement
 that holds of every machine run from the start policy holds of the design over `Obs_run2`, for every

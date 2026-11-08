@@ -376,12 +376,22 @@ theorem view_initStore {E : Elab} (hnd : (E.decls.toList.map Decl.name).Nodup)
         have hf' : (E.toDesign2.decls.toList.find? fun dc => dc.name == n) = some dc := hf
         rw [hf']
         simp only [Option.map_some, Elab.initStore, hdecl, Val.ofLVec, VType.ofDecl, VType.conv]
-        have hw : (dc.init.getD (LVec.xVec dc.width)).width = dc.width := by
+        have hw : (dc.init.getD (if dc.isNet = true then LVec.replicate dc.width Logic.lz else LVec.xVec dc.width)).width = dc.width := by
           cases hi : dc.init with
-          | none => simp
+          | none => cases hnet : dc.isNet <;> simp [hnet, LVec.replicate, LVec.xVec, LVec.width]
           | some v => exact hinit dc hmem v hi
         rw [LVec.resizeU_of_width hw]
-        by_cases h : dc.twoState = true <;> simp [h]
+        cases hi : dc.init
+        · cases hnet : dc.isNet
+          · rcases Bool.eq_false_or_eq_true dc.twoState with ht | ht <;>
+              simp [hi, hnet, ht, LVec.replicate, LVec.xVec]
+          · rcases Bool.eq_false_or_eq_true dc.twoState with ht | ht <;>
+              simp [hi, hnet, ht, LVec.replicate, LVec.xVec]
+        · cases hnet : dc.isNet
+          · rcases Bool.eq_false_or_eq_true dc.twoState with ht | ht <;>
+              simp [hi, hnet, ht, LVec.replicate, LVec.xVec]
+          · rcases Bool.eq_false_or_eq_true dc.twoState with ht | ht <;>
+              simp [hi, hnet, ht, LVec.replicate, LVec.xVec]
 
 /-- Inputs are undriven, so a frame keeps their values. -/
 theorem Frame.lookup_input {d : Design2} (hd : CombDesign d) {st st' : SvState} (hF : Frame d st st')
@@ -512,6 +522,39 @@ theorem runObs2_of_runs_E0 {E : Elab} {rank : Nat → Nat} (hS : Settles E E.toD
     intro c _
     rw [Nat.add_sub_cancel, hbt, hbt]
   rw [hr, List.map_map]
+  unfold runObs2
+  have hg : run2ClockGuard E.toDesign2 = .ok () := by
+    have hnames : ∀ ps : List Proc0,
+        (ps.map Proc0.toProcess2).filterMap run2Clock? = [] := by
+      intro ps
+      induction ps with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.map_cons, List.filterMap_cons, Proc0.toProcess2, run2Clock?, ih]
+    have himplicit : ∀ ps : List Proc0,
+        (ps.map Proc0.toProcess2).any (fun p =>
+          match p with
+          | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+          | _ => false) = false := by
+      intro ps
+      induction ps with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+    have hc : run2ClockNames E.toDesign2 = [] := by
+      simp [run2ClockNames, Elab.toDesign2, hnames E.procs.toList]
+    have hi : E.toDesign2.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) = false := by
+      simpa [Elab.toDesign2] using himplicit E.procs.toList
+    unfold run2ClockGuard
+    rw [hc]
+    simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+    split
+    · next h => exact Bool.noConfusion (hi.symm.trans h)
+    · rfl
+  simp only [hg, Res.ok_bind]
   exact runFromObs2_of_behaves0 hS hinit hb σ env.length 0 0 _ (fun _ => rfl)
     (fun h => absurd h (Nat.lt_irrefl 0))
 
@@ -691,6 +734,39 @@ theorem runs2_of_runs_E0_agree {E : Elab} {d : Design2} {rank : Nat → Nat}
     .ok ((List.range env.length).map fun c =>
       (⟨b (2 * c + 1 - 1), b (2 * c + 1)⟩ : CycleObs SvState))
   rw [hr, List.map_map]
+  unfold runObs2
+  have hg : run2ClockGuard E.toDesign2 = .ok () := by
+    have hnames : ∀ ps : List Proc0,
+        (ps.map Proc0.toProcess2).filterMap run2Clock? = [] := by
+      intro ps
+      induction ps with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.map_cons, List.filterMap_cons, Proc0.toProcess2, run2Clock?, ih]
+    have himplicit : ∀ ps : List Proc0,
+        (ps.map Proc0.toProcess2).any (fun p =>
+          match p with
+          | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+          | _ => false) = false := by
+      intro ps
+      induction ps with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+    have hc : run2ClockNames E.toDesign2 = [] := by
+      simp [run2ClockNames, Elab.toDesign2, hnames E.procs.toList]
+    have hi : E.toDesign2.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) = false := by
+      simpa [Elab.toDesign2] using himplicit E.procs.toList
+    unfold run2ClockGuard
+    rw [hc]
+    simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+    split
+    · next h => exact Bool.noConfusion (hi.symm.trans h)
+    · rfl
+  simp only [hg, Res.ok_bind]
   exact hF F₀ (Nat.le_refl _)
 
 /-- **R-DESIGN2, comb slice, E → `run2`, any equation design** (transport theorem). -/
@@ -858,8 +934,16 @@ theorem runs_E0_of_runObs2 {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : S
         exact hty _ (List.getElem_mem hi)
   let cfg := runCfg E σ stim
   have hb : Behaves0 E stim σ cfg := exists_behaves0 hS σ stim
+  have hfrom : runFromObs2 E.toDesign2 σ F (initState2 E.toDesign2) 0 stim = .ok r := by
+    unfold runObs2 at h
+    cases hg : run2ClockGuard E.toDesign2 with
+    | ok u => simpa [hg] using h
+    | timeout => simp [hg] at h
+    | unsupported msg => simp [hg] at h
   have hr := runFromObs2_eq_behaves0 hS hA hinit hb hty' stim.length 0 0 _ r (fun _ => rfl)
-    (fun h => absurd h (Nat.lt_irrefl 0)) (by rw [map_range'_getD]; exact h)
+    (fun h => absurd h (Nat.lt_irrefl 0)) (by
+      rw [map_range'_getD]
+      exact hfrom)
   refine ⟨fun t => E.view (cfg t).store, ⟨cfg, hb, fun _ => rfl⟩, ?_⟩
   rw [hr]
   show _ = (List.range stim.length).map fun c =>
@@ -943,7 +1027,8 @@ theorem run2_one_entry {d : Design2} (hd : CombDesign d) (ha : Acyclic d) (σ : 
     (StateShape.of_applyInputs2 hd hs entry)
   obtain ⟨-, -, hnd⟩ := combSettle2_eqs hd (StateShape.of_applyInputs2 hd hs entry) h1
   refine ⟨S, ?_, hnd⟩
-  simp only [runObs2, runFromObs2, cycleObs2_comb hd (Nat.le_refl _) hs h1, Res.ok_bind,
+  simp only [runObs2, runFromObs2, CombDesign.run2ClockGuard_ok hd,
+    cycleObs2_comb hd (Nat.le_refl _) hs h1, Res.ok_bind,
     Res.pure_eq]
 
 /-- **The unrestricted converse is false** (transport theorem, negative): for an assign-only

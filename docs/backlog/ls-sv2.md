@@ -7530,3 +7530,84 @@ extractor, RTL, or finite captured-window theorem was edited.  No duplicate
 PicoRV32 frontier is still the existing unpacked-memory and parametric-x/z
 family; it does not justify a new owner request.  Keep the symbolic ADDI
 invariant parked until a corresponding generic loader change lands.
+
+## 2026-11-08-ls-sv2-391 — inventory the R2 headline's consumed facts
+
+Item 391 records the bounded fact list for the all-prefix R2 headline.  This
+is a contract inventory, not a new theorem or an alternative packaging; future
+ISA-side lemmas are admitted only when they establish one of these statements.
+
+1. `Rv32iInstruction` and its decoder evidence identify every admitted RV32I
+   retirement input as exactly one mixed ISA instruction.
+2. `rvMemoryMachineWith profile` supplies the stateful R0 transition, trace,
+   and `rvMemoryStateAfter` functions used by the headline's target stream.
+3. `Rv32iCycleStepRefines` states the per-cycle safety fact: a related core and
+   ISA state either produce one exact mixed ISA step with its retirement/order
+   evidence or stutter explicitly on an invalid row, while threading memory.
+4. `rv32iRvfiCycleTrace_of_step_refines` turns that step fact over a finite
+   admitted cycle prefix into a mixed certificate whose normalized RVFI trace
+   equals the stateful ISA trace and whose final relation is retained.
+5. `Rv32iRetiresTarget` supplies liveness for every finite target retirement
+   prefix by a finite cycle boundary; it does not choose a scheduler.
+6. `schedulePrefix_admit` lifts pointwise schedule admission to every finite
+   cycle prefix consumed by the step theorem.
+7. `rv32i_progress_refinement` packages the finite-prefix certificate for all
+   target lengths, and `rv32i_reset_refinement` specializes its initial relation
+   to the loaded core's reset state.
+8. `rv32i_r2_headline` projects that reset refinement to the public statement:
+   every target prefix has a boundary with equal committed trace and a final
+   core-to-ISA relation over `rvMemoryStateAfter`.
+
+The list deliberately excludes per-instruction re-exports, structure-valued
+aliases, and finite captured-window facts; those do not occur in the headline
+statement.
+
+## 2026-11-08-ls-sv2-392 — expose mixed decoder evidence at one boundary
+
+Item 392 implements the first fact in the bounded R2 inventory.  The mixed
+`Rv32iInstruction` union now exposes `wordOf` and `decoded`, and
+`Rv32iInstruction.decode_word` proves that the parser decoder at the retained
+word is exactly the instruction's stored `Option Instr` evidence.  The trap
+constructors preserve the distinction between an undecodable word and a CSR
+word whose CSR row is absent.  `rv32iProgramInput_fetched` additionally proves
+that every mixed program input carries the same retained source word.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean` passes on
+Lean 4.35.0.  The new theorems have axiom footprints
+`[propext, Quot.sound]`; no `sorryAx` or custom axiom is introduced.  No
+loaded-core or oracle result is claimed.
+
+**CHANGED:** Added only the two accessors and two decoder/input projection
+facts to `LeanModels/Refine/RvfiRv32iProgram.lean`; no per-instruction wrapper,
+alternative package, RTL, loader, extractor, or finite captured-window lemma
+was added.
+
+**JUDGED / DECIDED:** The loaded-core step invariant can now refer to one
+mixed decoder-evidence projection rather than opening each family constructor.
+Continue only with the remaining listed headline facts; keep the symbolic
+PicoRV32 proof parked at the owner loader wall.
+
+## 2026-11-08-ls-sv2-393 — state the mixed result through `rvMemoryStateAfter`
+
+Item 393 closes the stateful-machine form of the second bounded headline
+fact.  `rvMemoryStateAfter_rv32i_program` states directly that threading
+`rvMemoryMachineWith profile` over the mixed program inputs yields
+`rv32iProgramState`; it uses the existing per-step mixed machine theorem and
+does not introduce another state representation.  The mixed trace law already
+has the direct `trace (rvMemoryMachineWith profile)` form required by the
+headline.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean` passes on
+Lean 4.35.0.  The new theorem has the standard
+`[propext, Classical.choice, Quot.sound]` footprint and no `sorryAx` or custom
+axiom.  No loaded-core or oracle result is claimed.
+
+**CHANGED:** Added the direct state-after theorem and its axiom print to
+`LeanModels/Refine/RvfiRv32iProgram.lean`; no alternative state package,
+per-instruction wrapper, RTL, loader, extractor, or finite captured-window
+lemma was added.
+
+**JUDGED / DECIDED:** The R2 headline's target-state equation now names the
+public state function it consumes.  Continue only with a genuinely missing
+fact from the bounded list; keep PicoRV32 parked at the unchanged owner
+loader wall.

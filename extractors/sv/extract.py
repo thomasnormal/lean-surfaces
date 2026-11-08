@@ -12071,9 +12071,39 @@ def _empty_input_task_call(expression):
                for formal in formals):
             return False
         body = getattr(subroutine, "body", None)
+        if type(body).__name__ == "BlockStatement":
+            body = getattr(body, "body", None)
         body_list = (list(body.list)
                      if type(body).__name__ == "StatementList" else None)
         return body_list == []
+    except Exception:
+        return False
+
+
+def _empty_task_symbol(subroutine):
+    """Recognize the source-shaped empty input-only task supported by E.
+
+    The declaration remains metadata in ``others`` with a distinct marker;
+    only its call is represented as the existing empty statement. Any task
+    with formals, defaults, output storage, or a nonempty body stays loud.
+    """
+    try:
+        if str(getattr(subroutine, "subroutineKind", "")).split(".")[-1] != "Task":
+            return False
+        if getattr(subroutine, "syntax", None) is None:
+            return False
+        if str(getattr(subroutine, "flags", "")).split(".")[-1] != "None_":
+            return False
+        formals = list(getattr(subroutine, "arguments", []))
+        if any(str(getattr(formal, "direction", "")).split(".")[-1] != "In"
+               or getattr(formal, "initializer", None) is not None
+               for formal in formals):
+            return False
+        body = getattr(subroutine, "body", None)
+        if type(body).__name__ == "BlockStatement":
+            body = getattr(body, "body", None)
+        return (type(body).__name__ == "StatementList"
+                and list(getattr(body, "list", [])) == [])
     except Exception:
         return False
 
@@ -26199,6 +26229,61 @@ def _sva_integer(node):
         return None
 
 
+def _sva_vector_literal(node):
+    """Convert a sized based literal in a sampled SVA expression.
+
+    Slang keeps ``1'b0`` and friends as ``IntegerVectorExpression`` nodes,
+    separate from decimal ``IntegerLiteralExpression``. Preserve the
+    declared width and four-state digits in the existing PExpr Literal shape.
+    """
+    if not isinstance(node, dict) or node.get("kind") != "IntegerVectorExpression":
+        return None
+    try:
+        width = int((node.get("size") or {}).get("text", ""), 10)
+    except (TypeError, ValueError):
+        return None
+    if width <= 0:
+        return None
+    base = ((node.get("base") or {}).get("text", "") or "").lower()
+    raw = ((node.get("value") or {}).get("text", "") or "").replace("_", "").lower()
+    if not raw or base not in ("'b", "'o", "'d", "'h"):
+        return None
+    if base == "'b":
+        if any(c not in "01xz" for c in raw):
+            return None
+        bits = raw
+    elif base == "'o":
+        table = {"0": "000", "1": "001", "2": "010", "3": "011",
+                 "4": "100", "5": "101", "6": "110", "7": "111",
+                 "x": "xxx", "z": "zzz"}
+        if any(c not in table for c in raw):
+            return None
+        bits = "".join(table[c] for c in raw)
+    elif base == "'h":
+        table = {str(i): format(i, "04b") for i in range(10)}
+        table.update({c: format(10 + i, "04b") for i, c in enumerate("abcdef")})
+        table.update({"x": "xxxx", "z": "zzzz"})
+        if any(c not in table for c in raw):
+            return None
+        bits = "".join(table[c] for c in raw)
+    else:
+        if set(raw) <= {"x"}:
+            bits = "x" * width
+        elif set(raw) <= {"z"}:
+            bits = "z" * width
+        else:
+            try:
+                n = int(raw, 10)
+            except ValueError:
+                return None
+            bits = format(n & ((1 << width) - 1), "0%db" % width)
+    if len(bits) < width:
+        bits = bits[0] * (width - len(bits)) + bits if bits[0] in "xz" else bits.rjust(width, "0")
+    else:
+        bits = bits[-width:]
+    return {"kind": "Literal", "span": None, "width": width, "bits": bits}
+
+
 def _sva_scoped_name(node):
     """Return a qualified value path from Slang's nested ``ScopedName``.
 
@@ -26255,10 +26340,25 @@ def _sva_pexpr(node):
             return {"kind": "Unsupported", "sv_kind": kind,
                     "text": "selector outside element-select fragment"}
         bit = selector.get("selector") or {}
-        if bit.get("kind") != "BitSelect":
+        selector_kind = bit.get("kind")
+        if selector_kind == "BitSelect":
+            index = _sva_pexpr(bit.get("expr"))
+        elif selector_kind in ("AscendingRangeSelect", "DescendingRangeSelect"):
+            left = _sva_pexpr(bit.get("left"))
+            width = _sva_pexpr(bit.get("right"))
+            one = {"kind": "Int", "value": 1}
+            span = {"kind": "Binary", "op": "-", "left": width, "right": one}
+            if selector_kind == "AscendingRangeSelect":
+                msb = {"kind": "Binary", "op": "+", "left": left, "right": span}
+                lsb = left
+            else:
+                msb = left
+                lsb = {"kind": "Binary", "op": "-", "left": left, "right": span}
+            return {"kind": "PartSel", "value": {"kind": "Ident", "name": base},
+                    "msb": msb, "lsb": lsb}
+        else:
             return {"kind": "Unsupported", "sv_kind": kind,
-                    "text": "selector outside bit-select fragment"}
-        index = _sva_pexpr(bit.get("expr"))
+                    "text": "selector outside bit/part-select fragment"}
         unpacked = base in _SVA_UNPACKED_NAMES
         if not unpacked:
             try:
@@ -26275,6 +26375,12 @@ def _sva_pexpr(node):
         if value is not None:
             return {"kind": "Int", "value": value}
         return {"kind": "Unsupported", "sv_kind": kind, "text": "integer literal"}
+    if kind == "IntegerVectorExpression":
+        literal = _sva_vector_literal(node)
+        if literal is not None:
+            return literal
+        return {"kind": "Unsupported", "sv_kind": kind,
+                "text": "sized vector literal"}
     if kind == "UnbasedUnsizedLiteralExpression":
         raw = (node.get("literal", {}).get("text", "") or "").lower()
         if raw in ("'0", "'1", "'x", "'z"):
@@ -26392,6 +26498,8 @@ def _sva_value(node):
             if cycles is not None and cycles >= 0:
                 return {"kind": "SvaPastValue", "cycles": cycles,
                         "expr": _sva_pexpr(args[0])}
+        if name == "$countones" and len(args) == 1:
+            return {"kind": "SvaCountOnes", "expr": _sva_pexpr(args[0])}
     binary_ops = {
         "AddExpression": "+", "SubtractExpression": "-",
         "MultiplyExpression": "*", "DivideExpression": "/",
@@ -26419,16 +26527,45 @@ def _sva_has_past(node):
                if key not in ("span", "trivia"))
 
 
+def _sva_has_temporal_call(node):
+    """Whether an assertion expression contains a sampled-value call.
+
+    These calls cannot be represented by one live ``Expr2`` evaluated at the
+    current sample; ordinary boolean operators around them stay in the small
+    SVA wrapper while their non-temporal leaves remain ``Expr2``.
+    """
+    node = _sva_unwrap(node)
+    if not isinstance(node, dict):
+        return False
+    if node.get("kind") == "InvocationExpression":
+        name = node.get("left", {}).get("systemIdentifier", {}).get("text", "")
+        if name in ("$past", "$rose", "$fell", "$stable", "$isunknown",
+                    "$onehot0", "$countones"):
+            return True
+    return any(_sva_has_temporal_call(v) for key, v in node.items()
+               if key not in ("span", "trivia"))
+
+
 def _sva_bool(node):
     node = _sva_unwrap(node)
+    # Ordinary boolean operators are ordinary SystemVerilog expressions.
+    # Keep them in the existing PExpr/Expr2 evaluator so four-state logical
+    # truth tables (including !x) are not replaced by a separate Boolean
+    # mini-language.  Temporal sampled-value calls still need the SVA
+    # wrappers below because their operands are evaluated at another sample.
+    temporal = _sva_has_past(node) or _sva_has_temporal_call(node)
     if isinstance(node, dict) and node.get("kind") in (
             "LogicalAndExpression", "LogicalOrExpression"):
+        if not temporal:
+            return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
         return {
             "kind": "SvaAnd" if node["kind"] == "LogicalAndExpression" else "SvaOr",
             "left": _sva_bool(node.get("left")),
             "right": _sva_bool(node.get("right")),
         }
     if isinstance(node, dict) and node.get("kind") == "UnaryLogicalNotExpression":
+        if not temporal:
+            return {"kind": "SvaExpr", "expr": _sva_pexpr(node)}
         return {"kind": "SvaNot", "arg": _sva_bool(node.get("operand"))}
     if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
         left = node.get("left", {})
@@ -32465,6 +32602,13 @@ def convert_net_sym(sm, m):
         return unsupported(sm, m, "NetSymbol:" + nk)
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
+    # Keep a parameter-sized unpacked wire as one source-shaped declaration.
+    # Its generated element assignments retain their GenvarRef indices and
+    # are interpreted by the memory route at instantiation; folding the
+    # default point into cells would make a generate family unsound.
+    retained = _convert_unpacked_decl_sym(sm, m)
+    if retained is not None:
+        return retained
     fixed_array = _convert_fixed_net_array_sym(sm, m)
     if fixed_array is not None:
         return fixed_array
@@ -33079,6 +33223,12 @@ def _convert_member_sym(sm, m, k, path=()):
         # routine remains the explicit USERFN boundary.
         if not _subroutine_is_referenced(_SYM.scope, m):
             return None
+        if _empty_task_symbol(m):
+            # A referenced empty input-only task has exact no-op call
+            # semantics in the memory route. Keep its declaration metadata,
+            # but distinguish this admitted shape from every other task so
+            # unsupported tasks cannot be silently dropped.
+            return unsupported(sm, m, "SubroutineSymbol:empty-task")
         if (_literal_function_symbol(m, allow_implicit=True,
                                      allow_automatic=True)
                 or _sym_conditional_function_shape(m) is not None

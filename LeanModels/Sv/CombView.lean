@@ -654,6 +654,7 @@ structure DeclT where
   name : String
   isInput : Bool
   isOutput : Bool
+  isNet : Bool
   dims : List (PDim × Aff × Aff)
 deriving Repr, Inhabited
 
@@ -679,7 +680,8 @@ def DeclT.affNames (dt : DeclT) : List String :=
   dt.dims.flatMap fun p => p.2.1.names ++ p.2.2.names
 
 def DeclT.toDecl (σ : String → Int) (dt : DeclT) : Decl :=
-  { name := dt.name, width := dt.width σ, isInput := dt.isInput, isOutput := dt.isOutput }
+  { name := dt.name, width := dt.width σ, isInput := dt.isInput, isOutput := dt.isOutput,
+    isNet := dt.isNet }
 
 def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
   match affOf? d.msb, affOf? d.lsb with
@@ -696,10 +698,10 @@ def declOf? (pd : PDecl) : Except String DeclT :=
         .error s!"declaration `{pd.name}` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)"
       else
         match pd.type with
-        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, []⟩
+        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, []⟩
         | .packed [d] _ =>
             match dimOf? pd.name d with
-            | .ok p => .ok ⟨pd.name, pd.isInput, pd.isOutput, [p]⟩
+            | .ok p => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, [p]⟩
             | .error e => .error e
         | .packed [d1, d2] _ =>
             match dimOf? pd.name d1 with
@@ -707,7 +709,7 @@ def declOf? (pd : PDecl) : Except String DeclT :=
             | .ok p1 =>
                 match dimOf? pd.name d2 with
                 | .error e => .error e
-                | .ok p2 => .ok ⟨pd.name, pd.isInput, pd.isOutput, [p1, p2]⟩
+                | .ok p2 => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, [p1, p2]⟩
         | _ => .error s!"declaration `{pd.name}`: only scalar, 1-D and 2-D packed declarations are in the v1 fragment"
 
 def declsOf? : List PDecl → Except String (List DeclT)
@@ -1858,7 +1860,8 @@ theorem Summary.pairs_map_fst (s : Summary) (σ : String → Int) (E : IEnv)
 /-! ## The declaration stage -/
 
 theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
-    dt.name = pd.name ∧ dt.isInput = pd.isInput ∧ dt.isOutput = pd.isOutput ∧ pd.init = none ∧
+    dt.name = pd.name ∧ dt.isInput = pd.isInput ∧ dt.isOutput = pd.isOutput ∧
+    dt.isNet = pd.isNet ∧ pd.init = none ∧
     (∃ r, pd.type = .packed dt.pdims r) ∧ dt.dims.length ≤ 2 ∧
     (∀ p ∈ dt.dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) ∧
     pd.isSigned = false ∧ pd.twoState = false := by
@@ -1888,7 +1891,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
         | [], h =>
           simp only [Except.ok.injEq] at h
           subst h
-          refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
+          refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
           intro p hp; simp at hp
         | [d], h =>
           rcases hp : dimOf? pd.name d with e | p
@@ -1896,7 +1899,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
           · simp only [hp, Except.ok.injEq] at h
             subst h
             obtain ⟨h1, h2, h3⟩ := hdim hp
-            refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
+            refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
             intro q hq
             simp only [List.mem_singleton] at hq
             subst hq
@@ -1910,7 +1913,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
               subst h
               obtain ⟨h1, h2, h3⟩ := hdim hp1
               obtain ⟨k1, k2, k3⟩ := hdim hp2
-              refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
+              refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
               intro q hq
               simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
               rcases hq with rfl | rfl
@@ -1983,7 +1986,7 @@ theorem width_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
     (hd : declOf? pd = .ok dt)
     (hag : ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) :
     pd.type.width env = .ok (dt.width σ) := by
-  obtain ⟨-, -, -, -, ⟨r, hr⟩, -, hdim, -, -⟩ := declOf?_spec hd
+  obtain ⟨-, -, -, -, -, ⟨r, hr⟩, -, hdim, -, -⟩ := declOf?_spec hd
   rw [hr]
   exact width_dims r dt.dims hdim (dt_agree hag)
 
@@ -1991,7 +1994,7 @@ theorem elemWidth_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : Dec
     (hd : declOf? pd = .ok dt)
     (hag : ∀ n ∈ dt.affNames, env.intVal? n = some (σ n)) :
     pd.type.elemWidth env = .ok (dt.elemW σ) := by
-  obtain ⟨-, -, -, -, ⟨r, hr⟩, hlen, hdim, -, -⟩ := declOf?_spec hd
+  obtain ⟨-, -, -, -, -, ⟨r, hr⟩, hlen, hdim, -, -⟩ := declOf?_spec hd
   rw [hr]
   have hag' := dt_agree hag
   unfold DeclT.pdims
@@ -2017,7 +2020,7 @@ theorem buildDecls_summary {σ : String → Int} :
       simp [declsOf?] at h; subst h; rfl
   | pd :: rest, sd, h, env, hag => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, hi, ho, hinit, -, -, -, hsg, hts⟩ := declOf?_spec hd
+      obtain ⟨hn, hi, ho, hnet, hinit, -, -, -, hsg, hts⟩ := declOf?_spec hd
       have hw := width_decl (env := env) (σ := σ) hd (fun n hn => hag dt (by simp) n hn)
       have hrest := buildDecls_summary rest sd' hr
         { env with widths := (pd.name, dt.width σ) :: env.widths }
@@ -2029,10 +2032,10 @@ theorem buildDecls_summary {σ : String → Int} :
         · simp at hd'
         · simp_all
       have hdecl : instDecl env pd = .ok (dt.toDecl σ) := by
-        simp [instDecl, hw, hun, hinit, DeclT.toDecl, hn, hi, ho, hsg, hts]
+        simp [instDecl, hw, hun, hinit, DeclT.toDecl, hn, hi, ho, hnet, hsg, hts]
       simp only [buildDecls, hdecl, Res.ok_bind]
-      have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput } : Decl)
-          = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho]
+      have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput, isNet := pd.isNet } : Decl)
+          = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho, hnet]
       simp only [DeclT.toDecl] at hrest ⊢
       rw [hrest]
       simp [Res.ok_bind, hn]
@@ -2045,7 +2048,7 @@ theorem buildElems_summary {σ : String → Int} :
       simp [declsOf?] at h; subst h; rfl
   | pd :: rest, sd, h, env, hag => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, -, -, -, -, -, -, -, -⟩ := declOf?_spec hd
+      obtain ⟨hn, -, -, -, -, -, -, -, -, -⟩ := declOf?_spec hd
       have hw := width_decl (env := env) (σ := σ) hd (fun n hn => hag dt (by simp) n hn)
       have hrest := buildElems_summary rest sd' hr
         { env with widths := (pd.name, dt.width σ) :: env.widths }
@@ -2072,7 +2075,7 @@ theorem dimTable_summary {σ : String → Int} :
       simp [declsOf?] at h; subst h; simp [dimTable]
   | pd :: rest, sd, h, env, hag, n => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, -, -, -, ⟨r, hr'⟩, -, hdim, -, -⟩ := declOf?_spec hd
+      obtain ⟨hn, -, -, -, -, ⟨r, hr'⟩, -, hdim, -, -⟩ := declOf?_spec hd
       have hrest := dimTable_summary rest sd' hr (dimTableStep env pd)
         (fun dt' hdt' n' hn' => by
           rw [dimTableStep_intVal]; exact hag dt' (by simp [hdt']) n' hn') n

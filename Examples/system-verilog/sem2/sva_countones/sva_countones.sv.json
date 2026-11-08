@@ -1,0 +1,606 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_countones",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_countones/sva_countones.sv",
+      "sha256": "823dbf56f9c63a78dbb5de0271514f834eba0e1c8dbfa4e615eb07e5aa524030"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "sva_countones",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 21,
+              "end_line": 4,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 23,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 20,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 27
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 11
+              },
+              "width": 32,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 7,
+                "col": 14,
+                "end_line": 7,
+                "end_col": 27
+              },
+              "width": 32,
+              "op": "+",
+              "left": {
+                "kind": "Binary",
+                "span": {
+                  "line": 7,
+                  "col": 14,
+                  "end_line": 7,
+                  "end_col": 27
+                },
+                "width": 32,
+                "op": "+",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "op": "+",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "op": "+",
+                    "left": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    },
+                    "right": {
+                      "kind": "Ternary",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "cond": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "BitSel",
+                          "span": {
+                            "line": 7,
+                            "col": 14,
+                            "end_line": 7,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 7,
+                              "col": 25,
+                              "end_line": 7,
+                              "end_col": 26
+                            },
+                            "width": 4,
+                            "name": "a"
+                          },
+                          "index": {
+                            "kind": "Int",
+                            "span": {
+                              "line": 7,
+                              "col": 14,
+                              "end_line": 7,
+                              "end_col": 27
+                            },
+                            "value": 0,
+                            "resolved_width": null
+                          }
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 7,
+                            "col": 14,
+                            "end_line": 7,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "bits": "1"
+                        }
+                      },
+                      "then": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      },
+                      "else": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Ternary",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "BitSel",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 7,
+                            "col": 25,
+                            "end_line": 7,
+                            "end_col": 26
+                          },
+                          "width": 4,
+                          "name": "a"
+                        },
+                        "index": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 7,
+                            "col": 14,
+                            "end_line": 7,
+                            "end_col": 27
+                          },
+                          "value": 1,
+                          "resolved_width": null
+                        }
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    },
+                    "then": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000001"
+                    },
+                    "else": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "Ternary",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "BitSel",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 25,
+                          "end_line": 7,
+                          "end_col": 26
+                        },
+                        "width": 4,
+                        "name": "a"
+                      },
+                      "index": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 27
+                        },
+                        "value": 2,
+                        "resolved_width": null
+                      }
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  },
+                  "then": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000001"
+                  },
+                  "else": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000000"
+                  }
+                }
+              },
+              "right": {
+                "kind": "Ternary",
+                "span": {
+                  "line": 7,
+                  "col": 14,
+                  "end_line": 7,
+                  "end_col": 27
+                },
+                "width": 32,
+                "cond": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 1,
+                  "op": "===",
+                  "left": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 25,
+                        "end_line": 7,
+                        "end_col": 26
+                      },
+                      "width": 4,
+                      "name": "a"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 27
+                      },
+                      "value": 3,
+                      "resolved_width": null
+                    }
+                  },
+                  "right": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 7,
+                      "col": 14,
+                      "end_line": 7,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                "then": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "bits": "00000000000000000000000000000001"
+                },
+                "else": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "bits": "00000000000000000000000000000000"
+                }
+              },
+              "countones_lowered": true
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 55
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) $countones(a) == q);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaValueEq",
+                    "left": {
+                      "kind": "SvaCountOnes",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "a"
+                      }
+                    },
+                    "right": {
+                      "kind": "SvaCurrent",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "q"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

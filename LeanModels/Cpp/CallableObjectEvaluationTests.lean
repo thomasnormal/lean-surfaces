@@ -40687,6 +40687,21 @@ def callableValueObjectAlignAgreementWitness : Bool :=
 
 #guard callableValueObjectAlignAgreementWitness
 
+def callableValueObjectLiteralAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.integer 7,
+      sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 7 && objectValue == signed 7
+  | _, _ => false
+
+#guard callableValueObjectLiteralAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

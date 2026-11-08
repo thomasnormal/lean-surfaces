@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with an integer-literal
+  callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with an `alignof`
   callable and native differential row.
 

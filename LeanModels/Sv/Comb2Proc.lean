@@ -2545,6 +2545,7 @@ structure CombSim (d₁ d₂ : Design2) (I : SvState → Prop) : Prop where
   edge₂ : d₂.edgeIndices = []
   reset₁ : ∀ a b, d₁.resetIndices a b = []
   reset₂ : ∀ a b, d₂.resetIndices a b = []
+  clock₂ : run2ClockGuard d₂ = .ok ()
   none : ∀ i : Nat, d₁.processes[i]? = none → d₂.processes[i]? = none
   proc : ∀ (i : Nat) (p₁ : Process2), d₁.processes[i]? = some p₁ →
     ∃ p₂, d₂.processes[i]? = some p₂ ∧ ∀ st, I st → ∀ f r, runCombProcess2 f st p₁ = .ok r →
@@ -2646,7 +2647,7 @@ theorem runs2 (h : CombSim d₁ d₂ I) {σ : ScheduleOracle} {stim tr : List Sv
   have hf'' : LeanModels.Sv.runFrom2 d₂ σ f' (initState2 d₂) 0 stim = .ok tr := by
     rw [initState2_congr h.decls]
     exact hf'
-  simp [run2, hnq, hf'']
+  simp [run2, hnq, h.clock₂, hf'']
 
 end CombSim
 
@@ -2670,6 +2671,7 @@ theorem CombSim.of_lowerComb (hl : d.lowerComb = some d') (hd' : CombDesign d') 
   edge₂ := hd'.edgeIndices_eq
   reset₁ := (Design2.lowerComb_phases hl).2.1
   reset₂ := hd'.resetIndices_eq
+  clock₂ := CombDesign.run2ClockGuard_ok hd'
   none := fun i h => by rw [(Design2.lowerComb_spec hl).2.2.2 i, h]; rfl
   proc := by
     intro i p hp
@@ -2696,6 +2698,44 @@ theorem CombSim.of_lowerComb' (hl : d.lowerComb = some d') (hd' : CombDesign d')
   edge₂ := (Design2.lowerComb_phases hl).1
   reset₁ := hd'.resetIndices_eq
   reset₂ := (Design2.lowerComb_phases hl).2.1
+  clock₂ := by
+    have hcomb : ∀ p ∈ d.processes.toList,
+        (∃ t e, p = .assign t e) ∨ (∃ body, p = .alwaysComb body) := by
+      intro p hp
+      obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp hp
+      have hget : d.processes[i]? = some p := by
+        rw [Array.getElem?_toList] at hi
+        exact hi
+      obtain ⟨q, hq, -⟩ := Design2.lowerComb_proc hl hget
+      rcases Process2.lowerComb_eq_some hq with ⟨t, e, hpe, -⟩ | ⟨body, S, hpe, -, -⟩
+      · exact Or.inl ⟨t, e, hpe⟩
+      · exact Or.inr ⟨body, hpe⟩
+    have hnames : d.processes.toList.filterMap run2Clock? = [] := by
+      apply List.filterMap_eq_nil_iff.mpr
+      intro p hp
+      rcases hcomb p hp with ⟨t, e, rfl⟩ | ⟨body, rfl⟩ <;> rfl
+    have himplicit : d.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) = false := by
+      simp only [List.any_eq_false]
+      intro p hp
+      rcases hcomb p hp with ⟨t, e, rfl⟩ | ⟨body, rfl⟩ <;> simp
+    have hnames' : run2ClockNames d = [] := by
+      simp [run2ClockNames, hnames]
+    unfold run2ClockGuard
+    change (if (run2ClockNames d).length > 1 then _ else
+      if d.processes.toList.any (fun p =>
+        match p with
+        | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+        | _ => false) then _ else Res.ok ()) = Res.ok ()
+    rw [hnames']
+    simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+    rw [show d.processes.toList.any (fun p =>
+      match p with
+      | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+      | _ => false) = false from himplicit]
+    rfl
   none := fun i h => by
     cases hp : d.processes[i]? with
     | none => rfl

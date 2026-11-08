@@ -33,18 +33,26 @@ private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
 #guard cpuregsMem.processes.length == 2
 
 #guard match (net_z_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+  | [.assign "q" (.arrayElem "mem" [.int 0])] => true
   | _ => false
 
 #guard net_z_memory_wall.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
 
 #guard task_memory_wall.pdesign.others ==
-  [("SubroutineSymbol:Subroutine", "task empty_statement;\n    begin end\n  endtask")]
+  [("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")]
 
-#guard match (task_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+-- The memory adapter's admission is keyed to the extractor's exact empty-task
+-- marker.  A general task marker remains a loud unsupported module member.
+#guard LeanModels.Sv.Kernel.memAllowedOther
+  ("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")
+#guard !LeanModels.Sv.Kernel.memAllowedOther
+  ("SubroutineSymbol:Subroutine", "task nonempty; begin q = 1; endtask")
+
+private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
+  task_memory_wall.pdesign.instantiateMemD2 [4]
+
+#guard match taskMem.processes with
+  | .alwaysFF "clk" (.block [.block []]) :: .assign "q" (.arrayElem "mem" [.int 0]) :: _ => true
   | _ => false
 
 #guard task_memory_comments_wall.pdesign.others ==

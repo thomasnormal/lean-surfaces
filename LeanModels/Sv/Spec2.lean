@@ -127,16 +127,21 @@ def Runs2 (d : Design2) (σ : ScheduleOracle) (stim tr : List SvState) : Prop :=
 theorem run2_from_ok {d : Design2} {σ : ScheduleOracle} {fuel : Nat}
     {stim tr : List SvState} (h : run2 d σ fuel stim = .ok tr) :
     runFrom2 d σ fuel (initState2 d) 0 stim = .ok tr := by
-  simp only [run2] at h
-  obtain ⟨tr', hrun, hv⟩ := Res.bind_eq_ok.mp h
-  by_cases hq : d.processes.toList.any Process2.hasQualifiedCase = true
-  · simp only [hq, if_true, validateTraceChecks2] at hv
-    obtain ⟨u, _, hu⟩ := Res.bind_eq_ok.mp hv
-    have heq : tr' = tr := Res.ok.inj hu
-    simpa [heq] using hrun
-  · simp only [hq, Bool.not_eq_true, if_false] at hv
-    have heq : tr' = tr := Res.ok.inj hv
-    simpa [heq] using hrun
+  unfold run2 at h
+  cases hg : run2ClockGuard d with
+  | timeout => simp [hg] at h
+  | unsupported msg => simp [hg] at h
+  | ok u =>
+      simp only [hg, Res.ok_bind] at h
+      obtain ⟨tr', hrun, hv⟩ := Res.bind_eq_ok.mp h
+      by_cases hq : d.processes.toList.any Process2.hasQualifiedCase = true
+      · simp only [hq, if_true, validateTraceChecks2] at hv
+        obtain ⟨u, hu, hfin⟩ := Res.bind_eq_ok.mp hv
+        have heq : tr' = tr := Res.ok.inj hfin
+        simpa [heq] using hrun
+      · simp only [hq, Bool.not_eq_true, if_false] at hv
+        have heq : tr' = tr := Res.ok.inj hv
+        simpa [heq] using hrun
 
 /-- `d ⊨₂ P` — for **every** legal schedule, every stimulus, and every
 completed run (`Runs2`), the trace satisfies `P`. Introduce from a raw
@@ -238,13 +243,20 @@ theorem Runs2.exists_snapshot {d : Design2} {σ : ScheduleOracle} {stim tr : Lis
 
 /-- The empty stimulus completes with the empty trace, and only with it. -/
 theorem Runs2.nil_iff {d : Design2} {σ : ScheduleOracle} {tr : List SvState} :
-    Runs2 d σ [] tr ↔ tr = [] := by
+    Runs2 d σ [] tr ↔ run2ClockGuard d = .ok () ∧ tr = [] := by
   constructor
-  · intro h; simpa using h.length
-  · rintro rfl
+  · intro h
+    have hclock : run2ClockGuard d = .ok () := by
+      obtain ⟨fuel, hrun⟩ := h
+      unfold run2 at hrun
+      cases hg : run2ClockGuard d with
+      | timeout => simp [hg] at hrun
+      | unsupported msg => simp [hg] at hrun
+      | ok u => simpa using hg
+    exact ⟨hclock, by simpa using h.length⟩
+  · rintro ⟨hclock, rfl⟩
     refine ⟨0, ?_⟩
-    simp only [run2, runFrom2_nil, Res.ok_bind]
-    split <;> simp [validateTraceChecks2]
+    simp [run2, hclock, validateTraceChecks2]
 
 /-- **Snapshot decomposition, step form**: snapshot `c` of a completed run
 is an `.ok` `cycleStep2` from the previous snapshot — read off the shifted
@@ -307,12 +319,13 @@ theorem run2_ok_of_invariant {d : Design2} {σ : ScheduleOracle} {F : Nat}
     (hstep : ∀ (inputs st : SvState) (k : Nat), I st →
       ∃ st' k', cycleStep2 d σ F inputs st k = .ok (st', k') ∧ I st')
     (hnoq : d.processes.toList.any Process2.hasQualifiedCase = false)
+    (hclock : run2ClockGuard d = .ok ())
     (stim : List SvState) :
     ∃ tr, run2 d σ F stim = .ok tr ∧ ∀ s ∈ tr, I s := by
   obtain ⟨tr, hraw, hall⟩ :=
     runFrom2_ok_of_invariant I hstep stim (initState2 d) 0 hinit
   refine ⟨tr, ?_, hall⟩
-  simp [run2, hraw, hnoq]
+  simp [run2, hraw, hnoq, hclock]
 
 /-- `Runs2` form of `run2_ok_of_invariant` (fuel hidden again). -/
 theorem Runs2.of_invariant {d : Design2} {σ : ScheduleOracle} {F : Nat}
@@ -320,9 +333,10 @@ theorem Runs2.of_invariant {d : Design2} {σ : ScheduleOracle} {F : Nat}
     (hstep : ∀ (inputs st : SvState) (k : Nat), I st →
       ∃ st' k', cycleStep2 d σ F inputs st k = .ok (st', k') ∧ I st')
     (hnoq : d.processes.toList.any Process2.hasQualifiedCase = false)
+    (hclock : run2ClockGuard d = .ok ())
     (stim : List SvState) :
     ∃ tr, Runs2 d σ stim tr ∧ ∀ s ∈ tr, I s := by
-  obtain ⟨tr, h, hall⟩ := run2_ok_of_invariant I hinit hstep hnoq stim
+  obtain ⟨tr, h, hall⟩ := run2_ok_of_invariant I hinit hstep hnoq hclock stim
   exact ⟨tr, ⟨F, h⟩, hall⟩
 
 /-- **Snapshot invariant (elimination side)**: if `I` holds at `initState2 d`
@@ -367,11 +381,12 @@ theorem Terminates2.of_invariant {d : Design2} (I : SvState → Prop)
     (hinit : I (initState2 d))
     (hstep : ∀ σ : ScheduleOracle, ∃ F, ∀ (inputs st : SvState) (k : Nat), I st →
       ∃ st' k', cycleStep2 d σ F inputs st k = .ok (st', k') ∧ I st')
-    (hnoq : d.processes.toList.any Process2.hasQualifiedCase = false) :
+    (hnoq : d.processes.toList.any Process2.hasQualifiedCase = false)
+    (hclock : run2ClockGuard d = .ok ()) :
     Terminates2 d := by
   intro σ stim
   obtain ⟨F, hF⟩ := hstep σ
-  obtain ⟨tr, h, _⟩ := Runs2.of_invariant (F := F) I hinit hF hnoq stim
+  obtain ⟨tr, h, _⟩ := Runs2.of_invariant (F := F) I hinit hF hnoq hclock stim
   exact ⟨tr, h⟩
 
 /-! ## `⊨₂` introduction and elimination -/
@@ -511,7 +526,7 @@ private theorem holdD_terminates : Terminates2 holdD :=
   Terminates2.of_invariant (d := holdD) (fun _ => True) trivial (fun σ =>
     ⟨1, fun inputs st k _ => ⟨applyInputs2 holdD inputs st, k + 3, by
       simp [cycleStep2, combSettle2, combPass2, Design2.combIndices, Design2.resetIndices,
-        Design2.edgeIndices, holdD, σ.choose_nil, edgePass2, commitNba2], trivial⟩⟩) (by rfl)
+        Design2.edgeIndices, holdD, σ.choose_nil, edgePass2, commitNba2], trivial⟩⟩) (by rfl) rfl
 
 -- Non-vacuity, packaged: with `Terminates2`, a `⊨₂` fact is witnessed by an
 -- actual run on every schedule and stimulus.

@@ -10,13 +10,106 @@ holds `canonInt 32 true N`, so the tactics close `hag` from a range premise in c
 (b1b8ae934). Without it, the tactics say which value they could not place in range. The family readers
 accept `PDesign.instantiateGDAlias2` (4f3866fb7, 222d7f756). `sv_structure`'s `always_comb` form still
 refuses a design with an `always_comb` beside a continuous `assign`. `Comb2Base.lookup_initState2`
-follows the net-z `initState2` (07128fda5). `sv_exhaustive` passes the design explicitly (47b0568e3;
+follows the net-z `initState2` (07128fda5; ls-sv landed the same statement, `let`-bound, in b541daabf, and
+the merge keeps that form). `sv_exhaustive` passes the design explicitly (47b0568e3;
 example `sv_exhaustive_param`). `partsel_rev_instantiated` is stated at `psEnv32` (27149e35e).
 
 **Correction.** The message of 90e4d0224 says that the tactics close the `intVal?` form of `hag` "by
 `rfl`". That holds only at concrete arguments, where `canonInt` reduces. At a symbolic parameter `rfl`
 fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
 4f3866fb7, and only from the range premise above.
+
+## F1 retained contract guard cleanup
+
+Finite SVA range and `disable iff` witnesses now pattern-match their
+`Except` evaluation results, and their traces reflect the current sampled-edge
+semantics. The bounded cover row records its measured no-coverage result;
+assertion and assumption rows remain passing guards.
+
+## F1 finite assertion witness refresh
+
+The finite retained assert/assume witness now uses a clocked trace that passes
+under the current sampled-edge semantics. Its guards inspect the structured
+contract result by pattern matching rather than comparing an `Except` value
+through an unavailable equality instance.
+
+## Undriven nets in the memory route
+
+The memory-cycle adapter now admits the exact `NetSymbol:net-z` member shape
+as a one-bit z-initialized scalar net. Other unsupported module members remain
+loud. The PicoRV32 clean-room memory wall now retains `pcpi_mul_wr` and runs
+the `q = mem[0]` process through the memory route.
+
+## Generated members in the memory route
+
+Parameterized unpacked wires now remain source-shaped `UnpackedDecl` nodes in
+the symbolic envelope. The memory instantiator expands generate-if/for bodies
+with their concrete genvar values, and generated unpacked-cell assignments are
+executed through the existing memory write path. The clean-room `genmem_if`
+and `genmem_for` fixtures now load and retain their generated cell drivers;
+the finite-cell scalar route remains unchanged.
+
+## Lean 4.35 residual closure
+
+The v4.35 owner-lane repairs now include the exact run bridge from `runObs2`
+to `runFromObs2`, one-clock guard obligations in the loop and E observation
+proof paths, source-shaped z startup for E stores, and the current signed-cast
+and resolved-SVA proof pins. The signed examples now record the loud M0 cast
+boundary; the dynamic-select SVA row records its current false assertion
+outcome. Focused import-closure builds pass for the repaired modules.
+
+## Run2 guard and undriven-net proof repair
+
+The one-clock `run2` guard is now threaded through its structural proof
+lemmas and fuel monotonicity theorem, so multi-clock and implicit-clock
+refusals remain sound after the guard was added. Startup-state shape proofs
+also preserve the declared z value and width of undriven nets.
+
+The memory-cycle wall probe now pins both sides of the referenced-task
+boundary: source-declared empty input-only tasks are admitted as metadata,
+while ordinary task metadata remains a loud unsupported member.
+
+The x-resolution boundary now inventories every current `condTrue` projection
+across execution, assertion, observation, and proof routes. Until the
+concretization judgment is connected, those consumers require a known-value
+witness or remain loud.
+
+The first E edge bridge now consumes `ResolvedDecision`: a source-shaped
+`always_ff` conditional can be related to the branch selected by a concrete
+resolution, while the existing evaluator and AST remain unchanged.
+
+The F1 contract path now has clean-room envelope proofs for finite delayed
+assertions and covers, `|->`/`|=>`, `$rose`, finite `$past`, `disable iff`,
+and `$stable`. Each proof consumes the structured property AST emitted by the
+extractor; no property text is reparsed. These are kernel trace checks, with
+Xcelium result rows still pending from the property-result harness.
+
+The E combinational bridge now consumes `ResolvedDecision` for an
+`always_comb` conditional through `Core0Resolve`, matching the existing edge
+bridge. The source evaluator, AST, and fuel remain unchanged; callers must
+provide the correlated known-value witness before relating a branch to a
+concrete resolution.
+
+The x-resolution note now records the post-PicoRV32 interim boundary and the
+`⊨₂` migration order. Unknown-sensitive judgments require a named
+`DecisionKnown` witness or remain loud; `TwoStateBoundary` handles the
+deterministic §6.11 conversion. Resolution will be lifted through E steps,
+`Runs2`/`⊨₂`, observations and contracts, then comb and memory proof bridges.
+
+The structured SVA adapter now leaves ordinary `&&`, `||`, and `!` expressions
+in the existing `Expr2` four-state evaluator; only sampled-value calls retain
+SVA wrapper nodes. The first sampled `$rose`/`$fell` comparison uses the
+default unknown sample, so a first `1` is a rose and a first `0` is a fell.
+
+The v4.35 import roots are green again: ClockGuard0 and SelfCheck now use
+parser-stable named guard fixtures, and the initial-order refusal passes its
+message as the single `Res.unsupported` payload.
+
+The v4.35 net-startup regression is repaired. CombView summaries preserve a
+declaration's `isNet` flag through the symbolic declaration stage, so
+undriven nets retain z initialization. The comb termination theorem also
+supplies the one-clock guard required by the current `run2` proof interface;
+comb-only designs discharge it structurally.
 
 ## Qualified SVA signal paths
 
@@ -36,6 +129,12 @@ Dynamic packed element selects in SVA now retain the existing `BitSel` and
 The `sem2/sva_select` witness covers the sampled selector form; nested
 temporal calls and shifts remain named boundaries.
 
+Indexed packed part-selects now retain their source-shaped `PartSel` bounds,
+and sized based literals retain their declared width and four-state digits.
+The `sem2/sva_indexed_part` witness and Verilator row cover both forms; the
+pinned `prim_packer` census loses its four selector and four vector-literal
+property walls.
+
 Finite SVA boolean conjunction, disjunction, and negation now recurse through
 structured leaves, preserving nested `$past` sampling. The
 `sem2/sva_past_logic` witness and its Verilator row cover the conjunction form;
@@ -49,6 +148,11 @@ and other system calls remain loud.
 `$onehot0(expr)` now has an explicit finite four-state predicate with the
 known-one count rule. The `sem2/sva_onehot0` witness and Verilator row cover
 the form; the arbiter property-expression census falls from 3 to 2.
+
+`$countones(expr)` now has an explicit sampled four-state known-one count;
+x/z bits contribute zero. The `sem2/sva_countones` witness and Verilator row
+cover the retained SVA value form. The pinned `prim_packer` property census
+loses its eight `$countones` invocation walls; eight unrelated nodes remain.
 
 Finite sampled order comparisons now retain temporal operands as
 `SvaValueCmp`. The `sem2/sva_past_cmp` witness and Verilator row cover
@@ -222,13 +326,39 @@ The R2 memory route now also executes a source-shaped `always_comb` blocking
 read after sequential memory commits. The `sem2/unpacked_memory_comb` witness
 and direct Icarus row cover this form; NBA in `always_comb` remains loud.
 Undriven four-state wires remain source-shaped `pdesign.others` metadata, and
-the memory route keeps its named unsupported-member refusal until net
-resolution is represented. The `sem2/unpacked_memory_netz` guard covers the
-boundary.
+the memory route admits the exact `NetSymbol:net-z` shape as a one-bit
+z-initialized scalar net. Other unsupported members remain loud. The
+`sem2/unpacked_memory_netz` guard covers the boundary.
 The item-2 clean-room PicoRV32 wall pair is pinned under
 `Examples/system-verilog/cores/picorv32/walls`; its probe checks the exact
-ordinary unpacked-memory and memory-route net-z refusals without adapting
-PicoRV32.
+ordinary unpacked-memory refusal and the admitted source-shaped net-z memory
+route without adapting PicoRV32.
+Referenced empty input-only tasks are now retained as
+`SubroutineSymbol:empty-task` metadata in the memory route, and their calls
+execute as the existing empty statement. The `task_memory` wall proves the
+source-shaped no-op; stateful, timed, output, defaulted, and nonempty tasks
+remain loud.
+
+The Sem2 `run2`, `run2ExecChecks`, and observation runner now apply a
+`Clock:multiple`/`Clock:implicit` guard before the one-clock edge pass. The
+ordinary `clk_two` route therefore refuses, while the exact `runMulti` instant
+route remains available; `clk_implicit` records the data-driven event-control
+refusal.
+
+The x-resolution ruling is now recorded as an active proof boundary: until E
+quantifies correlated 0/1 concretizations, decisions and dynamic selects must
+carry a known-value witness or remain loud. Existing `condTrue` x-optimism is
+not a proof rule; the migration plan and its current call sites are listed in
+`docs/sv-x-resolution.md`.
+The kernel now exposes `DecisionKnown` over correlated concretizations and a
+known-state theorem, without changing execution until the refinement relation
+is connected to E.
+
+The x-resolution note now defines the differential testing levels: H is the
+nondeterministic relation, E the deterministic IEEE execution, and S/J
+downstream refinements. Known-value rows remain equality tests; rows that read
+unknowns use membership in H, classifying a simulator's selected x behavior
+without changing E.
 
 ## Initial `$readmemh` remains a named F4 boundary
 

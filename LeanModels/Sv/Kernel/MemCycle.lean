@@ -48,6 +48,25 @@ def memDeclOf? : List PDecl → String → Option PDecl
 def memDeclsOf (d : PDesign) : List PDecl :=
   d.decls.filter fun pd => !pd.unpackedDims.isEmpty
 
+/-- Referenced empty input-only tasks are retained as source metadata by the
+extractor, while their calls are represented by the existing empty statement
+node.  Every other unsupported module member remains a loud memory-route
+boundary. -/
+def memAllowedOther (entry : String × String) : Bool :=
+  entry.1 == "SubroutineSymbol:empty-task" || entry.1 == "NetSymbol:net-z"
+
+/-- Source-shaped scalar declarations for memory-route members that have no
+runtime process body.  An undriven wire is a one-bit z-valued net (§6.6), so
+retaining it in the scalar view preserves reads without manufacturing a
+driver. -/
+def memOtherDecls : List (String × String) → List Decl
+  | [] => []
+  | (k, n) :: rest =>
+      (if k == "NetSymbol:net-z" then
+        [{ name := n, width := 1, isNet := true,
+           init := some (LVec.replicate 1 .lz) }]
+       else []) ++ memOtherDecls rest
+
 /-! ## Generate labels
 
 Generate bodies keep their source `PProcess` until this adapter is
@@ -204,9 +223,10 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   if args.length != d.params.length then
     .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
   let env ← d.paramEnv2 args
-  if !d.others.isEmpty then
+  if d.others.any fun entry => !memAllowedOther entry then
     .unsupported "memory cycle route does not yet admit unsupported module members"
-  let decls ← scalarDeclsMem env d.decls
+  let scalarDecls ← scalarDeclsMem env d.decls
+  let decls := scalarDecls ++ memOtherDecls d.others
   let generated ← memExpandList env iterFuel [] d.generates
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
   return { name := d.name, env := envP, decls, memDecls := memDeclsOf d,
@@ -431,7 +451,12 @@ def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
         | some v => .ok v
         | none => .unsupported s!"assign target '{target}' is not present"
       .ok ({ st with scalar := SvState.set st.scalar target (old.insertAt 0 (v.resizeU dc.width)) }, q)
-  | .assignL _ _ => .unsupported "AssignL:memory cycle route"
+  | .assignL l e =>
+      -- A generated continuous assignment to an unpacked net is a source
+      -- shaped cell write.  Reuse the blocking cell evaluator here; the
+      -- process list is stepped in source order, so the route keeps the
+      -- driver's structure without flattening the array.
+      execMemStmt d fuel st q (.blockingAssignL l e)
   | .unsupported k t => .unsupported s!"{k}: {t}"
 
 def memClockFires (prev cur : SvState) (clock : String) : Bool :=

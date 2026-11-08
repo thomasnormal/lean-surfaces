@@ -52,11 +52,25 @@ def Design.clockGuard (d : Design) : Design :=
   | some (kind, msg) =>
       { d with processes := d.processes.push (.unsupported kind msg) }
 
-#guard ({ name := "m0_ok", decls := #[{name := "clk", width := 1, isInput := true}],
-  processes := #[.alwaysFF "clk" (.blockingAssign "q" (.lit (.ofNat 1 0)))] } : Design).clockReport == none
-#guard ({ name := "m0_two", decls := #[{name := "clk", width := 1, isInput := true}, {name := "clk2", width := 1, isInput := true}],
-  processes := #[.alwaysFF "clk" (.blockingAssign "q" (.lit (.ofNat 1 0))), .alwaysFF "clk2" (.blockingAssign "r" (.lit (.ofNat 1 0)))] } : Design).clockReport |>.isSome
-#guard ({ name := "m0_data", decls := #[{name := "en", width := 1, isInput := true}],
-  processes := #[.alwaysFF "en" (.blockingAssign "q" (.lit (.ofNat 1 0)))] } : Design).clockReport |>.isSome
+private def m0Ok : Design :=
+  { name := "m0_ok"
+    decls := #[{ name := "clk", width := 1, isInput := true }]
+    processes := #[.alwaysFF "clk" (.blockingAssign "q" (.lit (.ofNat 1 0)))] }
+
+private def m0Two : Design :=
+  { name := "m0_two"
+    decls := #[{ name := "clk", width := 1, isInput := true },
+      { name := "clk2", width := 1, isInput := true }]
+    processes := #[.alwaysFF "clk" (.blockingAssign "q" (.lit (.ofNat 1 0))),
+      .alwaysFF "clk2" (.blockingAssign "r" (.lit (.ofNat 1 0)))] }
+
+private def m0Data : Design :=
+  { name := "m0_data"
+    decls := #[{ name := "en", width := 1, isInput := true }]
+    processes := #[.alwaysFF "en" (.blockingAssign "q" (.lit (.ofNat 1 0)))] }
+
+#guard m0Ok.clockReport == none
+#guard m0Two.clockReport |>.isSome
+#guard m0Data.clockReport |>.isSome
 
 end LeanModels.Sv

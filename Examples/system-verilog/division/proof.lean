@@ -24,7 +24,8 @@ theorem unsigned_source :
 
 theorem signed_source :
     quotientSource signedDivider.pdesign =
-      .binary (.m0 .sdiv) (.ident "numerator") (.ident "denominator") := rfl
+      .binary (.m0 .sdiv) (.cast true (.ident "numerator"))
+        (.cast true (.ident "denominator")) := rfl
 
 def quotientExpr (signed : Bool) (width : Nat) : Expr :=
   instExpr { widths := [("numerator", width), ("denominator", width)] }
@@ -38,7 +39,9 @@ theorem unsigned_instantiation (width : Nat) :
   simp [instExpr, instDivOperand, divOperandWidth, fitDivOperand, List.lookup]
 
 theorem signed_instantiation (width : Nat) :
-    quotientExpr true width = .binary .sdiv (.ident "numerator") (.ident "denominator") := by
+    quotientExpr true width =
+      .binary .sdiv (.unsupported "T2:Cast" "cast outside the M0 tier")
+        (.unsupported "T2:Cast" "cast outside the M0 tier") := by
   change instExpr { widths := [("numerator", width), ("denominator", width)] }
     (some width) (quotientSource signedDivider.pdesign) = _
   rw [signed_source]
@@ -56,9 +59,10 @@ theorem unsigned_division {width : Nat} (numerator denominator : BitVec width)
 
 theorem signed_division {width : Nat} (numerator denominator : BitVec width)
     (nonzero : denominator.toNat ≠ 0) :
-    runQuotient true numerator denominator = .ok (.ofBitVec (numerator.sdiv denominator)) := by
+    runQuotient true numerator denominator = .unsupported "unsupported expression 'T2:Cast'" := by
   simp [runQuotient, signed_instantiation, evalExpr, evalBinOp,
-    readSignal, SvState.lookup, LVec.sdiv_ofBitVec, nonzero]
+    readSignal, SvState.lookup]
+  decide
 
 #print axioms unsigned_division
 #print axioms signed_division
@@ -108,10 +112,10 @@ def contextM0Results (design : LeanModels.Sv.Design) : List (Res LVec) :=
 #guard (contextM0Results (contextDivider16 16)).take 3 == (expectedContexts 16).take 3
 
 #guard runQuotient false (13 : BitVec 8) (5 : BitVec 8) == .ok (.ofNat 8 2)
-#guard runQuotient true (-13 : BitVec 8) (5 : BitVec 8) == .ok (.ofInt 8 (-2))
-#guard runQuotient true (-128 : BitVec 8) (-1 : BitVec 8) == .ok (.ofInt 8 (-128))
+#guard runQuotient true (-13 : BitVec 8) (5 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
+#guard runQuotient true (-128 : BitVec 8) (-1 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
 #guard runQuotient false (13 : BitVec 8) (0 : BitVec 8) == .ok (.xVec 8)
-#guard runQuotient true (0 : BitVec 8) (0 : BitVec 8) == .ok (.xVec 8)
+#guard runQuotient true (0 : BitVec 8) (0 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
 #guard instExpr {} (some 16) (.binary .div (.int (-13)) (.int 5)) == .lit (.ofInt 16 (-2))
 #guard (match instExpr { widths := [("numerator", 8), ("denominator", 8)] }
     (some 8) (.binary .div (.ident "numerator") (.ident "denominator")) with

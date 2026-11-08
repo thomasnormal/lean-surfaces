@@ -1,6 +1,19 @@
 # Unknown-bit resolution in E
 
-Status: **design decision; implementation pending**.
+## 2026-11-08 interim consumer rule
+
+Until the concretization relation is wired through execution, every theorem
+that branches on a possibly unknown condition, performs a two-state
+conversion, evaluates an unknown-sensitive select, or observes an assertion
+sample must provide `DecisionKnown` (or an equivalent all-known premise). If
+it cannot, the theorem remains a named refusal. The executable `condTrue`
+else branch is not a proof rule.
+
+Status: **design decision; implementation pending**. Until the relation is
+wired through E, the approved proof boundary is the cheap sufficient condition
+that every branch, conditional select, dynamic index, and assertion decision
+reads a known value. A proof that cannot establish that condition must remain
+loud rather than use `condTrue`'s x-optimistic else branch.
 
 SystemVerilog `x` and `z` represent a bit whose 0/1 value is not known (IEEE
 1800-2023 §6.3.1). The exact E semantics therefore treats an unknown as a set
@@ -59,6 +72,31 @@ in the tier:
 These are separate axes of choice. A proof quantifies over their product, while
 preserving correlations within each run.
 
+## Differential testing across refinement levels
+
+The most general specification is H: a nondeterministic relation containing
+every result permitted by the four-state source semantics. E is the
+deterministic IEEE execution selected by the language rules, while a
+synthesizer S and a formal tool J are separate consumers. Their results are
+useful only when they refine H; a simulator's choice among x-optimistic or
+x-pessimistic outcomes does not redefine E.
+
+Rows whose exercised values and decisions are all known remain equality tests:
+the E trace must equal the oracle trace. A row that reads an unknown in a
+branch condition, a two-state conversion, or an x-observer is a membership
+test: the oracle result must be one of the traces admitted by H. Xcelium's
+single selected trace is then recorded as a classified refinement choice,
+rather than used to alter the E rule. The same distinction applies to S and J
+when their output is compared with a four-state source row.
+
+The interim testing boundary is explicit. Until the resolution judgment is
+threaded through execution, known-value rows may remain equality tests, but an
+unknown-sensitive row must either carry a `DecisionKnown` witness or remain a
+loud refusal. No current `⊨₂` theorem may treat the simulator's selected trace
+as the E result. A future membership harness will check that the selected
+trace is one allowed by H and will report the simulator, synthesizer, or
+formal-tool choice as a refinement observation.
+
 ## Clocks and asynchronous inputs
 
 Multiple clocks are an environment and scheduling choice, not a preferred
@@ -80,7 +118,11 @@ clock or arrival schedule.
 ## Refinement obligations
 
 The implementation will introduce an explicit concretization/resolution
-judgment over E's source-shaped states and traces. It must prove:
+judgment over E's source-shaped states and traces. Until that judgment is
+threaded through a consumer, an unknown-sensitive decision is a named proof
+obligation: the consumer must provide `DecisionKnown` (or an equivalent
+all-known witness), or refuse. It must not use the x-optimistic else branch
+as an unproved theorem. The implementation must prove:
 
 1. **Soundness.** Every resolved E run is a concrete run permitted by the
    four-state AST semantics, including the same environment and schedule
@@ -93,6 +135,63 @@ judgment over E's source-shaped states and traces. It must prove:
 4. **Derived-view refinement.** Cycle views, contracts, and proof tactics
    quantify over the resolved E relation. They may use the known-state
    sufficient condition, but may not silently select one resolution.
+
+The migration plan is to add a `DecisionKnown` witness to the E step
+judgments, lift it through `⊨₂`/`Runs2` and the cycle observation contracts,
+then replace each direct `condTrue` decision with the resolution relation. The
+known-state theorem will show that the old evaluator is the singleton
+projection under that witness. The current direct users are grouped by
+surface so the migration cannot silently omit a proof route:
+
+* `Sem2` and `Semantics` use it for procedural `if`/ternary execution and
+  two-state expression conversion; `SelfCheck` has the corresponding
+  self-check evaluator.
+* `Step`, `Loop2Frag`, `Loop2E`, `CombFragE`, `FlatMemRun2`, `Core0Proc`,
+  `Core1Edge`, and `Seq2Cycle` branch while proving or executing source-shaped
+  statements. `MemCycle` and the case-check validator are the memory and
+  qualified-case variants of the same operation.
+* `Sva` and the assertion/self-check observers turn sampled values into
+  Boolean outcomes; those outcomes need the same known-sample witness.
+* `Surface`, `Observe`, `Obs_run2`, and the `Models2`/contract bridges expose
+  traces or edge decisions to the proof layer. `Comb2Proc` and `CombKnownBits`
+  also contain Boolean projection lemmas consumed by the comb tactics.
+
+The migration order is therefore: (1) add the resolved step relation beside
+`cycleStep2` and connect §6.11 through `TwoStateBoundary`; (2) lift that
+relation through `runFrom2`, `Runs2`, and `⊨₂`, proving that the old judgments
+are their known-state projection; (3) replace the direct projections in
+`Observe`, `Sva`, `Surface`, and contracts; and (4) move the comb and memory
+proof bridges to the same relation. The current interim rule is the cheap
+sufficient boundary: every decision, dynamic select/index, assertion sample,
+and two-state conversion used by a theorem must be known, or that theorem
+refuses by name. This rule applies even where the executable evaluator still
+has its historical `condTrue` else branch.
+
+Each consumer must either carry the witness or move to the resolved relation;
+the inventory is intentionally broader than the current `run2` path because
+all of these definitions can be used by a theorem or a derived view.
+
+The first kernel-facing fragment is now present in
+`LeanModels.Sv.Kernel.XResolve`: `DecisionKnown v` states that all correlated
+concretizations of a condition agree on `condTrue`, and
+`decisionKnown_of_allKnown` proves the cheap sufficient case used by current
+proofs; `DecisionKnown.abstract` exposes the agreement with the abstract
+condition for each concretization. It is a predicate and theorem only; execution remains behind the
+boundary above until the state and trace relation is connected.
+`TwoStateBoundary` separately records §6.11's deterministic x/z-to-zero
+conversion and proves its result is unique and width-preserving; it is not a
+concretization choice.
+`TypedResolution` combines the two cases at the value-set boundary: a
+four-state destination receives a source concretization, while a two-state
+destination receives the unique `TwoStateBoundary` result. This is the next
+interface for wiring declaration conversion into E without changing the
+current evaluator. `typedResolution_decision_agrees` now connects that
+value-set boundary to `DecisionKnown`: a known condition has the same branch
+result in the abstract and resolved states. `ResolvedDecision` packages those
+two premises as the object a future E branch step will consume; its
+`branch_eq` theorem lifts agreement to an arbitrary branch payload, and
+`ResolvedDecision.of_allKnown` constructs the witness used by the current
+known-value proof route.
 
 The first regression witnesses are the clean-room designs measured by the
 universal-correctness audit:

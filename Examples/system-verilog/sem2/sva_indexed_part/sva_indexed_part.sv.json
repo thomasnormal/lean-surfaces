@@ -1,0 +1,214 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_indexed_part",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_indexed_part/sva_indexed_part.sv",
+      "sha256": "145da48a1460de1897d31d408e01069ebcf4821aef68fcca3a81e29b2d1090de"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "sva_indexed_part",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 21,
+              "end_line": 4,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 16,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 21,
+              "end_line": 5,
+              "end_col": 25
+            },
+            "name": "base",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "value": 2,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 18,
+                      "end_line": 5,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 58
+            },
+            "name": "assert property (@(posedge clk) a[base +",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) a[base +: 2] == 2'b01);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaValueEq",
+                    "left": {
+                      "kind": "SvaCurrent",
+                      "expr": {
+                        "kind": "PartSel",
+                        "value": {
+                          "kind": "Ident",
+                          "name": "a"
+                        },
+                        "msb": {
+                          "kind": "Binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "name": "base"
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "op": "-",
+                            "left": {
+                              "kind": "Int",
+                              "value": 2
+                            },
+                            "right": {
+                              "kind": "Int",
+                              "value": 1
+                            }
+                          }
+                        },
+                        "lsb": {
+                          "kind": "Ident",
+                          "name": "base"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "SvaCurrent",
+                      "expr": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 2,
+                        "bits": "01"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

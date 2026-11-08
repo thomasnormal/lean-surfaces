@@ -167,6 +167,19 @@
       "measured": "2026-11-07: dynamic packed element selects in SVA preserve the existing BitSel/Expr2.index path and sampled four-state out-of-range behavior."
     },
     {
+      "name": "sva_indexed_part",
+      "example": "sem2/sva_indexed_part",
+      "top": "sva_indexed_part",
+      "clock": "clk",
+      "signals": ["a", "base"],
+      "stimulus": [
+        {"a": "00000001", "base": "000"},
+        {"a": "00000100", "base": "010"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: indexed packed part-selects and sized vector literals in SVA retain source widths and evaluate through the sampled Expr2 part-select path."
+    },
+    {
       "name": "sva_past_logic",
       "example": "sem2/sva_past_logic",
       "top": "sva_past_logic",
@@ -195,6 +208,23 @@
       "stimulus": [{"a": "0000"}, {"a": "0001"}],
       "verilator_only": true,
       "measured": "2026-11-07: $onehot0 retains the finite four-state at-most-one-known-one predicate."
+    },
+    {
+      "name": "sva_countones",
+      "example": "sem2/sva_countones",
+      "top": "sva_countones",
+      "clock": "clk",
+      "signals": ["a", "q"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0001"},
+        {"a": "0011"},
+        {"a": "0111"},
+        {"a": "10xz"},
+        {"a": "zzzz"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-07: $countones retains the finite four-state known-one count in the sampled SVA value tree; x/z bits contribute zero."
     },
     {
       "name": "sva_past_cmp",
@@ -31096,6 +31126,15 @@
         {"rises": ["clk1", "clk2"], "inputs": {"d": "0"}}
       ],
       "measured": "The exact multi-clock E instant route admits independent and coincident input-clock edges. At a coincident edge the read-domain flop samples the old write-domain value; the row is source-shaped and matches the simulator trace."
+    },
+    {
+      "name": "clk_implicit",
+      "example": "sem2/clk_implicit",
+      "top": "clk_implicit",
+      "signals": ["a", "d", "q"],
+      "stimulus": [{"a": "0", "d": "1"}, {"a": "1", "d": "0"}],
+      "refusal": "Clock:implicit",
+      "measured": "Sem2 run2 now refuses a data-driven event control instead of executing the edge body once per stimulus entry; event sensitivity remains in the exact scheduler route."
     },
     {
       "name": "clk_rst_int",

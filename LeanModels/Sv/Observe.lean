@@ -497,7 +497,9 @@ def runFromObs2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) :
 /-- `run2` with both samples per cycle (same start: `initState2`, counter `0`). -/
 def runObs2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) (stim : List SvState) :
     Res (List (CycleObs SvState)) :=
-  runFromObs2 d σ fuel (initState2 d) 0 stim
+  do
+    run2ClockGuard d
+    runFromObs2 d σ fuel (initState2 d) 0 stim
 
 /-- **Agreement with `runFrom2` on the post samples**, failures included. -/
 theorem runFrom2_eq_runFromObs2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) :
@@ -528,17 +530,27 @@ theorem run2_eq_runObs2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) (stim :
     (hnq : d.processes.toList.any Process2.hasQualifiedCase = false) :
     run2 d σ fuel stim = (runObs2 d σ fuel stim >>= fun os => pure (os.map CycleObs.post)) := by
   unfold run2 runObs2
-  rw [hnq, runFrom2_eq_runFromObs2]
-  cases runFromObs2 d σ fuel (initState2 d) 0 stim <;> rfl
+  cases hg : run2ClockGuard d with
+  | timeout => rfl
+  | unsupported msg => rfl
+  | ok u =>
+      simp only [hg, Res.ok_bind, Res.pure_eq, hnq, if_false]
+      rw [runFrom2_eq_runFromObs2]
+      cases runFromObs2 d σ fuel (initState2 d) 0 stim <;> rfl
 
 /-- A completed `run2` is the post samples of a completed `runObs2` (every design). -/
 theorem runObs2_of_run2_ok {d : Design2} {σ : ScheduleOracle} {fuel : Nat} {stim tr : List SvState}
     (h : run2 d σ fuel stim = .ok tr) :
     ∃ os, runObs2 d σ fuel stim = .ok os ∧ tr = os.map CycleObs.post := by
+  have hg : run2ClockGuard d = .ok () := by
+    cases hq : run2ClockGuard d with
+    | ok u => simpa using hq
+    | timeout => simp [run2, hq] at h
+    | unsupported msg => simp [run2, hq] at h
   have h1 := run2_from_ok h
   rw [runFrom2_eq_runFromObs2, Res.bind_eq_ok] at h1
   obtain ⟨os, h2, h3⟩ := h1
-  exact ⟨os, h2, (Res.ok.inj h3).symm⟩
+  exact ⟨os, by simpa [runObs2, hg] using h2, (Res.ok.inj h3).symm⟩
 
 /-- `.ok` form of `run2_eq_runObs2` (no qualified `case`). -/
 theorem run2_ok_iff {d : Design2} {σ : ScheduleOracle} {fuel : Nat} {stim tr : List SvState}
@@ -556,8 +568,13 @@ theorem run2_ok_iff {d : Design2} {σ : ScheduleOracle} {fuel : Nat} {stim tr : 
 theorem runObs2_length {d : Design2} {σ : ScheduleOracle} {fuel : Nat} {stim : List SvState}
     {os : List (CycleObs SvState)} (h : runObs2 d σ fuel stim = .ok os) :
     os.length = stim.length := by
+  have hg : run2ClockGuard d = .ok () := by
+    cases hq : run2ClockGuard d with
+    | ok u => simpa using hq
+    | timeout => simp [runObs2, hq] at h
+    | unsupported msg => simp [runObs2, hq] at h
   have h2 : runFrom2 d σ fuel (initState2 d) 0 stim = .ok (os.map CycleObs.post) := by
-    rw [runFrom2_eq_runFromObs2, show runFromObs2 d σ fuel (initState2 d) 0 stim = .ok os from h]
+    rw [runFrom2_eq_runFromObs2, show runFromObs2 d σ fuel (initState2 d) 0 stim = .ok os by simpa [runObs2, hg] using h]
     rfl
   simpa using runFrom2_length h2
 

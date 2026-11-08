@@ -1,6 +1,8 @@
 import LeanModels.Sv.Kernel.Core0ObsWin
+import LeanModels.Sv.Kernel.Core0Resolve
 import LeanModels.Sv.Kernel.Core1Disc
 import LeanModels.Sv.Kernel.Core1Obs
+import LeanModels.Sv.Kernel.Core1Resolve
 import LeanModels.Sv.Kernel.CoreMem
 import LeanModels.Sv.Kernel.XResolve
 import LeanModels.Sv.Kernel.MemElab

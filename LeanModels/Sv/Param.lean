@@ -546,6 +546,7 @@ at ingestion. -/
 inductive PSvaValue where
   | current (value : PExpr)
   | past (cycles : Nat) (value : PExpr)
+  | countOnes (value : PExpr)
   | binary (op : BinOp) (left right : PSvaValue)
 deriving Repr, BEq, Inhabited
 

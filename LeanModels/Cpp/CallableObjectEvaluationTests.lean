@@ -40600,6 +40600,26 @@ def callableValueObjectContinueAgreementWitness : Bool :=
 
 #guard callableValueObjectContinueAgreementWitness
 
+def callableValueObjectGotoAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.conditional controlParameter (.goto_ "done")
+        (.assign (handle "0x10") {
+          expression := CallableExpression.integer 7,
+          sourceType := intType, type := intType}))
+      (.label "done" (.return_ {
+        expression := CallableExpression.parameter (handle "0x10"),
+        sourceType := intType, type := intType})))}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 1 && objectValue == signed 1
+  | _, _ => false
+
+#guard callableValueObjectGotoAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

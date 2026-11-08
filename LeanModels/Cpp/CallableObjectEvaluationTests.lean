@@ -40832,6 +40832,24 @@ def callableValueObjectBitwiseNotAgreementWitness : Bool :=
 
 #guard callableValueObjectBitwiseNotAgreementWitness
 
+def callableValueObjectLogicalNotAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.unary "!"
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        , sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 1⟩ && objectValue == ⟨.boolean, 1⟩
+  | _, _ => false
+
+#guard callableValueObjectLogicalNotAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

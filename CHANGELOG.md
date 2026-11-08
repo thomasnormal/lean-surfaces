@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a logical-not
+  callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a bitwise-not
   callable and native differential row.
 

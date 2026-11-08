@@ -8,8 +8,10 @@ exact signed-32-bit `int` instantiation and its alias-guarded `X.sem` families (
 holds `canonInt 32 true N`, so the tactics close `hag` from a range premise in context,
 `(hR : (N : Int) < 2147483648)` (4f3866fb7), and the theorems about `X.sem N` take that premise
 (b1b8ae934). Without it, the tactics say which value they could not place in range. The family readers
-accept `PDesign.instantiateGDAlias2` (4f3866fb7, 222d7f756). `sv_structure`'s `always_comb` form still
-refuses a design with an `always_comb` beside a continuous `assign`. `Comb2Base.lookup_initState2`
+accept `PDesign.instantiateGDAlias2` (4f3866fb7, 222d7f756). For a design with an `always_comb` beside a
+continuous `assign`, `sv_structure`'s `always_comb` form shows the guard inert from a static check on the
+summary's names (`Summary.aliasOk`, `Summary.aliasGuard_eq`, `CombProcAlias.lean`; 158d35968), and
+`sv_exhaustive` takes the guard off the lowering (09d91972b). `Comb2Base.lookup_initState2`
 follows the net-z `initState2` (07128fda5; ls-sv landed the same statement, `let`-bound, in b541daabf, and
 the merge keeps that form). `sv_exhaustive` passes the design explicitly (47b0568e3;
 example `sv_exhaustive_param`). `partsel_rev_instantiated` is stated at `psEnv32` (27149e35e).
@@ -17,8 +19,10 @@ A localparam computed from in-range parameters can leave the range as well, so t
 design take the premise that keeps it in range, in the same form: `lin_chain`'s `lin_struct` and
 `lin_settled` take `(hRK : (W : Int) + P < 2147483648)` for `K = W + P`, and the three `row_chain_lp`
 statements take `(hRC : 2 * (N : Int) < 2147483648)` for `C = 2 * N` (d58b7a846). `CombProc`'s
-`apDecls` fixture gives `DeclT` its `isNet` field from b541daabf (2308df352). Still open: the mixed
-design above, and `paramEnv2` at a symbolic parameter for a `$clog2` localparam (`sq_chain`, `lp_clog2`).
+`apDecls` fixture gives `DeclT` its `isNet` field from b541daabf (2308df352). At a symbolic parameter the
+parameter stage `paramEnv2` of a `$clog2` localparam decides on the exact 32-bit value; the tactics
+rewrite each `canonInt 32 true x` it decides on to `x` from the same range premises (`closeParamEnv`,
+54a79d778; `sq_chain`, `lp_clog2`).
 
 **Conclusions at the exact value.** A few lemmas state the exact 32-bit value in their conclusion
 instead of taking a range premise, the form `xnor_n` uses: `mul2d`'s `mulScope_nM1`

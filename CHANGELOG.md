@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a null-pointer
+  comparison callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a parameter
   assignment callable and native differential row.
 

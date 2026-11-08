@@ -40639,6 +40639,22 @@ def callableValueObjectAssignmentAgreementWitness : Bool :=
 
 #guard callableValueObjectAssignmentAgreementWitness
 
+def callableValueObjectNullComparisonAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.nullComparison "==",
+      sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 1⟩ && objectValue == ⟨.boolean, 1⟩
+  | _, _ => false
+
+#guard callableValueObjectNullComparisonAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

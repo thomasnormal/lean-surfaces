@@ -234,7 +234,7 @@ theorem initExecStmt_items_unfold (mV : Module) (fuel : Nat) (h : Heap)
     (acc : GlobalsAcc) (target d : Expr) (body : Array Stmt) (sp sp' sp'' : Span) :
     initExecStmt mV (fuel + 1) h acc
         (.forStmt target (.call (.attribute d "items" sp) #[] #[] Option.none sp') body #[] sp'')
-      = (match evalExpr mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ d with
+      = (match evalExpr mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ d with
          | .ok st dv =>
            (match dv with
             | .ref a =>
@@ -254,7 +254,7 @@ theorem initExecStmt_items {mV : Module} {fuel : Nat} {h : Heap}
     {acc : GlobalsAcc} {target d : Expr} {body : Array Stmt}
     {sp sp' sp'' : Span} {a : Addr} {st : FrameState} {entries : Array (RVal × RVal)}
     {sv : Nat}
-    (hd : evalExpr mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ d = .ok st (.ref a))
+    (hd : evalExpr mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ d = .ok st (.ref a))
     (ho : Heap.get? st.world.heap a = some (.dict entries sv)) :
     initExecStmt mV (fuel + 1) h acc
         (.forStmt target (.call (.attribute d "items" sp) #[] #[] Option.none sp') body #[] sp'')
@@ -306,7 +306,7 @@ theorem initBodyStmts_nil (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAc
 /-- One body statement that runs to `.next`. -/
 theorem initBodyStmts_cons {mV : Module} {fuel : Nat} {h : Heap} {acc acc' : GlobalsAcc}
     {s : Stmt} {rest : List Stmt} {st : FrameState}
-    (hex : execStmt mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ s = .ok st .next)
+    (hex : execStmt mV fuel ⟨⟨h, resolvedG acc, [], [], 0⟩, []⟩ s = .ok st .next)
     (hflush : flushInitLocals mV acc st.locals = some acc') :
     initBodyStmts mV (fuel + 1) h acc (s :: rest)
       = initBodyStmts mV fuel st.world.heap acc' rest := by

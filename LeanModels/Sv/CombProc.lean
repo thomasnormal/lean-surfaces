@@ -1528,14 +1528,16 @@ def carryPT : PT :=
     (.leafL carryLhs (.bitSel (.ident "c") (.genvarRef "i")))
     (.leafL carryLhs (.bitSel (.ident "a") (.genvarRef "i"))))
 
-/-- The declarations of the design: `a`, `b`, `p`, `s` are `[N-1:0]`, `c` is `[N:0]`, as `PDesign.summary` reads them. -/
+/-- The declarations of the design: `a`, `b`, `p`, `s` are `[N-1:0]`, `c` is `[N:0]`, as `PDesign.summary` reads them.
+All seven are `logic` in `add_proc.sv` (variables, not nets), so `isNet` is `false` in each. -/
 def apDecls : List DeclT :=
   let nm1 : Aff := ⟨[("N", 1)], -1⟩
   let dm1 : PDim := ⟨.binary (.m0 .sub) (.paramRef "N" none) (.int 1), .int 0⟩
-  [⟨"a", true, false, [(dm1, nm1, Aff.const 0)]⟩, ⟨"b", true, false, [(dm1, nm1, Aff.const 0)]⟩,
-   ⟨"cin", true, false, []⟩, ⟨"s", false, true, [(dm1, nm1, Aff.const 0)]⟩, ⟨"cout", false, true, []⟩,
-   ⟨"c", false, false, [(⟨.paramRef "N" none, .int 0⟩, ⟨[("N", 1)], 0⟩, Aff.const 0)]⟩,
-   ⟨"p", false, false, [(dm1, nm1, Aff.const 0)]⟩]
+  [⟨"a", true, false, false, [(dm1, nm1, Aff.const 0)]⟩, ⟨"b", true, false, false, [(dm1, nm1, Aff.const 0)]⟩,
+   ⟨"cin", true, false, false, []⟩, ⟨"s", false, true, false, [(dm1, nm1, Aff.const 0)]⟩,
+   ⟨"cout", false, true, false, []⟩,
+   ⟨"c", false, false, false, [(⟨.paramRef "N" none, .int 0⟩, ⟨[("N", 1)], 0⟩, Aff.const 0)]⟩,
+   ⟨"p", false, false, false, [(dm1, nm1, Aff.const 0)]⟩]
 
 -- The recognizer accepts the carry cell, reads the access `c[i+1]` as its target and finds the three reads
 -- (the condition `p[i]`, then `c[i]`, then `a[i]`).

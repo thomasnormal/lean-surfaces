@@ -46,7 +46,9 @@ theorem fact_total (n : PyInt) (hn : 0 ≤ n) : tut_04.fact(n) ==> factSpec n.to
   py_begin [tut_04]
   py_loop (inv := fun (r i : Int) => 1 ≤ i ∧ i ≤ n + 1 ∧ r = factSpec (i - 1).toNat)
           (dec := fun (r i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  · py_simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+      Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
+    obtain rfl : i' = n + 1 := by omega
     simpa using hinv3
   all_goals grind [factSpec, factSpec_step]
 

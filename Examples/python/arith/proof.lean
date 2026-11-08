@@ -17,10 +17,14 @@ load_program arith from "Examples/python/arith/arith.json"
 /-- `floordiv(a, 0)` raises `ZeroDivisionError` for every `a`: the error
 path is loop-free, so `py_prove` closes it. -/
 theorem floordiv_zero (a : PyInt) : arith.floordiv(a, 0) ==>! .zeroDivisionError := by
-  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 /-- Same shape for `%`: `mod(a, 0)` raises for every `a`. -/
 theorem mod_zero (a : PyInt) : arith.mod(a, 0) ==>! .zeroDivisionError := by
-  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [arith, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 end Examples.python.arith.proof

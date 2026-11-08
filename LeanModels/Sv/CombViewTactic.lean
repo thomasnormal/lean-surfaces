@@ -394,7 +394,7 @@ unsafe def aliasInertEq (tac : String) (D pd args : Lean.Expr) : MetaM Lean.Expr
   let hq ← mkFreshExprMVar hqTy
   try closeByDecide hq.mvarId! "not inert"
   catch _ =>
-    throwError "{tac}: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`), and the comb theorems are stated for the unguarded family `PDesign.instantiateGD2`. Without a lowering in hand the tactics show that the guard keeps every process only for a design with no `always_comb` or with no continuous `assign` (`PDesign.aliasInert`, `CombAliasInert.lean`); this design has both, which is not covered yet (where `hl : (X.sem N).lowerComb = some d'` is in context, `sv_interface` and `sv_equations` read the guard off it)"
+    throwError "{tac}: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`), and the comb theorems are stated for the unguarded family `PDesign.instantiateGD2`. Without a lowering in hand the tactics show that the guard keeps every process only for a design with no `always_comb` or with no continuous `assign` (`PDesign.aliasInert`, `CombAliasInert.lean`); this design has both (the `always_comb` form of `sv_structure` shows the guard inert from the summary's names, `Summary.aliasOk`, `CombProcAlias.lean`; where `hl : (X.sem N).lowerComb = some d'` is in context, `sv_interface` and `sv_equations` read the guard off it)"
   let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
   let pf := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert) pd
     (← instantiateMVars hq) args

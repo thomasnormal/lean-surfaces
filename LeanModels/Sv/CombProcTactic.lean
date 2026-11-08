@@ -3,6 +3,7 @@ import LeanModels.Sv.CombEqTactic
 import LeanModels.Sv.CombCoreSimp
 import LeanModels.Sv.CombProcEq
 import LeanModels.Sv.CombProcGroup
+import LeanModels.Sv.CombProcAlias
 
 /-!
 # `sv_structure` / `sv_interface` / `sv_equations` for designs with `always_comb` bodies (WP-G, G2.2, R5)
@@ -622,33 +623,63 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
         if s.hasRepl then `(tactic| (svL_norm [$keyLemmas,*]; (try simp only [$replL,*]); try svL_norm [$keyLemmas,*]))
         else `(tactic| svL_norm [$keyLemmas,*])
       -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): the goal restated at the unguarded family the
-      -- theorems are about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`)
+      -- theorems are about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`); a design with an
+      -- `always_comb` beside a continuous assign fails that static check, and the guard is shown to keep every
+      -- process from the summary's names instead (`Summary.aliasOk`, `CombProcAlias.lean`), with the same
+      -- obligations (`comb_viewLA` and friends, stated at the guarded family)
+      let mut aliasNames := false
       if aliased then
-        let hA ← aliasInertEq "sv_structure" lc.appArg! pd args
-        replaceMainGoal [← rewriteDesign (← getMainGoal) hA]
+        try
+          let hA ← aliasInertEq "sv_structure" lc.appArg! pd args
+          replaceMainGoal [← rewriteDesign (← getMainGoal) hA]
+        catch _ =>
+          aliasNames := true
+          unless s.aliasOk do
+            let (w, n) := s.aliasFailure.getD ("?", "?")
+            throwError "sv_structure: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`: an `always_comb` that reads a continuous copy of a variable it writes later is refused), and this design has an `always_comb` beside continuous assigns. The tactic shows the guard keeps every process from the summary's NAMES (`Summary.aliasOk`, `CombProcAlias.lean`): no procedural site may read a signal that a continuous site drives from a signal the procedural site writes (through any chain of continuous sites). Here the `always_comb` that writes `{w}` reads `{n}`, which a continuous site drives (directly or through a chain) from a signal that block writes. The check is by signal name, not by bit, and does not look at the order of the reads and writes, so it also refuses a block whose read of `{n}` the guard itself admits (a bit range no write reaches, or a read after the last write): such a design is outside the tactic, not refused by the guard (where `hl : (X.sem N).lowerComb = some d'` is in context, `sv_interface` and `sv_equations` read the guard off the lowering, for every design)"
+      let pdT ← Term.exprToSyntax pd
+      let argsT ← Term.exprToSyntax args
       if !isAcyc then
-        evalTactic (← `(tactic|
-          refine LeanModels.Sv.CombView.comb_viewL (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity)
-            (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
-            (hself := ?hself)))
+        if aliasNames then
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.comb_viewLA (d := $pdT) (args := $argsT) (s := ?s) (env := ?env)
+              (hs := ?hs) (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
+              (hin := ?hin) (hdisj := ?hdisj) (hself := ?hself) (halias := ?halias)))
+        else
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.comb_viewL (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity)
+              (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
+              (hself := ?hself)))
       else if lexE?.isSome then
         let r ← match lexStx? with
           | some r => pure r
           | none => throwError "unreachable"
         let rT : TSyntax `term := ⟨r⟩
-        evalTactic (← `(tactic|
-          refine LeanModels.Sv.CombView.struct_lex_viewL (s := ?s) (env := ?env) (hs := ?hs)
-            (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin)
-            (hdisj := ?hdisj) (hself := ?hself) (κ := $rT) (hrank := ?hrank)))
+        if aliasNames then
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.struct_lex_viewLA (d := $pdT) (args := $argsT) (s := ?s) (env := ?env)
+              (hs := ?hs) (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
+              (hin := ?hin) (hdisj := ?hdisj) (hself := ?hself) (halias := ?halias) (κ := $rT) (hrank := ?hrank)))
+        else
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.struct_lex_viewL (s := ?s) (env := ?env) (hs := ?hs)
+              (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin)
+              (hdisj := ?hdisj) (hself := ?hself) (κ := $rT) (hrank := ?hrank)))
       else
         let r ← match rankStx? with
           | some r => pure r
           | none => throwError "unreachable"
         let rT : TSyntax `term := ⟨r⟩
-        evalTactic (← `(tactic|
-          refine LeanModels.Sv.CombView.struct_viewL (s := ?s) (env := ?env) (hs := ?hs)
-            (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin)
-            (hdisj := ?hdisj) (hself := ?hself) (ρ := $rT) (hrank := ?hrank)))
+        if aliasNames then
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.struct_viewLA (d := $pdT) (args := $argsT) (s := ?s) (env := ?env)
+              (hs := ?hs) (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
+              (hin := ?hin) (hdisj := ?hdisj) (hself := ?hself) (halias := ?halias) (ρ := $rT) (hrank := ?hrank)))
+        else
+          evalTactic (← `(tactic|
+            refine LeanModels.Sv.CombView.struct_viewL (s := ?s) (env := ?env) (hs := ?hs)
+              (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin)
+              (hdisj := ?hdisj) (hself := ?hself) (ρ := $rT) (hrank := ?hrank)))
       let goals ← getGoals
       let find (n : Name) : TacticM MVarId := do
         for g in goals do
@@ -674,6 +705,7 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
       closeParamEnv "sv_structure" (← find `h1)
       closeHag "sv_structure" (← find `hag) s args
       closeDecide `hok "the structural check failed"
+      if aliasNames then closeDecide `halias "the alias name check (`Summary.aliasOk`) failed"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq)
           (grouped : Bool := false) : TacticM (List MVarId) := do

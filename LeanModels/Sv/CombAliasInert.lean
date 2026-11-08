@@ -29,7 +29,8 @@ Where the design is known to lower (`hl : (X.sem N).lowerComb = some d'`, what t
 `unsupported` process, which does not lower (`PDesign.instantiateGDAlias2_of_lowerComb`). The one remaining case is
 the `always_comb` form of `sv_structure`, which must PROVE the lowering: for a design with BOTH an `always_comb`
 and a continuous assignment, whether a body reads a copy of what it writes depends on the windows at the parameter
-point, which this module does not decide; the tactic refuses such a design with a message that says so.
+point, which this module does not decide; `CombProcAlias.lean` decides it from the summary's names
+(`Summary.aliasOk`, `Summary.aliasGuard_eq`) at every point where the summary's obligations hold.
 -/
 
 namespace LeanModels.Sv

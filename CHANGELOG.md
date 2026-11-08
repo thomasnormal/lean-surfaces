@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a label and
+  `goto` callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a loop `continue`
   callable and native differential row.
 

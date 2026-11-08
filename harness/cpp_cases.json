@@ -19088,5 +19088,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-goto-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectGotoAgreementWitness",
+    "cpp_source": "int goto_agreement_witness(int value) { if (value) goto done; value = 7; done: return value; } bool callable_witness() { return goto_agreement_witness(1) == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

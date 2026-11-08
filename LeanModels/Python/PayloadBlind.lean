@@ -378,6 +378,48 @@ theorem ite {c : Prop} [Decidable c] {x y z u : Run World α}
   · rw [if_pos hc, if_pos hc]; exact ht hc
   · rw [if_neg hc, if_neg hc]; exact he hc
 
+theorem finishCallAt (depth : Nat) {x y : Run World α}
+    (h : PBW a o₀ o x y) :
+    PBW a o₀ o (Run.finishCallAt depth x) (Run.finishCallAt depth y) := by
+  cases x with
+  | ok w v =>
+      obtain ⟨hslot, hy⟩ := h.1 w v rfl
+      rw [hy]
+      simp only [Run.finishCallAt]
+      have hslot' : Heap.get? ({w with callDepth := depth} : World).heap a = some o₀ := hslot
+      simpa [World.swapAt] using
+        (ok (w := {w with callDepth := depth}) (a := a) (o₀ := o₀) (o := o) hslot' v)
+  | exn w e =>
+      obtain ⟨hslot, hy⟩ := h.2 w e rfl
+      rw [hy]
+      simp only [Run.finishCallAt]
+      have hslot' : Heap.get? ({w with callDepth := depth} : World).heap a = some o₀ := hslot
+      simpa [World.swapAt] using
+        (exn (w := {w with callDepth := depth}) (a := a) (o₀ := o₀) (o := o) hslot' e)
+  | timeout => exact timeout
+  | unsupported msg => exact unsupported
+
+theorem leaveCallDepth {x y : Run World α}
+    (h : PBW a o₀ o x y) :
+    PBW a o₀ o (Run.leaveCallDepth x) (Run.leaveCallDepth y) := by
+  cases x with
+  | ok w v =>
+      obtain ⟨hslot, hy⟩ := h.1 w v rfl
+      rw [hy]
+      simp only [Run.leaveCallDepth]
+      have hslot' : Heap.get? ({w with callDepth := w.callDepth.pred} : World).heap a = some o₀ := hslot
+      simpa [World.swapAt] using
+        (ok (w := {w with callDepth := w.callDepth.pred}) (a := a) (o₀ := o₀) (o := o) hslot' v)
+  | exn w e =>
+      obtain ⟨hslot, hy⟩ := h.2 w e rfl
+      rw [hy]
+      simp only [Run.leaveCallDepth]
+      have hslot' : Heap.get? ({w with callDepth := w.callDepth.pred} : World).heap a = some o₀ := hslot
+      simpa [World.swapAt] using
+        (exn (w := {w with callDepth := w.callDepth.pred}) (a := a) (o₀ := o₀) (o := o) hslot' e)
+  | timeout => exact timeout
+  | unsupported msg => exact unsupported
+
 /-- Enter a frame: the world is threaded, the caller's locals ride. -/
 theorem withLocals {l : REnv} {x y : Run World α} (h : PBW a o₀ o x y) :
     PBF a o₀ o (x.withLocals l) (y.withLocals l) := by
@@ -3502,14 +3544,32 @@ theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1
       refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
       refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
       refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
-      refine PBF.toWorld ?_
-      refine PBF.bind (ihSs m ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩ f.body.toList hslot)
-        fun s flow _ hs => ?_
-      cases flow with
-      | ret v => exact PBF.ok hs _
-      | next => exact PBF.ok hs _
-      | brk => exact PBF.unsupported
-      | cont => exact PBF.unsupported
+      refine PBW.ite (fun _ => ?_) (fun _ => ?_)
+      · refine PBW.finishCallAt w.callDepth ?_
+        refine PBF.toWorld ?_
+        refine PBF.bind
+          (ihSs m ⟨{w with callDepth := 1},
+            markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+            f.body.toList hslot)
+          fun s flow _ hs => ?_
+        cases flow with
+        | ret v => exact PBF.ok hs _
+        | next => exact PBF.ok hs _
+        | brk => exact PBF.unsupported
+        | cont => exact PBF.unsupported
+      · refine PBW.ite (fun _ => PBW.exn hslot _) (fun _ => ?_)
+        refine PBW.leaveCallDepth ?_
+        refine PBF.toWorld ?_
+        refine PBF.bind
+          (ihSs m ⟨{w with callDepth := w.callDepth + 1},
+            markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+            f.body.toList hslot)
+          fun s flow _ hs => ?_
+        cases flow with
+        | ret v => exact PBF.ok hs _
+        | next => exact PBF.ok hs _
+        | brk => exact PBF.unsupported
+        | cont => exact PBF.unsupported
 
 theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
     PBStepIter pa o₀ o (fuel + 1) := by
@@ -5324,10 +5384,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                               fun s2 es _ hs2 => ?_
                                                             exact PBF.pushRef hs2 _
                                                         | dict es sv =>
-                                                            simp only [setDedup_swapAt hs1 htwin]
-                                                            refine PBF.bind (PBF.liftRes hs1 _)
-                                                              fun s2 es _ hs2 => ?_
-                                                            exact PBF.pushRef hs2 _
+                                                            exact PBF.unsupported
                                                         | pyset _ => exact PBF.unsupported
                                                         | generator qn l cnt stt =>
                                                             refine PBF.bind (PBW.withLocals

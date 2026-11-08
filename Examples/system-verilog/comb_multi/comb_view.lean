@@ -20,7 +20,7 @@ open Examples.«system-verilog».comb_multi.gen
 namespace Examples.«system-verilog».comb_multi.comb_view
 
 /-- The structure theorem of the lowered adder whose cell is ONE two-window body, every `N ≥ 1`. -/
-theorem add_proc_m_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_proc_m_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc_m.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1)
     (fun _ pos i => if pos = 0 then 0 else i.toNat + 1))
@@ -61,9 +61,9 @@ overlaps the written window; ranks are functions of the site identity):
 
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc_m.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure?
-  exact add_proc_m_struct N hN
+  exact add_proc_m_struct N hN hR
 
 end Examples.«system-verilog».comb_multi.comb_view

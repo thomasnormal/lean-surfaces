@@ -38,7 +38,7 @@ info: sv_comb group: RankObl', 17 reads with 14 writers of 9 sites
 -/
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
-theorem lin_struct (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) :
+theorem lin_struct (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hRW : (W : Int) < 2147483648) (hRP : (P : Int) < 2147483648) :
     CombDesign (lin_chain.sem W P) ∧ Acyclic (lin_chain.sem W P) := by
   sv_structure (rank := rippleRank (fun p => p / 2) (fun _ _ _ => 0))
   all_goals (intros; omega)
@@ -48,7 +48,8 @@ info: sv_comb group: CoverObl, 17 reads with 14 writers of 9 sites
 -/
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
-theorem lin_settled (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hc : CombDesign (lin_chain.sem W P))
+theorem lin_settled (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hRW : (W : Int) < 2147483648) (hRP : (P : Int) < 2147483648)
+    (hc : CombDesign (lin_chain.sem W P))
     (ha : Acyclic (lin_chain.sem W P)) (st : SvState) (heqs : CombEqs (lin_chain.sem W P) st)
     (hsh : StateShape (lin_chain.sem W P) st) (x y : BitVec (W + P))
     (hA : SvState.lookup st "a" = some (LVec.ofBitVec x))
@@ -66,7 +67,8 @@ info: sv_comb group: CoverOblM, 9 reads with 8 writers of 4 sites
 -/
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
-theorem pm_settled (N : Nat) (hN : 1 ≤ N) {d' : Design2} (_hl : (add_proc_m.sem N).lowerComb = some d')
+theorem pm_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    {d' : Design2} (_hl : (add_proc_m.sem N).lowerComb = some d')
     (_hc : CombDesign d') (_ha : Acyclic d') (st : SvState) (_heqs : CombEqs d' st) (_hsh : StateShape d' st)
     (x y : BitVec N) (ci : Bool)
     (hA : SvState.lookup st "a" = some (LVec.ofBitVec x))

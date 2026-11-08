@@ -17,14 +17,14 @@ namespace Examples.«system-verilog».comb_ops.comb_view
 
 /-- The adder with `~` and `?:`: the same rank as `ripple_add`'s (the propagate cell `e[i]` ranks with the
 carry-in, the carry cell and the sum cell of bit `i` rank `i + 1`, the carry-out `N + 1`). -/
-theorem add_mux_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_mux_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (add_mux.sem N) ∧ Acyclic (add_mux.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1)
     (fun _ pos i => if pos = 0 then 0 else i.toNat + 1))
   all_goals (intros; omega)
 
 /-- Every site of `ops_gen` reads inputs only: one rank for all. -/
-theorem ops_gen_struct (N : Nat) (hN : 1 ≤ N) :
+theorem ops_gen_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (ops_gen.sem N) ∧ Acyclic (ops_gen.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
@@ -34,7 +34,7 @@ theorem ops_flat_struct : CombDesign ops_flat.sem ∧ Acyclic ops_flat.sem := by
   sv_structure (rank := rippleRank (fun p => [0, 0, 1, 0, 2, 0, 1, 1].getD p 0) (fun _ _ _ => 0))
 
 /-- The `always_comb` design, in the lowered shape. -/
-theorem ops_proc_struct (N : Nat) (hN : 1 ≤ N) :
+theorem ops_proc_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (ops_proc.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun p => [0, 1, 1, 0].getD p 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
@@ -68,9 +68,10 @@ overlaps the written window; ranks are functions of the site identity):
   rank(g_bit#1[i']) < rank(g_bit#2[i])   [g_bit#2[i] reads c[i]; g_bit#1[i'] drives c[i' + 1]]
 -/
 #guard_msgs (info, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (add_mux.sem N) ∧ Acyclic (add_mux.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (add_mux.sem N) ∧ Acyclic (add_mux.sem N) := by
   sv_structure?
-  exact add_mux_struct N hN
+  exact add_mux_struct N hN hR
 
 /--
 info: sv_structure: parameters [N]
@@ -116,9 +117,10 @@ rank relation a certificate must satisfy (writer < reader whenever the read wind
 overlaps the written window; ranks are functions of the site identity):
 -/
 #guard_msgs (info, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (ops_gen.sem N) ∧ Acyclic (ops_gen.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (ops_gen.sem N) ∧ Acyclic (ops_gen.sem N) := by
   sv_structure?
-  exact ops_gen_struct N hN
+  exact ops_gen_struct N hN hR
 
 /--
 info: sv_structure: parameters [N]
@@ -142,9 +144,9 @@ overlaps the written window; ranks are functions of the site identity):
   rank(plain#0) < rank(plain#2)   [plain#2 reads p[0]; plain#0 drives p]
 -/
 #guard_msgs (info, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (ops_proc.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure?
-  exact ops_proc_struct N hN
+  exact ops_proc_struct N hN hR
 
 end Examples.«system-verilog».comb_ops.comb_view

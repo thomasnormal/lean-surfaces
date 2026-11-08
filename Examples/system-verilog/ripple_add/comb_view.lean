@@ -27,25 +27,25 @@ namespace Examples.«system-verilog».ripple_add.comb_view
 /-- `sv_structure` leaves only compact goals: the declared-range goals and the one-driver goals
 (carry-in against carry cell, sum cell against sum cell, carry cell against carry cell); each is
 one `omega`. -/
-theorem ripple_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) := by
+theorem ripple_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (ripple_add.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
 /-- … and two more for the rank (the rank is the player's: carry-in 0, bit `i`'s two cells
 `i + 1`, carry-out `N + 1`, as a function of the SITE IDENTITY). -/
-theorem ripple_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
+theorem ripple_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (ripple_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
 
 /-- With the comb profile in hand the one-driver goals are not asked again. -/
-theorem ripple_acyclic_using (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (ripple_add.sem N)) :
+theorem ripple_acyclic_using (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hc : CombDesign (ripple_add.sem N)) :
     Acyclic (ripple_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
     using hc
   all_goals (intros; omega)
 
 /-- … and the lexicographic rank works on one-index families too (key `(index, 0, phase)`). -/
-example (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (ripple_add.sem N) := by
   sv_structure (lexRank := fun
     | .plain 0 => (0, 0, 0)
     | .plain _ => (N + 1, 0, 0)
@@ -95,9 +95,9 @@ overlaps the written window; ranks are functions of the site identity):
   rank(g_bit#1[i']) < rank(g_bit#1[i])   [g_bit#1[i] reads c[i]; g_bit#1[i'] drives c[i' + 1]]
 -/
 #guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (ripple_add.sem N) := by
   sv_structure?
-  exact ripple_comb N hN
+  exact ripple_comb N hN hR
 
 /-! ## Negative tests: each must be REJECTED, with the mathematical content that is wrong -/
 

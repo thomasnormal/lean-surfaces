@@ -1,6 +1,7 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Gen2
 import LeanModels.Sv.Hier2Gen
+import LeanModels.Sv.CombView
 
 /-!
 # `mul2d` — nested packed-array selects through the Design2 generate layer
@@ -14,7 +15,9 @@ chain as ONE `ArraySel` node with the raw declared labels, and
 `Param2.lean` lowers it against the declaration's symbolic dimensions to a
 flat window of the declared vector.
 
-This file pins the envelope's templates and proves, for EVERY `N ≥ 1` —
+This file pins the envelope's templates and proves, for EVERY `N ≥ 1` in
+the signed 32-bit range of the `int` parameter (`hR : (N : Int) <
+2147483648`: the instantiation binds `N` at its exact 32-bit value) —
 symbolically, nothing unrolled — the whole instantiated process list
 (`mul2d_processes`: four static assigns, the partial products, rows
 `1 … N-1`, the low output bits). In particular the partial-product block
@@ -36,7 +39,7 @@ any environment carrying the parameter and `pp`'s EVALUATED geometry
 `[N-1:0][N-1:0]` (`ppGeom N` — the declaration-scope table `instantiate2`
 builds once, before any genvar is bound); `mul2d_pp_instantiated`
 discharges those at the environment `instantiate2` builds, at every
-`N ≥ 1` (`PDesign.dimTable_lookup_of`).
+`N ≥ 1` in that range (`PDesign.dimTable_lookup_of`).
 
 The envelope is not a tracked build input (as for `ripple_add`): force a
 rebuild of this module after re-extracting `mul2d.sv.json`.
@@ -125,23 +128,21 @@ theorem pp_inst (env : IEnv) (elems : List (String × Nat)) (N i j : Nat) (hN : 
   simp [ppCell, hidx]
 
 /-- The loop bound `N` survives genvar bindings (genvars never shadow `N`). -/
-private theorem n_bound (env : IEnv) (N : Nat) (h : env.vals.lookup "N" = some (N : Int))
+private theorem n_bound (env : IEnv) (N : Nat) (h : env.intVal? "N" = some (N : Int))
     (g : String) (hg : g ≠ "N") (i : Int) :
-    evalInt (env.bindVal g i) (.paramRef "N" none) = .ok (N : Int) := by
-  apply evalInt_paramRef_of
-  simp [IEnv.bindVal, List.lookup, h, beq_false_of_ne (Ne.symm hg)]
+    evalInt (env.bindVal g i) (.paramRef "N" none) = .ok (N : Int) :=
+  CombView.evalInt_paramRef_of_intVal (by rw [IEnv.intVal?_bindVal_ne _ (Ne.symm hg), h])
 
-/-- … and `N` stays in the INT class there (`PExpr.isInt`: bound in `vals`). -/
-private theorem n_bound_int (env : IEnv) (N : Nat) (h : env.vals.lookup "N" = some (N : Int))
+/-- … and `N` stays in the INT class there (`PExpr.isInt`, its integer reading `intVal?`). -/
+private theorem n_bound_int (env : IEnv) (N : Nat) (h : env.intVal? "N" = some (N : Int))
     (g : String) (hg : g ≠ "N") (i : Int) :
-    (PExpr.paramRef "N" none).isInt (env.bindVal g i) = true := by
-  exact isInt_paramRef_of (v := (N : Int))
-    (by simp [IEnv.bindVal, List.lookup, h, beq_false_of_ne (Ne.symm hg)])
+    (PExpr.paramRef "N" none).isInt (env.bindVal g i) = true :=
+  CombView.isInt_paramRef_of_intVal (by rw [IEnv.intVal?_bindVal_ne _ (Ne.symm hg), h])
 
 /-- **The partial-product generate block, for every `N ≥ 1`**: the
 `i`-major family of 1-bit cells `pp[i*N + j] = a[j] & b[i]`. -/
 theorem mul2d_pp_expand (env : IEnv) (elems : List (String × Nat)) (N F : Nat) (hN : 1 ≤ N)
-    (hF : N < F) (hNv : env.vals.lookup "N" = some (N : Int))
+    (hF : N < F) (hNv : env.intVal? "N" = some (N : Int))
     (hd : env.dims.lookup "pp" = some (ppGeom N))
     (ha : elems.lookup "a" = some 1) (hb : elems.lookup "b" = some 1) :
     ppGen.expand2 env elems F =
@@ -163,15 +164,17 @@ theorem mul2d_pp_expand (env : IEnv) (elems : List (String × Nat)) (N F : Nat) 
   · intro v _ _
     apply expandList2_singleton_ok
     rw [GenItem.expand2_genFor_ascending_processes (N := (N : Int)) (evalInt_int 0)
-      (n_bound_int _ N (by simp [IEnv.bindVal, List.lookup, hNv]) "j" (by decide))
-      (n_bound _ N (by simp [IEnv.bindVal, List.lookup, hNv]) "j" (by decide)) (by simpa using hF)]
+      (n_bound_int _ N (by rw [IEnv.intVal?_bindVal_ne _ (by decide), hNv]) "j" (by decide))
+      (n_bound _ N (by rw [IEnv.intVal?_bindVal_ne _ (by decide), hNv]) "j" (by decide)) (by simpa using hF)]
     simp
 
 /-! ## At the environment `instantiate2` builds -/
 
-/-- The declaration scope of `mul2d` at `N`: `N` bound, its declared `int`
-type 32 bits. -/
-def mulScope (N : Int) : IEnv := { vals := [("N", N)], pwidths := [("N", 32)] }
+/-- The declaration scope of `mul2d` at `N`: `N` bound in `nvals` at its exact signed
+32-bit `int` value `canonInt 32 true N` (ls-sv's exact 32-bit `int` instantiation), its
+declared `int` type 32 bits. -/
+def mulScope (N : Int) : IEnv :=
+  { nvals := [("N", (canonInt 32 true N, 32, true))], pwidths := [("N", 32)], int32 := true }
 
 /-- The parameter environment of `mul2d` at `N` (by `rfl`): the declaration
 scope plus the geometry table evaluated in it. -/
@@ -179,22 +182,49 @@ def mulEnv (N : Int) : IEnv := { mulScope N with dims := dimTable (mulScope N) m
 
 theorem mul2d_paramEnv (N : Int) : mul2d.pdesign.paramEnv2 [N] = .ok (mulEnv N) := rfl
 
-/-- `N - 1` in the declaration scope, at any declared-width table. -/
+/-- The scope reads `N` at its 32-bit value, at any declared-width table. -/
+theorem mulScope_intVal (N : Int) (ws : List (String × Nat)) :
+    IEnv.intVal? { mulScope N with widths := ws } "N" = some (canonInt 32 true N) := by
+  simp [IEnv.intVal?, mulScope]
+
+/-- `N` read at its signed 32-bit value is `N`, in that range. -/
+private theorem canonN (N : Nat) (hR : (N : Int) < 2147483648) : canonInt 32 true (N : Int) = N :=
+  CombView.canonInt32_of_range ⟨by omega, hR⟩
+
+/-- `N - 1` in the declaration scope, at any declared-width table (at the 32-bit reading of `N`). -/
 theorem mulScope_nM1 (N : Int) (ws : List (String × Nat)) :
-    evalInt { mulScope N with widths := ws } nM1 = .ok (N - 1) :=
-  evalInt_sub_of (by simp [mulScope]) rfl (evalInt_paramRef_of (by simp [mulScope])) (evalInt_int 1)
+    evalInt { mulScope N with widths := ws } nM1 = .ok (canonInt 32 true N - 1) :=
+  evalInt_sub_of (CombView.isInt_paramRef_of_intVal (mulScope_intVal N ws)) rfl
+    (CombView.evalInt_paramRef_of_intVal (mulScope_intVal N ws)) (evalInt_int 1)
+
+/-- … `N` itself, in the signed 32-bit range. -/
+private theorem mulScope_intVal' (N : Nat) (hR : (N : Int) < 2147483648) (ws : List (String × Nat)) :
+    IEnv.intVal? { mulScope N with widths := ws } "N" = some (N : Int) := by
+  rw [mulScope_intVal, canonN N hR]
+
+/-- The environment `instantiate2` builds reads `N` at `N`, in the signed 32-bit range (any
+declaration list). -/
+theorem mulEnv_intVal (N : Nat) (hR : (N : Int) < 2147483648) (decls : List Decl) :
+    ((mulEnv N).withDecls decls).intVal? "N" = some (N : Int) := by
+  simp [IEnv.intVal?, mulEnv, mulScope, canonN N hR]
+
+/-- … `N - 1` itself, in the signed 32-bit range. -/
+private theorem mulScope_nM1' (N : Nat) (hR : (N : Int) < 2147483648) (ws : List (String × Nat)) :
+    evalInt { mulScope N with widths := ws } nM1 = .ok ((N : Int) - 1) := by
+  rw [mulScope_nM1, canonN N hR]
 
 /-- The geometry table's `pp` entry: `[N-1:0][N-1:0]` evaluated. -/
-theorem mulEnv_pp (N : Nat) : (mulEnv N).dims.lookup "pp" = some (ppGeom N) :=
+theorem mulEnv_pp (N : Nat) (hR : (N : Int) < 2147483648) :
+    (mulEnv N).dims.lookup "pp" = some (ppGeom N) :=
   PDesign.dimTable_lookup_of mul2d_pp_dims fun ws =>
-    evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1 N ws) (evalInt_int 0)
-      (evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1 N ws) (evalInt_int 0) evalDims_nil)
+    evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1' N hR ws) (evalInt_int 0)
+      (evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1' N hR ws) (evalInt_int 0) evalDims_nil)
 
 /-- **The partial-product block of the instantiated multiplier, for every
 `N ≥ 1`** — at the declaration environment of ANY declaration list and any
 element-width table giving the 1-D ports `a`, `b` 1-bit elements (what
 `buildElems` computes for them), at the surface fuel. -/
-theorem mul2d_pp_instantiated (N : Nat) (hN : 1 ≤ N) (decls : List Decl)
+theorem mul2d_pp_instantiated (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (decls : List Decl)
     (elems : List (String × Nat)) (ha : elems.lookup "a" = some 1)
     (hb : elems.lookup "b" = some 1) :
     ppGen.expand2 ((mulEnv N).withDecls decls) elems (PDesign.surfaceFuel [(N : Int)]) =
@@ -204,7 +234,7 @@ theorem mul2d_pp_instantiated (N : Nat) (hN : 1 ≤ N) (decls : List Decl)
       have := Nat.le_mul_self (N + 2)
       simp [PDesign.surfaceFuel]
       omega)
-    (by simp [mulEnv, mulScope]) (by simpa using mulEnv_pp N) ha hb
+    (mulEnv_intVal N hR decls) (by simpa using mulEnv_pp N hR) ha hb
 
 /-! ## The whole instantiated multiplier
 
@@ -227,22 +257,26 @@ theorem mul2d_c_dims : mul2d.pdesign.packedDims.lookup "c" = some rectDims := rf
 def rectGeom (N : Nat) : List (Int × Int) := [((N : Int) - 1, 0), ((N : Int), 0)]
 
 /-- The geometry table's `t`/`s`/`c` entries. -/
-theorem mulEnv_t (N : Nat) : (mulEnv N).dims.lookup "t" = some (ppGeom N) :=
+theorem mulEnv_t (N : Nat) (hR : (N : Int) < 2147483648) :
+    (mulEnv N).dims.lookup "t" = some (ppGeom N) :=
   PDesign.dimTable_lookup_of mul2d_t_dims fun ws =>
-    evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1 N ws) (evalInt_int 0)
-      (evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1 N ws) (evalInt_int 0) evalDims_nil)
+    evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1' N hR ws) (evalInt_int 0)
+      (evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1' N hR ws) (evalInt_int 0) evalDims_nil)
 
-private theorem rect_eval (N : Nat) (ws : List (String × Nat)) :
+private theorem rect_eval (N : Nat) (hR : (N : Int) < 2147483648) (ws : List (String × Nat)) :
     evalDims { mulScope N with widths := ws } rectDims = .ok (rectGeom N) :=
-  evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1 N ws) (evalInt_int 0)
+  evalDims_cons_of (d := ⟨nM1, .int 0⟩) (mulScope_nM1' N hR ws) (evalInt_int 0)
     (evalDims_cons_of (d := ⟨.paramRef "N" none, .int 0⟩)
-      (evalInt_paramRef_of (by simp [mulScope])) (evalInt_int 0) evalDims_nil)
+      (CombView.evalInt_paramRef_of_intVal (mulScope_intVal' N hR ws)) (evalInt_int 0)
+      evalDims_nil)
 
-theorem mulEnv_s (N : Nat) : (mulEnv N).dims.lookup "s" = some (rectGeom N) :=
-  PDesign.dimTable_lookup_of mul2d_s_dims (rect_eval N)
+theorem mulEnv_s (N : Nat) (hR : (N : Int) < 2147483648) :
+    (mulEnv N).dims.lookup "s" = some (rectGeom N) :=
+  PDesign.dimTable_lookup_of mul2d_s_dims (rect_eval N hR)
 
-theorem mulEnv_c (N : Nat) : (mulEnv N).dims.lookup "c" = some (rectGeom N) :=
-  PDesign.dimTable_lookup_of mul2d_c_dims (rect_eval N)
+theorem mulEnv_c (N : Nat) (hR : (N : Int) < 2147483648) :
+    (mulEnv N).dims.lookup "c" = some (rectGeom N) :=
+  PDesign.dimTable_lookup_of mul2d_c_dims (rect_eval N hR)
 
 /-- `2*N-1`, the msb label of `p`. -/
 def pMsb : PExpr := .binary (.m0 .sub) (.binary .mul (.int 2) (.paramRef "N" none)) (.int 1)
@@ -250,18 +284,20 @@ def pMsb : PExpr := .binary (.m0 .sub) (.binary .mul (.int 2) (.paramRef "N" non
 /-- `p`: `[2*N-1:0]`. -/
 theorem mul2d_p_dims : mul2d.pdesign.packedDims.lookup "p" = some [⟨pMsb, .int 0⟩] := rfl
 
-/-- `2*N-1` at `N`, in any environment binding `N`. -/
-theorem evalInt_pMsb {E : IEnv} {N : Int} (hN : E.vals.lookup "N" = some N) :
+/-- `2*N-1` at `N`, in any environment reading `N` as an integer (`intVal?`). -/
+theorem evalInt_pMsb {E : IEnv} {N : Int} (hN : E.intVal? "N" = some N) :
     evalInt E pMsb = .ok (2 * N - 1) :=
-  evalInt_sub_of (by simp [PExpr.isInt, SymBinOp.intArith, hN]) rfl
-    (evalInt_mul_of rfl (by simp [PExpr.isInt, hN]) (evalInt_int 2) (evalInt_paramRef_of hN))
+  evalInt_sub_of (isInt_binary_of rfl rfl (CombView.isInt_paramRef_of_intVal hN)) rfl
+    (evalInt_mul_of rfl (CombView.isInt_paramRef_of_intVal hN) (evalInt_int 2)
+      (CombView.evalInt_paramRef_of_intVal hN))
     (evalInt_int 1)
 
 /-- The geometry table's `p` entry. -/
-theorem mulEnv_p (N : Nat) : (mulEnv N).dims.lookup "p" = some [(2 * (N : Int) - 1, 0)] :=
-  PDesign.dimTable_lookup_of mul2d_p_dims fun _ =>
-    evalDims_cons_of (d := ⟨pMsb, .int 0⟩) (evalInt_pMsb (by simp [mulScope])) (evalInt_int 0)
-      evalDims_nil
+theorem mulEnv_p (N : Nat) (hR : (N : Int) < 2147483648) :
+    (mulEnv N).dims.lookup "p" = some [(2 * (N : Int) - 1, 0)] :=
+  PDesign.dimTable_lookup_of mul2d_p_dims fun ws =>
+    evalDims_cons_of (d := ⟨pMsb, .int 0⟩) (evalInt_pMsb (mulScope_intVal' N hR ws))
+      (evalInt_int 0) evalDims_nil
 
 /-- The 1-bit literal `1'b0`. -/
 def zero1 : LVec := LVec.ofNat 1 0
@@ -377,7 +413,7 @@ def mulProcs (N : Nat) : List Process2 :=
 /-- The environment facts every template reads: `N`, and the evaluated
 geometry of the four arrays. -/
 structure MulEnvOk (E : IEnv) (N : Nat) : Prop where
-  n : E.vals.lookup "N" = some (N : Int)
+  n : E.intVal? "N" = some (N : Int)
   pp : E.dims.lookup "pp" = some (ppGeom N)
   t : E.dims.lookup "t" = some (ppGeom N)
   s : E.dims.lookup "s" = some (rectGeom N)
@@ -385,12 +421,13 @@ structure MulEnvOk (E : IEnv) (N : Nat) : Prop where
 
 theorem MulEnvOk.bind {E : IEnv} {N : Nat} (h : MulEnvOk E N) (g : String) (hg : g ≠ "N")
     (v : Int) : MulEnvOk (E.bindVal g v) N :=
-  ⟨by simp [IEnv.bindVal, List.lookup, h.n, beq_false_of_ne (Ne.symm hg)],
+  ⟨by rw [IEnv.intVal?_bindVal_ne _ (Ne.symm hg), h.n],
    by simpa using h.pp, by simpa using h.t, by simpa using h.s, by simpa using h.c⟩
 
 theorem MulEnvOk.nM1 {E : IEnv} {N : Nat} (h : MulEnvOk E N) :
     evalInt E nM1 = .ok ((N : Int) - 1) :=
-  evalInt_sub_of (by simp [h.n]) rfl (evalInt_paramRef_of h.n) (evalInt_int 1)
+  evalInt_sub_of (CombView.isInt_paramRef_of_intVal h.n) rfl (CombView.evalInt_paramRef_of_intVal h.n)
+    (evalInt_int 1)
 
 /-- A path `x[i][j]` over `[N-1:0][N-1:0]` (`pp`, `t`). -/
 theorem win_sq {E : IEnv} {N : Nat} {n : String} (hd : E.dims.lookup n = some (ppGeom N))
@@ -504,8 +541,10 @@ theorem sTop_inst (h : MulEnvOk env N) (hN : 1 ≤ N) (i : Nat) (hi : i < N) :
   have h' := h.bind "i" (by decide) i
   have hi' : evalInt (env.bindVal "i" i) (.genvarRef "i") = .ok (i : Int) :=
     evalInt_genvarRef_of (by simp [IEnv.bindVal])
-  have hwS := win_rect (n := "s") h'.s hN hi' (evalInt_paramRef_of h'.n) hi (Nat.le_refl N)
-  have hwC := win_rect (n := "c") h'.c hN hi' (evalInt_paramRef_of h'.n) hi (Nat.le_refl N)
+  have hwS := win_rect (n := "s") h'.s hN hi' (CombView.evalInt_paramRef_of_intVal h'.n) hi
+    (Nat.le_refl N)
+  have hwC := win_rect (n := "c") h'.c hN hi' (CombView.evalInt_paramRef_of_intVal h'.n) hi
+    (Nat.le_refl N)
   rw [sTopT, instProcess2_assignL _ (target1 hwS), read1 hwC]
   rfl
 
@@ -590,40 +629,41 @@ def mulElems (N : Nat) : List (String × Nat) :=
 
 private theorem except_pure {ε α : Type} (a : α) : (pure a : Except ε α) = .ok a := rfl
 
-theorem mul2d_elems (N : Nat) (hN : 1 ≤ N) :
+theorem mul2d_elems (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     buildElems (mulEnv N) mul2d.pdesign.decls = .ok (mulElems N) := by
   have hv : ((N : Int) - 1).natAbs + 1 = N := by omega
   simp [mul2d.pdesign, buildElems, PType.width_packed_cons, PType.elemWidth, PDim.width,
     evalInt, mulEnv, mulScope, List.lookup, mulElems, Gen2.except_ok_bind, hv, List.foldlM_cons,
-    except_pure]
+    except_pure, canonN N hR]
 
 theorem mul2d_decls_ok (N : Int) : ∃ decls, buildDecls (mulEnv N) mul2d.pdesign.decls = .ok decls := by
   simp [mul2d.pdesign, buildDecls, instDecl, PType.width_packed_cons, PDim.width, evalInt, mulEnv,
     mulScope, List.lookup, Gen2.except_ok_bind]
 
-theorem mulEnvOk (N : Nat) (decls : List Decl) : MulEnvOk ((mulEnv N).withDecls decls) N :=
-  ⟨by simp [mulEnv, mulScope], by simpa using mulEnv_pp N, by simpa using mulEnv_t N,
-   by simpa using mulEnv_s N, by simpa using mulEnv_c N⟩
+theorem mulEnvOk (N : Nat) (hR : (N : Int) < 2147483648) (decls : List Decl) :
+    MulEnvOk ((mulEnv N).withDecls decls) N :=
+  ⟨mulEnv_intVal N hR decls, by simpa using mulEnv_pp N hR, by simpa using mulEnv_t N hR,
+   by simpa using mulEnv_s N hR, by simpa using mulEnv_c N hR⟩
 
 /-- An unbased-unsized fill in a context of width `w`. -/
 private theorem instExpr2_fill_ctx {env : IEnv} {elems : List (String × Nat)} {w : Nat}
     {b : Logic} : instExpr2 env elems (some w) (.fill b) = .lit (LVec.replicate w b) := by
   simp [instExpr2]
 
-theorem mul2d_static (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
+theorem mul2d_static (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (decls : List Decl) :
     mul2d.pdesign.processes.map (instProcess2 ((mulEnv N).withDecls decls) (mulElems N)) =
       [s0Proc N, c0Proc N, t0Proc N, pHiProc N] := by
-  have E := mulEnvOk N decls
+  have E := mulEnvOk N hR decls
   rw [mul2d_static_source]
   -- `p[2*N-1:N]`: the target window (a static-label `ArraySel` path over
   -- `[2*N-1:0]`) and the row part-select read.
   have hm : evalInt ((mulEnv N).withDecls decls) pMsb = .ok (2 * (N : Int) - 1) :=
     evalInt_pMsb E.n
   have hpd : ((mulEnv N).withDecls decls).dims.lookup "p" = some [(2 * (N : Int) - 1, 0)] := by
-    simpa using mulEnv_p N
+    simpa using mulEnv_p N hR
   have hgp := arrayPartGeom_range_of (is := []) (a := pMsb) (b := .paramRef "N" none)
     (arrayDims_of hpd) (walkIndices_nil (env := (mulEnv N).withDecls decls) _) hm
-    (evalInt_paramRef_of E.n)
+    (CombView.evalInt_paramRef_of_intVal E.n)
     (by rw [labelOffset_desc0 (m := 2 * (N : Int) - 1) (by omega),
       labelOffset_desc0 (m := 2 * (N : Int) - 1) (by omega)]; omega)
   rw [labelOffset_desc0 (m := 2 * (N : Int) - 1) (by omega) (N : Int),
@@ -637,7 +677,7 @@ theorem mul2d_static (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
     (by omega : (0 : Int) ≤ (N : Int) - 1) E.nM1 (by omega) (Int.le_refl _)
     (walkIndices_nil (env := (mulEnv N).withDecls decls) [((N : Int), 0)])
   have hgeom := arrayPartGeom_range_of (a := .paramRef "N" none) (b := .int 1)
-    (arrayDims_of E.s) hwalk (evalInt_paramRef_of E.n) (evalInt_int 1)
+    (arrayDims_of E.s) hwalk (CombView.evalInt_paramRef_of_intVal E.n) (evalInt_int 1)
     (by rw [labelOffset_desc0 (m := (N : Int)) (by omega),
       labelOffset_desc0 (m := (N : Int)) (by omega)]; omega)
   rw [labelOffset_desc0 (m := (N : Int)) (by omega) (N : Int),
@@ -700,7 +740,7 @@ theorem mul2d_static (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
       fitExpr2_of_rigid_eq rfl hsw, instExpr2_arrayPart _ (dynPartPlan_of_geom hgeom), hread]
     rfl
 
-theorem mul2d_gens (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
+theorem mul2d_gens (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (decls : List Decl) :
     expandList2 ((mulEnv N).withDecls decls) (mulElems N) (PDesign.surfaceFuel [(N : Int)])
       mul2d.pdesign.generates =
       .ok (((List.range N).flatMap fun i => (List.range N).map fun j => ppCell N i j)
@@ -710,9 +750,9 @@ theorem mul2d_gens (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
     have := Nat.le_mul_self (N + 2)
     simp [PDesign.surfaceFuel]
     omega
-  have E := mulEnvOk N decls
+  have E := mulEnvOk N hR decls
   rw [mul2d_generates]
-  exact expandList2_cons_ok (mul2d_pp_instantiated N hN decls _ (by simp [mulElems])
+  exact expandList2_cons_ok (mul2d_pp_instantiated N hN hR decls _ (by simp [mulElems])
       (by simp [mulElems, List.lookup]))
     (expandList2_cons_ok (mul2d_row_expand _ _ N _ hN hF E)
       (expandList2_singleton_ok
@@ -720,7 +760,8 @@ theorem mul2d_gens (N : Nat) (hN : 1 ≤ N) (decls : List Decl) :
 
 /-! ### The one-driver rule, for every `N`
 
-`mul2d.sem N` is `instantiateGD2`: the instantiated design under the
+`mul2d.sem N` is the `always_comb` alias guard (a no-op here: every process
+is a continuous assign) over `instantiateGD2`: the instantiated design under the
 one-driver rule (`Hier2.lean`, "Drivers" — a flat top is checked at every
 parameter point since 2026-10-28). It holds for every `N`, by the
 process-list recipe of `Hier2Gen.lean`. Each partial-product row and each
@@ -901,22 +942,33 @@ theorem mul2d_driversOk (N : Nat) :
       | (rw [mem_rowWins] at hw
          rcases hw with rfl | rfl | ⟨j, -, rfl | rfl | rfl⟩ <;> rfl)
 
-/-- **`mul2d`'s instantiated process list, for every `N ≥ 1`** (nothing
-unrolled): the static assigns, the `N×N` partial products, rows `1 … N-1`,
+/-- Every instantiated process is a continuous assign: the `always_comb` alias guard of
+`mul2d.sem` (`PDesign.instantiateGDAlias2`) keeps them all (`Design2.aliasGuard_of_noComb`). -/
+theorem mulProcs_noComb (N : Nat) : ∀ p ∈ mulProcs N, ∀ b, p ≠ .alwaysComb b := by
+  intro p hp b hb
+  subst hb
+  simp [mulProcs, rowCells, s0Proc, c0Proc, t0Proc, pHiProc, ppCell, cRowCell, tCell, sCell, cCell,
+    sTopCell, outCell] at hp
+
+/-- **`mul2d`'s instantiated process list, for every `N ≥ 1` in the signed 32-bit range**
+(nothing unrolled): the static assigns, the `N×N` partial products, rows `1 … N-1`,
 and the low output bits — every nested select a flat 1-bit window. -/
-theorem mul2d_processes (N : Nat) (hN : 1 ≤ N) :
+theorem mul2d_processes (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     (mul2d.sem N).processes.toList = mulProcs N := by
   obtain ⟨decls, hdecls⟩ := mul2d_decls_ok N
   have h := PDesign.instantiate2_of_ok (d := mul2d.pdesign) (args := [(N : Int)]) rfl
-    (mul2d_paramEnv N) hdecls (mul2d_elems N hN) (mul2d_gens N hN decls)
+    (mul2d_paramEnv N) hdecls (mul2d_elems N hN hR) (mul2d_gens N hN hR decls)
   have hothers : mul2d.pdesign.others = [] := rfl
   have hD : (mul2d.pdesign.instantiateD2 [(N : Int)]).processes.toList = mulProcs N := by
-    rw [PDesign.instantiateD2_of_ok h, PDesign.assemble2_processes, mul2d_static N hN decls,
+    rw [PDesign.instantiateD2_of_ok h, PDesign.assemble2_processes, mul2d_static N hN hR decls,
       hothers]
     simp [mulProcs]
-  -- `mul2d.sem N` is `instantiateGD2`; its one-driver guard passes.
-  show (mul2d.pdesign.instantiateGD2 [(N : Int)]).processes.toList = mulProcs N
-  rw [PDesign.instantiateGD2_of_driversOk (by rw [hD]; exact mul2d_driversOk N), hD]
+  -- `mul2d.sem N` is the alias guard over `instantiateGD2`; the one-driver guard passes, and
+  -- the alias guard keeps every process (all continuous assigns).
+  have hG : (mul2d.pdesign.instantiateGD2 [(N : Int)]).processes.toList = mulProcs N := by
+    rw [PDesign.instantiateGD2_of_driversOk (by rw [hD]; exact mul2d_driversOk N), hD]
+  show ((mul2d.pdesign.instantiateGD2 [(N : Int)]).aliasGuard).processes.toList = mulProcs N
+  rw [Design2.aliasGuard_of_noComb (by rw [hG]; exact mulProcs_noComb N), hG]
 
 #print axioms mul2d_pp_expand
 #print axioms mul2d_pp_instantiated

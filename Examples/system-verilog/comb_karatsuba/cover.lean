@@ -27,7 +27,8 @@ namespace Examples.«system-verilog».comb_karatsuba.cover
 set_option maxHeartbeats 0 in
 /-- Every obligation of `sv_equations` that is left (the coverage of every read, 17 goals) is closed by the standard
 closer; the two input premises by `inKnown_ofBitVec`. -/
-theorem k1u_covers (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (clmul_n.sem N)) (ha : Acyclic (clmul_n.sem N)) :
+theorem k1u_covers (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hc : CombDesign (clmul_n.sem N)) (ha : Acyclic (clmul_n.sem N)) :
     clmul_n.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

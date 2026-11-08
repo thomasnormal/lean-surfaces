@@ -16,29 +16,29 @@ open Examples.«system-verilog».comb_word.gen
 namespace Examples.«system-verilog».comb_word.comb_view
 
 /-- Every site reads inputs only: one rank for all. -/
-theorem add_same_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_same_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (add_same.sem N) ∧ Acyclic (add_same.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
-theorem add_wide_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_wide_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (add_wide.sem N) ∧ Acyclic (add_wide.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
-theorem sub_wide_struct (N : Nat) (hN : 1 ≤ N) :
+theorem sub_wide_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (sub_wide.sem N) ∧ Acyclic (sub_wide.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
-theorem addw_struct (N : Nat) (hN : 1 ≤ N) :
+theorem addw_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (addw.sem N) ∧ Acyclic (addw.sem N) := by
   sv_structure (rank := rippleRank (fun p => [0, 1, 1].getD p 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
 /-- **A sum in the leaves of an `always_comb` tree** (WP-B2 gate 2): the structure is the one of any single-window
 body, every read is an input. -/
-theorem addp_struct (N : Nat) (hN : 1 ≤ N) :
+theorem addp_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (addp.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
@@ -48,13 +48,13 @@ theorem addp_struct (N : Nat) (hN : 1 ≤ N) :
 /-- **A chain of rows of a two-dimensional packed array** (`r[i + 1] = ~r[i]`, parameter dimensions): the extractor's
 legacy `BitSel` over a two-dimensional base is a whole row, and the row-major offset is nonlinear in the stride, so the
 structure goals close with `sv_rowmajor; omega` (the library lemma `rmN_lt_iff`), as in `mul_array`. -/
-theorem row_chain_struct (N : Nat) (hN : 1 ≤ N) :
+theorem row_chain_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (row_chain.sem N) ∧ Acyclic (row_chain.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; sv_rowmajor; omega)
 
 /-- … over localparam dimensions, rows `2N` wide, … -/
-theorem row_chain_lp_struct (N : Nat) (hN : 1 ≤ N) :
+theorem row_chain_lp_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (row_chain_lp.sem N) ∧ Acyclic (row_chain_lp.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; sv_rowmajor; omega)
@@ -72,7 +72,8 @@ theorem ps_rot_struct : CombDesign (ps_rot.sem) ∧ Acyclic (ps_rot.sem) := by
   all_goals (intros; omega)
 
 /-- **Part selects whose bounds are affine in a genvar**: the four-bit windows `y[4*i+3:4*i]` of a generate loop. -/
-theorem ps_gen_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (ps_gen.sem N) ∧ Acyclic (ps_gen.sem N) := by
+theorem ps_gen_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (ps_gen.sem N) ∧ Acyclic (ps_gen.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
@@ -137,7 +138,8 @@ example : CombDesign (ps_rot.sem) := by
 
 /-- **`pp[i] = aw << i`**: the shift amount is a constant of the instance, so it is read like an unsized constant but
 names the genvar, which the structural obligation checks is a loop variable in scope. -/
-theorem shl_gen_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (shl_gen.sem N) ∧ Acyclic (shl_gen.sem N) := by
+theorem shl_gen_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (shl_gen.sem N) ∧ Acyclic (shl_gen.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; sv_rowmajor; omega)
 
@@ -149,12 +151,14 @@ theorem shl_gen_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (shl_gen.sem N) ∧
 
 /-- **Zero padding `{ {K{1'b0}}, x }`**: the count is a parameter, a constant of the instance (its name is checked in
 scope, its value non-negative: the new `InRangeObl` conjunct). -/
-theorem repl_pad_struct (N K : Nat) (hN : 1 ≤ N) : CombDesign (repl_pad.sem N K) ∧ Acyclic (repl_pad.sem N K) := by
+theorem repl_pad_struct (N K : Nat) (hN : 1 ≤ N) (hRN : (N : Int) < 2147483648) (hRK : (K : Int) < 2147483648) :
+    CombDesign (repl_pad.sem N K) ∧ Acyclic (repl_pad.sem N K) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)
 
 /-- **The AND mask `a & {N{b[i]}}`** in a generate loop: one row of `pp` per `i`, every read is an input. -/
-theorem repl_mask_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (repl_mask.sem N) ∧ Acyclic (repl_mask.sem N) := by
+theorem repl_mask_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (repl_mask.sem N) ∧ Acyclic (repl_mask.sem N) := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; sv_rowmajor; omega)
 

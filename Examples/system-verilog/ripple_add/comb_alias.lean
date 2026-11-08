@@ -26,7 +26,7 @@ open Examples.«system-verilog».ripple_add.comb_bundle (ripple_struct)
 
 namespace Examples.«system-verilog».ripple_add.comb_alias
 
-theorem ripple_correct (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -35,7 +35,7 @@ theorem ripple_correct (N : Nat) (hN : 1 ≤ N) :
         SvState.lookup st "s" = some (LVec.ofBitVec (x + y + (BitVec.ofBool ci).setWidth N)) ∧
         SvState.lookup st "cout" =
           some (LVec.ofBitVec (BitVec.ofBool (2 ^ N ≤ x.toNat + y.toNat + ci.toNat))) := by
-  obtain ⟨hc, ha⟩ := ripple_struct N hN
+  obtain ⟨hc, ha⟩ := ripple_struct N hN hR
   refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
   intro x y ci hA hB hCi
   sv_equations

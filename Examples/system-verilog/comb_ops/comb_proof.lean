@@ -110,17 +110,18 @@ theorem mux_final {N : Nat} (hN : 1 ≤ N) {st : SvState} {x y : BitVec N} {ci :
 
 /-- The structure of `add_mux`: a combinational design (its own declaration: every declaration has its own heartbeat
 budget, and the budget of the whole proof was within 8 % of the default limit). -/
-theorem add_mux_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (add_mux.sem N) := by
+theorem add_mux_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (add_mux.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem add_mux_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (add_mux.sem N) := by
+theorem add_mux_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (add_mux.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1)
     (fun _ pos i => if pos = 0 then 0 else i.toNat + 1))
   all_goals (intros; omega)
 
 /-- The equations of `add_mux` in a settled state (the second half of `add_mux_correct`). -/
-theorem add_mux_settled (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (add_mux.sem N)) (ha : Acyclic (add_mux.sem N))
+theorem add_mux_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hc : CombDesign (add_mux.sem N)) (ha : Acyclic (add_mux.sem N))
     (st : SvState) (heqs : CombEqs (add_mux.sem N) st) (hsh : StateShape (add_mux.sem N) st)
     (x y : BitVec N) (ci : Bool)
     (hA : SvState.lookup st "a" = some (LVec.ofBitVec x))
@@ -142,7 +143,7 @@ theorem add_mux_settled (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (add_mux.sem N
     | (refine inKnown_ofBitVec hCi ?_; omega)
 
 /-- **Adder correctness, every `N ≥ 1`** (the statement of `ripple_add`'s `ripple_correct`). -/
-theorem add_mux_correct (N : Nat) (hN : 1 ≤ N) :
+theorem add_mux_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     add_mux.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -151,11 +152,11 @@ theorem add_mux_correct (N : Nat) (hN : 1 ≤ N) :
         SvState.lookup st "s" = some (LVec.ofBitVec (x + y + (BitVec.ofBool ci).setWidth N)) ∧
         SvState.lookup st "cout" =
           some (LVec.ofBitVec (BitVec.ofBool (2 ^ N ≤ x.toNat + y.toNat + ci.toNat))) := by
-  have hc := add_mux_comb N hN
-  have ha := add_mux_acyclic N hN
+  have hc := add_mux_comb N hN hR
+  have ha := add_mux_acyclic N hN hR
   refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
   intro x y ci hA hB hCi
-  exact add_mux_settled N hN hc ha st heqs hsh x y ci hA hB hCi
+  exact add_mux_settled N hN hR hc ha st heqs hsh x y ci hA hB hCi
 
 /-- info: 'Examples.«system-verilog».comb_ops.comb_proof.add_mux_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

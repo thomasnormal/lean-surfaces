@@ -59,7 +59,8 @@ info: sv_equations: the netlist view and the obligations
   [inputsKnown_3] ⊢ ∃ v, st.lookup "cin" = some v ∧ v.allKnown = true ∧ v.width = 1
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (add_mux.sem N)) (ha : Acyclic (add_mux.sem N))
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hc : CombDesign (add_mux.sem N)) (ha : Acyclic (add_mux.sem N))
     (st : SvState) (heqs : CombEqs (add_mux.sem N) st) (hsh : StateShape (add_mux.sem N) st) :
     True := by
   sv_equations?
@@ -135,7 +136,8 @@ info: sv_equations: the netlist view and the obligations
   [inputsKnown_3] ⊢ ∃ v, st.lookup "s" = some v ∧ v.allKnown = true ∧ v.width = 1
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (ops_gen.sem N)) (ha : Acyclic (ops_gen.sem N))
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hc : CombDesign (ops_gen.sem N)) (ha : Acyclic (ops_gen.sem N))
     (st : SvState) (heqs : CombEqs (ops_gen.sem N) st) (hsh : StateShape (ops_gen.sem N) st) :
     True := by
   sv_equations?
@@ -221,7 +223,7 @@ info: sv_equations: the netlist view and the obligations (lowered design)
   [inputsKnown_3] ⊢ ∃ v, st.lookup "v" = some v ∧ v.allKnown = true ∧ v.width = (↑N + -1).natAbs + 1
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) {d' : Design2} (hl : (ops_proc.sem N).lowerComb = some d')
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) {d' : Design2} (hl : (ops_proc.sem N).lowerComb = some d')
     (hc : CombDesign d') (ha : Acyclic d') (st : SvState) (heqs : CombEqs d' st)
     (hsh : StateShape d' st) : True := by
   sv_equations?

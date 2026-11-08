@@ -128,14 +128,14 @@ private def rippleExhaustive (σ : ScheduleOracle) (N : Nat) : Bool :=
 
 /-- **Non-vacuity**: every run of the ripple adder completes, under every
 schedule and every stimulus. -/
-theorem ripple_terminates (N : Nat) (hN : 1 ≤ N) : Terminates2 (ripple_add.sem N) := by
+theorem ripple_terminates (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Terminates2 (ripple_add.sem N) := by
   proofs
 
 /-- **Ripple-adder correctness** (snapshot form): on every snapshot of every
 completed run whose inputs hold known values `x y : BitVec N`, `ci : Bool`,
 `s` holds the `N`-bit sum `x + y + ci` and `cout` the carry-out
 `2^N ≤ x + y + ci`. -/
-theorem ripple_correct (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -149,7 +149,7 @@ theorem ripple_correct (N : Nat) (hN : 1 ≤ N) :
 /-- **Ripple-adder correctness** (stimulus form): whenever cycle `c`'s
 stimulus entry drives `a`, `b`, `cin` with known values, snapshot `c` carries
 their sum on `s` and the carry-out on `cout`. -/
-theorem ripple_correct_stim (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_correct_stim (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_add.sem N ⊨₂ spec2 fun stim tr => ∀ (c : Nat) (inputs st : SvState),
       stim[c]? = some inputs → tr[c]? = some st → ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup inputs "a" = some (LVec.ofBitVec x) →
@@ -163,7 +163,7 @@ theorem ripple_correct_stim (N : Nat) (hN : 1 ≤ N) :
 /-- **Ripple-adder correctness** (arithmetic form): on every snapshot with
 known inputs the outputs are known, and carry-out · `2^N` + sum is exactly
 `x + y + ci` as natural numbers. -/
-theorem ripple_correct_nat (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_correct_nat (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -177,7 +177,7 @@ theorem ripple_correct_nat (N : Nat) (hN : 1 ≤ N) :
 
 /-- Non-vacuity, packaged: under every schedule and stimulus a completed run
 EXISTS, and it satisfies the correctness statement. -/
-example (N : Nat) (hN : 1 ≤ N) (σ : ScheduleOracle) (stim : List SvState) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (σ : ScheduleOracle) (stim : List SvState) :
     ∃ tr, Runs2 (ripple_add.sem N) σ stim tr ∧ ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -186,15 +186,15 @@ example (N : Nat) (hN : 1 ≤ N) (σ : ScheduleOracle) (stim : List SvState) :
         SvState.lookup st "s" = some (LVec.ofBitVec (x + y + (BitVec.ofBool ci).setWidth N)) ∧
         SvState.lookup st "cout" =
           some (LVec.ofBitVec (BitVec.ofBool (2 ^ N ≤ x.toNat + y.toNat + ci.toNat))) :=
-  Models2.exists_of_terminates (ripple_terminates N hN) (ripple_correct N hN) σ stim
+  Models2.exists_of_terminates (ripple_terminates N hN hR) (ripple_correct N hN hR) σ stim
 
 /-- Non-vacuity with uniqueness (`Terminates2.existsUnique`, `Mono2.lean`):
 under every schedule and stimulus there is EXACTLY one completed run, so the
 trace that `ripple_correct` describes is THE trace. -/
-example (N : Nat) (hN : 1 ≤ N) (σ : ScheduleOracle) (stim : List SvState) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (σ : ScheduleOracle) (stim : List SvState) :
     ∃ tr, Runs2 (ripple_add.sem N) σ stim tr ∧
       ∀ tr', Runs2 (ripple_add.sem N) σ stim tr' → tr' = tr :=
-  Terminates2.existsUnique (ripple_terminates N hN) σ stim
+  Terminates2.existsUnique (ripple_terminates N hN hR) σ stim
 
 /-! ## Axiom pins (no `sorry`, no `native_decide`, no `bv_decide`: standard
 axioms only) -/

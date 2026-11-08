@@ -11,7 +11,8 @@ soundness theorem (`CombView.comb_acyclic_view` / `comb_lex_view`) and one round
 normalizations, instead of repeating the in-range and one-driver normalizations in each:
 
 ```
-theorem ripple_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) ∧ Acyclic (ripple_add.sem N) := by
+theorem ripple_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (ripple_add.sem N) ∧ Acyclic (ripple_add.sem N) := by
   sv_structure (rank := rippleRank …)
   all_goals (intros; omega)
 ```
@@ -29,7 +30,7 @@ namespace Examples.«system-verilog».ripple_add.comb_bundle
 
 /-! ## Positive: the bundle, every `N ≥ 1`, with a `Nat` rank and with a lexicographic key -/
 
-theorem ripple_struct (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (ripple_add.sem N) ∧ Acyclic (ripple_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
@@ -41,14 +42,16 @@ def rippleKey (N : Nat) : SiteId → Key
   | .fam _ _ [i] => (1, i.toNat, 0)
   | .fam _ _ _ => (N + 1, 0, 0)
 
-theorem ripple_struct_lex (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_struct_lex (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     CombDesign (ripple_add.sem N) ∧ Acyclic (ripple_add.sem N) := by
   sv_structure (lexRank := rippleKey N)
   all_goals (intros; omega)
 
 -- The two halves are what the single-goal forms prove.
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) := (ripple_struct N hN).1
-example (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := (ripple_struct N hN).2
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (ripple_add.sem N) :=
+  (ripple_struct N hN hR).1
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (ripple_add.sem N) :=
+  (ripple_struct N hN hR).2
 
 /-! ## Negative: the sampled checks speak for the bundle too -/
 

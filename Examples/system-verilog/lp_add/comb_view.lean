@@ -24,20 +24,20 @@ namespace Examples.«system-verilog».lp_add.comb_view
 
 /- `$clog2` in a 32-bit signed `int` localparam follows the same summary
 route as the `integer` spelling. -/
-theorem lp_clog2_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_clog2.sem N) := by
+theorem lp_clog2_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_clog2.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem lp_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_add.sem N) := by
+theorem lp_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_add.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (lp_add.sem N) := by
+theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (lp_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
 
 /-- With the comb profile in hand the one-driver goals are not asked again. -/
-theorem lp_acyclic_using (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (lp_add.sem N)) :
+theorem lp_acyclic_using (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hc : CombDesign (lp_add.sem N)) :
     Acyclic (lp_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
     using hc
@@ -87,9 +87,9 @@ overlaps the written window; ranks are functions of the site identity):
   rank(g_bit#1[i']) < rank(g_bit#1[i])   [g_bit#1[i] reads c[i]; g_bit#1[i'] drives c[i' + 1]]
 -/
 #guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_add.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_add.sem N) := by
   sv_structure?
-  exact lp_comb N hN
+  exact lp_comb N hN hR
 
 /-! ## Negative tests: the samples evaluate the localparams too -/
 

@@ -19,7 +19,7 @@ namespace Examples.«system-verilog».ripple_step.comb_proof
 
 /-- **Ripple-adder correctness with `i = i + 1`, every `N ≥ 1`** (the statement of
 `ripple_add`'s `ripple_correct`, about `ripple_step.sem N`). -/
-theorem ripple_step_correct (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_step_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_step.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

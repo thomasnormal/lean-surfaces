@@ -1,5 +1,6 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Hier2Gen
+import LeanModels.Sv.CombView
 
 /-!
 # `ripple_fa` — the module-hierarchy acceptance of the Design2 layer (F3)
@@ -8,8 +9,10 @@ The real envelope `ripple_fa.sv.json` (the `ripple_add` adder written
 STRUCTURALLY: one `full_adder` instance per bit, instantiated by a
 `generate for`) is a hierarchical envelope — the top module `ripple_fa`
 plus the definition of `full_adder`, elaborated alone at its defaults. It
-flattens (`PDesign.instantiateH`, `Hier2.lean`), for EVERY `N` —
-symbolically, nothing unrolled — to
+flattens (`PDesign.instantiateH`, `Hier2.lean`), for EVERY `N` in the
+signed 32-bit range of its `int` parameter (`hR : (N : Int) < 2147483648`:
+the instantiation binds `N` at its exact 32-bit value) — symbolically,
+nothing unrolled — to
 
 ```
 c[0] = cin;   cout = c[N];
@@ -137,15 +140,16 @@ def rippleDecls (N : Nat) : List Decl :=
 
 /-! ## The stages at symbolic `N` -/
 
-/-- The declaration scope: `N` bound, its declared type `int` 32 bits. -/
+/-- The declaration scope: `N` bound in `nvals` at its exact signed 32-bit `int` value
+`canonInt 32 true N` (ls-sv's exact 32-bit `int` instantiation), its declared type 32 bits. -/
 def rippleScope (N : Int) : IEnv :=
-  { int32 := true, vals := [("N", N)], pwidths := [("N", 32)] }
+  { int32 := true, nvals := [("N", (canonInt 32 true N, 32, true))], pwidths := [("N", 32)] }
 
 /-- The parameter environment (with the evaluated packed-array geometry). -/
 def rippleEnv (N : Int) : IEnv :=
   { rippleScope N with dims := dimTable (rippleScope N) ripple_fa.pdesign.decls }
 
-/-- Declarations at raw widths (`|N-1| + 1`, `|N| + 1`). -/
+/-- Declarations at raw widths (`|N-1| + 1`, `|N| + 1`, at the 32-bit reading of `N`). -/
 def rippleDeclsRaw (wv wc : Nat) : List Decl :=
   [{ name := "a", width := wv, isInput := true },
    { name := "b", width := wv, isInput := true },
@@ -163,7 +167,7 @@ theorem ripple_paramEnvH (N : Int) :
 
 theorem ripple_decls (N : Int) :
     buildDecls (rippleEnv N) ripple_fa.pdesign.decls =
-      .ok (rippleDeclsRaw ((N - 1).natAbs + 1) (N.natAbs + 1)) := by
+      .ok (rippleDeclsRaw ((canonInt 32 true N - 1).natAbs + 1) ((canonInt 32 true N).natAbs + 1)) := by
   simp [ripple_fa.pdesign, buildDecls, instDecl, PType.width_packed_cons, PDim.width, evalInt,
     rippleEnv, rippleScope, List.lookup, rippleDeclsRaw, Gen2.except_ok_bind]
 
@@ -172,13 +176,18 @@ theorem ripple_elems (N : Int) :
   simp [ripple_fa.pdesign, buildElems, PType.width_packed_cons, PDim.width, evalInt, rippleEnv,
     rippleScope, List.lookup, rippleElems, Gen2.except_ok_bind]
 
+/-- `N` read at its signed 32-bit value is `N`, in that range. -/
+private theorem canonN (N : Nat) (hR : (N : Int) < 2147483648) : canonInt 32 true (N : Int) = N :=
+  CombView.canonInt32_of_range ⟨by omega, hR⟩
+
 /-- The static processes (as in `ripple_add`). -/
-theorem ripple_static (N : Nat) (wv wc : Nat) :
+theorem ripple_static (N : Nat) (hR : (N : Int) < 2147483648) (wv wc : Nat) :
     ripple_fa.pdesign.processes.map
         (instProcess2 ((rippleEnv N).withDecls (rippleDeclsRaw wv wc)) rippleElems) =
       [cinProc, coutProc N] := by
+  have hc := canonN N hR
   sv2_inst_simp [ripple_fa.pdesign, rippleEnv, rippleScope, rippleDeclsRaw, rippleElems, cinProc,
-    coutProc, dimTable, dimTableStep, PType.width_packed_cons, PDim.width, Int.lt_add_one_iff]
+    coutProc, dimTable, dimTableStep, PType.width_packed_cons, PDim.width, Int.lt_add_one_iff, hc]
 
 /-! ## One instance -/
 
@@ -206,10 +215,11 @@ def faDef : PDesign :=
 theorem ripple_fa_plib : ripple_fa.plib = [faDef] := rfl
 
 /-- The adder's parameter environment (no parameters; the scalar ports'
-geometry). -/
-def faEnv : IEnv := { dims := dimTable {} faDef.decls }
+geometry), in the exact 32-bit `int` mode `instantiateH` starts every level in
+(`PDesign.instantiateH` = `instantiateHFrom { int32 := true }`). -/
+def faEnv : IEnv := { int32 := true, dims := dimTable { int32 := true } faDef.decls }
 
-theorem fa_paramEnvH : faDef.paramEnvH {} [] = .ok faEnv := rfl
+theorem fa_paramEnvH : faDef.paramEnvH { int32 := true } [] = .ok faEnv := rfl
 
 theorem fa_decls : buildDecls faEnv faDef.decls = .ok faDesign.decls.toList := by
   simp [faDef, faDesign, buildDecls, instDecl, PType.width_packed_nil]
@@ -220,12 +230,13 @@ theorem fa_elems : buildElems faEnv faDef.decls = .ok faElems := by
   simp [faDef, faElems, buildElems]
 
 /-- The child: `full_adder` from the library, at its (empty) parameter
-point, instantiated alone — the closed `faDesign`, in any instantiating
+point, instantiated alone (from `instantiateH`'s initial environment
+`{ int32 := true }`) — the closed `faDesign`, in any instantiating
 scope, at any fuel and for any instantiating input ports (the adder has no
 flop, so the clock-source rule leaves it unchanged, and drives `s` and
 `cout` once each, so the one-driver rule does too). -/
 theorem fa_child (env : IEnv) (F : Nat) (clocks : List String) :
-    PDesign.childRec 1 ripple_fa.plib {} F clocks env faInst = .ok faDesign := by
+    PDesign.childRec 1 ripple_fa.plib { int32 := true } F clocks env faInst = .ok faDesign := by
   rw [ripple_fa_plib]
   simp only [PDesign.childRec, childInstOf]
   have hg : PInst.given env faDef faInst = .ok [] := by
@@ -271,24 +282,26 @@ theorem fa_flatten (env : IEnv) (k : Nat) :
 /-- One iteration of the generate loop: the singleton body `[fa]` at the
 `Nat`-cast genvar `k`. -/
 theorem fa_iter (env : IEnv) (F : Nat) (clocks : List String) (k : Nat) :
-    expandListH (PDesign.childRec 1 ripple_fa.plib {} F clocks) (env.bindVal "i" k) rippleElems F
-        [.inst faInst] = .ok (faDecls k, faProcs k) := by
+    expandListH (PDesign.childRec 1 ripple_fa.plib { int32 := true } F clocks) (env.bindVal "i" k)
+        rippleElems F [.inst faInst] = .ok (faDecls k, faProcs k) := by
   apply expandListH_singleton_ok rfl
   rw [GenItem.expandH_inst, instExpandH_of (fa_prefix env k) (fa_child _ F clocks), fa_flatten]
 
 /-- The generate expansion at the surface fuel: the instance family, bit by
 bit. -/
-theorem ripple_gens (N : Nat) (wv wc : Nat) (clocks : List String) :
-    expandListH (PDesign.childRec 1 ripple_fa.plib {} (PDesign.surfaceFuel [(N : Int)]) clocks)
+theorem ripple_gens (N : Nat) (hR : (N : Int) < 2147483648) (wv wc : Nat) (clocks : List String) :
+    expandListH (PDesign.childRec 1 ripple_fa.plib { int32 := true } (PDesign.surfaceFuel [(N : Int)])
+          clocks)
         ((rippleEnv N).withDecls (rippleDeclsRaw wv wc)) rippleElems
         (PDesign.surfaceFuel [(N : Int)]) ripple_fa.pdesign.generates =
       .ok ((List.range N).flatMap faDecls, (List.range N).flatMap faProcs) := by
+  have hc := canonN N hR
   rw [ripple_fa_generates]
   apply expandListH_singleton_ok rfl
   rw [GenItem.expandH_genFor_ascending_flatMap (N := (N : Int))
     (f := fun v => (faDecls v.toNat, faProcs v.toNat)) (evalInt_int 0)
-    (fun i => by simp [rippleEnv, rippleScope, List.lookup])
-    (fun i => by simp [evalInt, rippleEnv, rippleScope, List.lookup])
+    (fun i => by simp [rippleEnv, rippleScope, List.lookup, hc])
+    (fun i => by simp [evalInt, rippleEnv, rippleScope, List.lookup, hc])
     (by
       have := Nat.le_mul_self (N + 2)
       simp [PDesign.surfaceFuel]
@@ -396,49 +409,64 @@ theorem ripple_fa_driversOk (N : Nat) :
       List.mem_range, faWins] at hw
     rcases hw with (rfl | rfl) | ⟨k, _, (rfl | rfl)⟩ <;> rfl
 
-/-- **`instantiateH` at symbolic `N`**: succeeds, and is the assembled
+/-- **`instantiateH` at symbolic `N`** (in the signed 32-bit range): succeeds, and is the assembled
 flattened design (the top's one-driver rule passing, `ripple_fa_driversOk`). -/
-theorem ripple_fa_instantiateH (N : Nat) :
+theorem ripple_fa_instantiateH (N : Nat) (hR : (N : Int) < 2147483648) :
     ripple_fa.pdesign.instantiateH ripple_fa.plib [(N : Int)] (PDesign.surfaceFuel [(N : Int)]) =
       .ok (ripple_fa.pdesign.assembleH (rippleEnv N)
         (rippleDeclsRaw (((N : Int) - 1).natAbs + 1) ((N : Int).natAbs + 1))
         ((List.range N).flatMap faDecls) rippleElems ((List.range N).flatMap faProcs)) := by
-  apply PDesign.instantiateH_of_rec (PDesign.instantiateRec_of_ok (depth := 1) rfl
-    (ripple_paramEnvH N) (ripple_decls N) (ripple_elems N) (ripple_gens N _ _ _))
+  have hdecls := ripple_decls N
+  rw [canonN N hR] at hdecls
+  have hrec := PDesign.instantiateRec_of_ok (depth := 1) (lib := ripple_fa.plib)
+    (envI := { int32 := true }) rfl (ripple_paramEnvH N) hdecls (ripple_elems N)
+    (ripple_gens N hR _ _ _)
+  apply PDesign.instantiateH_of_rec hrec
   have hps : (ripple_fa.pdesign.assembleH (rippleEnv N)
         (rippleDeclsRaw (((N : Int) - 1).natAbs + 1) ((N : Int).natAbs + 1))
         ((List.range N).flatMap faDecls) rippleElems
         ((List.range N).flatMap faProcs)).processes.toList = rippleFaProcs N := by
-    rw [PDesign.assembleH_processes, ripple_static]
+    rw [PDesign.assembleH_processes, ripple_static N hR]
     simp [rippleFaProcs, ripple_fa.pdesign]
   rw [hps, ripple_declNames, ripple_inputNames]
   exact ripple_fa_driversOk N
 
 /-! ## The acceptance theorems -/
 
-/-- **The flattened process list, for every `N`** (no unrolling): `c[0] =
-cin`, `cout = c[N]`, then for each `i < N` the instance `g_bit[i].fa`'s
+/-- Every flattened process is a continuous assign: the `always_comb` alias
+guard of `ripple_fa.sem` (`PDesign.instantiateHDAlias2`) keeps them all
+(`Design2.aliasGuard_of_noComb`). -/
+theorem rippleFaProcs_noComb (N : Nat) : ∀ p ∈ rippleFaProcs N, ∀ b, p ≠ .alwaysComb b := by
+  intro p hp b hb
+  subst hb
+  simp [rippleFaProcs, faProcs, cinProc, coutProc] at hp
+
+/-- **The flattened process list, for every `N` in the signed 32-bit range** (no unrolling):
+`c[0] = cin`, `cout = c[N]`, then for each `i < N` the instance `g_bit[i].fa`'s
 five connections and two assigns. -/
-theorem ripple_fa_processes (N : Nat) :
+theorem ripple_fa_processes (N : Nat) (hR : (N : Int) < 2147483648) :
     (ripple_fa.sem N).processes.toList = rippleFaProcs N := by
-  show (ripple_fa.pdesign.instantiateHD2 ripple_fa.plib [(N : Int)]).processes.toList = _
-  rw [PDesign.instantiateHD2_of_ok (ripple_fa_instantiateH N), PDesign.assembleH_processes,
-    ripple_static]
-  simp [rippleFaProcs, ripple_fa.pdesign]
+  have hH : (ripple_fa.pdesign.instantiateHD2 ripple_fa.plib [(N : Int)]).processes.toList =
+      rippleFaProcs N := by
+    rw [PDesign.instantiateHD2_of_ok (ripple_fa_instantiateH N hR), PDesign.assembleH_processes,
+      ripple_static N hR]
+    simp [rippleFaProcs, ripple_fa.pdesign]
+  show ((ripple_fa.pdesign.instantiateHD2 ripple_fa.plib [(N : Int)]).aliasGuard).processes.toList = _
+  rw [Design2.aliasGuard_of_noComb (by rw [hH]; exact rippleFaProcs_noComb N), hH]
 
 /-- **Membership characterization, both directions**: a process of the
 flattened adder is the carry-in, the carry-out, or one of bit `i`'s seven
 instance processes for some `i < N`. -/
-theorem mem_ripple_fa_processes (N : Nat) (p : Process2) :
+theorem mem_ripple_fa_processes (N : Nat) (hR : (N : Int) < 2147483648) (p : Process2) :
     p ∈ (ripple_fa.sem N).processes.toList ↔
       p = cinProc ∨ p = coutProc N ∨ ∃ i < N, p ∈ faProcs i := by
-  rw [ripple_fa_processes]
+  rw [ripple_fa_processes N hR]
   simp [rippleFaProcs]
 
 /-- The process count: `7N + 2`. -/
-theorem ripple_fa_processes_length (N : Nat) :
+theorem ripple_fa_processes_length (N : Nat) (hR : (N : Int) < 2147483648) :
     (ripple_fa.sem N).processes.toList.length = 7 * N + 2 := by
-  rw [ripple_fa_processes]
+  rw [ripple_fa_processes N hR]
   simp only [rippleFaProcs, faProcs, List.length_cons, List.length_flatMap, List.length_nil,
     List.map_const', List.sum_replicate_nat, List.length_range]
   omega
@@ -448,10 +476,11 @@ theorem ripple_fa_processes_length (N : Nat) :
 then each instance's five 1-bit port signals under `g_bit[i].fa.`. Ports of
 the flattened design are exactly the top's: hoisted signals carry no port
 flag. -/
-theorem ripple_fa_decls (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_fa_decls (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     (ripple_fa.sem N).decls.toList = rippleDecls N ++ (List.range N).flatMap faDecls := by
-  show (ripple_fa.pdesign.instantiateHD2 ripple_fa.plib [(N : Int)]).decls.toList = _
-  rw [PDesign.instantiateHD2_of_ok (ripple_fa_instantiateH N), PDesign.assembleH_decls]
+  show ((ripple_fa.pdesign.instantiateHD2 ripple_fa.plib [(N : Int)]).aliasGuard).decls.toList = _
+  rw [Design2.aliasGuard_decls, PDesign.instantiateHD2_of_ok (ripple_fa_instantiateH N hR),
+    PDesign.assembleH_decls]
   have hv : ((N : Int) - 1).natAbs + 1 = N := by omega
   have hc : (N : Int).natAbs = N := Int.natAbs_natCast N
   rw [hv, hc]

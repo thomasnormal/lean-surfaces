@@ -77,7 +77,7 @@ info: sv_equations: the netlist view and the obligations
   [inputsKnown_3] ⊢ ∃ v, st.lookup "b" = some v ∧ v.allKnown = true ∧ v.width = (↑N + -1).natAbs + 1
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (neg_tern_wide.sem N))
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hc : CombDesign (neg_tern_wide.sem N))
     (ha : Acyclic (neg_tern_wide.sem N)) (st : SvState) (heqs : CombEqs (neg_tern_wide.sem N) st)
     (hsh : StateShape (neg_tern_wide.sem N) st) : True := by
   sv_equations?

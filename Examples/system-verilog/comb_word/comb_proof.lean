@@ -188,7 +188,7 @@ theorem addw_final {W N : Nat} (hW : W = N) {st : SvState} {x y : BitVec N} {c0 
     simp
 
 /-- **`y = a + b`, every `N ≥ 1`.** -/
-theorem add_same_correct (N : Nat) (hN : 1 ≤ N) :
+theorem add_same_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     add_same.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
@@ -211,7 +211,7 @@ theorem add_same_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hB ?_; omega)
 
 /-- **`y = a + b` into `N + 1` bits, every `N ≥ 1`.** -/
-theorem add_wide_correct (N : Nat) (hN : 1 ≤ N) :
+theorem add_wide_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     add_wide.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
@@ -235,7 +235,7 @@ theorem add_wide_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hB ?_; omega)
 
 /-- **`d = a - b` into `N + 1` bits, every `N ≥ 1`.** -/
-theorem sub_wide_correct (N : Nat) (hN : 1 ≤ N) :
+theorem sub_wide_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     sub_wide.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
@@ -260,7 +260,7 @@ theorem sub_wide_correct (N : Nat) (hN : 1 ≤ N) :
 
 /-- **The adder with a carry-in and a carry-out written with `+`, every `N ≥ 1`** (the statement of
 `add_mux_correct`). -/
-theorem addw_correct (N : Nat) (hN : 1 ≤ N) :
+theorem addw_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     addw.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -292,7 +292,8 @@ theorem addw_correct (N : Nat) (hN : 1 ≤ N) :
 /-- **`addp`, every `N ≥ 1`, in every settled state of the lowered design** (an `always_comb` whose two leaves are
 word-level): `y` is the sum of the zero-extended operands when `c` is set, their difference modulo `2^(N+1)`
 otherwise. -/
-theorem addp_settles (N : Nat) (hN : 1 ≤ N) {d' : Design2} (_hl : (addp.sem N).lowerComb = some d')
+theorem addp_settles (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    {d' : Design2} (_hl : (addp.sem N).lowerComb = some d')
     (_hc : CombDesign d') (_ha : Acyclic d') (st : SvState) (_heqs : CombEqs d' st)
     (_hsh : StateShape d' st) (x y : BitVec N) (c0 : Bool)
     (hA : SvState.lookup st "a" = some (LVec.ofBitVec x))
@@ -392,7 +393,7 @@ theorem bit1_of_lookup {st : SvState} {n : String} {v : LVec} {b : Bool}
   simp
 
 /-- **The comparison `<` and `==` of two `N`-bit operands, every `N ≥ 1`.** -/
-theorem cmp_same_correct (N : Nat) (hN : 1 ≤ N) :
+theorem cmp_same_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     cmp_same.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
@@ -549,7 +550,7 @@ theorem shl_const_final {W N : Nat} (hW : W = N) {st : SvState} {x : BitVec N}
       BitVec.setWidth_eq]
 
 /-- **`y = a << s`, every `N ≥ 1`** (a barrel shifter with a 3-bit amount). -/
-theorem shl_n_correct (N : Nat) (hN : 1 ≤ N) :
+theorem shl_n_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     shl_n.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N) (sv : BitVec 3), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "s" = some (LVec.ofBitVec sv) →
@@ -572,7 +573,7 @@ theorem shl_n_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hSv ?_; omega)
 
 /-- **`y = a >> s`, every `N ≥ 1`.** -/
-theorem shr_n_correct (N : Nat) (hN : 1 ≤ N) :
+theorem shr_n_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     shr_n.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N) (sv : BitVec 3), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "s" = some (LVec.ofBitVec sv) →
@@ -595,7 +596,7 @@ theorem shr_n_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hSv ?_; omega)
 
 /-- **`y = a << s` into `N + 1` bits, every `N ≥ 1`.** -/
-theorem shl_wide_correct (N : Nat) (hN : 1 ≤ N) :
+theorem shl_wide_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     shl_wide.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N) (sv : BitVec 3), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "s" = some (LVec.ofBitVec sv) →
@@ -618,7 +619,7 @@ theorem shl_wide_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hSv ?_; omega)
 
 /-- **The one-hot decoder `y = 1 << s`, every `N ≥ 1`** (`1#N <<< s`: bit `s` is set, and nothing at all when `s ≥ N`). -/
-theorem onehot_correct (N : Nat) (hN : 1 ≤ N) :
+theorem onehot_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     onehot.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (sv : BitVec 3), SvState.lookup st "s" = some (LVec.ofBitVec sv) →
         SvState.lookup st "y" = some (LVec.ofBitVec ((1#N) <<< sv.toNat)) := by
@@ -639,7 +640,7 @@ theorem onehot_correct (N : Nat) (hN : 1 ≤ N) :
     | (refine inKnown_ofBitVec hSv ?_; omega)
 
 /-- **`y = a << 1`, `z = a >> 2`, every `N ≥ 1`** (shifts by an unsized constant amount). -/
-theorem shl_const_correct (N : Nat) (hN : 1 ≤ N) :
+theorem shl_const_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     shl_const.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (x <<< 1)) ∧
@@ -795,7 +796,7 @@ theorem cat_add_e_final {W N : Nat} (hW : W = N) {st : SvState} {x y : BitVec N}
   rw [h, XF.bv_cat2, XF.bv_cat2, bv_of_lookup hA, bv_of_lookup hB]
 
 /-- **Concatenations in `+`, `?:` and `==`, every `N ≥ 1`.** -/
-theorem cat_add_correct (N : Nat) (hN : 1 ≤ N) :
+theorem cat_add_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     cat_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -939,7 +940,7 @@ theorem row_chain_gen {C R : Nat} {Wi Ri : Int} (hW : Wi = (C : Int)) (hR : Ri =
 
 /-- **A chain of rows over parameter dimensions, every `N ≥ 1`** (`logic [N:0][N-1:0] r`, `r[i + 1] = ~r[i]`: the legacy
 `BitSel` over a two-dimensional base is a whole row). -/
-theorem row_chain_correct (N : Nat) (hN : 1 ≤ N) :
+theorem row_chain_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     row_chain.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (if N % 2 = 0 then x else ~~~x)) := by
@@ -982,7 +983,7 @@ theorem row_chain_correct (N : Nat) (hN : 1 ≤ N) :
 
 /-- **The same chain over LOCALPARAM dimensions, rows `2N` bits wide** (`logic [R-1:0][C-1:0] r` with `R = N + 1`,
 `C = 2 * N`). -/
-theorem row_chain_lp_correct (N : Nat) (hN : 1 ≤ N) :
+theorem row_chain_lp_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     row_chain_lp.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec (2 * N)), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (if N % 2 = 0 then x else ~~~x)) := by
@@ -1177,7 +1178,7 @@ theorem ps_gen_final {N : Nat} {st : SvState} {x : BitVec (4 * N)}
   rw [h, SvState.boolAt_ofBitVec hA hk]
   simp [hk]
 
-theorem ps_gen_correct (N : Nat) (hN : 1 ≤ N) :
+theorem ps_gen_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ps_gen.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec (4 * N)), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (~~~x)) := by
@@ -1232,7 +1233,7 @@ theorem shl_gen_final {N : Nat} (hN32 : N ≤ 2 ^ 32) {st : SvState} {x : BitVec
   exact this
 
 /-- **Every row of the shifted array, every `N ≥ 1` (up to `2^32` rows).** -/
-theorem shl_gen_correct (N : Nat) (hN : 1 ≤ N) (hN32 : N ≤ 2 ^ 32) :
+theorem shl_gen_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hN32 : N ≤ 2 ^ 32) :
     shl_gen.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec (2 * N)), SvState.lookup st "aw" = some (LVec.ofBitVec x) →
         ∀ i, i < N → ∀ k, k < 2 * N →
@@ -1284,7 +1285,7 @@ theorem repl_pad_final {N K : Nat} {st : SvState} {x : BitVec N}
   · simp [h, hk', BitVec.getLsbD_of_ge x k (by omega)]
 
 /-- **Zero padding, every `N ≥ 1` and every `K`** (`K = 0` is the empty replication). -/
-theorem repl_pad_correct (N K : Nat) (hN : 1 ≤ N) :
+theorem repl_pad_correct (N K : Nat) (hN : 1 ≤ N) (hRN : (N : Int) < 2147483648) (hRK : (K : Int) < 2147483648) :
     repl_pad.sem N K ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (x.setWidth (N + K))) := by
@@ -1321,7 +1322,7 @@ theorem repl_mask_final {N : Nat} {st : SvState} {a b : BitVec N}
   cases hb : b.getLsbD i <;> simp [hb]
 
 /-- **The AND mask of a partial product, every `N ≥ 1`.** -/
-theorem repl_mask_correct (N : Nat) (hN : 1 ≤ N) :
+theorem repl_mask_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     repl_mask.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (a b : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec a) →
         SvState.lookup st "b" = some (LVec.ofBitVec b) →

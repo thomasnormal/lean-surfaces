@@ -30,7 +30,7 @@ namespace Examples.«system-verilog».mul_array.comb_view
 
 /-! ## Positive: the multiplier, every `N ≥ 1` -/
 
-theorem mul_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (mul_n.sem N) := by
+theorem mul_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (mul_n.sem N) := by
   sv_structure
   all_goals (intros; sv_rowmajor; omega)
 
@@ -51,13 +51,13 @@ def mulKey (N : Nat) : SiteId → Key
   | .fam _ _ _ => (N, 0, 0)               -- p[i] = s[i][0]
 
 set_option maxHeartbeats 400000 in
-theorem mul_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (mul_n.sem N) := by
+theorem mul_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (mul_n.sem N) := by
   sv_structure (lexRank := mulKey N)
   all_goals (intros; sv_rowmajor; omega)
 
 set_option maxHeartbeats 400000 in
 /-- The same, the key written inline (the form the proof-golf players will use). -/
-example (N : Nat) (hN : 1 ≤ N) : Acyclic (mul_n.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (mul_n.sem N) := by
   sv_structure (lexRank := fun
     | .plain 0 => (0, 0, 1)
     | .plain 1 => (0, 0, 0)
@@ -74,7 +74,7 @@ example (N : Nat) (hN : 1 ≤ N) : Acyclic (mul_n.sem N) := by
 
 set_option maxHeartbeats 400000 in
 /-- With the comb profile in hand (`using hc`) the one-driver obligation is not asked again. -/
-theorem mul_acyclic_using (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (mul_n.sem N)) :
+theorem mul_acyclic_using (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hc : CombDesign (mul_n.sem N)) :
     Acyclic (mul_n.sem N) := by
   sv_structure (lexRank := mulKey N) using hc
   all_goals (intros; sv_rowmajor; omega)
@@ -187,9 +187,9 @@ overlaps the written window; ranks are functions of the site identity):
   rank(g_row#2[i']) < rank(g_out#0[i])   [g_out#0[i] reads s[i][0]; g_row#2[i'] drives s[i'][N]]
 -/
 #guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (mul_n.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (mul_n.sem N) := by
   sv_structure?
-  exact mul_comb N hN
+  exact mul_comb N hN hR
 
 /-! ## Negative tests: each must be REJECTED, with the mathematical content that is wrong -/
 

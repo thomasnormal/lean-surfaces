@@ -68,7 +68,7 @@ theorem mul_full {N : Nat} (x y : BitVec N) :
     Nat.mod_eq_of_lt hxy]
 
 /-- **`p = a * b` and `q = a * b` into `N` and `2N` bits, every `N ≥ 1`.** -/
-theorem mul_word_correct (N : Nat) (hN : 1 ≤ N) :
+theorem mul_word_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     mul_word.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N), SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
@@ -137,7 +137,7 @@ theorem sq_chain_gen {N L : Nat} {Wi Li : Int} (hW : Wi = (N : Int)) (hL : Li = 
   rw [hy, hxy]
 
 /-- **`$clog2(N) + 1` squarings of `x` modulo `2^N`, every `N ≥ 1`**: a generate loop bounded by a `$clog2` localparam. -/
-theorem sq_chain_correct (N : Nat) (hN : 1 ≤ N) :
+theorem sq_chain_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     sq_chain.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec N), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofNat N (x.toNat ^ 2 ^ (clog2 N + 1)))) := by

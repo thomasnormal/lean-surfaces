@@ -24,7 +24,7 @@ theorem case_multi_struct : ∃ d', case_multi.sem.lowerComb = some d' ∧ CombD
   all_goals (intros; omega)
 
 /-- The structure theorem of `case_gen`, for every `N ≥ 1`. -/
-theorem case_gen_struct (N : Nat) (hN : 1 ≤ N) :
+theorem case_gen_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (case_gen.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
   all_goals (intros; omega)

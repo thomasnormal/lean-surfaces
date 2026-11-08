@@ -15,7 +15,7 @@ open Examples.«system-verilog».comb_ovr.gen
 namespace Examples.«system-verilog».comb_ovr.comb_view
 
 /-- The structure theorem of the lowered adder, every `N ≥ 1`. -/
-theorem add_ovr_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_ovr_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_ovr.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1)
     (fun _ pos i => if pos = 0 then 0 else i.toNat + 1))

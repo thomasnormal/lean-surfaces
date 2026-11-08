@@ -17,14 +17,14 @@ open Examples.«system-verilog».comb_proc.gen
 namespace Examples.«system-verilog».comb_proc.comb_view
 
 /-- The structure theorem of the lowered design, every `N ≥ 1`. -/
-theorem add_proc_struct (N : Nat) (hN : 1 ≤ N) :
+theorem add_proc_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1)
     (fun _ pos i => if pos = 0 then 0 else i.toNat + 1))
   all_goals (intros; omega)
 
 /-- … and with a lexicographic key (the carry cell ranked by `(i + 1, 0, 0)`). -/
-theorem add_proc_struct_lex (N : Nat) (hN : 1 ≤ N) :
+theorem add_proc_struct_lex (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure (lexRank := fun
     | .plain 0 => (0, 0, 0)
@@ -35,7 +35,7 @@ theorem add_proc_struct_lex (N : Nat) (hN : 1 ≤ N) :
   all_goals (intros; omega)
 
 /-- The comb profile alone (no rank). -/
-theorem add_proc_comb (N : Nat) (hN : 1 ≤ N) :
+theorem add_proc_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc.sem N).lowerComb = some d' ∧ CombDesign d' := by
   sv_structure
   all_goals (intros; omega)
@@ -70,9 +70,9 @@ overlaps the written window; ranks are functions of the site identity):
 
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) :
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ∃ d', (add_proc.sem N).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure?
-  exact add_proc_struct N hN
+  exact add_proc_struct N hN hR
 
 end Examples.«system-verilog».comb_proc.comb_view

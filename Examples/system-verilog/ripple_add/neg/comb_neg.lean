@@ -50,7 +50,7 @@ macro "ripple_close" : tactic =>
 
 /-! ## 1. The produced equation is the tampered one -/
 
-theorem bad_gate_eq (N : Nat) (hN : 1 ≤ N) :
+theorem bad_gate_eq (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     bad_gate.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -67,7 +67,7 @@ theorem bad_gate_eq (N : Nat) (hN : 1 ≤ N) :
   · exact eq_s_g_bit_0
   ripple_obligations
 
-theorem bad_offset_eq (N : Nat) (hN : 1 ≤ N) :
+theorem bad_offset_eq (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     bad_offset.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -85,7 +85,7 @@ theorem bad_offset_eq (N : Nat) (hN : 1 ≤ N) :
   · exact eq_s_g_bit_0
   ripple_obligations
 
-theorem bad_carry_eq (N : Nat) (hN : 1 ≤ N) :
+theorem bad_carry_eq (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     bad_carry.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
@@ -107,7 +107,7 @@ theorem bad_carry_eq (N : Nat) (hN : 1 ≤ N) :
 -- Control: the same wrapper on the GENUINE adder. `fail_if_success (fail_if_success S)` holds iff
 -- `S` succeeds, so this passes only because the genuine script proves the genuine statement; the
 -- tests below are therefore real failures, not an artifact of the wrapper.
-example (N : Nat) (hN : 1 ≤ N) : True := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : True := by
   fail_if_success
     fail_if_success
       have _ : ripple_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
@@ -130,7 +130,7 @@ example (N : Nat) (hN : 1 ≤ N) : True := by
         ripple_obligations
   trivial
 
-example (N : Nat) (hN : 1 ≤ N) : True := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : True := by
   fail_if_success
     have _ : bad_gate.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
         ∀ (x y : BitVec N) (ci : Bool),
@@ -152,7 +152,7 @@ example (N : Nat) (hN : 1 ≤ N) : True := by
       ripple_obligations
   trivial
 
-example (N : Nat) (hN : 1 ≤ N) : True := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : True := by
   fail_if_success
     have _ : bad_offset.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
         ∀ (x y : BitVec N) (ci : Bool),
@@ -174,7 +174,7 @@ example (N : Nat) (hN : 1 ≤ N) : True := by
       ripple_obligations
   trivial
 
-example (N : Nat) (hN : 1 ≤ N) : True := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : True := by
   fail_if_success
     have _ : bad_carry.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
         ∀ (x y : BitVec N) (ci : Bool),

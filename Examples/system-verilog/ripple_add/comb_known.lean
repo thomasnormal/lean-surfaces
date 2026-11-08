@@ -47,17 +47,17 @@ open Examples.«system-verilog».ripple_add.proof
 
 section Ripple
 
-variable {N : Nat} (hN : 1 ≤ N)
-include hN
+variable {N : Nat} (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+include hN hR
 
 theorem ripple_declWidth_a : (ripple_add.sem N).declWidth "a" = some N := by
-  simp [ripple_declWidth hN, rippleDecls]
+  simp [ripple_declWidth hN hR, rippleDecls]
 
 theorem ripple_declWidth_b : (ripple_add.sem N).declWidth "b" = some N := by
-  simp [ripple_declWidth hN, rippleDecls]
+  simp [ripple_declWidth hN hR, rippleDecls]
 
 theorem ripple_declWidth_cin : (ripple_add.sem N).declWidth "cin" = some 1 := by
-  simp [ripple_declWidth hN, rippleDecls]
+  simp [ripple_declWidth hN hR, rippleDecls]
 
 /-- The right-hand side of bit `i`'s sum cell. -/
 def sumRhs (i : Nat) : Expr2 :=
@@ -74,39 +74,39 @@ theorem sumRhs_xfWidth {i : Nat} (hi : i < N) :
     (sumRhs i).xfWidth (ripple_add.sem N) = some 1 := by
   have h1 : i + 1 ≤ N := hi
   have h2 : i + 1 ≤ N + 1 := by omega
-  simp [sumRhs, Expr2.xfWidth, XF.same, ripple_declWidth_a hN, ripple_declWidth_b hN,
-    ripple_declWidth_c hN, h1, h2]
+  simp [sumRhs, Expr2.xfWidth, XF.same, ripple_declWidth_a hN hR, ripple_declWidth_b hN hR,
+    ripple_declWidth_c hN hR, h1, h2]
 
 theorem carryRhs_xfWidth {i : Nat} (hi : i < N) :
     (carryRhs i).xfWidth (ripple_add.sem N) = some 1 := by
   have h1 : i + 1 ≤ N := hi
   have h2 : i + 1 ≤ N + 1 := by omega
-  simp [carryRhs, Expr2.xfWidth, XF.same, ripple_declWidth_a hN, ripple_declWidth_b hN,
-    ripple_declWidth_c hN, h1, h2]
+  simp [carryRhs, Expr2.xfWidth, XF.same, ripple_declWidth_a hN hR, ripple_declWidth_b hN hR,
+    ripple_declWidth_c hN hR, h1, h2]
 
 /-- **Check 1: every right-hand side is in the x-free fragment** (every `N ≥ 1`). -/
 theorem ripple_xfree : (ripple_add.sem N).XFree := by
   intro j t e hp
-  rcases ripple_proc.mp hp with ⟨-, h⟩ | ⟨-, h⟩ | ⟨i, hi, ⟨-, h⟩ | ⟨-, h⟩⟩ <;>
+  rcases (ripple_proc hR).mp hp with ⟨-, h⟩ | ⟨-, h⟩ | ⟨i, hi, ⟨-, h⟩ | ⟨-, h⟩⟩ <;>
     simp only [cinProc, coutProc, sumProc, carryProc, Process2.assign.injEq] at h <;>
     obtain ⟨-, rfl⟩ := h
-  · exact ⟨1, by simp [Expr2.xfWidth, ripple_declWidth_cin hN]⟩
-  · exact ⟨1, by simp [Expr2.xfWidth, ripple_declWidth_c hN]⟩
-  · exact ⟨1, sumRhs_xfWidth hN hi⟩
-  · exact ⟨1, carryRhs_xfWidth hN hi⟩
+  · exact ⟨1, by simp [Expr2.xfWidth, ripple_declWidth_cin hN hR]⟩
+  · exact ⟨1, by simp [Expr2.xfWidth, ripple_declWidth_c hN hR]⟩
+  · exact ⟨1, sumRhs_xfWidth hN hR hi⟩
+  · exact ⟨1, carryRhs_xfWidth hN hR hi⟩
 
 /-- Every bit of `a` and `b` below `N` is an input bit. -/
 theorem ripple_sourced_input {n : String} (hn : n = "a" ∨ n = "b") {k : Nat} (hk : k < N) :
     (ripple_add.sem N).Sourced n k := by
   refine Or.inl ⟨?_, N, ?_, hk⟩
-  · rw [ripple_inputNames hN]; rcases hn with rfl | rfl <;> simp
+  · rw [ripple_inputNames hN hR]; rcases hn with rfl | rfl <;> simp
   · rcases hn with rfl | rfl
-    · exact ripple_declWidth_a hN
-    · exact ripple_declWidth_b hN
+    · exact ripple_declWidth_a hN hR
+    · exact ripple_declWidth_b hN hR
 
 /-- Every bit of the sum `s` is driven (bit `i`'s sum cell). -/
 theorem ripple_sourced_s {k : Nat} (hk : k < N) : (ripple_add.sem N).Sourced "s" k :=
-  Or.inr ⟨2 * k + 2, k, 1, (ripple_writes hN).mpr (Or.inr (Or.inr ⟨k, hk, Or.inl ⟨rfl, rfl⟩⟩)),
+  Or.inr ⟨2 * k + 2, k, 1, (ripple_writes hN hR).mpr (Or.inr (Or.inr ⟨k, hk, Or.inl ⟨rfl, rfl⟩⟩)),
     Nat.le_refl _, by omega⟩
 
 /-- Every bit of the carry chain `c` is driven (`c[0]` by the carry-in, `c[k+1]` by bit `k`'s
@@ -114,10 +114,10 @@ carry cell). -/
 theorem ripple_sourced_c {k : Nat} (hk : k ≤ N) : (ripple_add.sem N).Sourced "c" k := by
   right
   rcases Nat.eq_zero_or_pos k with rfl | hpos
-  · exact ⟨0, 0, 1, (ripple_writes hN).mpr (Or.inl ⟨rfl, rfl⟩), Nat.le_refl _, by omega⟩
+  · exact ⟨0, 0, 1, (ripple_writes hN hR).mpr (Or.inl ⟨rfl, rfl⟩), Nat.le_refl _, by omega⟩
   · obtain ⟨k', rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
     exact ⟨2 * k' + 3, k' + 1, 1,
-      (ripple_writes hN).mpr (Or.inr (Or.inr ⟨k', by omega, Or.inr ⟨rfl, rfl⟩⟩)),
+      (ripple_writes hN hR).mpr (Or.inr (Or.inr ⟨k', by omega, Or.inr ⟨rfl, rfl⟩⟩)),
       Nat.le_refl _, by omega⟩
 
 /-- **Check 2: no read touches an undriven bit** (every `N ≥ 1`). -/
@@ -126,21 +126,21 @@ theorem ripple_covered : (ripple_add.sem N).Covered := by
       (r = .win "a" i 1 ∨ r = .win "b" i 1 ∨ r = .win "c" i 1) → r.Covered (ripple_add.sem N) := by
     intro i hi r hr
     rcases hr with rfl | rfl | rfl <;> intro k hk <;> obtain rfl : k = 0 := (by omega)
-    · exact ripple_sourced_input hN (Or.inl rfl) hi
-    · exact ripple_sourced_input hN (Or.inr rfl) hi
-    · exact ripple_sourced_c hN (by omega)
+    · exact ripple_sourced_input hN hR (Or.inl rfl) hi
+    · exact ripple_sourced_input hN hR (Or.inr rfl) hi
+    · exact ripple_sourced_c hN hR (by omega)
   intro j t e hp r hr
-  rcases ripple_proc.mp hp with ⟨-, h⟩ | ⟨-, h⟩ | ⟨i, hi, ⟨-, h⟩ | ⟨-, h⟩⟩ <;>
+  rcases (ripple_proc hR).mp hp with ⟨-, h⟩ | ⟨-, h⟩ | ⟨i, hi, ⟨-, h⟩ | ⟨-, h⟩⟩ <;>
     simp only [cinProc, coutProc, sumProc, carryProc, Process2.assign.injEq] at h <;>
     obtain ⟨-, rfl⟩ := h <;>
     simp [Expr2.reads, Expr2.sliceReads] at hr
   · subst hr
-    refine ⟨1, ripple_declWidth_cin hN, by omega, fun k hk => Or.inl ⟨?_, 1, ripple_declWidth_cin hN, hk⟩⟩
-    rw [ripple_inputNames hN]; simp
+    refine ⟨1, ripple_declWidth_cin hN hR, by omega, fun k hk => Or.inl ⟨?_, 1, ripple_declWidth_cin hN hR, hk⟩⟩
+    rw [ripple_inputNames hN hR]; simp
   · subst hr
     intro k hk
     obtain rfl : k = 0 := by omega
-    exact ripple_sourced_c hN (by omega)
+    exact ripple_sourced_c hN hR (by omega)
   · exact three i hi r hr
   · rcases hr with h | h | h | h | h <;> exact three i hi r (by simp [h])
 
@@ -151,12 +151,12 @@ theorem ripple_inputsKnown {st : SvState} {x y : BitVec N} {ci : Bool}
     (hc : SvState.lookup st "cin" = some (LVec.ofBitVec (BitVec.ofBool ci))) :
     (ripple_add.sem N).InputsKnown st := by
   intro n hn
-  rw [ripple_inputNames hN] at hn
+  rw [ripple_inputNames hN hR] at hn
   simp only [List.mem_cons, List.not_mem_nil, or_false] at hn
   rcases hn with rfl | rfl | rfl
-  · exact ⟨_, ha, LVec.allKnown_ofBitVec x, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_a hN⟩
-  · exact ⟨_, hb, LVec.allKnown_ofBitVec y, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_b hN⟩
-  · exact ⟨_, hc, LVec.allKnown_ofBitVec _, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_cin hN⟩
+  · exact ⟨_, ha, LVec.allKnown_ofBitVec x, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_a hN hR⟩
+  · exact ⟨_, hb, LVec.allKnown_ofBitVec y, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_b hN hR⟩
+  · exact ⟨_, hc, LVec.allKnown_ofBitVec _, by rw [LVec.width_ofBitVec]; exact ripple_declWidth_cin hN hR⟩
 
 /-! ## The consequences -/
 
@@ -168,16 +168,16 @@ theorem ripple_known {st : SvState} (heqs : CombEqs (ripple_add.sem N) st)
     (hb : SvState.lookup st "b" = some (LVec.ofBitVec y))
     (hc : SvState.lookup st "cin" = some (LVec.ofBitVec (BitVec.ofBool ci))) :
     (∀ i, i < N → KnownBit st "s" i) ∧ KnownBit st "cout" 0 ∧ ∀ k, k ≤ N → KnownBit st "c" k := by
-  have hin := ripple_inputsKnown hN ha hb hc
+  have hin := ripple_inputsKnown hN hR ha hb hc
   have H : ∀ {n : String} {k : Nat}, (ripple_add.sem N).DrivenBit n k → KnownBit st n k :=
-    fun h => CombKnown.driven_bit_known (ripple_comb N hN) (ripple_acyclic N hN) (ripple_xfree hN)
-      (ripple_covered hN) heqs hs hin h
-  refine ⟨fun i hi => H ⟨2 * i + 2, i, 1, (ripple_writes hN).mpr
+    fun h => CombKnown.driven_bit_known (ripple_comb N hN hR) (ripple_acyclic N hN hR) (ripple_xfree hN hR)
+      (ripple_covered hN hR) heqs hs hin h
+  refine ⟨fun i hi => H ⟨2 * i + 2, i, 1, (ripple_writes hN hR).mpr
       (Or.inr (Or.inr ⟨i, hi, Or.inl ⟨rfl, rfl⟩⟩)), Nat.le_refl _, by omega⟩,
-    H ⟨1, 0, 1, (ripple_writes hN).mpr (Or.inr (Or.inl ⟨rfl, rfl⟩)), Nat.le_refl _, by omega⟩,
+    H ⟨1, 0, 1, (ripple_writes hN hR).mpr (Or.inr (Or.inl ⟨rfl, rfl⟩)), Nat.le_refl _, by omega⟩,
     fun k hk => ?_⟩
-  rcases ripple_sourced_c hN hk with h | h
-  · exact absurd h.1 (by rw [ripple_inputNames hN]; decide)
+  rcases ripple_sourced_c hN hR hk with h | h
+  · exact absurd h.1 (by rw [ripple_inputNames hN hR]; decide)
   · exact H h
 
 /-- **The `sv_bitvec` step**: the sum port of any settled state with known inputs IS the
@@ -188,9 +188,9 @@ theorem ripple_sum_ofBitVec {st : SvState} (heqs : CombEqs (ripple_add.sem N) st
     (hb : SvState.lookup st "b" = some (LVec.ofBitVec y))
     (hc : SvState.lookup st "cin" = some (LVec.ofBitVec (BitVec.ofBool ci))) :
     SvState.lookup st "s" = some (LVec.ofBitVec (XF.bv N (st.boolAt "s"))) :=
-  CombKnown.signal_eq_ofBitVec (ripple_comb N hN) (ripple_acyclic N hN) (ripple_xfree hN)
-    (ripple_covered hN) heqs hs (ripple_inputsKnown hN ha hb hc) (ripple_declWidth_s hN) (by omega)
-    fun _ hk => ripple_sourced_s hN hk
+  CombKnown.signal_eq_ofBitVec (ripple_comb N hN hR) (ripple_acyclic N hN hR) (ripple_xfree hN hR)
+    (ripple_covered hN hR) heqs hs (ripple_inputsKnown hN hR ha hb hc) (ripple_declWidth_s hN hR) (by omega)
+    fun _ hk => ripple_sourced_s hN hR hk
 
 /-- **The adder's four equations, pointwise over the settled state**, with `x i` read as
 `st.boolAt "x" i`. The shape of `AddNetlistView` (`svgolf/design/ideal_add_lib.lean`). -/
@@ -206,28 +206,28 @@ theorem ripple_equations {st : SvState} (heqs : CombEqs (ripple_add.sem N) st)
     (∀ i, i < N → st.boolAt "s" i =
       ((st.boolAt "a" i ^^ st.boolAt "b" i) ^^ st.boolAt "c" i)) ∧
     st.boolAt "cout" 0 = st.boolAt "c" N := by
-  have hin := ripple_inputsKnown hN ha hb hc
-  have hd := ripple_comb N hN
-  have hac := ripple_acyclic N hN
-  have hx := ripple_xfree hN
-  have hcv := ripple_covered hN
+  have hin := ripple_inputsKnown hN hR ha hb hc
+  have hd := ripple_comb N hN hR
+  have hac := ripple_acyclic N hN hR
+  have hx := ripple_xfree hN hR
+  have hcv := ripple_covered hN hR
   refine ⟨?_, fun i hi => ?_, fun i hi => ?_, ?_⟩
-  · have := (CombKnown.settled_slice hd hac hx hcv heqs hs hin (ripple_proc_cin N) (k := 0)
+  · have := (CombKnown.settled_slice hd hac hx hcv heqs hs hin (ripple_proc_cin N hR) (k := 0)
       (by omega)).2
-    simpa [Expr2.xfBitsZ, Expr2.xfWidth, Expr2.xfBits, ripple_declWidth_cin hN] using this
+    simpa [Expr2.xfBitsZ, Expr2.xfWidth, Expr2.xfBits, ripple_declWidth_cin hN hR] using this
   · have hp : (ripple_add.sem N).processes[2 * i + 3]? =
-        some (.assign (.slice "c" (i + 1) 1) (carryRhs i)) := ripple_proc_carry hi
+        some (.assign (.slice "c" (i + 1) 1) (carryRhs i)) := ripple_proc_carry hR hi
     have := (CombKnown.settled_slice hd hac hx hcv heqs hs hin hp (k := 0) (by omega)).2
-    rw [Expr2.xfBitsZ, carryRhs_xfWidth hN hi] at this
+    rw [Expr2.xfBitsZ, carryRhs_xfWidth hN hR hi] at this
     simpa [carryRhs, Expr2.xfBits] using this
   · have hp : (ripple_add.sem N).processes[2 * i + 2]? =
-        some (.assign (.slice "s" i 1) (sumRhs i)) := ripple_proc_sum hi
+        some (.assign (.slice "s" i 1) (sumRhs i)) := ripple_proc_sum hR hi
     have := (CombKnown.settled_slice hd hac hx hcv heqs hs hin hp (k := 0) (by omega)).2
-    rw [Expr2.xfBitsZ, sumRhs_xfWidth hN hi] at this
+    rw [Expr2.xfBitsZ, sumRhs_xfWidth hN hR hi] at this
     simpa [sumRhs, Expr2.xfBits] using this
-  · have := (CombKnown.settled_ident hd hac hx hcv heqs hs hin (ripple_declWidth_cout hN)
-      (ripple_proc_cout N) (k := 0) (by omega)).2
-    simpa [Expr2.xfBitsZ, coutProc, Expr2.xfWidth, ripple_declWidth_c hN, Expr2.xfBits] using this
+  · have := (CombKnown.settled_ident hd hac hx hcv heqs hs hin (ripple_declWidth_cout hN hR)
+      (ripple_proc_cout N hR) (k := 0) (by omega)).2
+    simpa [Expr2.xfBitsZ, coutProc, Expr2.xfWidth, ripple_declWidth_c hN hR, Expr2.xfBits] using this
 
 /-- Mirror of `AddView` of `svgolf/design/ideal_add_lib.lean` (plain Lean, not importable here):
 the producer contract of the consumer half, one field per group of `assign`s. -/
@@ -250,7 +250,7 @@ theorem ripple_addView {st : SvState} (heqs : CombEqs (ripple_add.sem N) st)
     (hc : SvState.lookup st "cin" = some (LVec.ofBitVec (BitVec.ofBool ci))) :
     AddView N x y ci (fun i => st.boolAt "c" i) (fun i => st.boolAt "s" i)
       (st.boolAt "cout" 0) := by
-  obtain ⟨h0, hstep, hsum, hout⟩ := ripple_equations hN heqs hs ha hb hc
+  obtain ⟨h0, hstep, hsum, hout⟩ := ripple_equations hN hR heqs hs ha hb hc
   have hci : st.boolAt "cin" 0 = ci := by
     rw [SvState.boolAt_ofBitVec hc (by omega)]; simp
   refine ⟨?_, fun i hi => ?_, fun i hi => ?_, hout⟩
@@ -267,15 +267,15 @@ theorem ripple_known_run :
       SvState.lookup inputs "b" = some (LVec.ofBitVec y) →
       SvState.lookup inputs "cin" = some (LVec.ofBitVec (BitVec.ofBool ci)) →
       (∀ i, i < N → KnownBit st "s" i) ∧ KnownBit st "cout" 0 := by
-  apply Models2.of_comb_inputs (ripple_comb N hN)
+  apply Models2.of_comb_inputs (ripple_comb N hN hR)
   intro stim tr h c inputs st hi hc x y ci ha hb hci
   obtain ⟨heqs, hs, hin⟩ := h c st hc
   have hmem : ∀ n, n = "a" ∨ n = "b" ∨ n = "cin" →
       n ∈ (ripple_add.sem N).inputNames.toList := by
     intro n hn
-    rw [ripple_inputNames hN]
+    rw [ripple_inputNames hN hR]
     rcases hn with rfl | rfl | rfl <;> simp
-  obtain ⟨hS, hCO, -⟩ := ripple_known hN heqs hs
+  obtain ⟨hS, hCO, -⟩ := ripple_known hN hR heqs hs
     (hin inputs hi "a" (hmem _ (by simp)) _ ha)
     (hin inputs hi "b" (hmem _ (by simp)) _ hb)
     (hin inputs hi "cin" (hmem _ (by simp)) _ hci)
@@ -290,7 +290,7 @@ example (σ : ScheduleOracle) (stim : List SvState) :
       SvState.lookup inputs "b" = some (LVec.ofBitVec y) →
       SvState.lookup inputs "cin" = some (LVec.ofBitVec (BitVec.ofBool ci)) →
       (∀ i, i < N → KnownBit st "s" i) ∧ KnownBit st "cout" 0 :=
-  Models2.exists_of_terminates (ripple_terminates N hN) (ripple_known_run hN) σ stim
+  Models2.exists_of_terminates (ripple_terminates N hN hR) (ripple_known_run hN hR) σ stim
 
 end Ripple
 

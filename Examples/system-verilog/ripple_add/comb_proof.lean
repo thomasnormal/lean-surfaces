@@ -102,7 +102,7 @@ theorem ripple_final {N : Nat} (hN : 1 ≤ N) {st : SvState} {x y : BitVec N} {c
     rw [this]
 
 /-- **Ripple-adder correctness, every `N ≥ 1`** (the statement of `spec.lean`'s `ripple_correct`). -/
-theorem ripple_correct (N : Nat) (hN : 1 ≤ N) :
+theorem ripple_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     ripple_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

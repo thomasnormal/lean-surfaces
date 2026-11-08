@@ -127,15 +127,15 @@ theorem mul_final {N : Nat} (hN : 1 ≤ N) {st : SvState} {x y : BitVec N}
 
 set_option maxHeartbeats 2000000 in
 /-- **Multiplier correctness, every `N ≥ 1`**: `p` is the full product `a * b` on `2N` bits. -/
-theorem mul_correct (N : Nat) (hN : 1 ≤ N) :
+theorem mul_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
     mul_n.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →
         SvState.lookup st "b" = some (LVec.ofBitVec y) →
         SvState.lookup st "p" =
           some (LVec.ofBitVec (BitVec.ofNat (2 * N) (x.toNat * y.toNat))) := by
-  have hc := mul_comb N hN
-  have ha := mul_acyclic N hN
+  have hc := mul_comb N hN hR
+  have ha := mul_acyclic N hN hR
   refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
   intro x y hA hB
   sv_equations

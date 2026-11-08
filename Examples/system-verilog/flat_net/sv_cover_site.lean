@@ -31,7 +31,8 @@ namespace Examples.«system-verilog».flat_net.sv_cover_site
 set_option maxHeartbeats 2000000 in
 /-- Every obligation of `sv_equations` that is left (the coverage of every read, 26 sites) is closed by
 `sv_cover`, the three input premises by `inKnown_ofBitVec`. -/
-theorem flat_p (K : Nat) (hc : CombDesign (flat_net_p.sem K)) (ha : Acyclic (flat_net_p.sem K)) :
+theorem flat_p (K : Nat) (hR : (K : Int) < 2147483648)
+    (hc : CombDesign (flat_net_p.sem K)) (ha : Acyclic (flat_net_p.sem K)) :
     flat_net_p.sem K ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec 12) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

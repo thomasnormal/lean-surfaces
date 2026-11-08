@@ -61,7 +61,8 @@ info: sv_equations: the netlist view and the obligations (lowered design)
   [inputsKnown_3] ⊢ ∃ v, st.lookup "cin" = some v ∧ v.allKnown = true ∧ v.width = 1
 -/
 #guard_msgs (info, drop warning, whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) {d' : Design2} (hl : (add_proc_m.sem N).lowerComb = some d')
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    {d' : Design2} (hl : (add_proc_m.sem N).lowerComb = some d')
     (hc : CombDesign d') (ha : Acyclic d') (st : SvState) (heqs : CombEqs d' st)
     (hsh : StateShape d' st) : True := by
   sv_equations?

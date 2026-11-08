@@ -7561,3 +7561,28 @@ ISA-side lemmas are admitted only when they establish one of these statements.
 The list deliberately excludes per-instruction re-exports, structure-valued
 aliases, and finite captured-window facts; those do not occur in the headline
 statement.
+
+## 2026-11-08-ls-sv2-392 — expose mixed decoder evidence at one boundary
+
+Item 392 implements the first fact in the bounded R2 inventory.  The mixed
+`Rv32iInstruction` union now exposes `wordOf` and `decoded`, and
+`Rv32iInstruction.decode_word` proves that the parser decoder at the retained
+word is exactly the instruction's stored `Option Instr` evidence.  The trap
+constructors preserve the distinction between an undecodable word and a CSR
+word whose CSR row is absent.  `rv32iProgramInput_fetched` additionally proves
+that every mixed program input carries the same retained source word.
+
+**MEASURED:** `lake env lean LeanModels/Refine/RvfiRv32iProgram.lean` passes on
+Lean 4.35.0.  The new theorems have axiom footprints
+`[propext, Quot.sound]`; no `sorryAx` or custom axiom is introduced.  No
+loaded-core or oracle result is claimed.
+
+**CHANGED:** Added only the two accessors and two decoder/input projection
+facts to `LeanModels/Refine/RvfiRv32iProgram.lean`; no per-instruction wrapper,
+alternative package, RTL, loader, extractor, or finite captured-window lemma
+was added.
+
+**JUDGED / DECIDED:** The loaded-core step invariant can now refer to one
+mixed decoder-evidence projection rather than opening each family constructor.
+Continue only with the remaining listed headline facts; keep the symbolic
+PicoRV32 proof parked at the owner loader wall.

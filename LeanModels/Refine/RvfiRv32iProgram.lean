@@ -42,6 +42,58 @@ inductive Rv32iInstruction where
   | csr (instruction : CsrInstruction)
   | trap (instruction : TrapInstruction)
 
+namespace Rv32iInstruction
+
+/-! The mixed union keeps one source word and one parser-derived decode proof
+for every admitted instruction.  These accessors expose that common fact to a
+loaded-core invariant without introducing another decoder. -/
+
+/-- The source word retained by a mixed instruction. -/
+def wordOf : Rv32iInstruction → Word
+  | .alu instruction => instruction.word
+  | .branch instruction => instruction.word
+  | .jump instruction => instruction.word
+  | .memory instruction => instruction.word
+  | .fence instruction => instruction.word
+  | .system instruction => instruction.word
+  | .csr instruction => instruction.word
+  | .trap instruction => instruction.wordOf
+
+/-- The single semantic instruction described by the retained decode proof. -/
+def decoded : Rv32iInstruction → Option Instr
+  | .alu instruction => some (.alu instruction.op instruction.rd
+      instruction.src1 instruction.src2)
+  | .branch instruction => some (.branch instruction.cond instruction.rs1
+      instruction.rs2 instruction.offset)
+  | .jump instruction => some instruction.kind.toInstr
+  | .memory instruction => some
+      (instruction.kind.toInstr instruction.r instruction.rs1 instruction.imm)
+  | .fence instruction => some (.system instruction.kind.toSysOp)
+  | .system instruction => some (.system instruction.kind.toSysOp)
+  | .csr instruction => some instruction.kind.toInstr
+  | .trap instruction =>
+      match instruction with
+      | .word _ _ => none
+      | .csr _ kind _ _ => some kind.toInstr
+
+/-- The parser decoder agrees with the mixed instruction's retained evidence. -/
+theorem decode_word (instruction : Rv32iInstruction) :
+    Fetched.decode (.word instruction.wordOf) = instruction.decoded := by
+  cases instruction with
+  | alu instruction => exact instruction.decode
+  | branch instruction => exact instruction.decode
+  | jump instruction => exact instruction.decode
+  | memory instruction => exact instruction.decode
+  | fence instruction => exact instruction.decode
+  | system instruction => exact instruction.decode
+  | csr instruction => exact instruction.decode
+  | trap instruction =>
+      cases instruction with
+      | word word decode => exact decode
+      | csr word kind decode row => exact decode
+
+end Rv32iInstruction
+
 /-- The input presented to one mixed instruction at its threaded state. -/
 def rv32iProgramInput (state : RvMemoryState) : Rv32iInstruction → Input
   | .alu instruction => aluProgramInput state.memory instruction
@@ -52,6 +104,22 @@ def rv32iProgramInput (state : RvMemoryState) : Rv32iInstruction → Input
   | .system instruction => systemProgramInput state.memory instruction
   | .csr instruction => csrProgramInput state.memory instruction
   | .trap instruction => trapProgramInput state.memory instruction
+
+/-- The cycle input for a mixed instruction carries its retained source word. -/
+theorem rv32iProgramInput_fetched (state : RvMemoryState)
+    (instruction : Rv32iInstruction) :
+    (rv32iProgramInput state instruction).fetched =
+      .word instruction.wordOf := by
+  cases instruction with
+  | alu instruction => rfl
+  | branch instruction => rfl
+  | jump instruction => rfl
+  | memory instruction => rfl
+  | fence instruction => rfl
+  | system instruction => rfl
+  | csr instruction => rfl
+  | trap instruction =>
+      cases instruction <;> rfl
 
 /-- The stateful architectural and byte-memory transition for one instruction. -/
 def rv32iProgramStep (state : RvMemoryState) : Rv32iInstruction → RvMemoryState
@@ -636,6 +704,8 @@ theorem Rv32iRvfiCycleTrace.append
 #print axioms LeanModels.Refine.rv32iProgramInputs_append
 #print axioms LeanModels.Refine.rv32iProgramState_append
 #print axioms LeanModels.Refine.rv32iProgramRetirements_append
+#print axioms LeanModels.Refine.Rv32iInstruction.decode_word
+#print axioms LeanModels.Refine.rv32iProgramInput_fetched
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_step
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_state
 #print axioms LeanModels.Refine.rvMemoryMachineWith_rv32i_program_trace

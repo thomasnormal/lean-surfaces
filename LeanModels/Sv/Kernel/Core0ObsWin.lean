@@ -199,6 +199,34 @@ theorem runs2_of_runs_E0_wagree (hS : WSettles E d own rank) (hA : WSettleAgree 
     .ok ((List.range env.length).map fun c =>
       (⟨b (2 * c + 1 - 1), b (2 * c + 1)⟩ : CycleObs SvState))
   rw [hr, List.map_map]
+  unfold runObs2
+  have hg : run2ClockGuard E.toDesign2 = .ok () := by
+    unfold run2ClockGuard run2ClockNames Elab.toDesign2
+    have hnames : List.filterMap (run2Clock? ∘ Proc0.toProcess2) E.procs.toList = [] := by
+      induction E.procs.toList with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.filterMap_cons, Function.comp_apply, Proc0.toProcess2,
+            run2Clock?, ih]
+    have hi : ∀ ps : List Proc0,
+        (ps.map Proc0.toProcess2).any (fun p =>
+          match p with
+          | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+          | _ => false) = false := by
+      intro ps
+      induction ps with
+      | nil => rfl
+      | cons p ps ih => cases p <;>
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+    have hc : (List.filterMap run2Clock? (E.procs.toList.map Proc0.toProcess2)).eraseDups = [] := by
+      simpa [Function.comp_def] using congrArg List.eraseDups hnames
+    rw [hc]
+    simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+    have hi' := hi E.procs.toList
+    split
+    · next h => exact Bool.noConfusion (hi'.symm.trans h)
+    · rfl
+  simp only [hg, Res.ok_bind]
   exact hF F₀ (Nat.le_refl _)
 
 /-- **R-DESIGN2, comb slice, E → `run2`, window rank** (transport theorem): for a design whose

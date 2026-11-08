@@ -2034,9 +2034,8 @@ theorem buildDecls_summary {σ : String → Int} :
       have hdecl : instDecl env pd = .ok (dt.toDecl σ) := by
         simp [instDecl, hw, hun, hinit, DeclT.toDecl, hn, hi, ho, hnet, hsg, hts]
       simp only [buildDecls, hdecl, Res.ok_bind]
-      have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput,
-        isNet := pd.isNet } : Decl)
-          = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho]
+      have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput, isNet := pd.isNet } : Decl)
+          = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho, hnet]
       simp only [DeclT.toDecl] at hrest ⊢
       rw [hrest]
       simp [Res.ok_bind, hn]

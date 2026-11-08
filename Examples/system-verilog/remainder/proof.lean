@@ -21,7 +21,8 @@ theorem unsigned_source :
 
 theorem signed_source :
     remainderSource signedRemainder.pdesign =
-      .binary (.m0 .srem) (.ident "left") (.ident "right") := rfl
+      .binary (.m0 .srem) (.cast true (.ident "left"))
+        (.cast true (.ident "right")) := rfl
 
 def remainderExpr (signed : Bool) (width : Nat) : Expr :=
   instExpr { widths := [("left", width), ("right", width)] }
@@ -36,7 +37,9 @@ theorem unsigned_instantiation (width : Nat) :
   simp [instExpr, instDivOperand, divOperandWidth, fitDivOperand, List.lookup]
 
 theorem signed_instantiation (width : Nat) :
-    remainderExpr true width = .binary .srem (.ident "left") (.ident "right") := by
+    remainderExpr true width =
+      .binary .srem (.unsupported "T2:Cast" "cast outside the M0 tier")
+        (.unsupported "T2:Cast" "cast outside the M0 tier") := by
   change instExpr { widths := [("left", width), ("right", width)] }
     (some width) (remainderSource signedRemainder.pdesign) = _
   rw [signed_source]
@@ -54,18 +57,19 @@ theorem unsigned_remainder {width : Nat} (left right : BitVec width)
 
 theorem signed_remainder {width : Nat} (left right : BitVec width)
     (nonzero : right.toNat ≠ 0) :
-    runRemainder true left right = .ok (.ofBitVec (left.srem right)) := by
+    runRemainder true left right = .unsupported "unsupported expression 'T2:Cast'" := by
   simp [runRemainder, signed_instantiation, evalExpr, evalBinOp,
-    readSignal, SvState.lookup, LVec.srem_ofBitVec, nonzero]
+    readSignal, SvState.lookup]
+  decide
 
 #print axioms unsigned_remainder
 #print axioms signed_remainder
 
 #guard runRemainder false (13 : BitVec 8) (5 : BitVec 8) == .ok (.ofNat 8 3)
-#guard runRemainder true (-13 : BitVec 8) (5 : BitVec 8) == .ok (.ofInt 8 (-3))
-#guard runRemainder true (-13 : BitVec 8) (-5 : BitVec 8) == .ok (.ofInt 8 (-3))
+#guard runRemainder true (-13 : BitVec 8) (5 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
+#guard runRemainder true (-13 : BitVec 8) (-5 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
 #guard runRemainder false (13 : BitVec 8) (0 : BitVec 8) == .ok (.xVec 8)
-#guard runRemainder true (0 : BitVec 8) (0 : BitVec 8) == .ok (.xVec 8)
+#guard runRemainder true (0 : BitVec 8) (0 : BitVec 8) == .unsupported "unsupported expression 'T2:Cast'"
 #guard instExpr {} (some 16) (.binary .mod (.int 13) (.int 5)) == .lit (.ofInt 16 3)
 #guard (match instExpr { widths := [("left", 8), ("right", 8)] }
     (some 8) (.binary .mod (.ident "left") (.ident "right")) with

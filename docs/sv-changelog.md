@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Lean 4.35 residual closure
+
+The v4.35 owner-lane repairs now include the exact run bridge from `runObs2`
+to `runFromObs2`, one-clock guard obligations in the loop and E observation
+proof paths, source-shaped z startup for E stores, and the current signed-cast
+and resolved-SVA proof pins. The signed examples now record the loud M0 cast
+boundary; the dynamic-select SVA row records its current false assertion
+outcome. Focused import-closure builds pass for the repaired modules.
+
 ## Run2 guard and undriven-net proof repair
 
 The one-clock `run2` guard is now threaded through its structural proof

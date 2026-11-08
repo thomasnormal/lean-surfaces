@@ -888,6 +888,29 @@ theorem terminates (h : SingleComb d body I f) : Terminates2 d :=
       let ⟨k', hk⟩ := hF inputs st k F hst (Nat.le_refl F)
       ⟨_, k', hk, h.inv _ (h.inputs inputs st hst)⟩⟩)
     (by simp [h.procs, Process2.hasQualifiedCase, h.noq])
+    (by
+      have hnames : d.processes.toList.filterMap run2Clock? = [] := by
+        simp [h.procs, run2Clock?]
+      have himplicit : d.processes.toList.any (fun p =>
+          match p with
+          | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+          | _ => false) = false := by
+        rw [h.procs]
+        rfl
+      have hnames' : run2ClockNames d = [] := by
+        simp [run2ClockNames, hnames]
+      unfold run2ClockGuard
+      rw [hnames']
+      simp only [List.length_nil, Nat.not_lt_zero, ↓reduceIte]
+      have hnot : ¬ d.processes.toList.any (fun p =>
+          match p with
+          | .unsupported svKind _ => svKind.startsWith "SignalEventControl:"
+          | _ => false) = true := by
+        rw [himplicit]
+        decide
+      split
+      · next htrue => exact (hnot htrue).elim
+      · rfl)
 
 /-- **Bridge S, the snapshots**: snapshot `c` of a completed run is `f` of cycle `c`'s inputs
 applied to a state of the run. -/

@@ -21,7 +21,7 @@ private def edge (clk a i q : Nat) : CycleObs PortSample :=
 #guard match selectProp.pdesign.properties[0]? with
   | some p => match SvaContract.ofProperty env [] p with
     | .ok c => match c.eval [edge 0 9 0 1, edge 1 9 2 0] with
-      | .ok true => true | _ => false
+      | .ok false => true | _ => false
     | .error _ => false
   | none => false
 

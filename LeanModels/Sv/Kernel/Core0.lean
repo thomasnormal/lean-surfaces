@@ -176,7 +176,9 @@ def Elab.Typed (E : Elab) (s : Store) : Prop :=
 /-- The startup store: declaration initializers, else all-x (LRM 6.8). -/
 def Elab.initStore (E : Elab) : Store := fun x =>
   match E.declOf x with
-  | some dc => Val.ofLVec (VType.ofDecl dc) (dc.init.getD (LVec.xVec dc.width))
+  | some dc =>
+      Val.ofLVec (VType.ofDecl dc)
+        (dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width))
   | none => default
 
 /-- Set a named variable from a vector (stimulus; converted to its type). -/

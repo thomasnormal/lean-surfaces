@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restored the value/object evaluator agreement battery's direct parameter
+  return callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with an explicit
   integral-conversion callable and native differential row.
 

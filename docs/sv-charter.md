@@ -14363,7 +14363,9 @@ with no resize. `instExpr2_arrayPart` now carries the hypothesis
 `partsel.sv` (one `+:` and one `-:` template, targets and reads)
 instantiates to the `W`-bit window copies `rev[i*W +: W] ← a[(N-1-i)*W +: W]`
 (`partsel_rev_expand`; `partsel_rev_instantiated` at the environment
-`instantiate2` builds), axioms `[propext, Classical.choice, Quot.sound]`, and
+`instantiate2` builds, `psEnv32`, which binds `N` and `W` at their exact
+signed 32-bit `int` value, so that theorem takes `N`, `W` < 2^31 as premises
+since 2026-11-08), axioms `[propext, Classical.choice, Quot.sound]`, and
 pins the lowered nodes of the overhanging and run-time selects at the row
 parameter points.
 

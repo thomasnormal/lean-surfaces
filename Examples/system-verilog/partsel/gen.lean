@@ -1,5 +1,6 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Gen2
+import LeanModels.Sv.CombView
 
 /-!
 # `partsel` — indexed part-selects with parameter and genvar bases
@@ -25,11 +26,11 @@ for i < N:   rev_up[i*W +: W]       = a[(N-1-i)*W +: W]   ↦  slice copy
              rev_dn[(i+1)*W-1 -: W] = a[(N-i)*W-1 -: W]   ↦  the same copy
 ```
 
-(`partsel_rev_expand` at any environment carrying `N`, `W` in `vals` and the
-three vectors' evaluated geometry `[N*W-1:0]`; `partsel_rev_instantiated` at the
-unbounded-`int` scope `psEnv`, the environment `instantiate2` built before
-ls-sv's exact 32-bit `int` instantiation; `instantiate2` now builds `psEnv32`,
-`N` and `W` read at their signed 32-bit value, `partsel_paramEnv`). Route: `Gen2`'s
+(`partsel_rev_expand` at any environment whose integer reading `intVal?` gives
+`N`, `W`, and the three vectors' evaluated geometry `[N*W-1:0]`;
+`partsel_rev_instantiated` at the environment `instantiate2` builds, `psEnv32`
+(`partsel_paramEnv`: `N` and `W` bound at their exact signed 32-bit `int`
+value), for `N`, `W` in that range). Route: `Gen2`'s
 `arrayPartTarget_up_desc0`/`…_down_desc0` and
 `fitExpr2_arrayPart_up_desc0`/`…_down_desc0` per cell, and
 `GenItem.expand2_genFor_ascending_processes` for the loop.
@@ -118,63 +119,69 @@ private theorem lane_bounds (N W i : Nat) (hi : i < N) :
 /-- **The `+:` template at an in-range lane** (any environment binding `N`,
 `W` and the two vectors' evaluated geometry). -/
 theorem revUp_inst (env : IEnv) (elems : List (String × Nat)) (N W i : Nat)
-    (hNv : env.vals.lookup "N" = some (N : Int)) (hWv : env.vals.lookup "W" = some (W : Int))
+    (hNv : env.intVal? "N" = some (N : Int)) (hWv : env.intVal? "W" = some (W : Int))
     (hdy : env.dims.lookup "rev_up" = some (laneGeom N W))
     (hda : env.dims.lookup "a" = some (laneGeom N W)) (hW : 0 < W) (hi : i < N) :
     instProcess2 (env.bindVal "i" i) elems revUpT =
       .assign (.slice "rev_up" (i * W) W) (.slice (.ident "a") ((N - 1 - i) * W) W) := by
-  have hNb : (env.bindVal "i" i).vals.lookup "N" = some (N : Int) := by simp [List.lookup, hNv]
-  have hWb : (env.bindVal "i" i).vals.lookup "W" = some (W : Int) := by simp [List.lookup, hWv]
+  have hNb : (env.bindVal "i" i).intVal? "N" = some (N : Int) := by
+    rw [IEnv.intVal?_bindVal_ne _ (by decide), hNv]
+  have hWb : (env.bindVal "i" i).intVal? "W" = some (W : Int) := by
+    rw [IEnv.intVal?_bindVal_ne _ (by decide), hWv]
   have hib : (env.bindVal "i" i).vals.lookup "i" = some (i : Int) := by simp
   obtain ⟨hrow, hrow2⟩ := lane_bounds N W i hi
   have hiW : (0 : Int) ≤ (i : Int) * W := Int.mul_nonneg (by omega) (by omega)
   have hsub : (N : Int) - 1 - i = ((N - 1 - i : Nat) : Int) := by omega
-  have iN := isInt_paramRef_of hNb
-  have iW := isInt_paramRef_of hWb
-  have hevt := evalInt_mul_of rfl iW (evalInt_genvarRef_of hib) (evalInt_paramRef_of hWb)
+  have iN := CombView.isInt_paramRef_of_intVal hNb
+  have iW := CombView.isInt_paramRef_of_intVal hWb
+  have eW := CombView.evalInt_paramRef_of_intVal hWb
+  have hevt := evalInt_mul_of rfl iW (evalInt_genvarRef_of hib) eW
   have hevs := evalInt_mul_of (isInt_binary_of rfl (isInt_binary_of rfl iN rfl) rfl) iW
     (evalInt_sub_of (isInt_binary_of rfl iN rfl) rfl
-      (evalInt_sub_of iN rfl (evalInt_paramRef_of hNb) (evalInt_int 1))
-      (evalInt_genvarRef_of hib)) (evalInt_paramRef_of hWb)
+      (evalInt_sub_of iN rfl (CombView.evalInt_paramRef_of_intVal hNb) (evalInt_int 1))
+      (evalInt_genvarRef_of hib)) eW
   rw [hsub] at hevs
   rw [Int.add_mul, Int.one_mul] at hrow
   have hT := arrayPartTarget_up_desc0 (arrayDims_of (by simpa [laneGeom] using hdy)) (by omega)
-    hevt (evalInt_paramRef_of hWb) (by omega) (Int.mul_nonneg (by omega) (by omega)) (by omega)
+    hevt eW (by omega) (Int.mul_nonneg (by omega) (by omega)) (by omega)
   have hR := fitExpr2_arrayPart_up_desc0 (elems := elems)
-    (arrayDims_of (by simpa [laneGeom] using hda)) (by omega) hevs (evalInt_paramRef_of hWb)
+    (arrayDims_of (by simpa [laneGeom] using hda)) (by omega) hevs eW
     (by omega) (Int.mul_nonneg (by omega) (by omega)) (by omega)
   rw [revUpT, instProcess2_assignL _ (by rw [instLhs2_arrayPart]; exact hT), hR]
   simp only [← Int.natCast_mul, Int.toNat_natCast]
 
 /-- **The `-:` template at an in-range lane**: the same window copy. -/
 theorem revDn_inst (env : IEnv) (elems : List (String × Nat)) (N W i : Nat)
-    (hNv : env.vals.lookup "N" = some (N : Int)) (hWv : env.vals.lookup "W" = some (W : Int))
+    (hNv : env.intVal? "N" = some (N : Int)) (hWv : env.intVal? "W" = some (W : Int))
     (hdy : env.dims.lookup "rev_dn" = some (laneGeom N W))
     (hda : env.dims.lookup "a" = some (laneGeom N W)) (hW : 0 < W) (hi : i < N) :
     instProcess2 (env.bindVal "i" i) elems revDnT =
       .assign (.slice "rev_dn" (i * W) W) (.slice (.ident "a") ((N - 1 - i) * W) W) := by
-  have hNb : (env.bindVal "i" i).vals.lookup "N" = some (N : Int) := by simp [List.lookup, hNv]
-  have hWb : (env.bindVal "i" i).vals.lookup "W" = some (W : Int) := by simp [List.lookup, hWv]
+  have hNb : (env.bindVal "i" i).intVal? "N" = some (N : Int) := by
+    rw [IEnv.intVal?_bindVal_ne _ (by decide), hNv]
+  have hWb : (env.bindVal "i" i).intVal? "W" = some (W : Int) := by
+    rw [IEnv.intVal?_bindVal_ne _ (by decide), hWv]
   have hib : (env.bindVal "i" i).vals.lookup "i" = some (i : Int) := by simp
   obtain ⟨hrow, hrow2⟩ := lane_bounds N W i hi
   have hsub : (N : Int) - i = ((N - 1 - i : Nat) : Int) + 1 := by omega
   have hiW : (0 : Int) ≤ (i : Int) * W := Int.mul_nonneg (by omega) (by omega)
   have hjW : (0 : Int) ≤ ((N - 1 - i : Nat) : Int) * W := Int.mul_nonneg (by omega) (by omega)
-  have iN := isInt_paramRef_of hNb
-  have iW := isInt_paramRef_of hWb
+  have iN := CombView.isInt_paramRef_of_intVal hNb
+  have iW := CombView.isInt_paramRef_of_intVal hWb
+  have eW := CombView.evalInt_paramRef_of_intVal hWb
   have hevt := evalInt_sub_of (isInt_binary_of rfl rfl iW) rfl
     (evalInt_mul_of rfl iW (evalInt_add_of rfl rfl (evalInt_genvarRef_of hib)
-      (evalInt_int 1)) (evalInt_paramRef_of hWb)) (evalInt_int 1)
+      (evalInt_int 1)) eW) (evalInt_int 1)
   have hevs := evalInt_sub_of (isInt_binary_of rfl (isInt_binary_of rfl iN rfl) iW) rfl
     (evalInt_mul_of (isInt_binary_of rfl iN rfl) iW (evalInt_sub_of iN rfl
-      (evalInt_paramRef_of hNb) (evalInt_genvarRef_of hib)) (evalInt_paramRef_of hWb))
+      (CombView.evalInt_paramRef_of_intVal hNb) (evalInt_genvarRef_of hib)) eW)
     (evalInt_int 1)
   rw [hsub] at hevs
   rw [Int.add_mul, Int.one_mul] at hevt hevs hrow
   have hT := arrayPartTarget_down_desc0 (arrayDims_of (by simpa [laneGeom] using hdy))
-    (by omega) hevt (evalInt_paramRef_of hWb) (by omega) (by omega) (by omega)
+    (by omega) hevt eW (by omega) (by omega) (by omega)
   have hR := fitExpr2_arrayPart_down_desc0 (elems := elems)
-    (arrayDims_of (by simpa [laneGeom] using hda)) (by omega) hevs (evalInt_paramRef_of hWb)
+    (arrayDims_of (by simpa [laneGeom] using hda)) (by omega) hevs eW
     (by omega) (by omega) (by omega)
   rw [revDnT, instProcess2_assignL _ (by rw [instLhs2_arrayPart]; exact hT), hR]
   have e1 : (i : Int) * W + W - 1 - W + 1 = ((i * W : Nat) : Int) := by push_cast; omega
@@ -186,21 +193,22 @@ theorem revDn_inst (env : IEnv) (elems : List (String × Nat)) (N W i : Nat)
 /-! ## The whole block, for every `N` and `W ≥ 1` -/
 
 /-- The loop bound `N` survives the genvar binding. -/
-private theorem n_bound (env : IEnv) (N : Nat) (h : env.vals.lookup "N" = some (N : Int))
+private theorem n_bound (env : IEnv) (N : Nat) (h : env.intVal? "N" = some (N : Int))
     (i : Int) : evalInt (env.bindVal "i" i) (.paramRef "N" none) = .ok (N : Int) :=
-  evalInt_paramRef_of (by simp [List.lookup, h])
+  CombView.evalInt_paramRef_of_intVal (by rw [IEnv.intVal?_bindVal_ne _ (by decide), h])
 
-/-- … and stays in the INT class (bound in `vals`). -/
-private theorem n_bound_int (env : IEnv) (N : Nat) (h : env.vals.lookup "N" = some (N : Int))
+/-- … and stays in the INT class (its integer reading `intVal?`). -/
+private theorem n_bound_int (env : IEnv) (N : Nat) (h : env.intVal? "N" = some (N : Int))
     (i : Int) : (PExpr.paramRef "N" none).isInt (env.bindVal "i" i) = true :=
-  isInt_paramRef_of (v := (N : Int)) (by simp [List.lookup, h])
+  CombView.isInt_paramRef_of_intVal (by rw [IEnv.intVal?_bindVal_ne _ (by decide), h])
 
 /-- **The lane-reversal block, for every `N` and every `W ≥ 1`** (any
-environment binding `N`, `W` and the evaluated geometry of `a`, `rev_up`,
-`rev_dn`; any fuel past `N`): lane by lane, the two `W`-bit window copies. -/
+environment reading `N`, `W` as integers (`intVal?`) and holding the evaluated
+geometry of `a`, `rev_up`, `rev_dn`; any fuel past `N`): lane by lane, the two
+`W`-bit window copies. -/
 theorem partsel_rev_expand (env : IEnv) (elems : List (String × Nat)) (N W F : Nat)
     (hW : 0 < W) (hF : N < F)
-    (hNv : env.vals.lookup "N" = some (N : Int)) (hWv : env.vals.lookup "W" = some (W : Int))
+    (hNv : env.intVal? "N" = some (N : Int)) (hWv : env.intVal? "W" = some (W : Int))
     (hda : env.dims.lookup "a" = some (laneGeom N W))
     (hdu : env.dims.lookup "rev_up" = some (laneGeom N W))
     (hdd : env.dims.lookup "rev_dn" = some (laneGeom N W)) :
@@ -218,74 +226,82 @@ theorem partsel_rev_expand (env : IEnv) (elems : List (String × Nat)) (N W F : 
     revDn_inst env elems N W i hNv hWv hdd hda hW (List.mem_range.mp hi)]
   rfl
 
-/-! ## At the unbounded-`int` scope, and the environment `instantiate2` builds
+/-! ## At the environment `instantiate2` builds
 
-`psEnv` is the scope `instantiate2` built until the exact 32-bit `int` instantiation (both parameters in
-`vals`, unbounded); `psEnv32` is the one it builds now (`partsel_paramEnv`). The lane theorems below are
-stated at `psEnv`. -/
+`paramEnv2` runs with `int32 := true` (ls-sv's exact 32-bit `int` instantiation): both `int` parameters are
+bound in `nvals` at their signed 32-bit value `canonInt 32 true`, so the instantiated block is the window copies
+of `revCells N W` where `N` and `W` are in the signed 32-bit range (`hRN`, `hRW`); outside it the instantiation
+reads the wrapped values. -/
 
-/-- The unbounded-`int` declaration scope of `partsel` at `(N, W)`: both parameters bound in `vals`,
-their declared `int` types 32 bits. -/
-def psScope (N W : Int) : IEnv :=
-  { vals := [("N", N), ("W", W)], pwidths := [("N", 32), ("W", 32)] }
-
-/-- The unbounded-`int` parameter environment of `partsel`: that scope plus the geometry table
-evaluated in it. -/
-def psEnv (N W : Int) : IEnv :=
-  { psScope N W with dims := dimTable (psScope N W) partsel.pdesign.decls }
-
-/-- The declaration scope `instantiate2` builds since ls-sv's exact 32-bit `int` instantiation
-(`paramEnv2` runs with `int32 := true`): both `int` parameters bound in `nvals` at their signed 32-bit
-value `canonInt 32 true`, not in `vals`. -/
+/-- The declaration scope `instantiate2` builds: both `int` parameters bound in `nvals` at their signed
+32-bit value `canonInt 32 true`. -/
 def psScope32 (N W : Int) : IEnv :=
   { nvals := [("W", (canonInt 32 true W, 32, true)), ("N", (canonInt 32 true N, 32, true))],
     pwidths := [("N", 32), ("W", 32)], int32 := true }
 
-/-- The parameter environment of `partsel` (by `rfl`): the exact 32-bit declaration scope plus the
-geometry table evaluated in it. -/
+/-- The parameter environment of `partsel` (by `rfl`): that declaration scope plus the geometry table
+evaluated in it. -/
 def psEnv32 (N W : Int) : IEnv :=
   { psScope32 N W with dims := dimTable (psScope32 N W) partsel.pdesign.decls }
 
 theorem partsel_paramEnv (N W : Int) : partsel.pdesign.paramEnv2 [N, W] = .ok (psEnv32 N W) := rfl
 
+/-- In the signed 32-bit range, the scope reads `N` and `W` at their values. -/
+private theorem psScope32_intVal (N W : Nat) (hRN : (N : Int) < 2147483648)
+    (hRW : (W : Int) < 2147483648) (ws : List (String × Nat)) :
+    IEnv.intVal? { psScope32 N W with widths := ws } "N" = some (N : Int) ∧
+      IEnv.intVal? { psScope32 N W with widths := ws } "W" = some (W : Int) := by
+  have hN := CombView.canonInt32_of_range (v := (N : Int)) ⟨by omega, hRN⟩
+  have hW := CombView.canonInt32_of_range (v := (W : Int)) ⟨by omega, hRW⟩
+  constructor <;> simp [IEnv.intVal?, psScope32, List.lookup, hN, hW]
+
 /-- `[N*W-1:0]` evaluated in the declaration scope, at any width table. -/
-private theorem lane_evalDims (N W : Nat) (ws : List (String × Nat)) :
-    evalDims { psScope N W with widths := ws } laneDims = .ok (laneGeom N W) :=
-  evalDims_cons_of
-    (evalInt_sub_of (isInt_binary_of rfl (isInt_paramRef_of (v := (N : Int)) (by simp [psScope]))
-        (isInt_paramRef_of (v := (W : Int)) (by simp [psScope, List.lookup]))) rfl
-      (evalInt_mul_of (isInt_paramRef_of (v := (N : Int)) (by simp [psScope]))
-        (isInt_paramRef_of (v := (W : Int)) (by simp [psScope, List.lookup]))
-        (evalInt_paramRef_of (by simp [psScope]))
-        (evalInt_paramRef_of (by simp [psScope, List.lookup]))) (evalInt_int 1))
+private theorem lane_evalDims32 (N W : Nat) (hRN : (N : Int) < 2147483648)
+    (hRW : (W : Int) < 2147483648) (ws : List (String × Nat)) :
+    evalDims { psScope32 N W with widths := ws } laneDims = .ok (laneGeom N W) := by
+  obtain ⟨hN, hW⟩ := psScope32_intVal N W hRN hRW ws
+  exact evalDims_cons_of
+    (evalInt_sub_of (isInt_binary_of rfl (CombView.isInt_paramRef_of_intVal hN)
+        (CombView.isInt_paramRef_of_intVal hW)) rfl
+      (evalInt_mul_of (CombView.isInt_paramRef_of_intVal hN) (CombView.isInt_paramRef_of_intVal hW)
+        (CombView.evalInt_paramRef_of_intVal hN) (CombView.evalInt_paramRef_of_intVal hW))
+      (evalInt_int 1))
     (evalInt_int 0) evalDims_nil
 
 /-- The geometry table's entries for the three lane vectors: `[N*W-1:0]`. -/
-theorem psEnv_a (N W : Nat) : (psEnv N W).dims.lookup "a" = some (laneGeom N W) :=
-  PDesign.dimTable_lookup_of partsel_a_dims (lane_evalDims N W)
+theorem psEnv32_a (N W : Nat) (hRN : (N : Int) < 2147483648) (hRW : (W : Int) < 2147483648) :
+    (psEnv32 N W).dims.lookup "a" = some (laneGeom N W) :=
+  PDesign.dimTable_lookup_of partsel_a_dims (lane_evalDims32 N W hRN hRW)
 
-theorem psEnv_rev_up (N W : Nat) : (psEnv N W).dims.lookup "rev_up" = some (laneGeom N W) :=
-  PDesign.dimTable_lookup_of partsel_rev_up_dims (lane_evalDims N W)
+theorem psEnv32_rev_up (N W : Nat) (hRN : (N : Int) < 2147483648) (hRW : (W : Int) < 2147483648) :
+    (psEnv32 N W).dims.lookup "rev_up" = some (laneGeom N W) :=
+  PDesign.dimTable_lookup_of partsel_rev_up_dims (lane_evalDims32 N W hRN hRW)
 
-theorem psEnv_rev_dn (N W : Nat) : (psEnv N W).dims.lookup "rev_dn" = some (laneGeom N W) :=
-  PDesign.dimTable_lookup_of partsel_rev_dn_dims (lane_evalDims N W)
+theorem psEnv32_rev_dn (N W : Nat) (hRN : (N : Int) < 2147483648) (hRW : (W : Int) < 2147483648) :
+    (psEnv32 N W).dims.lookup "rev_dn" = some (laneGeom N W) :=
+  PDesign.dimTable_lookup_of partsel_rev_dn_dims (lane_evalDims32 N W hRN hRW)
 
 /-- **The lane-reversal block of the instantiated design, for every `N` and
-every `W ≥ 1`** — at the declaration environment of ANY declaration list and
-element-width table, at the surface fuel `instantiateD2` uses. -/
-theorem partsel_rev_instantiated (N W : Nat) (hW : 1 ≤ W) (decls : List Decl)
-    (elems : List (String × Nat)) :
-    revGen.expand2 ((psEnv N W).withDecls decls) elems
+every `W ≥ 1` in the signed 32-bit `int` range** — at the environment
+`instantiate2` builds (`psEnv32`, `partsel_paramEnv`), with the declarations of
+ANY declaration list and any element-width table, at the surface fuel
+`instantiateD2` uses. -/
+theorem partsel_rev_instantiated (N W : Nat) (hW : 1 ≤ W) (hRN : (N : Int) < 2147483648)
+    (hRW : (W : Int) < 2147483648) (decls : List Decl) (elems : List (String × Nat)) :
+    revGen.expand2 ((psEnv32 N W).withDecls decls) elems
         (PDesign.surfaceFuel [(N : Int), (W : Int)]) =
       .ok ((List.range N).flatMap (revCells N W)) := by
   have hF : N < PDesign.surfaceFuel [(N : Int), (W : Int)] := by
     have := Nat.le_mul_self (N + W + 2)
     simp [PDesign.surfaceFuel]
     omega
-  exact partsel_rev_expand _ elems N W _ hW hF (by simp [psEnv, psScope])
-    (by simp [psEnv, psScope, List.lookup])
-    (by simpa using psEnv_a N W) (by simpa using psEnv_rev_up N W)
-    (by simpa using psEnv_rev_dn N W)
+  have cN := CombView.canonInt32_of_range (v := (N : Int)) ⟨by omega, hRN⟩
+  have cW := CombView.canonInt32_of_range (v := (W : Int)) ⟨by omega, hRW⟩
+  exact partsel_rev_expand _ elems N W _ hW hF
+    (by simp [IEnv.intVal?, psEnv32, psScope32, List.lookup, cN])
+    (by simp [IEnv.intVal?, psEnv32, psScope32, List.lookup, cW])
+    (by simpa using psEnv32_a N W hRN hRW) (by simpa using psEnv32_rev_up N W hRN hRW)
+    (by simpa using psEnv32_rev_dn N W hRN hRW)
 
 #print axioms partsel_rev_expand
 #print axioms partsel_rev_instantiated

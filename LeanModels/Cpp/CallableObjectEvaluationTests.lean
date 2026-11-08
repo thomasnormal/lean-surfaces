@@ -40702,6 +40702,46 @@ def callableValueObjectLiteralAgreementWitness : Bool :=
 
 #guard callableValueObjectLiteralAgreementWitness
 
+def callableValueObjectNoexceptAgreementWitness : Bool :=
+  let operand : TypedCallableExpression := {
+    expression := CallableExpression.binary "+"
+      {expression := CallableExpression.integer 1, sourceType := intType, type := intType}
+      {expression := CallableExpression.integer 2, sourceType := intType, type := intType}
+      , sourceType := intType, type := intType}
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.noexceptExpr operand,
+      sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 1⟩ && objectValue == ⟨.boolean, 1⟩
+  | _, _ => false
+
+#guard callableValueObjectNoexceptAgreementWitness
+
+def callableValueObjectConversionAgreementWitness : Bool :=
+  let operand : TypedCallableExpression := {
+    expression := CallableExpression.integer 7,
+    sourceType := intType, type := intType}
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .unsignedChar, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.convert operand,
+      sourceType := intType, type := .builtin .unsignedChar}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 8, 7⟩ && objectValue == ⟨.unsigned 8, 7⟩
+  | _, _ => false
+
+#guard callableValueObjectConversionAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

@@ -125,6 +125,12 @@ shared Boolean result through both evaluator APIs.
 The battery also includes a unary-plus callable, checking integral unary
 operator agreement through both evaluator APIs.
 
+It also includes a bitwise-not callable, checking integral unary operator
+agreement through both evaluator APIs.
+
+The battery also includes a logical-not callable, checking Boolean unary
+operator agreement through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

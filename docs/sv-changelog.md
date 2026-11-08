@@ -36,6 +36,16 @@ accepted them on the same ground as `xnor_n` (2026-11-08).
 fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
 4f3866fb7, and only from the range premise above.
 
+## Parametric x/z literals in the memory route
+
+The source-shaped memory cycle adapter now admits the extractor's exact
+`IntegerLiteral:unsized-xz-parametric` member marker. An unsized `'bx` write
+is retained as an x-valued `PExpr.lit`, so a continuous read of that cell
+produces an all-x vector at the declared packed width. This exception is
+local to the memory route; the ordinary flat route and unrelated unsupported
+module members remain loud. The `picorv32/walls/xz_memory` guard checks both
+the retained cell assignment and the all-x result from `runMem2`.
+
 ## F1 retained contract guard cleanup
 
 Finite SVA range and `disable iff` witnesses now pattern-match their

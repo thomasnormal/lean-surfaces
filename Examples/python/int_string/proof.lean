@@ -29,8 +29,8 @@ theorem grouped_offset_total (offset : PyInt) :
     hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
     starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
-    RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic, Run.toPublic_ok,
+    RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 theorem signed_adjustment_total (offset : PyInt) :
     int_string.signed_adjustment(offset) ==> offset - 2048 := by
@@ -44,8 +44,8 @@ theorem signed_adjustment_total (offset : PyInt) :
     hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
     starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
-    RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic, Run.toPublic_ok,
+    RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
   omega
 
 private theorem hexadecimal :
@@ -68,7 +68,7 @@ theorem hex_offset_total (offset : PyInt) :
     funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
     starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
     fstringFormatBuiltinName, flattenStarRun, flattenStarCallArgs, Run.bind,
-    Run.liftRes, Run.toPublic, RVal.freezeB]
+    Run.leaveCallDepth, Run.liftRes, Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 theorem grouped_offset_result (offset result : PyInt)
     (run : int_string.grouped_offset(offset) ⇓ result) : result = 1024 + offset :=

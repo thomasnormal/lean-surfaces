@@ -443,3 +443,48 @@ The exact probe records the ordinary unpacked-memory refusal, the retained
 `memory cycle route does not yet admit unsupported module members` refusal.
 The owner-branch measurement at `3d11ff8f7` agrees and leaves the first denied
 member in the already catalogued parametric x/z family.
+
+## 2026-11-08 smaller RV32I census while PicoRV32 waits
+
+The PicoRV32 memory-route request is waiting on the owner lane's generic
+parametric `'bx` boundary.  I therefore ran the same admission census against
+three smaller real RV32I cores, using pinned upstream trees, their upstream
+source sets, the approved pyslang-11 extractor, and both current routes.  No
+RTL was changed and all envelopes are outside this repository.
+
+| core | upstream pin | top / source set | licence | envelope (bytes / SHA-256) | modules | static `Unsupported` nodes | extraction |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| FemtoRV32 Quark | [`BrunoLevy/learn-fpga`](https://github.com/BrunoLevy/learn-fpga) `f5ada24ae6cca67d99889daec2c4ee44a6e59417` | `FemtoRV32` / `FemtoRV/RTL/PROCESSOR/femtorv32_quark.v` | three-clause BSD (`FemtoRV/LICENSE.md`) | 751,470 / `9a97d6736c30221e580f898673adb6fcaa49931d24eec1494d006e040bdfc1ce` | 1 | 48 | 0.907 s |
+| SERV | [`olofk/serv`](https://github.com/olofk/serv) `f200eb2ed7b69ac1c6b8eddd47654522aeee5ce8` | `serv_rf_top` / the 17 Verilog files in `serv.core`'s `core` fileset | ISC (`LICENSE`) | 2,055,412 / `ea713d68c00b6bc3cc4e892de56bf1ccc74d1ba2dcc9dc30abb9a317c64c7a64` | 14 | 71 | 3.200 s |
+| DarkRISCV | [`darklife/darkriscv`](https://github.com/darklife/darkriscv) `bb6b483cc61a2886a0602c7e62b14f5995ddfbb9` | `darkriscv` / `rtl/darkriscv.v` with the checked-in `rtl/config.vh` include path | three-clause BSD (`LICENSE`) | 1,227,921 / `38b3c3253f79b006aac7a547d9c61fce31c86dfe26994a990ce324bd1ce321cf` | 1 | 1 | 1.178 s |
+
+The exact `load_design_sv2` first refusals are:
+
+* Quark: `REFUSED — our defaults elaboration disagrees with the envelope's resolved metadata (Lean vs slang differential): localparam 'FETCH_INSTR': Constant:untyped-width — an untyped parameter or localparam takes its expression's own type (IEEE 1800-2023 §6.20.2; slang, Yosys 0.53), while Icarus 12.0 gives it the lossless width of an expression built with + - * or ** ($bits of SB + 1'b1 with an 8-bit SB is 9, of N + 1 with an int N 33): the two are different constants wherever the width is observable (a concatenation part, a negative value extended into a wider unsigned context, a context it widens) — refused for every such untyped constant, at every point`.
+* SERV: the same cross-check refusal, first at `parameter 'RF_WIDTH' default: Constant:untyped-width` (the route's source-shaped first refusal after supplying the recorded defaults is `localparam 'CSR_REGS': Constant:untyped-width`, with the same full message above).
+* DarkRISCV: `REFUSED — our defaults elaboration disagrees with the envelope's resolved metadata (Lean vs slang differential): decl 'FLUSH': non-literal initializer outside the M0 tier`.
+
+The route probes used the envelope parser directly after recording the
+load-gate refusal, so they did not weaken or modify the differential gate.
+At the default points Quark `[0, 24]` and DarkRISCV `[0]`, both the ordinary
+`instantiateD2` route and `instantiateMemD2` return one loud
+`unsupported "Instantiate"` process with, respectively, the Quark
+`localparam 'FETCH_INSTR': Constant:untyped-width ...` and DarkRISCV
+`decl 'FLUSH': non-literal initializer outside the M0 tier` messages.  SERV's
+`defaultArgs` itself refuses at `parameter 'RF_WIDTH' default:
+Constant:untyped-width`; with the source defaults supplied explicitly as
+`[0, 0, 0, 0, 1, 1296649801, 0, 1, 1, 2, 10]`, both routes return one loud
+`unsupported "Instantiate"` process at `localparam 'CSR_REGS':
+Constant:untyped-width ...`.  No route reaches an admitted cycle design.
+
+DarkRISCV is the closest follow-up by this measured admission distance: one
+module and one static unsupported node, with only the declaration-initializer
+wall.  Quark is next (one module, but 48 static unsupported nodes and 23
+out-of-tier module members), and SERV is last (14 modules, 71 static nodes,
+and the same untyped-width wall in a parameter/localparam chain).  The
+DarkRISCV initializer is the smallest new real-core instance, so a clean-room
+request was filed in the ls-sv inbox.  The external repro is
+`logic [1:0] t = a;` with source SHA-256
+`c6fd179b1c79448ed81918ef4b2d8f2b79b6cdbc891c96cbf10b8a08443351da` and
+pyslang-11 envelope SHA-256
+`6a649ad976ea82f8698cea10a41df120710f2a39fe07c90dbe4bc1cb66920cb6`.

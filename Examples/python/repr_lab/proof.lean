@@ -31,10 +31,10 @@ theorem boolean_repr (value : PyBool) :
     fstringFormatBuiltinName, lenMultBuiltinName, hasUnboundLocal,
     unboundLocalMarker, Env.lookup]
   all_goals py_simp [reprVal, reprArgsH, reprArgs, reprVal, printOne,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
-    RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
   all_goals simp [decimalOverflowValH, decimalOverflowImmediate, Run.toPublic,
-    Run.bind, Run.liftRes, RVal.freezeB]
+    Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     repr_lab.of(value) ==> toString value := by
@@ -54,10 +54,10 @@ theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     fstringFormatBuiltinName, lenMultBuiltinName, hasUnboundLocal,
     unboundLocalMarker, Env.lookup]
   all_goals py_simp [reprVal, reprArgsH, reprArgs, reprVal, printOne,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
-    RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
   all_goals simp [decimalOverflowValH, decimalOverflowImmediate, rendered,
-    Run.toPublic, Run.bind, Run.liftRes, RVal.freezeB]
+    Run.toPublic, Run.bind, Run.leaveCallDepth, Run.liftRes, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 #print axioms boolean_repr
 #print axioms integer_repr

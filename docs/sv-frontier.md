@@ -81,6 +81,12 @@ kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
 
+The memory route also preserves the exact parametric x/z literal marker used
+by a retained cell driver. In the clean-room `xz_memory` fixture, `'bx`
+remains an unknown-valued `PExpr.lit` and the one-cycle read is all-x at the
+declared width. This route-specific admission does not widen the ordinary
+constant-context x/z policy.
+
 The clean-room `sem2/unpacked_register_memory` fixture extends this route to a
 parameter-sized register file with run-time read and write indices. The
 symbolic envelope retains both `ArraySel` operations; E evaluates known

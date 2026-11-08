@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a short-circuit
+  logical-OR callable and native differential row.
+
 - Restored the value/object evaluator agreement battery's direct parameter
   return callable and native differential row.
 

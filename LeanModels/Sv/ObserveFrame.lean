@@ -677,7 +677,14 @@ theorem Observe.Obs_run2.pre_input {d : Design2} (hd : d.writesInput = false) {�
     (hx : SvState.lookup e n = some (LVec.ofBitVec x)) :
     SvState.lookup o.pre n = some (LVec.ofBitVec x) := by
   obtain ⟨fuel, hrun⟩ := hr
-  obtain ⟨inputs, prev, kc, kc', hi, -, hcyc⟩ := runFromObs2_cycle hrun ho
+  have hg : run2ClockGuard d = .ok () := by
+    cases hq : run2ClockGuard d with
+    | ok u => simpa using hq
+    | timeout => simp [runObs2, hq] at hrun
+    | unsupported msg => simp [runObs2, hq] at hrun
+  have hfrom : runFromObs2 d σ fuel (initState2 d) 0 stim = .ok r := by
+    simpa [runObs2, hg] using hrun
+  obtain ⟨inputs, prev, kc, kc', hi, -, hcyc⟩ := runFromObs2_cycle hfrom ho
   rw [he, Option.some.injEq] at hi
   subst hi
   obtain ⟨k2, hpre⟩ := cycleObs2_pre hcyc

@@ -86,6 +86,9 @@ branch selection and return propagation through both evaluator APIs.
 It also includes a loop `break` callable, checking transfer out of the loop and
 the retained parameter state through both evaluator APIs.
 
+The battery also includes a loop `continue` callable, checking transfer to the
+step expression and the retained parameter state through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

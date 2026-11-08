@@ -293,13 +293,13 @@ The R2 memory route now also executes a source-shaped `always_comb` blocking
 read after sequential memory commits. The `sem2/unpacked_memory_comb` witness
 and direct Icarus row cover this form; NBA in `always_comb` remains loud.
 Undriven four-state wires remain source-shaped `pdesign.others` metadata, and
-the memory route keeps its named unsupported-member refusal until net
-resolution is represented. The `sem2/unpacked_memory_netz` guard covers the
-boundary.
+the memory route admits the exact `NetSymbol:net-z` shape as a one-bit
+z-initialized scalar net. Other unsupported members remain loud. The
+`sem2/unpacked_memory_netz` guard covers the boundary.
 The item-2 clean-room PicoRV32 wall pair is pinned under
 `Examples/system-verilog/cores/picorv32/walls`; its probe checks the exact
-ordinary unpacked-memory and memory-route net-z refusals without adapting
-PicoRV32.
+ordinary unpacked-memory refusal and the admitted source-shaped net-z memory
+route without adapting PicoRV32.
 Referenced empty input-only tasks are now retained as
 `SubroutineSymbol:empty-task` metadata in the memory route, and their calls
 execute as the existing empty statement. The `task_memory` wall proves the

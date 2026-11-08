@@ -519,7 +519,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     cases hff : findFunction m fname with
     | none =>
       have h1 := hc (tc + 1) (by omega)
-      rw [callIn, hff] at h1
+      rw [LeanModels.Python.callIn, hff] at h1
       cases h1
     | some f => simp
   refine ⟨ta + tc + 1, ?_⟩
@@ -537,6 +537,98 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
         simpa [flattenStarCallArgs] using ih
   simp [evalExpr, flattenStarRun, Run.withLocals, hlocal, hglob, hfn, hnt, hstar,
     Module.heapFree_funs hm, findClass_heapFree hm fname, ha', hc'', hflat]
+
+/-! ## Stateful call expressions
+
+`EvalsTo` is intentionally pinned to one frame state.  A nested call in the
+depth-aware interpreter can return a changed world, so the proof layer needs a
+small effectful twin for the call splice.  The relation is kept local to this
+module rather than changing the established pure surface. -/
+
+def EvalsState (m : Module) (st : FrameState) (e : Expr) (v : RVal)
+    (st' : FrameState) : Prop :=
+  ∃ fuel, evalExpr m fuel st e = .ok st' v
+
+namespace EvalsState
+
+theorem at_least {m : Module} {st st' : FrameState} {e : Expr} {v : RVal}
+    (h : EvalsState m st e v st') :
+    ∃ fuel, ∀ F ≥ fuel, evalExpr m F st e = .ok st' v := by
+  obtain ⟨fuel, hrun⟩ := h
+  exact ⟨fuel, fun F hF => evalExpr_mono hrun (by simp) F hF⟩
+
+theorem callIn {m : Module} {st : FrameState} {fname : String}
+    {argEs : Array Expr} {args : Array Val} {v : Val} {after : World}
+    {sp sp' : Span}
+    (hlocal : Env.lookup st.locals fname = Option.none)
+    (hargs : EvalsToList m st argEs.toList
+      (RVal.thawList args.toList))
+    (hspec : CallsIn m st.world fname (RVal.thawArgs args) after
+      (RVal.thaw v))
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl)
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
+    EvalsState m st
+      (.call (.name fname sp) argEs #[] Option.none sp') (RVal.thaw v)
+      ⟨after, st.locals⟩ := by
+  obtain ⟨w, locals⟩ := st
+  obtain ⟨ta, ha⟩ := hargs.at_least
+  obtain ⟨tc, hc⟩ := hspec.at_least
+  have hfn : (findFunction m fname).isSome = true := by
+    cases hff : findFunction m fname with
+    | none =>
+      have h1 := hc (tc + 1) (by omega)
+      rw [LeanModels.Python.callIn, hff] at h1
+      simp at h1
+    | some f => simp
+  have hflat : flattenStarCallArgs (RVal.thawList args.toList) =
+      RVal.thawList args.toList := by
+    induction args.toList with
+    | nil => rfl
+    | cons x xs ih =>
+      cases x <;> simp [RVal.thawList, flattenStarCallArgs,
+        List.flatMap_cons, RVal.thaw] <;>
+        simpa [flattenStarCallArgs] using ih
+  refine ⟨ta + tc + 1, ?_⟩
+  have ha' := ha (ta + tc) (by omega)
+  have hc' := hc (ta + tc) (by omega)
+  have hc'' : LeanModels.Python.callIn m (ta + tc) w fname
+      (RVal.thawList args.toList).toArray = .ok after (RVal.thaw v) := by
+    simpa [RVal.thawArgs] using hc'
+  simp [evalExpr, flattenStarRun, Run.withLocals, RVal.thawArgs, hlocal, hglob,
+    hfn, hnt, hstar, Module.heapFree_funs hm, findClass_heapFree hm fname,
+    ha', hc'', hflat]
+
+end EvalsState
+
+/-! A stateful call assignment is the interprocedural splice used by the
+depth-aware proof surface. The caller's locals survive the call; only the
+world and the newly assigned name change. -/
+
+theorem PyStmtTriple.callState {m : Module} {P : FrameState → Prop}
+    {Q : PyPost} {x fname : String} {argEs : Array Expr}
+    {spx spf spc spa : Span}
+    (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
+        ∃ args after v,
+          EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
+          CallsIn m st.world fname (RVal.thawArgs args) after (RVal.thaw v) ∧
+          Q.next ⟨after, Env.set st.locals x (RVal.thaw v)⟩)
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl)
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
+    PyStmtTriple m P
+      (.assign #[.name x spx]
+        (.call (.name fname spf) argEs #[] Option.none spc) spa) Q := by
+  intro st hP
+  obtain ⟨hlocal, args, after, v, hargs, hcall, hQ⟩ := h st hP
+  have hev := EvalsState.callIn (sp := spf) (sp' := spc)
+    hlocal hargs hcall hglob hnt hm hstar
+  obtain ⟨te, he⟩ := hev.at_least
+  refine ⟨te + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  simpa [execStmt, he F' (by omega), assignToH, hQ]
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-state, the callee name unshadowed, the pinned public world, the

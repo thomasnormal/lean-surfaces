@@ -25,8 +25,8 @@ theorem integer_truth (value : PyInt) :
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal,
     unboundLocalMarker, isLoweredBuiltinName, isPyBuiltinName,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 
 theorem boolean_identity (value : PyBool) :
@@ -39,8 +39,8 @@ theorem boolean_identity (value : PyBool) :
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal,
     unboundLocalMarker, isLoweredBuiltinName, isPyBuiltinName,
-    flattenStarRun, flattenStarCallArgs, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB]
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.leaveCallDepth, Run.liftRes,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 
 #print axioms integer_truth

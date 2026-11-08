@@ -18,8 +18,8 @@ theorem by_one_total (value : PyInt) :
     starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
     lenMultBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, isPyBuiltinName, flattenStarRun,
-    flattenStarCallArgs, Env.lookup, lookupG, Run.bind, Run.liftRes,
-    Run.toPublic, RVal.freezeB]
+    flattenStarCallArgs, Env.lookup, lookupG, Run.bind, Run.leaveCallDepth, Run.liftRes,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit]
 
 #print axioms by_one_total
 

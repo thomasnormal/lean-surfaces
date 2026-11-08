@@ -206,6 +206,10 @@ namespace LVec
 @[simp] theorem width_xVec (w : Nat) : (xVec w).width = w := by
   simp [xVec, replicate, width]
 
+/-- A replicated bit (the all-`z` start of an undriven net) has the requested width. -/
+@[simp] theorem width_replicate (w : Nat) (b : Logic) : (replicate w b).width = w := by
+  simp [replicate, width]
+
 /-- Bit `i` of a slice (the `getD .lx` read primitive). -/
 theorem getD_extract (v : LVec) (lo w i : Nat) :
     (v.extract lo w).bits[i]?.getD .lx = if i < w then v.bits[lo + i]?.getD .lx else .lx := by
@@ -1884,13 +1888,16 @@ theorem combPass2_ok_of_combFuel {d : Design2} (hd : CombDesign d) {fuel : Nat}
 
 /-! ## The comb-only cycle -/
 
-/-- `initState2` binds each declared name to its initializer (else all-x), the
-value then squashed to 2-state for a 2-state declaration. -/
+/-- `initState2` binds each declared name to its initializer, else a net to
+all-z (an undriven net holds z) and any other declaration to all-x, the value
+then squashed to 2-state for a 2-state declaration (`Sem2.initState2` since
+ls-sv 6f146c58c, "retain undriven net z state"). -/
 theorem lookup_initState2 (d : Design2) (n : String) :
     SvState.lookup (initState2 d) n =
       (d.decls.toList.find? fun dc => dc.name == n).map
-        fun dc => if dc.twoState then (dc.init.getD (LVec.xVec dc.width)).toTwoState
-          else dc.init.getD (LVec.xVec dc.width) := by
+        fun dc => if dc.twoState then
+            (dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)).toTwoState
+          else dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width) := by
   unfold initState2
   generalize d.decls.toList = ds
   induction ds with
@@ -1912,12 +1919,15 @@ theorem StateShape.of_initState2 {d : Design2} (hd : CombDesign d) :
   obtain ⟨dc, hf, rfl⟩ := Design2.declWidth_eq_some_iff.mp hdw
   have hname : dc.name = n := by simpa using List.find?_some hf
   have hmem := List.mem_of_find?_eq_some hf
-  have hw0 : (dc.init.getD (LVec.xVec dc.width)).width = dc.width := by
+  have hw0 : (dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)).width =
+      dc.width := by
     cases hi : dc.init with
-    | none => simp
+    | none => split <;> simp
     | some v => simp [hd.initWidth n ⟨i, lo, w, hW⟩ dc hmem hname v hi]
-  refine ⟨if dc.twoState then (dc.init.getD (LVec.xVec dc.width)).toTwoState
-      else dc.init.getD (LVec.xVec dc.width), by rw [lookup_initState2, hf]; rfl, ?_⟩
+  refine ⟨if dc.twoState then
+        (dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)).toTwoState
+      else dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width),
+    by rw [lookup_initState2, hf]; rfl, ?_⟩
   rw [hdw]
   by_cases h2 : dc.twoState = true
   · simp [h2, LVec.toTwoState, LVec.width] at hw0 ⊢

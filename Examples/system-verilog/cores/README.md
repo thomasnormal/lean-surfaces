@@ -333,6 +333,36 @@ Its first retained member is `NetSymbol:net-z` for `pcpi_mul_wr` at
 the symbolic ADDI invariant remains parked at the unpacked `cpuregs` and
 unsupported-member/net-z walls.
 
+## 2026-11-08 PicoRV32 re-probe on the owner branch
+
+The pinned YosysHQ source was re-extracted without RTL changes against the
+owner lane's generated-member revision `ac176c933` (the public merge was still
+pending at this probe).  The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the fresh envelope is 2,991,521
+bytes with SHA-256
+`5cf47d7aed28c2e63a0ab0dc3f3ac414f27fe326eab59ffe232b348bace45a3b`.
+
+The declaration has 26 parameter declarations (18 local parameters), 189
+declarations, 43 processes, and three generate entries.  The ordinary route's
+exact first refusal remains:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route passes the generated members and then first refuses:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr` at
+`picorv32.v:257`.  This is an existing generic wall, so no new clean-room
+request or RTL adaptation is justified; the symbolic ADDI invariant remains
+parked at the unpacked-memory and unsupported-member/net-z boundaries.
+
 ## Mixed RV32I program certificate
 
 `LeanModels.Refine.RvfiRv32iProgram` combines the admitted ALU, branch, jump,

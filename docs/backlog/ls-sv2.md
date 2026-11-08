@@ -7423,3 +7423,40 @@ extractor, RTL, or finite captured-window theorem was edited.
 loaded-core proof.  Keep the core-side premises explicit until ls-sv's public
 closure is green; then re-probe PicoRV32 and record its first exact refusal
 before adding any core-specific invariant.
+
+## 2026-11-08-ls-sv2-386 — re-probe PicoRV32 on the owner branch
+
+Item 386 re-probed the pinned PicoRV32 source against the owner branch after
+generated-memory members were admitted.  The public merge was pending at the
+time of the probe, so this is an owner-branch measurement rather than a public
+`origin/master` result.
+
+**MEASURED:** The source commit is
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the owner revision is
+`ac176c93380b4f34091c6d1ef2e0c6f4c170eadc`; and the fresh 2,991,521-byte
+envelope has SHA-256
+`5cf47d7aed28c2e63a0ab0dc3f3ac414f27fe326eab59ffe232b348bace45a3b`.
+It contains 26 parameter declarations (18 local parameters), 189
+declarations, 43 processes, and three generate entries.  The ordinary route's
+first refusal remains the `cpuregs` unpacked-memory declaration at
+`picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route passes the generated members, then first refuses with
+`memory cycle route does not yet admit unsupported module members`; its first
+retained member is `NetSymbol:net-z` for `pcpi_mul_wr` at
+`picorv32.v:257`.
+
+**CHANGED:** Recorded the owner-branch re-probe in both PicoRV32 status
+READMEs and added this backlog entry.  No ls-sv-owned source, semantics,
+loader, extractor, RTL, or finite captured-window theorem was edited, and no
+new `REQUEST ls-sv:` was filed because the wall is already catalogued.
+
+**JUDGED / DECIDED:** Generated members are no longer the first memory-route
+wall at this owner revision.  Keep the symbolic ADDI invariant parked at the
+unpacked-memory and unsupported-member/net-z boundaries until the owner merge
+lands and the next generic loader wall is measured.

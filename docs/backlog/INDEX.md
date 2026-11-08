@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1261 entries across 18 lanes.** Regenerate with
+**1262 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-08-ls-sv2-386` |  | re-probe PicoRV32 on the owner branch | ls-sv2 |
 | `2026-11-07-pycomplete-458` |  | transport ListComp through ClockErase | python-completeness |
 | `2026-11-07-pycomplete-457` |  | enable proof-interpreter ListComp | python-completeness |
 | `2026-11-07-pycomplete-456` |  | thread ListComp helpers through fuelMono | python-completeness |

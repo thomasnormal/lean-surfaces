@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F1 retained contract guard cleanup
+
+Finite SVA range and `disable iff` witnesses now pattern-match their
+`Except` evaluation results, and their traces reflect the current sampled-edge
+semantics. The bounded cover row records its measured no-coverage result;
+assertion and assumption rows remain passing guards.
+
 ## F1 finite assertion witness refresh
 
 The finite retained assert/assume witness now uses a clocked trace that passes

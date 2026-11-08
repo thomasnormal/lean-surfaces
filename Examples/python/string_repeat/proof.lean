@@ -45,7 +45,9 @@ theorem repeat_right_total (text : PyStr) (count : PyInt)
     sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
     fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
-    strRepeat_of_bounds text count countBound outputBound]
+    strRepeat_of_bounds text count countBound outputBound, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB]
 
 theorem repeat_left_total (text : PyStr) (count : PyInt)
     (countBound : count.natAbs ≤ 1048576)
@@ -56,7 +58,9 @@ theorem repeat_left_total (text : PyStr) (count : PyInt)
     sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
     fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
-    strRepeat_of_bounds text count countBound outputBound]
+    strRepeat_of_bounds text count countBound outputBound, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB]
 
 theorem decorated_total (text : PyStr) (count : PyInt)
     (countBound : count.natAbs ≤ 1048576)
@@ -67,7 +71,9 @@ theorem decorated_total (text : PyStr) (count : PyInt)
     sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
     fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
-    strRepeat_of_bounds text count countBound outputBound]
+    strRepeat_of_bounds text count countBound outputBound, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB]
 
 theorem width_offset_total (offset : PyInt) :
     string_repeat.width_offset(offset) ==> 6 + offset := by
@@ -75,7 +81,9 @@ theorem width_offset_total (offset : PyInt) :
     sequenceMult, sequenceMultLength, seqIndexBudget, lenMultBuiltinName, starArgBuiltinName,
     fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
     isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd, tripled_ab,
-    tripled_ab_length]
+    tripled_ab_length, pythonTopCallDepth, pythonRecursionLimit,
+    Run.finishCallAt, Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok,
+    RVal.freezeB]
   decide
 
 end Examples.python.string_repeat.proof

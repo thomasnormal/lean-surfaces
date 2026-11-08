@@ -178,8 +178,8 @@ of a range goal (`addClog2Facts`). -/
 theorem clog2_zero_or_lt (n : Nat) : n = 0 ∨ LeanModels.Sv.clog2 n < n := by
   unfold LeanModels.Sv.clog2
   by_cases h : n ≤ 1
-  · rw [if_pos h]; omega
-  · rw [if_neg h]
+  · simp only [h, ↓reduceIte]; omega
+  · simp only [h, ↓reduceIte]
     right
     have h2 : n - 1 ≠ 0 := by omega
     have := (Nat.log2_lt h2).2 (Nat.lt_two_pow_self (n := n - 1))

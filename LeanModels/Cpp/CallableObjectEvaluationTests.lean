@@ -40547,6 +40547,25 @@ def callableValueObjectCommaAgreementWitness : Bool :=
 
 #guard callableValueObjectCommaAgreementWitness
 
+def callableValueObjectConditionalStatementAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.conditional controlParameter
+      (.return_ {
+        expression := CallableExpression.integer 11,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := CallableExpression.integer 22,
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 11 && objectValue == signed 11
+  | _, _ => false
+
+#guard callableValueObjectConditionalStatementAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

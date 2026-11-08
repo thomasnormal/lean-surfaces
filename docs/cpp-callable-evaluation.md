@@ -80,6 +80,9 @@ condition, body, step, and return state through both evaluator APIs.
 It also includes a comma-expression callable, checking left-to-right sequencing
 and right-operand result propagation through both evaluator APIs.
 
+The battery also includes a statement-level conditional callable, checking
+branch selection and return propagation through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

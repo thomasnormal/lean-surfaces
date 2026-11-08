@@ -90,16 +90,15 @@ memories, compound memory expressions, and hierarchy remain loud.
 The PicoRV32 R2 item is now started from the re-probe's generic walls. A
 source-shaped `always_comb` memory read is admitted after the sequential
 `MemState` commit; `sem2/unpacked_memory_comb` covers this exact form. The
-memory route still refuses unsupported module members such as `net-z` wires.
-The generic undriven-wire boundary remains source-shaped metadata: a plain
-four-state `wire` with no driver is retained in `pdesign.others`, and the
-memory route keeps its named unsupported-member refusal until net resolution is
-represented. `sem2/unpacked_memory_netz` guards this behavior.
+memory route admits the exact undriven `NetSymbol:net-z` member as a
+source-shaped one-bit z-initialized scalar net. Other unsupported module
+members remain loud. `sem2/unpacked_memory_netz` and the PicoRV32 wall probe
+guard this behavior.
 The item-2 clean-room PicoRV32 wall pair is pinned under
 `Examples/system-verilog/cores/picorv32/walls`: `unpacked_cpuregs` checks the
-ordinary unpacked-memory refusal, while `net_z_memory` checks the memory-route
-unsupported-member refusal and `NetSymbol:net-z` metadata. `walls/probe.lean`
-checks both exact messages.
+ordinary unpacked-memory refusal, while `net_z_memory` checks the retained
+z-initialized net and source-shaped memory process. `walls/probe.lean` checks
+both boundaries.
 The same route now admits a referenced source-shaped empty input-only task as
 metadata (`SubroutineSymbol:empty-task`) and executes its call as the existing
 empty statement. `task_memory` guards this exact no-op shape; tasks with

@@ -13,7 +13,9 @@ private theorem add_ne_bitAnd : (BinOp.add == BinOp.bitAnd) = false := by
 theorem ann_module_global_total (offset : PyInt) :
     ann_lab.ann_module_global(offset) ==> 5 + offset := by
   py_prove [ann_lab, hasUnboundLocal, unboundLocalMarker, add_ne_bitAnd,
-    evalBinOpH, setLikeRefH]
+    evalBinOpH, setLikeRefH, pythonTopCallDepth, pythonRecursionLimit,
+    Run.finishCallAt, Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok,
+    RVal.freezeB]
 
 #print axioms ann_module_global_total
 

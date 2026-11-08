@@ -7460,3 +7460,40 @@ new `REQUEST ls-sv:` was filed because the wall is already catalogued.
 wall at this owner revision.  Keep the symbolic ADDI invariant parked at the
 unpacked-memory and unsupported-member/net-z boundaries until the owner merge
 lands and the next generic loader wall is measured.
+
+## 2026-11-08-ls-sv2-387 — re-probe PicoRV32 after undriven-net admission
+
+Item 387 re-probed the pinned PicoRV32 source against the owner branch after
+the exact undriven `NetSymbol:net-z` member was admitted.  The public merge was
+pending at the time of the probe, so this is an owner-branch measurement
+rather than a public `origin/master` result.
+
+**MEASURED:** The source commit is
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the owner revision is
+`3d11ff8f7fc3c8e2f32572896e5ee320133033cc`; and the fresh 2,991,521-byte
+envelope has SHA-256
+`5cf47d7aed28c2e63a0ab0dc3f3ac414f27fe326eab59ffe232b348bace45a3b`.
+The ordinary route still refuses `cpuregs` with
+`unpacked array storage outside E (UnpackedDecl:memory)` at
+`picorv32.v:203`.  The memory route admits all eight source-shaped PCPI
+`NetSymbol:net-z` members, then returns
+`memory cycle route does not yet admit unsupported module members`.  Its first
+remaining denied member is the already catalogued
+`IntegerLiteral:unsized-xz-parametric` `"'bx"` at `picorv32.v:1038`.
+
+The exact owner-branch probe passes these observations, including the
+first-denied metadata.  The generic x/z family is already covered by the
+owner's refusal fixtures and oracle records, so no duplicate clean-room
+request is filed.
+
+**CHANGED:** Recorded the owner-branch re-probe in both PicoRV32 status
+READMEs and added this backlog entry.  No ls-sv-owned source, semantics,
+loader, extractor, RTL, or finite captured-window theorem was edited, and no
+new `REQUEST ls-sv:` was filed because the first remaining member is an
+already catalogued generic x/z boundary.  No oracle result is claimed for the
+PicoRV32 load.
+
+**JUDGED / DECIDED:** The undriven-net admission removes the prior first
+memory-route member.  Keep the symbolic ADDI invariant parked at the
+unpacked-memory and parametric-x/z boundaries until the owner merge lands and
+the next generic loader wall is measured.

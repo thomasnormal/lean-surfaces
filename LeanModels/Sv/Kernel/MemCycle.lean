@@ -438,7 +438,12 @@ def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
         | some v => .ok v
         | none => .unsupported s!"assign target '{target}' is not present"
       .ok ({ st with scalar := SvState.set st.scalar target (old.insertAt 0 (v.resizeU dc.width)) }, q)
-  | .assignL _ _ => .unsupported "AssignL:memory cycle route"
+  | .assignL l e =>
+      -- A generated continuous assignment to an unpacked net is a source
+      -- shaped cell write.  Reuse the blocking cell evaluator here; the
+      -- process list is stepped in source order, so the route keeps the
+      -- driver's structure without flattening the array.
+      execMemStmt d fuel st q (.blockingAssignL l e)
   | .unsupported k t => .unsupported s!"{k}: {t}"
 
 def memClockFires (prev cur : SvState) (clock : String) : Bool :=

@@ -32602,6 +32602,13 @@ def convert_net_sym(sm, m):
         return unsupported(sm, m, "NetSymbol:" + nk)
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
+    # Keep a parameter-sized unpacked wire as one source-shaped declaration.
+    # Its generated element assignments retain their GenvarRef indices and
+    # are interpreted by the memory route at instantiation; folding the
+    # default point into cells would make a generate family unsound.
+    retained = _convert_unpacked_decl_sym(sm, m)
+    if retained is not None:
+        return retained
     fixed_array = _convert_fixed_net_array_sym(sm, m)
     if fixed_array is not None:
         return fixed_array

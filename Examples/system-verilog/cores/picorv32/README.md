@@ -848,6 +848,39 @@ fixtures both remain admitted, so this is not a new generated-member shape and
 no `REQUEST ls-sv:` repro is filed.  The symbolic ADDI invariant remains
 parked at the unpacked `cpuregs` and unsupported-member/net-z walls.
 
+## 2026-11-08 re-probe on the owner branch after generated-member admission
+
+The pinned YosysHQ source was re-extracted without RTL changes against the
+owner lane's generated-member revision `ac176c933` (the public merge was still
+pending at this probe).  The source remains
+`ef203c2b0a3fb793280f5114941416c425c5b461`; the fresh envelope is 2,991,521
+bytes with SHA-256
+`5cf47d7aed28c2e63a0ab0dc3f3ac414f27fe326eab59ffe232b348bace45a3b`.
+
+The declaration has 26 parameter declarations (18 local parameters), 189
+declarations, 43 processes, and three generate entries.  At the default
+parameters, the ordinary semantic route still first refuses the unpacked
+`cpuregs` memory at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route now passes the generated members, then first refuses at the
+existing unsupported-module-member gate:
+
+```text
+unsupported "Instantiate"
+  "memory cycle route does not yet admit unsupported module members"
+```
+
+The first retained member is `NetSymbol:net-z` for `pcpi_mul_wr`, the `wire`
+at `picorv32.v:257`.  This is the already catalogued generic wall, so no new
+clean-room request or core adaptation is justified; the symbolic ADDI
+invariant remains parked at the unpacked-memory and unsupported-member/net-z
+boundaries.
+
 ## 2026-11-07 re-probe after `cpuregs` memory-route admission
 
 The current owner revision `43f0d0fa4` admits the source-shaped unpacked

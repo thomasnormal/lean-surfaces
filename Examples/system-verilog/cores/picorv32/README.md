@@ -1298,3 +1298,15 @@ minimal source-shaped repro was filed in the ls-sv inbox (source SHA-256
 SHA-256 `aa3007af985290e03c15ba2a35a8a58b02b324631a6505661ac8824afa1ea01c`).
 No RTL adaptation or symbolic ADDI invariant is claimed; re-probe after the
 conversion wall is admitted.
+
+
+## 2026-11-08 parametric x/z conversion
+
+The clean-room [`xz_conversion_memory.sv`](walls/xz_conversion_memory.sv)
+fixture isolates the extractor's
+`ConversionExpression:xz-literal-parametric` marker for an unsized `'bx`
+cell driver. The ordinary semantic family keeps that conversion as a loud
+unsupported process. The memory route admits the exact marker, retains the
+source-shaped driver, and treats the x site as context-propagated unknown data:
+at `N=16`, one cycle reads `q` as 16 bits of `x`. Both markers, the retained
+processes, and the all-x result are guarded in [`walls/probe.lean`](walls/probe.lean).

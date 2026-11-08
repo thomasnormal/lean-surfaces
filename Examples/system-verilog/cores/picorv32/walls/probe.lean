@@ -25,6 +25,10 @@ set_option maxRecDepth 100000 in
 load_design_sv2 nonliteral_initializer_wall
   from "Examples/system-verilog/cores/picorv32/walls/nonliteral_initializer.sv.json"
 
+set_option maxRecDepth 100000 in
+load_design_sv2 xz_conversion_memory_wall
+  from "Examples/system-verilog/cores/picorv32/walls/xz_conversion_memory.sv.json"
+
 #guard match (unpacked_cpuregs_wall.sem 32).processes with
   | #[.unsupported "Instantiate"
       "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
@@ -103,4 +107,25 @@ private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
     (nonliteral_initializer_wall.pdesign.instantiateMemD2 []) 32
     [[("a", LeanModels.Sv.LVec.lit "11")]] with
   | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.lit "0x")
+  | _ => false
+
+#guard xz_conversion_memory_wall.pdesign.others ==
+  [("ConversionExpression:xz-literal-parametric", "'bx"),
+   ("IntegerLiteral:unsized-xz-parametric", "'bx")]
+
+#guard (xz_conversion_memory_wall.sem 8).processes.toList.any fun p =>
+  match p with
+  | .unsupported "ConversionExpression:xz-literal-parametric" _ => true
+  | _ => false
+
+-- The conversion marker widens the unsized x site at the instantiated target
+-- width, so the memory route remains all-x when N differs from the default.
+#guard match (xz_conversion_memory_wall.pdesign.instantiateMemD2 [16]).processes with
+  | [.assign "q" (.ident "mem[0]"), .assign "mem[0]" (.lit _)] => true
+  | _ => false
+
+#guard match LeanModels.Sv.Kernel.runMem2
+    (xz_conversion_memory_wall.pdesign.instantiateMemD2 [16]) 32
+    [[("clk", LeanModels.Sv.LVec.lit "0")]] with
+  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 16)
   | _ => false

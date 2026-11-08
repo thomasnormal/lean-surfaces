@@ -36,7 +36,15 @@ accepted them on the same ground as `xnor_n` (2026-11-08).
 fails, because `canonInt 32 true N` is not definitionally `N`. The tactics close `hag` there only since
 4f3866fb7, and only from the range premise above.
 
-## Nonliteral declaration initializers in the memory route
+## Parametric x/z conversion in the memory route
+
+The source-shaped memory adapter now admits the exact
+`ConversionExpression:xz-literal-parametric` marker alongside the previously
+admitted unsized-literal marker. It preserves the source driver and widens the
+unsized x site to all-x at the destination context width. The clean-room
+`xz_conversion_memory` row reads 16 bits of x at `N=16`; unrelated unsupported
+members remain loud and the ordinary flat route still reports the conversion.
+
 
 The source-shaped memory adapter now retains nonliteral scalar declaration
 initializers as `(name, Expr2)` entries and evaluates them once, in declaration

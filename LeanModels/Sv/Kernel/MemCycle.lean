@@ -33,6 +33,8 @@ structure MemDesign2 where
   /-- Runtime declaration initializers, evaluated in source order before the
       first input sample. Literal initializers remain on `Decl`. -/
   initializers : List (String × Expr2)
+  /-- The exact unsized x/z conversion marker retained by the extractor. -/
+  xzUnsized : Bool
   processes : List PProcess
 deriving Repr, Inhabited
 
@@ -57,7 +59,8 @@ node.  Every other unsupported module member remains a loud memory-route
 boundary. -/
 def memAllowedOther (entry : String × String) : Bool :=
   entry.1 == "SubroutineSymbol:empty-task" || entry.1 == "NetSymbol:net-z" ||
-    entry.1 == "IntegerLiteral:unsized-xz-parametric"
+    entry.1 == "IntegerLiteral:unsized-xz-parametric" ||
+    entry.1 == "ConversionExpression:xz-literal-parametric"
 
 /-- Source-shaped scalar declarations for memory-route members that have no
 runtime process body.  An undriven wire is a one-bit z-valued net (§6.6), so
@@ -252,16 +255,19 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   let generated ← memExpandList env iterFuel [] d.generates
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
   return { name := d.name, env := envP, decls, memDecls := memDeclsOf d,
-           initializers, processes := d.processes ++ generated }
+           initializers,
+           xzUnsized := d.others.any fun (k, t) =>
+             k == "ConversionExpression:xz-literal-parametric" && t == "'bx",
+           processes := d.processes ++ generated }
 
 def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
   match instantiateMem2 d args (PDesign.surfaceFuel args) with
   | .ok m => m
   | .timeout =>
-      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], processes :=
+      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], xzUnsized := false, processes :=
           [.unsupported "Instantiate" "memory cycle route exhausted executor fuel"] }
   | .unsupported msg =>
-      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], processes :=
+      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], xzUnsized := false, processes :=
           [.unsupported "Instantiate" msg] }
 
 def MemDesign2.initState (d : MemDesign2) : MemCycleState :=
@@ -368,6 +374,10 @@ def resolveMemTarget (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       .unsupported s!"array target '{n}' has rank outside the one-cell fragment"
   | _ => .unsupported s!"target '{pd.name}' is not an unpacked array element"
 
+def memPExprAllX : PExpr → Bool
+  | .lit v => v.bits.toList.all (· == Logic.lx)
+  | _ => false
+
 def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (ctx : Option Nat) (e : PExpr) : Res LVec :=
   match e with
@@ -378,7 +388,11 @@ def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
           evalMemCell d fuel st pd is
   | .arrayPart .. => .unsupported "memory RHS partial target is outside the one-cell fragment"
   | _ =>
-      if memExprReadsArray e then
+      if d.xzUnsized && memPExprAllX e then
+        match ctx with
+        | some w => .ok (LVec.xVec w)
+        | none => .unsupported "unsized x/z conversion has no destination width"
+      else if memExprReadsArray e then
         .unsupported "memory expression is not a direct cell read"
       else
         evalExpr2 fuel st.scalar (instExpr2 d.env [] ctx e)
@@ -581,7 +595,7 @@ private def memProbeDesign : MemDesign2 :=
       { name := "rstn", width := 1, isInput := true },
       { name := "d", width := 8, isInput := true },
       { name := "q", width := 8, isOutput := true }],
-    memDecls := [memProbeDecl], initializers := [], processes := [] }
+    memDecls := [memProbeDecl], initializers := [], xzUnsized := false, processes := [] }
 
 #guard (MemState.read memProbeDesign.initState.memory "mem" 0).isSome
 #guard runMem2 memProbeDesign 8 [] == .ok []

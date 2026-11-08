@@ -13,7 +13,9 @@ theorem boolean_field (value : PyBool) :
     fstring_repr.repr_field(value) ==> ("[" ++ (if value then "True" else "False") ++ "]") := by
   py_prove [fstring_repr, reprVal, formatValueH, reprArgsH, strOfValH,
     decimalOverflowValH, decimalOverflowValsH, decimalOverflowEntriesH,
-    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
+    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB]
 
 theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     fstring_repr.repr_field(value) ==> ("[" ++ toString value ++ "]") := by
@@ -24,13 +26,17 @@ theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     simp [decimalOverflowImmediate, rendered]
   py_prove [fstring_repr, reprVal, rendered, noOverflow, formatValueH,
     reprArgsH, strOfValH, decimalOverflowValH, decimalOverflowValsH,
-    decimalOverflowEntriesH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
+    decimalOverflowEntriesH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 theorem unicode_str_field (value : PyStr) :
     fstring_repr.str_field(value) ==> ("[" ++ value ++ "]") := by
   py_prove [fstring_repr, formatValueH, reprArgsH, strOfValH,
     decimalOverflowValH, decimalOverflowValsH, decimalOverflowEntriesH,
-    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
+    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB]
 
 #print axioms boolean_field
 #print axioms integer_field

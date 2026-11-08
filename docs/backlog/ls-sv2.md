@@ -7530,3 +7530,34 @@ extractor, RTL, or finite captured-window theorem was edited.  No duplicate
 PicoRV32 frontier is still the existing unpacked-memory and parametric-x/z
 family; it does not justify a new owner request.  Keep the symbolic ADDI
 invariant parked until a corresponding generic loader change lands.
+
+## 2026-11-08-ls-sv2-391 — inventory the R2 headline's consumed facts
+
+Item 391 records the bounded fact list for the all-prefix R2 headline.  This
+is a contract inventory, not a new theorem or an alternative packaging; future
+ISA-side lemmas are admitted only when they establish one of these statements.
+
+1. `Rv32iInstruction` and its decoder evidence identify every admitted RV32I
+   retirement input as exactly one mixed ISA instruction.
+2. `rvMemoryMachineWith profile` supplies the stateful R0 transition, trace,
+   and `rvMemoryStateAfter` functions used by the headline's target stream.
+3. `Rv32iCycleStepRefines` states the per-cycle safety fact: a related core and
+   ISA state either produce one exact mixed ISA step with its retirement/order
+   evidence or stutter explicitly on an invalid row, while threading memory.
+4. `rv32iRvfiCycleTrace_of_step_refines` turns that step fact over a finite
+   admitted cycle prefix into a mixed certificate whose normalized RVFI trace
+   equals the stateful ISA trace and whose final relation is retained.
+5. `Rv32iRetiresTarget` supplies liveness for every finite target retirement
+   prefix by a finite cycle boundary; it does not choose a scheduler.
+6. `schedulePrefix_admit` lifts pointwise schedule admission to every finite
+   cycle prefix consumed by the step theorem.
+7. `rv32i_progress_refinement` packages the finite-prefix certificate for all
+   target lengths, and `rv32i_reset_refinement` specializes its initial relation
+   to the loaded core's reset state.
+8. `rv32i_r2_headline` projects that reset refinement to the public statement:
+   every target prefix has a boundary with equal committed trace and a final
+   core-to-ISA relation over `rvMemoryStateAfter`.
+
+The list deliberately excludes per-instruction re-exports, structure-valued
+aliases, and finite captured-window facts; those do not occur in the headline
+statement.

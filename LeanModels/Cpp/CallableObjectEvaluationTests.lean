@@ -41061,6 +41061,26 @@ def callableValueObjectEqualityAgreementWitness : Bool :=
 
 #guard callableValueObjectEqualityAgreementWitness
 
+def callableValueObjectInequalityAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.binary "!="
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 4,
+          sourceType := intType, type := intType}
+        , sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [signed 3],
+      evaluateCallableObject 32 .lp64 function [signed 3] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 1⟩ && objectValue == ⟨.boolean, 1⟩
+  | _, _ => false
+
+#guard callableValueObjectInequalityAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

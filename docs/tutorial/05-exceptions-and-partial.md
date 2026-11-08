@@ -48,13 +48,18 @@ And the real proofs, from `proof.lean`:
 ```lean
 -- Examples/python/tut_05/proof.lean (header comment and docstrings elided)
 theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by
-  py_prove [tut_05, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
+  py_prove [tut_05, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH,
+    pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 : Int) := by
   py_begin [tut_05]
   py_loop (state := [n])
           (inv := fun (k : Int) => 0 ≤ k)
           (dec := fun (k : Int) => k.toNat)
+  · py_simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+      Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
+    omega
   all_goals grind
 
 theorem countdown_partial (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ~~> (0 : Int) := by

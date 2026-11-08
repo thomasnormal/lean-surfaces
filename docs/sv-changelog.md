@@ -13,6 +13,19 @@ refuses a design with an `always_comb` beside a continuous `assign`. `Comb2Base.
 follows the net-z `initState2` (07128fda5; ls-sv landed the same statement, `let`-bound, in b541daabf, and
 the merge keeps that form). `sv_exhaustive` passes the design explicitly (47b0568e3;
 example `sv_exhaustive_param`). `partsel_rev_instantiated` is stated at `psEnv32` (27149e35e).
+A localparam computed from in-range parameters can leave the range as well, so the theorems over such a
+design take the premise that keeps it in range, in the same form: `lin_chain`'s `lin_struct` and
+`lin_settled` take `(hRK : (W : Int) + P < 2147483648)` for `K = W + P`, and the three `row_chain_lp`
+statements take `(hRC : 2 * (N : Int) < 2147483648)` for `C = 2 * N` (d58b7a846). `CombProc`'s
+`apDecls` fixture gives `DeclT` its `isNet` field from b541daabf (2308df352). Still open: the mixed
+design above, and `paramEnv2` at a symbolic parameter for a `$clog2` localparam (`sq_chain`, `lp_clog2`).
+
+**Conclusions at the exact value.** A few lemmas state the exact 32-bit value in their conclusion
+instead of taking a range premise, the form `xnor_n` uses: `mul2d`'s `mulScope_nM1`
+(`= .ok (canonInt 32 true N - 1)`), `ripple_fa`'s `ripple_decls` (widths at `canonInt 32 true N`), and
+`ripple_fa`'s `fa_paramEnvH`, `fa_child`, `fa_iter` and `ripple_gens`, stated at ls-sv's initial
+environment `{ int32 := true }` (was `{}`; the definition `faEnv` with them) (b1b8ae934). The lead
+accepted them on the same ground as `xnor_n` (2026-11-08).
 
 **Correction.** The message of 90e4d0224 says that the tactics close the `intVal?` form of `hag` "by
 `rfl`". That holds only at concrete arguments, where `canonInt` reduces. At a symbolic parameter `rfl`

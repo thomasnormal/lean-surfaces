@@ -7364,3 +7364,62 @@ Loop2 guard bridge is not.  Hold the PicoRV32 R2 re-probe until the owner
 discharges `run2ClockGuard d = Res.ok ()` in `SingleComb.terminates`, removes
 the `sorryAx`, lands the repair on public master, and the import closure passes.
 Do not add finite captured-window lemmas.
+
+## 2026-11-07-ls-sv2-384 — recheck the full owner import closure
+
+Item 384 reread both inboxes and the goal, then reran the focused and full
+closures against the newest uncommitted owner worktree.  The public owner
+branch is still `4b308092c`; this is a local closure check, not a public repair
+or a core probe.
+
+**MEASURED:** The focused Lean 4.35.0 build of `Loop2` and
+`sem2/sva_select.proof` passes, and `#print axioms
+LeanModels.Sv.Loop2.SingleComb.terminates` reports only
+`[propext, Classical.choice, Quot.sound]`.  The full target build passes
+`ClockGuard0`, `SelfCheck`, `CombView`, `Comb2`, `Comb2Proc`, `CycleMachine`,
+`Loop2`, signed `remainder`, signed `division`, `ripple_add.gen`, and
+`sem2/sva_select` until the final proof target.  It fails only at
+`Examples/system-verilog/ripple_add/proof.lean:529` with two `Unknown
+identifier hR` errors.  The enclosing `example` at line 520 binds
+`N hN σ stim` but not `hR`, while line 529 calls
+`ripple_terminates N hN hR` and `ripple_correct N hN hR`.
+`origin/master` remains `f5fdcea8e`; no PicoRV32 load or oracle result is
+claimed.
+
+**CHANGED:** Routed the exact stale proof-binder failure as a dated
+`REQUEST ls-sv:` and added this backlog entry.  No ls-sv-owned source,
+semantics, loader, extractor, RTL, or finite captured-window theorem was
+edited.
+
+**JUDGED / DECIDED:** The Loop2 clock-guard bridge is now locally sound and
+axiom-clean, but the owner closure is not green until the `ripple_add` proof
+example supplies its `hR` hypothesis (or otherwise uses the intended theorem
+parameters).  Hold the PicoRV32 R2 re-probe until that proof-side repair lands
+on public master and the full import closure passes.  Do not add finite
+captured-window lemmas.
+
+## 2026-11-07-ls-sv2-385 — state the R2 all-prefix headline
+
+Item 385 pins the end-to-end R2 result as a generic Lean proposition before a
+loaded RTL core is available.  The statement quantifies every finite target
+retirement prefix and asks for a finite cycle boundary whose committed stream
+equals the stateful RV32I memory-machine trace and whose retained core state is
+related to the target ISA state.
+
+**MEASURED:** `LeanModels.Refine.R2Headline` and the umbrella
+`LeanModels.Refine` both build on Lean 4.35.0.  The theorem
+`rv32i_r2_headline` derives the headline from the explicit
+`Rv32iCycleStepRefines` invariant, reset relation, pointwise admission, and
+`Rv32iRetiresTarget` progress witness.  Its axiom footprint is only the
+standard `[propext, Classical.choice, Quot.sound]`; no `sorryAx` or new axiom
+is introduced.  No RTL load or oracle result is claimed while the owner import
+closure still has the `ripple_add` `hR` binder wall.
+
+**CHANGED:** Added `LeanModels/Refine/R2Headline.lean` and imported it from
+`LeanModels/Refine.lean`.  No ls-sv-owned source, semantics, loader,
+extractor, RTL, or finite captured-window theorem was edited.
+
+**JUDGED / DECIDED:** The headline theorem is now the fixed target for the
+loaded-core proof.  Keep the core-side premises explicit until ls-sv's public
+closure is green; then re-probe PicoRV32 and record its first exact refusal
+before adding any core-specific invariant.

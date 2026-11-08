@@ -19040,5 +19040,53 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-comma-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCommaAgreementWitness",
+    "cpp_source": "int comma_witness(int value) { return (value, 9); } bool callable_witness() { return comma_witness(7) == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
+    "id": "statement.callable-value-object-conditional-statement-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectConditionalStatementAgreementWitness",
+    "cpp_source": "int conditional_statement_witness(int value) { if (value) return 11; return 22; } bool callable_witness() { return conditional_statement_witness(1) == 11; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-break-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectBreakAgreementWitness",
+    "cpp_source": "int break_witness(int value) { for (; value; --value) { break; } return value; } bool callable_witness() { return break_witness(1) == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-continue-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectContinueAgreementWitness",
+    "cpp_source": "int continue_witness(int value) { for (; value; --value) { continue; } return value; } bool callable_witness() { return continue_witness(1) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

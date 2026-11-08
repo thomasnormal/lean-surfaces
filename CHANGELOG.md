@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a loop `continue`
+  callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a loop `break`
+  callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a statement-level
+  conditional callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a comma
+  expression callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a decrementing
   `for` callable and native differential row.
 

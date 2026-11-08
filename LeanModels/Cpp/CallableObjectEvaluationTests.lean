@@ -40671,6 +40671,22 @@ def callableValueObjectSizeAgreementWitness : Bool :=
 
 #guard callableValueObjectSizeAgreementWitness
 
+def callableValueObjectAlignAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := unsignedLongType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.alignOf shortType,
+      sourceType := unsignedLongType, type := unsignedLongType}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 64, 2⟩ && objectValue == ⟨.unsigned 64, 2⟩
+  | _, _ => false
+
+#guard callableValueObjectAlignAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1267 entries across 18 lanes.** Regenerate with
+**1294 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -27,16 +27,43 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-08-ls-sv2-389` |  | add a combined memory/xz clean-room measurement | ls-sv2 |
 | `2026-11-08-ls-sv2-387` |  | re-probe PicoRV32 after undriven-net admission | ls-sv2 |
 | `2026-11-08-ls-sv2-386` |  | re-probe PicoRV32 on the owner branch | ls-sv2 |
+| `2026-11-07-pycomplete-474` |  | audit float-round worker family | python-completeness |
+| `2026-11-07-pycomplete-473` |  | audit differential row coverage gaps | python-completeness |
+| `2026-11-07-pycomplete-472` |  | audit frontend-version admission and freshness | python-completeness |
+| `2026-11-07-pycomplete-471` |  | audit runner oracle and frontend pinning | python-completeness |
+| `2026-11-07-pycomplete-470` |  | audit remaining general ingestion bridges | python-completeness |
+| `2026-11-07-pycomplete-469` |  | audit display/comprehension/starred rewrites | python-completeness |
+| `2026-11-07-pycomplete-468` |  | audit extractor try lowerings | python-completeness |
+| `2026-11-07-pycomplete-467` |  | audit class method flattening | python-completeness |
+| `2026-11-07-pycomplete-466` |  | audit yield-from inlining | python-completeness |
+| `2026-11-07-pycomplete-465` |  | audit trailing definition deletion rewrite | python-completeness |
+| `2026-11-07-pycomplete-464` |  | audit module-level function alias copying | python-completeness |
+| `2026-11-07-pycomplete-463` |  | audit namedtuple static recognition | python-completeness |
+| `2026-11-07-pycomplete-462` |  | audit two-interpreter refinement edge | python-completeness |
+| `2026-11-07-pycomplete-462` |  | audit text-keyed semantic residues | python-completeness |
+| `2026-11-07-pycomplete-461` |  | audit trace-clock reading type | python-completeness |
+| `2026-11-07-pycomplete-460` |  | audit static definition-delete no-op census | python-completeness |
+| `2026-11-07-pycomplete-459` |  | audit shape-specific ingestion rewrites | python-completeness |
 | `2026-11-07-pycomplete-458` |  | transport ListComp through ClockErase | python-completeness |
+| `2026-11-07-pycomplete-458` |  | audit signed set iteration order | python-completeness |
 | `2026-11-07-pycomplete-457` |  | enable proof-interpreter ListComp | python-completeness |
+| `2026-11-07-pycomplete-457` |  | audit length-only repetition removal | python-completeness |
 | `2026-11-07-pycomplete-456` |  | thread ListComp helpers through fuelMono | python-completeness |
+| `2026-11-07-pycomplete-456` |  | audit non-simple annotation ordering | python-completeness |
 | `2026-11-07-pycomplete-455` |  | prove proof-side ListComp helper monotonicity | python-completeness |
+| `2026-11-07-pycomplete-455` |  | audit dead yield-target drop | python-completeness |
+| `2026-11-07-pycomplete-454` |  | audit boundary augmented-repeat rewrite | python-completeness |
 | `2026-11-07-pycomplete-454` |  | add proof-side ListComp stepper seam | python-completeness |
 | `2026-11-07-pycomplete-453` |  | price proof-interpreter ListComp transport | python-completeness |
+| `2026-11-07-pycomplete-453` |  | close ListComp shadowing audit after native evaluator | python-completeness |
 | `2026-11-07-pycomplete-452` |  | price the ListComp recursion seam | python-completeness |
+| `2026-11-07-pycomplete-452` |  | audit generator capture and creation iteration | python-completeness |
 | `2026-11-07-pycomplete-451` |  | choose the next completeness milestone | python-completeness |
+| `2026-11-07-pycomplete-451` |  | audit structured global declaration handling | python-completeness |
 | `2026-11-07-pycomplete-450` |  | recheck parameterized float-round worker | python-completeness |
+| `2026-11-07-pycomplete-450` |  | audit module-definition position independence | python-completeness |
 | `2026-11-07-pycomplete-449` |  | recheck differential edge coverage | python-completeness |
+| `2026-11-07-pycomplete-449` |  | audit recursion-limit finding against current tier | python-completeness |
 | `2026-11-07-pycomplete-448` |  | rebase float proof over call depth | python-completeness |
 | `2026-11-07-pycomplete-447` |  | recheck active recursion depth | python-completeness |
 | `2026-11-07-pycomplete-446` |  | repair journal clock stamps | python-completeness |

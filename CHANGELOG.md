@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with an explicit
+  integral-conversion callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a `noexcept`
   callable and native differential row.
 

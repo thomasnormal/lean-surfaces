@@ -228,8 +228,11 @@ def native_rows(cases, clang):
                     continue
                 if execute.returncode == 0 and execute.stdout.strip() == "ok":
                     result[row["id"]] = ("NATIVE", "ok")
+                elif execute.returncode == 3:
+                    result[row["id"]] = ("DIVERGE", "native assertion failed")
                 else:
-                    result[row["id"]] = ("ORACLE", "check witness did not complete")
+                    result[row["id"]] = ("ORACLE", "check witness did not complete: %s" %
+                                          stable_diagnostic((execute.stdout + execute.stderr)[-1200:], directory))
     if not callable_cases:
         return result
     corpus = os.environ.get("LEANCPP_TINYXML2_DIR")
@@ -297,6 +300,8 @@ def differential(cases, model, native):
                 verdict, detail = "MATCH", "Lean and Clang agree"
             else:
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
+        elif native_status == "DIVERGE":
+            verdict, detail = "DIVERGE", native_value
         else:
             verdict, detail = "DIVERGE", "unknown native status %s" % native_status
         rows.append({"id": row["id"], "corpus": row["corpus"], "kind": row.get("kind", "callable"), "rung": row["rung"],
@@ -472,7 +477,7 @@ def main(argv=None):
     parser.add_argument("--grammar", default=str(GRAMMAR))
     parser.add_argument("--json", dest="json_path")
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--require-oracle", action="store_true")
+    parser.add_argument("--require-oracle", action="store_true", default=bool(os.environ.get("CI")))
     args = parser.parse_args(argv)
     os.chdir(ROOT)
     cases = load_json(pathlib.Path(args.cases))
@@ -487,6 +492,7 @@ def main(argv=None):
         raise SystemExit("cpp_diff_test: grammar ids must be nonempty and unique")
     model = model_rows(cases)
     clang, clang_version = clang_info()
+    print("cpp_diff_test: oracle clang: %s" % clang_version)
     native = native_rows(cases, clang)
     diff_rows = differential(cases, model, native)
     grammar_result = grammar_rows(grammar, clang)

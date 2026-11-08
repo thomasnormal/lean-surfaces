@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Corrected the C++ differential harness to classify native assertion failures
+  as `DIVERGE`, print the pinned Clang version, and require an available oracle
+  by default in CI.
+
 - Extended the value/object evaluator agreement battery with a logical-not
   callable and native differential row.
 

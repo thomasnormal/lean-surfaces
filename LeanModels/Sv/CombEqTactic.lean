@@ -98,18 +98,6 @@ of the array multiplier exceed its (deliberately small) search budget and are cl
 open Lean Elab Tactic Meta
 open LeanModels.Sv.CombView
 
-/-- `X.sem N` is `PDesign.instantiateGD2 X.pdesign [↑N]`: unfold until it shows. -/
-private partial def findGD2' (e : Expr) (fuel : Nat) : MetaM (Option (Expr × Expr)) := do
-  let e ← whnfCore e
-  if e.isAppOfArity ``LeanModels.Sv.PDesign.instantiateGD2 2 then
-    return some (e.getAppArgs[0]!, e.getAppArgs[1]!)
-  match fuel with
-  | 0 => return none
-  | fuel + 1 =>
-    match ← unfoldDefinition? e with
-    | some e' => findGD2' e' fuel
-    | none => return none
-
 -- COPY NOTE (literal simp list, kept in step by hand): `sv_eq_norm_at` is one of six copies of the same
 -- vocabulary: `sv_norm_core` (CombViewTactic.lean), `sv_eq_norm_at` and `sv_eq_norm` (CombEqTactic.lean),
 -- `svL_norm_core`, `svL_eq_norm_at` and `svL_eq_norm` (CombProcTactic.lean). The L copies are the plain ones plus
@@ -406,7 +394,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
     let some haN := ha?
       | throwError "sv_equations: no hypothesis `Acyclic (X.sem N)` in the context (prove it with `sv_structure (rank := …)`)"
     let D := heqsT.appFn!.appArg!
-    let some (pd, args) ← findGD2' D 8
+    let some (pd, args, aliased) ← findGD2A D 8
       | if (← isHD2Family D 8) then throwError (hierarchyRefusal "sv_equations")
         else throwError "sv_equations: cannot read a `load_design_sv2` family (`X.sem N`) off the design of `{heqsN}`"
     let some pdName := (match pd.getAppFn with | .const n _ => some n | _ => none)
@@ -427,10 +415,17 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       let eqAtN ← withRepl hasRepl replL keyI (← `(tactic| sv_eq_norm_at $keyI))
       let normR : TSyntax `tactic ←
         if hasRepl then `(tactic| (sv_norm; (try simp only [$replL,*]); try sv_norm)) else `(tactic| sv_norm)
-      let hcI := mkIdent hcN
-      let haI := mkIdent haN
-      let heqsI := mkIdent heqsN
-      let hshI := mkIdent hshN
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): the four hypotheses restated at the unguarded family
+      -- the theorem is about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`)
+      let hA? ← if aliased then some <$> aliasInertEq "sv_equations" D pd args else pure none
+      let hyp (n : Name) : TacticM Term := do
+        match hA? with
+        | some hA => Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName n).toExpr D hA)
+        | none => pure (mkIdent n)
+      let hcI ← hyp hcN
+      let haI ← hyp haN
+      let heqsI ← hyp heqsN
+      let hshI ← hyp hshN
       evalTactic (← `(tactic|
         have $keyI:ident := LeanModels.Sv.CombEq.eq_view (s := ?s) (env := ?env) (hs := ?hs)
             (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
@@ -468,7 +463,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_equations" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
       let mut out : Array MVarId := #[]

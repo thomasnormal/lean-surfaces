@@ -4,6 +4,7 @@ import LeanModels.Sv.CombCoreSimp
 import LeanModels.Sv.CombViewPlain
 import LeanModels.Sv.CombViewGroup
 import LeanModels.Sv.CombShared
+import LeanModels.Sv.CombAliasInert
 
 /-!
 # `sv_structure` / `sv_structure?`: the structural stage of the `sv_comb` tactic (v0)
@@ -25,10 +26,13 @@ theorem ripple_struct (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) �
 sv_structure?            -- prints the families, site identities and the required rank relation
 ```
 
-What it does: reads the design off the goal (`X.sem N` is `PDesign.instantiateGD2 X.pdesign [↑N]`),
-runs the recognizer `PDesign.summary` (a refusal is an error with the specific reason, naming
-the site), applies the theorem `comb_view`/`acyclic_view` (whose hypotheses are CHECKED by `rfl`
-and `decide`: the parameter stage, the structural facts, the fuel), normalizes the player
+What it does: reads the design off the goal (`X.sem N` is `PDesign.instantiateGDAlias2 X.pdesign [↑N]`, the
+`always_comb` alias guard over `PDesign.instantiateGD2 X.pdesign [↑N]`; the goal is restated at the latter, the guard
+shown inert by a static check, `CombAliasInert.lean`), runs the recognizer `PDesign.summary` (a refusal is an error
+with the specific reason, naming the site), applies the theorem `comb_view`/`acyclic_view` (whose hypotheses are
+CHECKED by `rfl` and `decide`: the parameter stage, the structural facts, the fuel; at a symbolic `int` parameter
+the exact 32-bit reading of the parameters is checked against the summary's valuation from the range premises in
+context, `closeHag`), normalizes the player
 obligations, and returns them. It never discharges the in-range, disjointness or rank goals of a
 design with a generate loop or a parameter. Before returning them it SAMPLES them at small `N` (for the
 message only): a genuine violation is reported with the offending sites instead of an unprovable goal.
@@ -111,25 +115,32 @@ unsafe def evalLex (e : Expr) : MetaM (SiteId → Key) :=
       (mkConst ``LeanModels.Sv.CombView.Key)) e
 
 
-/-- `X.sem N` is `PDesign.instantiateGD2 X.pdesign [↑N]`: unfold until it shows. -/
-private partial def findGD2 (e : Expr) (fuel : Nat) : MetaM (Option (Expr × Expr)) := do
+namespace LeanModels.Sv.CombView
+
+/-- `X.sem N` is the alias-guarded family `PDesign.instantiateGDAlias2 X.pdesign [↑N]` (since ls-sv 7c9b7ac59;
+before it, and in a goal stated at it, the unguarded `PDesign.instantiateGD2 X.pdesign [↑N]`): unfold until one of
+them shows. The third component is `true` for the guarded family, which the tactics first rewrite to the unguarded
+one the comb theorems are stated for (`aliasInertEq`). -/
+partial def findGD2A (e : Lean.Expr) (fuel : Nat) : MetaM (Option (Lean.Expr × Lean.Expr × Bool)) := do
   let e ← whnfCore e
+  if e.isAppOfArity ``LeanModels.Sv.PDesign.instantiateGDAlias2 2 then
+    return some (e.getAppArgs[0]!, e.getAppArgs[1]!, true)
   if e.isAppOfArity ``LeanModels.Sv.PDesign.instantiateGD2 2 then
-    return some (e.getAppArgs[0]!, e.getAppArgs[1]!)
+    return some (e.getAppArgs[0]!, e.getAppArgs[1]!, false)
   match fuel with
   | 0 => return none
   | fuel + 1 =>
     match ← unfoldDefinition? e with
-    | some e' => findGD2 e' fuel
+    | some e' => findGD2A e' fuel
     | none => return none
 
-namespace LeanModels.Sv.CombView
-
-/-- `X.sem N` of a design WITH module instances is `PDesign.instantiateHD2 X.pdesign X.plib [↑N]` (`Hier2.lean`);
-the `sv_comb` tactics have no summary for it (WP-I, step I0: say so instead of "cannot read a family"). -/
+/-- `X.sem N` of a design WITH module instances is `PDesign.instantiateHDAlias2 X.pdesign X.plib [↑N]`
+(`PDesign.instantiateHD2` under the alias guard, `Hier2.lean`); the `sv_comb` tactics have no summary for it
+(WP-I, step I0: say so instead of "cannot read a family"). -/
 partial def isHD2Family (e : Lean.Expr) (fuel : Nat) : MetaM Bool := do
   let e ← whnfCore e
-  if e.isAppOfArity `LeanModels.Sv.PDesign.instantiateHD2 3 then
+  if e.isAppOfArity `LeanModels.Sv.PDesign.instantiateHD2 3 ||
+      e.isAppOfArity `LeanModels.Sv.PDesign.instantiateHDAlias2 3 then
     return true
   match fuel with
   | 0 => return false
@@ -144,6 +155,22 @@ def hierarchyRefusal (tac : String) : String :=
   "The loader, the scorer and the post-synthesis check accept such a design; the tactics do not. Flatten the design " ++
   "in the source (inline the instances into one module), or prove the structure by hand " ++
   "(`Examples/system-verilog/ripple_fa` is a worked by-hand proof of a hierarchical adder)"
+
+/-! ### The exact 32-bit `int` reading of the parameters at a symbolic point (`hag`)
+
+The instantiation binds an `int` parameter at `canonInt 32 true v` and an `int` localparam at its width-exact value
+(`PDesign.paramEnv2`, `int32 := true`), while the summary's valuation `s.val args` is the unbounded integer. At
+concrete arguments the two agree by `rfl`; at a symbolic one they agree where every value is in the signed 32-bit
+range, which the tactics show from the hypotheses in context (`closeHag`). -/
+
+theorem canonInt32_of_bounds {v : Int} (h1 : -2147483648 ≤ v) (h2 : v < 2147483648) :
+    canonInt 32 true v = v :=
+  canonInt32_of_range ⟨h1, h2⟩
+
+/-- `hag` one name at a time (the head of the parameter list). -/
+theorem hag_cons {f g : String → Option Int} {n : String} {ns : List String}
+    (h : f n = g n) (t : ns.map f = ns.map g) : (n :: ns).map f = (n :: ns).map g := by
+  rw [List.map_cons, List.map_cons, h, t]
 
 end LeanModels.Sv.CombView
 
@@ -308,6 +335,7 @@ changes, and a limit the player set higher is kept. -/
 def withDeepRec {α : Type} (x : TacticM α) : TacticM α :=
   withTheReader Core.Context (fun c => { c with maxRecDepth := max c.maxRecDepth 100000 }) x
 
+
 /-- **Decide the obligation of a flat netlist** (WP-P3b). `g` is an obligation goal (`s.DisjObl σ`,
 `s.CoverObl σ`, …) of the summary `s`; `lem` is the `…_of_plain` lemma that reduces it to a closed, decidable
 statement about the site list (`CombViewPlain.lean`, `CombEqPlain.lean`). When every site of `s` is plain and
@@ -341,6 +369,123 @@ partial def listElemExprs (e : Expr) : MetaM (Array Expr) := do
     | (``List.nil, _) => break
     | _ => throwError "sv_comb: cannot read a list expression element by element"
   return acc
+
+namespace LeanModels.Sv.CombView
+
+/-- **The alias guard, out of the way** (ls-sv 7c9b7ac59): the equation `D = pd.instantiateGD2 args` for the design
+`D` of the goal, which unfolds to the guarded family `pd.instantiateGDAlias2 args`. The static check
+`PDesign.aliasInert pd` (`CombAliasInert.lean`) is decided natively and by the kernel (`closeByDecide`); a design with
+an `always_comb` beside a continuous assignment fails it, and the tactic `tac` refuses the design, saying why. -/
+unsafe def aliasInertEq (tac : String) (D pd args : Lean.Expr) : MetaM Lean.Expr := do
+  let hqTy ← mkEq (mkApp (mkConst ``LeanModels.Sv.PDesign.aliasInert) pd) (mkConst ``Bool.true)
+  let hq ← mkFreshExprMVar hqTy
+  try closeByDecide hq.mvarId! "not inert"
+  catch _ =>
+    throwError "{tac}: the design family applies the `always_comb` alias guard (`X.sem N` is `PDesign.instantiateGDAlias2`, `CombAlias2.lean`), and the comb theorems are stated for the unguarded family `PDesign.instantiateGD2`. The tactics show that the guard keeps every process only for a design with no `always_comb` or with no continuous `assign` (`PDesign.aliasInert`, `CombAliasInert.lean`); this design has both, which is not covered yet"
+  let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
+  let pf := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert) pd
+    (← instantiateMVars hq) args
+  mkExpectedTypeHint pf (← mkEq D D')
+
+/-- Replace the design `D` by `D'` in the target of `g` along `hA : D = D'` (every occurrence). -/
+def rewriteDesign (g : MVarId) (hA : Lean.Expr) : MetaM MVarId := do
+  let r ← g.rewrite (← instantiateMVars (← g.getType)) hA
+  unless r.mvarIds.isEmpty do throwError "sv_comb: internal error: the design rewrite left goals"
+  g.replaceTargetEq r.eNew r.eqProof
+
+/-- A hypothesis `h : T[D]` as a proof of `T[D']`, along `hA : D = D'` (unchanged when `T` does not mention `D`). -/
+def transportDesign (h D hA : Lean.Expr) : MetaM Lean.Expr := do
+  let T ← instantiateMVars (← inferType h)
+  let Tabs ← kabstract T D
+  unless Tabs.hasLooseBVars do return h
+  let some (_, _, D') := (← instantiateMVars (← inferType hA)).eq?
+    | throwError "sv_comb: internal error: the design equation is not an equation"
+  let motive := Lean.mkLambda `x .default (← inferType D) Tabs
+  let eq ← mkCongrArg motive hA
+  mkExpectedTypeHint (← mkEqMP eq h) (Tabs.instantiate1 D')
+
+/-- The summary's valuation of a localparam definition as a term over the terms `m` of the names before it
+(`CE.eval`, operation for operation), so that it is definitionally `s.val args n`. -/
+partial def ceTerm (m : List (String × Lean.Expr)) : CE → MetaM Lean.Expr
+  | .lit v => pure (toExpr v)
+  | .ref n => pure ((m.lookup n).getD (toExpr (0 : Int)))
+  | .add a b => do mkAppM ``HAdd.hAdd #[← ceTerm m a, ← ceTerm m b]
+  | .sub a b => do mkAppM ``HSub.hSub #[← ceTerm m a, ← ceTerm m b]
+  | .mul a b => do mkAppM ``HMul.hMul #[← ceTerm m a, ← ceTerm m b]
+  | .divK a k => do mkAppM ``Int.tdiv #[← ceTerm m a, toExpr k]
+  | .modK a k => do mkAppM ``Int.tmod #[← ceTerm m a, toExpr k]
+  | .clog2 a => do
+      let n ← mkAppM ``LeanModels.Sv.clog2 #[← mkAppM ``Int.toNat #[← ceTerm m a]]
+      mkAppOptM ``Nat.cast #[mkConst ``Int, none, n]
+  | .clog2S a => do
+      let n ← mkAppM ``LeanModels.Sv.clog2 #[← mkAppM ``Int.toNat #[← ceTerm m a]]
+      let c ← mkAppOptM ``Nat.cast #[mkConst ``Int, none, n]
+      pure (mkApp3 (mkConst ``LeanModels.Sv.canonInt) (toExpr (32 : Nat)) (toExpr true) c)
+
+/-- **Close `hag`** (`s.params.map (fun n => env.intVal? n) = s.params.map (fun n => some (s.val args n))`), the
+agreement of the instantiation environment with the summary's valuation. At concrete arguments `rfl` decides it. At
+a symbolic argument the environment holds each `int` parameter and localparam at its exact 32-bit value, `canonInt 32
+true` of the argument or of the width-exact fold of the definition, and the valuation holds the unbounded integer:
+for each name the tactic reads the environment's value (by unification, the computation `rfl` did), states it against
+the valuation's value, and removes every `canonInt 32 true` whose argument `omega` shows to be in the signed 32-bit
+range from the hypotheses in context (`canonInt32_of_bounds`, with `Int.tdiv`/`Int.tmod` of a non-negative numerator
+as `/`/`%`). A value it cannot place in range is an error that names it: a theorem at a symbolic `int` parameter
+needs its range premise, e.g. `(hR : (N : Int) < 2147483648)`. -/
+unsafe def closeHag (tac : String) (g : MVarId) (sv : Summary) (args : Lean.Expr) : TacticM Unit := do
+  let what := "the parameter values could not be read off the instantiation environment"
+  let argsI ← instantiateMVars args
+  if !argsI.hasFVar && !argsI.hasMVar then
+    setGoals [g]
+    try evalTactic (← `(tactic| rfl)) catch e => throwError "{tac}: {what}\n{e.toMessageData}"
+    unless (← getGoals).isEmpty do throwError "{tac}: {what}"
+    return
+  g.withContext do
+    let ty ← instantiateMVars (← g.getType)
+    let some (_, lhs, rhs) := ty.eq? | throwError "{tac}: internal error: `hag` is not an equation"
+    unless lhs.isAppOfArity ``List.map 4 && rhs.isAppOfArity ``List.map 4 do
+      throwError "{tac}: internal error: `hag` is not an equation of two maps"
+    let f := lhs.getAppArgs[2]!
+    let gf := rhs.getAppArgs[2]!
+    let argEs ← listElemExprs argsI
+    let mut m : List (String × Lean.Expr) := (sv.params.zip argEs.toList).reverse
+    for (n, c) in sv.lps do
+      m := (n, ← ceTerm m c) :: m
+    let strT := mkConst ``String
+    let mut acc : Lean.Expr ← mkExpectedTypeHint
+      (← mkEqRefl (mkApp4 (mkConst ``List.map [Level.zero, Level.zero]) strT
+        (mkApp (mkConst ``Option [Level.zero]) (mkConst ``Int)) f (mkApp (mkConst ``List.nil [Level.zero]) strT)))
+      (← mkEq (mkApp4 (mkConst ``List.map [Level.zero, Level.zero]) strT
+          (mkApp (mkConst ``Option [Level.zero]) (mkConst ``Int)) f (mkApp (mkConst ``List.nil [Level.zero]) strT))
+        (mkApp4 (mkConst ``List.map [Level.zero, Level.zero]) strT
+          (mkApp (mkConst ``Option [Level.zero]) (mkConst ``Int)) gf (mkApp (mkConst ``List.nil [Level.zero]) strT)))
+    let mut suffix : List String := []
+    for n in sv.params.reverse do
+      let nE := toExpr n
+      let v ← mkFreshExprMVar (mkConst ``Int)
+      unless ← isDefEq (mkApp f nE).headBeta (← mkAppM ``Option.some #[v]) do
+        throwError "{tac}: {what}: `{n}` is not bound as a 32-bit signed `int` in the instantiation environment"
+      let v ← instantiateMVars v
+      let r := (m.lookup n).getD (toExpr (0 : Int))
+      unless ← isDefEq (mkApp gf nE).headBeta (← mkAppM ``Option.some #[r]) do
+        throwError "{tac}: internal error: the valuation of `{n}` is not `{r}`"
+      let pg ← mkFreshExprSyntheticOpaqueMVar (← mkEq (← mkAppM ``Option.some #[v]) (← mkAppM ``Option.some #[r]))
+      setGoals [pg.mvarId!]
+      try
+        evalTactic (← `(tactic| ((try simp (disch := omega) only [Int.ofNat_eq_natCast,
+            LeanModels.Sv.CombView.canonInt32_of_bounds, Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg,
+            Option.some.injEq]) <;> first | rfl | omega)))
+      catch _ =>
+        throwError "{tac}: {what}: at a symbolic parameter the instantiation holds `{n}` at its exact 32-bit `int` value `{v}`, which is the summary's `{r}` only where every value is in the signed 32-bit range [-2147483648, 2147483647], and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`)"
+      unless (← getGoals).isEmpty do throwError "{tac}: {what} (`{n}`)"
+      let h ← mkExpectedTypeHint (← instantiateMVars pg) (← mkEq (mkApp f nE) (mkApp gf nE))
+      acc := mkAppN (mkConst ``LeanModels.Sv.CombView.hag_cons) #[f, gf, nE, toExpr suffix, h, acc]
+      suffix := n :: suffix
+    unless ← isDefEq ty (← inferType acc) do
+      throwError "{tac}: internal error: the parameter list is not `{sv.params}`"
+    g.assign acc
+    setGoals []
+
+end LeanModels.Sv.CombView
 
 /-- **Below this many sites the grouped route is not taken** (WP-LIN). Listing the related sites costs a weak head
 normalization of the site list and of each site's reads, a fixed price that the avoided pairs only repay from a few sites on:
@@ -483,7 +628,7 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
     unless isComb || isAcyc do
       throwError "sv_structure: the goal must be `CombDesign (X.sem N)`, `Acyclic (X.sem N)`, their conjunction `CombDesign (X.sem N) ∧ Acyclic (X.sem N)`, or that conjunction with the shared obligations `∧ SharedObl X.pdesign [N]` (for `sv_equations`)"
     let dGoal := if isBoth then ty.appFn!.appArg!.appArg! else ty.appArg!
-    let some (pd, args) ← findGD2 dGoal 8
+    let some (pd, args, aliased) ← findGD2A dGoal 8
       | if (← isHD2Family dGoal 8) then throwError (hierarchyRefusal "sv_structure")
         else throwError "sv_structure: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConst? pd
@@ -547,6 +692,15 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
               (fun i => showKey (κ i)) then
             throwError "sv_structure: {m} {ctxMsg}{(s.rankReadNote σ (fun w r => decide (KLt (κ w) (κ r)))).getD ""}"
       -- the proof
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): the goal is restated at the unguarded family the
+      -- theorems are about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`), and so is `using hc`
+      let mut usingStx? := usingStx?
+      if aliased then
+        let hA ← aliasInertEq "sv_structure" dGoal pd args
+        replaceMainGoal [← rewriteDesign (← getMainGoal) hA]
+        if let some u := usingStx? then
+          let hcE ← Tactic.elabTerm u none
+          usingStx? := some (← Term.exprToSyntax (← transportDesign hcE dGoal hA)).raw
       let pdId := mkIdent pdName
       let replL ← if s.hasRepl then replSimpLemmas else pure #[]
       let pdL ← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)
@@ -649,7 +803,7 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_structure" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq)
@@ -760,7 +914,7 @@ unsafe def runSvInterface : TacticM Unit := do
     unless ty.isApp && ty.getAppNumArgs ≥ 3 && ty.getAppFn.isConst do
       throwError "sv_interface: the goal must be a task's interface statement `t.Interface N (X.sem N)`"
     let D := ty.appArg!
-    let some (pd, args) ← findGD2 D 8
+    let some (pd, args, aliased) ← findGD2A D 8
       | if (← isHD2Family D 8) then throwError (hierarchyRefusal "sv_interface")
         else throwError "sv_interface: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConst? pd
@@ -781,12 +935,18 @@ unsafe def runSvInterface : TacticM Unit := do
       unless probs.isEmpty do
         throwError "sv_interface: structural check failed:\n  {"\n  ".intercalate probs}"
       let pdId := mkIdent pdName
-      let hcI ← Term.exprToSyntax hcE
       let keyI := mkIdent `key
-      -- the goal over the unfolded family, so that `key` rewrites it syntactically
+      -- the goal over the unfolded family, so that `key` rewrites it syntactically; the alias-guarded family
+      -- (`X.sem N`, ls-sv 7c9b7ac59) is restated at the unguarded one (`aliasInertEq`), and so is the profile
       let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
-      let ty' := ty.replace fun e => if e == D then some D' else none
-      replaceMainGoal [← goal.replaceTargetDefEq ty']
+      let hcI ← if aliased then
+          let hA ← aliasInertEq "sv_interface" D pd args
+          replaceMainGoal [← rewriteDesign goal hA]
+          Term.exprToSyntax (← transportDesign hcE D hA)
+        else
+          let ty' := ty.replace fun e => if e == D then some D' else none
+          replaceMainGoal [← goal.replaceTargetDefEq ty']
+          Term.exprToSyntax hcE
       evalTactic (← `(tactic|
         have $keyI:ident := LeanModels.Sv.CombView.decls_view (s := ?s) (env := ?env) (hs := ?hs)
             (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hc := $hcI)))
@@ -820,7 +980,7 @@ unsafe def runSvInterface : TacticM Unit := do
           closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_interface" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       setGoals [bodyGoal]
       -- unfold the statement and the task, and evaluate the declarations' widths

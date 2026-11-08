@@ -491,18 +491,6 @@ unsafe def evalSummaryP (pd : Expr) : MetaM (Except String Summary) := do
     (mkConst ``LeanModels.Sv.CombView.Summary)
   evalExpr (Except String Summary) ty (mkApp (mkConst ``LeanModels.Sv.PDesign.summaryP) pd)
 
-/-- `X.sem N` is `PDesign.instantiateGD2 X.pdesign [↑N]`: unfold until it shows. -/
-private partial def findGD2L (e : Expr) (fuel : Nat) : MetaM (Option (Expr × Expr)) := do
-  let e ← whnfCore e
-  if e.isAppOfArity ``LeanModels.Sv.PDesign.instantiateGD2 2 then
-    return some (e.getAppArgs[0]!, e.getAppArgs[1]!)
-  match fuel with
-  | 0 => return none
-  | fuel + 1 =>
-    match ← unfoldDefinition? e with
-    | some e' => findGD2L e' fuel
-    | none => return none
-
 private partial def fvarsOfL (e : Expr) : Array FVarId := Id.run do
   let mut acc : Array FVarId := #[]
   repeat
@@ -558,7 +546,7 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
     let hasComb := (ty.find? (fun e => e.isConstOf ``LeanModels.Sv.CombDesign)).isSome
     let isAcyc := (ty.find? (fun e => e.isConstOf ``LeanModels.Sv.Acyclic)).isSome
     unless hasComb do throwUnsupportedSyntax
-    let some (pd, args) ← findGD2L lc.appArg! 8
+    let some (pd, args, aliased) ← findGD2A lc.appArg! 8
       | if (← isHD2Family lc.appArg! 8) then throwError (hierarchyRefusal "sv_structure")
         else throwError "sv_structure: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConstL? pd
@@ -633,6 +621,11 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
       let normR : TSyntax `tactic ←
         if s.hasRepl then `(tactic| (svL_norm [$keyLemmas,*]; (try simp only [$replL,*]); try svL_norm [$keyLemmas,*]))
         else `(tactic| svL_norm [$keyLemmas,*])
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): the goal restated at the unguarded family the
+      -- theorems are about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`)
+      if aliased then
+        let hA ← aliasInertEq "sv_structure" lc.appArg! pd args
+        replaceMainGoal [← rewriteDesign (← getMainGoal) hA]
       if !isAcyc then
         evalTactic (← `(tactic|
           refine LeanModels.Sv.CombView.comb_viewL (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity)
@@ -679,7 +672,7 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_structure" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       let mut out : Array MVarId := #[]
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq)
@@ -755,7 +748,7 @@ unsafe def runSvInterfaceL : TacticM Unit := do
     let D := ty.appArg!
     let some (hlN, X) ← findLowerHyp | throwUnsupportedSyntax
     unless ← isDefEq X D do throwUnsupportedSyntax
-    let some (pd, args) ← findGD2L D 8
+    let some (pd, args, aliased) ← findGD2A D 8
       | if (← isHD2Family D 8) then throwError (hierarchyRefusal "sv_interface")
         else throwError "sv_interface: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConstL? pd
@@ -767,11 +760,18 @@ unsafe def runSvInterfaceL : TacticM Unit := do
       unless probs.isEmpty do
         throwError "sv_interface: structural check failed:\n  {"\n  ".intercalate probs}"
       let pdId := mkIdent pdName
-      let hlI := mkIdent hlN
       let keyI := mkIdent `key
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59) is restated at the unguarded one
+      -- (`aliasInertEq`), and so is `hl`
       let D' := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
-      let ty' := ty.replace fun e => if e == D then some D' else none
-      replaceMainGoal [← goal.replaceTargetDefEq ty']
+      let hlI ← if aliased then
+          let hA ← aliasInertEq "sv_interface" D pd args
+          replaceMainGoal [← rewriteDesign goal hA]
+          Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName hlN).toExpr D hA)
+        else
+          let ty' := ty.replace fun e => if e == D then some D' else none
+          replaceMainGoal [← goal.replaceTargetDefEq ty']
+          pure (mkIdent hlN)
       evalTactic (← `(tactic|
         have $keyI:ident := LeanModels.Sv.CombEq.declsL_view (s := ?s) (env := ?env) (hs := ?hs)
             (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hl := $hlI)))
@@ -804,7 +804,7 @@ unsafe def runSvInterfaceL : TacticM Unit := do
           closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_interface" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       setGoals [bodyGoal]
       let headId := mkIdent ty.getAppFn.constName!
@@ -974,7 +974,7 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       | throwError "sv_equations: no hypothesis `CombDesign d'` in the context (prove it with `sv_structure`)"
     let some haN := ha?
       | throwError "sv_equations: no hypothesis `Acyclic d'` in the context (prove it with `sv_structure (rank := …)`)"
-    let some (pd, args) ← findGD2L X 8
+    let some (pd, args, aliased) ← findGD2A X 8
       | if (← isHD2Family X 8) then throwError (hierarchyRefusal "sv_equations")
         else throwError "sv_equations: cannot read a `load_design_sv2` family (`X.sem N`) off the design of `{hlN}`"
     let some pdName := headConstL? pd
@@ -998,7 +998,12 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       let eqAtN ← withRepl hasRepl replL keyI (← `(tactic| svL_eq_norm_at $keyI))
       let normR : TSyntax `tactic ←
         if hasRepl then `(tactic| (svL_norm; (try simp only [$replL,*]); try svL_norm)) else `(tactic| svL_norm)
-      let hlI := mkIdent hlN
+      -- the alias-guarded family (`X.sem N`, ls-sv 7c9b7ac59): `hl` restated at the unguarded family
+      -- (`aliasInertEq`); the other four are about the lowered design `d'`
+      let hlI ← if aliased then
+          let hA ← aliasInertEq "sv_equations" X pd args
+          Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName hlN).toExpr X hA)
+        else pure (mkIdent hlN)
       let hcI := mkIdent hcN
       let haI := mkIdent haN
       let heqsI := mkIdent heqsN
@@ -1048,7 +1053,7 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
       closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
-      closeWith `hag "the parameter values could not be read off the instantiation environment" (← `(tactic| rfl))
+      closeHag "sv_equations" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`; in an `always_comb`, the same at every leaf and a one-bit such expression as the condition)"
       let mut out : Array MVarId := #[]

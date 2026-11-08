@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a less-than-or-
+  equal comparison callable and native differential row.
+
 - Extended the value/object evaluator agreement battery with a greater-than
   comparison callable and native differential row.
 

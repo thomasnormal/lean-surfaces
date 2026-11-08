@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Extended the value/object evaluator agreement battery with a binary
+  subtraction callable and native differential row.
+
+- Extended the value/object evaluator agreement battery with a binary
   multiplication callable and native differential row.
 
 - Corrected the C++ differential harness to classify native assertion failures

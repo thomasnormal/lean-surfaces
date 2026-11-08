@@ -983,7 +983,8 @@ theorem row_chain_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
 
 /-- **The same chain over LOCALPARAM dimensions, rows `2N` bits wide** (`logic [R-1:0][C-1:0] r` with `R = N + 1`,
 `C = 2 * N`). -/
-theorem row_chain_lp_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+theorem row_chain_lp_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hRC : 2 * (N : Int) < 2147483648) :
     row_chain_lp.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x : BitVec (2 * N)), SvState.lookup st "x" = some (LVec.ofBitVec x) →
         SvState.lookup st "y" = some (LVec.ofBitVec (if N % 2 = 0 then x else ~~~x)) := by

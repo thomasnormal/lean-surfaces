@@ -38,7 +38,8 @@ info: sv_comb group: RankObl', 17 reads with 14 writers of 9 sites
 -/
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
-theorem lin_struct (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hRW : (W : Int) < 2147483648) (hRP : (P : Int) < 2147483648) :
+theorem lin_struct (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hRW : (W : Int) < 2147483648) (hRP : (P : Int) < 2147483648)
+    (hRK : (W : Int) + P < 2147483648) :
     CombDesign (lin_chain.sem W P) ∧ Acyclic (lin_chain.sem W P) := by
   sv_structure (rank := rippleRank (fun p => p / 2) (fun _ _ _ => 0))
   all_goals (intros; omega)
@@ -49,6 +50,7 @@ info: sv_comb group: CoverObl, 17 reads with 14 writers of 9 sites
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
 theorem lin_settled (W P : Nat) (hW : 2 ≤ W) (hP : 2 ≤ P) (hRW : (W : Int) < 2147483648) (hRP : (P : Int) < 2147483648)
+    (hRK : (W : Int) + P < 2147483648)
     (hc : CombDesign (lin_chain.sem W P))
     (ha : Acyclic (lin_chain.sem W P)) (st : SvState) (heqs : CombEqs (lin_chain.sem W P) st)
     (hsh : StateShape (lin_chain.sem W P) st) (x y : BitVec (W + P))

@@ -54,7 +54,8 @@ theorem row_chain_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) 
   all_goals (intros; sv_rowmajor; omega)
 
 /-- … over localparam dimensions, rows `2N` wide, … -/
-theorem row_chain_lp_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+theorem row_chain_lp_struct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+    (hRC : 2 * (N : Int) < 2147483648) :
     CombDesign (row_chain_lp.sem N) ∧ Acyclic (row_chain_lp.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; sv_rowmajor; omega)

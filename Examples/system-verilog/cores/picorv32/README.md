@@ -1193,3 +1193,31 @@ unsupported "Instantiate"
 [`probe.lean`](walls/probe.lean) guards both exact results.  The corresponding
 dated `REQUEST ls-sv:` asks the owner lane to admit these constructs with exact
 IEEE 1800 semantics while preserving loud refusal outside the supported shape.
+
+## Combined memory and parametric x/z clean-room repro
+
+Item 389 adds [`xz_memory.sv`](walls/xz_memory.sv), a minimal combined
+fixture: a parameter-sized unpacked memory is read and written by continuous
+assignments, and the write uses the unsized x/z literal `'bx`.  It is a
+measurement fixture, not a PicoRV32 adaptation and not a new semantic request;
+the two component boundaries are already catalogued above.
+
+The approved pyslang extractor produces a 9,020-byte envelope with SHA-256
+`cc40cd919372a91246472303ea75f1a9bb6cb569af0e4f9ad15161507fb3a610`.  The
+source SHA-256 is
+`b2f937bcacf45a96a2958dfc46c5b8239589dfcdc98c3e521f26bd4a04b0ed2f`.
+The exact guards in [`walls/probe.lean`](walls/probe.lean) record all three
+observations:
+
+* the ordinary route first refuses the unpacked `mem` declaration with
+  `decl 'mem': unpacked array storage outside E (UnpackedDecl:memory)`;
+* `pdesign.others` retains
+  `IntegerLiteral:unsized-xz-parametric` with text `'bx`;
+* the memory route returns
+  `memory cycle route does not yet admit unsupported module members`.
+
+The owner-branch probe at `3d11ff8f7` gives the same combined result: the
+first denied metadata is the already catalogued `IntegerLiteral:unsized-xz-parametric`
+`'bx`, after the admitted net-z members.  No duplicate `REQUEST ls-sv:` is
+filed; the symbolic ADDI invariant remains parked at the existing generic
+unpacked-memory and parametric-x/z walls.

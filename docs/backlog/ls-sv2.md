@@ -7497,3 +7497,36 @@ PicoRV32 load.
 memory-route member.  Keep the symbolic ADDI invariant parked at the
 unpacked-memory and parametric-x/z boundaries until the owner merge lands and
 the next generic loader wall is measured.
+
+## 2026-11-08-ls-sv2-389 — add a combined memory/xz clean-room measurement
+
+Item 389 adds `Examples/system-verilog/cores/picorv32/walls/xz_memory.sv`, a
+minimal source-shaped fixture that combines a parameter-sized unpacked memory
+with a continuous assignment of the unsized x/z literal `'bx`.  This is a
+generic measurement fixture, not a PicoRV32 adaptation and not a new semantic
+request: the unpacked-memory and parametric-x/z boundaries are already
+catalogued independently.
+
+**MEASURED:** The approved pyslang-11 extractor emitted the committed
+9,020-byte envelope with source SHA-256
+`b2f937bcacf45a96a2958dfc46c5b8239589dfcdc98c3e521f26bd4a04b0ed2f` and
+envelope SHA-256
+`cc40cd919372a91246472303ea75f1a9bb6cb569af0e4f9ad15161507fb3a610`.
+The exact Lean guards record the ordinary route's
+`decl 'mem': unpacked array storage outside E (UnpackedDecl:memory)` refusal,
+`pdesign.others = [("IntegerLiteral:unsized-xz-parametric", "'bx")]`, and the
+memory route's `memory cycle route does not yet admit unsupported module
+members` refusal.  The owner-branch probe at `3d11ff8f7` gives the same
+combined result, with `'bx` as the first denied metadata after the admitted
+net-z members.
+
+**CHANGED:** Added the clean-room source and approved envelope, extended
+`walls/probe.lean` with exact guards, and recorded the fixture in both
+PicoRV32 scouting READMEs.  No ls-sv-owned source, semantics, loader,
+extractor, RTL, or finite captured-window theorem was edited.  No duplicate
+`REQUEST ls-sv:` was filed.
+
+**JUDGED / DECIDED:** The combined fixture confirms that the current
+PicoRV32 frontier is still the existing unpacked-memory and parametric-x/z
+family; it does not justify a new owner request.  Keep the symbolic ADDI
+invariant parked until a corresponding generic loader change lands.

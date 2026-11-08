@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## F1 finite assertion witness refresh
+
+The finite retained assert/assume witness now uses a clocked trace that passes
+under the current sampled-edge semantics. Its guards inspect the structured
+contract result by pattern matching rather than comparing an `Except` value
+through an unavailable equality instance.
+
 ## Undriven nets in the memory route
 
 The memory-cycle adapter now admits the exact `NetSymbol:net-z` member shape

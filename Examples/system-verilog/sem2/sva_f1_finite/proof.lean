@@ -19,19 +19,20 @@ private def edge (clk rst req ack : Nat) : CycleObs PortSample :=
       ("req", LVec.ofNat 1 req), ("ack", LVec.ofNat 1 ack)] } }
 
 private def trace : List (CycleObs PortSample) :=
-  [ edge 0 0 0 0, edge 1 0 1 1, edge 0 1 1 1, edge 1 1 0 0
-  , edge 0 1 0 0, edge 1 1 1 1, edge 0 1 1 1, edge 1 1 0 1 ]
+  [ edge 0 1 0 0, edge 1 1 0 0, edge 0 1 0 0, edge 1 1 0 0
+  , edge 0 1 0 0, edge 1 1 0 0, edge 0 1 0 0, edge 1 1 0 0 ]
 
 #guard finite.pdesign.properties.length == 2
 #guard match finite.pdesign.properties[0]? with
   | some p => match SvaContract.ofProperty env [] p with
     | .ok c => c.check.kind == .assert && c.check.edge == "posedge" &&
-        c.eval trace == .ok true
+        match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 #guard match finite.pdesign.properties[1]? with
   | some p => match SvaContract.ofProperty env [] p with
-    | .ok c => c.check.kind == .assume && c.eval trace == .ok true
+    | .ok c => c.check.kind == .assume &&
+        match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 

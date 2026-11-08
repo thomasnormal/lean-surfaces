@@ -237,7 +237,8 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
     data_ne_sorted, data_ne_len,
-    hne, hfd, hnn, h0le, hlt, htn, hq]
+    hne, hfd, hnn, h0le, hlt, htn, hq, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
 
 /-- **Main theorem (`median_low`).** For every nonempty int list,
 CPython's `median_low` terminates and returns the element at sorted rank
@@ -277,7 +278,8 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
     data_ne_sorted, data_ne_len,
-      hne, hfd, hpar, hnn, h0le, hlt, htn, hq]
+      hne, hfd, hpar, hnn, h0le, hlt, htn, hq, pythonTopCallDepth,
+      pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
   · -- even length: return data[n // 2 - 1], and n//2 − 1 = (n-1)/2
     have hmod : (data.length : Int) % 2 = 0 := by
       rw [hm] at hpar; omega
@@ -300,8 +302,9 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     Run.liftRes, Run.toPublic, RVal.freezeB, Run.ok_bind, Run.exn_bind,
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
-    data_ne_sorted, data_ne_len,
-      hne, hfd, hpar, hnn, h1le, hlt, htn, hq]
+      data_ne_sorted, data_ne_len,
+      hne, hfd, hpar, hnn, h1le, hlt, htn, hq, pythonTopCallDepth,
+      pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
 
 /-! ## The public corollaries -/
 

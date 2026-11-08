@@ -11,8 +11,11 @@ kernel; the summary does), computes each site's depth (the rank of `sv_structure
 sites in depth order once into a gate program over one packed `Nat` (`compileNet`, checked once), and closes
 each output by one `decide +kernel` over all inputs of the run against the task's function (`exh_out`).
 `X.sem` is the alias-guarded family (`PDesign.instantiateGDAlias2`, ls-sv 7c9b7ac59): the comb theorems are
-applied at the unguarded `PDesign.instantiateGD2` along `PDesign.instantiateGDAlias2_of_aliasInert`
-(`CombAliasInert.lean`), and the no-qualified-`case` premise is `NoQ.semAlias_noQ` with the design passed
+applied at the unguarded `PDesign.instantiateGD2` along `PDesign.instantiateGDAlias2_of_lowerComb` for a design
+with `always_comb` processes (it lowers; `sv_structure` shows the guard inert at the guarded family, from the
+summary's names where the design also has continuous assigns, `CombProcAlias.lean`) and along
+`PDesign.instantiateGDAlias2_of_aliasInert` for a continuous-only one (`CombAliasInert.lean`), and the
+no-qualified-`case` premise is `NoQ.semAlias_noQ` with the design passed
 explicitly (left to unification it is a metavariable: `X.sem` does not unfold to `?d.instantiateGDAlias2 ?args`
 below the `processes` projection).
 A failing output reports the first input and output bit where the netlist and the task differ.
@@ -89,15 +92,21 @@ unsafe def runSvExhaustive : TacticM Unit := withDeepRec do
   let (OFF, ORD, PROG, RK) := (← `(layout $S (Summary.val $S [])), ← lit (toString (repr ord)),
     ← lit (toString (repr prog)), ← lit (toString (repr rk)))
   -- `X.sem` is the alias-guarded family (ls-sv 7c9b7ac59); the comb theorems below are stated at the unguarded one
-  evalTactic (← `(tactic| have hA : $D = LeanModels.Sv.PDesign.instantiateGD2 $PD [] :=
-    LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert (d := $PD) (by sv_decide) []))
+  -- (`hA`). A design with `always_comb` processes lowers (`hl`, which `sv_structure` proves at the guarded family,
+  -- for an `always_comb` beside continuous assigns too: `Summary.aliasOk`, `CombProcAlias.lean`), and a guarded
+  -- design that lowers is its own guard (`PDesign.instantiateGDAlias2_of_lowerComb`); a continuous-only design is
+  -- its own guard by the static check (`PDesign.instantiateGDAlias2_of_aliasInert`).
   if proc then evalTactic (← `(tactic| (
     obtain ⟨d', hl, hc, ha⟩ : ∃ d', LeanModels.Sv.Design2.lowerComb $D = some d' ∧ LeanModels.Sv.CombDesign d' ∧
         LeanModels.Sv.Acyclic d' := by
       sv_structure (rank := rippleRank (fun p => ($RK : List Nat).getD p 0) (fun _ _ _ => 0)); all_goals (intros; omega)
+    have hA : $D = LeanModels.Sv.PDesign.instantiateGD2 $PD [] :=
+      LeanModels.Sv.PDesign.instantiateGDAlias2_of_lowerComb (d := $PD) (args := []) hl
     refine $(mkIdent `SvGolf.CombTask.satisfiedAt_of_lowered) (by sv_interface) hl hc ha
       (LeanModels.Sv.NoQ.semAlias_noQ (d := $PD) (by sv_decide) _) ?_)))
   else evalTactic (← `(tactic| (
+    have hA : $D = LeanModels.Sv.PDesign.instantiateGD2 $PD [] :=
+      LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert (d := $PD) (by sv_decide) []
     obtain ⟨hc, ha⟩ : LeanModels.Sv.CombDesign $D ∧ LeanModels.Sv.Acyclic $D := by
       sv_structure (rank := rippleRank (fun p => ($RK : List Nat).getD p 0) (fun _ _ _ => 0))
     refine $(mkIdent `SvGolf.CombTask.satisfiedAt_of_comb) (by sv_interface) hc ha ?_)))
@@ -157,8 +166,9 @@ unsafe def runSvExhaustive : TacticM Unit := withDeepRec do
         ∀ i < Summary.dw $S (Summary.val $S []) p.1, st.boolAt p.1 i = p.2.testBit i := by
       simp only [List.forall_mem_cons, List.mem_nil_iff, false_implies, implies_true, and_true]; exact $hxss
     have ht : topoG (inBits $OFF (Summary.dw $S (Summary.val $S [])) $NAMES) [] $PROG = true := by sv_decide)))
-  -- one goal per output, each closed by one exhaustive decision
-  if (← getMainTarget).isAppOfArity ``And 2 then
+  -- one goal per output, each closed by one exhaustive decision (the target is under an `mdata` here: a design with
+  -- several outputs has a conjunction behind it)
+  if (← getMainTarget).consumeMData.isAppOfArity ``And 2 then
     evalTactic (← `(tactic| repeat' refine And.intro ?_ ?_))
   for g in ← getGoals do
     setGoals [g]

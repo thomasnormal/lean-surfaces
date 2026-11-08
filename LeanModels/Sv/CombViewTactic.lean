@@ -172,6 +172,19 @@ theorem hag_cons {f g : String → Option Int} {n : String} {ns : List String}
     (h : f n = g n) (t : ns.map f = ns.map g) : (n :: ns).map f = (n :: ns).map g := by
   rw [List.map_cons, List.map_cons, h, t]
 
+/-- `$clog2` of a positive value is below it (`clog2 1 = 0`, and `clog2 n = log2 (n - 1) + 1 < n`): the fact that puts
+`$clog2(N) + 1` in the 32-bit range wherever `N` is. The tactics hand it to `omega` with `clog2_le` for every `clog2`
+of a range goal (`addClog2Facts`). -/
+theorem clog2_zero_or_lt (n : Nat) : n = 0 ∨ LeanModels.Sv.clog2 n < n := by
+  unfold LeanModels.Sv.clog2
+  by_cases h : n ≤ 1
+  · rw [if_pos h]; omega
+  · rw [if_neg h]
+    right
+    have h2 : n - 1 ≠ 0 := by omega
+    have := (Nat.log2_lt h2).2 (Nat.lt_two_pow_self (n := n - 1))
+    omega
+
 end LeanModels.Sv.CombView
 
 /-- The free variables of an expression. -/
@@ -433,6 +446,44 @@ partial def ceTerm (m : List (String × Lean.Expr)) : CE → MetaM Lean.Expr
       let c ← mkAppOptM ``Nat.cast #[mkConst ``Int, none, n]
       pure (mkApp3 (mkConst ``LeanModels.Sv.canonInt) (toExpr (32 : Nat)) (toExpr true) c)
 
+/-- The arguments `a` of the `clog2 a` subterms of `e` (closed under no binder). -/
+partial def clog2Args (e : Lean.Expr) : Array Lean.Expr :=
+  match e with
+  | .app f a =>
+      (if e.isAppOfArity ``LeanModels.Sv.clog2 1 && !a.hasLooseBVars then #[a] else #[]) ++ clog2Args f ++
+        clog2Args a
+  | .lam _ t b _ | .forallE _ t b _ => clog2Args t ++ clog2Args b
+  | .letE _ t v b _ => clog2Args t ++ clog2Args v ++ clog2Args b
+  | .mdata _ b | .proj _ _ b => clog2Args b
+  | _ => #[]
+
+/-- `a` and the forms the tactics' `simp` sets give it (`Int.ofNat n` as `↑n`, then `(↑n).toNat` as `n`): `omega` reads
+`clog2 a` as an atom up to syntax, so a fact is stated for each. -/
+def clog2Variants (a : Lean.Expr) : Array Lean.Expr :=
+  let cast (x : Lean.Expr) : Lean.Expr :=
+    mkApp3 (mkConst ``Nat.cast [Level.zero]) (mkConst ``Int) (mkConst ``instNatCastInt) x
+  let a1 := a.replace fun x => if x.isAppOfArity ``Int.ofNat 1 then some (cast x.appArg!) else none
+  let a2 := a1.replace fun x =>
+    if x.isAppOfArity ``Int.toNat 1 && x.appArg!.isAppOfArity ``Nat.cast 3 then some x.appArg!.appArg! else none
+  #[a, a1, a2]
+
+/-- Put `clog2_le a` and `clog2_zero_or_lt a` in the context of the main goal for every `clog2 a` of the terms `es`, for
+`omega` (which reads `clog2 a` as an atom). -/
+def addClog2Facts (es : Array Lean.Expr) : TacticM Unit := do
+  let mut seen : Array Lean.Expr := #[]
+  for e in es do
+    for a in (clog2Args (← instantiateMVars e)).flatMap clog2Variants do
+      if seen.contains a then continue
+      seen := seen.push a
+      let g ← getMainGoal
+      let h1 := mkApp (mkConst ``LeanModels.Sv.CombView.clog2_le) a
+      let h2 := mkApp (mkConst ``LeanModels.Sv.CombView.clog2_zero_or_lt) a
+      let g ← g.assert `hclog2_le (← inferType h1) h1
+      let (_, g) ← g.intro1P
+      let g ← g.assert `hclog2_lt (← inferType h2) h2
+      let (_, g) ← g.intro1P
+      replaceMainGoal [g]
+
 /-- **Close `hag`** (`s.params.map (fun n => env.intVal? n) = s.params.map (fun n => some (s.val args n))`), the
 agreement of the instantiation environment with the summary's valuation. At concrete arguments `rfl` decides it. At
 a symbolic argument the environment holds each `int` parameter and localparam at its exact 32-bit value, `canonInt 32
@@ -481,6 +532,7 @@ unsafe def closeHag (tac : String) (g : MVarId) (sv : Summary) (args : Lean.Expr
         throwError "{tac}: internal error: the valuation of `{n}` is not `{r}`"
       let pg ← mkFreshExprSyntheticOpaqueMVar (← mkEq (← mkAppM ``Option.some #[v]) (← mkAppM ``Option.some #[r]))
       setGoals [pg.mvarId!]
+      addClog2Facts #[v, r]
       try
         evalTactic (← `(tactic| ((try simp (disch := omega) only [Int.ofNat_eq_natCast,
             LeanModels.Sv.CombView.canonInt32_of_bounds, Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg,
@@ -495,6 +547,103 @@ unsafe def closeHag (tac : String) (g : MVarId) (sv : Summary) (args : Lean.Expr
       throwError "{tac}: internal error: the parameter list is not `{sv.params}`"
     g.assign acc
     setGoals []
+
+/-! ### The parameter stage at a symbolic point (`h1`)
+
+`h1 : pd.paramEnv2 args = .ok ?env` is the instantiation environment, computed by `rfl`. At a symbolic `int`
+argument the computation carries `canonInt 32 true v`, the exact 32-bit value, and it stops wherever it DECIDES on such a
+value: the sign test of `$clog2` (`$clog2` of a negative value is an error), and any fold after it. `closeParamEnv`
+first tries `rfl`; where `rfl` is stuck it evaluates the left-hand side with `canonInt` held back
+(`whnfCanon`) down to the first `canonInt 32 true x` the evaluation needs (`exposeCanon`: the term is reduced only along
+the path to it, so it is definitionally the goal's), shows `x` in the signed 32-bit range from the hypotheses in context
+(`omega`, with `Int.tdiv`/`Int.tmod` of a non-negative numerator as `/`/`%` and the `clog2` facts), rewrites
+`canonInt 32 true x` to `x` (`canonInt32_of_bounds`) and tries `rfl` again. Every rewrite is a kernel-checked equation;
+the environment the final `rfl` computes holds the values in range, as the summary does. A value it cannot place in
+range is an error that names it. -/
+
+/-- `whnf` with `canonInt` held back. -/
+def whnfCanon (e : Lean.Expr) : MetaM Lean.Expr :=
+  withCanUnfoldPred (fun _ ci => pure (ci.name != ``LeanModels.Sv.canonInt)) (whnf e)
+
+/-- **The first `canonInt` an evaluation needs**: `e` reduced along the path to the first stuck application
+`t = canonInt w s x` with `x` mentioning a free variable (the innermost one first), definitionally `e`, with `t` a
+syntactic subterm; subterms that already contain `t` are kept unreduced. `none`: no such application. -/
+partial def exposeCanon (e : Lean.Expr) (fuel : Nat) : MetaM (Option (Lean.Expr × Lean.Expr)) := do
+  if fuel == 0 || !e.hasFVar then return none
+  let e' ← whnfCanon e
+  let found? : Option (Lean.Expr × Lean.Expr) ← do
+    if e'.isAppOfArity ``LeanModels.Sv.canonInt 3 then
+      let x := e'.appArg!
+      match ← exposeCanon x (fuel - 1) with
+      | some (x', t) =>
+          pure (some (mkApp e'.appFn! (if (x.find? (· == t)).isSome then x else x'), t))
+      | none => pure (if x.hasFVar then some (e', e') else none)
+    else if e'.isApp then
+      let fn := e'.getAppFn
+      let args := e'.getAppArgs
+      let mut res : Option (Lean.Expr × Lean.Expr) := none
+      for i in [0:args.size] do
+        let a := args[i]!
+        if a.isLambda || a.isSort || a.hasLooseBVars then continue
+        if (← isType a) || (← isProof a) then continue
+        if let some (a', t) ← exposeCanon a (fuel - 1) then
+          res := some (mkAppN fn (args.set! i (if (a.find? (· == t)).isSome then a else a')), t)
+          break
+      pure res
+    else if let .proj sn i b := e' then
+      -- a projection of a stuck structure (`Decidable.decide` of a stuck instance)
+      match ← exposeCanon b (fuel - 1) with
+      | some (b', t) => pure (some (.proj sn i (if (b.find? (· == t)).isSome then b else b'), t))
+      | none => pure none
+    else pure none
+  match found? with
+  | some (e'', t) => return some (if (e.find? (· == t)).isSome then e else e'', t)
+  | none => return none
+
+/-- **Close `h1`** (`pd.paramEnv2 args = .ok ?env`): `rfl`, or, where the computation stops at an exact 32-bit
+value, the rewrites described above, then `rfl`. -/
+unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
+  let what := "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter"
+  let tryRfl (g : MVarId) : TacticM Bool := do
+    let st ← saveState
+    setGoals [g]
+    try
+      evalTactic (← `(tactic| rfl))
+      if (← getGoals).isEmpty then return true
+      st.restore; return false
+    catch _ =>
+      st.restore; return false
+  if ← tryRfl g then return
+  let mut g := g
+  for _ in [0:32] do
+    let some (gN, t, x) ← g.withContext do
+        let ty ← instantiateMVars (← g.getType)
+        let some (_, lhs, rhs) := ty.eq? | throwError "{tac}: internal error: `h1` is not an equation"
+        let some (lhs', t) ← exposeCanon lhs 400 | return none
+        let x := t.appArg!
+        let ws := t.appFn!.appFn!.appArg!
+        let sg := t.appFn!.appArg!
+        unless (← isDefEq ws (toExpr (32 : Nat))) && (← isDefEq sg (toExpr true)) do
+          throwError "{tac}: {what}: the instantiation evaluates `{t}` at a symbolic parameter (only the 32-bit signed reading, `canonInt 32 true`, is placed in range)"
+        let g1 ← g.replaceTargetDefEq (← mkEq lhs' rhs)
+        pure (some (g1, t, x))
+      | throwError "{tac}: {what}"
+    -- `x` in the signed 32-bit range, from the hypotheses in context (the hypotheses of `canonInt32_of_bounds`)
+    let pfFn := mkApp (mkConst ``LeanModels.Sv.CombView.canonInt32_of_bounds) x
+    let (bs, _, _) ← gN.withContext do forallMetaTelescopeReducing (← inferType pfFn)
+    for b in bs do
+      setGoals [b.mvarId!]
+      addClog2Facts #[x]
+      try
+        evalTactic (← `(tactic| ((try simp (disch := omega) only [Int.ofNat_eq_natCast, Int.toNat_natCast,
+            Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg]) <;> omega)))
+      catch _ =>
+        throwError "{tac}: {what}: the instantiation decides on `{t}`, the exact 32-bit `int` value of `{x}`, which is `{x}` only in the signed 32-bit range [-2147483648, 2147483647], and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`, and a derived value one of its own)"
+      unless (← getGoals).isEmpty do throwError "{tac}: {what} (`{x}` in range)"
+    let eq ← instantiateMVars (mkAppN pfFn bs)
+    g ← gN.withContext do rewriteDesign gN eq
+    if ← tryRfl g then return
+  throwError "{tac}: {what}"
 
 end LeanModels.Sv.CombView
 
@@ -813,7 +962,7 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
-      closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
+      closeParamEnv "sv_structure" (← find `h1)
       closeHag "sv_structure" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       let mut out : Array MVarId := #[]
@@ -990,7 +1139,7 @@ unsafe def runSvInterface : TacticM Unit := do
           -- false (or not evaluable): the kernel decision, for its own report, as before WP-P
           closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
-      closeWith `h1 "the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter" (← `(tactic| rfl))
+      closeParamEnv "sv_interface" (← find `h1)
       closeHag "sv_interface" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       setGoals [bodyGoal]

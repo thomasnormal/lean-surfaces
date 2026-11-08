@@ -10,6 +10,11 @@ has few input bits. It reads the design's SUMMARY (`X.sem`, `PDesign.instantiate
 kernel; the summary does), computes each site's depth (the rank of `sv_structure`, no table), compiles the
 sites in depth order once into a gate program over one packed `Nat` (`compileNet`, checked once), and closes
 each output by one `decide +kernel` over all inputs of the run against the task's function (`exh_out`).
+`X.sem` is the alias-guarded family (`PDesign.instantiateGDAlias2`, ls-sv 7c9b7ac59): the comb theorems are
+applied at the unguarded `PDesign.instantiateGD2` along `PDesign.instantiateGDAlias2_of_aliasInert`
+(`CombAliasInert.lean`), and the no-qualified-`case` premise is `NoQ.semAlias_noQ` with the design passed
+explicitly (left to unification it is a metavariable: `X.sem` does not unfold to `?d.instantiateGDAlias2 ?args`
+below the `processes` projection).
 A failing output reports the first input and output bit where the netlist and the task differ.
 
 The kernel rule (measured on the 113-gate S-box): NO QUADRATIC OR STRING-KEYED CHECKS IN THE KERNEL; PROVE
@@ -83,12 +88,15 @@ unsafe def runSvExhaustive : TacticM Unit := withDeepRec do
     else `((LeanModels.Sv.PDesign.summary $PD).toOption.getD default)
   let (OFF, ORD, PROG, RK) := (← `(layout $S (Summary.val $S [])), ← lit (toString (repr ord)),
     ← lit (toString (repr prog)), ← lit (toString (repr rk)))
+  -- `X.sem` is the alias-guarded family (ls-sv 7c9b7ac59); the comb theorems below are stated at the unguarded one
+  evalTactic (← `(tactic| have hA : $D = LeanModels.Sv.PDesign.instantiateGD2 $PD [] :=
+    LeanModels.Sv.PDesign.instantiateGDAlias2_of_aliasInert (d := $PD) (by sv_decide) []))
   if proc then evalTactic (← `(tactic| (
     obtain ⟨d', hl, hc, ha⟩ : ∃ d', LeanModels.Sv.Design2.lowerComb $D = some d' ∧ LeanModels.Sv.CombDesign d' ∧
         LeanModels.Sv.Acyclic d' := by
       sv_structure (rank := rippleRank (fun p => ($RK : List Nat).getD p 0) (fun _ _ _ => 0)); all_goals (intros; omega)
     refine $(mkIdent `SvGolf.CombTask.satisfiedAt_of_lowered) (by sv_interface) hl hc ha
-      (LeanModels.Sv.NoQ.sem_noQ (by sv_decide) _) ?_)))
+      (LeanModels.Sv.NoQ.semAlias_noQ (d := $PD) (by sv_decide) _) ?_)))
   else evalTactic (← `(tactic| (
     obtain ⟨hc, ha⟩ : LeanModels.Sv.CombDesign $D ∧ LeanModels.Sv.Acyclic $D := by
       sv_structure (rank := rippleRank (fun p => ($RK : List Nat).getD p 0) (fun _ _ _ => 0))
@@ -132,14 +140,18 @@ unsafe def runSvExhaustive : TacticM Unit := withDeepRec do
       (hself := noSelfRead_of_plain (by sv_decide) (by sv_decide) (by sv_decide))
       (hwid := widthOblL_of_plain (by sv_decide) (by sv_decide))
       (hbit := Summary.bitReadObl_of_plain _ _ (by sv_decide) (by sv_decide))
-      (hcov := Summary.coverObl_of_plain _ _ (by sv_decide) (by sv_decide)) (hinK := hinK) hl hc ha heqs hs)
+      (hcov := Summary.coverObl_of_plain _ _ (by sv_decide) (by sv_decide)) (hinK := hinK)
+      (Eq.mp (congrArg (fun x => LeanModels.Sv.Design2.lowerComb x = some d') hA) hl) hc ha heqs hs)
       else `(eqsL_of_eqs (by sv_decide) (LeanModels.Sv.CombEq.eq_view (s := $S) (args := []) (hs := rfl)
       (harity := rfl) (h1 := rfl) (hag := rfl) (hok := by sv_decide) (hfrag := by sv_decide)
       (hauto := Summary.autoObl_of_plain _ _ _ (by sv_decide) (by sv_decide))
       (hin := Summary.inRangeObl_of_plain _ _ (by sv_decide) (by sv_decide))
       (hwid := Summary.widthObl_of_plain _ _ (by sv_decide) (by sv_decide))
       (hbit := Summary.bitReadObl_of_plain _ _ (by sv_decide) (by sv_decide))
-      (hcov := Summary.coverObl_of_plain _ _ (by sv_decide) (by sv_decide)) (hinK := hinK) hc ha heqs hs)))
+      (hcov := Summary.coverObl_of_plain _ _ (by sv_decide) (by sv_decide)) (hinK := hinK)
+      (Eq.mp (congrArg LeanModels.Sv.CombDesign hA) hc) (Eq.mp (congrArg LeanModels.Sv.Acyclic hA) ha)
+      (Eq.mp (congrArg (fun x => LeanModels.Sv.CombEqs x st) hA) heqs)
+      (Eq.mp (congrArg (fun x => LeanModels.Sv.StateShape x st) hA) hs))))
     have hc : compileNet $S (Summary.val $S []) $OFF $ORD = some $PROG := by sv_decide
     have hxs : ∀ p ∈ $XS, p.2 < 2 ^ Summary.dw $S (Summary.val $S []) p.1 ∧
         ∀ i < Summary.dw $S (Summary.val $S []) p.1, st.boolAt p.1 i = p.2.testBit i := by

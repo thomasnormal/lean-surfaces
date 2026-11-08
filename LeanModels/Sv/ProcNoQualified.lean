@@ -229,11 +229,33 @@ theorem sem_noQ {d : PDesign} (hq : pdQ d = true) (args : List Int) :
     · simp only [h p hp, Bool.false_eq_true, not_false_eq_true]
     · simp only [Process2.hasQualifiedCase, Bool.false_eq_true, not_false_eq_true]
 
+/-- **… and in the alias-guarded family** `d.instantiateGDAlias2 args`, which is what `X.sem N` is since ls-sv
+7c9b7ac59: the guard keeps every process or turns an `always_comb` into a loud `unsupported` one, and neither
+has a `case`. The design is an explicit argument for the callers that build this premise (`sv_exhaustive`): the
+family `X.sem N` does not unify with `?d.instantiateGDAlias2 ?args` below a projection, so `d` cannot be left to
+unification. -/
+theorem semAlias_noQ {d : PDesign} (hq : pdQ d = true) (args : List Int) :
+    (d.instantiateGDAlias2 args).processes.toList.any Process2.hasQualifiedCase = false := by
+  have h := List.any_eq_false.mp (sem_noQ hq args)
+  unfold PDesign.instantiateGDAlias2
+  rw [Design2.aliasGuard_processes]
+  refine List.any_eq_false.mpr fun p hp => ?_
+  obtain ⟨q, hq', rfl⟩ := List.mem_map.mp hp
+  have hq0 := h q hq'
+  cases q <;> simp only [aliasGuardProc] <;> (try split) <;>
+    simp_all [Process2.hasQualifiedCase]
+
 /--
 info: 'LeanModels.Sv.NoQ.sem_noQ' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms sem_noQ
+
+/--
+info: 'LeanModels.Sv.NoQ.semAlias_noQ' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms semAlias_noQ
 
 end NoQ
 end LeanModels.Sv

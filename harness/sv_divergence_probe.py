@@ -88,6 +88,14 @@ import sys
 import tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXTERNAL_TIMEOUT = 600
+# PATH may contain a vendor wrapper (or a license-gated frontend) named
+# ``yosys``.  The probe is a measurement instrument, so default to the
+# pinned open-source executable and make an override explicit for other hosts.
+YOSYS = os.environ.get(
+    "SV_YOSYS",
+    "/scratch/thomas-ahle/tools/mamba/envs/mox/bin/yosys",
+)
 
 # Pinned at DECLARED time; a change in either direction is a guard failure.
 #
@@ -117,18 +125,19 @@ def _grep_count(pattern, path, flags=""):
         if os.path.isdir(path):
             out = subprocess.run(
                 ["grep", "-r" + flags, "-o", pattern, path, "--include=*.lean"],
-                capture_output=True, text=True)
+                capture_output=True, text=True, timeout=EXTERNAL_TIMEOUT)
             if out.returncode >= 2:
                 return None
             return len([l for l in out.stdout.splitlines() if l.strip()])
         if not os.path.isfile(path):
             return None
         out = subprocess.run(["grep", "-c" + flags, pattern, path],
-                             capture_output=True, text=True)
+                             capture_output=True, text=True,
+                             timeout=EXTERNAL_TIMEOUT)
         if out.returncode >= 2:
             return None
         return int(out.stdout.strip() or 0)
-    except (OSError, ValueError):
+    except (OSError, ValueError, subprocess.TimeoutExpired):
         return None
 
 
@@ -371,10 +380,12 @@ def _icarus_y(fx, stim):
                 sim = os.path.join(work, "sim")
                 c = subprocess.run(["iverilog", "-g2012", "-o", sim, "tb.sv",
                                     os.path.join(REPO, fx["sv"])],
-                                   cwd=work, capture_output=True, text=True)
+                                   cwd=work, capture_output=True, text=True,
+                                   timeout=EXTERNAL_TIMEOUT)
                 if c.returncode == 0:
                     r = subprocess.run(["vvp", sim], cwd=work,
-                                       capture_output=True, text=True)
+                                       capture_output=True, text=True,
+                                       timeout=EXTERNAL_TIMEOUT)
                     ys = [dict(kv.split("=", 1) for kv in ln.split()[2:])["y"]
                           for ln in r.stdout.splitlines() if ln.startswith("CYCLE ")]
                     if r.returncode == 0 and len(ys) == len(stim):
@@ -396,7 +407,8 @@ def _yosys_vs_settle(fx):
     if key in _DIV3_CACHE:
         return _DIV3_CACHE[key]
     result = None
-    if shutil.which("yosys"):
+    yosys = YOSYS if os.path.isfile(YOSYS) and os.access(YOSYS, os.X_OK) else None
+    if yosys:
         ins = [p for p in fx["ports"] if p[1] == "in"]
         width = sum(p[2] for p in ins)
         points = []
@@ -412,7 +424,8 @@ def _yosys_vs_settle(fx):
         script += " ".join("eval %s -show y;" % " ".join(
             "-set %s %d'b%s" % (k, len(b), b) for k, b in v.items()) for v in points)
         try:
-            y = subprocess.run(["yosys", "-p", script], capture_output=True, text=True)
+            y = subprocess.run([yosys, "-p", script], capture_output=True, text=True,
+                               timeout=EXTERNAL_TIMEOUT)
             got = re.findall(r"Eval result: \\y = (\d+)'([01xz]+)\.", y.stdout)
             if y.returncode == 0 and len(got) == len(points):
                 bad = []
@@ -421,7 +434,7 @@ def _yosys_vs_settle(fx):
                     if b != fx["settle"](v):
                         bad.append("%s->%s" % (v, b))
                 result = (bad, len(points))
-        except OSError:
+        except (OSError, subprocess.TimeoutExpired):
             result = None
     _DIV3_CACHE[key] = result
     return result

@@ -701,6 +701,15 @@
       "measured": "A one-rank parameter-sized unpacked memory stays source-shaped in E: reset and sequential cell writes commit through MemState, and q observes mem[0]."
     },
     {
+      "name": "net_decl_driver",
+      "example": "sem2/net_decl_driver",
+      "top": "net_decl_driver",
+      "mode": "timed",
+      "signals": ["a", "c"],
+      "stimulus": [],
+      "measured": "2026-11-09: IEEE 1800-2023 §10.3.1 makes `wire [3:0] c = a` a continuous driver. Icarus 13.0 and Xcelium 24.03 both print P03 post=5 after a changes; the source-shaped timed row keeps c's initial z state and the declaration assignment as its own driver."
+    },
+    {
       "name": "wire_generate",
       "example": "wire_generate",
       "top": "wire_generate",

@@ -1758,6 +1758,15 @@
       "ticks": 4
     },
     {
+      "name": "net_decl_driver_timed",
+      "file": "Examples/system-verilog/sem2/net_decl_driver/net_decl_driver.sv",
+      "module": "net_decl_driver",
+      "oracle": ["P03 post=5"],
+      "expect": "match",
+      "mode": "timed",
+      "ticks": 4
+    },
+    {
       "name": "always_no_control_refuse",
       "file": "Examples/system-verilog/always_no_control_refuse/always_no_control_refuse.sv",
       "module": "top",

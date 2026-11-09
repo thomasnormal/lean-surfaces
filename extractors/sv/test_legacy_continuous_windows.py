@@ -60,6 +60,19 @@ class LegacyContinuousWindows(unittest.TestCase):
             "name": "value[0]",
         })
 
+    def test_net_declaration_initializer_is_a_continuous_driver(self):
+        envelope = self.extract(
+            "module top; reg [3:0] a = 0; wire [3:0] c = a; "
+            "initial begin #1 a = 4'd5; #1 $display(\"%0d\", c); "
+            "$finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        net = next(d for d in module["decls"] if d["name"] == "c")
+        self.assertEqual(net["kind"], "Net")
+        self.assertEqual(net["init"]["bits"], "zzzz")
+        self.assertEqual(module["processes"][0]["kind"], "Assign")
+        self.assertEqual(module["processes"][0]["target"]["name"], "c")
+        self.assertTrue(module["processes"][0]["net_declaration_assign"])
+
     def test_nested_fixed_array_cells_flatten_in_source_order(self):
         envelope = self.extract(
             "module top; bit [3:0] value [2][3]; "

@@ -2356,6 +2356,31 @@ _ASSOC_CELLS = {}
 _LEGACY_NET_ALIASES = {}
 _LEGACY_NET_ALIAS_NODES = set()
 _LEGACY_NET_ALIAS_SYMBOLS = set()
+_M0_NET_PENDING = []
+
+
+def _queue_m0_net_initializer(sm, symbol, width):
+    """Retain a net declaration assignment as its own continuous driver.
+
+    IEEE 1800-2023 §10.3.1 gives ``wire [w] n = e`` continuous-assignment
+    semantics.  The legacy envelope has no declaration-initializer driver
+    field, so keep the net's initial z state and place the source-shaped
+    `Assign` beside the declaration while converting that module.  This is
+    intentionally limited to the single-driver shape checked by
+    ``convert_net``; competing drivers remain loud.
+    """
+    global _M0_NET_PENDING
+    init = getattr(symbol, "initializer", None)
+    if init is None:
+        return
+    _M0_NET_PENDING.append({
+        "kind": "Assign",
+        "span": sym_span(sm, init),
+        "target": {"kind": "Ident", "span": sym_span(sm, symbol),
+                   "width": width, "name": _storage_name(symbol)},
+        "value": convert_expr(sm, init),
+        "net_declaration_assign": True,
+    })
 
 
 def _storage_name(symbol):
@@ -28751,12 +28776,24 @@ def convert_net(sm, m):
     if w is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
     init = m.initializer
+    if init is not None and _SYM is None:
+        # A declaration assignment is itself the net's sole continuous
+        # driver.  Start the net at z and retain the assignment as a process;
+        # storing the RHS as `init` would freeze it at time zero and lose the
+        # driver wake-up when its source changes.
+        if not _net_has_no_continuous_drivers(m):
+            return unsupported(sm, m, "NetSymbol:initialized-net")
+        _queue_m0_net_initializer(sm, m, w)
+        init_d = {"kind": "Literal", "span": sym_span(sm, m),
+                  "width": w, "bits": "z" * w}
+    else:
+        init_d = convert_expr(sm, init) if init is not None else None
     declaration = signed_metadata({
         "kind": "Net",
         "span": sym_span(sm, m),
         "name": _storage_name(m),
         "width": w,
-        "init": convert_expr(sm, init) if init is not None else None,
+        "init": init_d,
     }, m.type)
     if resolution is not None:
         declaration["continuous_resolution"] = resolution
@@ -29159,6 +29196,8 @@ def _subroutine_is_referenced(scope, subroutine):
 
 
 def convert_module(sm, inst):
+    global _M0_NET_PENDING
+    _M0_NET_PENDING = []
     if not getattr(inst, "isModule", False):
         kind = str(getattr(inst, "kind", "")).split(".")[-1]
         marker = ("PrimitiveInstanceSymbol:PrimitiveInstance"
@@ -29234,6 +29273,9 @@ def convert_module(sm, inst):
                         decls.extend(converted)
                     else:
                         decls.append(converted)
+                    if _M0_NET_PENDING:
+                        processes.extend(_M0_NET_PENDING)
+                        _M0_NET_PENDING = []
             elif k == "NetAlias":
                 if id(m) not in _LEGACY_NET_ALIAS_NODES:
                     others.append(unsupported(sm, m, "NetAliasSymbol:NetAlias"))

@@ -19520,5 +19520,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-compound-shift-left-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCompoundShiftLeftAgreementWitness",
+    "cpp_source": "int compound_shift_left_agreement_witness(int value) { value <<= 1; return value; } bool callable_witness() { return compound_shift_left_agreement_witness(3) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

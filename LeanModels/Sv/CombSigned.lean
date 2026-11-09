@@ -1,4 +1,4 @@
-import LeanModels.Sv.CombSignedShape
+import LeanModels.Sv.CombEqShape
 import LeanModels.Sv.CombEqThm
 
 /-!
@@ -13,7 +13,7 @@ written: nothing is assumed about signedness, and the width obligation is a goal
 
 Why the equation holds: `instExpr2` lets the cast marker vanish, and `fitExpr2` treats a marked operand differently only
 when it is narrower than its context (`Resize:signed`, loud), which the width contract excludes. The per-site statement
-is `proc_shapeCU` (`CombSignedShape.lean`): a process and its twin instantiate to the same assign. The rest of this file
+is `proc_shapeCU` (built on the shape theorems of `CombEqShape.lean`): a process and its twin instantiate to the same assign. The rest of this file
 carries that through the generate expansion: the summary of the design as written is the twin's summary with the
 original processes put back (`siteOfU?`, `summaryG_unsign`), and the realized process lists agree site by site
 (`Summary.enum_congr`).

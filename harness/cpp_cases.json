@@ -19126,6 +19126,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-conditional-statement-false-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectConditionalStatementFalseAgreementWitness",
+    "cpp_source": "int conditional_statement_false_agreement_witness(int value) { if (value) return 11; return 22; } bool callable_witness() { return conditional_statement_false_agreement_witness(0) == 22; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-comma-increment-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

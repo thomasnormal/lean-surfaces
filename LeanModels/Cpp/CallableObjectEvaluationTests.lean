@@ -40684,6 +40684,25 @@ def callableValueObjectConditionalStatementAgreementWitness : Bool :=
 
 #guard callableValueObjectConditionalStatementAgreementWitness
 
+def callableValueObjectConditionalStatementFalseAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.conditional controlParameter
+      (.return_ {
+        expression := CallableExpression.integer 11,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := CallableExpression.integer 22,
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 22 && objectValue == signed 22
+  | _, _ => false
+
+#guard callableValueObjectConditionalStatementFalseAgreementWitness
+
 def callableValueObjectBreakAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

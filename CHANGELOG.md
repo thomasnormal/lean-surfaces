@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with the false branch
+  of a conditional statement and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with the goto
   fall-through path and native differential coverage.
 

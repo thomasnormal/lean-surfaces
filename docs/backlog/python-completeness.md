@@ -10743,7 +10743,26 @@ or active-exception semantics.
 | Semantic change | none; audit confirmation only |
 
 DECIDED: close `py-shape-specific-ingestion-rewrites` as already fixed; keep
-unsupported callable, active-exception, and allocation-budget boundaries loud.
+unsupported callable, active-exception, and budget boundaries loud until their
+native semantics are modeled.
+
+## 2026-11-09-pycomplete-486 — revalidate shape-specific ingestion audit
+
+The high-priority `py-shape-specific-ingestion-rewrites` finding remains
+closed. The five reported helper passes—builtin alias, dead value,
+immediate-genexp drain, length-only repetition, and direct bare-reraise—have no
+active definitions or call sites. Source statements remain structured and use
+the ordinary evaluator or a loud boundary.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five helper names absent from active `Json.lean` ingestion |
+| Dead-value witness | CPython 3.9 raises `NameError`; leanpy refuses via definition-order admission (exit 3) |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-shape-specific-ingestion-rewrites`; retain loud boundaries
+for unsupported callable, active-exception, and allocation cases until native
+semantics are modeled.
 
 ## 2026-11-07-pycomplete-414 — recheck the static definition-delete census
 

@@ -218,6 +218,9 @@ parameter through both evaluator APIs.
 It also includes the false short-circuit path of a logical-AND callable,
 checking both evaluator APIs.
 
+It also includes the true-left short-circuit path of a logical-OR callable,
+checking both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

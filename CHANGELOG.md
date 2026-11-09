@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with the true-left
+  short-circuit path of a logical-OR callable and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with the false
   short-circuit path of a logical-AND callable and native differential coverage.
 

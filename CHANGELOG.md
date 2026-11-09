@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Extended the value/object evaluator agreement battery with compound
+  multiplication assignment and native differential coverage.
+
+- Extended the value/object evaluator agreement battery with compound
   subtraction assignment and native differential coverage.
 
 - Extended the value/object evaluator agreement battery with a greater-than-

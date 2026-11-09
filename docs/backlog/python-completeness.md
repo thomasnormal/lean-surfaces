@@ -10364,6 +10364,24 @@ DECIDED: close `py-genexp-capture-census` and `py-genexp-iter-deferred` as
 already fixed; retain conservative loudness until native generator-expression
 nodes replace the lowering.
 
+## 2026-11-09-pycomplete-478 — revalidate generator capture census
+
+The high-priority `py-genexp-capture-census` finding remains closed. The
+structured ingestion census counts tuple-unpack and `del` targets through
+`bodyAssigns`, and walrus targets through `exprAssigns`, before admitting the
+by-value generator lowering. Unsafe captures therefore remain a loud boundary;
+safe walrus capture uses the existing cell path.
+
+| Measurement | Result |
+|---|---|
+| Unpack/`del` witness | `genexp_capture_rebinding.py`: loud refusal; CPython 3.9 raises the captured-name `NameError` |
+| Walrus witness | `p = 3; g = (p for _ in (1,)); (p := 7); list(g)`: `[7]` on both runners |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-capture-census`; retain conservative loudness for
+uncertified capture shapes until native generator-expression nodes replace the
+lowering.
+
 ## 2026-11-07-pycomplete-407 — recheck list-comprehension shadowing
 
 The list-comprehension shadowing finding is already closed by the source-node

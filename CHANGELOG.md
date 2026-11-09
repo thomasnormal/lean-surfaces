@@ -59,6 +59,10 @@
 - Revalidated structured `global` declarations with the long-name witness;
   extraction and both evaluators remain text-free and match CPython 3.9.
 
+- Revalidated generator-expression capture admission for unpack, walrus, and
+  `del` rebinding; unsafe captures refuse loudly and safe walrus capture matches
+  CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

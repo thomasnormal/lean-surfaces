@@ -10431,6 +10431,24 @@ expectations were stale loud-boundary pins and are updated to the live behavior.
 DECIDED: close `py-listcomp-list-shadow`; retain the explicit loud boundaries
 for walrus filters and generator sources.
 
+## 2026-11-09-pycomplete-480 — revalidate native ListComp shadow semantics
+
+The high-priority `py-listcomp-list-shadow` finding remains closed. The
+extractor and JSON parser preserve `ListComp` as a source node, and both
+interpreter surfaces evaluate that node directly. No user-visible `list` name
+is synthesized or resolved, so module and local bindings named `list` cannot
+change comprehension behavior.
+
+| Measurement | Result |
+|---|---|
+| Module/local shadow witness | `listcomp_shadow.py`: `[1, 2]`, exit 0, MATCH CPython 3.9.25 |
+| Local-only shadow witness | `list = 3; [y for y in (1, 2)]`: `[1, 2]` on both runners |
+| Source audit | no active `ListComp` to `.call (.name "list")` ingestion path |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-listcomp-list-shadow`; retain explicit loud boundaries for
+walrus filters and unsupported comprehension source shapes.
+
 ## 2026-11-07-pycomplete-408 — recheck augmented-repeat semantics
 
 The augmented-repeat audit finding is already closed. The

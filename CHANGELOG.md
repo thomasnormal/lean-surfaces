@@ -66,6 +66,10 @@
 - Revalidated creation-time `GET_ITER` for synthesized generator expressions;
   scalar outer sources raise the same `TypeError` as CPython 3.9.
 
+- Revalidated native list-comprehension evaluation; user bindings named `list`
+  no longer affect comprehension semantics and the shadow fixtures match
+  CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

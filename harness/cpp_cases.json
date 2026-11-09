@@ -19450,6 +19450,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-logical-and-false-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectLogicalAndFalseAgreementWitness",
+    "cpp_source": "bool logical_and_false_agreement_witness(int value) { return value && 1; } bool callable_witness() { return logical_and_false_agreement_witness(0) == false; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-compound-multiplication-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

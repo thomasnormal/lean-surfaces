@@ -136,10 +136,13 @@ def main (argv : List String) : IO UInt32 := do
           | .timeout => err "memory init: timeout"
           | .unsupported m => err s!"memory init: unsupported: {m}"
           | .ok initial =>
-            match runMemAtNegedge d fuel clock initial stim with
-            | .timeout => err "runMem2: timeout"
-            | .unsupported m => err s!"runMem2: unsupported: {m}"
-            | .ok trace =>
+            match runMemInitial d fuel initial with
+            | .timeout => err "memory initial: timeout"
+            | .unsupported m => err s!"memory initial: unsupported: {m}"
+            | .ok initial' => match runMemAtNegedge d fuel clock initial' stim with
+              | .timeout => err "runMem2: timeout"
+              | .unsupported m => err s!"runMem2: unsupported: {m}"
+              | .ok trace =>
                 let rec emit (k : Nat) : List SvState → IO Unit
                   | [] => pure ()
                   | st :: rest => do

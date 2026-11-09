@@ -300,8 +300,8 @@
                 "end_line": 6,
                 "end_col": 37
               },
-              "sv_kind": "ExpressionStatement:CallExpression",
-              "text": "$readmemh(\"rom.hex\", rom);"
+              "sv_kind": "SystemTask:readmemh",
+              "text": "file=rom.hex;target=rom;data=00,11,22,33"
             }
           },
           {

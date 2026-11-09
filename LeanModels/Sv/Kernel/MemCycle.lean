@@ -774,6 +774,70 @@ def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       let tr ← runMemFrom d fuel st' rest
       return st'.scalar :: tr
 
+def readmemhField (key text : String) : Option String :=
+  text.splitOn ";" |>.findSome? fun field =>
+    match field.splitOn "=" with
+    | [k, v] => if k == key then some v else none
+    | _ => none
+
+def readmemhDigit (c : Char) : Option Nat :=
+  if c >= '0' && c <= '9' then some (c.toNat - '0'.toNat)
+  else if c >= 'a' && c <= 'f' then some (10 + c.toNat - 'a'.toNat)
+  else if c >= 'A' && c <= 'F' then some (10 + c.toNat - 'A'.toNat)
+  else none
+
+def readmemhNat (s : String) : Option Nat :=
+  s.toList.foldlM (init := 0) fun n c => do
+    let d ← readmemhDigit c
+    return n * 16 + d
+
+def runReadmemh (d : MemDesign2) (st : MemCycleState) (text : String) : Res MemCycleState := do
+  let some target := readmemhField "target" text
+    | .unsupported "SystemTask:readmemh:metadata"
+  let some data := readmemhField "data" text
+    | .unsupported "SystemTask:readmemh:metadata"
+  let words := data.splitOn ","
+  match memDeclOf? d.memDecls target with
+  | none =>
+      -- slang's fixed one-rank elaboration may expose the cells as scalar
+      -- declarations (`rom[0]`, …).  Preserve that frontend shape while
+      -- applying the same time-zero file contents.
+      let rec goFlat (offset : Nat) (rest : List String) (scalar : SvState) : Res SvState :=
+        match rest with
+        | [] => .ok scalar
+        | word :: more => do
+            let some n := readmemhNat word
+              | .unsupported "SystemTask:readmemh:xz-digit"
+            let name := s!"{target}[{offset}]"
+            let some dc := d.decls.find? (·.name == name)
+              | .unsupported s!"SystemTask:readmemh cell '{name}' is not declared"
+            goFlat (offset + 1) more (SvState.set scalar name (LVec.ofNat dc.width n))
+      let scalar ← goFlat 0 words st.scalar
+      return { st with scalar }
+  | some pd =>
+   let shape ← match pd.memShape? d.env with
+    | .ok (some shape) => .ok shape
+    | .ok none => .unsupported "SystemTask:readmemh target has no memory shape"
+    | .error e => .unsupported e
+   let count := (Int.natAbs (shape.msb - shape.lsb)) + 1
+   if words.length != count then
+    .unsupported s!"SystemTask:readmemh:short-file: {words.length} words for {count} cells"
+   let rec goMem (index : Int) (rest : List String) (memory : MemState) : Res MemState :=
+    match rest with
+    | [] => .ok memory
+    | word :: more => do
+        let some n := readmemhNat word
+          | .unsupported "SystemTask:readmemh:xz-digit"
+        let value := LVec.ofNat shape.elemWidth n
+        let targetL := PLhs.arrayElem target [.int index]
+        let memory ← match MemState.writeTarget d.env pd targetL value memory with
+          | .ok (some m) => .ok m
+          | .ok none => .unsupported "SystemTask:readmemh target is outside the memory shape"
+          | .error e => .unsupported e
+        goMem (index + 1) more memory
+   let memory ← goMem shape.msb words st.memory
+   return { st with memory }
+
 /-- Execute the source-shaped `initial` process phase once, before the first
     input sample.  IEEE 1800-2023 §9.2.1 gives a single initial process one
     time-zero activation; the route refuses multiple such processes at
@@ -784,6 +848,7 @@ def runMemInitial (d : MemDesign2) (fuel : Nat) (st : MemCycleState) :
     match p with | .initial _ => true | _ => false)
   match initials with
   | [] => .ok st
+  | [.initial (.unsupported "SystemTask:readmemh" text)] => runReadmemh d st text
   | [p] => do
       let (st', q) ← runMemProcess d fuel st ([], []) p
       commitMemPending d st' q

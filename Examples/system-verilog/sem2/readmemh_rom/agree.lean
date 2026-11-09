@@ -1,6 +1,6 @@
-/- Clean-room F4 boundary: an initial `$readmemh` process remains a named
-   source-process refusal until initial-process scheduling and file loading are
-   part of E.  The ROM declaration and read assignment stay visible. -/
+/- Clean-room F4 boundary: the ordinary Design2 route keeps the initial
+   `$readmemh` process loud, while the source-shaped memory route loads its
+   literal file at time zero. -/
 import LeanModels.Sv.Ingest2
 
 namespace Examples.«system-verilog».sem2.readmemh_rom.agree
@@ -12,8 +12,8 @@ load_design_sv2 readmemhRom from
 
 #guard (match readmemhRom.pdesign.processes with
   | .initial (.unsupported k msg) :: _ =>
-      k == "ExpressionStatement:CallExpression" &&
-      msg == "$readmemh(\"rom.hex\", rom);"
+      k == "SystemTask:readmemh" &&
+      msg == "file=rom.hex;target=rom;data=00,11,22,33"
   | _ => false)
 
 #guard (match (readmemhRom.pdesign.instantiateD2 []).processes.toList with

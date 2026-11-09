@@ -582,6 +582,16 @@ def main():
                       if case.get("instants") is not None
                       else gen_tb2.generate_tb2(top, ports, case))
                 try:
+                    # File-backed elaboration tasks such as `$readmemh` resolve
+                    # relative to the DUT's source directory in simulators.
+                    # Keep that source-shaped lookup when the generated TB is
+                    # run in its temporary work directory.
+                    os.makedirs(wd, exist_ok=True)
+                    source_dir = os.path.dirname(dut_sv)
+                    for sidecar in os.listdir(source_dir):
+                        if sidecar.lower().endswith((".hex", ".mem")):
+                            shutil.copyfile(os.path.join(source_dir, sidecar),
+                                            os.path.join(wd, sidecar))
                     runner = {"xrun": run_xcelium,
                               "iverilog": run_iverilog,
                               "verilator": run_verilator}[sim]

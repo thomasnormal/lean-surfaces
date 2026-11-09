@@ -142,16 +142,15 @@ metadata (`SubroutineSymbol:empty-task`) and executes its call as the existing
 empty statement. `task_memory` guards this exact no-op shape; tasks with
 outputs, defaults, timing, or nonempty bodies remain loud unsupported members.
 
-### Initial ROM loading remains an explicit F4 boundary
+### Literal-file ROM loading
 
-The clean-room `sem2/readmemh_rom` fixture measures the next memory wall:
-`initial $readmemh("rom.hex", rom)` is retained in the envelope and becomes a
-named `ProceduralBlockSymbol:Initial` refusal in `PDesign` and `Design2`.
-The generated ROM cells and the combinational `rom[addr]` read remain visible,
-so the loader does not invent time-zero contents from the file. This row is
-loud in
-`harness/sv/cases2.json`; admitting it requires initial-process scheduling and
-file-loading semantics in E, followed by a differential witness.
+The clean-room `sem2/readmemh_rom` fixture now admits the narrow IEEE 1800-2023
+§21.4 form `initial $readmemh("rom.hex", rom)` in the source-shaped memory E
+route. The extractor retains the literal file name and hexadecimal payload;
+the memory initial phase writes the four cells before the first sample. The
+row matches both Icarus and Xcelium. The ordinary Design2 route still refuses
+the same process as `T2:Initial`, and missing files, short files, x/z digits,
+and non-literal targets remain loud at extraction.
 
 ### Mixed valid/ready sequential chains
 

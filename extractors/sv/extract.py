@@ -25301,6 +25301,42 @@ def _convert_syscall(sm, s, e):
         is_sys = bool(e.isSystemCall)
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and name == "$readmemh":
+        # Elaboration-time ROM loading is admitted only for a literal file
+        # name and a whole one-dimensional fixed unpacked integral array.
+        # Keep the source task as an Unsupported envelope node (Stmt2 is
+        # frozen); the memory E route consumes its retained file payload.
+        try:
+            args = list(e.arguments)
+            filename = source_text(args[0]).strip().strip('"')
+            target_expr = getattr(args[1], "left", args[1])
+            target = source_text(target_expr).strip()
+            if len(args) != 2 or not filename or not target:
+                return unsupported(sm, s, "SystemTask:readmemh:shape",
+                                   "$readmemh requires a literal file and one whole array")
+            source_file = os.path.normpath(sm.getFileName(s.sourceRange.start))
+            path = os.path.join(os.path.dirname(source_file), filename)
+            if not os.path.isfile(path):
+                return unsupported(sm, s, "SystemTask:readmemh:missing-file",
+                                   f"literal file '{filename}' is not present beside the source")
+            raw = re.sub(r"//[^\n]*|/\*.*?\*/", "", open(path, encoding="utf-8").read(), flags=re.S)
+            words = raw.split()
+            if not words or any(re.fullmatch(r"[0-9a-fA-F]+", word) is None for word in words):
+                return unsupported(sm, s, "SystemTask:readmemh:xz-digit",
+                                   "$readmemh data must contain hexadecimal 0/1 digits only")
+            symbol = getattr(target_expr, "symbol", None)
+            canonical = getattr(getattr(symbol, "type", None), "canonicalType", None)
+            if type(canonical).__name__ != "FixedSizeUnpackedArrayType":
+                return unsupported(sm, s, "SystemTask:readmemh:shape",
+                                   "$readmemh target must be a one-dimensional fixed unpacked array")
+            left, right = int(canonical.range.left), int(canonical.range.right)
+            if len(words) != abs(left - right) + 1:
+                return unsupported(sm, s, "SystemTask:readmemh:short-file",
+                                   f"literal file has {len(words)} words for {abs(left - right) + 1} ROM cells")
+            marker = f"file={filename};target={target};data={','.join(words)}"
+            return unsupported(sm, s, "SystemTask:readmemh", marker)
+        except Exception as exc:
+            return unsupported(sm, s, "SystemTask:readmemh:shape", str(exc))
     if is_sys and _SYM is None and name == "$sformatf":
         # `$sformatf` is pure when its existing literal expression converter
         # accepts the format and operand.  In statement position the packed

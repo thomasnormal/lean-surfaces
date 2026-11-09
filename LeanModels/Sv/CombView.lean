@@ -994,9 +994,15 @@ def scmpOp? : SymBinOp → Option CmpOp
   | .sge => some .ge
   | _ => none
 
-/-- The refusal of an operand of a signed comparison the fragment does not read. -/
+/-- The refusal of an operand of a signed comparison the fragment does not read. An operand the envelope itself marks
+unsupported is named first: there the semantics has no meaning for the site, so the wall is not the tactics'. -/
 def scmpOpdRefusal (l r : PExpr) : String :=
   match l, r with
+  | .unsupported k _, _ | _, .unsupported k _ =>
+      if k == "ConversionExpression:width" then
+        "a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics"
+      else
+        s!"a signed comparison whose operand the envelope marks unsupported (`{k}`): the semantics lowers this site to a loud node, so no equation holds for it"
   | .cast true (.ident _), .cast true (.ident _) =>
       "a signed comparison of two signals whose declared packed dimensions differ (the narrower operand would be sign-extended at some parameter point, which the fragment does not model: it reads a signed comparison of two signed signals declared with the same dimensions)"
   | .signedResize .., _ | _, .signedResize .. =>

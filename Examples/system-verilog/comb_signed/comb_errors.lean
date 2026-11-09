@@ -18,7 +18,15 @@ The constructs whose meaning signedness changes and that they do not read yet ar
 * `neg/sg_asr_amt.sv`: an arithmetic shift right by a signed amount `a >>> b`;
 * `neg/sg_asr_self.sv`: an arithmetic shift right as an operand of `&&`;
 * `neg/sg_asr_wide.sv`: an arithmetic shift right into a target wider than its operand (sign extension before the shift);
-* `neg/asr_unsigned.sv`: `>>>` of an unsigned operand.
+* `neg/asr_unsigned.sv`: `>>>` of an unsigned operand;
+* `neg/sg_cmp_const.sv` (the downstream clean-room repro `signed_decl.sv`, verbatim): `x >= 0` with `x` signed and 8 bits
+  wide. The unsized `0` is a 32-bit signed integer, so the comparison is signed and `x` is sign-extended to 32 bits
+  (IEEE 1800-2023 §11.8.1, §11.4.4). The extractor marks that sign extension `ConversionExpression:width`: the envelope
+  carries an `Unsupported` node in place of `x`, `instExpr2` keeps it, and the semantics itself lowers the site to a loud
+  node, so no equation holds for any tactic to prove. The wall is the extractor's (the `SignedResize` marker it emits for
+  the operand of a shift or a division), and the message says so;
+* `neg/sg_cmp_mixed.sv`: a signed comparison of an 8-bit and a 16-bit signed signal, the same wall (the narrower operand
+  is sign-extended, §11.8.2).
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView
@@ -35,6 +43,8 @@ load_design_sv2 sg_asr_amt from "Examples/system-verilog/comb_signed/neg/sg_asr_
 load_design_sv2 sg_asr_self from "Examples/system-verilog/comb_signed/neg/sg_asr_self.sv.json"
 load_design_sv2 sg_asr_wide from "Examples/system-verilog/comb_signed/neg/sg_asr_wide.sv.json"
 load_design_sv2 asr_unsigned from "Examples/system-verilog/comb_signed/neg/asr_unsigned.sv.json"
+load_design_sv2 sg_cmp_const from "Examples/system-verilog/comb_signed/neg/sg_cmp_const.sv.json"
+load_design_sv2 sg_cmp_mixed from "Examples/system-verilog/comb_signed/neg/sg_cmp_mixed.sv.json"
 
 /--
 error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)
@@ -106,6 +116,21 @@ error: sv_structure: outside the supported fragment — site `plain#0`: operator
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (asr_unsigned.sem W) := by
+  sv_structure
+
+-- the downstream repro: the envelope itself refuses the sign extension of `x` (`ConversionExpression:width`)
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics
+-/
+#guard_msgs (whitespace := lax) in
+example : CombDesign sg_cmp_const.sem := by
+  sv_structure
+
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics
+-/
+#guard_msgs (whitespace := lax) in
+example : CombDesign sg_cmp_mixed.sem := by
   sv_structure
 
 end Examples.«system-verilog».comb_signed.comb_errors

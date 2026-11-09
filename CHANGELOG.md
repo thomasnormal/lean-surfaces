@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with null-pointer
+  inequality and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with an assignment
   whose RHS increments the target and native differential coverage.
 

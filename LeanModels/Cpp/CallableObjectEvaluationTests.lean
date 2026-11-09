@@ -40874,6 +40874,22 @@ def callableValueObjectNullComparisonAgreementWitness : Bool :=
 
 #guard callableValueObjectNullComparisonAgreementWitness
 
+def callableValueObjectNullInequalityAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.nullComparison "!=",
+      sourceType := .builtin .boolean, type := .builtin .boolean}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.boolean, 0⟩ && objectValue == ⟨.boolean, 0⟩
+  | _, _ => false
+
+#guard callableValueObjectNullInequalityAgreementWitness
+
 def callableValueObjectSizeAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

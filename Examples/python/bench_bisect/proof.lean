@@ -28,9 +28,10 @@ open LeanModels LeanModels.Python
 
 load_program bench_bisect from "Examples/python/bench_bisect/bench_bisect.json"
 
-/-- The pinned world of the stage-1 geometry (`initWorld` unfolded — what
-`py_simp` presents at every state; docs/memory-model.md). -/
-def pw : World := ⟨#[], [], [], [], 0⟩
+/-- The pinned world of the stage-1 geometry at the public call frame
+(`initWorld` unfolded, with call depth one — what `py_simp` presents at
+every state; docs/memory-model.md). -/
+def pw : World := ⟨#[], [], [], [], 1⟩
 
 /-! # Part 1 — `bisect_left` (cold prover 0, adapted) -/
 
@@ -317,15 +318,18 @@ theorem bisect_left_core (xs : List Int) (x : Int)
   obtain ⟨f₀, hloopT⟩ := execWhile_at_least hex
   rcases om' with _ | mv <;>
     (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
+     have hloop := hloopT (f₀ + 58) (by omega)
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, callIn, bench_bisect, hloopT,
+     py_simp [callFunction, callIn, bench_bisect, hloop,
        funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
        Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
        moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
        starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
        fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
-       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
-     all_goals simp_all
+       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+       Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit,
+       Run.finishCallAt, Run.leaveCallDepth]
+     all_goals simp_all [hloop]
      all_goals omega)
 
 /-! ## Bounds-only variant (no sortedness): termination on ANY list -/
@@ -433,15 +437,18 @@ theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
   obtain ⟨f₀, hloopT⟩ := execWhile_at_least hex
   rcases om' with _ | mv <;>
     (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
+     have hloop := hloopT (f₀ + 58) (by omega)
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, callIn, bench_bisect, hloopT,
+     py_simp [callFunction, callIn, bench_bisect, hloop,
        funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
        Expr.heapFreeList, Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
        moduleGenFree, funsGenAllocFree, Stmt.genAllocFree, Stmt.genAllocFreeList,
        starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
        fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
-       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
-     all_goals try simp_all
+       flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+       Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit,
+       Run.finishCallAt, Run.leaveCallDepth]
+     all_goals try simp_all [hloop]
      all_goals omega)
 
 open BL in
@@ -880,13 +887,19 @@ private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise
   · py_begin [bench_bisect]
     refine CallsTo.intro (fl + 32) ?_
     rw [hentry]
-    py_simp [funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+    try rw [callIn.eq_2]
+    have hh := hthresh (fl + 26) (by omega)
+    have hh' := hh
+    try simp only [pw, bench_bisect, BR.testE, BR.bodyE, BR.toEnv] at hh'
+    try rw [hh]
+    py_simp [callIn, pw, bench_bisect, BR.testE, BR.bodyE, BR.toEnv, funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
       Expr.heapFreeList, Expr.heapFree, moduleGenFree, funsGenAllocFree,
       Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal, unboundLocalMarker,
       starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
       fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
-      flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
-    rw [hthresh (fl + 26) (by omega)]
+      flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+      Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit,
+      Run.finishCallAt, Run.leaveCallDepth, hh, hh']
     try unfold BR.toEnv
     rcases p' with ⟨lo', hi', _mid', grown'⟩
     cases grown' <;> py_simp
@@ -909,13 +922,19 @@ private theorem bisect_right_terminates_core (a : List Int) (x : Int) :
   py_begin [bench_bisect]
   refine CallsTo.intro (fl + 32) ?_
   rw [hentry]
-  py_simp [funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
+  try rw [callIn.eq_2]
+  have hh := hthresh (fl + 26) (by omega)
+  have hh' := hh
+  try simp only [pw, bench_bisect, BR.testE, BR.bodyE, BR.toEnv] at hh'
+  try rw [hh]
+  py_simp [callIn, pw, bench_bisect, BR.testE, BR.bodyE, BR.toEnv, funsHeapFree, FunctionDefn.heapFree, Stmt.heapFreeList, Stmt.heapFree,
     Expr.heapFreeList, Expr.heapFree, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal, unboundLocalMarker,
     starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
     fstringFormatBuiltinName, lenMultBuiltinName, flattenStarRun,
-    flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic, RVal.freezeB]
-  rw [hthresh (fl + 26) (by omega)]
+    flattenStarCallArgs, Run.bind, Run.liftRes, Run.toPublic,
+    Run.toPublic_ok, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit,
+    Run.finishCallAt, Run.leaveCallDepth, hh, hh']
   try unfold BR.toEnv
   rcases p' with ⟨lo', hi', _mid', grown'⟩
   cases grown' <;> py_simp

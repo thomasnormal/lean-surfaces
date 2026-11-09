@@ -141,6 +141,18 @@
       "measured": "A straight-line automatic function with a statically safe unique case (distinct literal labels and a default) is inlined with ordinary first-match value semantics; overlapping, dynamic, or incomplete qualified cases remain loud."
     },
     {
+      "name": "function_generate_case",
+      "example": "sem2/function_generate_case",
+      "top": "function_generate_case",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "00000000000000000000"},
+        {"a": "00000000000000000001"},
+        {"a": "00010010001101000101"}
+      ],
+      "measured": "2026-11-09: an automatic local-temporary unique case without an explicit begin/end block is inlined inside a generated assignment; the generated family remains source-shaped and matches Icarus and Xcelium."
+    },
+    {
       "name": "function_case_return_name",
       "example": "seq_function_case_return_name",
       "top": "function_case_return_name",

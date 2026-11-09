@@ -11881,14 +11881,21 @@ def _sym_case_function_shape(subroutine):
         declarations = []
         while statements and type(statements[0]).__name__ == "VariableDeclStatement":
             declarations.append(statements.pop(0))
-        if not declarations or len(statements) != 1:
+        if not declarations or len(statements) not in (1, 2):
             return None
-        block = statements[0]
-        if type(block).__name__ != "BlockStatement":
-            return None
-        block_list = getattr(getattr(block, "body", None), "list", None)
-        if block_list is None or len(block_list) != 2:
-            return None
+        if len(statements) == 1:
+            block = statements[0]
+            if type(block).__name__ != "BlockStatement":
+                return None
+            block_list = getattr(getattr(block, "body", None), "list", None)
+            if block_list is None or len(block_list) != 2:
+                return None
+        else:
+            # A function body may omit an explicit begin/end block.  Slang
+            # then exposes the case and return directly in the StatementList;
+            # this is the same straight-line source shape and must not make a
+            # generated call fall through to the generic CallExpression wall.
+            block_list = statements
         case, case_ret = block_list
         if type(case).__name__ != "CaseStatement":
             return None

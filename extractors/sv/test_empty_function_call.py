@@ -406,6 +406,22 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_symbolic_local_case_function_without_begin_is_inlined_in_generate(self):
+        design = self.symbolic(
+            "module top(input logic [19:0] a, output logic [19:0] y); "
+            "function automatic logic [4:0] map5(input logic [4:0] x); "
+            "logic [4:0] t; unique case (x) 5'h00: t = 5'h1f; "
+            "default: t = 5'h00; endcase return t; endfunction "
+            "genvar i; generate for (i = 0; i < 4; i = i + 1) begin : g "
+            "assign y[5*i +: 5] = map5(a[5*i +: 5]); end endgenerate "
+            "endmodule")
+        values = [node for node in nodes(design)
+                  if node.get("user_function_inline")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["kind"], "Ternary")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_symbolic_local_qualified_cases_are_inlined_when_provably_safe(self):
         for qualifier in ("unique", "unique0", "priority"):
             with self.subTest(qualifier=qualifier):

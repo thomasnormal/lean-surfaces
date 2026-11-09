@@ -19508,5 +19508,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-compound-bit-xor-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCompoundBitXorAgreementWitness",
+    "cpp_source": "int compound_bit_xor_agreement_witness(int value) { value ^= 3; return value; } bool callable_witness() { return compound_bit_xor_agreement_witness(7) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

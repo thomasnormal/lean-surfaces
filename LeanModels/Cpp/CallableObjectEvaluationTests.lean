@@ -41255,6 +41255,25 @@ def callableValueObjectCompoundBitOrAgreementWitness : Bool :=
 
 #guard callableValueObjectCompoundBitOrAgreementWitness
 
+def callableValueObjectCompoundBitXorAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .sequence
+      (.compoundAssign "^=" (handle "0x10") {
+        expression := CallableExpression.integer 3,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType})}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 4 && objectValue == signed 4
+  | _, _ => false
+
+#guard callableValueObjectCompoundBitXorAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

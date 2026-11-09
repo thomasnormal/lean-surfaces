@@ -182,6 +182,9 @@ state updates through both evaluator APIs.
 It also includes compound multiplication assignment, checking parameter state
 updates through both evaluator APIs.
 
+It also includes compound division assignment, checking parameter state updates
+through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.
@@ -390,7 +393,8 @@ executing the body.
 `CallableRung3Tests.lean` adds kernel-reduced prefix- and postfix-increment
 call witnesses. The parameter state is updated once; the postfix result is
 then sequenced with a comma expression so the updated value is observed. The
-compound-assignment witness extends the same state path with `+=`. The
+compound-assignment witnesses extend the same state path with `+=`, `-=`, `*=`,
+and `/=`. The
 conditional witness then selects one of two typed results from the parameter.
 The logical short-circuit witness then exposes whether an incrementing right
 operand ran for false and true left operands. The corresponding coverage rows

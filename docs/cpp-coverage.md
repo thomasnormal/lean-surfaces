@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 1640 | 1622 | 0 | 8 | 0 | 10 |
+| 1641 | 1623 | 0 | 8 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -1654,6 +1654,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-value-object-greater-equal-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-compound-subtraction-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-compound-multiplication-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-value-object-compound-division-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 
 ## Grammar census
 

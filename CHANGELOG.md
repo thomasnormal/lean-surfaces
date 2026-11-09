@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a break-after-
+  assignment callable and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with the false branch
   of a conditional statement and native differential coverage.
 

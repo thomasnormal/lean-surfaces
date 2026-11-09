@@ -19162,6 +19162,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-break-assignment-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectBreakAssignmentAgreementWitness",
+    "cpp_source": "int break_assignment_agreement_witness(int value) { for (; value; --value) { value = 9; break; } return value; } bool callable_witness() { return break_assignment_agreement_witness(1) == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-continue-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

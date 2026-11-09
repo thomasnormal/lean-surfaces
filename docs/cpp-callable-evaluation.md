@@ -245,6 +245,9 @@ through both evaluator APIs.
 It also includes the false branch of a conditional statement, checking both
 evaluator APIs.
 
+It also includes a break-after-assignment callable, checking retained loop
+state through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

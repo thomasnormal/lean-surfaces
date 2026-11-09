@@ -40720,6 +40720,27 @@ def callableValueObjectBreakAgreementWitness : Bool :=
 
 #guard callableValueObjectBreakAgreementWitness
 
+def callableValueObjectBreakAssignmentAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.forLoop .skip controlParameter controlStep
+        (.block (.sequence
+          (.assign (handle "0x10") {
+            expression := .integer 9, sourceType := intType, type := intType})
+          .break_)))
+      (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 1] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 9 && objectValue == signed 9
+  | _, _ => false
+
+#guard callableValueObjectBreakAssignmentAgreementWitness
+
 def callableValueObjectContinueAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

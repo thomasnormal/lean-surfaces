@@ -150,6 +150,15 @@ assignments for its outputs. It is deliberately outside the strict
 source-shaped drivers. Its four-cycle vector trace is pinned in
 `harness/sv/cases2.json` as `valid_chain_mixed_profile` and matches Icarus.
 
+### Generated one-driver wire windows
+
+The clean-room `wire_generate/wire_generate.sv` witness now admits a
+parameterized `wire` output driven once per bit by a genvar loop. The extractor
+retains the generated `AssignL` windows, and the net guard checks their
+interval coverage at the instantiated parameter point before treating the
+wire as a net-as-variable. The `wire_generate` differential row matches
+Icarus at `W = 4` and its default-point cross-check agrees.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

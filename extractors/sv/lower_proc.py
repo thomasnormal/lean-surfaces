@@ -846,13 +846,21 @@ def net_driver_reason(ex, sm, symbol, dtype):
         if not records:
             return "no driver: the net reads z"
         intervals, texts = [], []
+        generated_windows = False
         for d in records:
             owner = d.containingSymbol
             kind = type(owner).__name__
             if kind not in _NET_OWNERS:
                 return "driver of kind %s" % kind
             if owner.location not in drivers_here:
-                return "a driver inside a generate scope"
+                # Slang's driver table puts every elaborated assignment from
+                # a generate loop under the generate scope rather than the
+                # module scope.  Keep the source-shaped genvar window; the
+                # interval coverage below and Design2.driverGuard check the
+                # actual parameter point for one driver per bit.
+                if kind != "ContinuousAssignSymbol":
+                    return "a driver inside a generate scope"
+                generated_windows = True
             if kind == "ContinuousAssignSymbol" and (has_strength(owner) or getattr(owner, "delay", None) is not None):
                 return "an explicit drive strength or a delay"
             lo, hi = d.bounds
@@ -869,6 +877,11 @@ def net_driver_reason(ex, sm, symbol, dtype):
             return "undriven bits: the net reads z there"
         if len(records) == 1 and texts[0] == symbol.name:
             return None                                                       # (A)
+        if generated_windows:
+            gen_window = re.compile(r"^%s\s*\[\s*[A-Za-z_$][A-Za-z0-9_$]*\s*\]$" % re.escape(symbol.name))
+            if all(gen_window.match(t) for t in texts):
+                return None                                                       # generated genvar windows
+            return "drivers select windows by an expression"
         if not ex._sym_dtype_fixed(dtype):
             return "drivers select windows of a net whose width depends on a parameter"
         window = re.compile(r"^%s\s*(\[\s*\d+\s*(:\s*\d+\s*)?\])?$" % re.escape(symbol.name))

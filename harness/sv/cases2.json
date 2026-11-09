@@ -328,6 +328,19 @@
       "measured": "A one-rank parameter-sized unpacked memory stays source-shaped in E: reset and sequential cell writes commit through MemState, and q observes mem[0]."
     },
     {
+      "name": "wire_generate",
+      "example": "wire_generate",
+      "top": "wire_generate",
+      "params": {"W": 4},
+      "signals": ["x", "y"],
+      "stimulus": [
+        {"x": "0000"},
+        {"x": "0101"},
+        {"x": "1010"}
+      ],
+      "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
+    },
+    {
       "name": "unpacked_register_memory_dynamic",
       "example": "sem2/unpacked_register_memory",
       "top": "unpacked_register_memory",

@@ -218,6 +218,19 @@ class SymbolicParamWidths(unittest.TestCase):
         ports = [p for p in module["ports"] if p.get("kind") == "Unsupported"]
         self.assertEqual([p["sv_kind"] for p in ports], ["PortSymbol:net-z"])
 
+    def test_generate_loop_wire_driver_is_admitted(self):
+        # N2: elaborated genvar windows tile the wire at every point, so the
+        # source-shaped AssignL drivers are a one-driver-per-bit net.
+        module = self.extract(
+            "module top #(parameter integer W = 8) (input logic [W-1:0] x,"
+            " output wire [W-1:0] y); genvar i; generate"
+            " for (i = 0; i < W; i = i + 1) assign y[i] = x[i];"
+            " endgenerate endmodule")
+        ports = [p for p in module["ports"] if p.get("name") == "y"]
+        self.assertEqual(len(ports), 1)
+        self.assertEqual(ports[0]["kind"], "Port")
+        self.assertTrue(ports[0].get("net_as_variable"))
+
 
 if __name__ == "__main__":
     unittest.main()

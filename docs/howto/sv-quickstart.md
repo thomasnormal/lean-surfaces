@@ -109,7 +109,7 @@ adder_directed         adder            5  sigma_src          PASS
 adder_x                adder            5  sigma_src          PASS
 counter_reset          counter          8  sigma_src          PASS
 counter_xrst           counter          4  sigma_src          PASS
-race_blk_one_edge      race_blk         1  sigma_rev          PASS (matched sigma_rev)
+race_blk_one_edge      race_blk         1  refusal            PASS (Schedule:preemptive)
 swap_nba_swap          swap_nba         4  sigma_src          PASS
 xsel_directed          xsel             4  sigma_src          PASS
 xsel_x                 xsel             4  sigma_src          PASS

@@ -8,7 +8,7 @@ sigma and optional probe arguments are accepted for harness compatibility.
 
 import Lean
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.Kernel.MemPreemptGuard
 
 open Lean (Json)
 open LeanModels.Sv
@@ -113,9 +113,11 @@ def main (argv : List String) : IO UInt32 := do
           | .ok d => pure d
           | .timeout => .error "instantiateMem2: timeout"
           | .unsupported m => .error s!"instantiateMem2: {m}"
-        match d.preemptionReport with
-        | some (k, msg) => .error s!"{k}: {msg}"
-        | none => pure ()
+        -- The source-shaped memory cycle is process-atomic, while IEEE
+        -- 1800-2023 §4.7 permits mid-process suspension.  Guard this route
+        -- before executing it; `runMem2` remains the low-level executor.
+        if let some (k, msg) := d.memoryPreemptionReport then
+          .error s!"{k}: {msg}"
         let stim0 ← (← getArr case "stimulus").toList.mapM (parseEntry d)
         let clock := (getOpt case "clock").bind (·.getStr?.toOption)
         let stim := addClock clock 0 stim0

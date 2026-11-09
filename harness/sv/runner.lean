@@ -36,6 +36,7 @@ import Lean
 import LeanModels.Sv.Json
 import LeanModels.Sv.Semantics
 import LeanModels.Sv.ClockGuard0
+import LeanModels.Sv.PreemptGuard2
 
 open Lean (Json)
 open LeanModels.Sv
@@ -247,6 +248,11 @@ structure Prepared where
 def prepare (envText casesText caseName : String) : Except String Prepared := do
   let d ← loadEnvelopeDesign envText
   if let some (k, msg) := d.clockReport then
+    throw s!"{k}: {msg}"
+  -- The M0 cycle route is process-atomic, but IEEE 1800-2023 §4.7 permits
+  -- mid-process suspension.  Refuse unsafe cross-process windows at this
+  -- route boundary; `run` itself remains the source-shaped executor.
+  if let some (k, msg) := d.preemptionReport then
     throw s!"{k}: {msg}"
   let cj ← Json.parse casesText
   let fuel := ((getF cj "fuel").toOption.bind (·.getNat?.toOption)).getD 1000

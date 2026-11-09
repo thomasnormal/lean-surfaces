@@ -264,9 +264,11 @@ def main (argv : List String) : IO UInt32 := do
         match p with
         | .unsupported "AlwaysComb:alias-read" msg => .error s!"AlwaysComb:alias-read: {msg}"
         | _ => pure ()
-      -- IEEE 1800-2023 §4.7 is an admission guard, not an opt-in profile:
-      -- run2 remains process-atomic only after the design has established
-      -- that no partial write is observable across processes.
+      -- The cycle route is process-atomic, while IEEE 1800-2023 §4.7 also
+      -- permits a process to be suspended while its statement is running.
+      -- Guard the route boundary unconditionally: only NBA-only edge bodies
+      -- and simple continuous assignments are safe to retain as atomic
+      -- activations.  The low-level `run2` definition remains unchanged.
       if let some (k, msg) := d.preemptionReport then
         .error s!"{k}: {msg}"
       -- The clock discipline (WP-Q0, 2026-10-30, `ClockGuard2.lean`): a

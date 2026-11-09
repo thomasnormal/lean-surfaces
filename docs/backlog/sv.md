@@ -64,8 +64,9 @@ six is such a design is an R1 **check**, not an assumption — added to
 inch 7's re-establishment list.
 
 **The empirical evidence was already in this lane's harness, being read as
-a curiosity rather than as data.** `race_blk_one_edge` matched
-**`sigma_rev`**, not `sigma_src`: the racy design produced a *different*
+a curiosity rather than as data.** The raw `race_blk` theorem still exhibits
+both legal orders; the route harness now refuses `race_blk_one_edge` at the
+`Schedule:preemptive` boundary because the racy design produces a *different*
 trace under the reversed schedule. That is the race-free boundary showing
 itself, and it is why the schedule oracle is load-bearing rather than
 decorative.

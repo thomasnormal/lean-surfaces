@@ -101,7 +101,8 @@ from oracle_disagreements import (HarnessError, SimulatorError, check_declaratio
 # Dependency order matters: each may import the previous ones.
 SV_LEAN_MODULES = ["Basic", "Ast", "Semantics", "Obs", "Sem2", "CombGuard2",
                    "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "CombAlias2",
-                   "ClockGuard2", "Ingest2", "PreemptGuard2"]
+                   "ClockGuard2", "Ingest2", "PreemptGuard2",
+                   "Kernel/MemPreemptGuard"]
 
 SIGMA_NAMES = ("src", "rev")
 
@@ -120,6 +121,7 @@ def ensure_oleans(verbose):
     for name in SV_LEAN_MODULES:
         src = os.path.join(REPO, "LeanModels", "Sv", name + ".lean")
         olean = os.path.join(libdir, name + ".olean")
+        os.makedirs(os.path.dirname(olean), exist_ok=True)
         newest_dep = max(newest_dep, os.path.getmtime(src))
         if not os.path.exists(olean) or os.path.getmtime(olean) < newest_dep:
             if verbose:

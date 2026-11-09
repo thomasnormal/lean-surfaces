@@ -1,9 +1,9 @@
 {
-  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). The IEEE 1800-2023 §4.7 suspension guard is a default admission check; rows that need an explicit refusal name `Schedule:preemptive`. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
+  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). The route boundary applies the conservative IEEE 1800-2023 §4.7 preemption guard by default; the old preemptive flag is retained only in historical envelopes. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
   "fuel": 2000,
   "cases": [
     {
-      "name": "preemptive_profile_cross_process_nba",
+      "name": "preemptive_profile_safe_nba",
       "example": "sem2/preempt_profile",
       "top": "preempt_profile",
       "signals": ["q", "r"],
@@ -12,10 +12,23 @@
         {"a": "1", "b": "0"},
         {"a": "0", "b": "1"}
       ],
-      "measured": "2026-11-09: two NBA-only always_ff processes may read and write the same state across a clock edge without exposing an intermediate write; the default §4.7 guard admits the source-shaped row and the trace matches Icarus/Xcelium."
+      "measured": "2026-11-09: the default §4.7 route admits this cross-process dependency because both edge bodies are NBA-only; RHS evaluation sees the pre-NBA state and neither activation exposes a partial write."
     },
     {
       "name": "preemptive_profile_blocking_refuse",
+      "example": "sem2/preempt_blocking",
+      "top": "preempt_blocking",
+      "refusal": "Schedule:preemptive",
+      "signals": ["q", "r"],
+      "stimulus": [
+        {"a": "0", "b": "0"},
+        {"a": "1", "b": "0"},
+        {"a": "0", "b": "1"}
+      ],
+      "measured": "2026-11-09: the blocking q = a activation can be suspended before r = q reads q, so the default route refuses the cross-process read/write window under IEEE 1800-2023 §4.7."
+    },
+    {
+      "name": "preemptive_profile_block_refuse",
       "example": "sem2/preempt_block_refuse",
       "top": "preempt_block_refuse",
       "refusal": "Schedule:preemptive",
@@ -24,7 +37,7 @@
         {"a": "0", "b": "0"},
         {"a": "1", "b": "0"}
       ],
-      "measured": "2026-11-09: a multi-write blocking always_comb can be suspended after its first write while another process reads that window; the default §4.7 guard refuses the source-shaped design."
+      "measured": "2026-11-09: a multi-write blocking always_comb can be suspended after its first write while another process reads that window; the default §4.7 route refuses the source-shaped design."
     },
     {
       "name": "port_net_width_refuse",
@@ -94,7 +107,8 @@
         {"d": "0"},
         {"d": "1"}
       ],
-      "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge."
+      "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge.",
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "valid_chain_mixed_profile",
@@ -429,7 +443,8 @@
         {"we": "1", "widx": "10", "ridx": "10", "d": "10100101"},
         {"we": "0", "widx": "00", "ridx": "10", "d": "00000000"}
       ],
-      "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted."
+      "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted.",
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "unpacked_memory_netz",
@@ -1900,7 +1915,8 @@
             "stderr": "<source>:10: sorry: Streaming concatenation not supported.\n<source>:10: sorry: Streaming concatenation not supported in l-values.\n"
           }
         ]
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "fixed_array_stream_continuous",
@@ -2720,7 +2736,8 @@
         {},
         {},
         {}
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "alu_div_w8",
@@ -2787,7 +2804,8 @@
         {},
         {},
         {}
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "fifo_d8_w32",
@@ -2995,7 +3013,8 @@
           "pop_i": "1",
           "data_i": "00000000000000000000000000000000"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "fifo_d4_w8",
@@ -3171,7 +3190,8 @@
           "pop_i": "1",
           "data_i": "00000000"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "register_file_ff",
@@ -5517,7 +5537,8 @@
           "CYCLE 0 a=0110 w_flat=00000000 z=x",
           "CYCLE 1 a=1001 w_flat=00000000 z=x"
         ]
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "array_param_labels",
@@ -6810,7 +6831,8 @@
         {
           "a": "0101"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "const_wrap",
@@ -14073,7 +14095,8 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_k0_n4",
@@ -14099,7 +14122,8 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_k0_n5",
@@ -14125,7 +14149,8 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_k0_n3",
@@ -14151,7 +14176,8 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_k0_n2",
@@ -14177,7 +14203,8 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_n0",
@@ -16988,7 +17015,8 @@
           "CYCLE 5 a=x b=1 y=1x",
           "CYCLE 6 a=0 b=0 y=00"
         ]
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "acg_alias_wire",
@@ -17254,7 +17282,8 @@
         {
           "a": "11"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "acg_alias_copy",
@@ -17289,7 +17318,8 @@
         {
           "a": "11"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "acg_alias_far",
@@ -17334,7 +17364,8 @@
           "a": "11",
           "b": "01"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "acg_alias_bits_ok",
@@ -17378,7 +17409,8 @@
           "a": "1",
           "b": "1"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "acg_alias_port_wr",
@@ -28848,7 +28880,8 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_kminus_p_w3",
@@ -28877,7 +28910,8 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_kminus_p_w5",
@@ -28906,7 +28940,8 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "label_kminus_q",
@@ -28932,7 +28967,8 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "dyn32_part",
@@ -30365,7 +30401,8 @@
           "w_i": "1010xx01111100000000111x01010101"
         }
       ],
-      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Packed union `word_u { logic [31:0] w; logic [1:0][15:0] h; logic [3:0][7:0] b; }`: reads in_v.h[1] = [31:16], in_v.b[3] = [31:24], in_v.w[5] = [5] (the one-dimensional member keeps its bit window), and the byte-swap writes out_v.b[i] = in_v.b[3-i] are 8-bit write windows (pre-fix: bit [i])."
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Packed union `word_u { logic [31:0] w; logic [1:0][15:0] h; logic [3:0][7:0] b; }`: reads in_v.h[1] = [31:16], in_v.b[3] = [31:24], in_v.w[5] = [5] (the one-dimensional member keeps its bit window), and the byte-swap writes out_v.b[i] = in_v.b[3-i] are 8-bit write windows (pre-fix: bit [i]).",
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "member_elem_nested",
@@ -54283,7 +54320,8 @@
       ],
       "params": {
         "N": 1
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "wl_rowloop_n2",
@@ -54632,7 +54670,8 @@
       ],
       "params": {
         "N": 2
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "wl_rowloop_n3",
@@ -55221,7 +55260,8 @@
       ],
       "params": {
         "N": 3
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "wl_rowloop_n4",
@@ -56090,7 +56130,8 @@
       ],
       "params": {
         "N": 4
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "wl_rowloop_n8",
@@ -56959,7 +57000,8 @@
       ],
       "params": {
         "N": 8
-      }
+      },
+      "refusal": "Schedule:preemptive"
     },
     {
       "name": "wl_partsel_n1",
@@ -69849,7 +69891,8 @@
         {"a": "1111", "b": "0001"},
         {"a": "1000", "b": "0111"},
         {"a": "xxxx", "b": "0000"}
-      ]
+      ],
+      "refusal": "Schedule:preemptive"
     }
     ,{
       "name": "signed_cast_fixed",

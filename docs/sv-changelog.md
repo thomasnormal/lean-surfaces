@@ -1,5 +1,27 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Default §4.7 route guard — 2026-11-09
+
+The `Schedule:preemptive` guard now runs at the `runner`/`runner2` route
+boundaries by default. It keeps the source-shaped process-atomic executors
+unchanged while refusing unsafe cross-process read/write or write/write
+windows that could expose an IEEE 1800-2023 §4.7 mid-process suspension.
+NBA-only edge bodies and simple continuous assignments are retained as safe
+atomic activations, and the source-shaped memory route has the same guard.
+
+
+The admission census is measured over all 1,553 committed SV envelopes: 854
+M0 and 699 symbolic. M0 parsing has 842 pre-existing adapter refusals plus
+one new `Schedule:preemptive` refusal (`race_blk`). At default points the
+symbolic routes report 40 semantic and 46 memory-route preemption refusals;
+at parameter points, 49 semantic cases and one memory case reach the same
+boundary. The newly covered groups include mixed combinational/edge designs,
+fixed-array streams, ALU divide and FIFO rows, indexed/labelled arrays,
+always-comb alias cross-process rows, packed member-element rows, row loops,
+and signed-net rows. The requested svGolf tree and leaderboard/reference tree
+are unavailable on this machine, so no svGolf census is claimed.
+
+
 ## Exact 32-bit `int` parameters in the svGolf comb tactics
 
 The svGolf comb tactics (`sv_structure`, `sv_interface`, `sv_equations`, `sv_exhaustive`) now follow ls-sv's

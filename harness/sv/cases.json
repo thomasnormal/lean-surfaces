@@ -145,6 +145,7 @@
     {
       "name": "race_blk_one_edge",
       "example": "race_blk",
+      "refusal": "Schedule:preemptive",
       "signals": [
         "a",
         "b"
@@ -155,7 +156,8 @@
       ],
       "stimulus": [
         {}
-      ]
+      ],
+      "measured": "2026-11-09: the raw M0 theorem still exhibits both legal process orders; the route harness now refuses this blocking cross-process window at the IEEE 1800-2023 §4.7 boundary."
     },
     {
       "name": "swap_nba_swap",

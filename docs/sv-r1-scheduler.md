@@ -195,10 +195,12 @@ proof anywhere consumes an unrestricted `∀ d, Deterministic d`. Only
 `docs/sv-charter.md`'s wording overclaimed, and it is corrected there.
 
 **The empirical evidence sits in this lane's own harness run.**
-`race_blk_one_edge` matched **`sigma_rev`**, not `sigma_src`: the racy
-design produced a *different* trace under the reversed schedule. That is
-the race-free boundary showing itself on real hardware semantics, and it
-is why the schedule oracle is load-bearing rather than decorative.
+The raw `race_blk` theorem still exhibits both legal orders. The route
+harness now refuses `race_blk_one_edge` at the `Schedule:preemptive` boundary
+because the racy design produces a *different* trace under the reversed
+schedule. That is the race-free boundary showing itself on real hardware
+semantics, and the schedule oracle remains load-bearing rather than
+decorative.
 
 **(b) Determinism is relative to WHAT IS OBSERVABLE — and R1 changes
 that.** `Deterministic` quantifies over agreement of the *trace*, so its

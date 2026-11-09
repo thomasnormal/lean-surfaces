@@ -23,6 +23,150 @@ def _root_.fibSpec : Nat → Int
   | 1 => 1
   | n + 2 => fibSpec (n + 1) + fibSpec n
 
+private def fibBound : Nat → Nat
+  | 0 => 1
+  | n + 1 => n + 1
+
+/-! Recursive calls execute one frame below their caller.  This helper keeps
+the active depth explicit; the public arrow below is obtained by instantiating
+it at depth zero and applying the ordinary boundary wrapper. -/
+set_option maxHeartbeats 1200000 in
+private theorem fib_depth (d n : Nat)
+    (hlim : d + fibBound n < pythonRecursionLimit) :
+    ∃ f₀, ∀ F, f₀ ≤ F →
+      callIn fib F ({heap := #[], globals := [], callDepth := d} : World)
+        "fib" #[.int (n : Int)] =
+      .ok ({heap := #[], globals := [], callDepth := d} : World)
+        (.int (fibSpec n)) := by
+  induction n using Nat.strongRecOn generalizing d with
+  | ind n ih =>
+    match n with
+    | 0 | 1 =>
+      by_cases hz : d = 0
+      · subst d
+        refine ⟨32, ?_⟩
+        intro F hF
+        obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
+        subst hc
+        rw [Nat.add_comm, callIn.eq_2]
+        py_simp [fib, fibSpec, pythonTopCallDepth, pythonRecursionLimit,
+          Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+          Run.toPublic_ok, RVal.freezeB]
+      · have hd : 0 < d := by omega
+        have htop : d ≠ pythonTopCallDepth := by
+          intro h; simp [pythonTopCallDepth, pythonRecursionLimit] at h hlim; omega
+        have hguard : ¬ (999 ≤ d) := by
+          simp [fibBound, pythonRecursionLimit] at hlim ⊢; omega
+        refine ⟨32, ?_⟩
+        intro F hF
+        obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
+        subst hc
+        rw [Nat.add_comm, callIn.eq_2]
+        py_simp [fib, fibSpec, hz, hd, htop, hguard,
+          pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+          Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
+    | n + 2 =>
+      have hstep : d + 1 + fibBound n < pythonRecursionLimit := by
+        cases n with
+        | zero => simp [fibBound] at hlim ⊢; omega
+        | succ n => simp [fibBound] at hlim ⊢; omega
+      obtain ⟨f₁, h₁⟩ := ih (n + 1) (by omega) (d + 1) (by
+        simp [fibBound] at hlim ⊢; omega)
+      obtain ⟨f₂, h₂⟩ := ih n (by omega) (d + 1) hstep
+      by_cases hz : d = 0
+      · have hz0 : d = 0 := hz
+        refine ⟨f₁ + f₂ + 32, ?_⟩
+        intro F hF
+        obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
+        subst hc
+        rw [Nat.add_comm]
+        have hs : c + (f₁ + f₂ + 32) = Nat.succ (c + (f₁ + f₂ + 31)) := by omega
+        rw [hs, callIn.eq_2]
+        have hn1 : (n : Int) + 2 - 1 = (n : Int) + 1 := by omega
+        have hn2 : (n : Int) + 2 - 2 = (n : Int) := by omega
+        have h₁' := h₁ (c + (f₁ + f₂ + 26)) (by omega)
+        have h₂' := h₂ (c + (f₁ + f₂ + 26)) (by omega)
+        simp only [fib] at h₁' h₂'
+        have h₁'' : callIn fib (c + (f₁ + f₂ + 26))
+            ({heap := #[], globals := [], callDepth := 1} : World)
+            "fib" #[.int ((n : Int) + 1)] =
+            .ok ({heap := #[], globals := [], callDepth := 1} : World)
+            (.int (fibSpec (n + 1))) := by simpa [fib, Nat.zero_add, hz0] using h₁'
+        have h₂'' : callIn fib (c + (f₁ + f₂ + 26))
+            ({heap := #[], globals := [], callDepth := 1} : World)
+            "fib" #[.int (n : Int)] =
+            .ok ({heap := #[], globals := [], callDepth := 1} : World)
+            (.int (fibSpec n)) := by simpa [fib, Nat.zero_add, hz0] using h₂'
+        simp only [fib] at h₁'' h₂''
+        py_simp [fib, fibSpec, hz0, hn1, hn2,
+          show ¬((n : Int) + 2 < 2) by omega, h₁'', h₂'',
+          pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+          Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB,
+          evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+          setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+          Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
+          Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+          moduleGenFree, funsGenAllocFree, Stmt.genAllocFree,
+          Stmt.genAllocFreeList, Run.bind, Run.liftRes,
+          starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+          fstringFormatBuiltinName, flattenStarRun, flattenStarCallArgs,
+          RVal.thawList, RVal.thawList_eq_map, RVal.thawArgs,
+          List.flatMap, List.map, Array.mk]
+      · have hd : 0 < d := by omega
+        have htop : d ≠ pythonTopCallDepth := by
+          intro h; simp [pythonTopCallDepth, pythonRecursionLimit] at h hlim; omega
+        have htopb : (d == pythonTopCallDepth) = false :=
+          beq_eq_false_iff_ne.mpr htop
+        have htop1001 : d ≠ 1001 := by
+          intro h; apply htop; simpa [pythonTopCallDepth, pythonRecursionLimit] using h
+        have hguard : ¬ (999 ≤ d) := by
+          have hd2 : d + 2 < pythonRecursionLimit := by
+            cases n with
+            | zero => simpa [fibBound] using hlim
+            | succ n => simp [fibBound] at hlim ⊢; omega
+          simp [pythonRecursionLimit] at hd2 ⊢; omega
+        refine ⟨f₁ + f₂ + 32, ?_⟩
+        intro F hF
+        obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
+        subst hc
+        rw [Nat.add_comm]
+        have hs : c + (f₁ + f₂ + 32) = Nat.succ (c + (f₁ + f₂ + 31)) := by omega
+        rw [hs, callIn.eq_2]
+        have hn1 : (n : Int) + 2 - 1 = (n : Int) + 1 := by omega
+        have hn2 : (n : Int) + 2 - 2 = (n : Int) := by omega
+        have h₁' := h₁ (c + (f₁ + f₂ + 26)) (by omega)
+        have h₂' := h₂ (c + (f₁ + f₂ + 26)) (by omega)
+        simp only [fib] at h₁' h₂'
+        have h₁'' : callIn fib (c + (f₁ + f₂ + 26))
+            ({heap := #[], globals := [], callDepth := d + 1} : World)
+            "fib" #[.int ((n : Int) + 1)] =
+            .ok ({heap := #[], globals := [], callDepth := d + 1} : World)
+            (.int (fibSpec (n + 1))) := by simpa [fib] using h₁'
+        have h₂'' : callIn fib (c + (f₁ + f₂ + 26))
+            ({heap := #[], globals := [], callDepth := d + 1} : World)
+            "fib" #[.int (n : Int)] =
+            .ok ({heap := #[], globals := [], callDepth := d + 1} : World)
+            (.int (fibSpec n)) := by simpa [fib] using h₂'
+        simp only [fib] at h₁'' h₂''
+        py_simp [fib, fibSpec, hz, hd, htop, htopb, htop1001, hguard, hn1, hn2,
+          show ¬((n : Int) + 2 < 2) by omega,
+          pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+          Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB,
+          evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
+          setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+          Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
+          Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
+          moduleGenFree, funsGenAllocFree, Stmt.genAllocFree,
+          Stmt.genAllocFreeList, Run.bind, Run.liftRes,
+          starArgBuiltinName, starListBuiltinName, starTupleBuiltinName,
+          fstringFormatBuiltinName, flattenStarRun, flattenStarCallArgs,
+          RVal.thawList, RVal.thawList_eq_map, RVal.thawArgs,
+          List.flatMap, List.map, Array.mk]
+        py_simp [evalExprs, evalExpr, RVal.thawList, RVal.thawList_eq_map,
+          flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals,
+          h₁'', h₂'',
+          Run.toWorld, Run.liftRes]
+
 -- H7 note: the `.call` arm's equation now carries the keyword tier and
 -- the guarded closure dispatch; fib's whole-body symbolic step crosses
 -- it twice, which pushed this proof past the default heartbeat budget
@@ -35,35 +179,18 @@ step case `py_lift` puts the two IH runs in fuel-threshold form
 (`CallsTo.at_least`, i.e. FuelMono), so a single symbolic execution of the
 body closes the goal by conditional rewriting. -/
 theorem fib_total (k : Nat) (hk : k < pythonRecursionLimit) : fib(k) ==> fibSpec k := by
-  induction k using Nat.strongRecOn with
-  | ind k ih =>
-    match k, ih with
-    | 0, _ => py_prove [fib, fibSpec]
-    | 1, _ => py_prove [fib, fibSpec]
-    | k + 2, ih =>
-      -- `py_lift`: the IHs in threshold form, valid at EVERY fuel ≥ f₁/f₂ —
-      -- the final conditional rewrite discharges the ≥ side conditions by
-      -- omega, so no exact-offset bookkeeping is needed anywhere below.
-      py_lift ⟨f₁, h₁⟩ := ih (k + 1) (by omega) (by omega) with [fib]
-      py_lift ⟨f₂, h₂⟩ := ih k (by omega) (by omega) with [fib]
-      refine ⟨f₁ + f₂ + 32, ?_⟩   -- any generous slack works
-      unfold callFunction
-      rw [callIn.eq_2]
-      py_simp [fib, show ¬((k : Int) + 2 < 2) by omega,
-               show (k : Int) + 2 - 1 = ((k + 1 : Nat) : Int) by omega,
-               evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
-               setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
-               Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList,
-               Expr.heapFree, hasUnboundLocal, unboundLocalMarker,
-               moduleGenFree, funsGenAllocFree, Stmt.genAllocFree,
-               Stmt.genAllocFreeList, Run.bind, Run.liftRes, Run.toPublic,
-               RVal.freezeB, starArgBuiltinName, starListBuiltinName,
-               starTupleBuiltinName, fstringFormatBuiltinName, flattenStarRun,
-               flattenStarCallArgs]
-      simp (disch := omega) only [h₁]
-      py_simp []
-      simp (disch := omega) only [h₂]
-      py_simp [fibSpec]
+  obtain ⟨f₀, hf⟩ := fib_depth 0 k (by
+    cases k with
+    | zero => simp [fibBound, pythonRecursionLimit]
+    | succ k => simpa [fibBound] using hk)
+  refine ⟨f₀, ?_⟩
+  unfold callFunction
+  have hinit : initWorld fib = ({heap := #[], globals := []} : World) := by rfl
+  have hargs : RVal.thawArgs #[ToVal.toVal k] = #[.int (k : Int)] := by rfl
+  rw [hinit, hargs]
+  rw [hf f₀ (Nat.le_refl f₀)]
+  simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 set_option warning.simp.varHead false in
 /-- Determinism corollary of `fib_total` — one `py_corollary`

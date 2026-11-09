@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with compound
+  bitwise-AND assignment and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with compound modulo
   assignment and native differential coverage.
 

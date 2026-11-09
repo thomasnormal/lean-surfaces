@@ -19582,6 +19582,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-short-size-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectShortSizeAgreementWitness",
+    "cpp_source": "bool short_size_agreement_witness() { return sizeof(short) == 2; } bool callable_witness() { return short_size_agreement_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-value-object-null-inequality-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

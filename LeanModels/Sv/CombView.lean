@@ -831,7 +831,7 @@ def signedOpRefusal? : SymBinOp → Option String
 say what signedness changes there. -/
 def leafRefusal : PExpr → String
   | .cast true (.ident n) =>
-      s!"a signed read of `{n}` in a position the tactics do not read through the unsigned twin (they read a signed signal as the same bits where it is an operand of a continuous assign; a select of a signed signal, an index, a shift operand and an `always_comb` body are outside the fragment)"
+      s!"a signed read of `{n}` in a position the tactics do not read through the unsigned twin (they read a signed signal as the same bits where it is an operand of a continuous assign; an index, a shift amount and an `always_comb` body are outside the fragment)"
   | .signedResize .. =>
       "sign extension (a signed operand narrower than its context is extended with its sign bit, which the fragment does not model; it has zero extension)"
   | _ => "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
@@ -839,7 +839,7 @@ def leafRefusal : PExpr → String
 /-- The refusal of a select whose base is not an identifier. -/
 def selBaseRefusal (kind : String) : PExpr → String
   | .cast true (.ident n) =>
-      s!"a select of the signed signal `{n}` (outside the v1 fragment: the tactics read a signed signal through its unsigned twin only as a whole operand)"
+      s!"a select of the signed signal `{n}` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)"
   | _ => s!"{kind} select of a non-identifier base"
 
 /-- A read of one access. -/
@@ -1018,10 +1018,11 @@ that evaluation fails; it fails at every type on a signal access (`evalAt_sigOpd
 factor. -/
 def sigOpd : PExpr → Bool
   | .ident _ | .bitSel (.ident _) _ | .partSel (.ident _) _ _ | .arrayElem .. | .arrayPart .. => true
-  | .cast true (.ident _) => true
+  | .cast true (.ident _) | .bitSel (.cast true (.ident _)) _ | .partSel (.cast true (.ident _)) _ _ => true
   | .resize _ (.ident _) | .resize _ (.bitSel (.ident _) _) | .resize _ (.partSel (.ident _) _ _)
   | .resize _ (.arrayElem ..) | .resize _ (.arrayPart ..) => true
-  | .resize _ (.cast true (.ident _)) => true
+  | .resize _ (.cast true (.ident _)) | .resize _ (.bitSel (.cast true (.ident _)) _)
+  | .resize _ (.partSel (.cast true (.ident _)) _ _) => true
   | _ => false
 
 /-- The extra condition of `*` (WP-B2): one factor is a signal access (`sigOpd`). Every other operator passes. -/
@@ -1222,7 +1223,9 @@ comparison of two signed signals declared with the same dimensions (`rdsOfW?`; `
 `PExpr.unsign` is the expression with the marker removed at every position the recognizer reads as a value leaf:
 operands of `& | ^ + - *`, of the six comparisons and of `&& ||`, the operand of `~`, `!` and a reduction, the three
 parts of `?:`, concatenation parts, the argument of a replication and the operand of a zero-extension marker
-(`Resize`). It is NOT removed in an index or bound, under a sign-extension marker, or in an operand of a shift. The
+(`Resize`); and from the base of a bit or part select in those positions (a select is unsigned whatever its base,
+IEEE 1800-2023 §11.8.1, and `instExpr2` lowers it through the base's element width, which the marker does not change).
+It is NOT removed in an index or bound, under a sign-extension marker, or in an operand of a shift. The
 tactics summarize the unsigned twin `PDesign.unsign` and carry the result back to the design as written by a theorem
 (`CombSigned.lean`), under the width obligation of `sv_equations` (no operand is implicitly widened). -/
 
@@ -1237,6 +1240,8 @@ mutual
 /-- The unsigned twin of an expression (see the section docstring). -/
 def _root_.LeanModels.Sv.PExpr.unsign : PExpr → PExpr
   | .cast true (.ident n) => .ident n
+  | .bitSel (.cast true (.ident n)) i => .bitSel (.ident n) i
+  | .partSel (.cast true (.ident n)) m l => .partSel (.ident n) m l
   | .binary op l r =>
       match unsignOp op with
       | true => .binary op l.unsign r.unsign

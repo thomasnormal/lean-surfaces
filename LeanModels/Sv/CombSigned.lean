@@ -4,7 +4,9 @@ import LeanModels.Sv.CombEqThm
 /-!
 # Signed reads: a design and its unsigned twin instantiate to the same design
 
-`PDesign.unsign` (`CombView.lean`) removes the cast marker of every signed read the recognizer reads as a value leaf.
+`PDesign.unsign` (`CombView.lean`) removes the cast marker of every signed read the recognizer reads as a value leaf,
+and from the base of a bit or part select in those positions (a select is unsigned, IEEE 1800-2023 §11.8.1; it lowers as
+the select of the plain signal, `instExpr2_bitSel_castU`/`instExpr2_partSel_castU`).
 This file proves that, under the width contract of `sv_equations` (`Summary.WidthObl`: every bare access exactly as
 wide as its context, so no signed operand is ever implicitly widened), the design as written and its unsigned twin
 instantiate to the SAME `Design2` (`instantiateGD2_unsign`). The `sv_comb` tactics summarize the twin and rewrite the
@@ -24,7 +26,9 @@ So is a shift (`>>>` or `<<`) whose left operand is a signed signal, into a targ
 not enter a shift, and `Sk.sh` with the signed flag lowers `>>>` to `BinOp.ashr true` (`XF.ashrBits`).
 What else signedness changes is outside the fragment and stays refused: sign extension (the `SignedResize` marker), a
 signed comparison of other operands, `>>>` into a wider target, a signed shift amount, signed `/` and `%`, a signed
-read in an index, and a signed read other than a shifted operand, or a signed comparison, in an `always_comb` body.
+read in an index, a select of a signed signal as a shift operand, and a signed read other than a shifted operand, or a
+signed comparison, in an `always_comb` body (the twin is defined on continuous assigns; an `always_comb` body would
+need a statement-level twin and its instantiation theorem through the procedural lowering).
 -/
 
 namespace LeanModels.Sv

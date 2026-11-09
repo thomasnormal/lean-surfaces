@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "sg_sel",
+  "top": "sg_sel_proc",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_signed/neg/sg_sel.sv",
-      "sha256": "3cd1d6ac39cbe84c45a50ef1541152ab9772236d57ed5b2991490d559a009b9f"
+      "path": "Examples/system-verilog/comb_signed/neg/sg_sel_proc.sv",
+      "sha256": "c80fa46050baee03001ee2766114bcfacef55738ad94b83bbe02e528d58930e1"
     }
   ],
   "packages": [],
@@ -25,16 +25,16 @@
           "end_line": 7,
           "end_col": 10
         },
-        "name": "sg_sel",
+        "name": "sg_sel_proc",
         "imports": [],
         "params": [
           {
             "kind": "ParameterDecl",
             "span": {
               "line": 2,
-              "col": 35,
+              "col": 40,
               "end_line": 2,
-              "end_col": 40
+              "end_col": 45
             },
             "name": "W",
             "type": {
@@ -45,9 +45,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 40,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 45
                     },
                     "value": 31,
                     "resolved_width": 32
@@ -56,9 +56,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 40,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 45
                     },
                     "value": 0,
                     "resolved_width": 32
@@ -71,9 +71,9 @@
               "kind": "Int",
               "span": {
                 "line": 2,
-                "col": 39,
+                "col": 44,
                 "end_line": 2,
-                "end_col": 40
+                "end_col": 45
               },
               "value": 8,
               "resolved_width": 32
@@ -150,11 +150,11 @@
             "kind": "Port",
             "span": {
               "line": 4,
-              "col": 16,
+              "col": 31,
               "end_line": 4,
-              "end_col": 19
+              "end_col": 32
             },
-            "name": "neg",
+            "name": "y",
             "dir": "out",
             "width": {
               "kind": "PackedType",
@@ -166,75 +166,84 @@
         "decls": [],
         "processes": [
           {
-            "kind": "Assign",
+            "kind": "AlwaysComb",
             "span": {
               "line": 6,
-              "col": 10,
+              "col": 3,
               "end_line": 6,
-              "end_col": 22
+              "end_col": 26
             },
-            "target": {
-              "kind": "Ident",
+            "body": {
+              "kind": "BlockingAssign",
               "span": {
                 "line": 6,
-                "col": 10,
+                "col": 15,
                 "end_line": 6,
-                "end_col": 13
+                "end_col": 26
               },
-              "width": 1,
-              "name": "neg"
-            },
-            "value": {
-              "kind": "BitSel",
-              "span": {
-                "line": 6,
-                "col": 16,
-                "end_line": 6,
-                "end_col": 22
-              },
-              "width": 1,
-              "value": {
+              "target": {
                 "kind": "Ident",
                 "span": {
                   "line": 6,
-                  "col": 16,
+                  "col": 15,
                   "end_line": 6,
-                  "end_col": 17
+                  "end_col": 16
                 },
-                "width": 8,
-                "name": "a",
-                "signed": true
+                "width": 1,
+                "name": "y"
               },
-              "index": {
-                "kind": "Binary",
+              "value": {
+                "kind": "BitSel",
                 "span": {
                   "line": 6,
-                  "col": 18,
+                  "col": 19,
                   "end_line": 6,
-                  "end_col": 21
+                  "end_col": 25
                 },
-                "width": 32,
-                "op": "-",
-                "left": {
-                  "kind": "ParamRef",
+                "width": 1,
+                "value": {
+                  "kind": "Ident",
                   "span": {
                     "line": 6,
-                    "col": 18,
+                    "col": 19,
                     "end_line": 6,
-                    "end_col": 19
+                    "end_col": 20
                   },
-                  "name": "W"
+                  "width": 8,
+                  "name": "a",
+                  "signed": true
                 },
-                "right": {
-                  "kind": "Int",
+                "index": {
+                  "kind": "Binary",
                   "span": {
                     "line": 6,
-                    "col": 20,
+                    "col": 21,
                     "end_line": 6,
-                    "end_col": 21
+                    "end_col": 24
                   },
-                  "value": 1,
-                  "resolved_width": 32
+                  "width": 32,
+                  "op": "-",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 6,
+                      "col": 21,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "name": "W"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 24
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
                 }
               }
             }

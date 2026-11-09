@@ -607,7 +607,10 @@ theorem unsign_binary_f {op : SymBinOp} (h : unsignOp op = false) (l r : PExpr) 
 
 theorem unsign_of_leafRd {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e = .ok a) :
     e.unsign = e := by
-  cases e <;> first | rfl | (simp [leafRd?] at h)
+  cases e with
+  | bitSel b i => cases b <;> first | rfl | (simp [leafRd?] at h)
+  | partSel b m l => cases b <;> first | rfl | (simp [leafRd?] at h)
+  | _ => first | rfl | (simp [leafRd?] at h)
 
 theorem unsign_of_rdsLeaf {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsLeaf? ds e = .ok rs) :
     e.unsign = e := by
@@ -775,7 +778,8 @@ theorem unsign_of_rdsOf {ds : List DeclT} :
   | .concat ps, rs, h => by
       show PExpr.concat (PExpr.unsignL ps) = _
       rw [unsignL_of_partsRd (by simpa [rdsOf?] using h)]
-  | .ident _, _, _ | .bitSel .., _, _ | .partSel .., _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .ident _, _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .bitSel .., _, h | .partSel .., _, h => unsign_of_rdsLeaf (by simpa [rdsOf?] using h)
   | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .int _, _, h | .fill _, _, h
   | .resize .., _, h | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h | .repl .., _, h
   | .cast .., _, h | .unsupported .., _, h => by
@@ -821,7 +825,8 @@ theorem unsign_of_rdsOfW {ds : List DeclT} :
       · rfl
       · rw [unsign_of_leafRd ha]
       · rw [unsign_of_rdsOfW he]
-  | .ident _, _, _ | .bitSel .., _, _ | .partSel .., _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .ident _, _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .bitSel .., _, h | .partSel .., _, h => unsign_of_rdsLeaf (by simpa [rdsOfW?] using h)
   | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .fill _, _, h
   | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h
   | .cast .., _, h | .unsupported .., _, h => by
@@ -1437,15 +1442,28 @@ theorem evalAt_sigOpd {e : PExpr} (h : sigOpd e = true) (ty : Nat × Bool) (v : 
     evalAt env ty e ≠ .ok v := by
   cases e with
   | ident n => simp [evalAt]
-  | bitSel b i => cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
-  | partSel b m l => cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+  | bitSel b i =>
+      cases b with
+      | cast s x => cases s <;> cases x <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+      | _ => simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+  | partSel b m l =>
+      cases b with
+      | cast s x => cases s <;> cases x <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+      | _ => simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
   | arrayElem n is => simp [evalAt]
   | arrayPart n is md a b => simp [evalAt]
   | resize w a =>
       cases a with
       | bitSel b i =>
-          cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates, PExpr.negGenvarAt]
-      | partSel b m l => cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+          cases b with
+          | cast s x =>
+              cases s <;> cases x <;>
+                simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates, PExpr.negGenvarAt]
+          | _ => simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates, PExpr.negGenvarAt]
+      | partSel b m l =>
+          cases b with
+          | cast s x => cases s <;> cases x <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+          | _ => simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
       | cast s x =>
           cases s <;> cases x <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates,
             PExpr.negGenvarAt]

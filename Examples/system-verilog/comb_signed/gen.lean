@@ -21,9 +21,12 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   the left shift `<<` of a signed input, into targets of the operand's width (`comb_proof.lean`: `BitVec.sshiftRight` and
   `<<<` for every width);
 * `asr_proc.sv`: the same `>>>` inside `always_comb`, which the procedural route reads too;
+* `ssel.sv`: bit and part selects of signed inputs, unsigned values (IEEE 1800-2023 §11.8.1): the sign bit, the low bits,
+  a bit inside `^`, and `{a[W-1], a[W-1:1]}` (`comb_proof.lean`, for every width `W ≥ 2`). The twin reads each select
+  of the plain signal;
 * `neg/`: the constructs whose meaning signedness changes and the tactics do not read yet, refused with that reason
-  (`comb_errors.lean`): a select of a signed signal, a signed comparison of two signals declared with different
-  dimensions, one in a self-determined position, one of an operand that is not a whole signal, and one inside
+  (`comb_errors.lean`): a select of a signed signal as a shift operand and inside `always_comb`, a signed comparison of
+  two signals declared with different dimensions, one in a self-determined position, one of an operand that is not a whole signal, and one inside
   `always_comb`; an arithmetic shift right by a signed amount, in a self-determined position and into a wider target,
   and `>>>` of an unsigned operand. (Sign extension into a wider target, `neg/sg_ext.sv`, never reaches the tactics: at a
   symbolic width the extractor marks the conversion `ConversionExpression:width`; so does a signed comparison of two
@@ -42,6 +45,7 @@ load_design_sv2 pass from "Examples/system-verilog/comb_signed/pass.sv.json"
 load_design_sv2 scmp from "Examples/system-verilog/comb_signed/scmp.sv.json"
 load_design_sv2 asr from "Examples/system-verilog/comb_signed/asr.sv.json"
 load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.json"
+load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
 
 -- The design as written has signed reads: the recognizer refuses them, and summarizes the unsigned twin.
 #guard sadd.pdesign.summary.toOption.isNone
@@ -55,6 +59,10 @@ load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.j
 -- So is a shift of a signed operand (the twin does not enter a shift).
 #guard asr.pdesign.unsign == asr.pdesign
 #guard asr.pdesign.summary.toOption.isSome
+-- A select of a signed signal is read through the twin (the select of the plain signal).
+#guard ssel.pdesign.summary.toOption.isNone
+#guard ssel.pdesign.unsign.summary.toOption.isSome
+#guard (ssel.pdesign.unsign == ssel.pdesign) == false
 
 -- The declarations keep their signedness (the summary's too).
 #guard (sadd.sem 8).decls.toList.map (·.isSigned) == [true, true, true, true, false, false]
@@ -91,6 +99,13 @@ load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.j
         (SvState.lookup s1 n).map LVec.toBinString == some v) &&
       [("y", "1111"), ("z", "1101"), ("l", "0000")].all (fun (n, v) =>
         (SvState.lookup s2 n).map LVec.toBinString == some v)
+  | _ => false)
+
+-- A run at `W = 4`, `a = -6` (1010), `b = 5` (0101): `msb = 1`, `low = 010`, `x = a[0] ^ b[3] = 0`, `h = 1101`.
+#guard (match run2 (ssel.sem 4) σ_src 1000 [[("a", .ofNat 4 10), ("b", .ofNat 4 5)]] with
+  | .ok [st] =>
+      [("msb", "1"), ("low", "010"), ("x", "0"), ("h", "1101")].all (fun (n, v) =>
+        (SvState.lookup st n).map LVec.toBinString == some v)
   | _ => false)
 
 end Examples.«system-verilog».comb_signed.gen

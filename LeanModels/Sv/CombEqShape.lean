@@ -91,6 +91,54 @@ theorem instExpr2_castU (ctx : Option Nat) (s : Bool) (a : PExpr) :
     instExpr2 E elems ctx (.cast s a) = instExpr2 E elems ctx a := by
   simp [instExpr2]
 
+/-! ### A select of a signed signal
+
+A select is unsigned whatever its base (IEEE 1800-2023 §11.8.1). `instExpr2` lowers it through the base's element width
+(`elemOf`, which sees through the marker) and the base read at its own width; the only other thing it consults is
+whether the select is a constant (`evalInt`), and a select of a signal is not one, with or without the marker (`ctype`
+of a signal is an error). So a select of a signed signal lowers as the select of the plain signal. -/
+
+/-- The bases whose `ctype` is an error: a signal, and a signed read of one. -/
+theorem ctype_sigBase_err (n : String) :
+    (∃ m, ctype E (.ident n) = .error m) ∧ (∃ m, ctype E (.cast true (.ident n)) = .error m) :=
+  ⟨⟨_, rfl⟩, ⟨_, rfl⟩⟩
+
+theorem evalInt_bitSel_sig_err {b : PExpr} (hb : ∃ m, ctype E b = .error m) (hi : b.isInt E = false) (i : PExpr) :
+    ∃ m, evalInt E (.bitSel b i) = .error m := by
+  obtain ⟨m, hm⟩ := hb
+  exact ⟨m, by simp [evalInt, hi, evalSized, ctype, evalAt, hm, bind, Except.bind]⟩
+
+theorem evalInt_partSel_sig_err {b : PExpr} (hb : ∃ m, ctype E b = .error m) (hi : b.isInt E = false)
+    (msb lsb : PExpr) : ∃ m, evalInt E (.partSel b msb lsb) = .error m := by
+  obtain ⟨m, hm⟩ := hb
+  exact ⟨m, by simp [evalInt, hi, evalSized, ctype, hm, bind, Except.bind]⟩
+
+theorem instExpr2_bitSel_castU (ctx : Option Nat) (n : String) (i : PExpr) :
+    instExpr2 E elems ctx (.bitSel (.cast true (.ident n)) i) = instExpr2 E elems ctx (.bitSel (.ident n) i) := by
+  obtain ⟨m1, h1⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl i
+  obtain ⟨m2, h2⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl i
+  simp only [instExpr2, h1, h2, elemOf, selfWidth2]
+
+theorem selfWidth2_bitSel_castU (n : String) (i : PExpr) :
+    selfWidth2 E elems (.bitSel (.cast true (.ident n)) i) = selfWidth2 E elems (.bitSel (.ident n) i) := by
+  obtain ⟨m1, h1⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl i
+  obtain ⟨m2, h2⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl i
+  simp only [selfWidth2, h1, h2, elemOf]
+
+theorem instExpr2_partSel_castU (ctx : Option Nat) (n : String) (msb lsb : PExpr) :
+    instExpr2 E elems ctx (.partSel (.cast true (.ident n)) msb lsb) =
+      instExpr2 E elems ctx (.partSel (.ident n) msb lsb) := by
+  obtain ⟨m1, h1⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl msb lsb
+  obtain ⟨m2, h2⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl msb lsb
+  simp only [instExpr2, h1, h2, elemOf, selfWidth2]
+
+theorem selfWidth2_partSel_castU (n : String) (msb lsb : PExpr) :
+    selfWidth2 E elems (.partSel (.cast true (.ident n)) msb lsb) =
+      selfWidth2 E elems (.partSel (.ident n) msb lsb) := by
+  obtain ⟨m1, h1⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl msb lsb
+  obtain ⟨m2, h2⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl msb lsb
+  simp only [selfWidth2, h1, h2, elemOf]
+
 end cast
 
 /-! ## Recognizer inversions through `PExpr.unsign` -/
@@ -116,17 +164,41 @@ theorem unsign_resize (m : Nat) (a : PExpr) : (PExpr.resize m a).unsign = .resiz
 theorem unsignL_cons (p : PExpr) (ps : List PExpr) : PExpr.unsignL (p :: ps) = p.unsign :: PExpr.unsignL ps := by
   simp [PExpr.unsignL]
 
-/-- A leaf whose unsigned twin the leaf recognizer accepts: the leaf itself, or a signed read of an identifier. -/
+/-- A leaf whose unsigned twin the leaf recognizer accepts: the leaf itself, a signed read of an identifier, or a bit or
+part select of one. -/
 theorem leafRd_unsign {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e.unsign = .ok a) :
-    leafRd? ds e = .ok a ∨ ∃ n, e = .cast true (.ident n) ∧ leafRd? ds (.ident n) = .ok a := by
+    leafRd? ds e = .ok a ∨ (∃ n, e = .cast true (.ident n) ∧ leafRd? ds (.ident n) = .ok a) ∨
+      (∃ n i, e = .bitSel (.cast true (.ident n)) i ∧ leafRd? ds (.bitSel (.ident n) i) = .ok a) ∨
+      (∃ n msb lsb, e = .partSel (.cast true (.ident n)) msb lsb ∧
+        leafRd? ds (.partSel (.ident n) msb lsb) = .ok a) := by
   cases e with
   | cast s x =>
       cases s with
       | true =>
           cases x with
-          | ident n => exact Or.inr ⟨n, rfl, h⟩
+          | ident n => exact Or.inr (Or.inl ⟨n, rfl, h⟩)
           | _ => simp [PExpr.unsign, leafRd?] at h
       | false => simp [PExpr.unsign, leafRd?] at h
+  | bitSel b i =>
+      cases b with
+      | cast s x =>
+          cases s with
+          | true =>
+              cases x with
+              | ident n => exact Or.inr (Or.inr (Or.inl ⟨n, i, rfl, h⟩))
+              | _ => exact Or.inl h
+          | false => exact Or.inl h
+      | _ => exact Or.inl h
+  | partSel b msb lsb =>
+      cases b with
+      | cast s x =>
+          cases s with
+          | true =>
+              cases x with
+              | ident n => exact Or.inr (Or.inr (Or.inr ⟨n, msb, lsb, rfl, h⟩))
+              | _ => exact Or.inl h
+          | false => exact Or.inl h
+      | _ => exact Or.inl h
   | binary op l r =>
       cases hu : unsignOp op
       · rw [unsign_binary_f hu] at h; simp [leafRd?] at h
@@ -146,8 +218,10 @@ theorem rdsLeaf_unsign {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsLea
 theorem leaf_flagsU {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e.unsign = .ok a) :
     e.ctxPropagates = false ∧ e.constLeaf = false ∧
       ∀ (env : IEnv) (m w : Nat), (PExpr.resize m e).negGenvarWidened env w = none := by
-  rcases leafRd_unsign h with h' | ⟨n, rfl, -⟩
+  rcases leafRd_unsign h with h' | ⟨n, rfl, -⟩ | ⟨n, i, rfl, -⟩ | ⟨n, msb, lsb, rfl, -⟩
   · exact leaf_flags h'
+  · exact ⟨rfl, rfl, fun _ _ _ => rfl⟩
+  · exact ⟨rfl, rfl, fun _ _ _ => rfl⟩
   · exact ⟨rfl, rfl, fun _ _ _ => rfl⟩
 
 theorem leafU_ne_lit {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e.unsign = .ok a) :
@@ -165,6 +239,17 @@ theorem unsign_lit (v : LVec) : (PExpr.lit v).unsign = .lit v := by simp [PExpr.
 
 theorem unsign_int (k : Int) : (PExpr.int k).unsign = .int k := by simp [PExpr.unsign]
 
+/-- The twin of a select is a select of the same index or bounds (the marker of a signed base removed). -/
+theorem unsign_bitSel (b i : PExpr) : ∃ b', (PExpr.bitSel b i).unsign = .bitSel b' i := by
+  cases b with
+  | cast s x => cases s <;> cases x <;> exact ⟨_, rfl⟩
+  | _ => exact ⟨_, rfl⟩
+
+theorem unsign_partSel (b m l : PExpr) : ∃ b', (PExpr.partSel b m l).unsign = .partSel b' m l := by
+  cases b with
+  | cast s x => cases s <;> cases x <;> exact ⟨_, rfl⟩
+  | _ => exact ⟨_, rfl⟩
+
 theorem unsign_eq_lit {e : PExpr} {v : LVec} (h : e.unsign = .lit v) : e = .lit v := by
   cases e with
   | lit w => simpa [PExpr.unsign] using h
@@ -180,6 +265,8 @@ theorem unsign_eq_lit {e : PExpr} {v : LVec} (h : e.unsign = .lit v) : e = .lit 
   | concat => simp [PExpr.unsign] at h
   | repl => simp [PExpr.unsign] at h
   | resize => simp [PExpr.unsign] at h
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
   | _ => simp [PExpr.unsign] at h
 
 theorem unsign_eq_fill {e : PExpr} {b : Logic} (h : e.unsign = .fill b) : e = .fill b := by
@@ -197,6 +284,8 @@ theorem unsign_eq_fill {e : PExpr} {b : Logic} (h : e.unsign = .fill b) : e = .f
   | concat => simp [PExpr.unsign] at h
   | repl => simp [PExpr.unsign] at h
   | resize => simp [PExpr.unsign] at h
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
   | _ => simp [PExpr.unsign] at h
 
 theorem unsign_eq_concat1 {e x : PExpr} (h : e.unsign = .concat [x]) :
@@ -221,6 +310,8 @@ theorem unsign_eq_concat1 {e x : PExpr} (h : e.unsign = .concat [x]) :
   | reduce => simp [PExpr.unsign] at h
   | repl => simp [PExpr.unsign] at h
   | resize => simp [PExpr.unsign] at h
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
   | _ => simp [PExpr.unsign] at h
 
 theorem unsign_eq_repl {e c a : PExpr} (h : e.unsign = .repl c a) : ∃ a', e = .repl c a' ∧ a'.unsign = a := by
@@ -240,11 +331,15 @@ theorem unsign_eq_repl {e c a : PExpr} (h : e.unsign = .repl c a) : ∃ a', e = 
   | reduce => simp [PExpr.unsign] at h
   | concat => simp [PExpr.unsign] at h
   | resize => simp [PExpr.unsign] at h
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
   | _ => simp [PExpr.unsign] at h
 
 theorem unsign_isOpW (e : PExpr) : e.unsign.isOpW = e.isOpW := by
   cases e with
   | cast s y => cases s <;> cases y <;> rfl
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb]; rfl
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb]; rfl
   | binary op l r =>
       cases hu : unsignOp op
       · rw [unsign_binary_f hu]
@@ -277,10 +372,26 @@ theorem unsign_ctxPropagates {e : PExpr} (h : e.isOpW = true) : e.unsign.ctxProp
 theorem sigOpd_of_unsign {e : PExpr} (h : sigOpd e.unsign = true) : sigOpd e = true := by
   cases e with
   | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+  | bitSel b i =>
+      cases b with
+      | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+      | _ => simp_all [PExpr.unsign, sigOpd]
+  | partSel b m l =>
+      cases b with
+      | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+      | _ => simp_all [PExpr.unsign, sigOpd]
   | resize m a =>
       rw [unsign_resize] at h
       cases a with
       | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+      | bitSel b i =>
+          cases b with
+          | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+          | _ => simp_all [PExpr.unsign, sigOpd]
+      | partSel b m l =>
+          cases b with
+          | cast s y => cases s <;> cases y <;> simp_all [PExpr.unsign, sigOpd]
+          | _ => simp_all [PExpr.unsign, sigOpd]
       | binary op l r =>
           cases hu : unsignOp op
           · rw [unsign_binary_f hu] at h; simp [sigOpd] at h
@@ -442,10 +553,14 @@ theorem leaf_eqU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (h : leafRd? ds e.unsign = .ok a) (ha : AccOK σ DW DG EW ns a) :
     selfWidth2 E elems e = some (a.win σ dw).2.2 ∧ (∀ ctx, instExpr2 E elems ctx e = accExpr σ a) ∧
       rigidExpr e = true := by
-  rcases leafRd_unsign h with h' | ⟨n, rfl, h'⟩
+  rcases leafRd_unsign h with h' | ⟨n, rfl, h'⟩ | ⟨n, i, rfl, h'⟩ | ⟨n, msb, lsb, rfl, h'⟩
   · exact leaf_eq C hdw h' ha
   · obtain ⟨h1, h2, h3⟩ := leaf_eq C hdw h' ha
     exact ⟨by rw [selfWidth2_castU]; exact h1, fun ctx => by rw [instExpr2_castU]; exact h2 ctx, h3⟩
+  · obtain ⟨h1, h2, -⟩ := leaf_eq C hdw h' ha
+    exact ⟨by rw [selfWidth2_bitSel_castU]; exact h1, fun ctx => by rw [instExpr2_bitSel_castU]; exact h2 ctx, rfl⟩
+  · obtain ⟨h1, h2, -⟩ := leaf_eq C hdw h' ha
+    exact ⟨by rw [selfWidth2_partSel_castU]; exact h1, fun ctx => by rw [instExpr2_partSel_castU]; exact h2 ctx, rfl⟩
 
 /-- `leaf_fit` for a leaf whose unsigned twin is accepted: at its own width the marker of a signed read is no
 widening. -/
@@ -459,9 +574,11 @@ theorem leaf_fitU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
 
 theorem rm_leafU {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e.unsign = .ok a) :
     rigidMax2 E elems e = selfWidth2 E elems e := by
-  rcases leafRd_unsign h with h' | ⟨n, rfl, h'⟩
+  rcases leafRd_unsign h with h' | ⟨n, rfl, h'⟩ | ⟨n, i, rfl, -⟩ | ⟨n, msb, lsb, rfl, -⟩
   · exact rm_leaf h'
   · rw [rigidMax2_castU, selfWidth2_castU]; exact rm_leaf h'
+  · rfl
+  · rfl
 
 theorem ie_resize_leafU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n))
@@ -688,10 +805,16 @@ theorem skT_shapeU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .fill b, _, _, hf, _, _, _ => by simp [PExpr.unsign, fragG] at hf
   | .ident n, rs, h, _, hacc, tw, hw =>
       leaf_caseU C hdw (by simpa [PExpr.unsign, rdsOf?] using h) hacc tw hw
-  | .bitSel b i, rs, h, _, hacc, tw, hw =>
-      leaf_caseU C hdw (by simpa [PExpr.unsign, rdsOf?] using h) hacc tw hw
-  | .partSel b m l, rs, h, _, hacc, tw, hw =>
-      leaf_caseU C hdw (by simpa [PExpr.unsign, rdsOf?] using h) hacc tw hw
+  | .bitSel b i, rs, h, _, hacc, tw, hw => by
+      obtain ⟨b', hb⟩ := unsign_bitSel b i
+      have h' : rdsLeaf? ds (PExpr.bitSel b i).unsign = .ok rs := by
+        rw [hb] at h ⊢; simpa [rdsOf?] using h
+      exact leaf_caseU C hdw h' hacc tw hw
+  | .partSel b m l, rs, h, _, hacc, tw, hw => by
+      obtain ⟨b', hb⟩ := unsign_partSel b m l
+      have h' : rdsLeaf? ds (PExpr.partSel b m l).unsign = .ok rs := by
+        rw [hb] at h ⊢; simpa [rdsOf?] using h
+      exact leaf_caseU C hdw h' hacc tw hw
   | .arrayElem n is, rs, h, _, hacc, tw, hw =>
       leaf_caseU C hdw (by simpa [PExpr.unsign, rdsOf?] using h) hacc tw hw
   | .arrayPart n is m a b, rs, h, _, hacc, tw, hw =>
@@ -1578,10 +1701,16 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       · rw [fitExpr2_of_not_rigid tw rfl, ie_int]; rfl
   | .ident n, rs, h, _, hacc, hcn, tw, hw =>
       leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
-  | .bitSel b i, rs, h, _, hacc, hcn, tw, hw =>
-      leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
-  | .partSel b pm pl, rs, h, _, hacc, hcn, tw, hw =>
-      leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
+  | .bitSel b i, rs, h, _, hacc, hcn, tw, hw => by
+      obtain ⟨b', hb⟩ := unsign_bitSel b i
+      have h' : rdsLeaf? ds (PExpr.bitSel b i).unsign = .ok rs := by
+        rw [hb] at h ⊢; simpa [rdsOfW?] using h
+      exact leaf_caseCU C hdw h' hacc tw hw
+  | .partSel b pm pl, rs, h, _, hacc, hcn, tw, hw => by
+      obtain ⟨b', hb⟩ := unsign_partSel b pm pl
+      have h' : rdsLeaf? ds (PExpr.partSel b pm pl).unsign = .ok rs := by
+        rw [hb] at h ⊢; simpa [rdsOfW?] using h
+      exact leaf_caseCU C hdw h' hacc tw hw
   | .arrayElem n is, rs, h, _, hacc, hcn, tw, hw =>
       leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
   | .arrayPart n is m a b, rs, h, _, hacc, hcn, tw, hw =>
@@ -1660,6 +1789,8 @@ theorem rhs_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
             cases hu : unsignOp op
             · rw [unsign_binary_f hu] at h; cases h
             · rw [unsign_binary_t hu] at h; cases h
+        | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+        | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
         | _ => simp [PExpr.unsign] at h
       exact hcat ⟨qs, hq⟩
     have h2 : rhsRds? ds v.unsign = rdsOfW? ds v.unsign := by

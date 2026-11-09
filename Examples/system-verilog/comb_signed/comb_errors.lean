@@ -8,7 +8,8 @@ The tactics read a signed signal as the same bits wherever it is a whole operand
 comparison of two signed signals declared with the same dimensions as the two's-complement order (`comb_proof.lean`).
 The constructs whose meaning signedness changes and that they do not read yet are refused, each with its reason:
 
-* `neg/sg_sel.sv`: a select of a signed signal `a[W-1]` (read through the unsigned twin only as a whole operand);
+* `neg/sg_sel_shift.sv`: a part select of a signed signal as the operand of a shift;
+* `neg/sg_sel_proc.sv`: a bit select of a signed signal inside `always_comb`;
 * `neg/sg_cmp_dims.sv`: a signed comparison of `logic signed [W-1:0] a` and `logic signed [7:0] b` (equal widths at
   `W = 8` only; elsewhere the narrower operand is sign-extended, IEEE 1800-2023 §11.8.2);
 * `neg/sg_cmp_self.sv`: a signed comparison as an operand of `&&` (a self-determined position);
@@ -24,7 +25,8 @@ open LeanModels.Sv LeanModels.Sv.CombView
 
 namespace Examples.«system-verilog».comb_signed.comb_errors
 
-load_design_sv2 sg_sel from "Examples/system-verilog/comb_signed/neg/sg_sel.sv.json"
+load_design_sv2 sg_sel_shift from "Examples/system-verilog/comb_signed/neg/sg_sel_shift.sv.json"
+load_design_sv2 sg_sel_proc from "Examples/system-verilog/comb_signed/neg/sg_sel_proc.sv.json"
 load_design_sv2 sg_cmp_dims from "Examples/system-verilog/comb_signed/neg/sg_cmp_dims.sv.json"
 load_design_sv2 sg_cmp_self from "Examples/system-verilog/comb_signed/neg/sg_cmp_self.sv.json"
 load_design_sv2 sg_cmp_opd from "Examples/system-verilog/comb_signed/neg/sg_cmp_opd.sv.json"
@@ -35,10 +37,18 @@ load_design_sv2 sg_asr_wide from "Examples/system-verilog/comb_signed/neg/sg_asr
 load_design_sv2 asr_unsigned from "Examples/system-verilog/comb_signed/neg/asr_unsigned.sv.json"
 
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` (outside the v1 fragment: the tactics read a signed signal through its unsigned twin only as a whole operand)
+error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)
 -/
 #guard_msgs (whitespace := lax) in
-example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_sel.sem W) := by
+example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_sel_shift.sem W) := by
+  sv_structure
+
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)
+-/
+#guard_msgs (whitespace := lax) in
+example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
+    ∃ d', (sg_sel_proc.sem W).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
   sv_structure
 
 /--

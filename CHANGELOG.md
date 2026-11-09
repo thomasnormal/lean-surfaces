@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with an `alignof(int)`
+  callable and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with a `sizeof(short)`
   callable and native differential coverage.
 

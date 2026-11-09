@@ -19006,6 +19006,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-while-body-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectWhileBodyAgreementWitness",
+    "cpp_source": "int while_body_agreement_witness(int value) { while (value) { --value; } return value; } bool callable_witness() { return while_body_agreement_witness(2) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-conditional-false-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

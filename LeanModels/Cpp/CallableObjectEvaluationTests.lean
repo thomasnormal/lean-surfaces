@@ -40496,6 +40496,28 @@ def callableValueObjectWhileAgreementWitness : Bool :=
 
 #guard callableValueObjectWhileAgreementWitness
 
+def callableValueObjectWhileBodyAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.whileLoop
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := .builtin .boolean}
+        (.expression {
+          expression := .increment "--" false (handle "0x10"),
+          sourceType := intType, type := intType}))
+      (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 64 .lp64 function [signed 2],
+      evaluateCallableObject 64 .lp64 function [signed 2] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 0 && objectValue == signed 0
+  | _, _ => false
+
+#guard callableValueObjectWhileBodyAgreementWitness
+
 def callableValueObjectSwitchAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

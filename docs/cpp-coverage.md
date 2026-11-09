@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 1654 | 1636 | 0 | 8 | 0 | 10 |
+| 1655 | 1637 | 0 | 8 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -1616,6 +1616,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-value-object-unary-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-conditional-agreement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-while-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-value-object-while-body-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-conditional-false-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-switch-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-value-object-do-while-agreement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

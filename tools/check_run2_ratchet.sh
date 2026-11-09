@@ -11,14 +11,16 @@
 #     run2  runFrom2  cycleStep2  combSettle2  execStmt2  evalExpr2  Runs2  Terminates2  and the judgment sign `⊨₂`
 #   * SCOPE: every `*.lean` file in the checkout. Any file that imports the Sv tier can name the layer, so this is not a
 #     directory list. A `.lake` directory is skipped at any depth, and so is a top-level `svgolf/` (it is not on master;
-#     its own plan moves it).
+#     its own plan moves it). Not read either: a top-level directory whose name starts with `.`, and a `.lean` that is a
+#     symlink below the top level (on 2026-11-10 the tree tracks neither kind).
 #   * COMMENTS DO NOT COUNT: line comments, block comments and docstrings are removed first by `lean_code_lines`
 #     (tools/leanlex.sh, the tree's one Lean lexer). A label such as "provisional over run2" in a docstring is free.
 #   * WORD MATCHING. A name counts as a whole word, where the words of an identifier are separated by `_`, `.` and a
-#     camel-case hump: it must not follow a letter or digit, and must not be followed by a lowercase letter or digit. So
-#     `Sv.run2`, `run2_mono`, `Obs_run2`, `run2ClockGuard`, `closed_eq_combSettle2` and `run2'` count (each is run-layer:
-#     every such identifier on master was read, 2026-11-09), and `overrun2`, `run2x`, `run20` and `ERuns2` do not. The
-#     sign `⊨₂` counts wherever it stands. Matching is case-sensitive.
+#     camel-case hump: it must not be followed by a lowercase letter or digit; a name that starts in lower case must not
+#     follow a letter or digit, and one that starts in upper case (`Runs2`, `Terminates2`) must not follow an upper-case
+#     letter. So `Sv.run2`, `run2_mono`, `Obs_run2`, `run2ClockGuard`, `closed_eq_combSettle2` and `run2'` count (each is
+#     run-layer: every such identifier on master was read, 2026-11-09), so would a new `seqRuns2`, and `overrun2`,
+#     `run2x`, `run20` and `ERuns2` do not. The sign `⊨₂` counts wherever it stands. Matching is case-sensitive.
 #   * The unit is the MENTION, not the line: a second name added to a line that already has one is growth.
 #
 # THE RATCHET.  The baseline (`tools/run2_ratchet.baseline`) lists the files that name the layer, with their counts.
@@ -30,7 +32,7 @@
 # WHAT IT DOES NOT CATCH (it under-reports, and says so).
 #   * Run-layer work that uses none of the names above: the derived runners and views (`runObs2`, `cycleObs2`,
 #     `runMem2`, `runHier2`, `runCombProcess2`, ...) are not in the list. On 2026-11-09, 19 files name one of those and
-#     none of the listed names.
+#     none of the listed names. Nor is the capitalised `Run2` of `toRun2`, `ofRun2`, `REdgeRun2` and `FlatMemRun2`.
 #   * Growth that a removal pays for: new work in one baseline file, with as many mentions removed elsewhere, passes.
 #     A baseline left above the tree (after removals, before `--regenerate`) leaves that much room.
 #   * Work outside Lean: an extractor rewrite into the run layer's vocabulary is invisible here.
@@ -38,7 +40,10 @@
 #     the rest of that line is not counted. `/-` inside a string reads as a block comment that never closes, which
 #     would hide the rest of the file (`LeanModels/Sv/Param.lean` from line 2762, measured 2026-11-09); the gate
 #     detects that with a marker line appended after the file and then counts the WHOLE file, comments included, so
-#     such a file over-counts rather than hides. A name inside a string literal on a code line DOES count.
+#     such a file over-counts rather than hides. It does NOT detect the case where a later `-/` (in another string, or
+#     in a comment) closes that false comment: the code between the two is hidden, and the marker still arrives. On
+#     2026-11-10 neither limit hides a mention (an independent string-aware count agreed with this gate file by file). A
+#     name inside a string literal on a code line DOES count.
 #
 # REGENERATING.  For a module split, a file move, or work that was in flight on 2026-11-09:
 #     bash tools/check_run2_ratchet.sh --regenerate
@@ -87,12 +92,13 @@ count_tokens() {
       colon = index($0, ":"); s = substr($0, colon + 1); hit = 0
       if (s == mark) { seen = 1; next }
       for (k = 1; k <= n; k++) {
-        t = T[k]; L = length(t); word = (t ~ /^[A-Za-z]/); off = 0; rest = s
+        t = T[k]; L = length(t); word = (t ~ /^[A-Za-z]/); up = (t ~ /^[A-Z]/); off = 0; rest = s
         while ((i = index(rest, t)) > 0) {
           at = off + i
           p = (at > 1) ? substr(s, at - 1, 1) : ""
           q = substr(s, at + L, 1)
-          if (!word || (p !~ /[A-Za-z0-9]/ && q !~ /[a-z0-9]/)) { c++; hit = 1 }
+          left = up ? (p !~ /[A-Z]/) : (p !~ /[A-Za-z0-9]/)
+          if (!word || (left && q !~ /[a-z0-9]/)) { c++; hit = 1 }
           off = at + L - 1; rest = substr(s, off + 1)
         }
       }
@@ -321,6 +327,8 @@ theorem a : run2 d = run2 d := rfl'
   word 'def w := overrun2 d'                 ; check "word: a name inside a longer word does not count" "$out" ""
   word 'def w := run2x + run20'              ; check "word: a name followed by a lowercase letter or digit does not count" "$out" ""
   word 'def w := ERuns2 d'                   ; check "word: a name after a capital does not count" "$out" ""
+  word 'def w := seqRuns2 d ∧ x2Terminates2 d'; check "word: a camel-case hump before a capitalised name counts" "$out" 2
+  word 'def w := xrun2 d ∧ XcycleStep2 d'    ; check "word: a lower-case name after any letter does not count" "$out" ""
   word 'def w := Run2 d + runObs2 d'         ; check "word: matching is case-sensitive, and runObs2 is not in the list" "$out" ""
   word 'def w := "run2: timeout"'            ; check "word: a name in a string literal counts" "$out" 1
   rm -f "$tree/LeanModels/Sv/W.lean"

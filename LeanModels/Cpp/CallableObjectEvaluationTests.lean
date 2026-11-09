@@ -41080,6 +41080,22 @@ def callableValueObjectParameterAgreementWitness : Bool :=
 
 #guard callableValueObjectParameterAgreementWitness
 
+def callableValueObjectUnsignedParameterAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .unsignedInt, parameters := [.builtin .unsignedInt], variadic := false}
+    parameters := [{declaration := handle "0x10", name := some "value", type := .builtin .unsignedInt}]
+    body := .return_ {
+      expression := CallableExpression.parameter (handle "0x10"),
+      sourceType := .builtin .unsignedInt, type := .builtin .unsignedInt}}
+  match evaluateCallable 32 .lp64 function [⟨.unsigned 32, 7⟩],
+      evaluateCallableObject 32 .lp64 function [⟨.unsigned 32, 7⟩] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 32, 7⟩ && objectValue == ⟨.unsigned 32, 7⟩
+  | _, _ => false
+
+#guard callableValueObjectUnsignedParameterAgreementWitness
+
 def callableValueObjectLogicalOrAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

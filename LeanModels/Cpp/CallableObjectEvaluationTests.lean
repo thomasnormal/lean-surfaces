@@ -40607,6 +40607,26 @@ def callableValueObjectForAgreementWitness : Bool :=
 
 #guard callableValueObjectForAgreementWitness
 
+def callableValueObjectForBodyAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.forLoop .skip controlParameter controlStep
+        (.expression {
+          expression := .increment "--" false (handle "0x10"),
+          sourceType := intType, type := intType}))
+      (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}))}
+  match evaluateCallable 64 .lp64 function [signed 2],
+      evaluateCallableObject 64 .lp64 function [signed 2] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 0 && objectValue == signed 0
+  | _, _ => false
+
+#guard callableValueObjectForBodyAgreementWitness
+
 def callableValueObjectCommaAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

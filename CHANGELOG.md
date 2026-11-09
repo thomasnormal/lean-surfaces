@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with an executed
+  for-loop body and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with a switch default
   clause and native differential coverage.
 

@@ -445,6 +445,14 @@ def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       else
         evalExpr2 fuel st.scalar (instExpr2 d.env d.elems ctx e)
 
+def evalMemExprs (d : MemDesign2) (fuel : Nat) (st : MemCycleState) :
+    List PExpr → Res (List LVec)
+  | [] => .ok []
+  | e :: es => do
+      let v ← evalMemExpr d fuel st none e
+      let vs ← evalMemExprs d fuel st es
+      .ok (v :: vs)
+
 def updateScalarBlocking (st : MemCycleState) (target : Lhs2) (v : LVec) : Res MemCycleState :=
   match resolveLhs2 1 st.scalar target with
   | .unsupported msg => .unsupported msg
@@ -480,6 +488,33 @@ def commitMemPending (d : MemDesign2) (st : MemCycleState) (q : MemPending) : Re
   return { scalar, memory }
 
 mutual
+def execMemCase (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
+    (q : MemPending) (subject : LVec) :
+    List (List PExpr × PStmt) → Option PStmt → CaseMode → CaseCheck →
+      Res (MemCycleState × MemPending)
+  | _, _, _, .unique =>
+      .unsupported "CaseCheck:memory cycle route"
+  | _, _, _, .unique0 =>
+      .unsupported "CaseCheck:memory cycle route"
+  | _, _, _, .priority =>
+      .unsupported "CaseCheck:memory cycle route"
+  | [], default?, _, .none =>
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 =>
+          match default? with
+          | some body => execMemStmt d fuel st q body
+          | none => .ok (st, q)
+  | (patterns, body) :: rest, default?, mode, .none =>
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 => do
+          let values ← evalMemExprs d fuel st patterns
+          if values.any (fun value => caseHit mode subject value) then
+            execMemStmt d fuel st q body
+          else
+            execMemCase d fuel st q subject rest default? mode .none
+
 def execMemStmt (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (q : MemPending) : PStmt → Res (MemCycleState × MemPending)
   | .blockingAssign n e => do
@@ -555,7 +590,12 @@ def execMemStmt (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       else match el with | some s => execMemStmt d fuel st q s | none => .ok (st, q)
   | .block body => execMemStmts d fuel st q body
   | .forLoop .. => .unsupported "ForLoopStatement:memory cycle route"
-  | .caseStmt .. => .unsupported "CaseStatement:memory cycle route"
+  | .caseStmt subject items default? mode check => do
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 => do
+          let sv ← evalMemExpr d fuel st none subject
+          execMemCase d fuel st q sv items default? mode check
   | .unsupported k t => .unsupported s!"{k}: {t}"
 
 def execMemStmts (d : MemDesign2) (fuel : Nat) (st : MemCycleState)

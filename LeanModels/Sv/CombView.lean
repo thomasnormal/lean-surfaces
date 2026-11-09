@@ -1036,7 +1036,15 @@ def selfOpW : SymBinOp → Bool
 
 /-- The run-time shifts `<<` (over an unsigned or a signed left operand) and `>>` (over an unsigned one) (WP-B2 gate 3),
 and the arithmetic shift right `>>>` over a signed left operand (IEEE 1800-2023 §11.4.10: the vacated bits take the sign
-bit; `instExpr2` lowers it to `BinOp.ashr true` of the left operand sign-extended to the context). -/
+bit; `instExpr2` lowers it to `BinOp.ashr true` of the left operand sign-extended to the context).
+
+The left operand is context-determined (§11.6.1: a shift is as wide as its left operand, and that operand takes the
+context of the shift), the amount self-determined (§11.4.10). `instExpr2` lowers both through `instDivOperand2`, not
+through the `fitExpr2` route of an operand of `+` or `&`: the operand is computed at the wider of the context and its own
+width with every leaf extended to that width first (the carry of `(a + b) << 1` survives into a wider target), and the
+result is truncated to the context afterwards. The left operand of an UNSIGNED shift may be any expression the
+word-level fragment reads (`rdsOfW?`); the skeleton reads it through `Sk.dz`, the mirror of `instDivOperand2`. The left
+operand of a signed shift is a signal access, a sized literal or an unsized constant (`shLeftRd?`). -/
 def shOpW : SymBinOp → Bool
   | .m0 (.shl _) | .m0 (.shr false) | .m0 (.ashr true) => true
   | _ => false
@@ -1051,10 +1059,11 @@ def shSign : SymBinOp → Bool
 def shOpdRefusal : PExpr → String
   | .cast true (.ident n) =>
       s!"a signed shift amount `{n}` (outside the fragment: it reads the amount of a shift as an unsigned signal access, sized literal or constant; IEEE 1800-2023 §11.4.10 treats the amount as unsigned, so write it into an unsigned signal first)"
-  | _ => "operand of a shift that is not a signal access, a sized literal or an unsized constant (outside the v1 fragment: `instExpr2` lowers a shift operand through a different instantiation than an operand of `+` or `&`, so only these are read; write the operand into a signal first)"
+  | _ => "a shift amount, or the left operand of a signed shift, that is not a signal access, a sized literal or an unsized constant (outside the fragment: these two positions are read as one of these, the amount also as a bare genvar or parameter; an expression there, such as `s + 1` as an amount or `(a + b) >>> 1`, is not read yet: write it into a signal first. The left operand of an unsigned shift may be any expression the fragment reads)"
 
-/-- An operand of a shift (the left operand, or the amount): a signal access, a sized literal or an unsized constant.
-`instExpr2` lowers both through `instDivOperand2`, whose default arm these are; an operation is refused. -/
+/-- An operand of a shift read as a leaf (the amount, or the left operand of a signed shift): a signal access, a sized
+literal or an unsized constant. `instExpr2` lowers both through `instDivOperand2`, whose default arm these are; an
+operation is refused here (the left operand of an UNSIGNED shift is read by `rdsOfW?` itself). -/
 def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .lit _ => .ok []
   | .int _ => .ok []
@@ -1109,6 +1118,7 @@ so each pair has one width at every parameter point: the fact the structural sou
 def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List (String × String)
   | .binary op l r =>
       if ctxOpW op then l.scmpPairs ++ r.scmpPairs
+      else if shOpW op && !shSign op then l.scmpPairs
       else
         match scmpOp? op, l, r with
         | some _, .cast true (.ident a), .cast true (.ident b) => [(a, b)]
@@ -1117,6 +1127,20 @@ def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List (String × String)
   | .ternary _ t e => t.scmpPairs ++ e.scmpPairs
   | .resize _ a => a.scmpPairs
   | _ => []
+
+/-- No signed shift (`<<<`, `>>>`, or `<<` of a signed operand) anywhere in the expression: the condition on the left
+operand of an UNSIGNED shift. `instDivOperand2` lowers that whole operand with the signedness of the outer shift, so an
+inner signed shift would neither extend nor fill with its sign bit there. -/
+def _root_.LeanModels.Sv.PExpr.noSShift : PExpr → Bool
+  | .binary op l r =>
+      (match op with
+       | .m0 (.shl true) | .m0 (.ashr true) => false
+       | _ => true) && l.noSShift && r.noSShift
+  | .unary _ a => a.noSShift
+  | .ternary c t e => c.noSShift && t.noSShift && e.noSShift
+  | .resize _ a => a.noSShift
+  | .reduce _ a => a.noSShift
+  | _ => true
 
 /-- The reads of a context-determined expression of the word-level fragment, or the reason it is outside it. -/
 def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
@@ -1139,12 +1163,21 @@ def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
             | .error e => .error e
             | .ok b => .ok (a ++ b)
       else if shOpW op then
-        match shLeftRd? ds (shSign op) l with
-        | .error e => .error e
-        | .ok a =>
-            match shAmtRd? ds r with
-            | .error e => .error e
-            | .ok b => .ok (a ++ b)
+        if shSign op then
+          match shLeftRd? ds true l with
+          | .error e => .error e
+          | .ok a =>
+              match shAmtRd? ds r with
+              | .error e => .error e
+              | .ok b => .ok (a ++ b)
+        else if l.noSShift then
+          match rdsOfW? ds l with
+          | .error e => .error e
+          | .ok a =>
+              match shAmtRd? ds r with
+              | .error e => .error e
+              | .ok b => .ok (a ++ b)
+        else .error "a signed shift (`<<<`, `>>>`, or `<<` of a signed operand) inside the left operand of an unsigned shift (outside the fragment: the outer shift lowers its whole operand unsigned, IEEE 1800-2023 §11.8.1, so the inner shift neither extends nor fills with its sign bit there; write the inner shift into a signal first)"
       else if (scmpOp? op).isSome then
         match l, r with
         | .cast true (.ident a), .cast true (.ident b) =>

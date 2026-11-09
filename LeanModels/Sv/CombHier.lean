@@ -180,6 +180,7 @@ def Sk.hren (pfx : String) : Sk → Sk
   | .rsz pr p => .rsz pr (p.hren pfx)
   | .sh d sg l r => .sh d sg (l.hren pfx) (r.hren pfx)
   | .scmp op a b => .scmp op (a.hren pfx) (b.hren pfx)
+  | .fit sg p => .fit sg (p.hren pfx)
 
 /-- A skeleton whose width is its context's wherever its width contract holds (`Sk.width_of_exactW`): an input
 connection's actual of this shape is exactly as wide as the port, so `connProcs` takes its assignment branch. -/
@@ -231,6 +232,7 @@ theorem Sk.width_of_exactW (σ : String → Int) (dw : String → Nat) :
   | .rsz _ _, _, he, _ => by simp [Sk.exactW] at he
   | .sh _ _ _ _, _, he, _ => by simp [Sk.exactW] at he
   | .scmp _ _ _, _, he, _ => by simp [Sk.exactW] at he
+  | .fit _ _, _, he, _ => by simp [Sk.exactW] at he
 
 end CombEq
 
@@ -334,6 +336,11 @@ theorem Sk.low_hren (σ : String → Int) (dw : String → Nat) (pfx : String) :
       cases d <;> cases sg <;>
         simp only [apply_ite (Expr2.rename (pfx ++ ·)), Expr2.rename, ihl, ihr, Bool.false_eq_true, if_false,
           if_true]
+  | fit sg p ih =>
+      intro tw
+      simp only [Sk.hren, Sk.low, Sk.width_hren, ih, fitDivOperand2]
+      cases sg <;> simp only [apply_ite (Expr2.rename (pfx ++ ·)), Expr2.rename, Bool.false_eq_true, if_false,
+        if_true]
   | _ => intro tw; simp_all [Sk.hren, Sk.low, Expr2.rename, accExpr_hren, Part.expr_hren,
       Expr2.renameList_eq_map, Function.comp_def]
 

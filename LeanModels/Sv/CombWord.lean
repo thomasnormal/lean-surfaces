@@ -165,6 +165,20 @@ theorem bv_shlBits {w wl wr : Nat} (f g : Nat → Bool) :
       simp [hk, h1, h2]
   · simp [hk, h1]
 
+/-- **Left-shift glue for a left operand that is an operation**: the shift of any bit function `f`, read at `w` bits, is
+`BitVec` shifting of `f`'s `w`-bit vector. (The left operand of a shift is computed at the shift's width, IEEE 1800-2023
+§11.6.1, so the equation of `(a + b) << s` is `XF.shlBits` of the sum's bit function at that width.) -/
+theorem bv_shlBits_gen {w wr : Nat} (f g : Nat → Bool) :
+    bv w (shlBits f wr g) = (bv w f) <<< (bv wr g).toNat := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro k hk
+  rw [getLsbD_bv hk, BitVec.getLsbD_shiftLeft, toNat_bv]
+  simp only [shlBits]
+  by_cases h1 : val g wr ≤ k
+  · rw [getLsbD_bv (show k - val g wr < w by omega)]
+    simp [hk, h1]
+  · simp [hk, h1]
+
 /-- A sign extension of the `BitVec` of a bit function is the `XF.sext` bit function. -/
 theorem getLsbD_signExtend_bv {w wl : Nat} (f : Nat → Bool) {j : Nat} (hj : j < w) :
     ((bv wl f).signExtend w).getLsbD j = sext wl f j := by
@@ -276,3 +290,7 @@ end LeanModels.Sv
 /-- info: 'LeanModels.Sv.XF.bv_ashrBits' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms LeanModels.Sv.XF.bv_ashrBits
+
+/-- info: 'LeanModels.Sv.XF.bv_shlBits_gen' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms LeanModels.Sv.XF.bv_shlBits_gen

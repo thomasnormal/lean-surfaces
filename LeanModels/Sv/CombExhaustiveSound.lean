@@ -70,7 +70,7 @@ theorem Sk.compile_sound : ∀ (sk : Sk) (tw k : Nat) (g : GE), sk.compile σ dw
   | .cat _, _, _, _, h | .rep _, _, _, _, h | .ext _, _, _, _, h | .tern _ _ _, _, _, _, h | .cref _, _, _, _, h
   | .rsz _ _, _, _, _, h | .lnot _, _, _, _, h | .red _ _, _, _, _, h | .land _ _, _, _, _, h
   | .lor _ _, _, _, _, h | .cmp _ _ _, _, _, _, h | .add _ _, _, _, _, h | .sub _ _, _, _, _, h
-  | .sh _ _ _ _, _, _, _, h | .scmp _ _ _, _, _, _, h => by simp [Sk.compile] at h
+  | .sh _ _ _ _, _, _, _, h | .scmp _ _ _, _, _, _, h | .fit _ _, _, _, _, h => by simp [Sk.compile] at h
 
 theorem tblOf_sound {w tw k : Nat} {sv : Nat → Bool} {dv : LVec} : ∀ {its : List (List LVec × Sk)} {t},
     tblOf w its = some t →

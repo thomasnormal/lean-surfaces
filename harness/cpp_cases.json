@@ -19186,6 +19186,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-continue-body-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectContinueBodyAgreementWitness",
+    "cpp_source": "int continue_body_agreement_witness(int value) { for (; value; --value) { --value; continue; } return value; } bool callable_witness() { return continue_body_agreement_witness(2) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-goto-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

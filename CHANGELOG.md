@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Extended the value/object evaluator agreement battery with negative signed
+  division and native differential coverage.
+
+- Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 
 - Extended the value/object evaluator agreement battery with negative signed

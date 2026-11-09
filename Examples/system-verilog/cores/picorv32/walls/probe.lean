@@ -30,10 +30,6 @@ set_option maxRecDepth 100000 in
 load_design_sv2 xz_conversion_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/xz_conversion_memory.sv.json"
 
-set_option maxRecDepth 100000 in
-load_design_sv2 hierarchy_instance_wall
-  from "Examples/system-verilog/cores/picorv32/walls/hierarchy_instance.sv.json"
-
 #guard match (unpacked_cpuregs_wall.sem 32).processes with
   | #[.unsupported "Instantiate"
       "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
@@ -133,26 +129,4 @@ private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
     (xz_conversion_memory_wall.pdesign.instantiateMemD2 [16]) 32
     [[("clk", LeanModels.Sv.LVec.lit "0")]] with
   | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 16)
-  | _ => false
-
--- Hierarchy is retained as a node with source port connections; the child is
--- not hoisted into the parent's declaration or process lists.
-#guard match hierarchy_instance_wall.pdesign.instantiateNode2
-    hierarchy_instance_wall.plib [] with
-  | .ok node =>
-      match node.instances with
-      | [i] => node.core.processes.isEmpty && i.name == "u_leaf" &&
-          i.module == "leaf" && i.args == [] &&
-          i.ports == [.input "a" (some (.ident "a")) false,
-                      .output "y" (some (.ident "y"))]
-      | _ => false
-  | _ => false
-
-#guard match hierarchy_instance_wall.pdesign.instantiateNode2
-    hierarchy_instance_wall.plib [] with
-  | .ok node =>
-      match LeanModels.Sv.runHier2 node LeanModels.Sv.σ_src 32
-          [[("a", LeanModels.Sv.LVec.lit "1")]] with
-      | .unsupported "Instance:hierarchy: source-shaped instance nodes require the E composition route; no flattening rewrite is applied" => true
-      | _ => false
   | _ => false

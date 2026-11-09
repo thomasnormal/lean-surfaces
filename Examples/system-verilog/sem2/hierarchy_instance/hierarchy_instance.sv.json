@@ -9,7 +9,7 @@
   "top": "hierarchy_instance",
   "source_files": [
     {
-      "path": "Examples/system-verilog/cores/picorv32/walls/hierarchy_instance.sv",
+      "path": "Examples/system-verilog/sem2/hierarchy_instance/hierarchy_instance.sv",
       "sha256": "694cd66af895908e9498a1f6eff12257bdef3fee942f9ce68bf8aef14855d9a7"
     }
   ],

@@ -89,6 +89,7 @@ retains each instance, child `PDesign`, parameter point, and §23.3.3 port
 connections beside the parent's own `Design2` core. No child signal or process
 is hoisted. Instance-free nodes use `run2`; instance-bearing nodes remain a
 named composition obligation until their cycle executor is wired.
+The general clean-room receipt is [`sem2/hierarchy_instance`](../Examples/system-verilog/sem2/hierarchy_instance/).
 
 The memory route also admits the exact parametric x/z conversion marker on a
 retained cell driver. In `xz_conversion_memory`, the source `'bx` remains an

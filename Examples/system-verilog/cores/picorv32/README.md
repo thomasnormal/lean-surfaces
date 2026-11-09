@@ -1310,14 +1310,3 @@ unsupported process. The memory route admits the exact marker, retains the
 source-shaped driver, and treats the x site as context-propagated unknown data:
 at `N=16`, one cycle reads `q` as 16 bits of `x`. Both markers, the retained
 processes, and the all-x result are guarded in [`walls/probe.lean`](walls/probe.lean).
-
-## 2026-11-08 source-shaped module instances
-
-The clean-room [`hierarchy_instance.sv`](walls/hierarchy_instance.sv) fixture
-has a `leaf u_leaf(.a(a), .y(y))` instance. `HierarchyNode2` retains the
-instance as a node carrying the child `PDesign`, parameter point, and source
-port connections; the parent's core keeps no hoisted child declarations or
-processes. The ordinary flat `sem` family remains available for the legacy
-flattened route, while `runHier2` gives an explicit named refusal until the E
-composition route executes instance nodes. The node shape and refusal are
-covered in [`walls/probe.lean`](walls/probe.lean).

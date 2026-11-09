@@ -12,8 +12,9 @@ load_design_sv2 memoryNetz from
 #guard memoryNetz.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
 private def memD : MemDesign2 := memoryNetz.pdesign.instantiateMemD2 [4]
 #guard match memD.processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
+  | [PProcess.alwaysFF "clk"
+      (PStmt.nbaAssignL (PLhs.arrayElem "mem" [PExpr.int 0]) (PExpr.ident "d")),
+     PProcess.assign "q" (PExpr.arrayElem "mem" [PExpr.int 0])] => true
   | _ => false
 
 end Examples.«system-verilog».sem2.unpacked_memory_netz.agree

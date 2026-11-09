@@ -21,9 +21,9 @@
 #      `LeanModels.Sv.XMono` (the width-parametric monotonicity theorems; imported by nothing), and
 #      `LeanModels.Sv.SeqFamily` and `LeanModels.Sv.SeqProfile` (the clocked-family lemmas; their only importers are svGolf's
 #      clocked references);
-#   2. the EXAMPLES group: every `Examples/system-verilog/**/*.lean` file that imports a `LeanModels.Sv.Comb*` module, or
-#      (to a fixpoint) imports such an Example (found by grep; `sem2/` is the semantic-agreement lane, built by its own
-#      gates, and is left out). Everything they import comes along as a dependency.
+#   2. the EXAMPLES group: every `Examples/system-verilog/**/*.lean` file. The root lakefile builds this whole glob;
+#      keeping the same set here means a stale fixture cannot hide behind the smaller comb closure. Everything they
+#      import comes along as a dependency.
 # The module list is printed first. A failing library group skips the Examples (they would fail through it).
 #
 # WHAT `--dependents` PRINTS.  One per line, in `--list` order, exactly the chain modules that transitively import the
@@ -53,24 +53,10 @@ lib_modules() {
     sort -u | sed 's/^/LeanModels.Sv./'
 }
 
-# The comb Examples: every Examples/system-verilog file (outside sem2/) that imports a `LeanModels.Sv.Comb*` module, and,
-# to a fixpoint, every file that imports one already chosen (`comb_alias`, `neg/comb_neg` and `ripple_step/comb_proof` import
-# only other Examples).
+# Every SystemVerilog Example. This deliberately mirrors lakefile.toml's Examples glob, including sem2 and other
+# semantic-agreement fixtures; a chain check must exercise the same files as the root build.
 example_files() {
-  local sel next pats
-  sel="$(grep -rl --include='*.lean' '^import LeanModels\.Sv\.Comb' Examples/system-verilog 2>/dev/null |
-    grep -v '^Examples/system-verilog/sem2/' | sort -u)"
-  pats="$(mktemp "${TMPDIR:-/tmp}/sv-chain-pats.XXXXXX")" || return 2
-  while :; do
-    printf '%s\n' "$sel" | sed -e 's/\.lean$//' -e 's#/#.#g' -e 's/system-verilog/«system-verilog»/' -e 's/^/import /' > "$pats"
-    next="$( { printf '%s\n' "$sel"
-               grep -rlxF --include='*.lean' -f "$pats" Examples/system-verilog 2>/dev/null |
-                 grep -v '^Examples/system-verilog/sem2/'; } | sort -u)"
-    [ "$next" = "$sel" ] && break
-    sel="$next"
-  done
-  rm -f "$pats"
-  printf '%s\n' "$sel"
+  find Examples/system-verilog -type f -name '*.lean' -print 2>/dev/null | sort -u
 }
 
 example_modules() {
@@ -208,7 +194,7 @@ STUB
   check "--list exits 0" "$rc" 0
   check "--list names a library module" "$(printf '%s' "$out" | grep -c 'LeanModels.Sv.CombLib')" 1
   check "--list names an example module" "$(printf '%s' "$out" | grep -c '«system-verilog».comb_ops.comb_proof')" 1
-  check "--list names no sem2 module" "$(printf '%s' "$out" | grep -c 'sem2')" 0
+  check "--list includes the semantic-agreement examples" "$([ "$(printf '%s' "$out" | grep -c 'sem2')" -gt 0 ] && echo yes || echo no)" yes
   check "--list runs no lake" "$(grep -c '^lake' "$STUB_LOG")" 0
   : > "$STUB_LOG"; PATH="$tmp:$PATH" env -u LEANSLOT bash "$self" >/dev/null 2>&1; rc=$?
   check "no slot: exits 0 when lake succeeds" "$rc" 0
@@ -254,13 +240,13 @@ STUB
   dep() { out="$(cd / && PATH="$tmp:$PATH" env -u LEANSLOT bash "$tree/tools/check_sv_chain.sh" --dependents "$@" 2>/dev/null)"; rc=$?; out="$(printf '%s' "$out" | tr '\n' ' ')"; }
   local ex='Examples.«system-verilog».ex'
   : > "$STUB_LOG"; dep LeanModels/Sv/Obs.lean
-  check "--dependents walks through a non-Comb module, and to the Examples" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via"
+  check "--dependents walks through a non-Comb module, and to the Examples" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   check "  ...exits 0" "$rc" 0
   check "  ...and runs no lake" "$(grep -c '^lake' "$STUB_LOG")" 0
   dep LeanModels/Sv/CombBar.lean
-  check "--dependents: a module is not its own dependent" "$out" "LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via"
+  check "--dependents: a module is not its own dependent" "$out" "LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   dep LeanModels/Sv/CombBar.lean LeanModels/Sv/Obs.lean
-  check "--dependents: a seed importing another seed IS one" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via"
+  check "--dependents: a seed importing another seed IS one" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   dep LeanModels/Sv/Leaf.lean
   check "--dependents: a leaf nothing imports prints nothing" "$out" ""
   check "  ...and exits 0" "$rc" 0
@@ -273,7 +259,7 @@ STUB
   dep LeanModels/Sv/Core2.lean
   check "--dependents walks through another tier" "$out" "LeanModels.Sv.CombVia"
   dep LeanModels/Sv/Deep.lean
-  check "--dependents walks through sem2, and prints none of it" "$out" "$ex.via"
+  check "--dependents walks through sem2" "$out" "$ex.via Examples.«system-verilog».sem2.mid"
   dep LeanModels/Sv/Tol.lean
   check "--dependents reads a trailing comment and \`public import\`" "$out" "LeanModels.Sv.CombPub LeanModels.Sv.CombTrail"
   dep LeanModels/Sv/Gone.lean

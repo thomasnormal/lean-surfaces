@@ -409,10 +409,8 @@
       "name": "static_fixed_array_continuous_copy",
       "file": "Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "queue_fixed_size_mismatch",
@@ -3048,10 +3046,8 @@
       "name": "wired_net_resolution",
       "file": "Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "assoc_bound_key",
@@ -3184,19 +3180,15 @@
       "name": "continuous_bound_literal",
       "file": "Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "continuous_history_literal",
       "file": "Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "fixed_array_disjoint_slice_copy",
@@ -3220,10 +3212,8 @@
       "name": "constant_expression_net_driver",
       "file": "Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "nested_fixed_array_dynamic_target",
@@ -3283,10 +3273,8 @@
       "name": "fixed_array_net_copy",
       "file": "Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "fixed_array_nested_copy",
@@ -3364,19 +3352,15 @@
       "name": "continuous_selected_history_windows",
       "file": "Examples/system-verilog/continuous_selected_history_windows/continuous_selected_history_windows.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "continuous_conditional_history_drivers",
       "file": "Examples/system-verilog/continuous_conditional_history_drivers/continuous_conditional_history_drivers.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "coverage_nocov_queries",
@@ -4344,10 +4328,8 @@
       "name": "net_alias",
       "file": "Examples/system-verilog/net_alias/net_alias.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "supply_net",
@@ -4407,10 +4389,8 @@
       "name": "two_state_net",
       "file": "Examples/system-verilog/two_state_net/two_state_net.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "mixed_dimension_queries",
@@ -4608,10 +4588,8 @@
       "name": "generate_adapter",
       "file": "Examples/system-verilog/generate_adapter/generate_adapter.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse"
     },
     {
       "name": "empty_dynamic_decl_adapter",

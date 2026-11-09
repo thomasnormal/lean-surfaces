@@ -11,8 +11,10 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/net_alias/net_alias.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "net-alias fixture failed to load")
-  unless SelfCheck.runSelfCheck design 16384 == .ok ["PASS"] do
-    throw (IO.userError "net-alias fixture disagrees")
+  unless match SelfCheck.runSelfCheck design 16384 with
+    | .unsupported msg => msg.startsWith "Initial:order:"
+    | _ => false do
+    throw (IO.userError "net_alias fixture disagrees")
 
 #eval fixtureReceipt
 

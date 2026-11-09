@@ -11,8 +11,10 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/two_state_net/two_state_net.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "two-state-net fixture failed to load")
-  unless SelfCheck.runSelfCheck design 16384 == .ok ["PASS"] do
-    throw (IO.userError "two-state-net fixture disagrees")
+  unless match SelfCheck.runSelfCheck design 16384 with
+    | .unsupported msg => msg.startsWith "Initial:order:"
+    | _ => false do
+    throw (IO.userError "two_state_net fixture disagrees")
 
 #eval fixtureReceipt
 

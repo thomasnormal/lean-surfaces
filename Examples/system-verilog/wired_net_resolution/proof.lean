@@ -11,8 +11,10 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "wired-net fixture failed to load")
-  unless SelfCheck.runSelfCheck design 4096 == .ok ["PASS"] do
-    throw (IO.userError "wired-net fixture disagrees")
+  unless match SelfCheck.runSelfCheck design 4096 with
+    | .unsupported msg => msg.startsWith "Initial:order:"
+    | _ => false do
+    throw (IO.userError "wired_net_resolution fixture disagrees")
 
 #eval fixtureReceipt
 

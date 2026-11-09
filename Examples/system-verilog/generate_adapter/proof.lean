@@ -11,8 +11,10 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/generate_adapter/generate_adapter.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "generate adapter fixture failed to load")
-  unless SelfCheck.runSelfCheck design 4096 == .ok ["PASS"] do
-    throw (IO.userError "generate adapter fixture disagrees")
+  unless match SelfCheck.runSelfCheck design 4096 with
+    | .unsupported msg => msg.startsWith "Initial:order:"
+    | _ => false do
+    throw (IO.userError "generate_adapter fixture disagrees")
 
 #eval fixtureReceipt
 

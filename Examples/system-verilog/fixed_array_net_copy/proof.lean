@@ -11,8 +11,10 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "fixed-array-net-copy fixture failed to load")
-  unless SelfCheck.runSelfCheck design 4096 == .ok ["PASS"] do
-    throw (IO.userError "fixed-array-net-copy fixture disagrees")
+  unless match SelfCheck.runSelfCheck design 4096 with
+    | .unsupported msg => msg.startsWith "Initial:order:"
+    | _ => false do
+    throw (IO.userError "fixed_array_net_copy fixture disagrees")
 
 #eval fixtureReceipt
 

@@ -20,7 +20,11 @@ A flat top whose processes are continuous assigns (`assign x = e`, `assign x[idx
 plus ANY NUMBER of `generate for` loops `for (g = c0; g < bound; g++)` whose bodies hold such assigns
 and, one level down, further `generate for` loops of such assigns (two levels deep, mixed bodies).
 
-* declarations: scalars, 1-D and 2-D packed arrays with affine bounds;
+* declarations: scalars, 1-D and 2-D packed arrays with affine bounds, unsigned or signed (4-state; a 2-state
+  declaration is refused);
+* signed reads (the loader's cast marker `PExpr.cast true (.ident n)`): a design that reads a signed signal is
+  summarized through its UNSIGNED TWIN (`PDesign.unsign`, "Signed reads" below), and the theorems are carried back to the
+  design as written by `CombSigned.lean`, under the width obligation of `sv_equations`;
 * localparams (`localparam integer L = e`, `e` an integer constant expression of the parameters and the
   earlier localparams: `+ - *` by a literal, `/` `%` by a positive literal, `$clog2`): one more NAMED CONSTANT,
   wherever a parameter may stand (`Summary.lps`, `Summary.val`; see "Local parameters" below);
@@ -655,6 +659,10 @@ structure DeclT where
   isInput : Bool
   isOutput : Bool
   isNet : Bool
+  /-- The declared signedness (`logic signed [..]`). `Decl.isSigned` is metadata the semantic tier never reads: a signed
+  READ is the envelope's cast marker around the identifier (`PExpr.cast true (.ident n)`), and signedness acts only
+  through the operators the instantiation lowers it into (sign extension, signed comparison, arithmetic shift). -/
+  isSigned : Bool
   dims : List (PDim × Aff × Aff)
 deriving Repr, Inhabited
 
@@ -680,7 +688,7 @@ def DeclT.affNames (dt : DeclT) : List String :=
   dt.dims.flatMap fun p => p.2.1.names ++ p.2.2.names
 
 def DeclT.toDecl (σ : String → Int) (dt : DeclT) : Decl :=
-  { name := dt.name, width := dt.width σ, isInput := dt.isInput, isOutput := dt.isOutput,
+  { name := dt.name, width := dt.width σ, isSigned := dt.isSigned, isInput := dt.isInput, isOutput := dt.isOutput,
     isNet := dt.isNet }
 
 def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
@@ -694,14 +702,14 @@ def declOf? (pd : PDecl) : Except String DeclT :=
   else match pd.init with
   | some _ => .error s!"declaration `{pd.name}` has an initializer"
   | none =>
-      if pd.isSigned || pd.twoState then
-        .error s!"declaration `{pd.name}` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)"
+      if pd.twoState then
+        .error s!"declaration `{pd.name}` is 2-state (outside the v1 fragment: the summary's declarations are 4-state)"
       else
         match pd.type with
-        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, []⟩
+        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, pd.isSigned, []⟩
         | .packed [d] _ =>
             match dimOf? pd.name d with
-            | .ok p => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, [p]⟩
+            | .ok p => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, pd.isSigned, [p]⟩
             | .error e => .error e
         | .packed [d1, d2] _ =>
             match dimOf? pd.name d1 with
@@ -709,7 +717,7 @@ def declOf? (pd : PDecl) : Except String DeclT :=
             | .ok p1 =>
                 match dimOf? pd.name d2 with
                 | .error e => .error e
-                | .ok p2 => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, [p1, p2]⟩
+                | .ok p2 => .ok ⟨pd.name, pd.isInput, pd.isOutput, pd.isNet, pd.isSigned, [p1, p2]⟩
         | _ => .error s!"declaration `{pd.name}`: only scalar, 1-D and 2-D packed declarations are in the v1 fragment"
 
 def declsOf? : List PDecl → Except String (List DeclT)
@@ -798,6 +806,34 @@ theorem bitAcc?_cases (ds : List DeclT) (n : String) (a : Aff) :
     · exact Or.inl rfl
   · exact Or.inl rfl
 
+/-- The refusal of an operator whose meaning depends on the signedness of its operands (signed reads are read through
+the unsigned twin, `PExpr.unsign`, only where signedness changes nothing). -/
+def signedOpRefusal? : SymBinOp → Option String
+  | .slt | .sle | .sgt | .sge | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge =>
+      some "a signed comparison (`<`, `<=`, `>`, `>=` of signed operands: the operands are ordered as two's-complement integers, which the fragment does not model; it has the unsigned comparisons)"
+  | .m0 (.ashr true) | .ashr =>
+      some "an arithmetic shift right `>>>` (it fills with the sign bit of a signed operand, which the fragment does not model; it has the logical shifts `<<` and unsigned `>>`)"
+  | .m0 (.shr true) =>
+      some "a shift right `>>` whose left operand is signed (outside the v1 fragment)"
+  | .m0 .sdiv | .m0 .srem =>
+      some "a signed division or remainder (outside the v1 fragment: `/` and `%` are word-level operators it does not have yet)"
+  | _ => none
+
+/-- The refusal of a leaf outside the fragment. A signed read left in the unsigned twin, and a sign-extension marker,
+say what signedness changes there. -/
+def leafRefusal : PExpr → String
+  | .cast true (.ident n) =>
+      s!"a signed read of `{n}` in a position the tactics do not read through the unsigned twin (they read a signed signal as the same bits where it is an operand of a continuous assign; a select of a signed signal, an index, a shift operand and an `always_comb` body are outside the fragment)"
+  | .signedResize .. =>
+      "sign extension (a signed operand narrower than its context is extended with its sign bit, which the fragment does not model; it has zero extension)"
+  | _ => "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
+
+/-- The refusal of a select whose base is not an identifier. -/
+def selBaseRefusal (kind : String) : PExpr → String
+  | .cast true (.ident n) =>
+      s!"a select of the signed signal `{n}` (outside the v1 fragment: the tactics read a signed signal through its unsigned twin only as a whole operand)"
+  | _ => s!"{kind} select of a non-identifier base"
+
 /-- A read of one access. -/
 def leafRd? (ds : List DeclT) : PExpr → Except String Acc
   | .ident n => .ok (.whole n)
@@ -807,11 +843,11 @@ def leafRd? (ds : List DeclT) : PExpr → Except String Acc
           match affOf? i with
           | some a => bitAcc? ds n a
           | none => .error s!"non-affine genvar-index obligation: read `{n}[…]` has a dynamic or nonlinear index, so the driven window cannot be determined"
-      | _ => .error "bit select of a non-identifier base"
+      | b => .error (selBaseRefusal "bit" b)
   | .partSel b msb lsb =>
       match b with
       | .ident n => partAcc? ds n [] .range msb lsb
-      | _ => .error "part select of a non-identifier base"
+      | b => .error (selBaseRefusal "part" b)
   | .arrayElem n is => elemAcc? ds n is
   | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
   | .unary .. => .error "unary operator in this position (outside the v1 fragment: `~` and `!` are allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
@@ -820,7 +856,7 @@ def leafRd? (ds : List DeclT) : PExpr → Except String Acc
   | .reduce .. => .error "reduction in this position (outside the v1 fragment: allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
   | .resize .. | .signedResize .. => .error "width conversion (an operand is not as wide as its context at the default parameters, so slang inserted an implicit zero-extension or truncation; the v1 fragment needs every operand exactly as wide as its target: widen or narrow it explicitly)"
   | .fill _ => .error "unbased unsized literal `'0`/`'1` inside an expression (outside the v1 fragment; allowed as a whole right-hand side)"
-  | _ => .error "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
+  | e => .error (leafRefusal e)
 
 /-- One access, as a read list. -/
 def rdsLeaf? (ds : List DeclT) (e : PExpr) : Except String (List Acc) :=
@@ -899,7 +935,7 @@ def rdsOf? (ds : List DeclT) : PExpr → Except String (List Acc)
             match rdsOf? ds r with
             | .error e => .error e
             | .ok b => .ok (a ++ b)
-      else .error s!"operator `{op.sym}` is outside the v1 fragment here (it has the bitwise gates `&`, `|`, `^`, the logical `&&`, `||` and `==`, `!=`; the word-level `+`, `-` and `*` are accepted only at the context-determined positions of a right-hand side (an `assign` or an `always_comb` leaf), not under `!`, a reduction, a comparison or a `?:` condition; so are the six comparisons and the run-time shifts `<<`, `>>`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)"
+      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment here (it has the bitwise gates `&`, `|`, `^`, the logical `&&`, `||` and `==`, `!=`; the word-level `+`, `-` and `*` are accepted only at the context-determined positions of a right-hand side (an `assign` or an `always_comb` leaf), not under `!`, a reduction, a comparison or a `?:` condition; so are the six comparisons and the run-time shifts `<<`, `>>`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
   | .unary op a =>
       match op with
       | .m0 .bnot => rdsOf? ds a
@@ -955,8 +991,10 @@ that evaluation fails; it fails at every type on a signal access (`evalAt_sigOpd
 factor. -/
 def sigOpd : PExpr → Bool
   | .ident _ | .bitSel (.ident _) _ | .partSel (.ident _) _ _ | .arrayElem .. | .arrayPart .. => true
+  | .cast true (.ident _) => true
   | .resize _ (.ident _) | .resize _ (.bitSel (.ident _) _) | .resize _ (.partSel (.ident _) _ _)
   | .resize _ (.arrayElem ..) | .resize _ (.arrayPart ..) => true
+  | .resize _ (.cast true (.ident _)) => true
   | _ => false
 
 /-- The extra condition of `*` (WP-B2): one factor is a signal access (`sigOpd`). Every other operator passes. -/
@@ -978,6 +1016,12 @@ def shSign : SymBinOp → Bool
   | .m0 (.shl s) => s
   | _ => false
 
+/-- The refusal of a shift operand outside the fragment. -/
+def shOpdRefusal : PExpr → String
+  | .cast true (.ident n) =>
+      s!"a signed operand `{n}` of a shift (outside the v1 fragment: `instExpr2` lowers a shift operand through a different instantiation than an operand of `+` or `&`, and the tactics read a signed signal through its unsigned twin only as an operand of the latter)"
+  | _ => "operand of a shift that is not a signal access, a sized literal or an unsized constant (outside the v1 fragment: `instExpr2` lowers a shift operand through a different instantiation than an operand of `+` or `&`, so only these are read; write the operand into a signal first)"
+
 /-- An operand of a shift (the left operand, or the amount): a signal access, a sized literal or an unsized constant.
 `instExpr2` lowers both through `instDivOperand2`, whose default arm these are; an operation is refused. -/
 def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
@@ -988,7 +1032,7 @@ def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .partSel b m l => rdsLeaf? ds (.partSel b m l)
   | .arrayElem n is => rdsLeaf? ds (.arrayElem n is)
   | .arrayPart n is m a b => rdsLeaf? ds (.arrayPart n is m a b)
-  | _ => .error "operand of a shift that is not a signal access, a sized literal or an unsized constant (outside the v1 fragment: `instExpr2` lowers a shift operand through a different instantiation than an operand of `+` or `&`, so only these are read; write the operand into a signal first)"
+  | e => .error (shOpdRefusal e)
 
 /-- The left operand of a shift of signedness `s`: as `shOpdRd?`, under the marker `instDivOperand2` sees through
 without changing the signedness of the operand: the `Resize` marker of an unsigned shift, the `SignedResize` marker of a
@@ -1048,7 +1092,7 @@ def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
             match shAmtRd? ds r with
             | .error e => .error e
             | .ok b => .ok (a ++ b)
-      else .error s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the run-time shifts `<<` and `>>` and the logical `&&`, `||`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)"
+      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the run-time shifts `<<` and `>>` and the logical `&&`, `||`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
   | .unary op a =>
       match op with
       | .m0 .bnot => rdsOfW? ds a
@@ -1103,6 +1147,78 @@ def rhsRds? (ds : List DeclT) (v : PExpr) : Except String (List Acc) :=
   match v with
   | .fill _ => .ok []
   | _ => rdsOfW? ds v
+
+/-! ### Signed reads: the unsigned twin of a design
+
+The loader reads a signed signal as the cast marker around the identifier (`PExpr.cast true (.ident n)`), and the
+instantiation lets that marker vanish (`instExpr2`'s cast arm) everywhere except in ONE place: an operand that
+`fitExpr2` would WIDEN to a wider context, where the widening would be a sign extension exactly when the whole
+expression is signed, and is therefore loud (`Resize:signed`). So a signed read means the same bits as the unsigned
+read of the same signal wherever no implicit widening happens, and signedness acts only through the operators the
+envelope spells separately (the sign-extension marker `SignedResize`, the signed comparisons `s<` …, the arithmetic
+shift `>>>`, signed `/` and `%`), which the fragment refuses.
+
+`PExpr.unsign` is the expression with the marker removed at every position the recognizer reads as a value leaf:
+operands of `& | ^ + - *`, of the six comparisons and of `&& ||`, the operand of `~`, `!` and a reduction, the three
+parts of `?:`, concatenation parts, the argument of a replication and the operand of a zero-extension marker
+(`Resize`). It is NOT removed in an index or bound, under a sign-extension marker, or in an operand of a shift. The
+tactics summarize the unsigned twin `PDesign.unsign` and carry the result back to the design as written by a theorem
+(`CombSigned.lean`), under the width obligation of `sv_equations` (no operand is implicitly widened). -/
+
+/-- The binary operators whose operands `PExpr.unsign` enters: the operators whose operands the recognizer reads
+with `rdsOfW?` or `rdsOf?`. -/
+def unsignOp : SymBinOp → Bool
+  | .m0 .and | .m0 .or | .m0 .xor | .m0 .add | .m0 .sub | .mul
+  | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge | .land | .lor => true
+  | _ => false
+
+mutual
+/-- The unsigned twin of an expression (see the section docstring). -/
+def _root_.LeanModels.Sv.PExpr.unsign : PExpr → PExpr
+  | .cast true (.ident n) => .ident n
+  | .binary op l r =>
+      match unsignOp op with
+      | true => .binary op l.unsign r.unsign
+      | false => .binary op l r
+  | .unary op a => .unary op a.unsign
+  | .ternary c t e => .ternary c.unsign t.unsign e.unsign
+  | .reduce op a => .reduce op a.unsign
+  | .concat ps => .concat (PExpr.unsignL ps)
+  | .repl c a => .repl c a.unsign
+  | .resize w a => .resize w a.unsign
+  | e => e
+
+/-- `PExpr.unsign` over a list (concatenation parts). -/
+def _root_.LeanModels.Sv.PExpr.unsignL : List PExpr → List PExpr
+  | [] => []
+  | e :: es => e.unsign :: PExpr.unsignL es
+end
+
+/-- The unsigned twin of a process: the right-hand side of a continuous assign. (An `always_comb` body is left as
+it is: a signed read there stays refused.) -/
+def _root_.LeanModels.Sv.PProcess.unsign : PProcess → PProcess
+  | .assign t v => .assign t v.unsign
+  | .assignL l v => .assignL l v.unsign
+  | p => p
+
+mutual
+/-- The unsigned twin of a generate item. -/
+def _root_.LeanModels.Sv.GenItem.unsign : GenItem → GenItem
+  | .process p => .process p.unsign
+  | .genFor lbl g i b st rc body => .genFor lbl g i b st rc (GenItem.unsignL body)
+  | .genIf c t e => .genIf c (GenItem.unsignL t) (GenItem.unsignL e)
+  | it => it
+
+/-- `GenItem.unsign` over a list. -/
+def _root_.LeanModels.Sv.GenItem.unsignL : List GenItem → List GenItem
+  | [] => []
+  | it :: its => it.unsign :: GenItem.unsignL its
+end
+
+/-- **The unsigned twin of a design**: every signed read in a continuous assign replaced by the unsigned read of the
+same signal. Declarations (including their signedness), parameters and everything else are unchanged. -/
+def _root_.LeanModels.Sv.PDesign.unsign (d : PDesign) : PDesign :=
+  { d with processes := d.processes.map PProcess.unsign, generates := GenItem.unsignL d.generates }
 
 def tgtOf? (ds : List DeclT) : PLhs → Except String Acc
   | .ident n => .ok (.whole n)
@@ -1864,7 +1980,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
     dt.isNet = pd.isNet ∧ pd.init = none ∧
     (∃ r, pd.type = .packed dt.pdims r) ∧ dt.dims.length ≤ 2 ∧
     (∀ p ∈ dt.dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) ∧
-    pd.isSigned = false ∧ pd.twoState = false := by
+    dt.isSigned = pd.isSigned ∧ pd.twoState = false := by
   have hdim : ∀ {nm : String} {d : PDim} {p : PDim × Aff × Aff}, dimOf? nm d = .ok p →
       p.1 = d ∧ affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2 := by
     intro nm d p hp
@@ -1880,10 +1996,10 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
     | some v => rw [hi] at h; simp at h
     | none =>
       rw [hi] at h
-      by_cases hst : (pd.isSigned || pd.twoState) = true
+      by_cases hst : pd.twoState = true
       · rw [if_pos hst] at h; simp at h
       rw [if_neg hst] at h
-      have hs : pd.isSigned = false ∧ pd.twoState = false := by simpa using hst
+      have hs : True ∧ pd.twoState = false := ⟨trivial, by simpa using hst⟩
       cases hty : pd.type with
       | packed ds r =>
         rw [hty] at h
@@ -1891,7 +2007,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
         | [], h =>
           simp only [Except.ok.injEq] at h
           subst h
-          refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
+          refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, rfl, hs.2⟩
           intro p hp; simp at hp
         | [d], h =>
           rcases hp : dimOf? pd.name d with e | p
@@ -1899,7 +2015,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
           · simp only [hp, Except.ok.injEq] at h
             subst h
             obtain ⟨h1, h2, h3⟩ := hdim hp
-            refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
+            refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, rfl, hs.2⟩
             intro q hq
             simp only [List.mem_singleton] at hq
             subst hq
@@ -1913,7 +2029,7 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
               subst h
               obtain ⟨h1, h2, h3⟩ := hdim hp1
               obtain ⟨k1, k2, k3⟩ := hdim hp2
-              refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
+              refine ⟨rfl, rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, rfl, hs.2⟩
               intro q hq
               simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
               rcases hq with rfl | rfl
@@ -2034,8 +2150,8 @@ theorem buildDecls_summary {σ : String → Int} :
       have hdecl : instDecl env pd = .ok (dt.toDecl σ) := by
         simp [instDecl, hw, hun, hinit, DeclT.toDecl, hn, hi, ho, hnet, hsg, hts]
       simp only [buildDecls, hdecl, Res.ok_bind]
-      have : ({ name := pd.name, width := dt.width σ, isInput := pd.isInput, isOutput := pd.isOutput, isNet := pd.isNet } : Decl)
-          = dt.toDecl σ := by simp [DeclT.toDecl, hn, hi, ho, hnet]
+      have : ({ name := pd.name, width := dt.width σ, isSigned := pd.isSigned, isInput := pd.isInput, isOutput := pd.isOutput, isNet := pd.isNet } : Decl) = dt.toDecl σ := by
+        simp [DeclT.toDecl, hn, hi, ho, hnet, hsg]
       simp only [DeclT.toDecl] at hrest ⊢
       rw [hrest]
       simp [Res.ok_bind, hn]

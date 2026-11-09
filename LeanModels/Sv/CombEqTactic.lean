@@ -399,7 +399,11 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
         else throwError "sv_equations: cannot read a `load_design_sv2` family (`X.sem N`) off the design of `{heqsN}`"
     let some pdName := (match pd.getAppFn with | .const n _ => some n | _ => none)
       | throwError "sv_equations: the design is not a named constant"
-    match ← evalSummary pd with
+    -- a design with signed reads is read through its unsigned twin (`CombSigned.lean`): the four hypotheses are
+    -- carried to the twin's family along `instantiateGD2_unsign_view`, whose hypotheses are this view's own goals
+    let signed ← hasSignedReads pd
+    let pdS := if signed then mkApp (mkConst ``LeanModels.Sv.PDesign.unsign) pd else pd
+    match ← evalSummary pdS with
     | .error msg => throwError "sv_equations: outside the supported fragment — {msg}"
     | .ok s =>
       let probs := s.structProblems
@@ -410,7 +414,8 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       let hasRepl := s.hasRepl
       let replL ← if hasRepl then replSimpLemmas else pure #[]
       let pdL ← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)
-      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL
+      let unsL ← if signed then unsignSimpLemmas else pure #[]
+      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL ++ unsL
       let svs : TSyntax `tactic ← if hasRepl then `(tactic| sv_simp [$replL,*]) else `(tactic| sv_simp)
       let eqAtN ← withRepl hasRepl replL keyI (← `(tactic| sv_eq_norm_at $keyI))
       let normR : TSyntax `tactic ←
@@ -419,9 +424,25 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       -- the theorem is about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`)
       let hA? ← if aliased then some <$> aliasInertEq "sv_equations" D pd args else pure none
       let hyp (n : Name) : TacticM Term := do
-        match hA? with
-        | some hA => Term.exprToSyntax (← transportDesign (← getLocalDeclFromUserName n).toExpr D hA)
-        | none => pure (mkIdent n)
+        let hE ← match hA? with
+          | some hA => transportDesign (← getLocalDeclFromUserName n).toExpr D hA
+          | none => pure (← getLocalDeclFromUserName n).toExpr
+        let hT ← match hA? with
+          | some _ => Term.exprToSyntax hE
+          | none => pure (mkIdent n)
+        unless signed do return hT
+        -- `Eq.mp (congrArg motive bridge) h`, the bridge's hypotheses the view's named goals
+        let ty ← instantiateMVars (← inferType hE)
+        let DG := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
+        let abs ← kabstract ty DG
+        unless abs.hasLooseBVars do
+          throwError "sv_equations: internal error: the design `{DG}` does not occur in `{n}`"
+        let motiveT ← Term.exprToSyntax (Lean.mkLambda `D .default (mkConst ``LeanModels.Sv.Design2) abs)
+        let pdT ← Term.exprToSyntax pd
+        let argsT ← Term.exprToSyntax args
+        `(Eq.mp (congrArg $motiveT (LeanModels.Sv.CombEq.instantiateGD2_unsign_view (d := $pdT) (args := $argsT)
+            (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok)
+            (hauto := ?hauto) (hin := ?hin) (hfrag := ?hfrag) (hwid := ?hwid) (hbit := ?hbit))) $hT)
       let hcI ← hyp hcN
       let haI ← hyp haN
       let heqsI ← hyp heqsN
@@ -650,6 +671,86 @@ unsafe def runSvEquations (hintOnly : Bool) : TacticM Unit := withDeepRec (runSv
 @[tactic svEquations] unsafe def evalSvEquations : Tactic := fun _ => runSvEquations false
 
 @[tactic svEquationsQ] unsafe def evalSvEquationsQ : Tactic := fun _ => runSvEquations true
+
+/-! ## `sv_structure` on a design with signed reads
+
+A design that reads a signed signal is summarized through its unsigned twin (`PDesign.unsign`, `CombSigned.lean`). This
+elaborator recognizes such a design in a `sv_structure` goal and runs the structural stage with `SignedHook`: the comb
+theorem is applied to the twin's family and the goal reached along `instantiateGD2_unsign_view`, which asks three
+obligations of `sv_equations` besides the structural ones: the fragment check (decided), the width obligation (no
+operand implicitly widened, so no signed operand is ever extended) and the bit-read obligation, normalized here as
+`sv_equations` normalizes them and returned as `width`/`bitRead` goals. Any other goal falls through to the elaborators
+of `CombViewTactic.lean` and `CombProcTactic.lean`. -/
+
+/-- The three obligations a design with signed reads adds to `sv_structure`. -/
+unsafe def signedHook (pdName : Name) : SignedHook where
+  extra := fun find s => do
+    let pdId := mkIdent pdName
+    let hasRepl := s.hasRepl
+    let replL ← if hasRepl then replSimpLemmas else pure #[]
+    let pdL ← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)
+    let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL ++ (← unsignSimpLemmas)
+    let svs : TSyntax `tactic ← if hasRepl then `(tactic| sv_simp [$replL,*]) else `(tactic| sv_simp)
+    let gF ← find `hfrag
+    setGoals [gF]
+    try
+      closeByDecide gF "frag"
+      setGoals []
+    catch _ =>
+      throwError "sv_structure: a right-hand side of the unsigned twin is outside the fragment of `sv_equations` (a design with signed reads is read through it, `CombSigned.lean`; the fragment: an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, the comparisons, `+ - *`, `?:`, a concatenation, or a fill)"
+    let mut out : List MVarId := []
+    for (n, nm, lem, what) in [(`hwid, "width", ``LeanModels.Sv.CombView.Summary.widthObl_of_plain,
+          "an operand of a flat netlist is not as wide as its target (a signed operand would be extended)"),
+        (`hbit, "bitRead", ``LeanModels.Sv.CombView.Summary.bitReadObl_of_plain,
+          "a bit read of a flat netlist is outside its vector")] do
+      let g ← find n
+      if (← tryClosePlain s g lem what) then continue
+      setGoals [g]
+      try
+        evalTactic (← `(tactic| (
+          (try simp only [$preL,*])
+          repeat (sv_eq_norm; try $svs:tactic)
+          repeat' refine And.intro ?_ ?_)))
+      catch e => throwError "sv_structure: while normalizing the obligation `{nm}` of a design with signed reads: {e.toMessageData}"
+      let rest ← getGoals
+      let k := rest.length
+      let mut i := 0
+      for g' in rest do
+        i := i + 1
+        g'.setTag (if k == 1 then Name.mkSimple nm else Name.mkSimple s!"{nm}_{i}")
+      out := out ++ rest
+    return out
+
+/-- The design of a `sv_structure` goal (`CombDesign D`, `Acyclic D`, or their conjunction), when it has signed reads. -/
+unsafe def signedStructureDesign? : TacticM (Option Name) := do
+  let goal ← getMainGoal
+  goal.withContext do
+    let ty ← instantiateMVars (← goal.getType)
+    let D? : Option Lean.Expr :=
+      if ty.isAppOfArity ``And 2 && ty.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombDesign then
+        some ty.appFn!.appArg!.appArg!
+      else if ty.getAppFn.isConstOf ``LeanModels.Sv.CombDesign || ty.getAppFn.isConstOf ``LeanModels.Sv.Acyclic then
+        some ty.appArg!
+      else none
+    let some D := D? | return none
+    let some (pd, _, _) ← findGD2A D 8 | return none
+    let some pdName := (match pd.getAppFn with | .const n _ => some n | _ => none) | return none
+    if ← hasSignedReads pd then return some pdName else return none
+
+@[tactic svStructure] unsafe def evalSvStructureSigned : Tactic := fun stx => do
+  let some pdName ← signedStructureDesign? | throwUnsupportedSyntax
+  let usingStx? : Option Syntax := if stx[2].isNone then none else some stx[2][1]
+  let hook := signedHook pdName
+  if stx[1].isNone then
+    withDeepRec (runSvStructure none none usingStx? false hook)
+  else
+    let cl := stx[1][0]
+    if cl[1].getAtomVal == "lexRank" then withDeepRec (runSvStructure none (some cl[3]) usingStx? false hook)
+    else withDeepRec (runSvStructure (some cl[3]) none usingStx? false hook)
+
+@[tactic svStructureQ] unsafe def evalSvStructureQSigned : Tactic := fun _ => do
+  let some pdName ← signedStructureDesign? | throwUnsupportedSyntax
+  withDeepRec (runSvStructure none none none true (signedHook pdName))
 
 /-! ## `sv_cover`: the coverage helper
 

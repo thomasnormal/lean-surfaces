@@ -78,21 +78,21 @@ load_design_sv2 two_state_and from "Examples/system-verilog/ripple_add/neg/two_s
 load_design_sv2 two_state_out from "Examples/system-verilog/ripple_add/neg/two_state_out.sv.json"
 
 /--
-error: sv_structure: outside the supported fragment — declaration `a` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)
+error: sv_structure: outside the supported fragment — declaration `a` is 2-state (outside the v1 fragment: the summary's declarations are 4-state)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (two_state_and.sem N) := by
   sv_structure
 
 /--
-error: sv_structure: outside the supported fragment — declaration `y` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)
+error: sv_structure: outside the supported fragment — declaration `y` is 2-state (outside the v1 fragment: the summary's declarations are 4-state)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (two_state_out.sem N) := by
   sv_structure
 
 /--
-error: sv_equations: outside the supported fragment — declaration `a` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)
+error: sv_equations: outside the supported fragment — declaration `a` is 2-state (outside the v1 fragment: the summary's declarations are 4-state)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) (st : SvState)
@@ -102,7 +102,7 @@ example (N : Nat) (hN : 1 ≤ N) (st : SvState)
   trivial
 
 /--
-error: sv_equations: outside the supported fragment — declaration `y` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)
+error: sv_equations: outside the supported fragment — declaration `y` is 2-state (outside the v1 fragment: the summary's declarations are 4-state)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) (st : SvState)

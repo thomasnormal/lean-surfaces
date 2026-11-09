@@ -5,6 +5,7 @@ import LeanModels.Sv.CombViewPlain
 import LeanModels.Sv.CombViewGroup
 import LeanModels.Sv.CombShared
 import LeanModels.Sv.CombAliasInert
+import LeanModels.Sv.CombSigned
 
 /-!
 # `sv_structure` / `sv_structure?`: the structural stage of the `sv_comb` tactic (v0)
@@ -765,9 +766,54 @@ def withRepl {m : Type → Type} [Monad m] [MonadQuotation m] (hasRepl : Bool)
     `(tactic| first | (simp only [$replL,*] at $h:ident; try $t:tactic) | $t:tactic)
   else pure t
 
+/-- **A design with signed reads** (`PDesign.unsign`, `CombSigned.lean`). The tactics summarize the unsigned twin
+`PDesign.unsign X.pdesign` and prove the theorem about the twin's instantiation; the goal about the design as written is
+reached along `instantiateGD2_unsign_view`, whose hypotheses are the view's (shared named goals) plus the fragment,
+width and bit-read obligations of `sv_equations` (`hfrag`, `hwid`, `hbit`). `extra` closes or normalizes those three:
+it is supplied by `CombEqTactic.lean`, where the normalization of the width obligation lives. -/
+structure SignedHook where
+  extra : (Name → TacticM MVarId) → Summary → TacticM (List MVarId)
+
+/-- The vocabulary of the unsigned twin, for the normalization of a summary computed from `PDesign.unsign X.pdesign`
+(the summary `rfl` produces may keep the twin's fields unevaluated). -/
+def unsignSimpLemmas {m : Type → Type} [Monad m] [MonadQuotation m] :
+    m (Array (TSyntax ``Lean.Parser.Tactic.simpLemma)) := do
+  return #[← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.PDesign.unsign),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.PProcess.unsign),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.PExpr.unsign),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.PExpr.unsignL),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.GenItem.unsign),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.GenItem.unsignL),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.CombView.unsignOp)]
+
+/-- Whether a design has signed reads the tactics read through its unsigned twin (`PDesign.unsign d ≠ d`). -/
+unsafe def hasSignedReads (pd : Lean.Expr) : MetaM Bool := do
+  let e ← mkAppM ``BEq.beq #[mkApp (mkConst ``LeanModels.Sv.PDesign.unsign) pd, pd]
+  return !(← evalExpr Bool (mkConst ``Bool) e)
+
+/-- The application `tm` of a comb theorem about the twin's family, wrapped into a proof of the goal about the design
+as written: `Eq.mpr (congrArg motive (instantiateGD2_unsign_view …)) tm`, the bridge's hypotheses the SAME named
+goals as the view's (`?s`, `?env`, `?hs`, …). -/
+def signedWrap (pd args : Lean.Expr) (tm : TSyntax `term) : TacticM (TSyntax `term) := do
+  let g ← getMainGoal
+  let gty ← instantiateMVars (← g.getType)
+  let D := mkApp2 (mkConst ``LeanModels.Sv.PDesign.instantiateGD2) pd args
+  let abs ← kabstract gty D
+  unless abs.hasLooseBVars do
+    throwError "sv_comb: internal error: the design `{D}` does not occur in the goal"
+  let motive := Lean.mkLambda `D .default (mkConst ``LeanModels.Sv.Design2) abs
+  let motiveT ← Term.exprToSyntax motive
+  let pdT ← Term.exprToSyntax pd
+  let argsT ← Term.exprToSyntax args
+  `(Eq.mpr (congrArg $motiveT (LeanModels.Sv.CombEq.instantiateGD2_unsign_view (d := $pdT) (args := $argsT)
+      (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok)
+      (hauto := ?hauto) (hin := ?hin) (hfrag := ?hfrag) (hwid := ?hwid) (hbit := ?hbit))) $tm)
+
 /-- Run the structural stage. (`unsafe`: it evaluates the recognizer on the design with
-`evalExpr`, at tactic time only.) -/
-unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly : Bool) : TacticM Unit := do
+`evalExpr`, at tactic time only.) With `hook?` the design has signed reads and is read through its unsigned twin
+(`SignedHook`). -/
+unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly : Bool)
+    (hook? : Option SignedHook := none) : TacticM Unit := do
   let goal ← getMainGoal
   goal.withContext do
     let ty ← instantiateMVars (← goal.getType)
@@ -793,7 +839,13 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         else throwError "sv_structure: cannot read a `load_design_sv2` family (`X.sem N`) off the design in the goal"
     let some pdName := headConst? pd
       | throwError "sv_structure: the design is not a named constant"
-    match ← evalSummary pd with
+    -- a design with signed reads is summarized through its unsigned twin (`SignedHook`)
+    let pdS := if hook?.isSome then mkApp (mkConst ``LeanModels.Sv.PDesign.unsign) pd else pd
+    if hook?.isSome && usingStx?.isSome then
+      throwError "sv_structure: `using hc` is not available for a design with signed reads (its summary is the unsigned twin's); prove `CombDesign (X.sem N) ∧ Acyclic (X.sem N)` in one call"
+    if hook?.isSome && isShared then
+      throwError "sv_structure: the shared obligations `SharedObl X.pdesign [N]` are not available for a design with signed reads (its summary is the unsigned twin's); prove `CombDesign (X.sem N) ∧ Acyclic (X.sem N)` and let `sv_equations` normalize its obligations"
+    match ← evalSummary pdS with
     | .error msg =>
         throwError "sv_structure: outside the supported fragment — {msg}"
     | .ok s =>
@@ -862,9 +914,12 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           let hcE ← Tactic.elabTerm u none
           usingStx? := some (← Term.exprToSyntax (← transportDesign hcE dGoal hA)).raw
       let pdId := mkIdent pdName
+      let wrapT (tm : TSyntax `term) : TacticM (TSyntax `term) :=
+        if hook?.isSome then signedWrap pd args tm else pure tm
       let replL ← if s.hasRepl then replSimpLemmas else pure #[]
       let pdL ← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)
-      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL
+      let unsL ← if hook?.isSome then unsignSimpLemmas else pure #[]
+      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL ++ unsL
       -- the player's own rank/key function, if it is a named definition: unfold it
       let keyIds : Array Ident :=
         match (rankE?.orElse fun _ => lexE?) with
@@ -878,9 +933,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         if s.hasRepl then `(tactic| (sv_norm [$keyLemmas,*]; (try simp only [$replL,*]); try sv_norm [$keyLemmas,*]))
         else `(tactic| sv_norm [$keyLemmas,*])
       if isComb then
-        evalTactic (← `(tactic|
-          refine LeanModels.Sv.CombView.comb_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
-            (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)))
+        evalTactic (← `(tactic| refine $(← wrapT (← `(LeanModels.Sv.CombView.comb_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+            (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj))))))
       else if isBoth then
         if lexE?.isSome then
           let r ← match lexStx? with
@@ -889,10 +943,9 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           let rT : TSyntax `term := ⟨r⟩
           let thm := mkIdent (if isShared then ``LeanModels.Sv.CombView.comb_lex_shared_view
             else ``LeanModels.Sv.CombView.comb_lex_view)
-          evalTactic (← `(tactic|
-            refine $thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `($thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
-              (κ := $rT) (hrank := ?hrank)))
+              (κ := $rT) (hrank := ?hrank))))))
         else
           let r ← match rankStx? with
             | some r => pure r
@@ -900,10 +953,9 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           let rT : TSyntax `term := ⟨r⟩
           let thm := mkIdent (if isShared then ``LeanModels.Sv.CombView.comb_acyclic_shared_view
             else ``LeanModels.Sv.CombView.comb_acyclic_view)
-          evalTactic (← `(tactic|
-            refine $thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `($thm:ident (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
-              (ρ := $rT) (hrank := ?hrank)))
+              (ρ := $rT) (hrank := ?hrank))))))
       else if lexE?.isSome then
         let r ← match lexStx? with
           | some r => pure r
@@ -911,16 +963,14 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         let rT : TSyntax `term := ⟨r⟩
         match usingStx? with
         | none =>
-          evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.lex_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `(LeanModels.Sv.CombView.lex_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
-              (κ := $rT) (hrank := ?hrank)))
+              (κ := $rT) (hrank := ?hrank))))))
         | some u =>
           let uT : TSyntax `term := ⟨u⟩
-          evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.lex_view_using (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `(LeanModels.Sv.CombView.lex_view_using (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hc := $uT)
-              (κ := $rT) (hrank := ?hrank)))
+              (κ := $rT) (hrank := ?hrank))))))
       else
         let r ← match rankStx? with
           | some r => pure r
@@ -928,16 +978,14 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         let rT : TSyntax `term := ⟨r⟩
         match usingStx? with
         | none =>
-          evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.acyclic_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `(LeanModels.Sv.CombView.acyclic_view (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj)
-              (ρ := $rT) (hrank := ?hrank)))
+              (ρ := $rT) (hrank := ?hrank))))))
         | some u =>
           let uT : TSyntax `term := ⟨u⟩
-          evalTactic (← `(tactic|
-            refine LeanModels.Sv.CombView.acyclic_view_using (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+          evalTactic (← `(tactic| refine $(← wrapT (← `(LeanModels.Sv.CombView.acyclic_view_using (s := ?s) (env := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
               (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hc := $uT)
-              (ρ := $rT) (hrank := ?hrank)))
+              (ρ := $rT) (hrank := ?hrank))))))
       -- name the new goals, close the structural hypotheses, keep the obligations
       let goals ← getGoals
       let find (n : Name) : TacticM MVarId := do
@@ -1024,6 +1072,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
             (try simp only [$preL,*])
             $normR:tactic
             repeat' refine And.intro ?_ ?_)) (grouped := true)).toArray
+      if let some hook := hook? then
+        out := out ++ (← hook.extra find s).toArray
       setGoals out.toList
 
 declare_syntax_cat svRankCat

@@ -506,6 +506,172 @@ theorem signedCast_of_rdsW {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rd
     e.signedCast = false := by
   cases e <;> first | rfl | (simp [rdsOfW?, rdsLeaf?, leafRd?] at h)
 
+/-! ### The unsigned twin of an expression the recognizer accepts is the expression itself
+
+The recognizer refuses a signed read (`PExpr.cast`) at every position `PExpr.unsign` enters, so an accepted
+expression has none there (`unsign_of_rdsOfW`). -/
+
+theorem unsignOp_of_binOk {op : SymBinOp} (h : binOk op = true) : unsignOp op = true := by
+  rcases binOk_cases h with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> rfl
+
+theorem unsignOp_of_ctxOpW {op : SymBinOp} (h : ctxOpW op = true) : unsignOp op = true := by
+  rcases ctxOpW_cases h with rfl | rfl | rfl | rfl | rfl | rfl | ⟨c, rfl⟩
+  all_goals first | rfl | (cases c <;> rfl)
+
+theorem unsignOp_of_selfOpW {op : SymBinOp} (h : selfOpW op = true) : unsignOp op = true := by
+  rcases selfOpW_cases h with rfl | rfl <;> rfl
+
+theorem unsignOp_of_shOpW {op : SymBinOp} (h : shOpW op = true) : unsignOp op = false := by
+  rcases shOpW_cases h with ⟨s, rfl⟩ | rfl <;> rfl
+
+theorem unsign_binary_t {op : SymBinOp} (h : unsignOp op = true) (l r : PExpr) :
+    (PExpr.binary op l r).unsign = .binary op l.unsign r.unsign := by
+  simp only [PExpr.unsign, h]
+
+theorem unsign_binary_f {op : SymBinOp} (h : unsignOp op = false) (l r : PExpr) :
+    (PExpr.binary op l r).unsign = .binary op l r := by
+  simp only [PExpr.unsign, h]
+
+theorem unsign_of_leafRd {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e = .ok a) :
+    e.unsign = e := by
+  cases e <;> first | rfl | (simp [leafRd?] at h)
+
+theorem unsign_of_rdsLeaf {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsLeaf? ds e = .ok rs) :
+    e.unsign = e := by
+  obtain ⟨a, ha, -⟩ := rdsLeaf_ok' h
+  exact unsign_of_leafRd ha
+
+theorem unsignL_of_partsRd {ds : List DeclT} :
+    ∀ {ps : List PExpr} {rs : List Acc}, partsRd? ds ps = .ok rs → PExpr.unsignL ps = ps
+  | [], _, _ => rfl
+  | p :: ps, rs, h => by
+      simp only [partsRd?] at h
+      rcases hp : partRd? ds p with e | a
+      · simp [hp] at h
+      · rcases hq : partsRd? ds ps with e | b
+        · simp [hp, hq] at h
+        · have h1 : p.unsign = p := by
+            cases p <;> first | rfl | exact unsign_of_rdsLeaf (by simpa [partRd?] using hp)
+          show p.unsign :: PExpr.unsignL ps = p :: ps
+          rw [h1, unsignL_of_partsRd hq]
+
+theorem unsign_of_repArgRd {ds : List DeclT} {a : PExpr} {rs : List Acc} (h : repArgRd? ds a = .ok rs) :
+    a.unsign = a := by
+  rcases repArgRd?_cases' h with ⟨v, rfl, -⟩ | ⟨e, rfl, rs', he⟩
+  · rfl
+  · show PExpr.concat [e.unsign] = _
+    rw [unsign_of_rdsLeaf he]
+where
+  repArgRd?_cases' {ds : List DeclT} {a : PExpr} {rs : List Acc} (h : repArgRd? ds a = .ok rs) :
+      (∃ v, a = .concat [.lit v] ∧ rs = []) ∨ (∃ e, a = .concat [e] ∧ ∃ rs', rdsLeaf? ds e = .ok rs') := by
+    unfold repArgRd? at h
+    split at h
+    · exact Or.inl ⟨_, rfl, by simpa using h.symm⟩
+    · rename_i e _
+      unfold notWhole at h
+      split at h <;> first | (simp at h) | exact Or.inr ⟨e, rfl, _, by assumption⟩
+    · simp at h
+
+theorem unsignL_of_partsRdW {ds : List DeclT} :
+    ∀ {ps : List PExpr} {rs : List Acc}, partsRdW? ds ps = .ok rs → PExpr.unsignL ps = ps
+  | [], _, _ => rfl
+  | p :: ps, rs, h => by
+      simp only [partsRdW?] at h
+      rcases hp : partRdW? ds p with e | a
+      · simp [hp] at h
+      · rcases hq : partsRdW? ds ps with e | b
+        · simp [hp, hq] at h
+        · have h1 : p.unsign = p := by
+            cases p with
+            | lit v => rfl
+            | repl c x =>
+                simp only [partRdW?, repRd?] at hp
+                rcases hk : affOf? c with _ | k
+                · simp [hk] at hp
+                · simp only [hk] at hp
+                  show PExpr.repl c x.unsign = _
+                  rw [unsign_of_repArgRd hp]
+            | _ => first | rfl | exact unsign_of_rdsLeaf (by simpa [partRdW?] using hp)
+          show p.unsign :: PExpr.unsignL ps = p :: ps
+          rw [h1, unsignL_of_partsRdW hq]
+
+theorem unsign_of_rdsOf {ds : List DeclT} :
+    ∀ {e : PExpr} {rs : List Acc}, rdsOf? ds e = .ok rs → e.unsign = e
+  | .lit _, _, _ => rfl
+  | .binary op l r, rs, h => by
+      obtain ⟨hb, ra, rb, hl, hr, rfl⟩ := rdsOf?_binary h
+      rw [unsign_binary_t (unsignOp_of_binOk hb), unsign_of_rdsOf hl, unsign_of_rdsOf hr]
+  | .unary op a, rs, h => by
+      obtain ⟨-, ha⟩ := rdsOf?_unary h
+      show PExpr.unary op a.unsign = _
+      rw [unsign_of_rdsOf ha]
+  | .ternary c t e, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
+      show PExpr.ternary c.unsign t.unsign e.unsign = _
+      rw [unsign_of_rdsOf hc, unsign_of_rdsOf ht, unsign_of_rdsOf he]
+  | .reduce op a, rs, h => by
+      show PExpr.reduce op a.unsign = _
+      rw [unsign_of_rdsOf (rdsOf?_reduce h)]
+  | .concat ps, rs, h => by
+      show PExpr.concat (PExpr.unsignL ps) = _
+      rw [unsignL_of_partsRd (by simpa [rdsOf?] using h)]
+  | .ident _, _, _ | .bitSel .., _, _ | .partSel .., _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .int _, _, h | .fill _, _, h
+  | .resize .., _, h | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h | .repl .., _, h
+  | .cast .., _, h | .unsupported .., _, h => by
+      simp [rdsOf?, rdsLeaf?, leafRd?] at h
+
+theorem unsign_of_rdsOfW {ds : List DeclT} :
+    ∀ {e : PExpr} {rs : List Acc}, rdsOfW? ds e = .ok rs → e.unsign = e
+  | .lit _, _, _ => rfl
+  | .int _, _, _ => rfl
+  | .binary op l r, rs, h => by
+      rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
+        ⟨hb, ra, rb, -, -, rfl⟩
+      · rw [unsign_binary_t (unsignOp_of_ctxOpW hb), unsign_of_rdsOfW hl, unsign_of_rdsOfW hr]
+      · rw [unsign_binary_t (unsignOp_of_selfOpW hb), unsign_of_rdsOf hl, unsign_of_rdsOf hr]
+      · exact unsign_binary_f (unsignOp_of_shOpW hb) l r
+  | .unary op a, rs, h => by
+      show PExpr.unary op a.unsign = _
+      rcases rdsOfW?_unary h with ⟨-, ha⟩ | ⟨-, ha⟩
+      · rw [unsign_of_rdsOfW ha]
+      · rw [unsign_of_rdsOf ha]
+  | .ternary c t e, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfW?_ternary h
+      show PExpr.ternary c.unsign t.unsign e.unsign = _
+      rw [unsign_of_rdsOf hc, unsign_of_rdsOfW ht, unsign_of_rdsOfW he]
+  | .reduce op a, rs, h => by
+      show PExpr.reduce op a.unsign = _
+      rw [unsign_of_rdsOf (rdsOfW?_reduce h)]
+  | .concat ps, rs, h => by
+      show PExpr.concat (PExpr.unsignL ps) = _
+      rw [unsignL_of_partsRdW (by simpa [rdsOfW?] using h)]
+  | .repl c a, rs, h => by
+      have h' : repRd? ds c a = .ok rs := by simpa [rdsOfW?] using h
+      unfold repRd? at h'
+      rcases hk : affOf? c with _ | k
+      · simp [hk] at h'
+      · simp only [hk] at h'
+        show PExpr.repl c a.unsign = _
+        rw [unsign_of_repArgRd h']
+  | .resize m e, rs, h => by
+      show PExpr.resize m e.unsign = _
+      rcases rdsOfW?_resize h with ⟨v, rfl, -⟩ | ⟨-, a, ha, -⟩ | ⟨-, he⟩
+      · rfl
+      · rw [unsign_of_leafRd ha]
+      · rw [unsign_of_rdsOfW he]
+  | .ident _, _, _ | .bitSel .., _, _ | .partSel .., _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
+  | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .fill _, _, h
+  | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h
+  | .cast .., _, h | .unsupported .., _, h => by
+      simp [rdsOfW?, rdsLeaf?, leafRd?] at h
+
+theorem unsign_of_rhsRds {ds : List DeclT} {v : PExpr} {rs : List Acc} (h : rhsRds? ds v = .ok rs) :
+    v.unsign = v := by
+  cases v with
+  | fill b => rfl
+  | _ => exact unsign_of_rdsOfW (by simpa [rhsRds?] using h)
+
 /-! ## Derived definitions on the summary -/
 
 /-- Structural well-formedness of a summary: decidable closed data, discharged by `decide`. -/
@@ -1119,7 +1285,12 @@ theorem evalAt_sigOpd {e : PExpr} (h : sigOpd e = true) (ty : Nat × Bool) (v : 
       | bitSel b i =>
           cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates, PExpr.negGenvarAt]
       | partSel b m l => cases b <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+      | cast s x =>
+          cases s <;> cases x <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind, PExpr.ctxPropagates,
+            PExpr.negGenvarAt]
       | _ => simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
+  | cast s a =>
+      cases s <;> cases a <;> simp_all [sigOpd, evalAt, ctype, bind, Except.bind]
   | _ => simp [sigOpd] at h
 
 theorem isInt_sigOpd {e : PExpr} (h : sigOpd e = true) : e.isInt env = false := by

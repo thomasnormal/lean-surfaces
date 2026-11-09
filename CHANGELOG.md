@@ -86,6 +86,10 @@
   remain loud allocation-boundary refusals instead of returning fabricated
   lengths.
 
+- Revalidated set iteration-order admission; only modeled nonnegative integer
+  insertion remains live, while negative hashes and table-rebuilding paths
+  refuse loudly.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

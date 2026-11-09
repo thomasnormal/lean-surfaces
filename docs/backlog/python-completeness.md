@@ -10690,6 +10690,24 @@ DECIDED: close `py-set-iteration-order` as already fixed by loud refusal of
 unmodeled table-construction paths; retain the narrow admitted direct-insertion
 surface.
 
+## 2026-11-09-pycomplete-485 — revalidate signed set-order audit
+
+The high-priority `py-set-iteration-order` finding remains closed by
+conservative set-order admission. The modeled table reconstruction handles the
+direct nonnegative integer/bool insertion slice; negative hashes and
+copy/dict-source/intersection construction refuse before iteration, avoiding
+the former confident order mismatches.
+
+| Measurement | Result |
+|---|---|
+| Focused set battery | 7 rows: 1 MATCH, 6 documented loud refusals, 0 failures |
+| Admitted row | `iter_order(7)` returns `[8, 7]` like CPython 3.9.25 |
+| Refused rows | `iter_order(-1)`, `iter_order(-5)`, copy, dict-source (small/wide), intersection |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-set-iteration-order`; retain loud refusal for unmodeled
+hash/table construction paths until CPython's complete set table is represented.
+
 ## 2026-11-07-pycomplete-413 — recheck shape-specific ingestion rewrite removal
 
 The shape-specific audit finding remains closed in current `Json.lean`. The

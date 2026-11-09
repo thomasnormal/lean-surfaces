@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Extended the value/object evaluator agreement battery with compound
+  shift-right assignment and native differential coverage.
+
+- Extended the value/object evaluator agreement battery with compound
   shift-left assignment and native differential coverage.
 
 - Extended the value/object evaluator agreement battery with compound

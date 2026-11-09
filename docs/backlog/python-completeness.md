@@ -10635,6 +10635,24 @@ produce.
 DECIDED: close `py-lenmult-length-only` as already fixed; retain the explicit
 allocation-budget refusal until memory outcomes are modeled.
 
+## 2026-11-09-pycomplete-484 — revalidate length-only repetition audit
+
+The high-priority `py-lenmult-length-only` finding remains closed. Approved
+ingestion evaluates sequence multiplication and `len` as separate AST
+operations; the legacy synthetic worker is unreachable from source envelopes.
+Products beyond the modeled allocation budget refuse loudly rather than
+returning a length that CPython cannot produce.
+
+| Measurement | Result |
+|---|---|
+| Oversized string witness | `len_repeat_oversize.py`: CPython 3.9 `OverflowError`; leanpy loud refusal, exit 3 |
+| Source audit | no active `lowerLenRepeatPairs` ingestion definition or call |
+| Ordinary products | existing string/tuple repeat rows remain MATCH |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-lenmult-length-only`; retain the explicit allocation-budget
+refusal until memory outcomes are modeled.
+
 ## 2026-11-07-pycomplete-412 — refuse dictionary-source set table order
 
 The integer-set audit exposed one remaining silent wrong answer after negative

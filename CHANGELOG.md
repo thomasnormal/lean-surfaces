@@ -82,6 +82,10 @@
   precede module annotation effects and function annotations are skipped, as in
   CPython 3.9.
 
+- Revalidated ordinary `len(sequence * count)` evaluation; oversized products
+  remain loud allocation-boundary refusals instead of returning fabricated
+  lengths.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

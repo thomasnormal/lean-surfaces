@@ -1,20 +1,30 @@
 {
-  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). preemptive: opt into the conservative IEEE 1800-2023 §4.7 preemption guard. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
+  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). The IEEE 1800-2023 §4.7 suspension guard is a default admission check; rows that need an explicit refusal name `Schedule:preemptive`. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
   "fuel": 2000,
   "cases": [
     {
-      "name": "preemptive_profile_cross_process_refuse",
+      "name": "preemptive_profile_cross_process_nba",
       "example": "sem2/preempt_profile",
       "top": "preempt_profile",
-      "preemptive": true,
-      "refusal": "Schedule:preemptive",
       "signals": ["q", "r"],
       "stimulus": [
         {"a": "0", "b": "0"},
         {"a": "1", "b": "0"},
         {"a": "0", "b": "1"}
       ],
-      "measured": "2026-11-07: the ordinary E profile is process-atomic; the optional IEEE §4.7 profile refuses the q-to-r cross-process dependency until E has an intra-process choice point."
+      "measured": "2026-11-09: two NBA-only always_ff processes may read and write the same state across a clock edge without exposing an intermediate write; the default §4.7 guard admits the source-shaped row and the trace matches Icarus/Xcelium."
+    },
+    {
+      "name": "preemptive_profile_blocking_refuse",
+      "example": "sem2/preempt_block_refuse",
+      "top": "preempt_block_refuse",
+      "refusal": "Schedule:preemptive",
+      "signals": ["q", "r", "z"],
+      "stimulus": [
+        {"a": "0", "b": "0"},
+        {"a": "1", "b": "0"}
+      ],
+      "measured": "2026-11-09: a multi-write blocking always_comb can be suspended after its first write while another process reads that window; the default §4.7 guard refuses the source-shaped design."
     },
     {
       "name": "port_net_width_refuse",

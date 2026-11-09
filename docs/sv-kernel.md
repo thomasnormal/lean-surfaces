@@ -32,15 +32,19 @@ or contract used by automation carries a refinement theorem back to the exact se
     and one-rank retained-declaration elaboration. `Kernel/MemCycle.lean`
     provides the provisional sequential view for direct one-rank cell NBAs;
     nested and compound memory forms remain named boundaries.
-- **Process-atomic execution** is a declared profile ruling on IEEE 1800-2023 §4.7: a process runs to its next suspension point
-  without interleaving. Xcelium behaves this way (`docs/sv-oracle-disagreements.md`). The departure is a register row, see
-  below. `LeanModels/Sv/PreemptGuard2.lean` provides the conservative
-  `Schedule:preemptive` profile boundary for clients that need to make a
-  claim under the LRM's possible mid-process suspension: it refuses an
-  instantiated design when one process can read a bit another writes, or two
-  processes can write the same bit. The ordinary `run2` profile remains
-  process-atomic until E gains an intra-process choice point; the differential
-  runner requests the guarded profile with a case's `preemptive` flag.
+- **Process-atomic execution** is the executor used after the IEEE 1800-2023
+  §4.7 admission guard. Xcelium behaves this way
+  (`docs/sv-oracle-disagreements.md`), but the LRM permits suspension while a
+  procedural statement is being evaluated. `PreemptGuard2.lean` therefore
+  runs by default at ingestion and in the differential runners: a single
+  assignment and an NBA-only process have no published intermediate write,
+  while a block with several blocking writes is refused when another process
+  can read or compete for one of those windows. Such refusals are named
+  `Schedule:preemptive`; no row opts into the guard. The process-atomic
+  executor is retained only behind this proof-shaped boundary until E gains
+  an intra-process choice point. `run2` and the source-shaped memory runner
+  apply it before execution; ingestion keeps the retained `Design2` available
+  to proofs, while every executable cycle route checks the same report.
 - **Qualified-case reports are not deferred.** E-core-0 refuses a violated `unique`/`unique0`/`priority` claim inside the
   activation that violates it. IEEE 1800-2023 §12.4.2.1 (by §12.5.3.1) defers the report to the Observed region and clears
   it when the `always_comb` is re-triggered in the same slot. So E refuses glitch-only violations that the LRM discards, and

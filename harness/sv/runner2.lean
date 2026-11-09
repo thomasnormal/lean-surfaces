@@ -264,12 +264,11 @@ def main (argv : List String) : IO UInt32 := do
         match p with
         | .unsupported "AlwaysComb:alias-read" msg => .error s!"AlwaysComb:alias-read: {msg}"
         | _ => pure ()
-      -- The optional IEEE §4.7 preemption profile.  Ordinary rows retain
-      -- the declared process-atomic profile (`sv-div-4`); a row requests
-      -- this conservative guard explicitly.
-      if (case.getObjVal? "preemptive").isOk then
-        if let some (k, msg) := d.preemptionReport then
-          .error s!"{k}: {msg}"
+      -- IEEE 1800-2023 §4.7 is an admission guard, not an opt-in profile:
+      -- run2 remains process-atomic only after the design has established
+      -- that no partial write is observable across processes.
+      if let some (k, msg) := d.preemptionReport then
+        .error s!"{k}: {msg}"
       -- The clock discipline (WP-Q0, 2026-10-30, `ClockGuard2.lean`): a
       -- check beside `name.sem`, at this row's point on the instantiated
       -- (flattened) design. A clock that is not an input port of the top, a

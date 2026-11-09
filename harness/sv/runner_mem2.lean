@@ -113,6 +113,9 @@ def main (argv : List String) : IO UInt32 := do
           | .ok d => pure d
           | .timeout => .error "instantiateMem2: timeout"
           | .unsupported m => .error s!"instantiateMem2: {m}"
+        match d.preemptionReport with
+        | some (k, msg) => .error s!"{k}: {msg}"
+        | none => pure ()
         let stim0 ← (← getArr case "stimulus").toList.mapM (parseEntry d)
         let clock := (getOpt case "clock").bind (·.getStr?.toOption)
         let stim := addClock clock 0 stim0

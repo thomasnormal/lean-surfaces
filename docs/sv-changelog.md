@@ -6855,12 +6855,15 @@ the defined sampling and NBA rules.
   designs (`Clock:multiple` / `Clock:implicit`) instead of firing every edge
   process on every implicit cycle. Clean-room refusal rows cover both shapes.
 
-- Added the optional `Schedule:preemptive` profile guard. It keeps the
-  source-shaped process-atomic E route unchanged while refusing designs whose
-  cross-process read/write or write/write windows could expose an IEEE §4.7
-  mid-process suspension. `runner2` rows opt in with `"preemptive": true`;
-  `sem2/preempt_profile` records the loud refusal until ls-spec supplies the
-  scheduler choice point.
+- The IEEE §4.7 `Schedule:preemptive` guard is now the default admission check.
+  It keeps source-shaped process-atomic execution only where a partial write
+  cannot be observed: single assignments and NBA-only edge processes remain
+  admitted, while multi-write blocking bodies with cross-process read/write or
+  write/write windows refuse loudly. `runner2` and the source-shaped memory
+  runner apply the same boundary; no case flag opts out. Retained designs stay
+  available to proof construction, while executable cycle routes refuse before
+  choosing a mid-process order. The explicit intra-process scheduler choice
+  remains an ls-spec follow-up.
 
 - The comb-view exact-`int` leaf proofs now consume `IEnv.intVal?` directly,
   including signed-32 `nvals` bindings, and a symbolic range guard pins the

@@ -1,0 +1,246 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "preempt_block_refuse",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/preempt_block_refuse/preempt_block_refuse.sv",
+      "sha256": "1850e49870e2c038764ff976b93a1519ec6205b0cf1a10702cf24e1a090df6c0"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "preempt_block_refuse",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 16
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 16
+            },
+            "name": "b",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 17
+            },
+            "name": "r",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "z",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 15,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 11
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 6
+                    },
+                    "width": 1,
+                    "name": "q"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "a"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 11
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 6
+                    },
+                    "width": 1,
+                    "name": "r"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "q"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 14,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 21
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 14,
+                "col": 15,
+                "end_line": 14,
+                "end_col": 21
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 14,
+                  "col": 15,
+                  "end_line": 14,
+                  "end_col": 16
+                },
+                "width": 1,
+                "name": "z"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 14,
+                  "col": 19,
+                  "end_line": 14,
+                  "end_col": 20
+                },
+                "width": 1,
+                "name": "q"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

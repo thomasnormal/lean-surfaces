@@ -1,5 +1,6 @@
 import LeanModels.Sv.Gen2
 import LeanModels.Sv.Kernel.MemProc
+import LeanModels.Sv.PreemptGuard2
 
 /-!
 # Source-shaped memory cycle adapter
@@ -58,6 +59,22 @@ def MemDesign2.elemWidth (d : MemDesign2) (name : String) : Nat :=
 
 def MemDesign2.elems (d : MemDesign2) : List (String × Nat) :=
   d.decls.map fun dc => (dc.name, d.elemWidth dc.name)
+
+/-- The memory route has the same §4.7 admission boundary as `run2`.  Its
+source-shaped process list is converted only for the access summary; no
+memory is flattened and no execution semantics is borrowed from `Design2`.
+The conversion's loud `unsupported` nodes simply contribute no writes, while
+the source gate still refuses any process whose retained accesses conflict. -/
+def MemDesign2.preemptionReport (d : MemDesign2) : Option (String × String) :=
+  let wd := fun n => d.env.widths.lookup n
+  let accesses := d.processes.map (fun p =>
+    Process2.preemptAccess wd (instProcess2 d.env d.elems p))
+  match firstPreemptConflict accesses 0 with
+  | none => none
+  | some (i, j) =>
+      some ("Schedule:preemptive",
+        s!"processes {i} and {j} may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes")
+
 
 /-! Some approved frontends elaborate a fixed unpacked array into scalar
 declarations named `a[0]`, `a[1]`, … while retaining a dynamic `a[index]`

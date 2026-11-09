@@ -39,7 +39,9 @@ set_option maxRecDepth 100000 in
 theorem pure_sum_all_traces (tr : ClockTrace) :
     callFunctionClock clock_lab "pure_sum" #[.int 10] tr 64 =
       .ok (.int 55) := by
-  py_simp [clock_lab, callIn, execWhile]
+  py_simp [clock_lab, callIn, execWhile, pythonTopCallDepth,
+    pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth,
+    Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 /- The transport twin reuses the concrete theorem above: this lab's proof
 already establishes the result for an arbitrary trace. -/

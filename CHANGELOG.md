@@ -56,6 +56,9 @@
   function bindings refuse loudly, while safe interleaved definitions match
   CPython 3.9.
 
+- Revalidated structured `global` declarations with the long-name witness;
+  extraction and both evaluators remain text-free and match CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

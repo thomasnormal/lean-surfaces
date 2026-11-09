@@ -10295,6 +10295,24 @@ arrays. No source-text fallback or truncation worker remains.
 DECIDED: close `py-global-text-truncation` as already fixed; keep structured
 lexical declarations as the only admitted path.
 
+## 2026-11-09-pycomplete-477 — revalidate structured global declarations
+
+The high-priority `py-global-text-truncation` finding remains closed. The
+approved extractor emits `ast.Global.names` directly, JSON ingestion stores
+`globalDecl` arrays, and both evaluator surfaces consume those arrays. The
+remaining `UNSUPPORTED_TEXT_LIMIT` is used only for diagnostic text on generic
+unsupported nodes; no global declaration is reparsed from source text.
+
+| Measurement | Result |
+|---|---|
+| Long declaration witness | `global_structured_script.py`: prints `5`, 1/1 MATCH |
+| Oracle | CPython 3.9.25 |
+| Stale path search | no `globalNamesText`/`nonlocalNamesText` or global text parser |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-global-text-truncation`; retain structured lexical
+declarations as the only admitted path.
+
 ## 2026-11-07-pycomplete-405 — recheck generator capture census
 
 The generator-capture audit finding is already closed by the structured

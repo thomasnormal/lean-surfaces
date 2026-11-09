@@ -1310,3 +1310,31 @@ unsupported process. The memory route admits the exact marker, retains the
 source-shaped driver, and treats the x site as context-propagated unknown data:
 at `N=16`, one cycle reads `q` as 16 bits of `x`. Both markers, the retained
 processes, and the all-x result are guarded in [`walls/probe.lean`](walls/probe.lean).
+
+## 2026-11-09 re-probe after unsized x/z conversion and fixed-cell admission
+
+The unchanged pinned source (ef203c2b0a3fb793280f5114941416c425c5b461,
+SHA-256 0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622)
+was re-extracted with the current public extractor.  The fresh envelope is
+2,994,255 bytes with SHA-256
+8081f25b6a3ce738cd1bc922b5c5366f6b50765d54068bbf890cd762fcfd2f5e.
+Public master at the probe was 8696b4034675cb943cbc86f7f82b356d9e770dbf,
+including the unsized x/z conversion landing and ls-sv's fixed unpacked-cell
+landing.
+
+The ordinary family still has its first refusal at picorv32.v:203:
+
+    unsupported "Instantiate"
+      "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+
+The memory route now admits the source-shaped design:
+instantiateMem2 reports 223 scalar declarations, one unpacked memory
+declaration, zero declaration initializers, and 52 processes.  The retained
+Initial and always @* diagnostics remain metadata and are not silently
+executed.  runMem2 returns ok for 80 alternating-clock cycles (two reset
+cycles
+followed by 78 released cycles) with all external inputs zero, and returns ok
+for a 20-cycle reset/ADDI/EBREAK memory stimulus with mem_ready=1.  No new
+executable wall appears in either probe.  This is loader and concrete-cycle
+evidence only; the symbolic ADDI invariant and the ordinary cpuregs route
+remain open.

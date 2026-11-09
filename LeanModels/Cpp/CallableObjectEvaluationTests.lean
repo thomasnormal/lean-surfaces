@@ -40646,6 +40646,25 @@ def callableValueObjectCommaAgreementWitness : Bool :=
 
 #guard callableValueObjectCommaAgreementWitness
 
+def callableValueObjectCommaIncrementAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.comma
+        {expression := .increment "++" false (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := .parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 8 && objectValue == signed 8
+  | _, _ => false
+
+#guard callableValueObjectCommaIncrementAgreementWitness
+
 def callableValueObjectConditionalStatementAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

@@ -19126,6 +19126,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-comma-increment-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectCommaIncrementAgreementWitness",
+    "cpp_source": "int comma_increment_agreement_witness(int value) { return (++value, value); } bool callable_witness() { return comma_increment_agreement_witness(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-break-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

@@ -19054,6 +19054,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-do-while-multi-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectDoWhileMultiAgreementWitness",
+    "cpp_source": "int do_while_multi_agreement_witness(int value) { do { --value; } while (value); return value; } bool callable_witness() { return do_while_multi_agreement_witness(2) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-for-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

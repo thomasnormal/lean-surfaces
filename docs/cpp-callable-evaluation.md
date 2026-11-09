@@ -227,6 +227,9 @@ selected result through both evaluator APIs.
 It also includes an executed while-loop body, checking loop-state agreement
 through both evaluator APIs.
 
+It also includes a multi-iteration do-while callable, checking loop-state
+agreement through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

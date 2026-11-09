@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with a multi-iteration
+  do-while callable and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with an executed
   while-loop body and native differential coverage.
 

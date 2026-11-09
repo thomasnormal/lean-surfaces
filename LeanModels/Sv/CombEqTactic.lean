@@ -6,6 +6,8 @@ import LeanModels.Sv.CombEqPlain
 import LeanModels.Sv.CombBridge
 import LeanModels.Sv.CombCover
 import LeanModels.Sv.CombEqGroup
+import LeanModels.Sv.CombHier
+import LeanModels.Sv.Ingest2
 
 /-!
 # `sv_equations` / `sv_equations?` / `sv_cover`: the equations stage of the `sv_comb` tactic (v0)
@@ -330,7 +332,9 @@ def stableAliases (sites : List LSite) : List (String × String × String × Str
     let n := ls.site.tgt.name
     let k := ((counts.lookup n).getD 0) + 1
     counts := (n, k) :: counts.filter (·.1 != n)
-    out := out ++ [(s!"eq_{n}_{k}", eqName ls, s!"known_{n}_{k}", knownName ls)]
+    -- a flattened instance's signal `u.w` reads `u_w` in an alias (a hypothesis name, not a path)
+    let nS := n.replace "." "_"
+    out := out ++ [(s!"eq_{nS}_{k}", eqName ls, s!"known_{nS}_{k}", knownName ls)]
   return out
 
 /-- Peel a right-nested conjunction `h : A₁ ∧ … ∧ Aₖ` into the named hypotheses. -/
@@ -364,6 +368,119 @@ def groupCoverGoal (sv : LeanModels.Sv.CombView.Summary) (g : MVarId) : MetaM MV
   g.assign (mkApp app hNew)
   return hNew.mvarId!
 
+/-! ## A design with module instances: through its flat twin (`CombHier.lean`)
+
+`X.sem N` of a design with module-level instances is read through its flat twin `CombHier.hierTwin X.pdesign X.plib`
+(the parent's processes, one continuous assignment per port connection, each child's processes renamed under the
+instance prefix, each child parameter a localparam of the parent): the tactics summarize the twin (a `PDesign` literal,
+computed natively and quoted) and carry each theorem back to `X.sem N` along `CombHier.instantiateHDAlias2_twin`, whose
+hypotheses are the view's (shared named goals), the fragment and width obligations of `sv_equations`, and the twin's own:
+`htw`, `hdsP` (`rfl`), `hck` (decided), the parent's and every child's parameter stage (`h1P`, `hagP`, `hch`: closed
+as `h1`/`hag`). A design the twin construction refuses is refused with its reason (an instance inside a generate loop,
+an open port, a child with instances of its own). -/
+
+/-- `X.sem N` of a design with module instances: `(pd, lib, args)` of `PDesign.instantiateHDAlias2 pd lib args`. -/
+partial def findHD2A (e : Lean.Expr) (fuel : Nat) : MetaM (Option (Lean.Expr × Lean.Expr × Lean.Expr)) := do
+  let e ← whnfCore e
+  if e.isAppOfArity ``LeanModels.Sv.PDesign.instantiateHDAlias2 3 then
+    return some (e.getAppArgs[0]!, e.getAppArgs[1]!, e.getAppArgs[2]!)
+  match fuel with
+  | 0 => return none
+  | fuel + 1 =>
+    match ← unfoldDefinition? e with
+    | some e' => findHD2A e' fuel
+    | none => return none
+
+/-- The flat twin of a design with module instances, evaluated: the twin as a literal, the instances as a literal, the
+parent's constants, and the instances. -/
+unsafe def mkHierTwin (tac : String) (pd lib : Lean.Expr) :
+    MetaM (Lean.Expr × Lean.Expr × List String × List (LeanModels.Sv.PInst × LeanModels.Sv.PDesign)) := do
+  let pT := mkApp2 (mkConst ``Prod [Level.zero, Level.zero]) (mkConst ``LeanModels.Sv.PInst)
+    (mkConst ``LeanModels.Sv.PDesign)
+  let rT := mkApp2 (mkConst ``Prod [Level.zero, Level.zero]) (mkConst ``LeanModels.Sv.PDesign)
+    (mkApp (mkConst ``List [Level.zero]) pT)
+  let ty := mkApp2 (mkConst ``Except [Level.zero, Level.zero]) (mkConst ``String) rT
+  let r ← evalExpr (Except String (LeanModels.Sv.PDesign × List (LeanModels.Sv.PInst × LeanModels.Sv.PDesign))) ty
+    (mkApp2 (mkConst ``LeanModels.Sv.CombHier.hierTwin) pd lib)
+  match r with
+  | .error msg => throwError "{tac}: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: {msg}"
+  | .ok (dF, pl) =>
+      let pdV ← evalExpr LeanModels.Sv.PDesign (mkConst ``LeanModels.Sv.PDesign) pd
+      return (toExpr dF, toExpr pl, LeanModels.Sv.CombHier.parentNames pdV, pl)
+
+/-- `D = pd.instantiateHDAlias2 lib args` for the goal's design `D` (definitional). -/
+def hierRestate (pd lib args D : Lean.Expr) : MetaM Lean.Expr := do
+  let D' := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateHDAlias2) pd lib args
+  mkExpectedTypeHint (← mkEqRefl D') (← mkEq D D')
+
+/-- The bridge `CombHier.instantiateHDAlias2_twin` with its hypotheses the named goals (shared with the view's). -/
+def hierBridge (pd lib args twinE plE : Lean.Expr) : TacticM (TSyntax `term) := do
+  let pdT ← Term.exprToSyntax pd
+  let libT ← Term.exprToSyntax lib
+  let argsT ← Term.exprToSyntax args
+  let twinT ← Term.exprToSyntax twinE
+  let plT ← Term.exprToSyntax plE
+  `(LeanModels.Sv.CombHier.instantiateHDAlias2_twin (d := $pdT) (lib := $libT) (args := $argsT) (dF := $twinT)
+      (pl := $plT) (htw := ?htw) (sF := ?s) (envF := ?env) (hs := ?hs) (harity := ?harity) (h1 := ?h1)
+      (hag := ?hag) (hok := ?hok) (hauto := ?hauto) (hin := ?hin) (hdisj := ?hdisj) (hfrag := ?hfrag)
+      (hwid := ?hwid) (dsP := ?dsP) (hdsP := ?hdsP) (hck := ?hck) (envP := ?envP) (h1P := ?h1P)
+      (hagP := ?hagP) (hch := ?hch))
+
+/-- The application `tm` of a comb theorem about the twin's family, wrapped into a proof of the goal about
+`pd.instantiateHDAlias2 lib args`. -/
+def hierWrap (pd lib args twinE plE : Lean.Expr) (tm : TSyntax `term) : TacticM (TSyntax `term) := do
+  let g ← getMainGoal
+  let gty ← instantiateMVars (← g.getType)
+  let D := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateHDAlias2) pd lib args
+  let abs ← kabstract gty D
+  unless abs.hasLooseBVars do
+    throwError "sv_comb: internal error: the design `{D}` does not occur in the goal"
+  let motive := Lean.mkLambda `D .default (mkConst ``LeanModels.Sv.Design2) abs
+  let motiveT ← Term.exprToSyntax motive
+  let br ← hierBridge pd lib args twinE plE
+  `(Eq.mpr (congrArg $motiveT $br) $tm)
+
+/-- Close the twin's own goals of the bridge: `htw`, `hdsP` (`rfl`), `hck` (decided), the parent's parameter stage
+(`h1P`, `hagP`) and every child's (`hch`: per instance, its parameter point and environment as `h1`, the agreement as
+`hag`, at the twin's values `m` of the renamed constants). -/
+unsafe def closeHierGoals (tac : String) (find : Name → TacticM MVarId) (pnames : List String)
+    (pl : List (LeanModels.Sv.PInst × LeanModels.Sv.PDesign)) (m : List (String × Lean.Expr)) : TacticM Unit := do
+  let val (n : String) : Lean.Expr := (m.lookup n).getD (toExpr (0 : Int))
+  for (n, what) in [(`htw, "the flat twin of the design could not be recomputed by `rfl`"),
+      (`hdsP, "the parent's declarations could not be recognized by `rfl`")] do
+    setGoals [← find n]
+    try evalTactic (← `(tactic| rfl)) catch e => throwError "{tac}: {what}\n{e.toMessageData}"
+    unless (← getGoals).isEmpty do throwError "{tac}: {what}"
+  try
+    closeByDecide (← find `hck) "hck"
+  catch _ =>
+    throwError "{tac}: the twin's summary does not match the hierarchy (`CombHier.HierOk`): a site of a connection or of a child is outside what the hierarchy summary reads (an input actual whose width is not its context's, an output target that is not a declared signal of the parent, or a child site that reads beyond the child's own scope)"
+  closeParamEnv tac (← find `h1P)
+  closeHagWith tac (← find `hagP) pnames val
+  -- the children, one conjunct per instance
+  setGoals [← find `hch]
+  evalTactic (← `(tactic| simp only [LeanModels.Sv.CombHier.AllChildEnvOk, and_true]))
+  evalTactic (← `(tactic| repeat' refine And.intro ?_ ?_))
+  let gs ← getGoals
+  unless gs.length == pl.length || (pl.isEmpty && gs.isEmpty) do
+    throwError "{tac}: internal error: {gs.length} child goals for {pl.length} instances"
+  for (g, (i, c)) in gs.zip pl do
+    setGoals [g]
+    evalTactic (← `(tactic| unfold LeanModels.Sv.CombHier.ChildEnvOk))
+    -- positional holes (a named hole would be shared with the previous instance's)
+    evalTactic (← `(tactic| refine ⟨?_, ?_, ?_, ?_⟩))
+    let cgs ← getGoals
+    unless cgs.length == 4 do throwError "{tac}: internal error: {cgs.length} goals for a child's environment"
+    let findC (n : Name) : TacticM MVarId :=
+      pure (if n == `henv then cgs[1]! else if n == `hlen then cgs[2]! else cgs[3]!)
+    closeParamEnv tac (← findC `henv)
+    setGoals [← findC `hlen]
+    try evalTactic (← `(tactic| rfl))
+    catch e => throwError "{tac}: instance `{i.name}`: the child's parameter count could not be checked by `rfl`\n{e.toMessageData}"
+    let pfx := LeanModels.Sv.CombHier.hpfx i
+    closeHagWith tac (← findC `hagc) (LeanModels.Sv.CombHier.childNames c) (fun n => val (pfx ++ n))
+  setGoals []
+
 /-- Run the equations stage. (`unsafe`: it evaluates the recognizer with `evalExpr`.) -/
 unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
   let goal ← getMainGoal
@@ -394,14 +511,28 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
     let some haN := ha?
       | throwError "sv_equations: no hypothesis `Acyclic (X.sem N)` in the context (prove it with `sv_structure (rank := …)`)"
     let D := heqsT.appFn!.appArg!
-    let some (pd, args, aliased) ← findGD2A D 8
-      | if (← isHD2Family D 8) then throwError (hierarchyRefusal "sv_equations")
-        else throwError "sv_equations: cannot read a `load_design_sv2` family (`X.sem N`) off the design of `{heqsN}`"
-    let some pdName := (match pd.getAppFn with | .const n _ => some n | _ => none)
-      | throwError "sv_equations: the design is not a named constant"
+    -- a design with module instances is read through its flat twin (`CombHier.lean`): the four hypotheses are carried
+    -- to the twin's family along `CombHier.instantiateHDAlias2_twin`, whose hypotheses are this view's own goals plus
+    -- the twin's (`hierBridge`)
+    let gd? ← findGD2A D 8
+    let hier? ← if gd?.isSome then pure none else
+      match ← findHD2A D 8 with
+      | some (pdH, lib, argsH) => do
+          let (twinE, plE, pnames, pl) ← mkHierTwin "sv_equations" pdH lib
+          pure (some (pdH, lib, argsH, twinE, plE, pnames, pl))
+      | none => pure none
+    let (pd, args, aliased) ← match gd?, hier? with
+      | some r, _ => pure r
+      | none, some (_, _, argsH, twinE, _, _, _) => pure (twinE, argsH, false)
+      | none, none =>
+          if (← isHD2Family D 8) then throwError (hierarchyRefusal "sv_equations")
+          else throwError "sv_equations: cannot read a `load_design_sv2` family (`X.sem N`) off the design of `{heqsN}`"
+    let pdName? := (match pd.getAppFn with | .const n _ => some n | _ => none)
+    if hier?.isNone && pdName?.isNone then
+      throwError "sv_equations: the design is not a named constant"
     -- a design with signed reads is read through its unsigned twin (`CombSigned.lean`): the four hypotheses are
     -- carried to the twin's family along `instantiateGD2_unsign_view`, whose hypotheses are this view's own goals
-    let signed ← hasSignedReads pd
+    let signed ← if hier?.isSome then pure false else hasSignedReads pd
     let pdS := if signed then mkApp (mkConst ``LeanModels.Sv.PDesign.unsign) pd else pd
     match ← evalSummary pdS with
     | .error msg => throwError "sv_equations: outside the supported fragment — {msg}"
@@ -409,13 +540,14 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       let probs := s.structProblems
       unless probs.isEmpty do
         throwError "sv_equations: structural check failed:\n  {"\n  ".intercalate probs}"
-      let pdId := mkIdent pdName
       let keyI := mkIdent `key
       let hasRepl := s.hasRepl
       let replL ← if hasRepl then replSimpLemmas else pure #[]
-      let pdL ← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)
+      let pdL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) ← match pdName? with
+        | some pdName => do let pdId := mkIdent pdName; pure #[← `(Lean.Parser.Tactic.simpLemma| $pdId:ident)]
+        | none => pure #[]
       let unsL ← if signed then unsignSimpLemmas else pure #[]
-      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := #[pdL] ++ replL ++ unsL
+      let preL : Array (TSyntax ``Lean.Parser.Tactic.simpLemma) := pdL ++ replL ++ unsL
       let svs : TSyntax `tactic ← if hasRepl then `(tactic| sv_simp [$replL,*]) else `(tactic| sv_simp)
       let eqAtN ← withRepl hasRepl replL keyI (← `(tactic| sv_eq_norm_at $keyI))
       let normR : TSyntax `tactic ←
@@ -424,6 +556,18 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       -- the theorem is about, along `X.sem N = X.pdesign.instantiateGD2 [N]` (`aliasInertEq`)
       let hA? ← if aliased then some <$> aliasInertEq "sv_equations" D pd args else pure none
       let hyp (n : Name) : TacticM Term := do
+        if let some (pdH, lib, argsH, twinE, plE, _, _) := hier? then
+          -- `Eq.mp (congrArg motive bridge) h`, `h` restated at `pdH.instantiateHDAlias2 lib args` first
+          let hE ← transportDesign (← getLocalDeclFromUserName n).toExpr D (← hierRestate pdH lib argsH D)
+          let ty ← instantiateMVars (← inferType hE)
+          let DH := mkApp3 (mkConst ``LeanModels.Sv.PDesign.instantiateHDAlias2) pdH lib argsH
+          let abs ← kabstract ty DH
+          unless abs.hasLooseBVars do
+            throwError "sv_equations: internal error: the design `{DH}` does not occur in `{n}`"
+          let motiveT ← Term.exprToSyntax (Lean.mkLambda `D .default (mkConst ``LeanModels.Sv.Design2) abs)
+          let br ← hierBridge pdH lib argsH twinE plE
+          let hT ← Term.exprToSyntax hE
+          return ← `(Eq.mp (congrArg $motiveT $br) $hT)
         let hE ← match hA? with
           | some hA => transportDesign (← getLocalDeclFromUserName n).toExpr D hA
           | none => pure (← getLocalDeclFromUserName n).toExpr
@@ -454,7 +598,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
             (hinK := ?hinK) (hc := $hcI) (ha := $haI) (heqs := $heqsI) (hsh := $hshI)))
       let goals ← getGoals
       let named : List Name := [`s, `env, `hs, `harity, `h1, `hag, `hok, `hauto, `hin, `hfrag, `hwid,
-        `hbit, `hcov, `hinK]
+        `hbit, `hcov, `hinK, `htw, `hdisj, `dsP, `hdsP, `hck, `envP, `h1P, `hagP, `hch]
       let mut bodyGoal? : Option MVarId := none
       for g in goals do
         unless named.contains (← g.getTag).eraseMacroScopes do
@@ -488,6 +632,25 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       closeDecide `hok "the structural check failed"
       closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
       let mut out : Array MVarId := #[]
+      -- a design with module instances: the twin's own goals of the bridge, and its one-driver obligation
+      if let some (_, _, argsH, _, _, pnames, pl) := hier? then
+        closeHierGoals "sv_equations" find pnames pl (← valTerms s argsH)
+        let gD ← find `hdisj
+        unless (← tryClosePlain s gD ``LeanModels.Sv.CombView.Summary.disjObl_of_plain
+            "the one-driver obligation of a flat netlist does not hold") do
+          setGoals [gD]
+          try evalTactic (← `(tactic| (
+              (try simp only [$preL,*])
+              $normR:tactic
+              repeat' refine And.intro ?_ ?_)))
+          catch e => throwError "sv_equations: while normalizing the obligation `driverDisjoint`: {e.toMessageData}"
+          let rest ← getGoals
+          let k := rest.length
+          let mut i := 0
+          for g' in rest do
+            i := i + 1
+            g'.setTag (if k == 1 then `driverDisjoint else Name.mkSimple s!"driverDisjoint_{i}")
+          out := out ++ rest.toArray
       let runOb (n : Name) (nm : String) (tac : TSyntax ``Lean.Parser.Tactic.tacticSeq)
           (grouped : Bool := false) : TacticM (List MVarId) := do
         let g0 ← find n
@@ -751,6 +914,76 @@ unsafe def signedStructureDesign? : TacticM (Option Name) := do
 @[tactic svStructureQ] unsafe def evalSvStructureQSigned : Tactic := fun _ => do
   let some pdName ← signedStructureDesign? | throwUnsupportedSyntax
   withDeepRec (runSvStructure none none none true (signedHook pdName))
+
+/-- The hook of `sv_structure` for a design with module instances: the twin, the wrapper, and the closing of the
+bridge's goals (the twin's own, the fragment, and the width obligation normalized as for a design with signed reads). -/
+unsafe def hierHook (pd lib args : Lean.Expr) : MetaM SignedHook := do
+  let (twinE, plE, pnames, pl) ← mkHierTwin "sv_structure" pd lib
+  return {
+    twin? := some {
+      design := twinE, args := args, restate := hierRestate pd lib args, wrap := hierWrap pd lib args twinE plE,
+      what := "a design with module instances (its summary is its flat twin's, `CombHier.lean`)" }
+    extra := fun find s => do
+      let hasRepl := s.hasRepl
+      let replL ← if hasRepl then replSimpLemmas else pure #[]
+      let svs : TSyntax `tactic ← if hasRepl then `(tactic| sv_simp [$replL,*]) else `(tactic| sv_simp)
+      let m ← valTerms s args
+      closeHierGoals "sv_structure" find pnames pl m
+      let gF ← find `hfrag
+      try
+        closeByDecide gF "frag"
+      catch _ =>
+        throwError "sv_structure: a right-hand side of the flat twin is outside the fragment of `sv_equations` (a design with module instances is read through it, `CombHier.lean`; the fragment: an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, the comparisons, `+ - *`, `?:`, a concatenation, or a fill)"
+      let g ← find `hwid
+      if (← tryClosePlain s g ``LeanModels.Sv.CombView.Summary.widthObl_of_plain
+          "an operand of a flat netlist is not as wide as its target") then
+        return []
+      setGoals [g]
+      try
+        evalTactic (← `(tactic| (
+          (try simp only [$replL,*])
+          repeat (sv_eq_norm; try $svs:tactic)
+          repeat' refine And.intro ?_ ?_)))
+      catch e => throwError "sv_structure: while normalizing the obligation `width` of a design with module instances: {e.toMessageData}"
+      let rest ← getGoals
+      let k := rest.length
+      let mut i := 0
+      for g' in rest do
+        i := i + 1
+        g'.setTag (if k == 1 then `width else Name.mkSimple s!"width_{i}")
+      return rest }
+
+/-- The hierarchical design of a `sv_structure` goal: `(pd, lib, args)`. -/
+unsafe def hierStructureDesign? : TacticM (Option (Lean.Expr × Lean.Expr × Lean.Expr)) := do
+  let goal ← getMainGoal
+  goal.withContext do
+    let ty ← instantiateMVars (← goal.getType)
+    let D? : Option Lean.Expr :=
+      if ty.isAppOfArity ``And 2 && ty.appFn!.appArg!.getAppFn.isConstOf ``LeanModels.Sv.CombDesign then
+        some ty.appFn!.appArg!.appArg!
+      else if ty.getAppFn.isConstOf ``LeanModels.Sv.CombDesign || ty.getAppFn.isConstOf ``LeanModels.Sv.Acyclic then
+        some ty.appArg!
+      else none
+    let some D := D? | return none
+    if (← findGD2A D 8).isSome then return none
+    findHD2A D 8
+
+/-- (`no_fallback`: a design this elaborator takes is one with module instances; its refusal is the one to report, not
+the flat elaborator's generic one.) -/
+@[no_fallback, tactic svStructure] unsafe def evalSvStructureHier : Tactic := fun stx => do
+  let some (pd, lib, args) ← hierStructureDesign? | throwUnsupportedSyntax
+  let usingStx? : Option Syntax := if stx[2].isNone then none else some stx[2][1]
+  let hook ← hierHook pd lib args
+  if stx[1].isNone then
+    withDeepRec (runSvStructure none none usingStx? false hook)
+  else
+    let cl := stx[1][0]
+    if cl[1].getAtomVal == "lexRank" then withDeepRec (runSvStructure none (some cl[3]) usingStx? false hook)
+    else withDeepRec (runSvStructure (some cl[3]) none usingStx? false hook)
+
+@[no_fallback, tactic svStructureQ] unsafe def evalSvStructureQHier : Tactic := fun _ => do
+  let some (pd, lib, args) ← hierStructureDesign? | throwUnsupportedSyntax
+  withDeepRec (runSvStructure none none none true (← hierHook pd lib args))
 
 /-! ## `sv_cover`: the coverage helper
 

@@ -19582,6 +19582,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-unary-noexcept-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectUnaryNoexceptAgreementWitness",
+    "cpp_source": "bool unary_noexcept_agreement_witness() { return noexcept(-1); } bool callable_witness() { return unary_noexcept_agreement_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-value-object-unsigned-literal-agreement",
     "kind": "statement",
     "corpus": "rung-3 witness",

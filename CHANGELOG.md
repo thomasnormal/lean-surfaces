@@ -74,6 +74,10 @@
   aliases mutate in place, boundary list mutation remains loudly unsupported,
   and the focused differential slice has no failures.
 
+- Revalidated expression-yield target handling for `global` and `nonlocal`
+  declarations; the unsupported send-channel shape refuses before any store
+  can be dropped.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

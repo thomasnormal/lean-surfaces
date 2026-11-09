@@ -41198,6 +41198,25 @@ def callableValueObjectCompoundDivisionAgreementWitness : Bool :=
 
 #guard callableValueObjectCompoundDivisionAgreementWitness
 
+def callableValueObjectCompoundModuloAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .sequence
+      (.compoundAssign "%=" (handle "0x10") {
+        expression := CallableExpression.integer 3,
+        sourceType := intType, type := intType})
+      (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType})}
+  match evaluateCallable 32 .lp64 function [signed 7],
+      evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 1 && objectValue == signed 1
+  | _, _ => false
+
+#guard callableValueObjectCompoundModuloAgreementWitness
+
 def callableSharedOperatorAgreementWitness : Bool :=
   integralBinaryOfString "+" == some .add &&
     integralBinaryOfString "<=" == some .lessEqual &&

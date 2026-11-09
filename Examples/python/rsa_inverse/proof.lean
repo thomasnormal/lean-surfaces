@@ -65,6 +65,123 @@ preservation leaves (the phase flip is the big one — its entry case is
 the old first-iteration argument, its two nonlinear bound steps are
 explicit `Int.mul_*` monotonicity facts), decrease, and the four wrap
 forks (ranges by `omega`, each modular identity from one `grind` key). -/
+private theorem egcd_body_depth2 (A B : Int) (hA : 0 < A) (hB : 0 < B) :
+    PyTriple rsa_inverse
+      (fun st => st = ⟨{initWorld rsa_inverse with callDepth := 2},
+        markUnboundLocals rsa_inverse.functions[0]!.body.toList
+          (mkCallEnv rsa_inverse.functions[0]!.params
+            (RVal.thawArgs #[.int A, .int B]))⟩)
+      rsa_inverse.functions[0]!.body.toList
+      { next := fun _ => False
+        ret := fun rv st => st.world = {initWorld rsa_inverse with callDepth := 2} ∧ ∃ i j : Int,
+          rv = .tuple #[.int (Int.gcd A B : Nat), .int i, .int j] ∧
+            0 ≤ i ∧ i < B ∧ (i * A) % B = (Int.gcd A B : Int) % B ∧
+            0 ≤ j ∧ j ≤ A ∧ (j * B) % A = (Int.gcd A B : Int) % A } := by
+  dsimp [rsa_inverse]
+  py_vcgen [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
+    PyVCGen.binOpBeqMult, setLikeRefH, funsHeapFree, FunctionDefn.heapFree,
+    Stmt.heapFreeList, Stmt.heapFree, Expr.heapFreeList, Expr.heapFree,
+    hasUnboundLocal, unboundLocalMarker, moduleGenFree, funsGenAllocFree,
+    Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
+    starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
+    flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals, Run.liftRes,
+    Run.toPublic, RVal.freezeB]
+    (inv := fun (a b x y lx ly : Int) =>
+      0 < a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B ∧
+      lx * A + ly * B = a ∧ x * A + y * B = b ∧ EgcdPhase A B a b x y lx ly)
+    (dec := fun (a b x y lx ly : Int) => b.toNat)
+    (exit1 := fun (a b x y lx ly : Int) =>
+      lx * A + ly * B = (Int.gcd A B : Int) ∧ -B ≤ 2 * lx ∧ 2 * lx ≤ B ∧
+      -A ≤ ly ∧ ly ≤ A ∧ a = (Int.gcd A B : Int))
+
+  -- init: 0 ≤ B, then the phase block at the entry state
+  · omega
+  · exact Or.inl ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+  -- exit: collapse the invariant at b = 0 into the distilled exit facts
+  · obtain ⟨h1, h2, h3, h4, h5, h6⟩ := hcore
+    subst hx
+    have hag : a = (Int.gcd A B : Int) := by have := Int.gcd_zero_right a; omega
+    have hR : (-B ≤ 2 * lx ∧ 2 * lx ≤ B) ∧ -A ≤ ly ∧ ly ≤ A := by
+      rcases h6 with ⟨-, hb0, -⟩ | ⟨-, ⟨-, hlx, -, hly, -, -, hb1, hb2⟩ |
+        ⟨-, hlx, -, hly, -, -, hb1, hb2⟩⟩ <;> omega
+    exact ⟨a, 0, x, y, lx, ly, ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩,
+      ⟨h1, h2, h3, h4, h5, h6⟩, by omega, hR.1.1, hR.1.2, hR.2.1, hR.2.2, hag⟩
+  -- preservation: the five linear conjuncts, then the phase flip
+  · omega
+  · exact Int.fmod_nonneg (by omega) (by omega)
+  · rw [gcd_fmod_step (by omega) (by omega)]; exact hinv3
+  · have hf := Int.fmod_def a b; grind
+  · have hq0 : 0 ≤ a.fdiv b := Int.fdiv_nonneg (by omega) (by omega)
+    have hf : a.fmod b = a - b * a.fdiv b := Int.fmod_def a b
+    have hmb : a.fmod b < b := Int.fmod_lt_of_pos a (by omega)
+    refine Or.inr ⟨hmb, ?_⟩
+    rcases hinv6 with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨hba, hph⟩
+    · exact Or.inl (by grind)  -- the first iteration lands in phase 1
+    · have ha2 : (2 : Int) ≤ a := by omega
+      rcases hph with ⟨hx, hlx, hy, hly, hid1, hid2, hbd1, hbd2⟩ |
+                      ⟨hx, hlx, hy, hly, hid1, hid2, hbd1, hbd2⟩
+      · refine Or.inr ?_
+        have hqx : 0 ≤ a.fdiv b * x := Int.mul_nonneg hq0 hx
+        have hqy : a.fdiv b * y ≤ 0 := Int.mul_nonpos_of_nonneg_of_nonpos hq0 hy
+        refine ⟨by omega, hx, by omega, hy, by grind, by grind, ?_, ?_⟩
+        · -- 2·x ≤ B: x·a ≤ B (identity, lx·b ≤ 0) and 2·x ≤ x·a (a ≥ 2)
+          have h1 : x * a ≤ B := by
+            have : lx * b ≤ 0 := Int.mul_nonpos_of_nonpos_of_nonneg hlx (by omega)
+            omega
+          have h2 : x * 2 ≤ x * a := Int.mul_le_mul_of_nonneg_left ha2 hx
+          have h3 : x * 2 = 2 * x := Int.mul_comm x 2
+          omega
+        · -- -y ≤ A: -y·a ≤ A (identity, ly·b ≥ 0) and -y ≤ -y·a (a ≥ 1)
+          have h1 : -(y * a) ≤ A := by
+            have : 0 ≤ ly * b := Int.mul_nonneg hly (by omega)
+            omega
+          have h2 : -y * 1 ≤ -y * a := Int.mul_le_mul_of_nonneg_left (by omega) (by omega)
+          have h3 : -y * a = -(y * a) := by grind
+          omega
+      · refine Or.inl ?_
+        have hqx : a.fdiv b * x ≤ 0 := Int.mul_nonpos_of_nonneg_of_nonpos hq0 hx
+        have hqy : 0 ≤ a.fdiv b * y := Int.mul_nonneg hq0 hy
+        refine ⟨by omega, hx, by omega, hy, by grind, by grind, ?_, ?_⟩
+        · have h1 : -(x * a) ≤ B := by
+            have : 0 ≤ lx * b := Int.mul_nonneg hlx (by omega)
+            omega
+          have h2 : -x * 2 ≤ -x * a := Int.mul_le_mul_of_nonneg_left ha2 (by omega)
+          have h3 : -x * a = -(x * a) := by grind
+          have h4 : -x * 2 = -(2 * x) := by grind
+          omega
+        · have h1 : y * a ≤ A := by
+            have : ly * b ≤ 0 := Int.mul_nonpos_of_nonpos_of_nonneg hly (by omega)
+            omega
+          have h2 : y * 1 ≤ y * a := Int.mul_le_mul_of_nonneg_left (by omega) hy
+          omega
+  -- decrease
+  · have := Int.fmod_lt_of_pos a (show (0:Int) < b by omega)
+    have := Int.fmod_nonneg (a := a) (by omega) (by omega)
+    omega
+  -- the four wrap forks: ranges by omega, each modular identity by one key
+  all_goals first
+    | omega
+    | (obtain ⟨hbez, -, -, -, -, -⟩ := hcont
+       first
+         | rw [show (lx' + B) * A = (Int.gcd A B : Int) + (A - ly') * B by grind,
+               Int.add_mul_emod_self_right]
+         | rw [show lx' * A = (Int.gcd A B : Int) + (-ly') * B by grind,
+               Int.add_mul_emod_self_right]
+         | rw [show (ly' + A) * B = (Int.gcd A B : Int) + (B - lx') * A by grind,
+               Int.add_mul_emod_self_right]
+         | rw [show ly' * B = (Int.gcd A B : Int) + (-lx') * A by grind,
+               Int.add_mul_emod_self_right])
+
+
+set_option maxHeartbeats 4000000 in
+/-- `Int`-typed relational core: `extended_gcd` terminates with
+`(gcd A B, i, j)` where the coefficients satisfy the wrap ranges and the
+modular Bezout identities. One `py_vcgen` call; residuals in walk order:
+init (`0 ≤ B`, the phase block at entry), the exit distillation, the six
+preservation leaves (the phase flip is the big one — its entry case is
+the old first-iteration argument, its two nonlinear bound steps are
+explicit `Int.mul_*` monotonicity facts), decrease, and the four wrap
+forks (ranges by `omega`, each modular identity from one `grind` key). -/
 private theorem egcd_core (A B : Int) (hA : 0 < A) (hB : 0 < B) :
     ∃ v, CallsTo rsa_inverse "extended_gcd" #[.int A, .int B] v ∧
       ∃ i j : Int, v = .tuple #[.int (Int.gcd A B : Nat), .int i, .int j] ∧
@@ -163,6 +280,45 @@ private theorem egcd_core (A B : Int) (hA : 0 < A) (hB : 0 < B) :
          | rw [show ly' * B = (Int.gcd A B : Int) + (-lx') * A by grind,
                Int.add_mul_emod_self_right])
 
+private theorem egcd_in_depth2 (A B : Int) (hA : 0 < A) (hB : 0 < B) :
+    ∃ i j : Int,
+      CallsIn rsa_inverse ({initWorld rsa_inverse with callDepth := 1})
+        "extended_gcd" #[.int A, .int B]
+        ({initWorld rsa_inverse with callDepth := 1})
+        (RVal.thaw (Val.tuple #[.int (Int.gcd A B), .int i, .int j])) ∧
+      0 ≤ i ∧ i < B ∧ (i * A) % B = (Int.gcd A B : Int) % B ∧
+      0 ≤ j ∧ j ≤ A ∧ (j * B) % A = (Int.gcd A B : Int) % A := by
+  obtain ⟨r, t, hr, hrun⟩ := (egcd_body_depth2 A B hA hB).exec rfl
+  cases r with
+  | ok st flow =>
+    cases flow with
+    | next => exact hr.elim
+    | ret rv =>
+      obtain ⟨hw, i, j, hrv, hi0, hib, himod, hj0, hja, hjmod⟩ := hr
+      subst hrv
+      refine ⟨i, j, ⟨t + 1, ?_⟩, hi0, hib, himod, hj0, hja, hjmod⟩
+      have hfind : findFunction rsa_inverse "extended_gcd" =
+          some rsa_inverse.functions[0]! := by rfl
+      have hargs : rsa_inverse.functions[0]!.argsOk = true := by rfl
+      have hlocals : rsa_inverse.functions[0]!.localsOk = true := by rfl
+      have hgen : rsa_inverse.functions[0]!.isGenerator = false := by rfl
+      have harity : arityOk rsa_inverse.functions[0]!.params 2 = true := by rfl
+      have hrun' := hrun t (Nat.le_refl t)
+      have hrun'' := hrun'
+      simp [RVal.thawArgs, RVal.thawList_eq_map] at hrun''
+      rw [callIn.eq_2, hfind]
+      simp [hargs, hlocals, hgen, harity, arityOk, pythonTopCallDepth,
+        pythonRecursionLimit]
+      rw [hrun'']
+      simp [rsa_inverse, hargs, hlocals, hgen, harity, arityOk, pythonTopCallDepth, pythonRecursionLimit,
+        Run.leaveCallDepth, Run.toWorld, Run.bind, Run.finishCallAt,
+        RVal.thawArgs, hrun', hw]
+    | brk => exact hr.elim
+    | cont => exact hr.elim
+  | exn st e => exact hr.elim
+  | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
+  | unsupported msg => exact hr.elim
+
 /-- **Total correctness of the shipped `extended_gcd`** (python-rsa 4.9.1,
 positive inputs): it terminates and returns `(gcd a b, i, j)` where the
 returned coefficients satisfy the *modular* Bezout identities
@@ -208,6 +364,8 @@ theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
   py_simp [rsa_inverse]
   rw [execWhile.eq_2]
   py_simp [rsa_inverse]
+  simp [RVal.freezeListB, RVal.freezeB, pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
 
 private theorem callsIn_exists_of_callsTo {m : Module} {fname : String}
     {args : Array Val} {v : Val} (h : CallsTo m fname args v)
@@ -226,6 +384,7 @@ private theorem callsIn_exists_of_callsTo {m : Module} {fname : String}
   | timeout => simp [hc] at hf
   | unsupported msg => simp [hc] at hf
 
+set_option maxHeartbeats 4000000 in
 /-- `Int`-typed core of `inverse_spec` — TOTAL correctness on coprime
 inputs. Coprimality rewrites the callee fact's gcd to 1, and the closing
 `py_vcgen` consumes it as a local `CallsTo` hypothesis at the call site;
@@ -237,21 +396,21 @@ private theorem inverse_core (x n : Int) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) :
     ∃ r : Int, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧
       rsa_inverse.inverse(x, n) ==> r := by
-  obtain ⟨v, hrun, i, j, rfl, hi0, hib, himod, -⟩ := egcd_core x n hx (by omega)
+  obtain ⟨i, j, hcall, hi0, hib, himod, -, -, -⟩ :=
+    egcd_in_depth2 x n hx (by omega)
   rw [hco] at himod
   simp only [Int.natCast_one] at himod
   rw [show (1:Int) % n = 1 from Int.emod_eq_of_lt (by omega) (by omega)] at himod
   refine ⟨i, hi0, hib, himod, ?_⟩
-  obtain ⟨w, hcall⟩ := callsIn_exists_of_callsTo hrun (by rfl)
   obtain ⟨f₀, hcall⟩ := hcall.at_least
   have hcall' := hcall (f₀ + 11) (by omega)
   have hw : initWorld rsa_inverse = ({ heap := #[], globals := [] } : World) := by
     rfl
   rw [hw] at hcall'
-  change callIn rsa_inverse (f₀ + 11) ({ heap := #[], globals := [] } : World)
+  change callIn rsa_inverse (f₀ + 11) ({ heap := #[], globals := [], callDepth := 1 } : World)
       "extended_gcd" #[.int x, .int n] = _ at hcall'
   have hcallU := hcall'
-  simp only [rsa_inverse] at hcallU
+  simp [rsa_inverse, RVal.thawArgs, RVal.thawList_eq_map] at hcallU
   refine CallsTo.intro (f₀ + 16) ?_
   unfold callFunction
   rw [callIn.eq_2]
@@ -262,8 +421,9 @@ private theorem inverse_core (x n : Int) (hx : 0 < x) (hn : 1 < n)
     Stmt.genAllocFree, Stmt.genAllocFreeList, starArgBuiltinName,
     starListBuiltinName, starTupleBuiltinName, fstringFormatBuiltinName,
     flattenStarRun, flattenStarCallArgs, Run.bind, Run.withLocals, Run.liftRes, Run.toPublic,
-    RVal.freezeB]
-  rw [hcallU]
+    RVal.freezeB, hcallU]
+  simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+    Run.leaveCallDepth, Run.toPublic, RVal.freezeB]
   py_simp [rsa_inverse, evalBinOpH, PyVCGen.binOpBeqBitAnd,
     PyVCGen.binOpBeqMult, setLikeRefH, Run.bind, Run.withLocals, Run.liftRes,
     Run.toPublic, RVal.freezeB, hco, Int.natCast_one]

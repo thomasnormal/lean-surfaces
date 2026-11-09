@@ -74,6 +74,11 @@ unsafe def runSvExhaustive : TacticM Unit := withDeepRec do
     | .error _ => match ← evalSummaryP pd with
       | .ok s => pure (true, s)
       | .error e => throwError "sv_exhaustive: the design is outside the comb fragment: {e}"
+  -- a parametric design: `sv_exhaustive` instantiates at the empty argument list (`instantiateGD2 X.pdesign []`,
+  -- `s.val []`), so every parameter would be unbound there; refuse before anything is evaluated at that point
+  let nPar := s.params.length - s.lps.length
+  unless nPar == 0 do
+    throwError "sv_exhaustive: the design has the parameter(s) {s.params.take nPar}; `sv_exhaustive` decides a netlist without parameters (it instantiates the design at the empty argument list and evaluates it exhaustively), so a parametric design is outside it. Prove a parametric design for every parameter value with `sv_structure` and `sv_equations`; at a parameter point, the no-qualified-`case` premise is `NoQ.semAlias_noQ (d := X.pdesign) (by decide) _` (`X.sem N` is the alias-guarded family, so `NoQ.sem_noQ` does not apply to it), see `Examples/system-verilog/sv_exhaustive_param/premise.lean`"
   unless s.lsites.all (·.hdrs.isEmpty) do throwError "sv_exhaustive: the design has a generate loop"
   let σ := s.val []
   let dep := depths s σ

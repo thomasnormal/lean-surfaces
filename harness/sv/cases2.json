@@ -341,6 +341,45 @@
       "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
     },
     {
+      "name": "hierarchy_parameterized_output_wire",
+      "example": "sem2/hierarchy_parameterized",
+      "top": "hierarchy_parameterized",
+      "params": {"W": 8},
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "00000000"},
+        {"a": "01011010"},
+        {"a": "10100101"}
+      ],
+      "measured": "2026-11-09: a parameterized parent output wire is tiled by source-shaped child output port ranges; the hierarchy route retains both instance drivers and agrees with Icarus and Xcelium."
+    },
+    {
+      "name": "hierarchy_parameterized_output_wire_w4",
+      "example": "sem2/hierarchy_parameterized",
+      "top": "hierarchy_parameterized",
+      "params": {"W": 4},
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0101"},
+        {"a": "1010"}
+      ],
+      "measured": "2026-11-09: the same source-shaped instance windows agree at the smaller parameter point W=4."
+    },
+    {
+      "name": "hierarchy_parameterized_output_wire_w16",
+      "example": "sem2/hierarchy_parameterized",
+      "top": "hierarchy_parameterized",
+      "params": {"W": 16},
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "0000000000000000"},
+        {"a": "0101010110101010"},
+        {"a": "1010101001010101"}
+      ],
+      "measured": "2026-11-09: the same source-shaped instance windows agree at the larger parameter point W=16."
+    },
+    {
       "name": "unpacked_register_memory_dynamic",
       "example": "sem2/unpacked_register_memory",
       "top": "unpacked_register_memory",

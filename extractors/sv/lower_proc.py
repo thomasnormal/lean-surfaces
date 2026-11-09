@@ -678,6 +678,34 @@ def _drivers(ex, symbol):
     return hit[1].getDrivers(symbol)
 
 
+def _instance_driver_target(owner, symbol):
+    """Return the source target of an instance output driver for ``symbol``.
+
+    Slang reports an output port connection as a ``ValueDriver`` owned by the
+    instance, with the actual target in an ``AssignmentExpression``.  Keep
+    this check tied to that connection instead of admitting arbitrary
+    parameter-dependent driver text: the hierarchy route must retain the
+    instance node and its source-shaped port target.
+    """
+    try:
+        for pc in owner.portConnections:
+            port = getattr(pc, "port", None)
+            if str(getattr(port, "direction", "")).split(".")[-1] != "Out":
+                continue
+            expr = getattr(pc, "expression", None)
+            if type(expr).__name__ != "AssignmentExpression":
+                continue
+            left = getattr(expr, "left", None)
+            root = getattr(left, "symbol", None)
+            if root is None:
+                root = getattr(getattr(left, "value", None), "symbol", None)
+            if root is symbol:
+                return left
+    except Exception:
+        return None
+    return None
+
+
 def _star_rules(ex, sm, m, converted, listed, form):
     """The reason (text) this block cannot be an `always_comb`, or `None` when R1 to R6 hold."""
     star = _Star(ex, sm, listed, form)
@@ -847,11 +875,27 @@ def net_driver_reason(ex, sm, symbol, dtype):
             return "no driver: the net reads z"
         intervals, texts = [], []
         generated_windows = False
+        instance_windows = False
         for d in records:
             owner = d.containingSymbol
             kind = type(owner).__name__
             if kind not in _NET_OWNERS:
                 return "driver of kind %s" % kind
+            if kind == "InstanceSymbol":
+                # An instance output is a continuous driver too, but unlike a
+                # plain assign it is a hierarchy node.  Permit its
+                # parameter-dependent static range only when slang confirms
+                # that the output connection targets this exact net.  The
+                # source-shaped range is checked below; expression-selected,
+                # concatenated, and unrelated targets remain loud.
+                target = _instance_driver_target(owner, symbol)
+                if target is None:
+                    return "instance output does not target this net"
+                if type(target).__name__ not in (
+                        "RangeSelectExpression", "NamedValueExpression",
+                        "HierarchicalValueExpression"):
+                    return "instance output selects a non-static window"
+                instance_windows = True
             if owner.location not in drivers_here:
                 # Slang's driver table puts every elaborated assignment from
                 # a generate loop under the generate scope rather than the
@@ -875,13 +919,27 @@ def net_driver_reason(ex, sm, symbol, dtype):
             edge = hi + 1
         if edge != width:
             return "undriven bits: the net reads z there"
-        if len(records) == 1 and texts[0] == symbol.name:
+        if len(records) == 1 and texts[0] == symbol.name and not generated_windows:
             return None                                                       # (A)
         if generated_windows:
             gen_window = re.compile(r"^%s\s*\[\s*[A-Za-z_$][A-Za-z0-9_$]*\s*\]$" % re.escape(symbol.name))
             if all(gen_window.match(t) for t in texts):
                 return None                                                       # generated genvar windows
             return "drivers select windows by an expression"
+        if instance_windows:
+            # ``sourceRange`` is the actual target text (for example
+            # ``y[W/2-1:0]``).  Keep the instance and its range intact for the
+            # hierarchy/E route; coverage above still rejects overlaps and
+            # holes at the elaborated default point, while the parameter
+            # cross-check and driversOk re-check every requested point.
+            if all(t == symbol.name for t in texts):
+                return None
+            inst_window = re.compile(
+                r"^%s\s*\[\s*[^\]]+\s*:\s*[^\]]+\s*\]$"
+                % re.escape(symbol.name))
+            if all(inst_window.match(t) for t in texts):
+                return None
+            return "instance output selects a non-static window"
         if not ex._sym_dtype_fixed(dtype):
             return "drivers select windows of a net whose width depends on a parameter"
         window = re.compile(r"^%s\s*(\[\s*\d+\s*(:\s*\d+\s*)?\])?$" % re.escape(symbol.name))

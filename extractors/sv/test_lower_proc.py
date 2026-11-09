@@ -885,6 +885,27 @@ class NetsAsVariables(Base):
         self.assertEqual(sv_kinds(m), [])
         self.assertEqual(self.decl(m, "w")["kind"], "Var")
 
+    def test_parameterized_instance_outputs_tile_an_output_wire(self):
+        top = (
+            "module top #(parameter integer W = 8) (input wire [W-1:0] a, "
+            "output wire [W-1:0] y); "
+            "leaf #(.W(W/2)) lo(.a(a[W/2-1:0]), .y(y[W/2-1:0])); "
+            "leaf #(.W(W/2)) hi(.a(a[W-1:W/2]), .y(y[W-1:W/2])); endmodule\n"
+        )
+        child = (
+            "module leaf #(parameter integer W = 4) (input wire [W-1:0] a, "
+            "output wire [W-1:0] y); assign y = a; endmodule\n"
+        )
+        m = self.module(top, top="top", more=(child,))
+        self.assertNotIn("PortSymbol:net-z", sv_kinds(m))
+        y = [p for p in m["ports"] if p["name"] == "y"][0]
+        self.assertTrue(y["net_as_variable"])
+        instances = [g for g in m["generates"] if g["kind"] == "Instance"]
+        self.assertEqual(len(instances), 2)
+        self.assertTrue(all(
+            p["dir"] == "out" and p["target"]["kind"] == "ArraySel"
+            for g in instances for p in g["ports"] if p["dir"] == "out"))
+
     # ---- what stays refused (the tag is the old one)
     def refused_net(self, body, ports="input [3:0] a, b, output [3:0] y", params="", more=()):
         m = self.top(body, ports, params, more)
@@ -919,7 +940,9 @@ class NetsAsVariables(Base):
                           if d.get("net_as_variable")], ["w"])
 
     def test_drivers_in_a_generate_scope(self):
-        self.refused_net("wire [3:0] w; for (genvar i = 0; i < 4; i++) begin : g assign w[i] = a[i]; end assign y = w;")
+        m = self.top("wire [3:0] w; for (genvar i = 0; i < 4; i++) begin : g assign w[i] = a[i]; end assign y = w;")
+        self.assertEqual(sv_kinds(m), [])
+        self.assertEqual(self.decl(m, "w")["kind"], "Var")
         self.refused_net("wire [3:0] w; if (1) begin : g assign w = a; end assign y = w;")
 
     def test_nets_declared_in_a_generate_scope(self):

@@ -164,6 +164,16 @@ interval coverage at the instantiated parameter point before treating the
 wire as a net-as-variable. The `wire_generate` differential row matches
 Icarus at `W = 4` and its default-point cross-check agrees.
 
+The companion hierarchy wall is now admitted as well. In
+[`sem2/hierarchy_parameterized`](../Examples/system-verilog/sem2/hierarchy_parameterized/),
+the parent's parameter-sized `output wire y` is tiled by the two child output
+port connections. The extractor verifies that each instance output really
+targets `y`, retains each source-shaped range on its `Instance` node, and
+checks interval coverage before marking the parent net as a variable. The
+hierarchy parameter point `W = 8` passes the default-point cross-check and
+matches both Icarus and Xcelium over three input cycles. Expression-selected,
+overlapping, and incomplete instance drivers remain loud.
+
 ## Ladder
 
 ### F1 — SVA safety fragment in E (clause 16)

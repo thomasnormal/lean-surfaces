@@ -11498,6 +11498,26 @@ rounding. The earlier one-definition-per-digit chain is absent.
 DECIDED: keep the parameterized worker and extend its boundary rows when
 CPython cutoff behavior changes; do not unroll new digit cases.
 
+## 2026-11-09-pycomplete-475 — revalidate recursion-limit audit after root build
+
+The high-priority `py-no-recursion-limit` finding remains closed on the current
+branch. The active `World.callDepth` guard and pinned `pythonRecursionLimit =
+1000` are present in both interpreter surfaces; the public Fibonacci theorem is
+now explicitly depth-bounded. A fresh root build after the repaired example
+batch also passed, so this audit needs no semantic change.
+
+| Measurement | Result |
+|---|---|
+| Closed-function differential | `depth(100)` and `depth(1000)`: 2/2 MATCH against CPython 3.9.25 |
+| Script differential | `recursion_limit_script.py --compare`: `RecursionError`, exit 1, MATCH |
+| Recursive theorem | `fib_total (k : Nat) (hk : k < pythonRecursionLimit)` |
+| Root build | Lean 4.35, 4,819 jobs, no errors |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-no-recursion-limit` on this branch; retain the explicit
+depth hypothesis for universal recursive specifications and leave
+`sys.setrecursionlimit` outside the tier.
+
 ## 2026-11-07-pycomplete-474 — audit float-round worker family
 
 The low `py-round-digits-unrolled` finding is already fixed. Both interpreter

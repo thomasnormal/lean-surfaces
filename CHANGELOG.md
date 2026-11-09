@@ -49,6 +49,8 @@
 
 - Extended the value/object evaluator agreement battery with an assignment
   whose RHS increments the target and native differential coverage.
+- Revalidated the active recursion-depth limit and the depth-bounded recursive
+  Fibonacci proof against CPython 3.9; no recursion-limit divergence remains.
 
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.

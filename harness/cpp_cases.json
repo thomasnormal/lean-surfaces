@@ -19174,6 +19174,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-goto-fallthrough-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectGotoFallthroughAgreementWitness",
+    "cpp_source": "int goto_fallthrough_agreement_witness(int value) { if (value) goto done; value = 7; done: return value; } bool callable_witness() { return goto_fallthrough_agreement_witness(0) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-assignment-agreement",
     "kind": "statement",
     "corpus": "rung-4 witness",

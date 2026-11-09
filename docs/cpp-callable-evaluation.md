@@ -239,6 +239,9 @@ through both evaluator APIs.
 It also includes a side-effecting comma callable, checking sequencing and
 state agreement through both evaluator APIs.
 
+It also includes a goto fall-through callable, checking the assignment path
+through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

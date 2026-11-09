@@ -40738,6 +40738,26 @@ def callableValueObjectGotoAgreementWitness : Bool :=
 
 #guard callableValueObjectGotoAgreementWitness
 
+def callableValueObjectGotoFallthroughAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence
+      (.conditional
+        {expression := .parameter (handle "0x10"), sourceType := intType, type := .builtin .boolean}
+        (.goto_ "done")
+        (.assign (handle "0x10") {
+          expression := .integer 7, sourceType := intType, type := intType}))
+      (.label "done" (.return_ {
+        expression := .parameter (handle "0x10"), sourceType := intType, type := intType}))) }
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 7 && objectValue == signed 7
+  | _, _ => false
+
+#guard callableValueObjectGotoFallthroughAgreementWitness
+
 def callableValueObjectAssignmentAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

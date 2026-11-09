@@ -25,10 +25,11 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   a bit inside `^`, and `{a[W-1], a[W-1:1]}` (`comb_proof.lean`, for every width `W ≥ 2`). The twin reads each select
   of the plain signal;
 * `neg/`: the constructs whose meaning signedness changes and the tactics do not read yet, refused with that reason
-  (`comb_errors.lean`): a select of a signed signal as a shift operand and inside `always_comb`, a signed comparison of
+  (`comb_errors.lean`): a select of a signed signal inside `always_comb`, a signed comparison of
   two signals declared with different dimensions, one in a self-determined position, one of an operand that is not a whole signal, and one inside
-  `always_comb`; an arithmetic shift right by a signed amount, in a self-determined position and into a wider target,
-  and `>>>` of an unsigned operand. (Sign extension into a wider target, `neg/sg_ext.sv`, never reaches the tactics: at a
+  `always_comb`; an arithmetic shift right by a signed amount and in a self-determined position, and `>>>` of an unsigned
+  operand. (A select of a signed signal as a shift operand, and `>>>` into a wider target, are read since the left
+  operand of a shift is read through `instDivOperand2`: `comb_shift`, `shift_signed_correct`.) (Sign extension into a wider target, `neg/sg_ext.sv`, never reaches the tactics: at a
   symbolic width the extractor marks the conversion `ConversionExpression:width`; so does a signed comparison of two
   operands whose widths differ symbolically.)
 

@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "sh_signed_op",
+  "top": "sh_cat_op",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_shift/neg/sh_signed_op.sv",
-      "sha256": "3065d2286a71fa12fa8591c1a6b65195c0fd2c379967c1d0420be9379e579d57"
+      "path": "Examples/system-verilog/comb_shift/neg/sh_cat_op.sv",
+      "sha256": "4d3efa0134fc5a32ee94def24362d2c213d81d1258904f7106e230372808ce8c"
     }
   ],
   "packages": [],
@@ -25,16 +25,16 @@
           "end_line": 9,
           "end_col": 10
         },
-        "name": "sh_signed_op",
+        "name": "sh_cat_op",
         "imports": [],
         "params": [
           {
             "kind": "ParameterDecl",
             "span": {
               "line": 3,
-              "col": 37,
+              "col": 34,
               "end_line": 3,
-              "end_col": 42
+              "end_col": 39
             },
             "name": "W",
             "type": {
@@ -45,9 +45,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 3,
-                      "col": 37,
+                      "col": 34,
                       "end_line": 3,
-                      "end_col": 42
+                      "end_col": 39
                     },
                     "value": 31,
                     "resolved_width": 32
@@ -56,9 +56,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 3,
-                      "col": 37,
+                      "col": 34,
                       "end_line": 3,
-                      "end_col": 42
+                      "end_col": 39
                     },
                     "value": 0,
                     "resolved_width": 32
@@ -71,9 +71,9 @@
               "kind": "Int",
               "span": {
                 "line": 3,
-                "col": 41,
+                "col": 38,
                 "end_line": 3,
-                "end_col": 42
+                "end_col": 39
               },
               "value": 8,
               "resolved_width": 32
@@ -87,9 +87,9 @@
             "kind": "Port",
             "span": {
               "line": 4,
-              "col": 33,
+              "col": 35,
               "end_line": 4,
-              "end_col": 34
+              "end_col": 36
             },
             "name": "a",
             "dir": "in",
@@ -150,9 +150,9 @@
             "kind": "Port",
             "span": {
               "line": 5,
-              "col": 33,
+              "col": 35,
               "end_line": 5,
-              "end_col": 34
+              "end_col": 36
             },
             "name": "b",
             "dir": "in",
@@ -206,16 +206,15 @@
                 }
               ],
               "resolved": 8
-            },
-            "signed": true
+            }
           },
           {
             "kind": "Port",
             "span": {
               "line": 6,
-              "col": 33,
+              "col": 35,
               "end_line": 6,
-              "end_col": 34
+              "end_col": 36
             },
             "name": "y",
             "dir": "out",
@@ -229,27 +228,48 @@
                       "line": 6,
                       "col": 26,
                       "end_line": 6,
-                      "end_col": 29
+                      "end_col": 31
                     },
                     "width": null,
                     "op": "-",
                     "left": {
-                      "kind": "ParamRef",
+                      "kind": "Binary",
                       "span": {
                         "line": 6,
                         "col": 26,
                         "end_line": 6,
-                        "end_col": 27
+                        "end_col": 29
                       },
-                      "name": "W"
+                      "width": null,
+                      "op": "+",
+                      "left": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 6,
+                          "col": 26,
+                          "end_line": 6,
+                          "end_col": 27
+                        },
+                        "name": "W"
+                      },
+                      "right": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 6,
+                          "col": 28,
+                          "end_line": 6,
+                          "end_col": 29
+                        },
+                        "name": "W"
+                      }
                     },
                     "right": {
                       "kind": "Int",
                       "span": {
                         "line": 6,
-                        "col": 28,
+                        "col": 30,
                         "end_line": 6,
-                        "end_col": 29
+                        "end_col": 31
                       },
                       "value": 1,
                       "resolved_width": null
@@ -259,18 +279,17 @@
                     "kind": "Int",
                     "span": {
                       "line": 6,
-                      "col": 30,
+                      "col": 32,
                       "end_line": 6,
-                      "end_col": 31
+                      "end_col": 33
                     },
                     "value": 0,
                     "resolved_width": null
                   }
                 }
               ],
-              "resolved": 8
-            },
-            "signed": true
+              "resolved": 16
+            }
           }
         ],
         "decls": [],
@@ -281,7 +300,7 @@
               "line": 8,
               "col": 12,
               "end_line": 8,
-              "end_col": 29
+              "end_col": 33
             },
             "target": {
               "kind": "Ident",
@@ -291,9 +310,8 @@
                 "end_line": 8,
                 "end_col": 13
               },
-              "width": 8,
-              "name": "y",
-              "signed": true
+              "width": 16,
+              "name": "y"
             },
             "value": {
               "kind": "Binary",
@@ -301,52 +319,94 @@
                 "line": 8,
                 "col": 16,
                 "end_line": 8,
-                "end_col": 29
+                "end_col": 33
               },
-              "width": 8,
-              "op": "s>>>",
+              "width": 16,
+              "op": "u<<",
               "left": {
-                "kind": "Binary",
+                "kind": "Concat",
                 "span": {
                   "line": 8,
-                  "col": 17,
+                  "col": 16,
                   "end_line": 8,
-                  "end_col": 22
+                  "end_col": 28
                 },
-                "width": 8,
-                "op": "+",
-                "left": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 8,
-                    "col": 17,
-                    "end_line": 8,
-                    "end_col": 18
+                "width": 16,
+                "parts": [
+                  {
+                    "kind": "SignedResize",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 24
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 17,
+                        "end_line": 8,
+                        "end_col": 24
+                      },
+                      "width": 8,
+                      "op": "s>>>",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 17,
+                          "end_line": 8,
+                          "end_col": 18
+                        },
+                        "width": 8,
+                        "name": "a",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 8,
+                          "col": 23,
+                          "end_line": 8,
+                          "end_col": 24
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      }
+                    }
                   },
-                  "width": 8,
-                  "name": "a",
-                  "signed": true
-                },
-                "right": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 8,
-                    "col": 21,
-                    "end_line": 8,
-                    "end_col": 22
-                  },
-                  "width": 8,
-                  "name": "b",
-                  "signed": true
-                }
+                  {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 8,
+                      "col": 26,
+                      "end_line": 8,
+                      "end_col": 27
+                    },
+                    "width": 8,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 26,
+                        "end_line": 8,
+                        "end_col": 27
+                      },
+                      "width": 8,
+                      "name": "b"
+                    }
+                  }
+                ]
               },
               "right": {
                 "kind": "Int",
                 "span": {
                   "line": 8,
-                  "col": 28,
+                  "col": 32,
                   "end_line": 8,
-                  "end_col": 29
+                  "end_col": 33
                 },
                 "value": 1,
                 "resolved_width": 32

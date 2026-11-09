@@ -316,11 +316,9 @@ theorem shOpW_cases {op : SymBinOp} (h : shOpW op = true) :
 theorem shSign_shr {op : SymBinOp} (h : op = .m0 (.shr false)) : shSign op = false := by
   subst h; rfl
 
-/-- The left operand of a recognized shift: under a signed shift (`shSign`), a leaf `shLeftRd?` reads; under an unsigned
-one, any expression of the word-level fragment without a signed shift inside (`rdsOfW?`, `PExpr.noSShift`). -/
+/-- The left operand of a recognized shift: an expression `rdsOfD?` reads at the signedness of the shift (`shSign`). -/
 def ShLeftOk (ds : List DeclT) (op : SymBinOp) (l : PExpr) (ra : List Acc) : Prop :=
-  (shSign op = true ∧ shLeftRd? ds true l = .ok ra) ∨
-    (shSign op = false ∧ l.noSShift = true ∧ rdsOfW? ds l = .ok ra)
+  rdsOfD? ds (shSign op) l = .ok ra
 
 theorem rdsOfW?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : List Acc}
     (h : rdsOfW? ds (.binary op l r) = .ok rs) :
@@ -356,26 +354,12 @@ theorem rdsOfW?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : Lis
       by_cases hsh : shOpW op = true
       · rw [if_pos hsh] at h
         right; right; left
-        by_cases hsg : shSign op = true
-        · rw [if_pos hsg] at h
-          rcases hl : shLeftRd? ds true l with e1 | ra
-          · simp [hl] at h
-          · rcases hr : shAmtRd? ds r with e2 | rb
-            · simp [hl, hr] at h
-            · simp only [hl, hr, Except.ok.injEq] at h
-              exact ⟨hsh, ra, rb, Or.inl ⟨hsg, hl⟩, rfl, h.symm⟩
-        · rw [if_neg hsg] at h
-          have hsg' : shSign op = false := by simpa using hsg
-          by_cases hns : l.noSShift = true
-          · rw [if_pos hns] at h
-            rcases hl : rdsOfW? ds l with e1 | ra
-            · simp [hl] at h
-            · rcases hr : shAmtRd? ds r with e2 | rb
-              · simp [hl, hr] at h
-              · simp only [hl, hr, Except.ok.injEq] at h
-                exact ⟨hsh, ra, rb, Or.inr ⟨hsg', hns, hl⟩, rfl, h.symm⟩
-          · rw [if_neg hns] at h
-            simp at h
+        rcases hl : rdsOfD? ds (shSign op) l with e1 | ra
+        · simp [hl] at h
+        · rcases hr : shAmtRd? ds r with e2 | rb
+          · simp [hl, hr] at h
+          · simp only [hl, hr, Except.ok.injEq] at h
+            exact ⟨hsh, ra, rb, hl, rfl, h.symm⟩
       · rw [if_neg hsh] at h
         by_cases hsc : (scmpOp? op).isSome = true
         · rw [if_pos hsc] at h
@@ -471,37 +455,6 @@ theorem shOpdRd?_cases {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdR
       obtain ⟨a', ha, hrs⟩ := rdsLeaf_ok' (by simpa [shOpdRd?] using h)
       exact ⟨a', ha, hrs⟩
   | _ => simp [shOpdRd?] at h
-
-/-- The left operand of a shift of signedness `s`: a shift operand, possibly under the marker that keeps the
-signedness (`Resize` for an unsigned shift, `SignedResize` for a signed one). -/
-theorem shLeftRd?_cases {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc} (h : shLeftRd? ds s e = .ok rs) :
-    ∃ x, (e = x ∨ (s = false ∧ ∃ m, e = .resize m x) ∨ (s = true ∧ ∃ m, e = .signedResize m x) ∨
-        (s = true ∧ ∃ n, e = .cast true (.ident n) ∧ x = .ident n)) ∧
-      shOpdRd? ds x = .ok rs := by
-  cases e with
-  | resize m x =>
-      cases s
-      · exact ⟨x, Or.inr (Or.inl ⟨rfl, m, rfl⟩), by simpa [shLeftRd?] using h⟩
-      · simp [shLeftRd?] at h
-  | signedResize m x =>
-      cases s
-      · simp [shLeftRd?] at h
-      · refine ⟨x, Or.inr (Or.inr (Or.inl ⟨rfl, m, rfl⟩)), ?_⟩
-        simp only [shLeftRd?, if_true] at h
-        split at h
-        · simp at h
-        · exact h
-  | cast sg x =>
-      cases sg with
-      | false => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
-      | true =>
-          cases x with
-          | ident n =>
-              cases s
-              · simp [shLeftRd?] at h
-              · exact ⟨.ident n, Or.inr (Or.inr (Or.inr ⟨rfl, n, rfl, rfl⟩)), by simpa [shLeftRd?] using h⟩
-          | _ => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
-  | _ => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
 
 theorem rdsOfW?_unary {ds : List DeclT} {op : SymUnaryOp} {a : PExpr} {rs : List Acc}
     (h : rdsOfW? ds (.unary op a) = .ok rs) :
@@ -696,11 +649,7 @@ theorem scmpPairs_dims {ds : List DeclT} : ∀ {e : PExpr} {rs : List Acc}, rdsO
           cases op with
           | m0 b => cases b <;> simp_all [shOpW, scmpOp?]
           | _ => simp_all [shOpW, scmpOp?]
-        rcases hl with ⟨hs, -⟩ | ⟨hs, -, hl⟩
-        · simp [PExpr.scmpPairs, h1, h2, hb, hs] at hp
-        · simp only [PExpr.scmpPairs, h1, hb, hs, Bool.not_false, Bool.and_self, if_true,
-            Bool.false_eq_true, if_false] at hp
-          exact scmpPairs_dims hl p hp
+        simp [PExpr.scmpPairs, h1, h2] at hp
       · simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1, (scmpOp_ctx hcm).2.2.1] at hp
         subst hp
         exact ⟨hs, hd⟩
@@ -1740,7 +1689,7 @@ theorem instDiv_sresize (s : Bool) (c : Option Nat) (m : Nat) (e : PExpr) :
 
 `instDiv_resize` for any operand but a bare genvar (which has an arm of its own), and one equation per operator arm. The
 `_form` lemmas only say which arm is taken (the read lemmas need no width); the exact forms below, with the operands'
-`divOperandWidth2` given, are what the shape theorem reads (`CombEq.skT_shapeD`). -/
+`divOperandWidth2` given, are what the shape theorem reads (`CombEq.skD_shape`). -/
 
 theorem instDiv_resizeG (s : Bool) (c : Option Nat) (m : Nat) (e : PExpr) (he : ∀ g, e ≠ .genvarRef g) :
     instDivOperand2 env elems s c (.resize m e) =
@@ -2444,89 +2393,387 @@ theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
       split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   · exact rd_shOpd C h' hacc false c
 
-/-- … and of the left operand of a shift (the marker is transparent). -/
-theorem rd_shLeft (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc}
-    (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (c : Option Nat) :
-    RdOK σ rs (instDivOperand2 E elems s c e) := by
-  obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩ | ⟨rfl, n, rfl, rfl⟩
-  · exact rd_shOpd C hxo hacc s c
-  · rw [instDiv_resize false c m x (shOpdKind hxo)]
-    exact rd_shOpd C hxo hacc false _
-  · rw [instDiv_sresize true c m x]
-    exact rd_shOpd C hxo hacc true _
-  · rw [instDiv_cast true c n]
-    exact rd_shOpd C hxo hacc true c
-
-/-- `rd_shLeft` at any signedness the operand is lowered with: an enclosing shift lowers the operand of a shift inside its
-own left operand with the OUTER signedness (`instDiv_shift_form`). -/
-theorem rd_shLeftS (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc}
-    (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s' : Bool) (c : Option Nat) :
-    RdOK σ rs (instDivOperand2 E elems s' c e) := by
-  obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩ | ⟨-, n, rfl, rfl⟩
-  · exact rd_shOpd C hxo hacc s' c
-  · rw [instDiv_resize s' c m x (shOpdKind hxo)]
-    exact rd_shOpd C hxo hacc false _
-  · rw [instDiv_sresize s' c m x]
-    exact rd_shOpd C hxo hacc true _
-  · rw [instDiv_cast s' c n]
-    exact rd_shOpd C hxo hacc s' c
-
 /-- A leaf the recognizer reads is a shift operand too. -/
 theorem shOpdRd?_of_rdsLeaf {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsLeaf? ds e = .ok rs) :
     shOpdRd? ds e = .ok rs := by
   cases e <;> first | exact h | (simp [rdsLeaf?, leafRd?] at h)
 
-/-! ### The reads of the left operand of an unsigned shift
+/-! ### The left operand of a shift (`rdsOfD?`)
 
-`instExpr2` lowers it through `instDivOperand2` (`ie_shl_form`), which `inst_rdW` does not cover: `rd_divV1` (the
-self-determined positions, `rdsOf?`) and `rd_divW` (`rdsOfW?`) are the same facts for that instantiation, at every
-signedness and context. -/
+`instExpr2` lowers it through `instDivOperand2` (`ie_shl_form`), which `inst_rdW` does not cover. A signed read there is
+the plain read (`iDO_uncast`), and the conversion markers are transparent (`iDO_peel`: they only set the signedness
+the operand is lowered with). `rd_divD1` (the self-determined positions, `rdsOfD1?`) and `rd_divD` (`rdsOfD?`) are the
+`RdOK` facts of that instantiation, at every signedness and context. -/
 
-/-- The parts of a concatenation, through `instDivParts2`. -/
-theorem rd_divPartsV1 (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
-    ∀ (ps : List PExpr) (rs : List Acc), partsRd? ds ps = .ok rs →
-      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → RdOK σ rs (.concat (instDivParts2 E elems ps).toArray)
-  | [], rs, h, _ => by
-      simp only [partsRd?, Except.ok.injEq] at h
-      subst h
-      rw [instDivParts2_nil]
-      exact RdOK.concat_nil
-  | p :: ps, rs, h, hacc => by
-      simp only [partsRd?] at h
-      rcases hp : partRd? ds p with e | ra
-      · simp [hp] at h
-      · rcases hq : partsRd? ds ps with e | rb
-        · simp [hp, hq] at h
-        · simp only [hp, hq, Except.ok.injEq] at h
-          subst h
-          have h1 : RdOK σ ra (instDivOperand2 E elems false (divOperandWidth2 E elems p) p) := by
-            unfold partRd? at hp
-            cases p with
-            | lit v =>
-                simp only [Except.ok.injEq] at hp
-                subst hp
-                exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) _ _
-            | _ =>
-                exact rd_shOpd C (shOpdRd?_of_rdsLeaf hp) (fun a ha => hacc a (List.mem_append_left _ ha)) _ _
-          have h2 := rd_divPartsV1 C ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha))
-          rw [instDivParts2_cons]
-          exact RdOK.concat_cons h1 h2
+/-! #### The cast marker is transparent -/
 
-/-- **The reads of an expression of the fragment through `instDivOperand2`**, at every signedness and context. -/
-theorem rd_divV1 (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
-    ∀ (e : PExpr) (rs : List Acc), rdsOf? ds e = .ok rs →
+theorem selfWidth2_castU (s : Bool) (a : PExpr) : selfWidth2 E elems (.cast s a) = selfWidth2 E elems a := by
+  simp [selfWidth2]
+
+theorem rigidMax2_castU (s : Bool) (a : PExpr) : rigidMax2 E elems (.cast s a) = rigidMax2 E elems a := by
+  simp [rigidMax2]
+
+theorem instExpr2_castU (ctx : Option Nat) (s : Bool) (a : PExpr) :
+    instExpr2 E elems ctx (.cast s a) = instExpr2 E elems ctx a := by
+  simp [instExpr2]
+
+/-! ### A select of a signed signal
+
+A select is unsigned whatever its base (IEEE 1800-2023 §11.8.1). `instExpr2` lowers it through the base's element width
+(`elemOf`, which sees through the marker) and the base read at its own width; the only other thing it consults is
+whether the select is a constant (`evalInt`), and a select of a signal is not one, with or without the marker (`ctype`
+of a signal is an error). So a select of a signed signal lowers as the select of the plain signal. -/
+
+/-- The bases whose `ctype` is an error: a signal, and a signed read of one. -/
+theorem ctype_sigBase_err (n : String) :
+    (∃ m, ctype E (.ident n) = .error m) ∧ (∃ m, ctype E (.cast true (.ident n)) = .error m) :=
+  ⟨⟨_, rfl⟩, ⟨_, rfl⟩⟩
+
+theorem evalInt_bitSel_sig_err {b : PExpr} (hb : ∃ m, ctype E b = .error m) (hi : b.isInt E = false) (i : PExpr) :
+    ∃ m, evalInt E (.bitSel b i) = .error m := by
+  obtain ⟨m, hm⟩ := hb
+  exact ⟨m, by simp [evalInt, hi, evalSized, ctype, evalAt, hm, bind, Except.bind]⟩
+
+theorem evalInt_partSel_sig_err {b : PExpr} (hb : ∃ m, ctype E b = .error m) (hi : b.isInt E = false)
+    (msb lsb : PExpr) : ∃ m, evalInt E (.partSel b msb lsb) = .error m := by
+  obtain ⟨m, hm⟩ := hb
+  exact ⟨m, by simp [evalInt, hi, evalSized, ctype, hm, bind, Except.bind]⟩
+
+theorem instExpr2_bitSel_castU (ctx : Option Nat) (n : String) (i : PExpr) :
+    instExpr2 E elems ctx (.bitSel (.cast true (.ident n)) i) = instExpr2 E elems ctx (.bitSel (.ident n) i) := by
+  obtain ⟨m1, h1⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl i
+  obtain ⟨m2, h2⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl i
+  simp only [instExpr2, h1, h2, elemOf, selfWidth2]
+
+theorem selfWidth2_bitSel_castU (n : String) (i : PExpr) :
+    selfWidth2 E elems (.bitSel (.cast true (.ident n)) i) = selfWidth2 E elems (.bitSel (.ident n) i) := by
+  obtain ⟨m1, h1⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl i
+  obtain ⟨m2, h2⟩ := evalInt_bitSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl i
+  simp only [selfWidth2, h1, h2, elemOf]
+
+theorem instExpr2_partSel_castU (ctx : Option Nat) (n : String) (msb lsb : PExpr) :
+    instExpr2 E elems ctx (.partSel (.cast true (.ident n)) msb lsb) =
+      instExpr2 E elems ctx (.partSel (.ident n) msb lsb) := by
+  obtain ⟨m1, h1⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl msb lsb
+  obtain ⟨m2, h2⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl msb lsb
+  simp only [instExpr2, h1, h2, elemOf, selfWidth2]
+
+theorem selfWidth2_partSel_castU (n : String) (msb lsb : PExpr) :
+    selfWidth2 E elems (.partSel (.cast true (.ident n)) msb lsb) =
+      selfWidth2 E elems (.partSel (.ident n) msb lsb) := by
+  obtain ⟨m1, h1⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).2 rfl msb lsb
+  obtain ⟨m2, h2⟩ := evalInt_partSel_sig_err (E := E) (ctype_sigBase_err n).1 rfl msb lsb
+  simp only [selfWidth2, h1, h2, elemOf]
+
+/-! #### Signed reads and conversion markers through `instDivOperand2` -/
+
+theorem dow_uncast (e : PExpr) : divOperandWidth2 E elems e.uncast = divOperandWidth2 E elems e := by
+  cases e with
+  | cast sg x => cases sg <;> cases x <;> first | rfl | simp [PExpr.uncast, divOperandWidth2]
+  | bitSel b i =>
+      cases b with
+      | cast sg x => cases sg <;> cases x <;> first | rfl | simp [PExpr.uncast, divOperandWidth2, elemOf]
+      | _ => rfl
+  | partSel b m l =>
+      cases b with
+      | cast sg x => cases sg <;> cases x <;> first | rfl | simp [PExpr.uncast, divOperandWidth2, elemOf]
+      | _ => rfl
+  | _ => rfl
+
+theorem iDO_uncast (s : Bool) (c : Option Nat) (e : PExpr) :
+    instDivOperand2 E elems s c e.uncast = instDivOperand2 E elems s c e := by
+  cases e with
+  | cast sg x => cases sg <;> cases x <;> first | rfl | exact (instDiv_cast s c _).symm
+  | bitSel b i =>
+      cases b with
+      | cast sg x =>
+          cases sg <;> cases x <;> first | rfl |
+            simp only [PExpr.uncast, instDivOperand2, divOperandWidth2, elemOf, instExpr2_bitSel_castU]
+      | _ => rfl
+  | partSel b m l =>
+      cases b with
+      | cast sg x =>
+          cases sg <;> cases x <;> first | rfl |
+            simp only [PExpr.uncast, instDivOperand2, divOperandWidth2, elemOf, instExpr2_partSel_castU]
+      | _ => rfl
+  | _ => rfl
+
+theorem dow_peel : ∀ p : PExpr, divOperandWidth2 E elems p.peelMk = divOperandWidth2 E elems p
+  | .resize _ e => by simp only [PExpr.peelMk, divOperandWidth2]; exact dow_peel e
+  | .signedResize _ e => by simp only [PExpr.peelMk, divOperandWidth2]; exact dow_peel e
+  | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
+  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .squash2 .. | .unsupported .. | .binary .. | .unary .. | .ternary ..
+  | .reduce .. | .concat _ | .repl .. => rfl
+
+/-- The signedness the markers at the root of an expression lower it with. -/
+def _root_.LeanModels.Sv.PExpr.peelSg (s : Bool) : PExpr → Bool
+  | .resize _ e => e.peelSg false
+  | .signedResize _ e => e.peelSg true
+  | _ => s
+
+theorem iDO_peel : ∀ (p : PExpr) (s : Bool) (c : Nat), (∀ g, p.peelMk ≠ .genvarRef g) →
+    instDivOperand2 E elems s (some c) p = instDivOperand2 E elems (p.peelSg s) (some c) p.peelMk
+  | .resize m e, s, c, hg => by
+      have hng : ∀ g, e ≠ .genvarRef g := fun g h => by subst h; exact hg g rfl
+      rw [instDiv_resizeG s (some c) m e hng]
+      simpa [PExpr.peelMk, PExpr.peelSg, Option.orElse] using iDO_peel e false c hg
+  | .signedResize m e, s, c, hg => by
+      rw [instDiv_sresize s (some c) m e]
+      simpa [PExpr.peelMk, PExpr.peelSg, Option.orElse] using iDO_peel e true c hg
+  | .lit _, _, _, _ | .fill _, _, _, _ | .ident _, _, _, _ | .bitSel .., _, _, _ | .partSel .., _, _, _
+  | .arrayElem .., _, _, _ | .arrayPart .., _, _, _ | .paramRef .., _, _, _ | .genvarRef _, _, _, _
+  | .enumRef .., _, _, _ | .int _, _, _, _ | .sysCall .., _, _, _ | .cast .., _, _, _ | .squash2 .., _, _, _
+  | .unsupported .., _, _, _ | .binary .., _, _, _ | .unary .., _, _, _ | .ternary .., _, _, _
+  | .reduce .., _, _, _ | .concat _, _, _, _ | .repl .., _, _, _ => rfl
+
+/-! #### Inversions of the shift-operand readers -/
+
+theorem uncast_kind {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e.uncast = .ok a) :
+    ((∃ n, e = .ident n) ∨ (∃ b i, e = .bitSel b i) ∨ (∃ n is, e = .arrayElem n is) ∨
+      (∃ n is m a b, e = .arrayPart n is m a b) ∨ (∃ b m l, e = .partSel b m l) ∨ (∃ n, e = .cast true (.ident n))) := by
+  cases e with
+  | cast sg x =>
+      cases sg with
+      | false => simp [PExpr.uncast, leafRd?, leafRefusal] at h
+      | true =>
+          cases x with
+          | ident n => exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr ⟨n, rfl⟩))))
+          | _ => simp [PExpr.uncast, leafRd?, leafRefusal] at h
+  | _ => first | (simp [PExpr.uncast, leafRd?] at h; done) | simp
+
+theorem dLeaf_cases {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : dLeaf? ds e = .ok rs) :
+    ∃ a, rs = [a] ∧ leafRd? ds e.uncast = .ok a := by
+  obtain ⟨a, hl, rfl⟩ := rdsLeaf_ok' h
+  exact ⟨a, rfl, hl⟩
+
+theorem shOpd_of_dLeaf {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : dLeaf? ds e = .ok rs) :
+    shOpdRd? ds e.uncast = .ok rs := shOpdRd?_of_rdsLeaf h
+
+/-! ### Inversions of `rdsOfD1?` -/
+
+theorem rdsOfD1?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : List Acc}
+    (h : rdsOfD1? ds (.binary op l r) = .ok rs) :
+    binOk op = true ∧ ∃ ra rb, rdsOfD1? ds l = .ok ra ∧ rdsOfD1? ds r = .ok rb ∧ rs = ra ++ rb := by
+  simp only [rdsOfD1?] at h
+  by_cases hb : binOk op = true
+  · rw [if_pos hb] at h
+    rcases hl : rdsOfD1? ds l with e1 | ra
+    · simp [hl] at h
+    · rcases hr : rdsOfD1? ds r with e2 | rb
+      · simp [hl, hr] at h
+      · simp only [hl, hr, Except.ok.injEq] at h
+        exact ⟨hb, ra, rb, rfl, rfl, h.symm⟩
+  · rw [if_neg hb] at h
+    simp at h
+
+theorem rdsOfD1?_unary {ds : List DeclT} {op : SymUnaryOp} {a : PExpr} {rs : List Acc}
+    (h : rdsOfD1? ds (.unary op a) = .ok rs) :
+    (op = .m0 .bnot ∨ op = .m0 .lnot) ∧ rdsOfD1? ds a = .ok rs := by
+  cases op with
+  | m0 u => cases u <;> simp_all [rdsOfD1?]
+  | _ => simp [rdsOfD1?] at h
+
+theorem rdsOfD1?_ternary {ds : List DeclT} {c t e : PExpr} {rs : List Acc}
+    (h : rdsOfD1? ds (.ternary c t e) = .ok rs) :
+    ∃ rc rt re, rdsOfD1? ds c = .ok rc ∧ rdsOfD1? ds t = .ok rt ∧ rdsOfD1? ds e = .ok re ∧
+      rs = rc ++ rt ++ re := by
+  simp only [rdsOfD1?] at h
+  rcases hc : rdsOfD1? ds c with e1 | rc
+  · simp [hc] at h
+  · rcases ht : rdsOfD1? ds t with e2 | rt
+    · simp [hc, ht] at h
+    · rcases he : rdsOfD1? ds e with e3 | re
+      · simp [hc, ht, he] at h
+      · simp only [hc, ht, he, Except.ok.injEq] at h
+        exact ⟨rc, rt, re, rfl, rfl, rfl, h.symm⟩
+
+/-- A recognized operand is never a bare genvar (the `Resize` arm of `instDivOperand2` has a genvar case of its own). -/
+theorem rdsOfD1?_ne_genvar {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsOfD1? ds e = .ok rs) :
+    ∀ g, e ≠ .genvarRef g := by
+  intro g hg; subst hg; simp [rdsOfD1?, dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
+
+/-! ### Inversions of `rdsOfD?` -/
+
+theorem rdsOfD?_binary {ds : List DeclT} {s : Bool} {op : SymBinOp} {l r : PExpr} {rs : List Acc}
+    (h : rdsOfD? ds s (.binary op l r) = .ok rs) :
+    (ctxOpW op = true ∧ ∃ ra rb, rdsOfD? ds s l = .ok ra ∧ rdsOfD? ds s r = .ok rb ∧ rs = ra ++ rb) ∨
+    (selfOpW op = true ∧ ∃ ra rb, rdsOfD1? ds l = .ok ra ∧ rdsOfD1? ds r = .ok rb ∧ rs = ra ++ rb) ∨
+    (ctxOpW op = false ∧ selfOpW op = false ∧ dShOk s op = true ∧
+      ∃ ra rb, rdsOfD? ds s l = .ok ra ∧ shAmtRd? ds r = .ok rb ∧ rs = ra ++ rb) := by
+  simp only [rdsOfD?] at h
+  by_cases hb : ctxOpW op = true
+  · rw [if_pos hb] at h
+    left
+    rcases hl : rdsOfD? ds s l with e1 | ra
+    · simp [hl] at h
+    · rcases hr : rdsOfD? ds s r with e2 | rb
+      · simp [hl, hr] at h
+      · simp only [hl, hr, Except.ok.injEq] at h
+        exact ⟨hb, ra, rb, rfl, rfl, h.symm⟩
+  · rw [if_neg hb] at h
+    by_cases hs : selfOpW op = true
+    · rw [if_pos hs] at h
+      right; left
+      rcases hl : rdsOfD1? ds l with e1 | ra
+      · simp [hl] at h
+      · rcases hr : rdsOfD1? ds r with e2 | rb
+        · simp [hl, hr] at h
+        · simp only [hl, hr, Except.ok.injEq] at h
+          exact ⟨hs, ra, rb, rfl, rfl, h.symm⟩
+    · rw [if_neg hs] at h
+      by_cases hsh : dShOk s op = true
+      · rw [if_pos hsh] at h
+        right; right
+        rcases hl : rdsOfD? ds s l with e1 | ra
+        · simp [hl] at h
+        · rcases hr : shAmtRd? ds r with e2 | rb
+          · simp [hl, hr] at h
+          · simp only [hl, hr, Except.ok.injEq] at h
+            exact ⟨by simpa using hb, by simpa using hs, hsh, ra, rb, rfl, rfl, h.symm⟩
+      · rw [if_neg hsh] at h
+        simp at h
+
+theorem dShOk_cases {s : Bool} {op : SymBinOp} (h : dShOk s op = true) :
+    (∃ sl, op = .m0 (.shl sl)) ∨ op = .m0 (.shr false) ∨ (s = true ∧ op = .m0 (.ashr true)) := by
+  cases op with
+  | m0 b =>
+      cases b with
+      | shl sl => exact Or.inl ⟨sl, rfl⟩
+      | shr sr => cases sr <;> simp_all [dShOk]
+      | ashr sa => cases sa <;> simp_all [dShOk]
+      | _ => simp_all [dShOk]
+  | _ => simp_all [dShOk]
+
+theorem shOpW_of_dShOk {s : Bool} {op : SymBinOp} (h : dShOk s op = true) : shOpW op = true := by
+  rcases dShOk_cases h with ⟨sl, rfl⟩ | rfl | ⟨-, rfl⟩ <;> rfl
+
+theorem rdsOfD?_unary {ds : List DeclT} {s : Bool} {op : SymUnaryOp} {a : PExpr} {rs : List Acc}
+    (h : rdsOfD? ds s (.unary op a) = .ok rs) :
+    (op = .m0 .bnot ∧ rdsOfD? ds s a = .ok rs) ∨ (op = .m0 .lnot ∧ rdsOfD1? ds a = .ok rs) := by
+  cases op with
+  | m0 u => cases u <;> simp_all [rdsOfD?]
+  | _ => simp [rdsOfD?] at h
+
+theorem rdsOfD?_ternary {ds : List DeclT} {s : Bool} {c t e : PExpr} {rs : List Acc}
+    (h : rdsOfD? ds s (.ternary c t e) = .ok rs) :
+    ∃ rc rt re, rdsOfD1? ds c = .ok rc ∧ rdsOfD? ds s t = .ok rt ∧ rdsOfD? ds s e = .ok re ∧
+      rs = rc ++ rt ++ re := by
+  simp only [rdsOfD?] at h
+  rcases hc : rdsOfD1? ds c with e1 | rc
+  · simp [hc] at h
+  · rcases ht : rdsOfD? ds s t with e2 | rt
+    · simp [hc, ht] at h
+    · rcases he : rdsOfD? ds s e with e3 | re
+      · simp [hc, ht, he] at h
+      · simp only [hc, ht, he, Except.ok.injEq] at h
+        exact ⟨rc, rt, re, rfl, rfl, rfl, h.symm⟩
+
+theorem rdsOfD?_sresize {ds : List DeclT} {s : Bool} {m : Nat} {e : PExpr} {rs : List Acc}
+    (h : rdsOfD? ds s (.signedResize m e) = .ok rs) : noConst e = true ∧ rdsOfD? ds true e = .ok rs := by
+  simp only [rdsOfD?] at h
+  by_cases hn : noConst e = true
+  · rw [if_pos hn] at h; exact ⟨hn, h⟩
+  · rw [if_neg hn] at h; simp at h
+
+theorem rdsOfD?_ne_genvar {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc} (h : rdsOfD? ds s e = .ok rs) :
+    ∀ g, e ≠ .genvarRef g := by
+  intro g hg; subst hg; simp [rdsOfD?, dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
+
+/-! ### Parts -/
+
+theorem partRdD?_cases {ds : List DeclT} {p : PExpr} {rs : List Acc} (h : partRdD? ds p = .ok rs) :
+    (∃ v, p.peelMk = .lit v ∧ rs = []) ∨ ((∀ v, p.peelMk ≠ .lit v) ∧ dLeaf? ds p.peelMk = .ok rs) := by
+  unfold partRdD? at h
+  split at h
+  · rename_i v hv
+    exact Or.inl ⟨v, hv, by simpa using h.symm⟩
+  · simp at h
+  · rename_i hnl _
+    exact Or.inr ⟨fun v hv => hnl v hv, h⟩
+
+theorem repArgRdD?_cases {ds : List DeclT} {a : PExpr} {rs : List Acc} (h : repArgRdD? ds a = .ok rs) :
+    ∃ x, a = .concat [x] ∧ ((∃ v, x.peelMk = .lit v ∧ rs = []) ∨
+      (dLeaf? ds x.peelMk = .ok rs ∧ (∀ v, x.peelMk ≠ .lit v) ∧ ∀ n, rs ≠ [.whole n])) := by
+  unfold repArgRdD? at h
+  split at h
+  · rename_i x
+    refine ⟨x, rfl, ?_⟩
+    split at h
+    · rename_i v hv
+      exact Or.inl ⟨v, hv, by simpa using h.symm⟩
+    · rename_i hnl
+      obtain ⟨h1, h2⟩ := notWhole_ok h
+      exact Or.inr ⟨h1, fun v hv => hnl v hv, h2⟩
+  · simp at h
+
+theorem repRdD?_cases {ds : List DeclT} {c a : PExpr} {rs : List Acc} (h : repRdD? ds c a = .ok rs) :
+    ∃ k, affOf? c = some k ∧ repArgRdD? ds a = .ok rs := by
+  unfold repRdD? at h
+  rcases hk : affOf? c with _ | k
+  · simp [hk] at h
+  · simp only [hk] at h
+    exact ⟨k, rfl, h⟩
+
+theorem partRdDW?_cases {ds : List DeclT} {p : PExpr} {rs : List Acc} (h : partRdDW? ds p = .ok rs) :
+    (∃ c a, p = .repl c a ∧ repRdD? ds c a = .ok rs) ∨ ((∀ c a, p ≠ .repl c a) ∧ partRdD? ds p = .ok rs) := by
+  unfold partRdDW? at h
+  split at h
+  · exact Or.inl ⟨_, _, rfl, h⟩
+  · rename_i hne
+    exact Or.inr ⟨fun c a hp => hne c a hp, h⟩
+
+theorem dLeaf_ne_genvar {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : dLeaf? ds e = .ok rs) :
+    ∀ g, e ≠ .genvarRef g := by
+  intro g hg; subst hg; simp [dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
+
+/-! ### The reads of the left operand of a shift (`rdsOfD?`), through `instDivOperand2` -/
+
+theorem rd_dLeaf (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} {rs : List Acc}
+    (h : dLeaf? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s : Bool) (c : Option Nat) :
+    RdOK σ rs (instDivOperand2 E elems s c e) := by
+  rw [← iDO_uncast]
+  exact rd_shOpd C (shOpd_of_dLeaf h) hacc s c
+
+/-- A literal or one access under conversion markers, at every signedness and context. -/
+theorem rd_peel (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {rs : List Acc}
+    (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) :
+    ∀ (x : PExpr), ((∃ v, x.peelMk = .lit v ∧ rs = []) ∨ dLeaf? ds x.peelMk = .ok rs) →
+      ∀ (s : Bool) (c : Option Nat), RdOK σ rs (instDivOperand2 E elems s c x)
+  | .resize m e, h, s, c => by
+      have hng : ∀ g, e ≠ .genvarRef g := by
+        intro g hg; subst hg
+        rcases h with ⟨v, hv, -⟩ | h
+        · simp [PExpr.peelMk] at hv
+        · exact dLeaf_ne_genvar h g rfl
+      rw [instDiv_resizeG s c m e hng]
+      exact rd_peel C hacc e (by simpa [PExpr.peelMk] using h) false _
+  | .signedResize m e, h, s, c => by
+      rw [instDiv_sresize s c m e]
+      exact rd_peel C hacc e (by simpa [PExpr.peelMk] using h) true _
+  | .lit v, h, s, c => by
+      rcases h with ⟨v', hv, rfl⟩ | h
+      · exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) s c
+      · simp [PExpr.peelMk, dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
+  | .fill _, h, s, c | .ident _, h, s, c | .bitSel .., h, s, c | .partSel .., h, s, c | .arrayElem .., h, s, c
+  | .arrayPart .., h, s, c | .paramRef .., h, s, c | .genvarRef _, h, s, c | .enumRef .., h, s, c | .int _, h, s, c
+  | .sysCall .., h, s, c | .cast .., h, s, c | .squash2 .., h, s, c | .unsupported .., h, s, c | .binary .., h, s, c
+  | .unary .., h, s, c | .ternary .., h, s, c | .reduce .., h, s, c | .concat _, h, s, c | .repl .., h, s, c => by
+      rcases h with ⟨v, hv, -⟩ | h
+      · simp [PExpr.peelMk] at hv
+      · exact rd_dLeaf C (by simpa [PExpr.peelMk] using h) hacc s c
+
+theorem rd_divD1 (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
+    ∀ (e : PExpr) (rs : List Acc), rdsOfD1? ds e = .ok rs →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ∀ (s : Bool) (c : Option Nat),
         RdOK σ rs (instDivOperand2 E elems s c e)
   | .lit v, rs, h, hacc, s, c => by
-      simp only [rdsOf?, Except.ok.injEq] at h
+      simp only [rdsOfD1?, Except.ok.injEq] at h
       subst h
       exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc s c
   | .binary op l r, rs, h, hacc, s, c => by
-      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOf?_binary h
-      have ihl := rd_divV1 C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-      have ihr := rd_divV1 C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOfD1?_binary h
+      have ihl := rd_divD1 C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+      have ihr := rd_divD1 C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
       have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor ∨ g = .add ∨ g = .sub) →
           RdOK σ (ra ++ rb) (instDivOperand2 E elems s c (.binary (.m0 g) l r)) := by
         intro g hg
@@ -2545,122 +2792,103 @@ theorem rd_divV1 (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
       · exact cmp .eq
       · exact cmp .ne
   | .unary op a, rs, h, hacc, s, c => by
-      obtain ⟨hop, ha⟩ := rdsOf?_unary h
-      have iha := rd_divV1 C a rs ha hacc
+      obtain ⟨hop, ha⟩ := rdsOfD1?_unary h
+      have iha := rd_divD1 C a rs ha hacc
       rcases hop with rfl | rfl
       · obtain ⟨k, hk⟩ := instDiv_bnot_form (env := E) (elems := elems) s c a
         rw [hk]; exact RdOK.unary _ (iha s k)
       · rw [instDiv_lnot]; exact RdOK.fitDiv (RdOK.unary _ (iha false _)) s c _
   | .ternary g t e, rs, h, hacc, s, c => by
-      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
-      have ihg := rd_divV1 C g rc hc
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD1?_ternary h
+      have ihg := rd_divD1 C g rc hc
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
-      have iht := rd_divV1 C t rt ht
+      have iht := rd_divD1 C t rt ht
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha)))
-      have ihe := rd_divV1 C e re he (fun a ha => hacc a (List.mem_append_right _ ha))
+      have ihe := rd_divD1 C e re he (fun a ha => hacc a (List.mem_append_right _ ha))
       obtain ⟨k, hk⟩ := instDiv_ternary_form (env := E) (elems := elems) s c g t e
       rw [hk]
       exact RdOK.ternary (ihg false _) (iht s k) (ihe s k)
   | .reduce op a, rs, h, hacc, s, c => by
-      have iha := rd_divV1 C a rs (rdsOf?_reduce h) hacc
+      have iha := rd_divD1 C a rs (by simpa [rdsOfD1?] using h) hacc
       rw [instDiv_reduce]; exact RdOK.fitDiv (RdOK.reduce _ (iha false _)) s c _
-  | .concat ps, rs, h, hacc, s, c => by
-      simp only [rdsOf?] at h
-      rw [instDiv_concat]
-      exact RdOK.fitDiv (rd_divPartsV1 C ps rs h hacc) s c _
-  | .ident n, rs, h, hacc, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .bitSel b i, rs, h, hacc, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .partSel b m l, rs, h, hacc, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .arrayElem n is, rs, h, hacc, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .arrayPart n is m a b, rs, h, hacc, s, c =>
-      rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .repl .., rs, h, _, _, _
-  | .paramRef .., rs, h, _, _, _
-  | .genvarRef .., rs, h, _, _, _ | .enumRef .., rs, h, _, _, _
-  | .int .., rs, h, _, _, _ | .fill .., rs, h, _, _, _
-  | .resize .., rs, h, _, _, _ | .signedResize .., rs, h, _, _, _
-  | .squash2 .., rs, h, _, _, _ | .sysCall .., rs, h, _, _, _
-  | .cast .., rs, h, _, _, _ | .unsupported .., rs, h, _, _, _ => by
-      simp [rdsOf?, rdsLeaf?, leafRd?] at h
+  | .resize m e, rs, h, hacc, s, c => by
+      have he : rdsOfD1? ds e = .ok rs := by simpa [rdsOfD1?] using h
+      rw [instDiv_resizeG s c m e (rdsOfD1?_ne_genvar he)]
+      exact rd_divD1 C e rs he hacc false _
+  | .signedResize m e, rs, h, hacc, s, c => by
+      have he : rdsOfD1? ds e = .ok rs := by simpa [rdsOfD1?] using h
+      rw [instDiv_sresize s c m e]
+      exact rd_divD1 C e rs he hacc true _
+  | .concat _, rs, h, _, _, _ => by simp [rdsOfD1?] at h
+  | .ident _, rs, h, hacc, s, c | .bitSel .., rs, h, hacc, s, c | .partSel .., rs, h, hacc, s, c
+  | .arrayElem .., rs, h, hacc, s, c | .arrayPart .., rs, h, hacc, s, c | .cast .., rs, h, hacc, s, c
+  | .fill _, rs, h, hacc, s, c | .paramRef .., rs, h, hacc, s, c | .genvarRef _, rs, h, hacc, s, c
+  | .enumRef .., rs, h, hacc, s, c | .int _, rs, h, hacc, s, c | .sysCall .., rs, h, hacc, s, c
+  | .squash2 .., rs, h, hacc, s, c | .unsupported .., rs, h, hacc, s, c | .repl .., rs, h, hacc, s, c =>
+      rd_dLeaf C (by simpa [rdsOfD1?] using h) hacc s c
 
-/-- The argument of a replication, a literal or one access in a one-part concatenation, through `instDivOperand2`. -/
-theorem rd_divRepArg (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {a : PExpr} {rs : List Acc}
-    (h : repArgRd? ds a = .ok rs) (hacc : ∀ x ∈ rs, AccOK σ DW DG EW ns x) (s : Bool) (c : Option Nat) :
-    RdOK σ rs (instDivOperand2 E elems s c a) := by
-  rcases repArgRd?_cases h with ⟨v, rfl, rfl⟩ | ⟨e, rfl, hl, -, -⟩
-  · rw [instDiv_concat, instDivParts2_cons, instDivParts2_nil]
-    refine RdOK.fitDiv ?_ s c _
-    have h1 := rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) false (divOperandWidth2 E elems (.lit v))
-    exact RdOK.concat_cons h1 RdOK.concat_nil
-  · rw [instDiv_concat, instDivParts2_cons, instDivParts2_nil]
-    refine RdOK.fitDiv ?_ s c _
-    have h1 := rd_shOpd C (shOpdRd?_of_rdsLeaf hl) hacc false (divOperandWidth2 E elems e)
-    have h2 := RdOK.concat_cons h1 (RdOK.concat_nil (σ := σ))
-    rwa [List.append_nil] at h2
-
-/-- A replication through `instDivOperand2` (its count evaluates, non-negative: `ConstOK`). -/
-theorem rd_divRepl (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {c a : PExpr} {rs : List Acc}
-    (h : repRd? ds c a = .ok rs) (hacc : ∀ x ∈ rs, AccOK σ DW DG EW ns x) (hco : ConstOK σ ns (.repl c a))
+/-- A replication inside the left operand of a shift (its count evaluates, non-negative: `ConstOK`). -/
+theorem rd_divReplD (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {c a : PExpr} {rs : List Acc}
+    (h : repRdD? ds c a = .ok rs) (hacc : ∀ x ∈ rs, AccOK σ DW DG EW ns x) (hco : ConstOK σ ns (.repl c a))
     (s : Bool) (ctx : Option Nat) : RdOK σ rs (instDivOperand2 E elems s ctx (.repl c a)) := by
-  obtain ⟨k, hk, harg⟩ := repRd?_cases h
+  obtain ⟨k, hk, harg⟩ := repRdD?_cases h
   obtain ⟨hev, h0⟩ := repl_facts C hk hco
   rw [instDiv_repl s ctx c a hev h0]
-  exact RdOK.fitDiv (RdOK.repl _ (rd_divRepArg C harg hacc false _)) s ctx _
+  refine RdOK.fitDiv (RdOK.repl _ ?_) s ctx _
+  obtain ⟨x, rfl, hx⟩ := repArgRdD?_cases harg
+  rw [instDiv_concat, instDivParts2_cons, instDivParts2_nil]
+  refine RdOK.fitDiv ?_ false _ _
+  have h1 := rd_peel C hacc x (by rcases hx with h | ⟨h, -⟩; exact Or.inl h; exact Or.inr h) false
+    (divOperandWidth2 E elems x)
+  have h2 := RdOK.concat_cons h1 (RdOK.concat_nil (σ := σ))
+  rwa [List.append_nil] at h2
 
-/-- The parts of a word-level concatenation (literals, accesses, replications), through `instDivParts2`. -/
-theorem rd_divPartsW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
-    ∀ (ps : List PExpr) (rs : List Acc), partsRdW? ds ps = .ok rs →
+theorem rd_divPartsD (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
+    ∀ (ps : List PExpr) (rs : List Acc), partsRdD? ds ps = .ok rs →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → PartsCO σ ns ps →
       RdOK σ rs (.concat (instDivParts2 E elems ps).toArray)
   | [], rs, h, _, _ => by
-      simp only [partsRdW?, Except.ok.injEq] at h
+      simp only [partsRdD?, Except.ok.injEq] at h
       subst h
       rw [instDivParts2_nil]
       exact RdOK.concat_nil
   | p :: ps, rs, h, hacc, hco => by
-      simp only [partsRdW?] at h
-      rcases hp : partRdW? ds p with e | ra
+      simp only [partsRdD?] at h
+      rcases hp : partRdDW? ds p with e | ra
       · simp [hp] at h
-      · rcases hq : partsRdW? ds ps with e | rb
+      · rcases hq : partsRdD? ds ps with e | rb
         · simp [hp, hq] at h
         · simp only [hp, hq, Except.ok.injEq] at h
           subst h
           obtain ⟨hco', hn, hc⟩ := partsCO_cons hco
+          have hacl : ∀ x ∈ ra, AccOK σ DW DG EW ns x := fun x hx => hacc x (List.mem_append_left _ hx)
           have h1 : RdOK σ ra (instDivOperand2 E elems false (divOperandWidth2 E elems p) p) := by
-            unfold partRdW? at hp
-            cases p with
-            | lit v =>
-                simp only [Except.ok.injEq] at hp
-                subst hp
-                exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) _ _
-            | repl c a =>
-                exact rd_divRepl C hp (fun x hx => hacc x (List.mem_append_left _ hx))
-                  ⟨fun n hn' => hn n hn', fun k hk => hc k hk⟩ _ _
-            | _ =>
-                exact rd_shOpd C (shOpdRd?_of_rdsLeaf hp) (fun a ha => hacc a (List.mem_append_left _ ha)) _ _
-          have h2 := rd_divPartsW C ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha)) hco'
+            rcases partRdDW?_cases hp with ⟨c, a, rfl, h'⟩ | ⟨-, h'⟩
+            · exact rd_divReplD C h' hacl ⟨fun n hn' => hn n hn', fun k hk => hc k hk⟩ _ _
+            · exact rd_peel C hacl p (by rcases partRdD?_cases h' with h | ⟨-, h⟩; exact Or.inl h; exact Or.inr h)
+                _ _
+          have h2 := rd_divPartsD C ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha)) hco'
           rw [instDivParts2_cons]
           exact RdOK.concat_cons h1 h2
 
-/-- **The reads of an expression of the word-level fragment through `instDivOperand2`**, at every signedness and
-context: what the left operand of an unsigned shift reads. -/
-theorem rd_divW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
-    ∀ (e : PExpr) (rs : List Acc), rdsOfW? ds e = .ok rs →
+/-- **The reads of the left operand of a shift through `instDivOperand2`**, at every signedness and context. -/
+theorem rd_divD (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
+    ∀ (e : PExpr) (s0 : Bool) (rs : List Acc), rdsOfD? ds s0 e = .ok rs →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns e → ∀ (s : Bool) (c : Option Nat),
         RdOK σ rs (instDivOperand2 E elems s c e)
-  | .lit v, rs, h, hacc, _, s, c => by
-      simp only [rdsOfW?, Except.ok.injEq] at h
+  | .lit v, _, rs, h, hacc, _, s, c => by
+      simp only [rdsOfD?, Except.ok.injEq] at h
       subst h
       exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc s c
-  | .int v, rs, h, hacc, _, s, c => by
-      simp only [rdsOfW?, Except.ok.injEq] at h
+  | .int v, _, rs, h, hacc, _, s, c => by
+      simp only [rdsOfD?, Except.ok.injEq] at h
       subst h
       exact rd_shOpd C (ds := ds) (e := .int v) (rs := []) (by simp [shOpdRd?]) hacc s c
-  | .binary op l r, rs, h, hacc, hcn, s, c => by
-      rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
-        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
-      · have ihl := rd_divW C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn)
-        have ihr := rd_divW C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha)) (cok_binary_r hcn)
+  | .binary op l r, s0, rs, h, hacc, hcn, s, c => by
+      rcases rdsOfD?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
+        ⟨-, -, hb, ra, rb, hl, hr', rfl⟩
+      · have ihl := rd_divD C l s0 ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn)
+        have ihr := rd_divD C r s0 rb hr' (fun a ha => hacc a (List.mem_append_right _ ha)) (cok_binary_r hcn)
         have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor ∨ g = .add ∨ g = .sub) →
             RdOK σ (ra ++ rb) (instDivOperand2 E elems s c (.binary (.m0 g) l r)) := by
           intro g hg
@@ -2676,81 +2904,60 @@ theorem rd_divW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
           rw [hk]; exact RdOK.binary _ (ihl s k) (ihr s k)
         · obtain ⟨k, hk⟩ := instDiv_cmp_form (env := E) (elems := elems) s c cm l r
           rw [hk]; exact RdOK.fitDiv (RdOK.binary _ (ihl s k) (ihr s k)) s c _
-      · have ihl := rd_divV1 C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-        have ihr := rd_divV1 C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      · have ihl := rd_divD1 C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+        have ihr := rd_divD1 C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
         rcases selfOpW_cases hb with rfl | rfl
         · rw [instDiv_land]; exact RdOK.fitDiv (RdOK.logical true (ihl false _) (ihr false _)) s c _
         · rw [instDiv_lor]; exact RdOK.fitDiv (RdOK.logical false (ihl false _) (ihr false _)) s c _
-      · have hR := rd_shAmt C hr' (fun a ha => hacc a (List.mem_append_right _ ha))
-          (fun g hgr => hcn.1 g (cnames_amount hb hgr))
-          (fun n hnr => hcn.1 n (cnames_amount_param hb hnr)) (shiftAmtWidth2 E elems r)
-        have hL : ∀ k, RdOK σ ra (instDivOperand2 E elems s k l) := by
-          intro k
-          rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-          · exact rd_shLeftS C hl (fun a ha => hacc a (List.mem_append_left _ ha)) s k
-          · exact rd_divW C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn) s k
-        obtain ⟨k, b, hk⟩ := instDiv_shift_form (env := E) (elems := elems) s c op hb l r
-        rw [hk]; exact RdOK.binary _ (hL k) hR
-      · -- a signed comparison of two signed signals: both lowered SIGNED at one common width
-        have hrd : ∀ (n : String) (k : Option Nat), Acc.whole n ∈ [Acc.whole a, Acc.whole b] →
-            RdOK σ [.whole n] (instDivOperand2 E elems true k (.cast true (.ident n))) := by
-          intro n k hn
-          rw [instDiv_cast]
-          exact rd_shOpd C (ds := ds) (e := .ident n) (by simp [shOpdRd?, rdsLeaf?, leafRd?])
-            (fun x hx => by simp at hx; subst hx; exact hacc _ hn) true k
-        obtain ⟨k, hk⟩ := instDiv_scmp_form (env := E) (elems := elems) s c hcm
-          (.cast true (.ident a)) (.cast true (.ident b))
-        rw [hk]
-        exact RdOK.fitDiv (RdOK.scmp _ (hrd a k (by simp)) (hrd b k (by simp))) s c _
-  | .unary op a, rs, h, hacc, hcn, s, c => by
-      rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
-      · have iha := rd_divW C a rs ha hacc (cok_unary hcn)
+      · have hsh := shOpW_of_dShOk hb
+        have hR := rd_shAmt C hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+          (fun g hgr => hcn.1 g (cnames_amount hsh hgr))
+          (fun n hnr => hcn.1 n (cnames_amount_param hsh hnr)) (shiftAmtWidth2 E elems r)
+        have hL := rd_divD C l s0 ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn)
+        obtain ⟨k, b, hk⟩ := instDiv_shift_form (env := E) (elems := elems) s c op hsh l r
+        rw [hk]; exact RdOK.binary _ (hL s k) hR
+  | .unary op a, s0, rs, h, hacc, hcn, s, c => by
+      rcases rdsOfD?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
+      · have iha := rd_divD C a s0 rs ha hacc (cok_unary hcn)
         obtain ⟨k, hk⟩ := instDiv_bnot_form (env := E) (elems := elems) s c a
         rw [hk]; exact RdOK.unary _ (iha s k)
-      · have iha := rd_divV1 C a rs ha hacc
+      · have iha := rd_divD1 C a rs ha hacc
         rw [instDiv_lnot]; exact RdOK.fitDiv (RdOK.unary _ (iha false _)) s c _
-  | .ternary g t e, rs, h, hacc, hcn, s, c => by
-      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfW?_ternary h
-      have ihg := rd_divV1 C g rc hc
+  | .ternary g t e, s0, rs, h, hacc, hcn, s, c => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD?_ternary h
+      have ihg := rd_divD1 C g rc hc
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
-      have iht := rd_divW C t rt ht
+      have iht := rd_divD C t s0 rt ht
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha))) (cok_ternary_t hcn)
-      have ihe := rd_divW C e re he (fun a ha => hacc a (List.mem_append_right _ ha)) (cok_ternary_e hcn)
+      have ihe := rd_divD C e s0 re he (fun a ha => hacc a (List.mem_append_right _ ha)) (cok_ternary_e hcn)
       obtain ⟨k, hk⟩ := instDiv_ternary_form (env := E) (elems := elems) s c g t e
       rw [hk]
       exact RdOK.ternary (ihg false _) (iht s k) (ihe s k)
-  | .reduce op a, rs, h, hacc, _, s, c => by
-      have iha := rd_divV1 C a rs (rdsOfW?_reduce h) hacc
+  | .reduce op a, _, rs, h, hacc, _, s, c => by
+      have iha := rd_divD1 C a rs (by simpa [rdsOfD?] using h) hacc
       rw [instDiv_reduce]; exact RdOK.fitDiv (RdOK.reduce _ (iha false _)) s c _
-  | .concat ps, rs, h, hacc, hcn, s, c => by
-      simp only [rdsOfW?] at h
+  | .concat ps, _, rs, h, hacc, hcn, s, c => by
       rw [instDiv_concat]
-      exact RdOK.fitDiv (rd_divPartsW C ps rs h hacc hcn) s c _
-  | .repl cn a, rs, h, hacc, hcn, s, c => rd_divRepl C h hacc hcn s c
-  | .resize m e, rs, h, hacc, hcn, s, c => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
-      · rw [instDiv_resizeG s c m _ (fun g hg => by cases hg)]
-        exact rd_shOpd C (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc false _
-      · have hng : ∀ g, e ≠ .genvarRef g := fun g hg => by subst hg; simp [leafRd?] at hl
-        rw [instDiv_resizeG s c m e hng]
-        exact rd_shOpd C (shOpdRd?_of_rdsLeaf (ds := ds) (by simp [rdsLeaf?, hl])) hacc false _
-      · have hng : ∀ g, e ≠ .genvarRef g := fun g hg => by subst hg; simp [PExpr.isOpW] at hop
-        rw [instDiv_resizeG s c m e hng]
-        exact rd_divW C e rs hr hacc (cok_resize hcn) false _
-  | .ident n, rs, h, hacc, _, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .bitSel b i, rs, h, hacc, _, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .partSel b m l, rs, h, hacc, _, s, c => rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .arrayElem n is, rs, h, hacc, _, s, c =>
-      rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .arrayPart n is m a b, rs, h, hacc, _, s, c =>
-      rd_shOpd C (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .paramRef .., rs, h, _, _, _, _
-  | .genvarRef .., rs, h, _, _, _, _ | .enumRef .., rs, h, _, _, _, _
-  | .fill .., rs, h, _, _, _, _
-  | .signedResize .., rs, h, _, _, _, _
-  | .squash2 .., rs, h, _, _, _, _ | .sysCall .., rs, h, _, _, _, _
-  | .cast .., rs, h, _, _, _, _ | .unsupported .., rs, h, _, _, _, _ => by
-      simp [rdsOfW?, rdsLeaf?, leafRd?] at h
+      exact RdOK.fitDiv (rd_divPartsD C ps rs (by simpa [rdsOfD?] using h) hacc hcn) s c _
+  | .repl cn a, _, rs, h, hacc, hcn, s, c => rd_divReplD C (by simpa [rdsOfD?] using h) hacc hcn s c
+  | .resize m e, _, rs, h, hacc, hcn, s, c => by
+      have he : rdsOfD? ds false e = .ok rs := by simpa [rdsOfD?] using h
+      rw [instDiv_resizeG s c m e (rdsOfD?_ne_genvar he)]
+      exact rd_divD C e false rs he hacc (cok_resize hcn) false _
+  | .signedResize m e, _, rs, h, hacc, _, s, c => by
+      obtain ⟨hn, he⟩ := rdsOfD?_sresize h
+      have hco : ConstOK σ ns e := by
+        obtain ⟨h1, h2⟩ := noConst_spec e hn
+        exact ⟨by simp [h1], by simp [h2]⟩
+      rw [instDiv_sresize s c m e]
+      exact rd_divD C e true rs he hacc hco true _
+  | .ident _, _, rs, h, hacc, _, s, c | .bitSel .., _, rs, h, hacc, _, s, c | .partSel .., _, rs, h, hacc, _, s, c
+  | .arrayElem .., _, rs, h, hacc, _, s, c | .arrayPart .., _, rs, h, hacc, _, s, c
+  | .cast .., _, rs, h, hacc, _, s, c | .fill _, _, rs, h, hacc, _, s, c | .paramRef .., _, rs, h, hacc, _, s, c
+  | .genvarRef _, _, rs, h, hacc, _, s, c | .enumRef .., _, rs, h, hacc, _, s, c
+  | .sysCall .., _, rs, h, hacc, _, s, c | .squash2 .., _, rs, h, hacc, _, s, c
+  | .unsupported .., _, rs, h, hacc, _, s, c =>
+      rd_dLeaf C (by simpa [rdsOfD?] using h) hacc s c
 
 /-- **The reads of an expression of the word-level fragment** (WP-B2), at any context: the context-determined
 positions through `rdsOfW?`, the self-determined operands through the v1 theorem `inst_rd`. -/
@@ -2803,11 +3010,8 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
         have hR := rd_shAmt C hr' (fun a ha => hacc a (List.mem_append_right _ ha))
           (fun g hgr => hcn.1 g (cnames_amount hb hgr))
           (fun n hnr => hcn.1 n (cnames_amount_param hb hnr))
-        have hL : ∀ s c, RdOK σ ra (instDivOperand2 E elems s c l) := by
-          intro s c
-          rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-          · exact rd_shLeftS C hl (fun a ha => hacc a (List.mem_append_left _ ha)) s c
-          · exact rd_divW C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn) s c
+        have hL : ∀ s c, RdOK σ ra (instDivOperand2 E elems s c l) :=
+          rd_divD C l (shSign op) ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) (cok_binary_l hcn)
         rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
         · obtain ⟨lc, hlc⟩ := ie_shl_form (env := E) (elems := elems) s ctx l r
           rw [hlc]; exact RdOK.ctxTrunc (RdOK.binary _ (hL s lc) (hR _)) ctx lc

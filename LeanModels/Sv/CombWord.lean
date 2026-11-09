@@ -272,6 +272,81 @@ theorem bv_ashrBits {w wr : Nat} (f g : Nat → Bool) :
     rw [if_neg h2, if_neg h4, hmsb]
     simp [hk', show 0 < w by omega]
 
+/-! ### One-bit results inside a shift operand (`!`, a reduction, a comparison), and sign extension
+
+`instDivOperand2` lowers a one-bit operation inside the left operand of a shift at its own width and fits it to the
+operation width (`XF.zext 1`), and a `SignedResize` marker there sign-extends (`XF.sext`): the glue to `BitVec`. -/
+
+/-- A one-bit bit function is `BitVec.ofBool` of its bit. -/
+theorem bv_one (b : Bool) : bv 1 (fun _ => b) = BitVec.ofBool b := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro k hk
+  rw [getLsbD_bv hk]
+  obtain rfl : k = 0 := by omega
+  cases b <;> rfl
+
+/-- `|v` is `v ≠ 0` (IEEE 1800-2023 §11.4.9). -/
+theorem any_eq_bv (w : Nat) (f : Nat → Bool) : any w f = (bv w f != 0#w) := by
+  by_cases h : ∃ k, k < w ∧ f k = true
+  · obtain ⟨k, hk, hf⟩ := h
+    have hne : bv w f ≠ 0#w := by
+      intro h0
+      have := congrArg (fun x => x.getLsbD k) h0
+      simp [getLsbD_bv hk, hf] at this
+    have : any w f = true := any_eq_true.mpr ⟨k, hk, hf⟩
+    simp [this, hne]
+  · have h0 : bv w f = 0#w := by
+      apply BitVec.eq_of_getLsbD_eq
+      intro k hk
+      rw [getLsbD_bv hk]
+      simp only [BitVec.getLsbD_zero]
+      cases hf : f k
+      · rfl
+      · exact absurd ⟨k, hk, hf⟩ h
+    have : any w f = false := by simpa [any] using h
+    simp [this, h0]
+
+/-- `&v` is `v = '1` (IEEE 1800-2023 §11.4.9). -/
+theorem all_eq_bv (w : Nat) (f : Nat → Bool) : all w f = (bv w f == BitVec.allOnes w) := by
+  by_cases h : ∀ k, k < w → f k = true
+  · have h1 : bv w f = BitVec.allOnes w := by
+      apply BitVec.eq_of_getLsbD_eq
+      intro k hk
+      rw [getLsbD_bv hk, h k hk]
+      simp [hk]
+    have : all w f = true := all_eq_true.mpr h
+    simp [this, h1]
+  · have hne : bv w f ≠ BitVec.allOnes w := by
+      intro h1
+      apply h
+      intro k hk
+      have := congrArg (fun x => x.getLsbD k) h1
+      simp only [getLsbD_bv hk, BitVec.getLsbD_allOnes, hk, decide_true] at this
+      exact this
+    have : all w f = false := by simpa [all] using h
+    simp [this, hne]
+
+/-- `a == b` on `w` bits is `BitVec` equality (IEEE 1800-2023 §11.4.5). -/
+theorem eqv_eq_bv (w : Nat) (f g : Nat → Bool) : eqv w f g = (bv w f == bv w g) := by
+  by_cases h : ∀ k, k < w → f k = g k
+  · have h1 : bv w f = bv w g := bv_congr_lt h
+    have : eqv w f g = true := eqv_eq_true.mpr h
+    simp [this, h1]
+  · have hne : bv w f ≠ bv w g := by
+      intro h1
+      apply h
+      intro k hk
+      have := congrArg (fun x => x.getLsbD k) h1
+      simpa [getLsbD_bv hk] using this
+    have : eqv w f g = false := by simpa [eqv] using h
+    simp [this, hne]
+
+/-- A sign extension, read at `w` bits: `BitVec.signExtend`. -/
+theorem bv_sext {w wl : Nat} (f : Nat → Bool) : bv w (sext wl f) = (bv wl f).signExtend w := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro k hk
+  rw [getLsbD_bv hk, getLsbD_signExtend_bv f hk]
+
 end XF
 end LeanModels.Sv
 

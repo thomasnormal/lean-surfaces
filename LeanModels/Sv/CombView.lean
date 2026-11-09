@@ -1048,9 +1048,9 @@ The left operand is context-determined (§11.6.1: a shift is as wide as its left
 context of the shift), the amount self-determined (§11.4.10). `instExpr2` lowers both through `instDivOperand2`, not
 through the `fitExpr2` route of an operand of `+` or `&`: the operand is computed at the wider of the context and its own
 width with every leaf extended to that width first (the carry of `(a + b) << 1` survives into a wider target), and the
-result is truncated to the context afterwards. The left operand of an UNSIGNED shift may be any expression the
-word-level fragment reads (`rdsOfW?`); the skeleton reads it through `Sk.dz`, the mirror of `instDivOperand2`. The left
-operand of a signed shift is a signal access, a sized literal or an unsized constant (`shLeftRd?`). -/
+result is truncated to the context afterwards. The left operand is read by `rdsOfD?`, the reader of what
+`instDivOperand2` lowers, at the signedness the shift gives it (`shSign`); the skeleton is `skD`, its mirror. The amount
+is a leaf (`shAmtRd?`). -/
 def shOpW : SymBinOp → Bool
   | .m0 (.shl _) | .m0 (.shr false) | .m0 (.ashr true) => true
   | _ => false
@@ -1065,11 +1065,11 @@ def shSign : SymBinOp → Bool
 def shOpdRefusal : PExpr → String
   | .cast true (.ident n) =>
       s!"a signed shift amount `{n}` (outside the fragment: it reads the amount of a shift as an unsigned signal access, sized literal or constant; IEEE 1800-2023 §11.4.10 treats the amount as unsigned, so write it into an unsigned signal first)"
-  | _ => "a shift amount, or the left operand of a signed shift, that is not a signal access, a sized literal or an unsized constant (outside the fragment: these two positions are read as one of these, the amount also as a bare genvar or parameter; an expression there, such as `s + 1` as an amount or `(a + b) >>> 1`, is not read yet: write it into a signal first. The left operand of an unsigned shift may be any expression the fragment reads)"
+  | _ => "a shift amount that is not a signal access, a sized literal, an unsized constant, or a bare genvar or parameter (outside the fragment: the amount of a shift is read as one of these; an expression there, such as `s + 1`, is not read yet. The left operand of a shift may be any expression the fragment reads)"
 
-/-- An operand of a shift read as a leaf (the amount, or the left operand of a signed shift): a signal access, a sized
-literal or an unsized constant. `instExpr2` lowers both through `instDivOperand2`, whose default arm these are; an
-operation is refused here (the left operand of an UNSIGNED shift is read by `rdsOfW?` itself). -/
+/-- An operand of a shift read as a leaf (the amount): a signal access, a sized literal or an unsized constant.
+`instExpr2` lowers it through `instDivOperand2`, whose default arm these are; an operation is refused here (the left
+operand of a shift is read by `rdsOfD?`). -/
 def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .lit _ => .ok []
   | .int _ => .ok []
@@ -1080,26 +1080,6 @@ def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .arrayPart n is m a b => rdsLeaf? ds (.arrayPart n is m a b)
   | e => .error (shOpdRefusal e)
 
-/-- The left operand of a shift of signedness `s`: as `shOpdRd?`, under the marker `instDivOperand2` sees through
-without changing the signedness of the operand: the `Resize` marker of an unsigned shift, the `SignedResize` marker of a
-signed one (`1 << s`: the unsized constant is a signed 32-bit integer). The other marker would flip the signedness the
-operand is lowered at, and is refused. -/
-def shLeftRd? (ds : List DeclT) (s : Bool) : PExpr → Except String (List Acc)
-  | .resize _ e =>
-      if s then .error "operand of a signed shift under a zero-extension marker (outside the v1 fragment: write the operand into a signal first)"
-      else shOpdRd? ds e
-  | .signedResize _ e =>
-      if s then
-        match e with
-        | .cast true (.ident n) =>
-            .error s!"a signed operand `{n}` of a shift, sign-extended to a wider context (outside the fragment: it reads a shift of a signed signal into a target of the signal's own width)"
-        | _ => shOpdRd? ds e
-      else .error "operand of an unsigned shift under a sign-extension marker (outside the v1 fragment: write the operand into a signal first)"
-  | .cast true (.ident n) =>
-      if s then shOpdRd? ds (.ident n)
-      else .error s!"a signed operand `{n}` of an unsigned shift (outside the fragment: a shift is signed when its left operand is)"
-  | e => shOpdRd? ds e
-
 /-- The AMOUNT of a shift (WP-B2 gate 4b): as `shOpdRd?`, or a bare genvar (`a << i` in a generate loop), a constant of
 the instance that reads nothing. `instDivOperand2` lowers it at its own width, 32 bits (`divOperandWidth2 (.genvarRef _)`), to
 the literal of its value. (A genvar under a conversion marker has its own lowering arm, a refusal of a negative value:
@@ -1108,6 +1088,246 @@ def shAmtRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .genvarRef _ => .ok []
   | .paramRef _ none => .ok []
   | e => shOpdRd? ds e
+
+/-- No constant of the instance and no replication in a right-hand side, in ONE cheap traversal (`noConst_spec`): the
+genvar amount of a shift (`cnames`) and a replication (`cnames`, `rcounts`) are the only sources. A traversal per leaf of
+a `case` table is what `sbox_table` pays (about 2.5 heartbeat-thousands per leaf), so the check is ONE function, not
+`cnames.isEmpty && rcounts.isEmpty`. -/
+def noConst : PExpr → Bool
+  | .binary op l r =>
+      (match op, r with
+       | .m0 (.shl _), .genvarRef _ => false
+       | .m0 (.shr false), .genvarRef _ => false
+       | .m0 (.ashr true), .genvarRef _ => false
+       | .m0 (.shl _), .paramRef _ none => false
+       | .m0 (.shr false), .paramRef _ none => false
+       | .m0 (.ashr true), .paramRef _ none => false
+       | _, _ => true) && noConst l && noConst r
+  | .unary _ a => noConst a
+  | .reduce _ a => noConst a
+  | .ternary c t e => noConst c && noConst t && noConst e
+  | .resize _ a => noConst a
+  | .repl .. => false
+  | .concat ps => ps.all fun p => match p with | .repl .. => false | _ => true
+  | _ => true
+
+theorem flatMap_nil_of_all {α β : Type} (f : α → List β) :
+    ∀ ps : List α, (∀ p ∈ ps, f p = []) → ps.flatMap f = []
+  | [], _ => rfl
+  | p :: ps, h => by
+      simp only [List.flatMap_cons, h p (by simp), List.nil_append]
+      exact flatMap_nil_of_all f ps fun q hq => h q (by simp [hq])
+
+theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.rcounts = []
+  | .binary op l r, h => by
+      simp only [noConst, Bool.and_eq_true] at h
+      obtain ⟨⟨h0, hl⟩, hr⟩ := h
+      obtain ⟨hl1, hl2⟩ := noConst_spec l hl
+      obtain ⟨hr1, hr2⟩ := noConst_spec r hr
+      refine ⟨?_, by simp [PExpr.rcounts, hl2, hr2]⟩
+      simp only [PExpr.cnames, hl1, hr1]
+      split <;> first | rfl | (simp_all)
+  | .unary _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
+  | .reduce _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
+  | .ternary c t e, h => by
+      simp only [noConst, Bool.and_eq_true] at h
+      obtain ⟨⟨hc, ht⟩, he⟩ := h
+      obtain ⟨c1, c2⟩ := noConst_spec c hc
+      obtain ⟨t1, t2⟩ := noConst_spec t ht
+      obtain ⟨e1, e2⟩ := noConst_spec e he
+      simp [PExpr.cnames, PExpr.rcounts, c1, c2, t1, t2, e1, e2]
+  | .resize _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
+  | .repl .., h => by simp [noConst] at h
+  | .concat ps, h => by
+      simp only [noConst, List.all_eq_true] at h
+      have key : ∀ p ∈ ps, repNames p = [] ∧ repCount p = [] := by
+        intro p hp
+        have := h p hp
+        cases p <;> first | exact ⟨rfl, rfl⟩ | (simp at this; done)
+      exact ⟨flatMap_nil_of_all repNames ps fun p hp => (key p hp).1,
+        flatMap_nil_of_all repCount ps fun p hp => (key p hp).2⟩
+  | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
+  | .paramRef .., _ | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
+  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by
+      simp [PExpr.cnames, PExpr.rcounts]
+
+/-! ### The left operand of a shift: what `instDivOperand2` lowers
+
+`instExpr2` lowers the left operand of a shift through `instDivOperand2` (IEEE 1800-2023 §11.6.1, §11.4.10), which reads
+the expression differently from the `fitExpr2` route of `rdsOfW?`: every leaf is extended to the operation width first,
+the conversion markers slang puts around a self-determined sub-operand in this position (`Resize`, `SignedResize`, even
+at the same width and nested, as in `{Resize8[a], Resize8[b]}` or `Resize32[Resize32[a]] == 0`) are transparent and only
+set the signedness the operand is lowered with (`Resize` unsigned, `SignedResize` signed), and a signed read is the
+plain read (its marker is lowered at its own width and fitted). `rdsOfD? ds s` reads such an operand at signedness `s`
+(the context-determined positions: the bitwise gates, `+`, `-`, `*`, the six comparisons, `~`, the arms of `?:`, a
+shift inside), `rdsOfD1?` the self-determined positions in it (the operands of `!`, a reduction, `&&`, `||` and the
+condition of `?:`, which `instDivOperand2` lowers unsigned at their own width: the v1 fragment, markers transparent), and
+`partsRdD?` its concatenation parts. The skeleton is `CombEq.skD`, the mirror of `instDivOperand2`. -/
+
+/-- The conversion markers at the root of an expression, stripped. -/
+def _root_.LeanModels.Sv.PExpr.peelMk : PExpr → PExpr
+  | .resize _ e => e.peelMk
+  | .signedResize _ e => e.peelMk
+  | e => e
+
+/-- A signed read (of a signal, or as the base of a select) as the unsigned read of the same signal: `instDivOperand2`
+lowers the two alike (`iDO_uncast`). -/
+def _root_.LeanModels.Sv.PExpr.uncast : PExpr → PExpr
+  | .cast true (.ident n) => .ident n
+  | .bitSel (.cast true (.ident n)) i => .bitSel (.ident n) i
+  | .partSel (.cast true (.ident n)) m l => .partSel (.ident n) m l
+  | e => e
+
+/-- One access of the left operand of a shift, a signed read included. -/
+def dLeaf? (ds : List DeclT) (e : PExpr) : Except String (List Acc) := rdsLeaf? ds e.uncast
+
+/-- The refusal of an operator in a self-determined position inside the left operand of a shift. -/
+def dSelfOpRefusal (op : SymBinOp) : String :=
+  signedOpRefusal? op |>.getD s!"operator `{op.sym}` in a self-determined position inside the left operand of a shift (the operand of `!`, a reduction, `&&`, `||` or the condition of `?:`): there the fragment reads the bitwise gates, `&&`, `||`, `==` and `!=`, as in every self-determined position"
+
+/-- The reads of a self-determined operand inside the left operand of a shift: the v1 fragment, the conversion markers
+transparent (`instDivOperand2` lowers it at its own width, unsigned). -/
+def rdsOfD1? (ds : List DeclT) : PExpr → Except String (List Acc)
+  | .lit _ => .ok []
+  | .binary op l r =>
+      if binOk op then
+        match rdsOfD1? ds l with
+        | .error e => .error e
+        | .ok a =>
+            match rdsOfD1? ds r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
+      else .error (dSelfOpRefusal op)
+  | .unary op a =>
+      match op with
+      | .m0 .bnot => rdsOfD1? ds a
+      | .m0 .lnot => rdsOfD1? ds a
+      | _ => .error "unary operator `-` or `+` (outside the v1 fragment: it has `~` and `!`)"
+  | .ternary c t e =>
+      match rdsOfD1? ds c with
+      | .error m => .error m
+      | .ok a =>
+          match rdsOfD1? ds t with
+          | .error m => .error m
+          | .ok b =>
+              match rdsOfD1? ds e with
+              | .error m => .error m
+              | .ok d => .ok (a ++ b ++ d)
+  | .reduce _ a => rdsOfD1? ds a
+  | .resize _ e => rdsOfD1? ds e
+  | .signedResize _ e => rdsOfD1? ds e
+  | .concat _ => .error "a concatenation in a self-determined position inside the left operand of a shift (the operand of `!`, a reduction, `&&`, `||` or the condition of `?:`): outside the fragment, as in every self-determined position"
+  | e => dLeaf? ds e
+
+/-- A concatenation part inside the left operand of a shift: a sized literal or one access, under conversion markers. -/
+def partRdD? (ds : List DeclT) (p : PExpr) : Except String (List Acc) :=
+  match p.peelMk with
+  | .lit _ => .ok []
+  | .binary op _ _ =>
+      .error s!"a concatenation part that is an operation (`{op.sym}`) inside the left operand of a shift (outside the fragment: a part is read as a sized literal, one access or a replication)"
+  | x => dLeaf? ds x
+
+/-- The argument of a replication inside the left operand of a shift: as `repArgRd?`, under conversion markers. -/
+def repArgRdD? (ds : List DeclT) : PExpr → Except String (List Acc)
+  | .concat [x] =>
+      match x.peelMk with
+      | .lit _ => .ok []
+      | y => notWhole (dLeaf? ds y)
+  | _ => .error "replication of a concatenation of several parts (outside the v1 fragment: replicate a sized literal, a bit select or a part select)"
+
+def repRdD? (ds : List DeclT) (c a : PExpr) : Except String (List Acc) :=
+  match affOf? c with
+  | some _ => repArgRdD? ds a
+  | none => .error "replication count is not affine (outside the v1 fragment: dynamic or nonlinear)"
+
+def partRdDW? (ds : List DeclT) (p : PExpr) : Except String (List Acc) :=
+  match p with
+  | .repl c a => repRdD? ds c a
+  | _ => partRdD? ds p
+
+def partsRdD? (ds : List DeclT) : List PExpr → Except String (List Acc)
+  | [] => .ok []
+  | p :: ps =>
+      match partRdDW? ds p with
+      | .error e => .error e
+      | .ok a =>
+          match partsRdD? ds ps with
+          | .error e => .error e
+          | .ok b => .ok (a ++ b)
+
+/-- The shifts inside the left operand of a shift lowered at signedness `s`: `<<` (`BinOp.shl` of its own flag), an
+unsigned `>>`, and, lowered signed, `>>>` (`instDivOperand2` lowers `>>>` to `BinOp.ashr s`, the arithmetic shift only
+when `s`). -/
+def dShOk (s : Bool) : SymBinOp → Bool
+  | .m0 (.shl _) | .m0 (.shr false) => true
+  | .m0 (.ashr true) => s
+  | _ => false
+
+/-- The refusal of an operator inside the left operand of a shift (at signedness `s`). -/
+def dOpRefusal (s : Bool) (op : SymBinOp) : String :=
+  match op with
+  | .m0 (.ashr _) =>
+      if s then "an arithmetic shift `>>>` whose own operand is unsigned, inside a sign-extended operand of a shift (outside the fragment)"
+      else "`>>>` inside the left operand of a shift whose operand is unsigned (`u>>>`, IEEE 1800-2023 §11.4.10: a logical shift there): `instDivOperand2` lowers it to `BinOp.ashr false`, an operator the tactics do not read yet (they read `<<`, `>>` and the arithmetic `>>>` of a signed operand)"
+  | .m0 (.ashl _) =>
+      "`<<<` inside the left operand of a shift (IEEE 1800-2023 §11.4.10: the same as `<<`): `instDivOperand2` lowers it to `BinOp.ashl`, an operator the tactics do not read yet (they read `<<`)"
+  | .slt | .sle | .sgt | .sge =>
+      "a signed comparison inside the left operand of a shift (the fragment reads a signed comparison as a right-hand side or an operand of the word-level operators, not inside a shift operand yet)"
+  | _ => signedOpRefusal? op |>.getD s!"operator `{op.sym}` inside the left operand of a shift (outside the fragment: there it reads the bitwise gates, `+`, `-`, `*`, the six comparisons, `~`, `!`, the reductions, `&&`, `||`, `?:`, concatenations, replications, `<<`, `>>` and the arithmetic `>>>` of a signed operand; `/`, `%` and `**` are word-level operators it does not have yet)"
+
+/-- **The reads of the left operand of a shift**, lowered by `instDivOperand2` at signedness `s` (see the section
+docstring), or the reason it is outside the fragment. A sign-extension marker is read around an operand that names no
+constant of the instance and replicates nothing (`noConst`: the scope and count obligations are collected through the
+`Resize` marker only). -/
+def rdsOfD? (ds : List DeclT) (s : Bool) : PExpr → Except String (List Acc)
+  | .lit _ => .ok []
+  | .int _ => .ok []
+  | .binary op l r =>
+      if ctxOpW op then
+        match rdsOfD? ds s l with
+        | .error e => .error e
+        | .ok a =>
+            match rdsOfD? ds s r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
+      else if selfOpW op then
+        match rdsOfD1? ds l with
+        | .error e => .error e
+        | .ok a =>
+            match rdsOfD1? ds r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
+      else if dShOk s op then
+        match rdsOfD? ds s l with
+        | .error e => .error e
+        | .ok a =>
+            match shAmtRd? ds r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
+      else .error (dOpRefusal s op)
+  | .unary op a =>
+      match op with
+      | .m0 .bnot => rdsOfD? ds s a
+      | .m0 .lnot => rdsOfD1? ds a
+      | _ => .error "unary operator `-` or `+` (outside the v1 fragment: it has `~` and `!`)"
+  | .ternary c t e =>
+      match rdsOfD1? ds c with
+      | .error m => .error m
+      | .ok a =>
+          match rdsOfD? ds s t with
+          | .error m => .error m
+          | .ok b =>
+              match rdsOfD? ds s e with
+              | .error m => .error m
+              | .ok d => .ok (a ++ b ++ d)
+  | .reduce _ a => rdsOfD1? ds a
+  | .concat ps => partsRdD? ds ps
+  | .repl c a => repRdD? ds c a
+  | .resize _ e => rdsOfD? ds false e
+  | .signedResize _ e =>
+      if noConst e then rdsOfD? ds true e
+      else .error "sign extension (the `SignedResize` marker) of an operand that names a constant of the instance (a genvar or parameter shift amount) or replicates, inside the left operand of a shift (outside the fragment)"
+  | e => dLeaf? ds e
 
 /-- The operand of a width conversion: ONE signal access (a sized literal is read before this is called). -/
 def resizeRd? (ds : List DeclT) (e : PExpr) : Except String (List Acc) :=
@@ -1124,7 +1344,6 @@ so each pair has one width at every parameter point: the fact the structural sou
 def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List (String × String)
   | .binary op l r =>
       if ctxOpW op then l.scmpPairs ++ r.scmpPairs
-      else if shOpW op && !shSign op then l.scmpPairs
       else
         match scmpOp? op, l, r with
         | some _, .cast true (.ident a), .cast true (.ident b) => [(a, b)]
@@ -1133,20 +1352,6 @@ def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List (String × String)
   | .ternary _ t e => t.scmpPairs ++ e.scmpPairs
   | .resize _ a => a.scmpPairs
   | _ => []
-
-/-- No signed shift (`<<<`, `>>>`, or `<<` of a signed operand) anywhere in the expression: the condition on the left
-operand of an UNSIGNED shift. `instDivOperand2` lowers that whole operand with the signedness of the outer shift, so an
-inner signed shift would neither extend nor fill with its sign bit there. -/
-def _root_.LeanModels.Sv.PExpr.noSShift : PExpr → Bool
-  | .binary op l r =>
-      (match op with
-       | .m0 (.shl true) | .m0 (.ashr true) => false
-       | _ => true) && l.noSShift && r.noSShift
-  | .unary _ a => a.noSShift
-  | .ternary c t e => c.noSShift && t.noSShift && e.noSShift
-  | .resize _ a => a.noSShift
-  | .reduce _ a => a.noSShift
-  | _ => true
 
 /-- The reads of a context-determined expression of the word-level fragment, or the reason it is outside it. -/
 def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
@@ -1169,28 +1374,19 @@ def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
             | .error e => .error e
             | .ok b => .ok (a ++ b)
       else if shOpW op then
-        if shSign op then
-          match shLeftRd? ds true l with
-          | .error e => .error e
-          | .ok a =>
-              match shAmtRd? ds r with
-              | .error e => .error e
-              | .ok b => .ok (a ++ b)
-        else if l.noSShift then
-          match rdsOfW? ds l with
-          | .error e => .error e
-          | .ok a =>
-              match shAmtRd? ds r with
-              | .error e => .error e
-              | .ok b => .ok (a ++ b)
-        else .error "a signed shift (`<<<`, `>>>`, or `<<` of a signed operand) inside the left operand of an unsigned shift (outside the fragment: the outer shift lowers its whole operand unsigned, IEEE 1800-2023 §11.8.1, so the inner shift neither extends nor fills with its sign bit there; write the inner shift into a signal first)"
+        match rdsOfD? ds (shSign op) l with
+        | .error e => .error e
+        | .ok a =>
+            match shAmtRd? ds r with
+            | .error e => .error e
+            | .ok b => .ok (a ++ b)
       else if (scmpOp? op).isSome then
         match l, r with
         | .cast true (.ident a), .cast true (.ident b) =>
             if (dimsOf ds a).isSome && decide (dimsOf ds a = dimsOf ds b) then .ok [.whole a, .whole b]
             else .error (scmpOpdRefusal l r)
         | _, _ => .error (scmpOpdRefusal l r)
-      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the four signed comparisons of two signed signals, the run-time shifts `<<` and `>>`, the arithmetic shift `>>>` of a signed operand and the logical `&&`, `||`; `<<<`, `>>>` of an unsigned operand, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
+      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the four signed comparisons of two signed signals, the run-time shifts `<<` and `>>`, the arithmetic shift `>>>` of a signed operand and the logical `&&`, `||`; `<<<` and `>>>` of an unsigned operand (the same as `<<` and `>>`, but lowered to `BinOp.ashl`/`BinOp.ashr false`), a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
   | .unary op a =>
       match op with
       | .m0 .bnot => rdsOfW? ds a
@@ -1256,8 +1452,9 @@ read of the same signal wherever no implicit widening happens, and signedness ac
 envelope spells separately (the sign-extension marker `SignedResize`, the signed comparisons `s<` …, the arithmetic
 shift `>>>`, signed `/` and `%`). Of these the fragment reads two, as written (`PExpr.unsign` enters neither): a signed
 comparison of two signed signals declared with the same dimensions (`rdsOfW?`; `Sk.scmp` states its bit through
-`BitVec.slt`/`BitVec.sle`), and a shift (`>>>` or `<<`) of a signed signal, the left operand of a signed shift
-(`shLeftRd?`; `Sk.sh` with the signed flag, `XF.ashrBits` for `>>>`); it refuses the others.
+`BitVec.slt`/`BitVec.sle`), and a shift (`>>>` or `<<`) of a signed operand (`rdsOfD?` at signedness `true`, which also
+reads the `SignedResize` marker inside a shift operand: `Sk.fit true`, the sign extension `XF.sext`; `Sk.sh` with the
+signed flag, `XF.ashrBits` for `>>>`); it refuses the others.
 
 `PExpr.unsign` is the expression with the marker removed at every position the recognizer reads as a value leaf:
 operands of `& | ^ + - *`, of the six comparisons and of `&& ||`, the operand of `~`, `!` and a reduction, the three
@@ -1335,68 +1532,6 @@ def tgtOf? (ds : List DeclT) : PLhs → Except String Acc
   | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
   | .partSel n msb lsb => partAcc? ds n [] .range msb lsb
   | .concat _ => .error "concatenation target (outside the v1 fragment)"
-
-/-- No constant of the instance and no replication in a right-hand side, in ONE cheap traversal (`noConst_spec`): the
-genvar amount of a shift (`cnames`) and a replication (`cnames`, `rcounts`) are the only sources. A traversal per leaf of
-a `case` table is what `sbox_table` pays (about 2.5 heartbeat-thousands per leaf), so the check is ONE function, not
-`cnames.isEmpty && rcounts.isEmpty`. -/
-def noConst : PExpr → Bool
-  | .binary op l r =>
-      (match op, r with
-       | .m0 (.shl _), .genvarRef _ => false
-       | .m0 (.shr false), .genvarRef _ => false
-       | .m0 (.ashr true), .genvarRef _ => false
-       | .m0 (.shl _), .paramRef _ none => false
-       | .m0 (.shr false), .paramRef _ none => false
-       | .m0 (.ashr true), .paramRef _ none => false
-       | _, _ => true) && noConst l && noConst r
-  | .unary _ a => noConst a
-  | .reduce _ a => noConst a
-  | .ternary c t e => noConst c && noConst t && noConst e
-  | .resize _ a => noConst a
-  | .repl .. => false
-  | .concat ps => ps.all fun p => match p with | .repl .. => false | _ => true
-  | _ => true
-
-theorem flatMap_nil_of_all {α β : Type} (f : α → List β) :
-    ∀ ps : List α, (∀ p ∈ ps, f p = []) → ps.flatMap f = []
-  | [], _ => rfl
-  | p :: ps, h => by
-      simp only [List.flatMap_cons, h p (by simp), List.nil_append]
-      exact flatMap_nil_of_all f ps fun q hq => h q (by simp [hq])
-
-theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.rcounts = []
-  | .binary op l r, h => by
-      simp only [noConst, Bool.and_eq_true] at h
-      obtain ⟨⟨h0, hl⟩, hr⟩ := h
-      obtain ⟨hl1, hl2⟩ := noConst_spec l hl
-      obtain ⟨hr1, hr2⟩ := noConst_spec r hr
-      refine ⟨?_, by simp [PExpr.rcounts, hl2, hr2]⟩
-      simp only [PExpr.cnames, hl1, hr1]
-      split <;> first | rfl | (simp_all)
-  | .unary _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
-  | .reduce _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
-  | .ternary c t e, h => by
-      simp only [noConst, Bool.and_eq_true] at h
-      obtain ⟨⟨hc, ht⟩, he⟩ := h
-      obtain ⟨c1, c2⟩ := noConst_spec c hc
-      obtain ⟨t1, t2⟩ := noConst_spec t ht
-      obtain ⟨e1, e2⟩ := noConst_spec e he
-      simp [PExpr.cnames, PExpr.rcounts, c1, c2, t1, t2, e1, e2]
-  | .resize _ a, h => by simpa only [noConst, PExpr.cnames, PExpr.rcounts] using noConst_spec a h
-  | .repl .., h => by simp [noConst] at h
-  | .concat ps, h => by
-      simp only [noConst, List.all_eq_true] at h
-      have key : ∀ p ∈ ps, repNames p = [] ∧ repCount p = [] := by
-        intro p hp
-        have := h p hp
-        cases p <;> first | exact ⟨rfl, rfl⟩ | (simp at this; done)
-      exact ⟨flatMap_nil_of_all repNames ps fun p hp => (key p hp).1,
-        flatMap_nil_of_all repCount ps fun p hp => (key p hp).2⟩
-  | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
-  | .paramRef .., _ | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
-  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by
-      simp [PExpr.cnames, PExpr.rcounts]
 
 /-- The site with the lists `cn`, `rc` given, a literal `[]` for each that is empty (see `forceSite`). -/
 def forceC (pos : Nat) (tg : Acc) (rds : List Acc) (proc : PProcess) (cn : List String) (rc : List Aff) :

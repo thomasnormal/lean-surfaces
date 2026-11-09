@@ -16,10 +16,9 @@ what the checker's `--tactics` advisory reports as `in_fragment false`):
   since gate 3: `shl_const`);
 * `neg_shift_amt`, `neg_shift_par` (gate 3): a shift whose AMOUNT is an expression (`a << (s + 3'd1)`) or an expression
   over a parameter (`a << (N - 1)`): the fragment reads a signal access, a sized literal or an unsized constant there (and a
-  bare genvar or parameter), and the message says to write the amount into a signal first. `neg_shift_op`, a shift whose
-  LEFT operand is an operation (`(a + b) << 1`), is accepted since the left operand of an unsigned shift is read through
-  `instDivOperand2` (`comb_shift`); the message changed with it (it names the amount and the left operand of a signed
-  shift, the positions still read as a leaf);
+  bare genvar or parameter), and the message names the amount as the one position still read as a leaf. `neg_shift_op`, a
+  shift whose LEFT operand is an operation (`(a + b) << 1`), is accepted since the left operand of a shift is read through
+  `instDivOperand2` (`comb_shift`), and proved below by `sv_structure` and `sv_equations`;
 * `neg_selfdet`: `+` under a reduction (a self-determined position keeps the v1 fragment);
 * `neg_shift_gv` (gate 4b): a shift by an expression over a genvar (`a << (i + 1)`); the bare genvar `a << i` is read;
 * `neg_repl_whole`, `neg_repl_nonaffine`, `neg_repl_op`, `neg_repl_selfdet` (gate 4c): a replication of a WHOLE signal (`{2{a}}`: its width is the
@@ -78,13 +77,17 @@ example (N : Nat) (hN : 1 ≤ N) : CombDesign (neg_mul_op.sem N) := by
 -- a shift by an unsized constant (`a << 1`): accepted since WP-B2 gate 3 (see `shl_const`)
 #guard neg_shift.pdesign.summary.toOption.isSome
 
--- a shift whose left operand is an operation (`(a + b) << 1`): accepted since the left operand of an unsigned shift is
--- read through `instDivOperand2` (`Sk.dz`; see `comb_shift`)
-#guard neg_shift_op.pdesign.summary.toOption.isSome
+-- a shift whose left operand is an operation (`(a + b) << 1`): accepted since the left operand of a shift is read through
+-- `instDivOperand2` (`skD`; the equation of the same shape is proved in `comb_shift`, `shift_op_correct`): the structure
+-- stage passes, for every width
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+    CombDesign (neg_shift_op.sem N) ∧ Acyclic (neg_shift_op.sem N) := by
+  sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  all_goals (intros; omega)
 
 -- a shift whose amount is an expression
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a shift amount, or the left operand of a signed shift, that is not a signal access, a sized literal or an unsized constant (outside the fragment: these two positions are read as one of these, the amount also as a bare genvar or parameter; an expression there, such as `s + 1` as an amount or `(a + b) >>> 1`, is not read yet: write it into a signal first. The left operand of an unsigned shift may be any expression the fragment reads)
+error: sv_structure: outside the supported fragment — site `plain#0`: a shift amount that is not a signal access, a sized literal, an unsized constant, or a bare genvar or parameter (outside the fragment: the amount of a shift is read as one of these; an expression there, such as `s + 1`, is not read yet. The left operand of a shift may be any expression the fragment reads)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (neg_shift_amt.sem N) := by
@@ -92,7 +95,7 @@ example (N : Nat) (hN : 1 ≤ N) : CombDesign (neg_shift_amt.sem N) := by
 
 -- a shift by an expression over a parameter
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a shift amount, or the left operand of a signed shift, that is not a signal access, a sized literal or an unsized constant (outside the fragment: these two positions are read as one of these, the amount also as a bare genvar or parameter; an expression there, such as `s + 1` as an amount or `(a + b) >>> 1`, is not read yet: write it into a signal first. The left operand of an unsigned shift may be any expression the fragment reads)
+error: sv_structure: outside the supported fragment — site `plain#0`: a shift amount that is not a signal access, a sized literal, an unsized constant, or a bare genvar or parameter (outside the fragment: the amount of a shift is read as one of these; an expression there, such as `s + 1`, is not read yet. The left operand of a shift may be any expression the fragment reads)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (neg_shift_par.sem N) := by
@@ -137,7 +140,7 @@ example : CombDesign (neg_row_3d.sem) := by
 
 -- a shift by an expression over a genvar: only the bare genvar is a constant the recognizer reads
 /--
-error: sv_structure: outside the supported fragment — site `g#0`: a shift amount, or the left operand of a signed shift, that is not a signal access, a sized literal or an unsized constant (outside the fragment: these two positions are read as one of these, the amount also as a bare genvar or parameter; an expression there, such as `s + 1` as an amount or `(a + b) >>> 1`, is not read yet: write it into a signal first. The left operand of an unsigned shift may be any expression the fragment reads)
+error: sv_structure: outside the supported fragment — site `g#0`: a shift amount that is not a signal access, a sized literal, an unsized constant, or a bare genvar or parameter (outside the fragment: the amount of a shift is read as one of these; an expression there, such as `s + 1`, is not read yet. The left operand of a shift may be any expression the fragment reads)
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (neg_shift_gv.sem N) := by

@@ -22,13 +22,14 @@ original processes put back (`siteOfU?`, `summaryG_unsign`), and the realized pr
 
 A signed comparison of two signed signals declared with the same dimensions is read as written: the twin keeps it
 (`PExpr.unsign` does not enter `s<` …), and the shape theorems lower it to `Expr2.scmp` of the two signals (`Sk.scmp`).
-So is a shift (`>>>` or `<<`) whose left operand is a signed signal, into a target of the signal's width: the twin does
-not enter a shift, and `Sk.sh` with the signed flag lowers `>>>` to `BinOp.ashr true` (`XF.ashrBits`).
-What else signedness changes is outside the fragment and stays refused: sign extension (the `SignedResize` marker), a
-signed comparison of other operands, `>>>` into a wider target, a signed shift amount, signed `/` and `%`, a signed
-read in an index, a select of a signed signal as a shift operand, and a signed read other than a shifted operand, or a
-signed comparison, in an `always_comb` body (the twin is defined on continuous assigns; an `always_comb` body would
-need a statement-level twin and its instantiation theorem through the procedural lowering).
+So is the left operand of a shift: the twin does not enter a shift, and the reader of a shift operand (`rdsOfD?`, the
+mirror of `instDivOperand2`) reads a signed read there as the plain read and the `SignedResize` marker as the sign
+extension it is (`Sk.fit true`, `XF.sext`), at the signedness of the shift; `Sk.sh` with the signed flag lowers `>>>` to
+`BinOp.ashr true` (`XF.ashrBits`). What else signedness changes is outside the fragment and stays refused: a sign
+extension outside a shift operand (the extractor marks it `ConversionExpression:width`), a signed comparison of other
+operands, a signed shift amount, signed `/` and `%`, a signed read in an index, and a signed read other than in a shift
+operand, or a signed comparison, in an `always_comb` body (the twin is defined on continuous assigns; an `always_comb`
+body would need a statement-level twin and its instantiation theorem through the procedural lowering).
 -/
 
 namespace LeanModels.Sv

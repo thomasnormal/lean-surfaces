@@ -44,20 +44,38 @@ index-freedom of the proc chain (`CombProc`).
   LeanModels.Sv.evals_resizeSigned
 
 #pin_axioms LeanModels.Sv.CombView.rdsLeaf_ok' LeanModels.Sv.CombView.shOpW_cases
-  LeanModels.Sv.CombView.shOpdRd?_cases LeanModels.Sv.CombView.shLeftRd?_cases LeanModels.Sv.CombView.RdOK.fitDiv
+  LeanModels.Sv.CombView.shOpdRd?_cases LeanModels.Sv.CombView.RdOK.fitDiv
   LeanModels.Sv.CombView.RdOK.ctxTrunc LeanModels.Sv.CombView.ie_shl_form LeanModels.Sv.CombView.ie_shr_form
   LeanModels.Sv.CombView.instDiv_default LeanModels.Sv.CombView.instDiv_resize
   LeanModels.Sv.CombView.leafKind_of_leafRd LeanModels.Sv.CombView.shOpdKind LeanModels.Sv.CombView.rd_shOpd
-  LeanModels.Sv.CombView.rd_shLeft LeanModels.Sv.CombView.instDiv_sresize LeanModels.Sv.CombView.RdOK.resizeSigned
+  LeanModels.Sv.CombView.instDiv_sresize LeanModels.Sv.CombView.RdOK.resizeSigned
   LeanModels.Sv.CombView.shSign_shr
 
-#pin_axioms LeanModels.Sv.CombEq.shOpd_len LeanModels.Sv.CombEq.shLeft_len LeanModels.Sv.CombEq.skT_sh
+#pin_axioms LeanModels.Sv.CombEq.shOpd_len LeanModels.Sv.CombEq.skT_sh
   LeanModels.Sv.CombEq.shOpd_leaves LeanModels.Sv.CombEq.ie_shl_some LeanModels.Sv.CombEq.ie_shr_some
   LeanModels.Sv.CombEq.ie_shl_none LeanModels.Sv.CombEq.ie_shr_none LeanModels.Sv.CombEq.divW_eq_selfW
   LeanModels.Sv.CombEq.shOpd_shape LeanModels.Sv.CombEq.xf_shLeft LeanModels.Sv.CombEq.xf_shCore
   LeanModels.Sv.CombEq.xf_shFin LeanModels.Sv.CombEq.sext_congr LeanModels.Sv.CombEq.shrBits_zext
   LeanModels.Sv.CombProc.idxFree_fitDiv LeanModels.Sv.CombProc.idxFree_ctxTrunc
-  LeanModels.Sv.CombProc.idxFree_shOpd LeanModels.Sv.CombProc.idxFree_shLeft
+  LeanModels.Sv.CombProc.idxFree_shOpd
+
+/-!
+The left operand of a shift as any expression of the fragment (`rdsOfD?`, the mirror `skD` of `instDivOperand2`): the
+transparency of the cast and conversion markers there, the reader's inversions, its counts and leaves, the shape
+theorems, and the read and index-freedom facts.
+-/
+
+#pin_axioms LeanModels.Sv.CombView.iDO_uncast LeanModels.Sv.CombView.dow_uncast LeanModels.Sv.CombView.iDO_peel
+  LeanModels.Sv.CombView.dow_peel LeanModels.Sv.CombView.instExpr2_bitSel_castU LeanModels.Sv.CombView.instExpr2_partSel_castU
+  LeanModels.Sv.CombView.dLeaf_cases LeanModels.Sv.CombView.rdsOfD?_binary LeanModels.Sv.CombView.rdsOfD1?_binary
+  LeanModels.Sv.CombView.partRdDW?_cases LeanModels.Sv.CombView.repArgRdD?_cases
+  LeanModels.Sv.CombView.rd_divD1 LeanModels.Sv.CombView.rd_divD LeanModels.Sv.CombView.rd_divPartsD
+  LeanModels.Sv.CombEq.dLeaf_facts LeanModels.Sv.CombEq.rdsOfD?_len LeanModels.Sv.CombEq.rdsOfD1?_len
+  LeanModels.Sv.CombEq.skD_leaves LeanModels.Sv.CombEq.skD1_leaves LeanModels.Sv.CombEq.partsTD_leaves
+  LeanModels.Sv.CombEq.skAmt_eq LeanModels.Sv.CombEq.iDO_ashr LeanModels.Sv.CombEq.dleaf_shape
+  LeanModels.Sv.CombEq.skD1_shape LeanModels.Sv.CombEq.skD_shape LeanModels.Sv.CombEq.parts_shapeDD
+  LeanModels.Sv.CombEq.repl_shapeDD LeanModels.Sv.CombProc.idxFree_divD LeanModels.Sv.CombProc.idxFree_divD1
+  LeanModels.Sv.CombProc.idxFree_divPartsD
 
 /-!
 Gate 3b (concatenation operands): the glue of `CombWord`, the parts lemmas that moved down to `CombEqBase` (they are

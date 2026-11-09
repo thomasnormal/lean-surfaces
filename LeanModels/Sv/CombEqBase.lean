@@ -114,9 +114,9 @@ inductive Sk where
   /-- A run-time shift `l << r` (`dir = true`) or `l >> r` (WP-B2 gate 3): the left operand is context-determined
   (computed at the wider of the context and its own width, every leaf extended to that width BEFORE the operation, by
   zeros, or by its sign bit when `sg`: `1 << s`, the unsized constant is a signed integer), the amount self-determined
-  and unsigned, and it never widens the result. `l` is in the form of `Sk.dz`, the mirror of `instDivOperand2`: a
-  fitted leaf (`Sk.fit`) or, under an unsigned shift, an operation of the fragment over such operands. A signed `>>` is
-  not built (`sg = false` whenever `dir = false`); `sg` with `dir = false` is the arithmetic shift `>>>`. -/
+  and unsigned, and it never widens the result. `l` is in the form `skD` builds, the mirror of `instDivOperand2`: a
+  fitted leaf (`Sk.fit`), or an operation of the fragment over such operands. A signed `>>` is not built (`sg = false`
+  whenever `dir = false`); `sg` with `dir = false` is the arithmetic shift `>>>`. -/
   | sh (dir : Bool) (sg : Bool) (l r : Sk)
   /-- A signed comparison of two signed signals of one width (IEEE 1800-2023 §11.4.4, §11.8.1): one bit, the operands
   ordered as two's-complement integers. The operands are accesses (the recognizer reads `a < b` of two whole signed
@@ -124,7 +124,7 @@ inductive Sk where
   | scmp (op : CmpOp) (a b : Acc)
   /-- An operand of the left operand of an UNSIGNED shift that `instDivOperand2` FITS to its context (IEEE 1800-2023
   §11.6.1, §11.8.2): `p` read at its own width, then zero-extended (or, under `sg`, sign-extended) to the context, or
-  truncated, through `fitDivOperand2`. Only `Sk.dz` builds it: the leaves of such an operand, and the one-bit or
+  truncated, through `fitDivOperand2`. Only `skD` (and `Sk.dz`) builds it: the leaves of such an operand, and the one-bit or
   self-determined operations in it (`instDivOperand2` lowers a comparison, `!`, a reduction, `&&`, `||`, a concatenation
   and a replication at their own width and fits the result). -/
   | fit (sg : Bool) (p : Sk)
@@ -198,12 +198,10 @@ def Sk.dz (s : Bool) : Sk → Sk
   | .fill b => .fill b
   | .fit sg p => .fit sg p
 
-/-- Number of access leaves of the parts of a concatenation (literals take none). -/
-def pcnt : List PExpr → Nat
-  | [] => 0
-  | p :: ps => (match p with | .lit _ => 0 | .repl _ (.concat [.lit _]) => 0 | _ => 1) + pcnt ps
-
-/-- Number of access leaves of a gate tree. -/
+mutual
+/-- Number of access leaves of an expression of the fragment. The conversion markers and the cast marker of a signed
+read are transparent (a marker around a literal reads nothing, around one access one access): the left operand of a
+shift carries markers around its self-determined sub-operands (`CombView.rdsOfD?`). -/
 def cnt : PExpr → Nat
   | .lit _ => 0
   | .binary _ l r => cnt l + cnt r
@@ -213,24 +211,18 @@ def cnt : PExpr → Nat
   | .int _ => 0
   | .paramRef _ _ => 0
   | .genvarRef _ => 0
-  | .repl _ (.concat [.lit _]) => 0
+  | .repl _ a => cnt a
   | .concat ps => pcnt ps
-  | .signedResize _ e =>
-      match e with
-      | .lit _ => 0
-      | .int _ => 0
-      | _ => 1
-  | .resize _ e =>
-      match e with
-      | .lit _ => 0
-      | .int _ => 0
-      | .binary _ l r => cnt l + cnt r
-      | .unary _ a => cnt a
-      | .reduce _ a => cnt a
-      | .ternary c t f => cnt c + cnt t + cnt f
-      | .concat ps => pcnt ps
-      | _ => 1
+  | .signedResize _ e => cnt e
+  | .resize _ e => cnt e
+  | .cast _ e => cnt e
   | _ => 1
+
+/-- Number of access leaves of the parts of a concatenation (literals take none). -/
+def pcnt : List PExpr → Nat
+  | [] => 0
+  | p :: ps => cnt p + pcnt ps
+end
 
 /-- The parts of a concatenation: a literal part is itself, every other part takes the next access. -/
 def partsT : List PExpr → List Acc → List Part
@@ -241,6 +233,114 @@ def partsT : List PExpr → List Acc → List Part
       | .repl c (.concat [.lit v]) => .replit (repAff c) v :: partsT ps as
       | .repl c _ => .reprd (repAff c) (as.headD (.whole "")) :: partsT ps (as.drop 1)
       | _ => .rd (as.headD (.whole "")) :: partsT ps (as.drop 1)
+
+/-! ### The left operand of a shift: the mirror of `instDivOperand2`
+
+`skD s v` is the skeleton of the left operand `v` of a shift as `instDivOperand2` lowers it at signedness `s` (the reader
+is `CombView.rdsOfD?`): the context-determined operators take the context (`& | ^ + - *`, `~`, the arms of `?:`, a
+shift inside), every leaf and every operation `instDivOperand2` lowers at its own width (a comparison, `!`, a reduction,
+`&&`, `||`, a concatenation, a replication) is fitted to the context (`Sk.fit s`), the operands of `!`, a reduction,
+`&&`, `||` and the condition of `?:` are v1 skeletons (`skD1`), a conversion marker is transparent and sets the
+signedness (`Resize` unsigned, `SignedResize` signed), and a signed read is the plain access. -/
+
+/-- The amount of a shift (a leaf: `CombView.shAmtRd?`), as `skT` builds it (`skAmt_eq`). -/
+def skAmt (r : PExpr) (as : List Acc) : Sk :=
+  match r with
+  | .lit v => .lit v
+  | .int v => .const v
+  | .genvarRef g => .cref (Aff.var g)
+  | .paramRef n none => .cref (Aff.var n)
+  | _ => .rd (as.headD (.whole ""))
+
+/-- A self-determined operand inside the left operand of a shift: as `skT` of the v1 fragment, the conversion markers
+transparent. -/
+def skD1 : PExpr → List Acc → Sk
+  | .lit v, _ => .lit v
+  | .binary op l r, as =>
+      match gateOf op with
+      | some g => mkGate g (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l)))
+      | none =>
+          match op with
+          | .land => .land (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l)))
+          | .lor => .lor (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l)))
+          | .m0 .eq => .cmp .eq (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l)))
+          | .m0 .ne => .cmp .ne (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l)))
+          | _ => .fill .l0
+  | .unary op a, as =>
+      match op with
+      | .m0 .bnot => .bnot (skD1 a as)
+      | .m0 .lnot => .lnot (skD1 a as)
+      | _ => .fill .l0
+  | .reduce op a, as => .red op (skD1 a as)
+  | .ternary c t e, as =>
+      .tern (skD1 c (as.take (cnt c))) (skD1 t ((as.drop (cnt c)).take (cnt t)))
+        (skD1 e ((as.drop (cnt c)).drop (cnt t)))
+  | .resize _ e, as => skD1 e as
+  | .signedResize _ e, as => skD1 e as
+  | _, as => .rd (as.headD (.whole ""))
+
+/-- A concatenation part inside the left operand of a shift (`CombView.partRdD?`). -/
+def dPart (p : PExpr) (as : List Acc) : Part :=
+  match p.peelMk with
+  | .lit v => .lit v
+  | _ => .rd (as.headD (.whole ""))
+
+/-- A replication inside the left operand of a shift (`CombView.repRdD?`). -/
+def repPartD (c a : PExpr) (as : List Acc) : Part :=
+  match a with
+  | .concat [x] =>
+      match x.peelMk with
+      | .lit v => .replit (repAff c) v
+      | _ => .reprd (repAff c) (as.headD (.whole ""))
+  | _ => .reprd (repAff c) (as.headD (.whole ""))
+
+def partTD (p : PExpr) (as : List Acc) : Part :=
+  match p with
+  | .repl c a => repPartD c a as
+  | _ => dPart p as
+
+def partsTD : List PExpr → List Acc → List Part
+  | [], _ => []
+  | p :: ps, as => partTD p as :: partsTD ps (as.drop (cnt p))
+
+/-- **The skeleton of the left operand of a shift** lowered at signedness `s` (see the section docstring). -/
+def skD (s : Bool) : PExpr → List Acc → Sk
+  | .lit v, _ => .fit s (.lit v)
+  | .int k, _ => .fit s (.const k)
+  | .binary op l r, as =>
+      match gateOf op with
+      | some g => mkGate g (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l)))
+      | none =>
+          match op with
+          | .m0 .add => .add (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l)))
+          | .m0 .sub => .sub (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l)))
+          | .mul => .mul (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l)))
+          | .m0 .eq => .fit s (.cmp .eq (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .m0 .ne => .fit s (.cmp .ne (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .m0 .lt => .fit s (.cmp .lt (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .m0 .le => .fit s (.cmp .le (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .m0 .gt => .fit s (.cmp .gt (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .m0 .ge => .fit s (.cmp .ge (skD s l (as.take (cnt l))) (skD s r (as.drop (cnt l))))
+          | .land => .fit s (.land (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l))))
+          | .lor => .fit s (.lor (skD1 l (as.take (cnt l))) (skD1 r (as.drop (cnt l))))
+          | .m0 (.shl sl) => .sh true sl (skD s l (as.take (cnt l))) (skAmt r (as.drop (cnt l)))
+          | .m0 (.shr false) => .sh false false (skD s l (as.take (cnt l))) (skAmt r (as.drop (cnt l)))
+          | .m0 (.ashr true) => .sh false true (skD s l (as.take (cnt l))) (skAmt r (as.drop (cnt l)))
+          | _ => .fill .l0
+  | .unary op a, as =>
+      match op with
+      | .m0 .bnot => .bnot (skD s a as)
+      | .m0 .lnot => .fit s (.lnot (skD1 a as))
+      | _ => .fill .l0
+  | .reduce op a, as => .fit s (.red op (skD1 a as))
+  | .ternary c t e, as =>
+      .tern (skD1 c (as.take (cnt c))) (skD s t ((as.drop (cnt c)).take (cnt t)))
+        (skD s e ((as.drop (cnt c)).drop (cnt t)))
+  | .concat ps, as => .fit s (.cat (partsTD ps as))
+  | .repl c a, as => .fit s (.rep (repPartD c a as))
+  | .resize _ e, as => skD false e as
+  | .signedResize _ e, as => skD true e as
+  | _, as => .fit s (.rd (as.headD (.whole "")))
 
 /-- The gate-tree skeleton of `v`, taking one access of `as` per leaf, left to right (a concatenation is the
 skeleton `.cat` of its parts: the same node as the top-level concatenation, WP-B2 gate 3b). -/
@@ -262,18 +362,9 @@ def skT : PExpr → List Acc → Sk
           | .m0 .add => .add (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | .m0 .sub => .sub (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | .mul => .mul (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
-          | .m0 (.shl false) => .sh true false (Sk.dz false (skT l (as.take (cnt l)))) (skT r (as.drop (cnt l)))
-          | .m0 (.shl true) =>
-              .sh true true
-                (Sk.dz true
-                  (match l with | .signedResize _ x => skT x (as.take (cnt l)) | x => skT x (as.take (cnt l))))
-                (skT r (as.drop (cnt l)))
-          | .m0 (.shr false) => .sh false false (Sk.dz false (skT l (as.take (cnt l)))) (skT r (as.drop (cnt l)))
-          | .m0 (.ashr true) =>
-              .sh false true
-                (Sk.dz true
-                  (match l with | .signedResize _ x => skT x (as.take (cnt l)) | x => skT x (as.take (cnt l))))
-                (skT r (as.drop (cnt l)))
+          | .m0 (.shl sl) => .sh true sl (skD sl l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .m0 (.shr false) => .sh false false (skD false l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .m0 (.ashr true) => .sh false true (skD true l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | .slt => .scmp .lt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
           | .sle => .scmp .le (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
           | .sgt => .scmp .gt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
@@ -1605,76 +1696,18 @@ theorem shAmt_len {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds
   · simp [cnt]
   · exact shOpd_len h'
 
-theorem shLeft_len {ds : List DeclT} {s : Bool} {l : PExpr} {rs : List Acc} (h : shLeftRd? ds s l = .ok rs) :
-    rs.length = cnt l := by
-  obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  have h1 := shOpd_len hxo
-  rcases hx with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩ | ⟨-, n, rfl, rfl⟩
-  · exact h1
-  · rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m', a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
-      simpa [cnt] using h1
-  · rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m', a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
-      simpa [cnt] using h1
-  · simpa [cnt] using h1
-
-/-- **The skeleton of a recognized shift**: `skT` strips the marker from the left operand and builds `Sk.sh` over the
-mirror `Sk.dz` of its lowering (`instDivOperand2`); the signedness flag of the skeleton is the one of the operator. The
-left operand of a signed shift is a leaf (`shOpdRd?`), the one of an unsigned shift an expression of the word-level
-fragment, bare or under the `Resize` marker. -/
-theorem skT_sh {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {ra rb : List Acc} (hb : shOpW op = true)
-    (hl : ShLeftOk ds op l ra) (hr : shAmtRd? ds r = .ok rb) (hla : ra.length = cnt l) :
-    ∃ (d sg : Bool) (x : PExpr),
-      ((op = .m0 (.shl sg) ∧ d = true) ∨ (op = .m0 (.shr false) ∧ d = false ∧ sg = false) ∨
-        (op = .m0 (.ashr true) ∧ d = false ∧ sg = true)) ∧
-      ((sg = true ∧ shOpdRd? ds x = .ok ra ∧
-          (l = x ∨ (∃ m, l = .signedResize m x) ∨ (∃ n, l = .cast true (.ident n) ∧ x = .ident n))) ∨
-        (sg = false ∧ l.noSShift = true ∧ rdsOfW? ds l = .ok ra ∧ x = l)) ∧
-      skT (.binary op l r) (ra ++ rb) = .sh d sg (Sk.dz sg (skT x ra)) (skT r rb) := by
+/-- **The skeleton of a recognized shift**: `Sk.sh` over the mirror `skD` of the left operand's lowering
+(`instDivOperand2`) at the signedness of the operator (`shSign`). -/
+theorem skT_sh {op : SymBinOp} {l r : PExpr} {ra rb : List Acc} (hb : shOpW op = true) (hla : ra.length = cnt l) :
+    ∃ d : Bool, ((∃ sg, op = .m0 (.shl sg) ∧ d = true) ∨ (op = .m0 (.shr false) ∧ d = false) ∨
+        (op = .m0 (.ashr true) ∧ d = false)) ∧
+      skT (.binary op l r) (ra ++ rb) = .sh d (shSign op) (skD (shSign op) l ra) (skT r rb) := by
   have e1 := List.take_left' hla (l₂ := rb)
   have e2 := List.drop_left' hla (l₂ := rb)
   rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
-  · rcases hl with ⟨hs, hl'⟩ | ⟨hs, hns, hl'⟩
-    · -- a signed `<<`: a leaf, bare, under the sign-extension marker, or a signed read
-      simp only [shSign] at hs
-      subst hs
-      obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases hl'
-      rcases hx with h | ⟨hs, -, -⟩ | ⟨-, m, h⟩ | ⟨-, n, h, rfl⟩
-      · subst h
-        rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ |
-            ⟨n, is, m, a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
-          exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, Or.inl ⟨rfl, hxo, Or.inl rfl⟩, by simp [skT, gateOf, e1, e2]⟩
-      · exact absurd hs (by simp)
-      · subst h
-        exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, Or.inl ⟨rfl, hxo, Or.inr (Or.inl ⟨m, rfl⟩)⟩,
-          by simp [skT, gateOf, e1, e2]⟩
-      · subst h
-        exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, Or.inl ⟨rfl, hxo, Or.inr (Or.inr ⟨n, rfl, rfl⟩)⟩,
-          by simp [skT, gateOf, e1, e2]⟩
-    · -- an unsigned `<<`: any operand of the fragment, its marker included (`Sk.dz` reads it)
-      simp only [shSign] at hs
-      subst hs
-      exact ⟨true, false, l, Or.inl ⟨rfl, rfl⟩, Or.inr ⟨rfl, hns, hl', rfl⟩, by simp only [skT, gateOf, e1, e2]⟩
-  · rcases hl with ⟨hs, -⟩ | ⟨-, hns, hl'⟩
-    · simp [shSign] at hs
-    · exact ⟨false, false, l, Or.inr (Or.inl ⟨rfl, rfl, rfl⟩), Or.inr ⟨rfl, hns, hl', rfl⟩,
-        by simp only [skT, gateOf, e1, e2]⟩
-  · rcases hl with ⟨-, hl'⟩ | ⟨hs, -, -⟩
-    · -- the arithmetic shift right of a signed operand
-      obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases hl'
-      rcases hx with h | ⟨hs, -, -⟩ | ⟨-, m, h⟩ | ⟨-, n, h, rfl⟩
-      · subst h
-        rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ |
-            ⟨n, is, m, a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
-          exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), Or.inl ⟨rfl, hxo, Or.inl rfl⟩,
-            by simp [skT, gateOf, e1, e2]⟩
-      · exact absurd hs (by simp)
-      · subst h
-        exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), Or.inl ⟨rfl, hxo, Or.inr (Or.inl ⟨m, rfl⟩)⟩,
-          by simp [skT, gateOf, e1, e2]⟩
-      · subst h
-        exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), Or.inl ⟨rfl, hxo, Or.inr (Or.inr ⟨n, rfl, rfl⟩)⟩,
-          by simp [skT, gateOf, e1, e2]⟩
-    · simp [shSign] at hs
+  · exact ⟨true, Or.inl ⟨s, rfl, rfl⟩, by simp [skT, gateOf, shSign, e1, e2]⟩
+  · exact ⟨false, Or.inr (Or.inl ⟨rfl, rfl⟩), by simp [skT, gateOf, shSign, e1, e2]⟩
+  · exact ⟨false, Or.inr (Or.inr ⟨rfl, rfl⟩), by simp [skT, gateOf, shSign, e1, e2]⟩
 
 theorem shOpd_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd? ds e = .ok rs) :
     (skT e rs).leaves = rs := by
@@ -1720,12 +1753,10 @@ theorem partsT_repl_ne (c : PExpr) {e : PExpr} (he : ∀ v, e ≠ .lit v) (ps : 
     partsT (.repl c (.concat [e]) :: ps) as = .reprd (repAff c) (as.headD (.whole "")) :: partsT ps (as.drop 1) := by
   cases e <;> first | rfl | exact absurd rfl (he _)
 
-theorem cnt_repl_ne (c : PExpr) {e : PExpr} (he : ∀ v, e ≠ .lit v) : cnt (.repl c (.concat [e])) = 1 := by
-  cases e <;> first | rfl | exact absurd rfl (he _)
-
-theorem pcnt_repl_ne (c : PExpr) {e : PExpr} (he : ∀ v, e ≠ .lit v) :
-    (match PExpr.repl c (.concat [e]) with | .lit _ => 0 | .repl _ (.concat [.lit _]) => 0 | _ => 1) = 1 := by
-  cases e <;> first | rfl | exact absurd rfl (he _)
+/-- One access counts one. -/
+theorem cnt_of_leaf {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? ds e = .ok a) : cnt e = 1 := by
+  rcases leafKind_of_leafRd h with ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m, a', b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
+    simp [cnt]
 
 theorem partRdW?_of_ne {ds : List DeclT} {p : PExpr} (hp : ∀ v, p ≠ .lit v) (hr : ∀ c a, p ≠ .repl c a) :
     partRdW? ds p = rdsLeaf? ds p := by
@@ -1775,14 +1806,11 @@ theorem partsRd_len {ds : List DeclT} :
           · obtain ⟨v, rfl⟩ := hpl
             have hra : ra = [] := by simpa [partRd?] using hp.symm
             subst hra
-            simp [pcnt, ih]
+            simp [pcnt, cnt, ih]
           · have hnl : ∀ v, p ≠ .lit v := fun v h => hpl ⟨v, h⟩
             rw [partRd?_of_ne hnl] at hp
             obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases hp
-            have hnr := rdsLeaf_ne_repl hp
-            have hp1 : (match p with | .lit _ => 0 | .repl _ (.concat [.lit _]) => 0 | _ => 1) = 1 := by
-              cases p <;> first | rfl | exact absurd rfl (hnl _) | exact absurd rfl (hnr _ _)
-            simp [pcnt, hp1, ih, Nat.add_comm]
+            simp [pcnt, cnt_of_leaf hl, ih, Nat.add_comm]
 
 /-- The word-level parts (literals, accesses, replications) take the accesses of their skeleton. -/
 theorem partsT_leavesW {ds : List DeclT} :
@@ -1840,22 +1868,322 @@ theorem partsRdW_len {ds : List DeclT} :
           · obtain ⟨v, rfl⟩ := hpl
             have hra : ra = [] := by simpa [partRdW?] using hp.symm
             subst hra
-            simp [pcnt, ih]
+            simp [pcnt, cnt, ih]
           · have hnl : ∀ v, p ≠ .lit v := fun v h => hpl ⟨v, h⟩
             by_cases hpr : ∃ c a, p = .repl c a
             · obtain ⟨c, a, rfl⟩ := hpr
               obtain ⟨k, hk, harg⟩ := repRd?_cases hp
               rcases repArgRd?_cases harg with ⟨v, rfl, rfl⟩ | ⟨e, rfl, hl, hnl', -⟩
-              · simp [pcnt, ih]
-              · obtain ⟨x, -, rfl⟩ := rdsLeaf_cases hl
-                have hp1 := pcnt_repl_ne c hnl'
-                simp [pcnt, hp1, ih, Nat.add_comm]
+              · simp [pcnt, cnt, ih]
+              · obtain ⟨x, hlx, rfl⟩ := rdsLeaf_cases hl
+                simp [pcnt, cnt, cnt_of_leaf hlx, ih, Nat.add_comm]
             · have hnr : ∀ c a, p ≠ .repl c a := fun c a h => hpr ⟨c, a, h⟩
               rw [partRdW?_of_ne hnl hnr] at hp
               obtain ⟨a, hl, rfl⟩ := rdsLeaf_cases hp
-              have hp1 : (match p with | .lit _ => 0 | .repl _ (.concat [.lit _]) => 0 | _ => 1) = 1 := by
-                cases p <;> first | rfl | exact absurd rfl (hnl _) | exact absurd rfl (hnr _ _)
-              simp [pcnt, hp1, ih, Nat.add_comm]
+              simp [pcnt, cnt_of_leaf hl, ih, Nat.add_comm]
+
+/-! ### The left operand of a shift (`rdsOfD?`): counts and leaves of `skD` -/
+
+/-- A leaf of the left operand of a shift (a signed read included) counts one access and is `Sk.rd` of it. -/
+theorem dLeaf_facts {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : dLeaf? ds e = .ok rs) :
+    ∃ a, rs = [a] ∧ leafRd? ds e.uncast = .ok a ∧ cnt e = 1 ∧
+      (∀ s as, skD s e as = .fit s (.rd (as.headD (.whole "")))) ∧
+      (∀ as, skD1 e as = .rd (as.headD (.whole ""))) ∧
+      (∀ as, skT e.uncast as = .rd (as.headD (.whole ""))) := by
+  obtain ⟨a, rfl, hl⟩ := dLeaf_cases h
+  refine ⟨a, rfl, hl, ?_⟩
+  rcases uncast_kind hl with ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m, x, y, rfl⟩ | ⟨b, m, l, rfl⟩ |
+    ⟨n, rfl⟩
+  · exact ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => rfl⟩
+  · refine ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => ?_⟩
+    cases b <;> try rfl
+    rename_i sg x
+    cases sg <;> cases x <;> rfl
+  · exact ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => rfl⟩
+  · exact ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => rfl⟩
+  · refine ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => ?_⟩
+    cases b <;> try rfl
+    rename_i sg x
+    cases sg <;> cases x <;> rfl
+  · exact ⟨rfl, fun _ _ => rfl, fun _ => rfl, fun _ => rfl⟩
+
+theorem cnt_peel : ∀ p : PExpr, cnt p.peelMk = cnt p
+  | .resize _ e => by simp only [PExpr.peelMk, cnt]; exact cnt_peel e
+  | .signedResize _ e => by simp only [PExpr.peelMk, cnt]; exact cnt_peel e
+  | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
+  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .squash2 .. | .unsupported .. | .binary .. | .unary .. | .ternary ..
+  | .reduce .. | .concat _ | .repl .. => rfl
+
+theorem skAmt_eq {ds : List DeclT} {r : PExpr} {rb : List Acc} (h : shAmtRd? ds r = .ok rb) (as : List Acc) :
+    skAmt r as = skT r as := by
+  rcases shAmtRd?_cases h with ⟨g, rfl, -⟩ | ⟨n, rfl, -⟩ | h'
+  · rfl
+  · rfl
+  · rcases shOpdKind h' with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m, a, b, rfl⟩ |
+      ⟨b, m, l, rfl⟩ <;> rfl
+
+theorem rdsOfD1?_len {ds : List DeclT} : ∀ (v : PExpr) (rs : List Acc), rdsOfD1? ds v = .ok rs → rs.length = cnt v
+  | .lit _, rs, h => by simp [rdsOfD1?] at h; subst h; simp [cnt]
+  | .binary op l r, rs, h => by
+      obtain ⟨-, ra, rb, hl, hr, rfl⟩ := rdsOfD1?_binary h
+      simp [cnt, rdsOfD1?_len l ra hl, rdsOfD1?_len r rb hr]
+  | .unary op a, rs, h => by
+      obtain ⟨-, ha⟩ := rdsOfD1?_unary h
+      simp [cnt, rdsOfD1?_len a rs ha]
+  | .ternary c t e, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD1?_ternary h
+      simp [cnt, rdsOfD1?_len c rc hc, rdsOfD1?_len t rt ht, rdsOfD1?_len e re he, Nat.add_assoc]
+  | .reduce op a, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [cnt, rdsOfD1?_len a rs h]
+  | .resize m e, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [cnt, rdsOfD1?_len e rs h]
+  | .signedResize m e, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [cnt, rdsOfD1?_len e rs h]
+  | .concat _, rs, h => by simp [rdsOfD1?] at h
+  | .ident _, rs, h | .bitSel .., rs, h | .partSel .., rs, h | .arrayElem .., rs, h | .arrayPart .., rs, h
+  | .cast .., rs, h | .fill _, rs, h | .paramRef .., rs, h | .genvarRef _, rs, h | .enumRef .., rs, h | .int _, rs, h
+  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .repl .., rs, h => by
+      obtain ⟨a, rfl, -, hc, -⟩ := dLeaf_facts (by simpa [rdsOfD1?] using h)
+      simp [hc]
+
+theorem partRdDW_len {ds : List DeclT} {p : PExpr} {rs : List Acc} (h : partRdDW? ds p = .ok rs) :
+    rs.length = cnt p := by
+  rcases partRdDW?_cases h with ⟨c, a, rfl, h'⟩ | ⟨-, h'⟩
+  · obtain ⟨k, -, harg⟩ := repRdD?_cases h'
+    obtain ⟨x, rfl, hx⟩ := repArgRdD?_cases harg
+    rcases hx with ⟨v, hv, rfl⟩ | ⟨hl, -, -⟩
+    · have := cnt_peel x
+      rw [hv] at this
+      simp [cnt, pcnt, ← this]
+    · obtain ⟨a', rfl, -, hc, -⟩ := dLeaf_facts hl
+      rw [cnt_peel] at hc
+      simp [cnt, pcnt, hc]
+  · rcases partRdD?_cases h' with ⟨v, hv, rfl⟩ | ⟨-, hl⟩
+    · have := cnt_peel p
+      rw [hv] at this
+      simp [← this, cnt]
+    · obtain ⟨a', rfl, -, hc, -⟩ := dLeaf_facts hl
+      rw [cnt_peel] at hc
+      simp [hc]
+
+theorem partsRdD_len {ds : List DeclT} :
+    ∀ (ps : List PExpr) (rs : List Acc), partsRdD? ds ps = .ok rs → rs.length = pcnt ps
+  | [], rs, h => by simp [partsRdD?] at h; subst h; simp [pcnt]
+  | p :: ps, rs, h => by
+      simp only [partsRdD?] at h
+      rcases hp : partRdDW? ds p with e | ra
+      · simp [hp] at h
+      · rcases hq : partsRdD? ds ps with e | rb
+        · simp [hp, hq] at h
+        · simp only [hp, hq, Except.ok.injEq] at h
+          subst h
+          simp [pcnt, partRdDW_len hp, partsRdD_len ps rb hq]
+
+theorem rdsOfD?_len {ds : List DeclT} :
+    ∀ (v : PExpr) (s : Bool) (rs : List Acc), rdsOfD? ds s v = .ok rs → rs.length = cnt v
+  | .lit _, _, rs, h => by simp [rdsOfD?] at h; subst h; simp [cnt]
+  | .int _, _, rs, h => by simp [rdsOfD?] at h; subst h; simp [cnt]
+  | .binary op l r, s, rs, h => by
+      rcases rdsOfD?_binary h with ⟨-, ra, rb, hl, hr, rfl⟩ | ⟨-, ra, rb, hl, hr, rfl⟩ |
+        ⟨-, -, -, ra, rb, hl, hr, rfl⟩
+      · simp [cnt, rdsOfD?_len l s ra hl, rdsOfD?_len r s rb hr]
+      · simp [cnt, rdsOfD1?_len l ra hl, rdsOfD1?_len r rb hr]
+      · simp [cnt, rdsOfD?_len l s ra hl, shAmt_len hr]
+  | .unary op a, s, rs, h => by
+      rcases rdsOfD?_unary h with ⟨-, ha⟩ | ⟨-, ha⟩
+      · simp [cnt, rdsOfD?_len a s rs ha]
+      · simp [cnt, rdsOfD1?_len a rs ha]
+  | .ternary c t e, s, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD?_ternary h
+      simp [cnt, rdsOfD1?_len c rc hc, rdsOfD?_len t s rt ht, rdsOfD?_len e s re he, Nat.add_assoc]
+  | .reduce op a, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [cnt, rdsOfD1?_len a rs h]
+  | .resize m e, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [cnt, rdsOfD?_len e false rs h]
+  | .signedResize m e, s, rs, h => by
+      obtain ⟨-, h'⟩ := rdsOfD?_sresize h
+      simp [cnt, rdsOfD?_len e true rs h']
+  | .concat ps, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [cnt, partsRdD_len ps rs h]
+  | .repl c a, s, rs, h => by
+      simp only [rdsOfD?] at h
+      exact partRdDW_len (p := .repl c a) (by simpa [partRdDW?] using h)
+  | .ident _, _, rs, h | .bitSel .., _, rs, h | .partSel .., _, rs, h | .arrayElem .., _, rs, h
+  | .arrayPart .., _, rs, h | .cast .., _, rs, h | .fill _, _, rs, h | .paramRef .., _, rs, h | .genvarRef _, _, rs, h
+  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h => by
+      obtain ⟨a, rfl, -, hc, -⟩ := dLeaf_facts (by simpa [rdsOfD?] using h)
+      simp [hc]
+
+/-! ### The skeletons' leaves are the reads -/
+
+theorem skD1_leaves {ds : List DeclT} :
+    ∀ (v : PExpr) (rs : List Acc), rdsOfD1? ds v = .ok rs → (skD1 v rs).leaves = rs
+  | .lit _, rs, h => by simp [rdsOfD1?] at h; subst h; simp [skD1, Sk.leaves]
+  | .binary op l r, rs, h => by
+      obtain ⟨hb, ra, rb, hl, hr, rfl⟩ := rdsOfD1?_binary h
+      have hla := rdsOfD1?_len l ra hl
+      have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+      have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+      have ihl := skD1_leaves l ra hl
+      have ihr := skD1_leaves r rb hr
+      rcases binOk_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+        simp [skD1, gateOf, mkGate, e1, e2, Sk.leaves, ihl, ihr]
+  | .unary op a, rs, h => by
+      obtain ⟨hop, ha⟩ := rdsOfD1?_unary h
+      have ih := skD1_leaves a rs ha
+      rcases hop with rfl | rfl <;> simp [skD1, Sk.leaves, ih]
+  | .ternary c t e, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD1?_ternary h
+      have hc' := rdsOfD1?_len c rc hc
+      have ht' := rdsOfD1?_len t rt ht
+      have e1 : (rc ++ rt ++ re).take (cnt c) = rc := by
+        rw [List.append_assoc]; exact List.take_left' hc'
+      have e2 : (rc ++ rt ++ re).drop (cnt c) = rt ++ re := by
+        rw [List.append_assoc]; exact List.drop_left' hc'
+      have e3 : (rt ++ re).take (cnt t) = rt := List.take_left' ht'
+      have e4 : (rt ++ re).drop (cnt t) = re := List.drop_left' ht'
+      simp only [skD1, e1, e2, e3, e4, Sk.leaves, skD1_leaves c rc hc, skD1_leaves t rt ht, skD1_leaves e re he]
+  | .reduce op a, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [skD1, Sk.leaves, skD1_leaves a rs h]
+  | .resize m e, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [skD1, skD1_leaves e rs h]
+  | .signedResize m e, rs, h => by
+      simp only [rdsOfD1?] at h
+      simp [skD1, skD1_leaves e rs h]
+  | .concat _, rs, h => by simp [rdsOfD1?] at h
+  | .ident _, rs, h | .bitSel .., rs, h | .partSel .., rs, h | .arrayElem .., rs, h | .arrayPart .., rs, h
+  | .cast .., rs, h | .fill _, rs, h | .paramRef .., rs, h | .genvarRef _, rs, h | .enumRef .., rs, h | .int _, rs, h
+  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .repl .., rs, h => by
+      obtain ⟨a, rfl, -, -, -, h1, -⟩ := dLeaf_facts (by simpa [rdsOfD1?] using h)
+      simp [h1, Sk.leaves]
+
+theorem repPartD_lit {c x : PExpr} {v : LVec} (hv : x.peelMk = .lit v) (as : List Acc) :
+    repPartD c (.concat [x]) as = .replit (repAff c) v := by
+  simp [repPartD, hv]
+
+theorem repPartD_rd {c x : PExpr} (hnl : ∀ v, x.peelMk ≠ .lit v) (as : List Acc) :
+    repPartD c (.concat [x]) as = .reprd (repAff c) (as.headD (.whole "")) := by
+  unfold repPartD
+  cases h : x.peelMk <;> simp_all
+
+theorem dPart_lit {p : PExpr} {v : LVec} (hv : p.peelMk = .lit v) (as : List Acc) : dPart p as = .lit v := by
+  simp [dPart, hv]
+
+theorem dPart_rd {p : PExpr} (hnl : ∀ v, p.peelMk ≠ .lit v) (as : List Acc) :
+    dPart p as = .rd (as.headD (.whole "")) := by
+  unfold dPart
+  cases h : p.peelMk <;> simp_all
+
+theorem partsTD_cons (p : PExpr) (ps : List PExpr) (as : List Acc) :
+    partsTD (p :: ps) as = partTD p as :: partsTD ps (as.drop (cnt p)) := by
+  simp only [partsTD]
+
+theorem partTD_of_ne {p : PExpr} (hnr : ∀ c a, p ≠ .repl c a) (as : List Acc) : partTD p as = dPart p as := by
+  cases p <;> first | rfl | exact absurd rfl (hnr _ _)
+
+theorem partsTD_leaves {ds : List DeclT} :
+    ∀ (ps : List PExpr) (rs : List Acc), partsRdD? ds ps = .ok rs → partLeaves (partsTD ps rs) = rs
+  | [], rs, h => by simp [partsRdD?] at h; subst h; simp [partsTD, partLeaves]
+  | p :: ps, rs, h => by
+      simp only [partsRdD?] at h
+      rcases hp : partRdDW? ds p with e | ra
+      · simp [hp] at h
+      · rcases hq : partsRdD? ds ps with e | rb
+        · simp [hp, hq] at h
+        · simp only [hp, hq, Except.ok.injEq] at h
+          subst h
+          have hla := partRdDW_len hp
+          have e2 : (ra ++ rb).drop (cnt p) = rb := List.drop_left' hla
+          have ih := partsTD_leaves ps rb hq
+          rw [partsTD_cons, e2]
+          rcases partRdDW?_cases hp with ⟨c, a, rfl, h'⟩ | ⟨hnr, h'⟩
+          · obtain ⟨k, -, harg⟩ := repRdD?_cases h'
+            obtain ⟨x, rfl, hx⟩ := repArgRdD?_cases harg
+            rcases hx with ⟨v, hv, rfl⟩ | ⟨hl, hnl, -⟩
+            · simp only [partTD, repPartD_lit hv, partLeaves, ih, List.nil_append]
+            · obtain ⟨a', rfl, -⟩ := dLeaf_facts hl
+              simp only [partTD, repPartD_rd hnl, partLeaves, ih, List.singleton_append, List.headD_cons]
+          · rw [partTD_of_ne hnr]
+            rcases partRdD?_cases h' with ⟨v, hv, rfl⟩ | ⟨hnl, hl⟩
+            · simp only [dPart_lit hv, partLeaves, ih, List.nil_append]
+            · obtain ⟨a', rfl, -⟩ := dLeaf_facts hl
+              simp only [dPart_rd hnl, partLeaves, ih, List.singleton_append, List.headD_cons]
+
+theorem skD_leaves {ds : List DeclT} :
+    ∀ (v : PExpr) (s : Bool) (rs : List Acc), rdsOfD? ds s v = .ok rs → (skD s v rs).leaves = rs
+  | .lit _, _, rs, h => by simp [rdsOfD?] at h; subst h; simp [skD, Sk.leaves]
+  | .int _, _, rs, h => by simp [rdsOfD?] at h; subst h; simp [skD, Sk.leaves]
+  | .binary op l r, s, rs, h => by
+      rcases rdsOfD?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
+        ⟨-, -, hb, ra, rb, hl, hr, rfl⟩
+      · have hla := rdsOfD?_len l s ra hl
+        have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+        have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+        have ihl := skD_leaves l s ra hl
+        have ihr := skD_leaves r s rb hr
+        rcases ctxOpW_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | ⟨cm, rfl⟩ <;> (try cases cm) <;>
+          simp [skD, gateOf, mkGate, CmpOp.ex, e1, e2, Sk.leaves, ihl, ihr]
+      · have hla := rdsOfD1?_len l ra hl
+        have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+        have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+        have ihl := skD1_leaves l ra hl
+        have ihr := skD1_leaves r rb hr
+        rcases selfOpW_cases hb with rfl | rfl <;> simp [skD, gateOf, e1, e2, Sk.leaves, ihl, ihr]
+      · have hla := rdsOfD?_len l s ra hl
+        have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
+        have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
+        have ihl := skD_leaves l s ra hl
+        have ihr : (skAmt r rb).leaves = rb := by rw [skAmt_eq hr]; exact shAmt_leaves hr
+        rcases dShOk_cases hb with ⟨sl, rfl⟩ | rfl | ⟨-, rfl⟩ <;>
+          simp [skD, gateOf, e1, e2, Sk.leaves, ihl, ihr]
+  | .unary op a, s, rs, h => by
+      rcases rdsOfD?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
+      · simp [skD, Sk.leaves, skD_leaves a s rs ha]
+      · simp [skD, Sk.leaves, skD1_leaves a rs ha]
+  | .ternary c t e, s, rs, h => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD?_ternary h
+      have hc' := rdsOfD1?_len c rc hc
+      have ht' := rdsOfD?_len t s rt ht
+      have e1 : (rc ++ rt ++ re).take (cnt c) = rc := by
+        rw [List.append_assoc]; exact List.take_left' hc'
+      have e2 : (rc ++ rt ++ re).drop (cnt c) = rt ++ re := by
+        rw [List.append_assoc]; exact List.drop_left' hc'
+      have e3 : (rt ++ re).take (cnt t) = rt := List.take_left' ht'
+      have e4 : (rt ++ re).drop (cnt t) = re := List.drop_left' ht'
+      simp only [skD, e1, e2, e3, e4, Sk.leaves, skD1_leaves c rc hc, skD_leaves t s rt ht, skD_leaves e s re he]
+  | .reduce op a, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [skD, Sk.leaves, skD1_leaves a rs h]
+  | .resize m e, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [skD, skD_leaves e false rs h]
+  | .signedResize m e, s, rs, h => by
+      obtain ⟨-, h'⟩ := rdsOfD?_sresize h
+      simp [skD, skD_leaves e true rs h']
+  | .concat ps, s, rs, h => by
+      simp only [rdsOfD?] at h
+      simp [skD, Sk.leaves, partsTD_leaves ps rs h]
+  | .repl c a, s, rs, h => by
+      simp only [rdsOfD?] at h
+      obtain ⟨k, -, harg⟩ := repRdD?_cases h
+      obtain ⟨x, rfl, hx⟩ := repArgRdD?_cases harg
+      rcases hx with ⟨v, hv, rfl⟩ | ⟨hl, hnl, -⟩
+      · simp [skD, repPartD_lit hv, Sk.leaves, partLeaves]
+      · obtain ⟨a', rfl, -⟩ := dLeaf_facts hl
+        simp [skD, repPartD_rd hnl, Sk.leaves, partLeaves]
+  | .ident _, _, rs, h | .bitSel .., _, rs, h | .partSel .., _, rs, h | .arrayElem .., _, rs, h
+  | .arrayPart .., _, rs, h | .cast .., _, rs, h | .fill _, _, rs, h | .paramRef .., _, rs, h | .genvarRef _, _, rs, h
+  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h => by
+      obtain ⟨a, rfl, -, -, h1, -⟩ := dLeaf_facts (by simpa [rdsOfD?] using h)
+      simp [h1, Sk.leaves]
 
 theorem rdsOfW?_len {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragW v = true → rs.length = cnt v
@@ -1867,10 +2195,7 @@ theorem rdsOfW?_len {ds : List DeclT} :
         simp [cnt, rdsOfW?_len l ra hl hf.1, rdsOfW?_len r rb hr hf.2]
       · replace hf := fragW_bin_self hb hf
         simp [cnt, rdsOf?_len l ra hl hf.1, rdsOf?_len r rb hr hf.2]
-      · rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-        · simp [cnt, shLeft_len hl, shAmt_len hr]
-        · have hfl := (fragW_bin_ctx (selfOpW_false_of_sh hb) hf).1
-          simp [cnt, rdsOfW?_len l ra hl hfl, shAmt_len hr]
+      · simp [cnt, rdsOfD?_len l _ ra hl, shAmt_len hr]
       · simp [cnt]
   | .unary op a, rs, h, hf => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
@@ -1914,9 +2239,9 @@ theorem rdsOfW?_len {ds : List DeclT} :
       have h' : repRd? ds c a = .ok rs := by simpa [rdsOfW?] using h
       obtain ⟨k, hk, harg⟩ := repRd?_cases h'
       rcases repArgRd?_cases harg with ⟨v, rfl, rfl⟩ | ⟨e, rfl, hl, hnl', -⟩
-      · simp [cnt]
-      · obtain ⟨x, -, rfl⟩ := rdsLeaf_cases hl
-        simp [cnt_repl_ne c hnl']
+      · simp [cnt, pcnt]
+      · obtain ⟨x, hlx, rfl⟩ := rdsLeaf_cases hl
+        simp [cnt, pcnt, cnt_of_leaf hlx]
   | .fill _, _, _, hf => by simp [fragW] at hf
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
   | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
@@ -1948,18 +2273,10 @@ theorem skT_leavesW {ds : List DeclT} :
         have ihr := skT_leaves r rb hr hf.2
         rcases selfOpW_cases hb with rfl | rfl <;>
           simp [skT, gateOf, mkGate, e1, e2, Sk.leaves, ihl, ihr]
-      · -- a run-time shift: the left operand is a leaf (signed shift) or an operand of the fragment (unsigned shift)
-        have hfl := (fragW_bin_ctx (selfOpW_false_of_sh hb) hf).1
-        have hla : ra.length = cnt l := by
-          rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-          · exact shLeft_len hl
-          · exact rdsOfW?_len l ra hl hfl
-        obtain ⟨d, sg, x, -, hx, hsk⟩ := skT_sh hb hl hr hla
+      · -- a run-time shift: the left operand through `rdsOfD?`, its skeleton `skD`
+        obtain ⟨d, -, hsk⟩ := skT_sh (rb := rb) hb (rdsOfD?_len l _ ra hl)
         rw [hsk]
-        rcases hx with ⟨-, hxo, -⟩ | ⟨-, -, hl', hxl⟩
-        · simp [Sk.leaves, shOpd_leaves hxo, shAmt_leaves hr]
-        · rw [hxl]
-          simp [Sk.leaves, skT_leavesW l ra hl' hfl, shAmt_leaves hr]
+        simp [Sk.leaves, skD_leaves l _ ra hl, shAmt_leaves hr]
       · -- a signed comparison of two signed signals
         cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, Sk.leaves]
   | .unary op a, rs, h, hf => by

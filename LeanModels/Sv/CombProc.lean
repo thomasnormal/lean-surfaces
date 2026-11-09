@@ -577,73 +577,55 @@ theorem idxFree_shAmt (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         Expr2.idxFree] <;> cases s <;> split <;> simp [Expr2.idxFree, *]
   · exact idxFree_shOpd C hdw h' hacc s c
 
-theorem idxFree_shLeft (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+/-! ### The left operand of a shift (`rdsOfD?`) through `instDivOperand2`: no `index` node -/
+
+theorem idxFree_dLeaf (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {e : PExpr} {rs : List Acc}
-    {s : Bool} (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (c : Option Nat) :
+    (h : dLeaf? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s : Bool) (c : Option Nat) :
     (instDivOperand2 E elems s c e).idxFree = true := by
-  obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩ | ⟨rfl, n, rfl, rfl⟩
-  · exact idxFree_shOpd C hdw hxo hacc s c
-  · rw [instDiv_resize false c m x (shOpdKind hxo)]
-    exact idxFree_shOpd C hdw hxo hacc false _
-  · rw [instDiv_sresize true c m x]
-    exact idxFree_shOpd C hdw hxo hacc true _
-  · rw [instDiv_cast true c n]
-    exact idxFree_shOpd C hdw hxo hacc true c
+  rw [← iDO_uncast]
+  exact idxFree_shOpd C hdw (shOpd_of_dLeaf h) hacc s c
 
-/-- `idxFree_shLeft` at any signedness the operand is lowered with (an enclosing shift lowers a nested shift's operand
-with its own). -/
-theorem idxFree_shLeftS (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
-    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {e : PExpr} {rs : List Acc}
-    {s : Bool} (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s' : Bool)
-    (c : Option Nat) : (instDivOperand2 E elems s' c e).idxFree = true := by
-  obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩ | ⟨-, n, rfl, rfl⟩
-  · exact idxFree_shOpd C hdw hxo hacc s' c
-  · rw [instDiv_resize s' c m x (shOpdKind hxo)]
-    exact idxFree_shOpd C hdw hxo hacc false _
-  · rw [instDiv_sresize s' c m x]
-    exact idxFree_shOpd C hdw hxo hacc true _
-  · rw [instDiv_cast s' c n]
-    exact idxFree_shOpd C hdw hxo hacc s' c
+theorem idxFree_peel (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {rs : List Acc}
+    (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) :
+    ∀ (x : PExpr), ((∃ v, x.peelMk = .lit v ∧ rs = []) ∨ dLeaf? ds x.peelMk = .ok rs) →
+      ∀ (s : Bool) (c : Option Nat), (instDivOperand2 E elems s c x).idxFree = true
+  | .resize m e, h, s, c => by
+      have hng : ∀ g, e ≠ .genvarRef g := by
+        intro g hg; subst hg
+        rcases h with ⟨v, hv, -⟩ | h
+        · simp [PExpr.peelMk] at hv
+        · exact dLeaf_ne_genvar h g rfl
+      rw [instDiv_resizeG s c m e hng]
+      exact idxFree_peel C hdw hacc e (by simpa [PExpr.peelMk] using h) false _
+  | .signedResize m e, h, s, c => by
+      rw [instDiv_sresize s c m e]
+      exact idxFree_peel C hdw hacc e (by simpa [PExpr.peelMk] using h) true _
+  | .lit v, h, s, c => by
+      rcases h with ⟨v', hv, rfl⟩ | h
+      · exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) s c
+      · simp [PExpr.peelMk, dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
+  | .fill _, h, s, c | .ident _, h, s, c | .bitSel .., h, s, c | .partSel .., h, s, c | .arrayElem .., h, s, c
+  | .arrayPart .., h, s, c | .paramRef .., h, s, c | .genvarRef _, h, s, c | .enumRef .., h, s, c | .int _, h, s, c
+  | .sysCall .., h, s, c | .cast .., h, s, c | .squash2 .., h, s, c | .unsupported .., h, s, c | .binary .., h, s, c
+  | .unary .., h, s, c | .ternary .., h, s, c | .reduce .., h, s, c | .concat _, h, s, c | .repl .., h, s, c => by
+      rcases h with ⟨v, hv, -⟩ | h
+      · simp [PExpr.peelMk] at hv
+      · exact idxFree_dLeaf C hdw (by simpa [PExpr.peelMk] using h) hacc s c
 
-/-- The parts of a concatenation through `instDivParts2` have no `index` node. -/
-theorem idxFree_divPartsV1 (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+theorem idxFree_divD1 (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
-    ∀ (ps : List PExpr) (rs : List Acc), partsRd? ds ps = .ok rs →
-      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → Expr2.listIdxFree (instDivParts2 E elems ps) = true
-  | [], rs, h, _ => by simp [instDivParts2_nil, Expr2.listIdxFree]
-  | p :: ps, rs, h, hacc => by
-      simp only [partsRd?] at h
-      rcases hp : partRd? ds p with e | ra
-      · simp [hp] at h
-      · rcases hq : partsRd? ds ps with e | rb
-        · simp [hp, hq] at h
-        · simp only [hp, hq, Except.ok.injEq] at h
-          subst h
-          have h1 : (instDivOperand2 E elems false (divOperandWidth2 E elems p) p).idxFree = true := by
-            unfold partRd? at hp
-            cases p with
-            | lit v => exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) _ _
-            | _ => exact idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf hp) (fun a ha => hacc a (List.mem_append_left _ ha)) _ _
-          have h2 := idxFree_divPartsV1 C hdw ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha))
-          rw [instDivParts2_cons]
-          simp [Expr2.listIdxFree, h1, h2]
-
-/-- **An expression of the fragment through `instDivOperand2`** has no `index` node, at every signedness and
-context. -/
-theorem idxFree_divV1 (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
-    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
-    ∀ (e : PExpr) (rs : List Acc), rdsOf? ds e = .ok rs → (∀ a ∈ rs, AccOK σ DW DG EW ns a) →
+    ∀ (e : PExpr) (rs : List Acc), rdsOfD1? ds e = .ok rs → (∀ a ∈ rs, AccOK σ DW DG EW ns a) →
       ∀ (s : Bool) (c : Option Nat), (instDivOperand2 E elems s c e).idxFree = true
   | .lit v, rs, h, hacc, s, c => by
-      simp only [rdsOf?, Except.ok.injEq] at h
+      simp only [rdsOfD1?, Except.ok.injEq] at h
       subst h
       exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc s c
   | .binary op l r, rs, h, hacc, s, c => by
-      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOf?_binary h
-      have ihl := idxFree_divV1 C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-      have ihr := idxFree_divV1 C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      obtain ⟨hb, ra, rb, hl, hr', rfl⟩ := rdsOfD1?_binary h
+      have ihl := idxFree_divD1 C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+      have ihr := idxFree_divD1 C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
       have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor ∨ g = .add ∨ g = .sub) →
           (instDivOperand2 E elems s c (.binary (.m0 g) l r)).idxFree = true := by
         intro g hg
@@ -662,65 +644,54 @@ theorem idxFree_divV1 (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       · exact cmp .eq
       · exact cmp .ne
   | .unary op a, rs, h, hacc, s, c => by
-      obtain ⟨hop, ha⟩ := rdsOf?_unary h
-      have iha := idxFree_divV1 C hdw a rs ha hacc
+      obtain ⟨hop, ha⟩ := rdsOfD1?_unary h
+      have iha := idxFree_divD1 C hdw a rs ha hacc
       rcases hop with rfl | rfl
       · obtain ⟨k, hk⟩ := instDiv_bnot_form (env := E) (elems := elems) s c a
         rw [hk]; simpa [Expr2.idxFree] using iha s k
       · rw [instDiv_lnot]; exact idxFree_fitDiv (by simpa [Expr2.idxFree] using iha false _) s c _
   | .ternary g t e, rs, h, hacc, s, c => by
-      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOf?_ternary h
-      have ihg := idxFree_divV1 C hdw g rc hc
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD1?_ternary h
+      have ihg := idxFree_divD1 C hdw g rc hc
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
-      have iht := idxFree_divV1 C hdw t rt ht
+      have iht := idxFree_divD1 C hdw t rt ht
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha)))
-      have ihe := idxFree_divV1 C hdw e re he (fun a ha => hacc a (List.mem_append_right _ ha))
+      have ihe := idxFree_divD1 C hdw e re he (fun a ha => hacc a (List.mem_append_right _ ha))
       obtain ⟨k, hk⟩ := instDiv_ternary_form (env := E) (elems := elems) s c g t e
       rw [hk]
       simp [Expr2.idxFree, ihg false _, iht s k, ihe s k]
   | .reduce op a, rs, h, hacc, s, c => by
-      have iha := idxFree_divV1 C hdw a rs (rdsOf?_reduce h) hacc
+      have iha := idxFree_divD1 C hdw a rs (by simpa [rdsOfD1?] using h) hacc
       rw [instDiv_reduce]; exact idxFree_fitDiv (by simpa [Expr2.idxFree] using iha false _) s c _
-  | .concat ps, rs, h, hacc, s, c => by
-      simp only [rdsOf?] at h
-      rw [instDiv_concat]
-      exact idxFree_fitDiv (by simpa [Expr2.idxFree] using idxFree_divPartsV1 C hdw ps rs h hacc) s c _
-  | .ident n, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .bitSel b i, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .partSel b m l, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .arrayElem n is, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .arrayPart n is m a b, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOf?] using h)) hacc s c
-  | .repl .., rs, h, _, _, _
-  | .paramRef .., rs, h, _, _, _
-  | .genvarRef .., rs, h, _, _, _ | .enumRef .., rs, h, _, _, _
-  | .int .., rs, h, _, _, _ | .fill .., rs, h, _, _, _
-  | .resize .., rs, h, _, _, _ | .signedResize .., rs, h, _, _, _
-  | .squash2 .., rs, h, _, _, _ | .sysCall .., rs, h, _, _, _
-  | .cast .., rs, h, _, _, _ | .unsupported .., rs, h, _, _, _ => by
-      simp [rdsOf?, rdsLeaf?, leafRd?] at h
+  | .resize m e, rs, h, hacc, s, c => by
+      have he : rdsOfD1? ds e = .ok rs := by simpa [rdsOfD1?] using h
+      rw [instDiv_resizeG s c m e (rdsOfD1?_ne_genvar he)]
+      exact idxFree_divD1 C hdw e rs he hacc false _
+  | .signedResize m e, rs, h, hacc, s, c => by
+      have he : rdsOfD1? ds e = .ok rs := by simpa [rdsOfD1?] using h
+      rw [instDiv_sresize s c m e]
+      exact idxFree_divD1 C hdw e rs he hacc true _
+  | .concat _, rs, h, _, _, _ => by simp [rdsOfD1?] at h
+  | .ident _, rs, h, hacc, s, c | .bitSel .., rs, h, hacc, s, c | .partSel .., rs, h, hacc, s, c
+  | .arrayElem .., rs, h, hacc, s, c | .arrayPart .., rs, h, hacc, s, c | .cast .., rs, h, hacc, s, c
+  | .fill _, rs, h, hacc, s, c | .paramRef .., rs, h, hacc, s, c | .genvarRef _, rs, h, hacc, s, c
+  | .enumRef .., rs, h, hacc, s, c | .int _, rs, h, hacc, s, c | .sysCall .., rs, h, hacc, s, c
+  | .squash2 .., rs, h, hacc, s, c | .unsupported .., rs, h, hacc, s, c | .repl .., rs, h, hacc, s, c =>
+      idxFree_dLeaf C hdw (by simpa [rdsOfD1?] using h) hacc s c
 
-/-- A replication through `instDivOperand2` (a literal or one access in a one-part concatenation) has no `index`
-node. -/
-theorem idxFree_divRepl (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+theorem idxFree_divReplD (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {c a : PExpr} {rs : List Acc}
-    (h : repRd? ds c a = .ok rs) (hacc : ∀ x ∈ rs, AccOK σ DW DG EW ns x) (s : Bool) (ctx : Option Nat) :
+    (h : repRdD? ds c a = .ok rs) (hacc : ∀ x ∈ rs, AccOK σ DW DG EW ns x) (s : Bool) (ctx : Option Nat) :
     (instDivOperand2 E elems s ctx (.repl c a)).idxFree = true := by
-  obtain ⟨k, hk, harg⟩ := repRd?_cases h
-  have ha : ∀ ctx', (instDivOperand2 E elems false ctx' a).idxFree = true := by
+  obtain ⟨k, hk, harg⟩ := repRdD?_cases h
+  obtain ⟨x, rfl, hx⟩ := repArgRdD?_cases harg
+  have ha : ∀ ctx', (fitDivOperand2 false ctx' (divOperandWidthSum2 E elems [x])
+      (.concat (instDivParts2 E elems [x]).toArray)).idxFree = true := by
     intro ctx'
-    rcases repArgRd?_cases harg with ⟨v, rfl, rfl⟩ | ⟨e, rfl, hl, -, -⟩
-    · rw [instDiv_concat, instDivParts2_cons, instDivParts2_nil]
-      have h1 := idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) false
-        (divOperandWidth2 E elems (.lit v))
-      exact idxFree_fitDiv (by simp [Expr2.idxFree, Expr2.listIdxFree, h1]) false _ _
-    · rw [instDiv_concat, instDivParts2_cons, instDivParts2_nil]
-      have h1 := idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf hl) hacc false (divOperandWidth2 E elems e)
-      exact idxFree_fitDiv (by simp [Expr2.idxFree, Expr2.listIdxFree, h1]) false _ _
+    rw [instDivParts2_cons, instDivParts2_nil]
+    have h1 := idxFree_peel C hdw hacc x (by rcases hx with h | ⟨h, -⟩; exact Or.inl h; exact Or.inr h) false
+      (divOperandWidth2 E elems x)
+    exact idxFree_fitDiv (by simp [Expr2.idxFree, Expr2.listIdxFree, h1]) false _ _
   simp only [instDivOperand2]
   cases hc : evalInt E c with
   | error e => simp [Expr2.idxFree]
@@ -730,50 +701,47 @@ theorem idxFree_divRepl (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         exact idxFree_fitDiv (by simpa [Expr2.idxFree] using ha _) s ctx _
       · simp [h0, Expr2.idxFree]
 
-/-- The parts of a word-level concatenation through `instDivParts2` have no `index` node. -/
-theorem idxFree_divPartsW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+theorem idxFree_divPartsD (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
-    ∀ (ps : List PExpr) (rs : List Acc), partsRdW? ds ps = .ok rs →
+    ∀ (ps : List PExpr) (rs : List Acc), partsRdD? ds ps = .ok rs →
       (∀ a ∈ rs, AccOK σ DW DG EW ns a) → Expr2.listIdxFree (instDivParts2 E elems ps) = true
   | [], rs, h, _ => by simp [instDivParts2_nil, Expr2.listIdxFree]
   | p :: ps, rs, h, hacc => by
-      simp only [partsRdW?] at h
-      rcases hp : partRdW? ds p with e | ra
+      simp only [partsRdD?] at h
+      rcases hp : partRdDW? ds p with e | ra
       · simp [hp] at h
-      · rcases hq : partsRdW? ds ps with e | rb
+      · rcases hq : partsRdD? ds ps with e | rb
         · simp [hp, hq] at h
         · simp only [hp, hq, Except.ok.injEq] at h
           subst h
+          have hacl : ∀ x ∈ ra, AccOK σ DW DG EW ns x := fun x hx => hacc x (List.mem_append_left _ hx)
           have h1 : (instDivOperand2 E elems false (divOperandWidth2 E elems p) p).idxFree = true := by
-            unfold partRdW? at hp
-            cases p with
-            | lit v => exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) (by simp) _ _
-            | repl c a =>
-                exact idxFree_divRepl C hdw hp (fun x hx => hacc x (List.mem_append_left _ hx)) _ _
-            | _ => exact idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf hp) (fun a ha => hacc a (List.mem_append_left _ ha)) _ _
-          have h2 := idxFree_divPartsW C hdw ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha))
+            rcases partRdDW?_cases hp with ⟨c, a, rfl, h'⟩ | ⟨-, h'⟩
+            · exact idxFree_divReplD C hdw h' hacl _ _
+            · exact idxFree_peel C hdw hacl p
+                (by rcases partRdD?_cases h' with h | ⟨-, h⟩; exact Or.inl h; exact Or.inr h) _ _
+          have h2 := idxFree_divPartsD C hdw ps rb hq (fun a ha => hacc a (List.mem_append_right _ ha))
           rw [instDivParts2_cons]
           simp [Expr2.listIdxFree, h1, h2]
 
-/-- **An expression of the word-level fragment through `instDivOperand2`** (the left operand of an unsigned shift)
-has no `index` node, at every signedness and context. -/
-theorem idxFree_divW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+/-- **The left operand of a shift through `instDivOperand2`** has no `index` node, at every signedness and context. -/
+theorem idxFree_divD (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
-    ∀ (e : PExpr) (rs : List Acc), rdsOfW? ds e = .ok rs → (∀ a ∈ rs, AccOK σ DW DG EW ns a) →
+    ∀ (e : PExpr) (s0 : Bool) (rs : List Acc), rdsOfD? ds s0 e = .ok rs → (∀ a ∈ rs, AccOK σ DW DG EW ns a) →
       ∀ (s : Bool) (c : Option Nat), (instDivOperand2 E elems s c e).idxFree = true
-  | .lit v, rs, h, hacc, s, c => by
-      simp only [rdsOfW?, Except.ok.injEq] at h
+  | .lit v, _, rs, h, hacc, s, c => by
+      simp only [rdsOfD?, Except.ok.injEq] at h
       subst h
       exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc s c
-  | .int v, rs, h, hacc, s, c => by
-      simp only [rdsOfW?, Except.ok.injEq] at h
+  | .int v, _, rs, h, hacc, s, c => by
+      simp only [rdsOfD?, Except.ok.injEq] at h
       subst h
       exact idxFree_shOpd C hdw (ds := ds) (e := .int v) (rs := []) (by simp [shOpdRd?]) hacc s c
-  | .binary op l r, rs, h, hacc, s, c => by
-      rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
-        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
-      · have ihl := idxFree_divW C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-        have ihr := idxFree_divW C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+  | .binary op l r, s0, rs, h, hacc, s, c => by
+      rcases rdsOfD?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
+        ⟨-, -, hb, ra, rb, hl, hr', rfl⟩
+      · have ihl := idxFree_divD C hdw l s0 ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+        have ihr := idxFree_divD C hdw r s0 rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
         have gate : ∀ g : BinOp, (g = .and ∨ g = .or ∨ g = .xor ∨ g = .add ∨ g = .sub) →
             (instDivOperand2 E elems s c (.binary (.m0 g) l r)).idxFree = true := by
           intro g hg
@@ -789,82 +757,57 @@ theorem idxFree_divW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           rw [hk]; simp [Expr2.idxFree, ihl s k, ihr s k]
         · obtain ⟨k, hk⟩ := instDiv_cmp_form (env := E) (elems := elems) s c cm l r
           rw [hk]; exact idxFree_fitDiv (by simp [Expr2.idxFree, ihl s k, ihr s k]) s c _
-      · have ihl := idxFree_divV1 C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
-        have ihr := idxFree_divV1 C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
+      · have ihl := idxFree_divD1 C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+        have ihr := idxFree_divD1 C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
         rcases selfOpW_cases hb with rfl | rfl
         · rw [instDiv_land]; exact idxFree_fitDiv (by simp [Expr2.idxFree, ihl false _, ihr false _]) s c _
         · rw [instDiv_lor]; exact idxFree_fitDiv (by simp [Expr2.idxFree, ihl false _, ihr false _]) s c _
-      · have hR := idxFree_shAmt C hdw hr' (fun a ha => hacc a (List.mem_append_right _ ha)) false
+      · have hsh := shOpW_of_dShOk hb
+        have hR := idxFree_shAmt C hdw hr' (fun a ha => hacc a (List.mem_append_right _ ha)) false
           (shiftAmtWidth2 E elems r)
-        have hL : ∀ k, (instDivOperand2 E elems s k l).idxFree = true := by
-          intro k
-          rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-          · exact idxFree_shLeftS C hdw hl (fun a ha => hacc a (List.mem_append_left _ ha)) s k
-          · exact idxFree_divW C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) s k
-        obtain ⟨k, b, hk⟩ := instDiv_shift_form (env := E) (elems := elems) s c op hb l r
-        rw [hk]; simp [Expr2.idxFree, hL k, hR]
-      · obtain ⟨k, hk⟩ := instDiv_scmp_form (env := E) (elems := elems) s c hcm
-          (.cast true (.ident a)) (.cast true (.ident b))
-        have hrd : ∀ (n : String) (k : Option Nat), Acc.whole n ∈ [Acc.whole a, Acc.whole b] →
-            (instDivOperand2 E elems true k (.cast true (.ident n))).idxFree = true := by
-          intro n k hn
-          rw [instDiv_cast]
-          exact idxFree_shOpd C hdw (ds := ds) (e := .ident n) (rs := [.whole n])
-            (by simp [shOpdRd?, rdsLeaf?, leafRd?]) (fun x hx => by simp at hx; subst hx; exact hacc _ hn) true k
-        rw [hk]
-        exact idxFree_fitDiv (by simp [Expr2.idxFree, hrd a k (by simp), hrd b k (by simp)]) s c _
-  | .unary op a, rs, h, hacc, s, c => by
-      rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
-      · have iha := idxFree_divW C hdw a rs ha hacc
+        have hL := idxFree_divD C hdw l s0 ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
+        obtain ⟨k, b, hk⟩ := instDiv_shift_form (env := E) (elems := elems) s c op hsh l r
+        rw [hk]; simp [Expr2.idxFree, hL s k, hR]
+  | .unary op a, s0, rs, h, hacc, s, c => by
+      rcases rdsOfD?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
+      · have iha := idxFree_divD C hdw a s0 rs ha hacc
         obtain ⟨k, hk⟩ := instDiv_bnot_form (env := E) (elems := elems) s c a
         rw [hk]; simpa [Expr2.idxFree] using iha s k
-      · have iha := idxFree_divV1 C hdw a rs ha hacc
+      · have iha := idxFree_divD1 C hdw a rs ha hacc
         rw [instDiv_lnot]; exact idxFree_fitDiv (by simpa [Expr2.idxFree] using iha false _) s c _
-  | .ternary g t e, rs, h, hacc, s, c => by
-      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfW?_ternary h
-      have ihg := idxFree_divV1 C hdw g rc hc
+  | .ternary g t e, s0, rs, h, hacc, s, c => by
+      obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfD?_ternary h
+      have ihg := idxFree_divD1 C hdw g rc hc
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_left _ ha)))
-      have iht := idxFree_divW C hdw t rt ht
+      have iht := idxFree_divD C hdw t s0 rt ht
         (fun a ha => hacc a (List.mem_append_left _ (List.mem_append_right _ ha)))
-      have ihe := idxFree_divW C hdw e re he (fun a ha => hacc a (List.mem_append_right _ ha))
+      have ihe := idxFree_divD C hdw e s0 re he (fun a ha => hacc a (List.mem_append_right _ ha))
       obtain ⟨k, hk⟩ := instDiv_ternary_form (env := E) (elems := elems) s c g t e
       rw [hk]
       simp [Expr2.idxFree, ihg false _, iht s k, ihe s k]
-  | .reduce op a, rs, h, hacc, s, c => by
-      have iha := idxFree_divV1 C hdw a rs (rdsOfW?_reduce h) hacc
+  | .reduce op a, _, rs, h, hacc, s, c => by
+      have iha := idxFree_divD1 C hdw a rs (by simpa [rdsOfD?] using h) hacc
       rw [instDiv_reduce]; exact idxFree_fitDiv (by simpa [Expr2.idxFree] using iha false _) s c _
-  | .concat ps, rs, h, hacc, s, c => by
-      simp only [rdsOfW?] at h
+  | .concat ps, _, rs, h, hacc, s, c => by
       rw [instDiv_concat]
-      exact idxFree_fitDiv (by simpa [Expr2.idxFree] using idxFree_divPartsW C hdw ps rs h hacc) s c _
-  | .repl cn a, rs, h, hacc, s, c => idxFree_divRepl C hdw (by simpa [rdsOfW?] using h) hacc s c
-  | .resize m e, rs, h, hacc, s, c => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
-      · rw [instDiv_resizeG s c m _ (fun g hg => by cases hg)]
-        exact idxFree_shOpd C hdw (ds := ds) (e := .lit v) (rs := []) (by simp [shOpdRd?]) hacc false _
-      · have hng : ∀ g, e ≠ .genvarRef g := fun g hg => by subst hg; simp [leafRd?] at hl
-        rw [instDiv_resizeG s c m e hng]
-        exact idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (ds := ds) (by simp [rdsLeaf?, hl])) hacc false _
-      · have hng : ∀ g, e ≠ .genvarRef g := fun g hg => by subst hg; simp [PExpr.isOpW] at hop
-        rw [instDiv_resizeG s c m e hng]
-        exact idxFree_divW C hdw e rs hr hacc false _
-  | .ident n, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .bitSel b i, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .partSel b m l, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .arrayElem n is, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .arrayPart n is m a b, rs, h, hacc, s, c =>
-      idxFree_shOpd C hdw (shOpdRd?_of_rdsLeaf (by simpa [rdsOfW?] using h)) hacc s c
-  | .paramRef .., rs, h, _, _, _
-  | .genvarRef .., rs, h, _, _, _ | .enumRef .., rs, h, _, _, _
-  | .fill .., rs, h, _, _, _
-  | .signedResize .., rs, h, _, _, _
-  | .squash2 .., rs, h, _, _, _ | .sysCall .., rs, h, _, _, _
-  | .cast .., rs, h, _, _, _ | .unsupported .., rs, h, _, _, _ => by
-      simp [rdsOfW?, rdsLeaf?, leafRd?] at h
+      have hp := idxFree_divPartsD C hdw ps rs (by simpa [rdsOfD?] using h) hacc
+      exact idxFree_fitDiv (by simpa [Expr2.idxFree] using hp) s c _
+  | .repl cn a, _, rs, h, hacc, s, c => idxFree_divReplD C hdw (by simpa [rdsOfD?] using h) hacc s c
+  | .resize m e, _, rs, h, hacc, s, c => by
+      have he : rdsOfD? ds false e = .ok rs := by simpa [rdsOfD?] using h
+      rw [instDiv_resizeG s c m e (rdsOfD?_ne_genvar he)]
+      exact idxFree_divD C hdw e false rs he hacc false _
+  | .signedResize m e, _, rs, h, hacc, s, c => by
+      obtain ⟨-, he⟩ := rdsOfD?_sresize h
+      rw [instDiv_sresize s c m e]
+      exact idxFree_divD C hdw e true rs he hacc true _
+  | .ident _, _, rs, h, hacc, s, c | .bitSel .., _, rs, h, hacc, s, c | .partSel .., _, rs, h, hacc, s, c
+  | .arrayElem .., _, rs, h, hacc, s, c | .arrayPart .., _, rs, h, hacc, s, c
+  | .cast .., _, rs, h, hacc, s, c | .fill _, _, rs, h, hacc, s, c | .paramRef .., _, rs, h, hacc, s, c
+  | .genvarRef _, _, rs, h, hacc, s, c | .enumRef .., _, rs, h, hacc, s, c
+  | .sysCall .., _, rs, h, hacc, s, c | .squash2 .., _, rs, h, hacc, s, c
+  | .unsupported .., _, rs, h, hacc, s, c =>
+      idxFree_dLeaf C hdw (by simpa [rdsOfD?] using h) hacc s c
 
 /-- **An expression of the word-level fragment** (WP-B2 gate 2: the context-determined positions through
 `rdsOfW?`, the self-determined operands through the v1 theorem `inst_idxFree`) instantiates to an expression with
@@ -931,11 +874,8 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         · rw [ie_lor]; simp [Expr2.idxFree, ihl, ihr]
       · -- a run-time shift (WP-B2 gate 3): the left operand through `instDivOperand2`
         have hR := idxFree_shAmt C hdw hr' (fun a ha => hacc a (List.mem_append_right _ ha)) false
-        have hL : ∀ s c, (instDivOperand2 E elems s c l).idxFree = true := by
-          intro s c
-          rcases hl with ⟨-, hl⟩ | ⟨-, -, hl⟩
-          · exact idxFree_shLeftS C hdw hl (fun a ha => hacc a (List.mem_append_left _ ha)) s c
-          · exact idxFree_divW C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha)) s c
+        have hL : ∀ s c, (instDivOperand2 E elems s c l).idxFree = true :=
+          idxFree_divD C hdw l (shSign op) ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
         rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
         · obtain ⟨lc, hlc⟩ := ie_shl_form (env := E) (elems := elems) s ctx l r
           rw [hlc]; exact idxFree_ctxTrunc (by simp [Expr2.idxFree, hL s lc, hR _]) ctx lc

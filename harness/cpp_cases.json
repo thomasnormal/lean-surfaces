@@ -19580,5 +19580,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-prefix-decrement-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectPrefixDecrementAgreementWitness",
+    "cpp_source": "int prefix_decrement_agreement_witness(int value) { return --value; } bool callable_witness() { return prefix_decrement_agreement_witness(7) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

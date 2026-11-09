@@ -212,6 +212,9 @@ parameter through both evaluator APIs.
 It also includes a postfix-decrement callable, checking the returned original
 parameter through both evaluator APIs.
 
+It also includes a prefix-decrement callable, checking the returned updated
+parameter through both evaluator APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

@@ -1,0 +1,58 @@
+[
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "nan_contains",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "match",
+    "note": "Finding 1: PyObject_RichCompareBool identity shortcut for the same NaN object."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "nan_list_equal",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "match",
+    "note": "Finding 1: NaN nested in a list equality comparison."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "int_pow_negative",
+    "args": [[23, 21], [2, 1], [9007199254740993, 1]],
+    "expect": "match",
+    "note": "Finding 2: CPython converts integer operands to binary64 before libm pow."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_insert_huge",
+    "args": [[9223372036854775808], [-9223372036854775809]],
+    "expect": "match",
+    "note": "Finding 3: PyNumber_AsSsize_t raising conversion at list.insert."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "Finding 3: raising index conversion at list.pop."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "range_len_huge",
+    "args": [[]],
+    "expect": "match",
+    "note": "Finding 3: Py_ssize_t narrowing at len(range(...))."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "bisect_fallback_negative_hi",
+    "args": [[]],
+    "expect": "match",
+    "note": "Finding 4 control: pure Python bisect fallback; the C accelerator is measured separately."
+  },
+  {
+    "file": "Examples/python/recursion_limit/recursion_limit.py",
+    "function": "depth",
+    "args": [[100], [1000]],
+    "expect": "match",
+    "note": "Finding 5: active recursion accounting at the pinned CPython 3.9 limit."
+  }
+]

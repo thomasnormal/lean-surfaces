@@ -98,6 +98,10 @@
   namedtuple, and alias deletes remain loud static-table boundaries, including
   partial and trailing delete shapes.
 
+- Added the foundation step 0 protocol probe corpus for NaN container identity,
+  integer power, Py_ssize_t narrowing, bisect fallback control, and recursion
+  accounting; no interpreter semantics changed.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

@@ -10816,6 +10816,31 @@ position-independent table can answer a later call or handler lookup.
 DECIDED: close `py-static-del-noop-census`; retain loud definition deletion
 until definitions become runtime-bound objects.
 
+## 2026-11-09-pyfoundation-0 — confirm the five protocol findings
+
+Foundation step 0 added `harness/foundation_probe.py` and its pinned envelope
+and rows. The current runner was rebuilt before measurement; both the monadic
+runner and the theorem-facing proof interpreter were then driven by the same
+12-row batch against CPython 3.9.25.
+
+| Finding | Probe | CPython 3.9.25 | Monadic | Proof | Verdict |
+|---|---|---|---|---|---|
+| 1 RichCompareBool identity | `nan_contains`, `nan_list_equal` | `True`, `True` | `False`, `False` | `False`, `False` | **2 wrong answers** |
+| 2 integer negative power | `23 ** -21`, `9007199254740993 ** -1` | `2.533468119602746e-29`, `1.1102230246251565e-16` | `…7457e-29`, `…1564e-16` | same | **2 wrong answers** |
+| 3 Py_ssize_t narrowing | huge `insert` (both signs), `pop`, `len(range)` | `OverflowError`, `OverflowError`, `OverflowError`, `OverflowError` | list result, list result, `IndexError`, huge integer | same | **4 wrong answers** |
+| 4 `_bisect` admission | negative/huge `lo`/`hi` C-vs-pure probe | C: `3`/`OverflowError`/`OverflowError`; pure: `0`/`IndexError`/huge integer | pure fallback control `0` MATCH | pure fallback control `0` MATCH | **domain gap reproduced** |
+| 5 recursion units | `depth(100)`, `depth(1000)` | `100`, `RecursionError` | MATCH/MATCH | MATCH/MATCH | **not reproduced** |
+
+The batch exit was intentionally nonzero in both modes because the eight
+confirmed mismatches are the inputs for foundation step 1. The `_bisect`
+control row exercises the model's pure fallback; the separate pinned CPython
+probe demonstrates that the current 15-call accelerator admission has no
+stated domain for the three narrowing-sensitive calls.
+
+DECIDED: keep the probe rows as the foundation baseline, stop the eight wrong
+answers in step 1, and make the accelerator admission domain explicit before
+claiming equivalence outside the measured fallback slice.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

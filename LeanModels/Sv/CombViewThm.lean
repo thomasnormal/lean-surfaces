@@ -325,8 +325,7 @@ theorem rdsOfW?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : Lis
     (ctxOpW op = true ∧ ∃ ra rb, rdsOfW? ds l = .ok ra ∧ rdsOfW? ds r = .ok rb ∧ rs = ra ++ rb) ∨
     (selfOpW op = true ∧ ∃ ra rb, rdsOf? ds l = .ok ra ∧ rdsOf? ds r = .ok rb ∧ rs = ra ++ rb) ∨
     (shOpW op = true ∧ ∃ ra rb, ShLeftOk ds op l ra ∧ shAmtRd? ds r = .ok rb ∧ rs = ra ++ rb) ∨
-    (∃ cm a b, scmpOp? op = some cm ∧ l = .cast true (.ident a) ∧ r = .cast true (.ident b) ∧
-      (dimsOf ds a).isSome = true ∧ dimsOf ds a = dimsOf ds b ∧ rs = [.whole a, .whole b]) := by
+    (∃ cm, scmpOp? op = some cm ∧ scmpRd? ds l r = .ok rs) := by
   simp only [rdsOfW?] at h
   by_cases hb : ctxOpW op = true
   · rw [if_pos hb] at h
@@ -365,16 +364,7 @@ theorem rdsOfW?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : Lis
         · rw [if_pos hsc] at h
           right; right; right
           obtain ⟨cm, hcm⟩ := Option.isSome_iff_exists.mp hsc
-          split at h
-          · rename_i a b
-            by_cases hd : ((dimsOf ds a).isSome && decide (dimsOf ds a = dimsOf ds b)) = true
-            · rw [if_pos hd] at h
-              simp only [Bool.and_eq_true, decide_eq_true_eq] at hd
-              simp only [Except.ok.injEq] at h
-              exact ⟨cm, a, b, hcm, rfl, rfl, hd.1, hd.2, h.symm⟩
-            · rw [if_neg hd] at h
-              simp at h
-          · simp at h
+          exact ⟨cm, hcm, h⟩
         · rw [if_neg hsc] at h
           simp at h
 
@@ -382,6 +372,56 @@ theorem rdsOfW?_binary {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {rs : Lis
 theorem scmpOp_ctx {op : SymBinOp} {cm : CmpOp} (h : scmpOp? op = some cm) :
     ctxOpW op = false ∧ selfOpW op = false ∧ shOpW op = false ∧ unsignOp op = false := by
   cases op <;> simp_all [scmpOp?, ctxOpW, selfOpW, shOpW, unsignOp]
+
+/-- **The operands `scmpRd?` reads**: two signed signals declared with the same dimensions, a signed signal and a sized
+literal of its constant width, or a signed signal of a constant width of at least 32 bits and an unsized constant. -/
+theorem scmpRd?_cases {ds : List DeclT} {l r : PExpr} {rs : List Acc} (h : scmpRd? ds l r = .ok rs) :
+    (∃ a b, l = .cast true (.ident a) ∧ r = .cast true (.ident b) ∧ (ScmpReq.same a b).DimsOk ds ∧
+      rs = [.whole a, .whole b]) ∨
+    (∃ a v, ((l = .cast true (.ident a) ∧ r = .lit v) ∨ (l = .lit v ∧ r = .cast true (.ident a))) ∧
+      (ScmpReq.width a v.width).DimsOk ds ∧ rs = [.whole a]) ∨
+    (∃ a k, ((l = .cast true (.ident a) ∧ r = .int k) ∨ (l = .int k ∧ r = .cast true (.ident a))) ∧
+      (ScmpReq.wide a).DimsOk ds ∧ rs = [.whole a]) := by
+  unfold scmpRd? at h
+  split at h
+  next a b =>
+    by_cases hd : ((dimsOf ds a).isSome && decide (dimsOf ds a = dimsOf ds b)) = true
+    · rw [if_pos hd] at h
+      simp only [Bool.and_eq_true, decide_eq_true_eq] at hd
+      simp only [Except.ok.injEq] at h
+      exact Or.inl ⟨a, b, rfl, rfl, hd, h.symm⟩
+    · rw [if_neg hd] at h; simp at h
+  next a v =>
+    split at h
+    · rename_i hd
+      simp only [Except.ok.injEq] at h
+      exact Or.inr (Or.inl ⟨a, v, Or.inl ⟨rfl, rfl⟩, hd, h.symm⟩)
+    · simp at h
+  next v a =>
+    split at h
+    · rename_i hd
+      simp only [Except.ok.injEq] at h
+      exact Or.inr (Or.inl ⟨a, v, Or.inr ⟨rfl, rfl⟩, hd, h.symm⟩)
+    · simp at h
+  next a k =>
+    split at h
+    · rename_i w hw
+      split at h
+      · rename_i h32
+        simp only [Except.ok.injEq] at h
+        exact Or.inr (Or.inr ⟨a, k, Or.inl ⟨rfl, rfl⟩, ⟨w, hw, h32⟩, h.symm⟩)
+      · simp at h
+    · simp at h
+  next k a =>
+    split at h
+    · rename_i w hw
+      split at h
+      · rename_i h32
+        simp only [Except.ok.injEq] at h
+        exact Or.inr (Or.inr ⟨a, k, Or.inr ⟨rfl, rfl⟩, ⟨w, hw, h32⟩, h.symm⟩)
+      · simp at h
+    · simp at h
+  next => simp at h
 
 /-- The instantiation of a signed comparison (`instExpr2`'s `s<` arm): `scmp` of the operands fitted to the wider of
 their own widths. -/
@@ -629,10 +669,10 @@ theorem scmpPairs_of_leaf {ds : List DeclT} {e : PExpr} {a : Acc} (h : leafRd? d
 /-- **The signed comparisons of a recognized expression compare signals declared with the same dimensions** (the
 recognizer's check, `rdsOfW?`): each pair has one width at every parameter point (`Summary.DW_eq_of_dims`). -/
 theorem scmpPairs_dims {ds : List DeclT} : ∀ {e : PExpr} {rs : List Acc}, rdsOfW? ds e = .ok rs →
-    ∀ p ∈ e.scmpPairs, (dimsOf ds p.1).isSome = true ∧ dimsOf ds p.1 = dimsOf ds p.2
+    ∀ p ∈ e.scmpPairs, p.DimsOk ds
   | .binary op l r, rs, h, p, hp => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, -⟩ | ⟨hb, -⟩ | ⟨hb, ra, rb, hl, -⟩ |
-        ⟨cm, a, b, hcm, rfl, rfl, hs, hd, -⟩
+        ⟨cm, hcm, hs⟩
       · simp only [PExpr.scmpPairs, hb, if_true, List.mem_append] at hp
         rcases hp with hp | hp
         · exact scmpPairs_dims hl p hp
@@ -650,9 +690,18 @@ theorem scmpPairs_dims {ds : List DeclT} : ∀ {e : PExpr} {rs : List Acc}, rdsO
           | m0 b => cases b <;> simp_all [shOpW, scmpOp?]
           | _ => simp_all [shOpW, scmpOp?]
         simp [PExpr.scmpPairs, h1, h2] at hp
-      · simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1, (scmpOp_ctx hcm).2.2.1] at hp
-        subst hp
-        exact ⟨hs, hd⟩
+      · rcases scmpRd?_cases hs with ⟨a, b, rfl, rfl, hd, -⟩ | ⟨a, v, hlr, hd, -⟩ | ⟨a, k, hlr, hd, -⟩
+        · simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1] at hp
+          subst hp
+          exact hd
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+          · simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1] at hp
+            subst hp
+            exact hd
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+          · simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1] at hp
+            subst hp
+            exact hd
   | .unary op a, rs, h, p, hp => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, -⟩
       · exact scmpPairs_dims ha p (by simpa [PExpr.scmpPairs] using hp)
@@ -710,6 +759,47 @@ theorem Summary.DW_eq_of_dims {s : Summary} (σ : String → Int) {a b : String}
     cases findDecl s.decls n <;> simp [DeclT.width, dimsW_eq_affPairsW]
   rw [key a, key b, h]
 
+/-- Constant bounds give the same width at every valuation. -/
+theorem constW_eval (σ : String → Int) : ∀ {ps : List (Aff × Aff)} {w : Nat}, constW ps = some w → affPairsW σ ps = w
+  | [], w, h => by simp only [constW, Option.some.injEq] at h; subst h; rfl
+  | (m, l) :: rest, w, h => by
+      simp only [constW] at h
+      split at h
+      · rename_i hc
+        simp only [Bool.and_eq_true, List.isEmpty_iff] at hc
+        rcases hr : constW rest with _ | w'
+        · simp [hr] at h
+        · simp only [hr, Option.map_some, Option.some.injEq] at h
+          subst h
+          simp [affPairsW, constW_eval σ hr, Aff.eval_of_terms_nil σ m hc.1, Aff.eval_of_terms_nil σ l hc.2]
+      · simp at h
+
+/-- **The width fact of a signed comparison the recognizer accepts holds at every valuation** (`scmpPairs_dims`): the
+declared widths of the summary (`Summary.DW`). -/
+theorem ScmpReq.holds_of_dimsOk {s : Summary} (σ : String → Int) {q : ScmpReq} (h : q.DimsOk s.decls) :
+    q.Holds (s.DW σ) := by
+  have key : ∀ n, s.DW σ n = (dimsOf s.decls n).map (affPairsW σ) := by
+    intro n
+    unfold Summary.DW Summary.find dimsOf
+    cases findDecl s.decls n <;> simp [DeclT.width, dimsW_eq_affPairsW]
+  cases q with
+  | same a b => exact Summary.DW_eq_of_dims σ h.2
+  | width a w =>
+      simp only [ScmpReq.DimsOk] at h
+      simp only [ScmpReq.Holds, key a]
+      rcases hd : dimsOf s.decls a with _ | ps
+      · simp [hd] at h
+      · simp only [hd, Option.bind_some] at h
+        simp [constW_eval σ h]
+  | wide a =>
+      obtain ⟨w, hw, h32⟩ := h
+      refine ⟨w, ?_, h32⟩
+      rw [key a]
+      rcases hd : dimsOf s.decls a with _ | ps
+      · simp [hd] at hw
+      · simp only [hd, Option.bind_some] at hw
+        simp [constW_eval σ hw]
+
 theorem unsignL_of_partsRdW {ds : List DeclT} :
     ∀ {ps : List PExpr} {rs : List Acc}, partsRdW? ds ps = .ok rs → PExpr.unsignL ps = ps
   | [], _, _ => rfl
@@ -766,7 +856,7 @@ theorem unsign_of_rdsOfW {ds : List DeclT} :
   | .int _, _, _ => rfl
   | .binary op l r, rs, h => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
-        ⟨hb, ra, rb, -, -, rfl⟩ | ⟨cm, a, b, hcm, -, -, -, -, -⟩
+        ⟨hb, ra, rb, -, -, rfl⟩ | ⟨cm, hcm, -⟩
       · rw [unsign_binary_t (unsignOp_of_ctxOpW hb), unsign_of_rdsOfW hl, unsign_of_rdsOfW hr]
       · rw [unsign_binary_t (unsignOp_of_selfOpW hb), unsign_of_rdsOf hl, unsign_of_rdsOf hr]
       · exact unsign_binary_f (unsignOp_of_shOpW hb) l r
@@ -2963,7 +3053,7 @@ theorem rd_divD (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
 positions through `rdsOfW?`, the self-determined operands through the v1 theorem `inst_rd`. -/
 theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
     ∀ (e : PExpr) (rs : List Acc), rdsOfW? ds e = .ok rs →
-      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns e → (∀ p ∈ e.scmpPairs, DW p.1 = DW p.2) →
+      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns e → (∀ p ∈ e.scmpPairs, p.Holds DW) →
         ∀ ctx, RdOK σ rs (instExpr2 E elems ctx e)
   | .lit v, rs, h, _, _, _, ctx => by
       simp only [rdsOfW?, Except.ok.injEq] at h
@@ -2971,7 +3061,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
       simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   | .binary op l r, rs, h, hacc, hcn, hweq, ctx => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
-        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
+        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, hcm, hs⟩
       · have ihl := inst_rdW C l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
           (cok_binary_l hcn) (fun p hp => hweq p (by simp [PExpr.scmpPairs, hb, hp]))
         have ihr := inst_rdW C r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
@@ -3019,13 +3109,44 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
           rw [hlc]; exact RdOK.ctxTrunc (RdOK.binary _ (hL false lc) (hR _)) ctx lc
         · obtain ⟨lc, hlc⟩ := ie_ashr_form (env := E) (elems := elems) ctx l r
           rw [hlc]; exact RdOK.ctxTrunc (RdOK.binary _ (hL true lc) (hR _)) ctx lc
-      · -- a signed comparison of two signed signals of one width
-        have hpair : DW a = DW b := hweq (a, b) (by simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1, (scmpOp_ctx hcm).2.2.1])
-        obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp (hacc (.whole a) (by simp)).1
-        have hwa : E.widths.lookup a = some w := by rw [C.widths]; exact hw
-        have hwb : E.widths.lookup b = some w := by rw [C.widths, ← hpair]; exact hw
-        rw [ie_scmp_rd hcm hwa hwb]
-        simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents, Acc.rd, Acc.name]
+      · -- a signed comparison: two signed signals of one width, or a signed signal and a constant
+        rcases scmpRd?_cases hs with ⟨a, b, rfl, rfl, -, rfl⟩ | ⟨a, v, hlr, -, rfl⟩ | ⟨a, k, hlr, -, rfl⟩
+        · have hpair : DW a = DW b := hweq (.same a b) (by simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1])
+          obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp (hacc (.whole a) (by simp)).1
+          have hwa : E.widths.lookup a = some w := by rw [C.widths]; exact hw
+          have hwb : E.widths.lookup b = some w := by rw [C.widths, ← hpair]; exact hw
+          rw [ie_scmp_rd hcm hwa hwb]
+          simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents, Acc.rd, Acc.name]
+        · have hreq : DW a = some v.width := hweq (.width a v.width) (by
+            rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1])
+          have hwa : E.widths.lookup a = some v.width := by rw [C.widths]; exact hreq
+          rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+          · rw [ie_scmp hcm ctx _ _ (show selfWidth2 E elems (.cast true (.ident a)) = some v.width by
+                simp [selfWidth2, hwa]) (show selfWidth2 E elems (.lit v) = some v.width by simp [selfWidth2]),
+              Nat.max_self, fit_signedRead hwa]
+            simp [fitExpr2, rigidExpr, selfWidth2, instExpr2, RdOK, Expr2.unsupportedFree, Expr2.reads,
+              Expr2.idents, Acc.rd, Acc.name]
+          · rw [ie_scmp hcm ctx _ _ (show selfWidth2 E elems (.lit v) = some v.width by simp [selfWidth2])
+              (show selfWidth2 E elems (.cast true (.ident a)) = some v.width by simp [selfWidth2, hwa]),
+              Nat.max_self, fit_signedRead hwa]
+            simp [fitExpr2, rigidExpr, selfWidth2, instExpr2, RdOK, Expr2.unsupportedFree, Expr2.reads,
+              Expr2.idents, Acc.rd, Acc.name]
+        · obtain ⟨w, hreq, h32⟩ : ∃ w, DW a = some w ∧ 32 ≤ w := hweq (.wide a) (by
+            rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1])
+          have hwa : E.widths.lookup a = some w := by rw [C.widths]; exact hreq
+          have hm : max w 32 = w := Nat.max_eq_left h32
+          have hm' : max 32 w = w := Nat.max_eq_right h32
+          rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+          · rw [ie_scmp hcm ctx _ _ (show selfWidth2 E elems (.cast true (.ident a)) = some w by
+                simp [selfWidth2, hwa]) (show selfWidth2 E elems (.int k) = some 32 by simp [selfWidth2]),
+              hm, fit_signedRead hwa]
+            simp [fitExpr2, rigidExpr, instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads,
+              Expr2.idents, Acc.rd, Acc.name]
+          · rw [ie_scmp hcm ctx _ _ (show selfWidth2 E elems (.int k) = some 32 by simp [selfWidth2])
+              (show selfWidth2 E elems (.cast true (.ident a)) = some w by simp [selfWidth2, hwa]),
+              hm', fit_signedRead hwa]
+            simp [fitExpr2, rigidExpr, instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads,
+              Expr2.idents, Acc.rd, Acc.name]
   | .unary op a, rs, h, hacc, hcn, hweq, ctx => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
       · have iha := inst_rdW C a rs ha hacc (cok_unary hcn) (fun p hp => hweq p (by simpa [PExpr.scmpPairs] using hp))
@@ -3092,7 +3213,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
 /-- The right-hand side of a site of the word-level fragment, at the target's width. -/
 theorem rhs_ok (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {v : PExpr} {rds : List Acc}
     (h : rhsRds? ds v = .ok rds) (hacc : ∀ a ∈ rds, AccOK σ DW DG EW ns a) (hcn : ConstOK σ ns v)
-    (hweq : ∀ p ∈ v.scmpPairs, DW p.1 = DW p.2) (w : Nat) :
+    (hweq : ∀ p ∈ v.scmpPairs, p.Holds DW) (w : Nat) :
     RdOK σ rds (fitExpr2 E elems (some w) v) := by
   by_cases hf : ∃ b, v = .fill b
   · obtain ⟨b, rfl⟩ := hf
@@ -3203,7 +3324,7 @@ theorem desc_mk {names : List String} {si : SiteInst} {p : Process2}
   exact hnm r hr
 
 /-- The signals the signed comparisons of a continuous assignment's right-hand side compare, pairwise. -/
-def _root_.LeanModels.Sv.PProcess.scmpPairs : PProcess → List (String × String)
+def _root_.LeanModels.Sv.PProcess.scmpPairs : PProcess → List ScmpReq
   | .assign _ v => v.scmpPairs
   | .assignL _ v => v.scmpPairs
   | _ => []
@@ -3213,7 +3334,7 @@ theorem site_desc (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {names : Li
     (hnm : ∀ n, (DW n).isSome = true → n ∈ names)
     {pos : Nat} {p : PProcess} {st : TSite} (hs : siteOf? ds pos p = .ok st)
     (hso : ∀ a ∈ st.tgt :: st.rds, AccOK σ DW DG EW ns a) (hcn : st.ConstOK σ ns)
-    (hweq : ∀ q ∈ p.scmpPairs, DW q.1 = DW q.2) {si : SiteInst}
+    (hweq : ∀ q ∈ p.scmpPairs, q.Holds DW) {si : SiteInst}
     (htgt : si.tgt = st.tgt.lhs σ) (hrd : si.rd = st.rds.map (Acc.rd σ)) (hmore : si.more = []) :
     Desc names si (instProcess2 E elems p) := by
   have hrdacc : ∀ rds, rds = st.rds → ∀ a ∈ rds, AccOK σ DW DG EW ns a := by

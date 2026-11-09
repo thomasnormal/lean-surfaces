@@ -21,7 +21,9 @@ order `evalPure2` computes through `LVec.toInt?`.
 * `ssel_correct`: selects of signed inputs read the bits of the input (`msb` the sign bit, `low` the low `W - 1`
   bits, `x` the `^` of two bits), and `{a[W-1], a[W-1:1]}` is `BitVec.sshiftRight` by one;
 * `scmp_correct`: `lt = a <ₛ b`, `le = a ≤ₛ b`, `gt = b <ₛ a`, `ge = b ≤ₛ a` (`BitVec.slt`/`BitVec.sle`: the operands
-  ordered as two's-complement integers, IEEE 1800-2023 §11.4.4).
+  ordered as two's-complement integers, IEEE 1800-2023 §11.4.4);
+* `scmp_const_correct`: a signed signal compared with a constant, on either side (`scmp_const.sv`): each bit is the order
+  of the signal's two's-complement integer and the constant's (`x < 8'sb1111_1101` is `u.toInt < -3`).
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -253,6 +255,49 @@ theorem ssel_correct (W : Nat) (hW : 2 ≤ W) (hR : (W : Int) < 2147483648) :
     | (refine inKnown_ofBitVec hA ?_; omega)
     | (refine inKnown_ofBitVec hB ?_; omega)
 
+/-- **Signed comparisons with a constant** (IEEE 1800-2023 §11.4.4, §11.8.1): an 8-bit signed signal against sized signed
+literals of its width, a 32-bit signed signal against unsized constants, the constant on either side; each bit is the
+order of the two's-complement integers. The design has no parameter: its widths are the ones the fragment reads a
+constant at (an extended operand is outside it, `comb_errors.lean`). -/
+theorem scmp_const_correct :
+    scmp_const.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8) (w : BitVec 32), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "z" = some (LVec.ofBitVec w) →
+        SvState.lookup st "x_ge0" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ u.toInt)))) ∧
+        SvState.lookup st "x_le0r" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ u.toInt)))) ∧
+        SvState.lookup st "x_ltm3" = some (LVec.ofBitVec (BitVec.ofBool (decide (u.toInt < -3)))) ∧
+        SvState.lookup st "x_gt100r" = some (LVec.ofBitVec (BitVec.ofBool (decide (u.toInt < 100)))) ∧
+        SvState.lookup st "z_ge0" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ w.toInt)))) ∧
+        SvState.lookup st "z_lt5" = some (LVec.ofBitVec (BitVec.ofBool (decide (w.toInt < 5)))) ∧
+        SvState.lookup st "z_le0r" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ w.toInt)))) := by
+  obtain ⟨hc, ha⟩ : CombDesign scmp_const.sem ∧ Acyclic scmp_const.sem := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u w hX hZ
+  sv_equations
+  · -- the widths (`max 8 8`, `max 32 32`) and the constants of the equations are closed terms: the forms below are the
+    -- same terms
+    have e1 : st.boolAt "x_ge0" 0 = (0#8).sle (XF.bv 8 (st.boolAt "x")) := eq_x_ge0_1
+    have e2 : st.boolAt "x_le0r" 0 = (0#8).sle (XF.bv 8 (st.boolAt "x")) := eq_x_le0r_1
+    have e3 : st.boolAt "x_ltm3" 0 = (XF.bv 8 (st.boolAt "x")).slt (BitVec.ofInt 8 (-3)) := eq_x_ltm3_1
+    have e4 : st.boolAt "x_gt100r" 0 = (XF.bv 8 (st.boolAt "x")).slt 100#8 := eq_x_gt100r_1
+    have e5 : st.boolAt "z_ge0" 0 = (0#32).sle (XF.bv 32 (st.boolAt "z")) := eq_z_ge0_1
+    have e6 : st.boolAt "z_lt5" 0 = (XF.bv 32 (st.boolAt "z")).slt 5#32 := eq_z_lt5_1
+    have e7 : st.boolAt "z_le0r" 0 = (0#32).sle (XF.bv 32 (st.boolAt "z")) := eq_z_le0r_1
+    rw [bv_of_lookup hX] at e1 e2 e3 e4
+    rw [bv_of_lookup hZ] at e5 e6 e7
+    simp only [BitVec.sle, BitVec.slt, BitVec.toInt_zero] at e1 e2 e3 e4 e5 e6 e7
+    rw [show (BitVec.ofInt 8 (-3)).toInt = -3 from rfl] at e3
+    rw [show (100#8).toInt = 100 from rfl] at e4
+    rw [show (5#32).toInt = 5 from rfl] at e6
+    exact ⟨lookup_bool known_x_ge0_1 e1, lookup_bool known_x_le0r_1 e2, lookup_bool known_x_ltm3_1 e3,
+      lookup_bool known_x_gt100r_1 e4, lookup_bool known_z_ge0_1 e5, lookup_bool known_z_lt5_1 e6,
+      lookup_bool known_z_le0r_1 e7⟩
+  all_goals first
+    | (intros; omega)
+    | (refine inKnown_ofBitVec hX ?_; omega)
+    | (refine inKnown_ofBitVec hZ ?_; omega)
+
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.sadd_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms sadd_correct
@@ -264,6 +309,10 @@ theorem ssel_correct (W : Nat) (hW : 2 ≤ W) (hR : (W : Int) < 2147483648) :
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms scmp_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_const_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms scmp_const_correct
 
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.asr_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

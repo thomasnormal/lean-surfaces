@@ -209,7 +209,11 @@ def Sk.decWidthOkC (σ : String → Int) (dw : String → Nat) :
       haveI := Sk.decWidthOkC σ dw l (max tw (l.width σ dw))
       haveI := Sk.decWidthOkC σ dw r (r.width σ dw)
       inferInstanceAs (Decidable (l.WidthOkC σ dw (max tw (l.width σ dw)) ∧ r.WidthOkC σ dw (r.width σ dw)))
-  | .scmp _ a b, tw => inferInstanceAs (Decidable (tw = 1 ∧ (a.win σ dw).2.2 = (b.win σ dw).2.2))
+  | .scmp _ l r, tw =>
+      haveI := Sk.decWidthOkC σ dw l (max (l.width σ dw) (r.width σ dw))
+      haveI := Sk.decWidthOkC σ dw r (max (l.width σ dw) (r.width σ dw))
+      inferInstanceAs (Decidable (tw = 1 ∧ l.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw)) ∧
+        r.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw))))
   | .fit _ p, _ =>
       haveI := Sk.decWidthOkC σ dw p (p.width σ dw)
       inferInstanceAs (Decidable (p.WidthOkC σ dw (p.width σ dw)))

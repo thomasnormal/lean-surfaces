@@ -1215,6 +1215,29 @@ theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     rw [hx]
     exact shOpd_shape C hdw h' hacc s c
 
+/-- **An operand of a signed comparison** (`scmpRd?`: a whole signed signal, a sized literal, an unsized constant): its
+self-width is its skeleton's, and fitted to a context its skeleton meets the width contract at, it is the skeleton lowered
+there. -/
+theorem scmpOpd_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {e : PExpr} {ra : List Acc}
+    (hacc : ∀ a ∈ ra, AccOK σ DW DG EW ns a) (he : ScmpOpdForm e ra) :
+    selfWidth2 E elems e = some ((skT e ra).width σ dw) ∧
+      ∀ M, (skT e ra).WidthOkC σ dw M → fitExpr2 E elems (some M) e = (skT e ra).low σ dw M := by
+  rcases he with ⟨a, rfl, rfl⟩ | ⟨v, rfl, rfl⟩ | ⟨k, rfl, rfl⟩
+  · have hA : E.widths.lookup a = some (dw a) := by
+      rw [C.widths]; exact hdw a (hacc (.whole a) (by simp)).1
+    refine ⟨by simp [skT, Sk.width, selfWidth2, hA, Acc.win], fun M hM => ?_⟩
+    simp only [skT, List.headD_cons, Sk.WidthOkC, Acc.win] at hM
+    subst hM
+    rw [fit_signedRead hA]
+    simp [skT, Sk.low, accExpr]
+  · refine ⟨by simp [skT, Sk.width, selfWidth2], fun M hM => ?_⟩
+    simp only [skT, Sk.WidthOkC] at hM
+    subst hM
+    simp [fitExpr2, rigidExpr, selfWidth2, instExpr2, skT, Sk.low]
+  · refine ⟨by simp [skT, Sk.width, selfWidth2], fun M _ => ?_⟩
+    simp [fitExpr2, rigidExpr, instExpr2, intLit2_eq, skT, Sk.low]
+
 /-- The leaf case of `skT_shapeCU`. -/
 theorem leaf_caseCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {v : PExpr} {rs : List Acc}
@@ -1894,8 +1917,7 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       cases hu : unsignOp op with
       | false =>
       rw [unsign_binary_f hu] at h hf hcn hw ⊢
-      rcases rdsOfW?_binary h with ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
-        ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
+      rcases rdsOfW?_binary h with ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hcm, hs⟩
       · rw [unsignOp_of_ctxOpW hb] at hu; cases hu
       · rw [unsignOp_of_selfOpW hb] at hu; cases hu
       · -- a run-time shift (WP-B2 gate 3): the left operand through `instDivOperand2`, its mirror `skD`
@@ -1954,28 +1976,27 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
             simp [Sk.low, ctxTrunc2]
           · rw [fitExpr2_binary, ie_ashr_some tw _ l r hlsw, hAt, hRexp]
             simp [Sk.low, ctxTrunc2]
-      · -- a signed comparison of two signed signals of one width (IEEE 1800-2023 §11.4.4, §11.8.1)
-        have hsk : skT (.binary op (.cast true (.ident a)) (.cast true (.ident b))) [.whole a, .whole b] =
-            .scmp cm (.whole a) (.whole b) := by
+      · -- a signed comparison (IEEE 1800-2023 §11.4.4, §11.8.1): two signed signals, or a signed signal and a
+        -- constant, at the wider of their widths
+        have hsk : skT (.binary op l r) rs =
+            .scmp cm (skT l (rs.take (cnt l))) (skT r (rs.drop (cnt l))) := by
           cases op <;> simp [scmpOp?] at hcm <;> subst hcm <;> simp [skT, gateOf]
+        obtain ⟨hL, hR⟩ := scmpRd?_opds hs
+        obtain ⟨sl, fl⟩ := scmpOpd_shape C hdw (fun a ha => hacc a (List.mem_of_mem_take ha)) hL
+        obtain ⟨sr, fr⟩ := scmpOpd_shape C hdw (fun a ha => hacc a (List.mem_of_mem_drop ha)) hR
         rw [hsk] at hw ⊢
-        obtain ⟨rfl, hab⟩ := hw
-        have hA : E.widths.lookup a = some (dw a) := by
-          rw [C.widths]; exact hdw a (hacc (.whole a) (by simp)).1
-        have hB : E.widths.lookup b = some (dw a) := by
-          have hab' : dw a = dw b := by simpa [Acc.win] using hab
-          rw [C.widths, hab']; exact hdw b (hacc (.whole b) (by simp)).1
-        have key : ∀ ctx, instExpr2 E elems ctx (.binary op (.cast true (.ident a)) (.cast true (.ident b))) =
-            (Sk.scmp cm (.whole a) (.whole b)).low σ dw 1 := by
+        obtain ⟨rfl, hwl, hwr⟩ := hw
+        have key : ∀ ctx, instExpr2 E elems ctx (.binary op l r) =
+            (Sk.scmp cm (skT l (rs.take (cnt l))) (skT r (rs.drop (cnt l)))).low σ dw 1 := by
           intro ctx
-          rw [ie_scmp_rd hcm hA hB]
-          simp [Sk.low, accExpr]
+          rw [ie_scmp hcm ctx l r sl sr, fl _ hwl, fr _ hwr]
+          simp [Sk.low]
         exact ⟨by simp [Sk.width, sw_scmp hcm], by simp [Sk.rmax, rm_scmp hcm],
           fun _ _ => by simpa [Sk.width] using key none, key _, by rw [fitExpr2_binary]; exact key _⟩
       | true =>
       rw [unsign_binary_t hu] at h hf hcn hw ⊢
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
-        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, -, -, hsc, -⟩
+        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hsc, -⟩
       · -- `& | ^ + -`: context-determined operands
         replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
         have hla := rdsOfW?_len l.unsign ra hl hf.1
@@ -3147,19 +3168,18 @@ theorem low_xf_genC {m : Design2} {σ : String → Int} {dw : String → Nat} :
       · rw [xfb_le h1 h2, XF.val_congr_lt b1, XF.val_congr_lt b2]
       · rw [xfb_gt h1 h2, XF.val_congr_lt b1, XF.val_congr_lt b2]
       · rw [xfb_ge h1 h2, XF.val_congr_lt b1, XF.val_congr_lt b2]
-  | .scmp op a b, tw, hk, hw, hL, env => by
-      obtain ⟨rfl, hab⟩ := hw
-      have h1 := expr_xfWidth (hL a (by simp [Sk.leaves]))
-      have h2 := expr_xfWidth (hL b (by simp [Sk.leaves]))
-      rw [← hab] at h2
-      have e1 : (accExpr σ a).xfBits m env = accBit σ env a := funext (expr_xfBits a env)
-      have e2 : (accExpr σ b).xfBits m env = accBit σ env b := funext (expr_xfBits b env)
-      cases op <;> simp [Sk.knownB, CmpOp.ord] at hk <;>
+  | .scmp op l r, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB, Bool.and_eq_true] at hk
+      obtain ⟨⟨hord, hkl⟩, hkr⟩ := hk
+      obtain ⟨rfl, hwl, hwr⟩ := hw
+      obtain ⟨h1, b1⟩ := low_xf_genC l _ hkl hwl (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      obtain ⟨h2, b2⟩ := low_xf_genC r _ hkr hwr (fun x hx => hL x (by simp [Sk.leaves, hx])) env
+      cases op <;> simp [CmpOp.ord] at hord <;>
         exact ⟨by simp [Sk.low, CmpOp.ex, Expr2.xfWidth, h1, h2, XF.comb], fun k _ => by
           simp only [Sk.low, Sk.bitC, scmpBit, CmpOp.ex, Expr2.xfBits]
           rw [h1, h2]
-          dsimp only [Option.getD]
-          simp [e1, e2, BitVec.slt, BitVec.sle]⟩
+          simp only [Option.getD_some, XF.bv_congr_lt b1, XF.bv_congr_lt b2]
+          simp [BitVec.slt, BitVec.sle]⟩
   | .ext p, tw, hk, hw, hL, env => by
       simp only [Sk.knownB] at hk
       simp only [Sk.WidthOkC] at hw

@@ -118,10 +118,11 @@ inductive Sk where
   fitted leaf (`Sk.fit`), or an operation of the fragment over such operands. A signed `>>` is not built (`sg = false`
   whenever `dir = false`); `sg` with `dir = false` is the arithmetic shift `>>>`. -/
   | sh (dir : Bool) (sg : Bool) (l r : Sk)
-  /-- A signed comparison of two signed signals of one width (IEEE 1800-2023 §11.4.4, §11.8.1): one bit, the operands
-  ordered as two's-complement integers. The operands are accesses (the recognizer reads `a < b` of two whole signed
-  signals declared with the same dimensions, `rdsOfW?`). -/
-  | scmp (op : CmpOp) (a b : Acc)
+  /-- A signed comparison (IEEE 1800-2023 §11.4.4, §11.8.1): one bit, the operands at the wider of their widths, ordered
+  as two's-complement integers. The recognizer reads two whole signed signals declared with the same dimensions, or a
+  whole signed signal and a constant (a sized literal of its width, an unsized constant when it is at least 32 bits
+  wide), `scmpRd?`: the operands are `rd`, `lit` and `const` leaves. -/
+  | scmp (op : CmpOp) (l r : Sk)
   /-- An operand of the left operand of an UNSIGNED shift that `instDivOperand2` FITS to its context (IEEE 1800-2023
   §11.6.1, §11.8.2): `p` read at its own width, then zero-extended (or, under `sg`, sign-extended) to the context, or
   truncated, through `fitDivOperand2`. Only `skD` (and `Sk.dz`) builds it: the leaves of such an operand, and the one-bit or
@@ -194,7 +195,7 @@ def Sk.dz (s : Bool) : Sk → Sk
   | .ext p => .fit false (.rep p)
   | .rsz _ p => p.dz false
   | .sh d sg l r => .sh d sg l r
-  | .scmp op a b => .fit s (.scmp op a b)
+  | .scmp op l r => .fit s (.scmp op l r)
   | .fill b => .fill b
   | .fit sg p => .fit sg p
 
@@ -365,10 +366,10 @@ def skT : PExpr → List Acc → Sk
           | .m0 (.shl sl) => .sh true sl (skD sl l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | .m0 (.shr false) => .sh false false (skD false l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | .m0 (.ashr true) => .sh false true (skD true l (as.take (cnt l))) (skT r (as.drop (cnt l)))
-          | .slt => .scmp .lt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
-          | .sle => .scmp .le (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
-          | .sgt => .scmp .gt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
-          | .sge => .scmp .ge (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
+          | .slt => .scmp .lt (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .sle => .scmp .le (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .sgt => .scmp .gt (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
+          | .sge => .scmp .ge (skT l (as.take (cnt l))) (skT r (as.drop (cnt l)))
           | _ => .fill .l0
   | .unary op a, as =>
       match op with
@@ -480,7 +481,7 @@ theorem fragOkL_scmp {v : PExpr} (h : fragOkL v = true) : v.scmpPairs = [] := by
 
 /-- … so the width fact of its signed comparisons holds vacuously. -/
 theorem fragOkL_weq {v : PExpr} {DW : String → Option Nat} (h : fragOkL v = true) :
-    ∀ p ∈ v.scmpPairs, DW p.1 = DW p.2 := by
+    ∀ p ∈ v.scmpPairs, p.Holds DW := by
   rw [fragOkL_scmp h]; simp
 
 theorem fragOkL_co {v : PExpr} {σ : String → Int} {ns : List String} (h : fragOkL v = true) : ConstOK σ ns v := by
@@ -625,7 +626,7 @@ def Sk.low (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → Expr2
   | .rsz true p =>
       if p.width σ dw < tw then p.low σ dw tw else .resize tw (p.low σ dw (p.width σ dw))
   | .rsz false p => .resize tw (p.low σ dw (p.width σ dw))
-  | .scmp op a b => .scmp op.ex (accExpr σ a) (accExpr σ b)
+  | .scmp op l r => .scmp op.ex (l.low σ dw (max (l.width σ dw) (r.width σ dw))) (r.low σ dw (max (l.width σ dw) (r.width σ dw)))
   | .sh d sg l r =>
       let E := Expr2.binary (if d then BinOp.shl sg else if sg then BinOp.ashr true else BinOp.shr false)
         (l.low σ dw (max tw (l.width σ dw))) (r.low σ dw (r.width σ dw))
@@ -719,7 +720,7 @@ def Sk.leaves : Sk → List Acc
   | .cref _ => []
   | .rsz _ p => p.leaves
   | .sh _ _ l r => l.leaves ++ r.leaves
-  | .scmp _ a b => [a, b]
+  | .scmp _ l r => l.leaves ++ r.leaves
   | .fit _ p => p.leaves
 
 /-- A replicated access is never a whole signal (the recognizer refuses it: its width is the declared one, which
@@ -758,7 +759,7 @@ def Sk.knownB : Sk → Bool
   | .cref _ => true
   | .rsz _ p => p.knownB
   | .sh _ _ l r => l.knownB && r.knownB
-  | .scmp op _ _ => op.ord
+  | .scmp op l r => op.ord && l.knownB && r.knownB
   | .fit _ p => p.knownB
 
 /-! ## Self-determined skeletons (WP-G S2) -/
@@ -954,7 +955,7 @@ def Sk.WidthOkC (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → 
       if p.width σ dw < tw then p.WidthOkC σ dw tw else p.WidthOkC σ dw (p.width σ dw)
   | .rsz false p => p.WidthOkC σ dw (p.width σ dw)
   | .sh _ _ l r => l.WidthOkC σ dw (max tw (l.width σ dw)) ∧ r.WidthOkC σ dw (r.width σ dw)
-  | .scmp _ a b => tw = 1 ∧ (a.win σ dw).2.2 = (b.win σ dw).2.2
+  | .scmp _ l r => tw = 1 ∧ l.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw)) ∧ r.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw))
   | .fit _ p => p.WidthOkC σ dw (p.width σ dw)
 
 /-- Bit `k` of the skeleton at the context width `tw`. The self-determined operands are read at their OWN width
@@ -1008,7 +1009,7 @@ def Sk.bitC (σ : String → Int) (dw : String → Nat) (tw : Nat) (rd : String 
       if p.width σ dw < tw then p.bitC σ dw tw rd k
       else XF.zext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
   | .rsz false p, k => XF.zext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
-  | .scmp op a b, _ => scmpBit op (a.win σ dw).2.2 (fun i => accBit σ rd a i) (fun i => accBit σ rd b i)
+  | .scmp op l r, _ => scmpBit op (max (l.width σ dw) (r.width σ dw)) (l.bitC σ dw (max (l.width σ dw) (r.width σ dw)) rd) (r.bitC σ dw (max (l.width σ dw) (r.width σ dw)) rd)
   | .fit false p, k => XF.zext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
   | .fit true p, k => XF.sext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
   -- a fitted leaf (`Sk.dz` of a signal access, a literal, a constant): its extension, unapplied (the equations print it
@@ -1665,7 +1666,7 @@ theorem skT_resize_op {ds : List DeclT} {e : PExpr} {rs : List Acc} (m : Nat) (a
     skT (.resize m e) as = .rsz e.ctxPropagates (skT e as) := by
   cases e with
   | binary op l r =>
-      rcases rdsOfW?_binary h with ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨cm, a, b, hcm, -, -, -, -, -⟩
+      rcases rdsOfW?_binary h with ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨cm, hcm, -⟩
       · rcases ctxOpW_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | ⟨cm, rfl⟩ <;> (try cases cm) <;>
           simp [skT, gateOf, mkGate, CmpOp.ex, PExpr.ctxPropagates]
       · rcases selfOpW_cases hb with rfl | rfl <;> simp [skT, gateOf, PExpr.ctxPropagates]
@@ -2185,18 +2186,38 @@ theorem skD_leaves {ds : List DeclT} :
       obtain ⟨a, rfl, -, -, h1, -⟩ := dLeaf_facts (by simpa [rdsOfD?] using h)
       simp [h1, Sk.leaves]
 
+/-- An operand of a signed comparison `scmpRd?` reads, with its reads: a whole signed signal, a sized literal, an unsized
+constant. -/
+def ScmpOpdForm (e : PExpr) (ra : List Acc) : Prop :=
+  (∃ a, e = .cast true (.ident a) ∧ ra = [.whole a]) ∨ (∃ v, e = .lit v ∧ ra = []) ∨ (∃ k, e = .int k ∧ ra = [])
+
+/-- The two operands of a signed comparison the recognizer reads, each with its share of the reads. -/
+theorem scmpRd?_opds {ds : List DeclT} {l r : PExpr} {rs : List Acc} (h : scmpRd? ds l r = .ok rs) :
+    ScmpOpdForm l (rs.take (cnt l)) ∧ ScmpOpdForm r (rs.drop (cnt l)) := by
+  rcases scmpRd?_cases h with ⟨a, b, rfl, rfl, -, rfl⟩ | ⟨a, v, hlr, -, rfl⟩ | ⟨a, k, hlr, -, rfl⟩
+  · exact ⟨Or.inl ⟨a, rfl, by simp [cnt]⟩, Or.inl ⟨b, rfl, by simp [cnt]⟩⟩
+  · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact ⟨Or.inl ⟨a, rfl, by simp [cnt]⟩, Or.inr (Or.inl ⟨v, rfl, by simp [cnt]⟩)⟩
+    · exact ⟨Or.inr (Or.inl ⟨v, rfl, by simp [cnt]⟩), Or.inl ⟨a, rfl, by simp [cnt]⟩⟩
+  · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact ⟨Or.inl ⟨a, rfl, by simp [cnt]⟩, Or.inr (Or.inr ⟨k, rfl, by simp [cnt]⟩)⟩
+    · exact ⟨Or.inr (Or.inr ⟨k, rfl, by simp [cnt]⟩), Or.inl ⟨a, rfl, by simp [cnt]⟩⟩
+
 theorem rdsOfW?_len {ds : List DeclT} :
     ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragW v = true → rs.length = cnt v
   | .lit _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [cnt]
   | .binary op l r, rs, h, hf => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
-        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, a, b, -, rfl, rfl, -, -, rfl⟩
+        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, -, hs⟩
       · replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
         simp [cnt, rdsOfW?_len l ra hl hf.1, rdsOfW?_len r rb hr hf.2]
       · replace hf := fragW_bin_self hb hf
         simp [cnt, rdsOf?_len l ra hl hf.1, rdsOf?_len r rb hr hf.2]
       · simp [cnt, rdsOfD?_len l _ ra hl, shAmt_len hr]
-      · simp [cnt]
+      · rcases scmpRd?_cases hs with ⟨a, b, rfl, rfl, -, rfl⟩ | ⟨a, v, hlr, -, rfl⟩ | ⟨a, k, hlr, -, rfl⟩
+        · simp [cnt]
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [cnt]
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [cnt]
   | .unary op a, rs, h, hf => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
       · replace hf : fragW a = true := by simpa [fragW] using hf
@@ -2256,7 +2277,7 @@ theorem skT_leavesW {ds : List DeclT} :
   | .lit _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [skT, Sk.leaves]
   | .binary op l r, rs, h, hf => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
-        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
+        ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hcm, hs⟩
       · replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
         have hla := rdsOfW?_len l ra hl hf.1
         have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
@@ -2277,8 +2298,13 @@ theorem skT_leavesW {ds : List DeclT} :
         obtain ⟨d, -, hsk⟩ := skT_sh (rb := rb) hb (rdsOfD?_len l _ ra hl)
         rw [hsk]
         simp [Sk.leaves, skD_leaves l _ ra hl, shAmt_leaves hr]
-      · -- a signed comparison of two signed signals
-        cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, Sk.leaves]
+      · -- a signed comparison: two signed signals, or a signed signal and a constant
+        rcases scmpRd?_cases hs with ⟨a, b, rfl, rfl, -, rfl⟩ | ⟨a, v, hlr, -, rfl⟩ | ⟨a, k, hlr, -, rfl⟩
+        · cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, Sk.leaves, cnt]
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+            cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, Sk.leaves, cnt]
+        · rcases hlr with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+            cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, Sk.leaves, cnt]
   | .unary op a, rs, h, hf => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
       · replace hf : fragW a = true := by simpa [fragW] using hf

@@ -17,6 +17,12 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   them as written (`PExpr.unsign` does not enter an operator whose meaning signedness changes), the recognizer reads each
   as a signed comparison of two signed signals declared with the same dimensions, and `sv_equations` states its bit
   through `BitVec.slt`/`BitVec.sle` (`comb_proof.lean` proves all four for every width);
+* `scmp_const.sv`: signed comparisons of a signed signal with a constant, the constant on either side: an 8-bit signed
+  signal against sized signed literals of its width (`8'sd0`, `8'sd100`, and `-3` written as its bits `8'sb1111_1101`),
+  a 32-bit signed signal against unsized constants (`0`, `5`, 32-bit signed integers). No operand is extended (the
+  literal is as wide as the signal; the signal is as wide as the unsized constant), so the recognizer reads them when
+  the signal is declared with constant dimensions of that width (`scmpRd?`); `comb_proof.lean`, `scmp_const_correct`,
+  states each bit as the order of the two's-complement integers (`u.toInt < -3`, ...);
 * `asr.sv`: the arithmetic shift right `>>>` of a signed input by an unsigned amount (a signal and the constant `1`), and
   the left shift `<<` of a signed input, into targets of the operand's width (`comb_proof.lean`: `BitVec.sshiftRight` and
   `<<<` for every width);
@@ -44,6 +50,7 @@ open LeanModels.Sv LeanModels.Sv.CombView
 load_design_sv2 sadd from "Examples/system-verilog/comb_signed/sadd.sv.json"
 load_design_sv2 pass from "Examples/system-verilog/comb_signed/pass.sv.json"
 load_design_sv2 scmp from "Examples/system-verilog/comb_signed/scmp.sv.json"
+load_design_sv2 scmp_const from "Examples/system-verilog/comb_signed/scmp_const.sv.json"
 load_design_sv2 asr from "Examples/system-verilog/comb_signed/asr.sv.json"
 load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.json"
 load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
@@ -57,6 +64,8 @@ load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
 -- A signed comparison is read as written: the twin is the design itself, and the recognizer accepts it.
 #guard scmp.pdesign.unsign == scmp.pdesign
 #guard scmp.pdesign.summary.toOption.isSome
+#guard scmp_const.pdesign.unsign == scmp_const.pdesign
+#guard scmp_const.pdesign.summary.toOption.isSome
 -- So is a shift of a signed operand (the twin does not enter a shift).
 #guard asr.pdesign.unsign == asr.pdesign
 #guard asr.pdesign.summary.toOption.isSome
@@ -90,6 +99,17 @@ load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
       [("lt", "0"), ("le", "1"), ("gt", "0"), ("ge", "1")].all (fun (n, v) =>
         (SvState.lookup s2 n).map LVec.toBinString == some v)
   | _ => false)
+
+-- Runs of `scmp_const.sv`, the bits in the order `x_ge0 x_le0r x_ltm3 x_gt100r z_ge0 z_lt5 z_le0r`, each the value
+-- Icarus Verilog 12.0 prints for the same inputs (`iverilog -g2012`): `x = -3`, `z = -1`: `0001010`; `x = -4`, `z = 5`:
+-- `0011101`; `x = 100`, `z = 4`: `1100111`; `x = 99`, `z = -2^31`: `1101010`.
+#guard [((253, 4294967295), "0001010"), ((252, 5), "0011101"), ((100, 4), "1100111"), ((99, 2147483648), "1101010")].all
+  fun ((x, z), want) =>
+    match run2 scmp_const.sem σ_src 1000 [[("x", .ofNat 8 x), ("z", .ofNat 32 z)]] with
+    | .ok [st] =>
+        (["x_ge0", "x_le0r", "x_ltm3", "x_gt100r", "z_ge0", "z_lt5", "z_le0r"].foldlM
+          (fun acc n => (SvState.lookup st n).map fun v => acc ++ v.toBinString) "") == some want
+    | _ => false
 
 -- A run at `W = 4`, `a = -6` (1010), `s = 1`: `y = a >>> 1 = -3` (1101), `z = 1101`, `l = a << 1 = 0100`; and at `s = 5`
 -- (an amount of the width or more): `y = 1111` (all sign bits), `l = 0000`.

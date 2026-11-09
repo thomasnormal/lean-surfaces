@@ -788,7 +788,7 @@ theorem pairs_desc_site {s : Summary} {σ : String → Int} {elems : List (Strin
     {σ' : String → Int} {E' : IEnv} (hc : SiteCtx s σ elems ls σ' E') {pos : Nat} {p : PProcess}
     (hp : siteOf? s.decls pos p = .ok ls.site) :
     Desc s.declNames (ls.inst σ' (s.dw σ)) (instProcess2 E' elems ls.site.proc) := by
-  have hweq : ∀ q ∈ p.scmpPairs, s.DW σ q.1 = s.DW σ q.2 := by
+  have hweq : ∀ q ∈ p.scmpPairs, q.Holds (s.DW σ) := by
     intro q hq
     rcases siteOf?_cases hp with ⟨t, v, rds, rfl, hrds, -⟩ | ⟨l, v, tg, rds, rfl, -, hrds, -⟩ <;>
     · simp only [PProcess.scmpPairs] at hq
@@ -797,7 +797,7 @@ theorem pairs_desc_site {s : Summary} {σ : String → Int} {elems : List (Strin
         simp [PExpr.scmpPairs] at hq
       · have h2 : rdsOfW? s.decls v = .ok rds := by
           cases v <;> first | exact hrds | (exfalso; exact hf ⟨_, rfl⟩)
-        exact Summary.DW_eq_of_dims σ (scmpPairs_dims h2 q hq).2
+        exact ScmpReq.holds_of_dimsOk σ (scmpPairs_dims h2 q hq)
   have h := site_desc hc.ctx hc.nm hp (fun a ha => hc.so a (TSite.mem_accs ha)) hc.cn hweq
     (si := ls.inst σ' (s.dw σ)) rfl rfl (by simp [LSite.inst, siteOf?_more hp])
   rw [← siteOf?_proc hp] at h

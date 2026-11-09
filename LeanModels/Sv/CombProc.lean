@@ -819,9 +819,9 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .lit v, rs, h, _, ctx => by simp [Expr2.idxFree]
   | .binary op l r, rs, h, hacc, ctx => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
-        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
+        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, hcm, hs⟩
       rotate_left 3
-      · -- a signed comparison of two signed signals: `scmp` of the two fitted reads
+      · -- a signed comparison: `scmp` of the two fitted operands (signed reads, sized literals, unsized constants)
         have hsr : ∀ (n : String) (c : Option Nat), (fitExpr2 E elems c (.cast true (.ident n))).idxFree = true := by
           intro n c
           have hi : ∀ c', (instExpr2 E elems c' (.cast true (.ident n))).idxFree = true := by
@@ -838,8 +838,24 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
                   · simp [Expr2.idxFree, hi]
               · exact hi _
             · exact hi _
+        have hlit : ∀ (v : LVec) (c : Option Nat), (fitExpr2 E elems c (.lit v)).idxFree = true := by
+          intro v c
+          cases c with
+          | none => simp [fitExpr2, instExpr2, Expr2.idxFree]
+          | some w =>
+              simp only [fitExpr2, rigidExpr, if_true, selfWidth2]
+              split <;> simp [instExpr2, Expr2.idxFree]
+        have hint : ∀ (k : Int) (c : Option Nat), (fitExpr2 E elems c (.int k)).idxFree = true := by
+          intro k c
+          cases c <;> simp [fitExpr2, rigidExpr, instExpr2, intLit2_eq, Expr2.idxFree]
+        have hopd : ∀ e ra', ScmpOpdForm e ra' → ∀ c, (fitExpr2 E elems c e).idxFree = true := by
+          rintro e ra' (⟨a, rfl, -⟩ | ⟨v, rfl, -⟩ | ⟨k, rfl, -⟩) c
+          · exact hsr a c
+          · exact hlit v c
+          · exact hint k c
+        obtain ⟨hL, hR⟩ := scmpRd?_opds hs
         cases op <;> simp [scmpOp?] at hcm <;> subst hcm <;> cases ctx <;>
-          simp [instExpr2, Expr2.idxFree, hsr]
+          simp [instExpr2, Expr2.idxFree, hopd l _ hL, hopd r _ hR]
       · have ihl := inst_idxFreeW C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
         have ihr := inst_idxFreeW C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
         have hfl := fit_idxFree (E := E) (elems := elems) (signedCast_of_rdsW hl) ihl

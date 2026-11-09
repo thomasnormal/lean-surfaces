@@ -1,0 +1,167 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sg_cmp_neg",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_neg.sv",
+      "sha256": "221dfa1656b37327e41a09c659fabcc16537af5cd9a82f3ccbdc2be3564675b3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "sg_cmp_neg",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 32,
+              "end_line": 3,
+              "end_col": 33
+            },
+            "name": "z",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 26,
+                      "end_line": 3,
+                      "end_col": 28
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 29,
+                      "end_line": 3,
+                      "end_col": 30
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "signed": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 32,
+              "end_line": 4,
+              "end_col": 33
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 6,
+              "col": 12,
+              "end_line": 6,
+              "end_col": 22
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 12,
+                "end_line": 6,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 6,
+                "col": 16,
+                "end_line": 6,
+                "end_col": 22
+              },
+              "width": 1,
+              "op": "s<",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 16,
+                  "end_line": 6,
+                  "end_col": 17
+                },
+                "width": 32,
+                "name": "z",
+                "signed": true
+              },
+              "right": {
+                "kind": "Unary",
+                "span": {
+                  "line": 6,
+                  "col": 20,
+                  "end_line": 6,
+                  "end_col": 22
+                },
+                "width": 32,
+                "op": "-",
+                "operand": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 6,
+                    "col": 21,
+                    "end_line": 6,
+                    "end_col": 22
+                  },
+                  "value": 5,
+                  "resolved_width": 32
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

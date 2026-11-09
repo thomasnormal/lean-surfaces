@@ -5,7 +5,8 @@ import LeanModels.Sv.CombProcTactic
 # Signed reads: what stays refused, and why
 
 The tactics read a signed signal as the same bits wherever it is a whole operand of a continuous assign, and a signed
-comparison of two signed signals declared with the same dimensions as the two's-complement order (`comb_proof.lean`).
+comparison of two signed signals declared with the same dimensions, or of a signed signal with a constant of its width,
+as the two's-complement order (`comb_proof.lean`).
 The constructs whose meaning signedness changes and that they do not read yet are refused, each with its reason. (A part
 select of a signed signal as the left operand of a shift, and an arithmetic shift right into a target wider than its
 operand, were refused here; the left operand of a shift is now read through `instDivOperand2` at the signedness of the
@@ -15,7 +16,14 @@ shift, and both are proved in `comb_shift/comb_proof.lean`, `shift_signed_correc
 * `neg/sg_cmp_dims.sv`: a signed comparison of `logic signed [W-1:0] a` and `logic signed [7:0] b` (equal widths at
   `W = 8` only; elsewhere the narrower operand is sign-extended, IEEE 1800-2023 §11.8.2);
 * `neg/sg_cmp_self.sv`: a signed comparison as an operand of `&&` (a self-determined position);
-* `neg/sg_cmp_opd.sv`: a signed comparison whose operand is an expression `a + b`, not a whole signed signal;
+* `neg/sg_cmp_opd.sv`: a signed comparison whose operand is an expression `a + b`, not a whole signed signal or a
+  constant;
+* `neg/sg_cmp_lit_param.sv`: a signed comparison of `logic signed [W-1:0] x` with the sized literal `8'sd0` (equal
+  widths at `W = 8` only; elsewhere one operand is extended, §11.8.2, and the semantics extends a sized literal with
+  zeros, not with its sign bit: a defect of the semantics reported to ls-sv, so the fragment reads a literal only against
+  a signal of the same constant width);
+* `neg/sg_cmp_neg.sv`: a signed comparison with a negated constant `z < -5` (unary minus, the next wall: a negative
+  constant is read written as its bits, `scmp_const.sv`);
 * `neg/sg_cmp_proc.sv`: a signed comparison inside `always_comb`;
 * `neg/sg_asr_amt.sv`: an arithmetic shift right by a signed amount `a >>> b`;
 * `neg/sg_asr_self.sv`: an arithmetic shift right as an operand of `&&`;
@@ -44,6 +52,8 @@ load_design_sv2 sg_asr_self from "Examples/system-verilog/comb_signed/neg/sg_asr
 load_design_sv2 asr_unsigned from "Examples/system-verilog/comb_signed/neg/asr_unsigned.sv.json"
 load_design_sv2 sg_cmp_const from "Examples/system-verilog/comb_signed/neg/sg_cmp_const.sv.json"
 load_design_sv2 sg_cmp_mixed from "Examples/system-verilog/comb_signed/neg/sg_cmp_mixed.sv.json"
+load_design_sv2 sg_cmp_lit_param from "Examples/system-verilog/comb_signed/neg/sg_cmp_lit_param.sv.json"
+load_design_sv2 sg_cmp_neg from "Examples/system-verilog/comb_signed/neg/sg_cmp_neg.sv.json"
 
 /--
 error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)
@@ -68,7 +78,7 @@ example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_
   sv_structure
 
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal (the fragment reads a signed comparison of two signed signals declared with the same dimensions; a select, a constant or an operation as an operand is outside it)
+error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal or an unsized constant (the fragment reads a signed comparison of two signed signals declared with the same dimensions, or of a whole signed signal with a constant; a select or an operation as an operand is outside it)
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_opd.sem W) := by
@@ -116,6 +126,20 @@ error: sv_structure: outside the supported fragment — site `plain#0`: a signed
 -/
 #guard_msgs (whitespace := lax) in
 example : CombDesign sg_cmp_mixed.sem := by
+  sv_structure
+
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison of the signed signal `x` with a sized literal of 8 bits, where `x` is not declared with constant dimensions of that width (the fragment reads a signed signal compared with a sized literal when the signal's declared width is a constant equal to the literal's: at another width one operand is extended, IEEE 1800-2023 §11.8.2, and the semantics extends a sized literal with zeros, which the fragment does not read)
+-/
+#guard_msgs (whitespace := lax) in
+example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_lit_param.sem W) := by
+  sv_structure
+
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison with a negated constant (`x < -5`, `x >= -8'sd3`): unary minus is outside the fragment (it reads a signed comparison of a whole signed signal with a sized literal of its width, a negative one written as its bits such as `8'sb1111_1101`, or with an unsized constant that is not negated)
+-/
+#guard_msgs (whitespace := lax) in
+example : CombDesign sg_cmp_neg.sem := by
   sv_structure
 
 end Examples.«system-verilog».comb_signed.comb_errors

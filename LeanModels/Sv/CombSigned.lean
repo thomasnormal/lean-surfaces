@@ -20,8 +20,10 @@ carries that through the generate expansion: the summary of the design as writte
 original processes put back (`siteOfU?`, `summaryG_unsign`), and the realized process lists agree site by site
 (`Summary.enum_congr`).
 
-A signed comparison of two signed signals declared with the same dimensions is read as written: the twin keeps it
-(`PExpr.unsign` does not enter `s<` …), and the shape theorems lower it to `Expr2.scmp` of the two signals (`Sk.scmp`).
+A signed comparison of two signed signals declared with the same dimensions, or of a signed signal with a constant (a
+sized literal as wide as the signal's constant width, an unsized constant against a signal of a constant width of at
+least 32 bits: no operand is extended), is read as written: the twin keeps it (`PExpr.unsign` does not enter `s<` …),
+and the shape theorems lower it to `Expr2.scmp` of the two fitted operands (`Sk.scmp` over `rd`, `lit` and `const`).
 So is the left operand of a shift: the twin does not enter a shift, and the reader of a shift operand (`rdsOfD?`, the
 mirror of `instDivOperand2`) reads a signed read there as the plain read and the `SignedResize` marker as the sign
 extension it is (`Sk.fit true`, `XF.sext`), at the signedness of the shift; `Sk.sh` with the signed flag lowers `>>>` to

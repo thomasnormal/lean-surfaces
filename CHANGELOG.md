@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Extended the value/object evaluator agreement battery with a postfix
+  decrement callable and native differential coverage.
+
+- Extended the value/object evaluator agreement battery with a postfix
   increment callable and native differential coverage.
 
 - Extended the value/object evaluator agreement battery with a prefix

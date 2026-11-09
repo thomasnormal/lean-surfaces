@@ -19568,5 +19568,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
+  },
+  {
+    "id": "statement.callable-value-object-postfix-decrement-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectPostfixDecrementAgreementWitness",
+    "cpp_source": "int postfix_decrement_agreement_witness(int value) { return value--; } bool callable_witness() { return postfix_decrement_agreement_witness(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
   }
 ]

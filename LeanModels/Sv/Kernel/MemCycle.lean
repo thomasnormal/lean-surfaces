@@ -43,6 +43,36 @@ structure MemCycleState where
   memory : MemState
 deriving Inhabited
 
+/-! The source-shaped memory route keeps scalar declarations as `Decl`s, but
+`instExpr2`/`instLhs2` still need the element-width table used by the ordinary
+parameter instantiator.  Rebuilding it from the retained packed geometry is
+both exact and source-shaped: a one-dimensional vector has one-bit elements,
+while a multidimensional packed declaration has the product of the dimensions
+after its first one.  The old empty table made every run-time select on a
+declared signal fail with `PartSel:base`/`BitSel:base`. -/
+
+def MemDesign2.elemWidth (d : MemDesign2) (name : String) : Nat :=
+  match d.env.dims.lookup name with
+  | some (_ :: rest) => dimsStride rest
+  | _ => 1
+
+def MemDesign2.elems (d : MemDesign2) : List (String × Nat) :=
+  d.decls.map fun dc => (dc.name, d.elemWidth dc.name)
+
+/-! Some approved frontends elaborate a fixed unpacked array into scalar
+declarations named `a[0]`, `a[1]`, … while retaining a dynamic `a[index]`
+select in the procedural AST.  Keep that representation source-shaped at the
+adapter boundary: the finite declaration set is the frontend's AST, not a
+new unrolling performed here. -/
+
+def MemDesign2.flatCell? (d : MemDesign2) (base : String) (index : Int) : Option Decl :=
+  d.decls.find? (fun dc => dc.name == s!"{base}[{index}]")
+
+def MemDesign2.flatCellWidth? (d : MemDesign2) (base : String) : Option Nat :=
+  match d.decls.find? (fun dc => dc.name.startsWith (base ++ "[")) with
+  | some dc => some dc.width
+  | none => none
+
 abbrev MemScalarNba := NbaQueue2
 abbrev MemPending := MemScalarNba × MemNba
 
@@ -332,7 +362,7 @@ def evalMemIndex (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
   match evalInt d.env idx with
   | .ok i => .ok (some i)
   | .error _ =>
-      let idx2 := instIndex2 d.env [] idx
+      let idx2 := instIndex2 d.env d.elems idx
       match evalExpr2 fuel st.scalar idx2 with
       | .ok v => .ok (indexInt? idx2 v)
       | .timeout => .timeout
@@ -381,6 +411,24 @@ def memPExprAllX : PExpr → Bool
 def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (ctx : Option Nat) (e : PExpr) : Res LVec :=
   match e with
+  | .arrayElem n [idx] =>
+      match memDeclOf? d.memDecls n with
+      | some pd => evalMemCell d fuel st pd [idx]
+      | none =>
+          match d.flatCellWidth? n with
+          | none => .unsupported s!"memory RHS '{n}' is not declared"
+          | some width =>
+              match evalMemIndex d fuel st idx with
+              | .timeout => .timeout
+              | .unsupported msg => .unsupported msg
+              | .ok none => .ok (LVec.xVec width)
+              | .ok (some i) =>
+                  match d.flatCell? n i with
+                  | some dc =>
+                      match SvState.lookup st.scalar dc.name with
+                      | some v => .ok v
+                      | none => .unsupported s!"flattened array cell '{dc.name}' is not present"
+                  | none => .ok (LVec.xVec width)
   | .arrayElem n is =>
       match memDeclOf? d.memDecls n with
       | none => .unsupported s!"memory RHS '{n}' is not declared"
@@ -395,7 +443,7 @@ def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       else if memExprReadsArray e then
         .unsupported "memory expression is not a direct cell read"
       else
-        evalExpr2 fuel st.scalar (instExpr2 d.env [] ctx e)
+        evalExpr2 fuel st.scalar (instExpr2 d.env d.elems ctx e)
 
 def updateScalarBlocking (st : MemCycleState) (target : Lhs2) (v : LVec) : Res MemCycleState :=
   match resolveLhs2 1 st.scalar target with
@@ -413,6 +461,18 @@ def enqueueScalarNba (st : MemCycleState) (q : MemPending) (target : Lhs2) (v : 
   | .timeout => .timeout
   | .ok (_, none) => .ok q
   | .ok (n, some (lo, w)) => .ok (q.1 ++ [(n, lo, v.resizeU w)], q.2)
+
+def flatCellTarget? (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
+    (base : String) (index : PExpr) : Res (Option (String × Nat)) := do
+  let some _ := d.flatCellWidth? base
+    | .unsupported s!"memory target '{base}' is not declared"
+  let k ← evalMemIndex d fuel st index
+  match k with
+  | none => .ok none
+  | some i =>
+      match d.flatCell? base i with
+      | some dc => .ok (some (dc.name, dc.width))
+      | none => .ok none
 
 def commitMemPending (d : MemDesign2) (st : MemCycleState) (q : MemPending) : Res MemCycleState := do
   let scalar := commitNba2 st.scalar q.1
@@ -432,39 +492,59 @@ def execMemStmt (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       return (st, q')
   | .blockingAssignL lhs e =>
       match lhs with
-      | .arrayElem n _ => do
-          let some pd := memDeclOf? d.memDecls n
-            | .unsupported s!"memory target '{n}' is not declared"
-          let target? ← resolveMemTarget d fuel st pd lhs
-          match target? with
-          | none => .ok (st, q)
-          | some target =>
-              let v ← evalMemExpr d fuel st (pd.type.width d.env |>.toOption) e
-              match MemState.writeTarget d.env pd target v st.memory with
-              | .error msg => .unsupported s!"memory blocking write: {msg}"
-              | .ok none => .unsupported s!"memory blocking write '{n}' did not find its state"
-              | .ok (some memory) => .ok ({ st with memory }, q)
+      | .arrayElem n [idx] =>
+          match memDeclOf? d.memDecls n with
+          | some pd => do
+              let target? ← resolveMemTarget d fuel st pd lhs
+              match target? with
+              | none => .ok (st, q)
+              | some target =>
+                  let v ← evalMemExpr d fuel st (pd.type.width d.env |>.toOption) e
+                  match MemState.writeTarget d.env pd target v st.memory with
+                  | .error msg => .unsupported s!"memory blocking write: {msg}"
+                  | .ok none => .unsupported s!"memory blocking write '{n}' did not find its state"
+                  | .ok (some memory) => .ok ({ st with memory }, q)
+          | none => do
+              let target? ← flatCellTarget? d fuel st n idx
+              match target? with
+              | none => .ok (st, q)
+              | some (name, width) =>
+                  let v ← evalMemExpr d fuel st (some width) e
+                  let st' ← updateScalarBlocking st (.ident name) v
+                  .ok (st', q)
+      | .arrayElem n _ =>
+          .unsupported s!"array target '{n}' has rank outside the one-cell fragment"
       | _ => do
-          let some (l2, w) := (instLhs2 d.env [] lhs).toOption
+          let some (l2, w) := (instLhs2 d.env d.elems lhs).toOption
             | .unsupported "memory scalar target is outside the admitted fragment"
           let v ← evalMemExpr d fuel st (some w) e
           let st' ← updateScalarBlocking st l2 v
           return (st', q)
   | .nbaAssignL lhs e =>
       match lhs with
-      | .arrayElem n _ => do
-          let some pd := memDeclOf? d.memDecls n
-            | .unsupported s!"memory target '{n}' is not declared"
-          let target? ← resolveMemTarget d fuel st pd lhs
-          match target? with
-          | none => .ok (st, q)
-          | some target =>
-              let value ← evalMemExpr d fuel st (pd.type.width d.env |>.toOption) e
-              match enqueueMemNba d.env pd target value q.2 with
-              | .error msg => .unsupported s!"memory NBA enqueue: {msg}"
-              | .ok q' => .ok (st, (q.1, q'))
+      | .arrayElem n [idx] =>
+          match memDeclOf? d.memDecls n with
+          | some pd => do
+              let target? ← resolveMemTarget d fuel st pd lhs
+              match target? with
+              | none => .ok (st, q)
+              | some target =>
+                  let value ← evalMemExpr d fuel st (pd.type.width d.env |>.toOption) e
+                  match enqueueMemNba d.env pd target value q.2 with
+                  | .error msg => .unsupported s!"memory NBA enqueue: {msg}"
+                  | .ok q' => .ok (st, (q.1, q'))
+          | none => do
+              let target? ← flatCellTarget? d fuel st n idx
+              match target? with
+              | none => .ok (st, q)
+              | some (name, width) =>
+                  let v ← evalMemExpr d fuel st (some width) e
+                  let q' ← enqueueScalarNba st q (.ident name) v
+                  .ok (st, q')
+      | .arrayElem n _ =>
+          .unsupported s!"array target '{n}' has rank outside the one-cell fragment"
       | _ => do
-          let some (l2, w) := (instLhs2 d.env [] lhs).toOption
+          let some (l2, w) := (instLhs2 d.env d.elems lhs).toOption
             | .unsupported "memory scalar target is outside the admitted fragment"
           let v ← evalMemExpr d fuel st (some w) e
           let q' ← enqueueScalarNba st q l2 v
@@ -566,6 +646,12 @@ def memStep (d : MemDesign2) (fuel : Nat) (inputs : SvState)
         match runMemProcess d fuel st ([], []) p with
         | .ok (st', ([], [])) => .ok st'
         | .ok (_, _) => .unsupported "AlwaysComb:memory cycle route does not admit NBA"
+        | .unsupported e => .unsupported e
+        | .timeout => .timeout
+    | p@(.assignL _ _) =>
+        match runMemProcess d fuel st ([], []) p with
+        | .ok (st', ([], [])) => .ok st'
+        | .ok (_, _) => .unsupported "AssignL:memory cycle route does not admit NBA"
         | .unsupported e => .unsupported e
         | .timeout => .timeout
     | _ => .ok st

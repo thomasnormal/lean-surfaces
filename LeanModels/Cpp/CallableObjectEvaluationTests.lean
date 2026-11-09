@@ -40455,6 +40455,27 @@ def callableValueObjectConditionalAgreementWitness : Bool :=
 
 #guard callableValueObjectConditionalAgreementWitness
 
+def callableValueObjectConditionalFalseAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .return_ {
+      expression := CallableExpression.conditional
+        {expression := CallableExpression.parameter (handle "0x10"),
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 8,
+          sourceType := intType, type := intType}
+        {expression := CallableExpression.integer 9,
+          sourceType := intType, type := intType}
+        , sourceType := intType, type := intType}}
+  match evaluateCallable 32 .lp64 function [signed 0],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value), .ok (.ok objectValue) => value == signed 9 && objectValue == signed 9
+  | _, _ => false
+
+#guard callableValueObjectConditionalFalseAgreementWitness
+
 def callableValueObjectWhileAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

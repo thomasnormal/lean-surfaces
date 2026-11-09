@@ -52,6 +52,10 @@
 - Revalidated the active recursion-depth limit and the depth-bounded recursive
   Fibonacci proof against CPython 3.9; no recursion-limit divergence remains.
 
+- Revalidated module-definition ordering admission: forward and duplicate
+  function bindings refuse loudly, while safe interleaved definitions match
+  CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

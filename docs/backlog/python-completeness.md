@@ -11535,6 +11535,26 @@ are handled by the shared worker and one proof boundary.
 DECIDED: close `py-round-digits-unrolled` as already fixed; retain the single
 parameterized worker and explicit unsupported integer boundary.
 
+## 2026-11-09-pycomplete-476 — revalidate module-definition ordering audit
+
+The high-priority `py-def-table-position-independent` finding remains closed.
+The script admission's `defsReachableBefore` check rejects a function body that
+can reach a later module definition and rejects duplicate module function
+names, preserving a loud boundary while the static function table remains
+position-independent. Safe interleaved definitions continue through the
+per-statement order checks.
+
+| Measurement | Result |
+|---|---|
+| Forward witness | `def_table_forward.py`: CPython 3.9 `NameError`; leanpy loud refusal, exit 3 |
+| Redefinition witness | `def_table_rebind.py`: CPython 3.9 prints `1` then `2`; leanpy loud refusal, exit 3 |
+| Safe interleaving | `interleave_script.py`: `start`, `8`, `6`, `end` on both runners, exit 0 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-def-table-position-independent` as already fixed by loud
+admission; retain the conservative guard until definitions become runtime
+bindings.
+
 ## 2026-11-07-pycomplete-451 — choose the next completeness milestone
 
 The current measured frontier has `ListComp` as the next practical language

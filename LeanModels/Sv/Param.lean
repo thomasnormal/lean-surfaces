@@ -477,6 +477,10 @@ inductive PProcess where
   | assign (target : String) (value : PExpr)
   | assignL (target : PLhs) (value : PExpr)
   | alwaysFFR (clock rstn : String) (body : PStmt) (resetHigh : Bool)
+  /-- A source-shaped `initial` process.  It runs once at time zero in
+  memory-cycle semantics; other semantic routes keep it loud until their
+  scheduler has an explicit time-zero phase. -/
+  | initial (body : PStmt)
   | unsupported (svKind : String) (text : String)
 deriving Repr, BEq, Inhabited
 
@@ -2256,6 +2260,7 @@ def instProcess (env : IEnv) : PProcess → Process
   | .assign t v => .assign t (instExpr env (env.widths.lookup t) v)
   | .assignL .. => .unsupported "T2:AssignL" "select target outside the M0 tier"
   | .alwaysFFR .. => .unsupported "T2:AlwaysFFR" "async reset outside the M0 tier"
+  | .initial .. => .unsupported "T2:Initial" "initial process outside the M0 tier"
   | .unsupported k t => .unsupported k t
 
 /-- Instantiate one declaration (earlier declarations' widths already in

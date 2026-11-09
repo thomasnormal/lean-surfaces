@@ -1441,6 +1441,8 @@ def instProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → Proc
   | .alwaysComb b => combGuardProc (fun n => env.widths.lookup n) (instStmt2 env elems b)
   | .alwaysFFR c rn b resetHigh =>
       @Process2.alwaysFFR c rn (instStmt2 env elems b) resetHigh
+  | .initial _ =>
+      .unsupported "T2:Initial" "initial process outside the cycle semantic tier"
   | .assign t v =>
       match env.widths.lookup t with
       | some w => .assign (.ident t) (fitExpr2 env elems (some w) v)

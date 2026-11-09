@@ -220,6 +220,7 @@ def memSubstProcess (vals : List (String × Int)) : PProcess → PProcess
   | .assign n e => .assign n (memSubstExpr vals e)
   | .assignL l e => .assignL (memSubstLhs vals l) (memSubstExpr vals e)
   | .alwaysFFR c r b h => .alwaysFFR c r (memSubstStmt vals b) h
+  | .initial b => .initial (memSubstStmt vals b)
   | p => p
 termination_by structural p => p
 end
@@ -661,6 +662,7 @@ def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
   | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body _ =>
       execMemStmt d fuel st q body
   | .alwaysComb body => execMemStmt d fuel st q body
+  | .initial body => execMemStmt d fuel st q body
   | .assign target e => do
       let v ← evalMemExpr d fuel st (d.env.widths.lookup target) e
       let some dc := d.decls.find? (·.name == target)
@@ -755,10 +757,27 @@ def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       let tr ← runMemFrom d fuel st' rest
       return st'.scalar :: tr
 
+/-- Execute the source-shaped `initial` process phase once, before the first
+    input sample.  IEEE 1800-2023 §9.2.1 gives a single initial process one
+    time-zero activation; the route refuses multiple such processes at
+    elaboration rather than choosing an Active-region order between them. -/
+def runMemInitial (d : MemDesign2) (fuel : Nat) (st : MemCycleState) :
+    Res MemCycleState :=
+  let initials := d.processes.filter (fun p =>
+    match p with | .initial _ => true | _ => false)
+  match initials with
+  | [] => .ok st
+  | [p] => do
+      let (st', q) ← runMemProcess d fuel st ([], []) p
+      commitMemPending d st' q
+  | _ => .unsupported
+      "memory cycle route does not yet admit multiple initial processes"
+
 def runMem2 (d : MemDesign2) (fuel : Nat) (stim : List SvState) : Res (List SvState) :=
   do
     let st ← d.initStateRes
-    runMemFrom d fuel st stim
+    let st' ← runMemInitial d fuel st
+    runMemFrom d fuel st' stim
 
 private def memProbeDecl : PDecl :=
   { name := "mem", type := .packed [⟨.int 7, .int 0⟩] (some 8),

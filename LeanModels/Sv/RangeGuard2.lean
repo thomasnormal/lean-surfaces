@@ -167,6 +167,7 @@ end
 /-- … of a process. -/
 def PProcess.legacySelNames : PProcess → List String
   | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.legacySelNames
+  | .initial b => b.legacySelNames
   | .assign _ v => v.legacySelNames
   | .assignL t v => t.legacySelNames ++ v.legacySelNames
   | .unsupported .. => []
@@ -317,6 +318,7 @@ end
 /-- … of a process. -/
 def PProcess.bitIdxs : PProcess → List PExpr
   | .alwaysFF _ b | .alwaysPlain _ b | .alwaysComb b | .alwaysFFR _ _ b _ => b.bitIdxs
+  | .initial b => b.bitIdxs
   | .assign _ v => v.bitIdxs
   | .assignL t v => t.bitIdxs ++ v.bitIdxs
   | .unsupported .. => []

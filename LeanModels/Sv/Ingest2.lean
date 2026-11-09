@@ -606,10 +606,10 @@ def parsePProcess (j : Json) : Except String PProcess := do
         return .unsupported "ProceduralBlockSymbol:Always"
           "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
     | "Initial" =>
-        -- Keep the envelope parseable so the semantic tier can report the
-        -- named unsupported process instead of failing while decoding JSON.
-        return .unsupported "ProceduralBlockSymbol:Initial"
-          "initial process is outside the sv-0.2 semantic tier"
+        -- Retain the parser's process node.  The ordinary cycle tier still
+        -- reports it as outside M0, while the source-shaped memory route has
+        -- an explicit time-zero phase for this node.
+        return .initial (← parsePStmt (← getField j "body"))
     | "Assign" =>
         let value ← parsePExpr (← getField j "value")
         match ← parseTargetL (← getField j "target") with

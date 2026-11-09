@@ -582,12 +582,14 @@ theorem idxFree_shLeft (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     {s : Bool} (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (c : Option Nat) :
     (instDivOperand2 E elems s c e).idxFree = true := by
   obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩
+  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩ | ⟨rfl, n, rfl, rfl⟩
   · exact idxFree_shOpd C hdw hxo hacc s c
   · rw [instDiv_resize false c m x (shOpdKind hxo)]
     exact idxFree_shOpd C hdw hxo hacc false _
   · rw [instDiv_sresize true c m x]
     exact idxFree_shOpd C hdw hxo hacc true _
+  · rw [instDiv_cast true c n]
+    exact idxFree_shOpd C hdw hxo hacc true c
 
 /-- **An expression of the word-level fragment** (WP-B2 gate 2: the context-determined positions through
 `rdsOfW?`, the self-determined operands through the v1 theorem `inst_idxFree`) instantiates to an expression with
@@ -654,7 +656,7 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         · rw [ie_lor]; simp [Expr2.idxFree, ihl, ihr]
       · -- a run-time shift (WP-B2 gate 3)
         have hR := idxFree_shAmt C hdw hr' (fun a ha => hacc a (List.mem_append_right _ ha)) false
-        rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl
+        rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
         · have hL : ∀ c, (instDivOperand2 E elems s c l).idxFree = true :=
             idxFree_shLeft C hdw hl (fun a ha => hacc a (List.mem_append_left _ ha))
           obtain ⟨lc, hlc⟩ := ie_shl_form (env := E) (elems := elems) s ctx l r
@@ -662,6 +664,10 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         · have hL : ∀ c, (instDivOperand2 E elems false c l).idxFree = true :=
             idxFree_shLeft C hdw hl (fun a ha => hacc a (List.mem_append_left _ ha))
           obtain ⟨lc, hlc⟩ := ie_shr_form (env := E) (elems := elems) ctx l r
+          rw [hlc]; exact idxFree_ctxTrunc (by simp [Expr2.idxFree, hL lc, hR _]) ctx lc
+        · have hL : ∀ c, (instDivOperand2 E elems true c l).idxFree = true :=
+            idxFree_shLeft C hdw hl (fun a ha => hacc a (List.mem_append_left _ ha))
+          obtain ⟨lc, hlc⟩ := ie_ashr_form (env := E) (elems := elems) ctx l r
           rw [hlc]; exact idxFree_ctxTrunc (by simp [Expr2.idxFree, hL lc, hR _]) ctx lc
   | .unary op a, rs, h, hacc, ctx => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩

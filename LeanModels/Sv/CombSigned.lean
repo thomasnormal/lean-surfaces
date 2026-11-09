@@ -20,9 +20,11 @@ original processes put back (`siteOfU?`, `summaryG_unsign`), and the realized pr
 
 A signed comparison of two signed signals declared with the same dimensions is read as written: the twin keeps it
 (`PExpr.unsign` does not enter `s<` …), and the shape theorems lower it to `Expr2.scmp` of the two signals (`Sk.scmp`).
+So is a shift (`>>>` or `<<`) whose left operand is a signed signal, into a target of the signal's width: the twin does
+not enter a shift, and `Sk.sh` with the signed flag lowers `>>>` to `BinOp.ashr true` (`XF.ashrBits`).
 What else signedness changes is outside the fragment and stays refused: sign extension (the `SignedResize` marker), a
-signed comparison of other operands, the arithmetic shift `>>>`, signed `/` and `%`, a signed operand of a shift, a
-signed read in an index, and a signed read or comparison in an `always_comb` body.
+signed comparison of other operands, `>>>` into a wider target, a signed shift amount, signed `/` and `%`, a signed
+read in an index, and a signed read other than a shifted operand, or a signed comparison, in an `always_comb` body.
 -/
 
 namespace LeanModels.Sv

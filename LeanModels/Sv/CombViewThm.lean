@@ -302,12 +302,13 @@ theorem selfOpW_false_of_sh {op : SymBinOp} (h : shOpW op = true) : selfOpW op =
   · rcases selfOpW_cases hs with rfl | rfl <;> simp [shOpW] at h
 
 theorem shOpW_cases {op : SymBinOp} (h : shOpW op = true) :
-    (∃ s, op = .m0 (.shl s)) ∨ op = .m0 (.shr false) := by
+    (∃ s, op = .m0 (.shl s)) ∨ op = .m0 (.shr false) ∨ op = .m0 (.ashr true) := by
   cases op with
   | m0 b =>
       cases b with
       | shl s => exact Or.inl ⟨s, rfl⟩
       | shr s => cases s <;> simp_all [shOpW]
+      | ashr s => cases s <;> simp_all [shOpW]
       | _ => simp_all [shOpW]
   | _ => simp_all [shOpW]
 
@@ -453,7 +454,8 @@ theorem shOpdRd?_cases {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdR
 /-- The left operand of a shift of signedness `s`: a shift operand, possibly under the marker that keeps the
 signedness (`Resize` for an unsigned shift, `SignedResize` for a signed one). -/
 theorem shLeftRd?_cases {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc} (h : shLeftRd? ds s e = .ok rs) :
-    ∃ x, (e = x ∨ (s = false ∧ ∃ m, e = .resize m x) ∨ (s = true ∧ ∃ m, e = .signedResize m x)) ∧
+    ∃ x, (e = x ∨ (s = false ∧ ∃ m, e = .resize m x) ∨ (s = true ∧ ∃ m, e = .signedResize m x) ∨
+        (s = true ∧ ∃ n, e = .cast true (.ident n) ∧ x = .ident n)) ∧
       shOpdRd? ds x = .ok rs := by
   cases e with
   | resize m x =>
@@ -463,7 +465,21 @@ theorem shLeftRd?_cases {ds : List DeclT} {s : Bool} {e : PExpr} {rs : List Acc}
   | signedResize m x =>
       cases s
       · simp [shLeftRd?] at h
-      · exact ⟨x, Or.inr (Or.inr ⟨rfl, m, rfl⟩), by simpa [shLeftRd?] using h⟩
+      · refine ⟨x, Or.inr (Or.inr (Or.inl ⟨rfl, m, rfl⟩)), ?_⟩
+        simp only [shLeftRd?, if_true] at h
+        split at h
+        · simp at h
+        · exact h
+  | cast sg x =>
+      cases sg with
+      | false => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
+      | true =>
+          cases x with
+          | ident n =>
+              cases s
+              · simp [shLeftRd?] at h
+              · exact ⟨.ident n, Or.inr (Or.inr (Or.inr ⟨rfl, n, rfl, rfl⟩)), by simpa [shLeftRd?] using h⟩
+          | _ => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
   | _ => exact ⟨_, Or.inl rfl, by simpa [shLeftRd?] using h⟩
 
 theorem rdsOfW?_unary {ds : List DeclT} {op : SymUnaryOp} {a : PExpr} {rs : List Acc}
@@ -579,7 +595,7 @@ theorem unsignOp_of_selfOpW {op : SymBinOp} (h : selfOpW op = true) : unsignOp o
   rcases selfOpW_cases h with rfl | rfl <;> rfl
 
 theorem unsignOp_of_shOpW {op : SymBinOp} (h : shOpW op = true) : unsignOp op = false := by
-  rcases shOpW_cases h with ⟨s, rfl⟩ | rfl <;> rfl
+  rcases shOpW_cases h with ⟨s, rfl⟩ | rfl | rfl <;> rfl
 
 theorem unsign_binary_t {op : SymBinOp} (h : unsignOp op = true) (l r : PExpr) :
     (PExpr.binary op l r).unsign = .binary op l.unsign r.unsign := by
@@ -1612,6 +1628,21 @@ theorem ie_shr_form (ctx : Option Nat) (l r : PExpr) :
         (instDivOperand2 env elems false (shiftAmtWidth2 env elems r) r)) := by
   unfold instExpr2; exact ⟨_, rfl⟩
 
+/-- The arithmetic shift right of a signed left operand at any context: the left operand lowered SIGNED (sign-extended
+to the context), the node `BinOp.ashr true`. -/
+theorem ie_ashr_form (ctx : Option Nat) (l r : PExpr) :
+    ∃ lc, instExpr2 env elems ctx (.binary (.m0 (.ashr true)) l r) =
+      ctxTrunc2 ctx lc (.binary (.ashr true) (instDivOperand2 env elems true lc l)
+        (instDivOperand2 env elems false (shiftAmtWidth2 env elems r) r)) := by
+  unfold instExpr2; exact ⟨_, rfl⟩
+
+/-- A signed read of a signal is lowered by `instDivOperand2` as the plain read (the cast arm lowers its operand at
+its own width and fits it to the context with the signedness it is given, as the default arm does). -/
+theorem instDiv_cast (s : Bool) (c : Option Nat) (n : String) :
+    instDivOperand2 env elems s c (.cast true (.ident n)) = instDivOperand2 env elems s c (.ident n) := by
+  simp only [instDivOperand2]
+  cases divOperandWidth2 env elems (.ident n) <;> simp [fitDivOperand2, instExpr2]
+
 /-- The default arm of `instDivOperand2` (an operand that is a signal access, a literal or an unsized constant). -/
 theorem instDiv_default (s : Bool) (c : Option Nat) (e : PExpr)
     (he : (∃ v, e = .lit v) ∨ (∃ k, e = .int k) ∨ (∃ n, e = .ident n) ∨ (∃ b i, e = .bitSel b i) ∨
@@ -2040,13 +2071,13 @@ theorem cnames_ternary_e {c t e : PExpr} {n : String} (h : n ∈ e.cnames) : n �
 theorem cnames_amount {op : SymBinOp} {l r : PExpr} (hb : shOpW op = true) {g : String} (hg : r = .genvarRef g) :
     g ∈ (PExpr.binary op l r).cnames := by
   subst hg
-  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl <;> simp [PExpr.cnames]
+  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl <;> simp [PExpr.cnames]
 
 theorem cnames_amount_param {op : SymBinOp} {l r : PExpr} (hb : shOpW op = true)
     {n : String} (hn : r = .paramRef n none) :
     n ∈ (PExpr.binary op l r).cnames := by
   subst r
-  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl <;> simp [PExpr.cnames]
+  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl <;> simp [PExpr.cnames]
 
 theorem rcounts_binary_l {op : SymBinOp} {l r : PExpr} {c : Aff} (h : c ∈ l.rcounts) :
     c ∈ (PExpr.binary op l r).rcounts := by simp [PExpr.rcounts, h]
@@ -2262,12 +2293,14 @@ theorem rd_shLeft (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {s : Bool} 
     (h : shLeftRd? ds s e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (c : Option Nat) :
     RdOK σ rs (instDivOperand2 E elems s c e) := by
   obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
-  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩
+  rcases hx with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩ | ⟨rfl, n, rfl, rfl⟩
   · exact rd_shOpd C hxo hacc s c
   · rw [instDiv_resize false c m x (shOpdKind hxo)]
     exact rd_shOpd C hxo hacc false _
   · rw [instDiv_sresize true c m x]
     exact rd_shOpd C hxo hacc true _
+  · rw [instDiv_cast true c n]
+    exact rd_shOpd C hxo hacc true c
 
 /-- **The reads of an expression of the word-level fragment** (WP-B2), at any context: the context-determined
 positions through `rdsOfW?`, the self-determined operands through the v1 theorem `inst_rd`. -/
@@ -2320,7 +2353,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
         have hR := rd_shAmt C hr' (fun a ha => hacc a (List.mem_append_right _ ha))
           (fun g hgr => hcn.1 g (cnames_amount hb hgr))
           (fun n hnr => hcn.1 n (cnames_amount_param hb hnr))
-        rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl
+        rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
         · have hL : ∀ c, RdOK σ ra (instDivOperand2 E elems s c l) :=
             rd_shLeft C hl (fun a ha => hacc a (List.mem_append_left _ ha))
           obtain ⟨lc, hlc⟩ := ie_shl_form (env := E) (elems := elems) s ctx l r
@@ -2328,6 +2361,10 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
         · have hL : ∀ c, RdOK σ ra (instDivOperand2 E elems false c l) :=
             rd_shLeft C hl (fun a ha => hacc a (List.mem_append_left _ ha))
           obtain ⟨lc, hlc⟩ := ie_shr_form (env := E) (elems := elems) ctx l r
+          rw [hlc]; exact RdOK.ctxTrunc (RdOK.binary _ (hL lc) (hR _)) ctx lc
+        · have hL : ∀ c, RdOK σ ra (instDivOperand2 E elems true c l) :=
+            rd_shLeft C hl (fun a ha => hacc a (List.mem_append_left _ ha))
+          obtain ⟨lc, hlc⟩ := ie_ashr_form (env := E) (elems := elems) ctx l r
           rw [hlc]; exact RdOK.ctxTrunc (RdOK.binary _ (hL lc) (hR _)) ctx lc
       · -- a signed comparison of two signed signals of one width
         have hpair : DW a = DW b := hweq (a, b) (by simp [PExpr.scmpPairs, hcm, (scmpOp_ctx hcm).1])

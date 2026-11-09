@@ -233,6 +233,10 @@ def skT : PExpr → List Acc → Sk
               .sh false false
                 (match l with | .resize _ x => skT x (as.take (cnt l)) | x => skT x (as.take (cnt l)))
                 (skT r (as.drop (cnt l)))
+          | .m0 (.ashr true) =>
+              .sh false true
+                (match l with | .signedResize _ x => skT x (as.take (cnt l)) | x => skT x (as.take (cnt l)))
+                (skT r (as.drop (cnt l)))
           | .slt => .scmp .lt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
           | .sle => .scmp .le (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
           | .sgt => .scmp .gt (as.headD (.whole "")) ((as.drop 1).headD (.whole ""))
@@ -263,7 +267,8 @@ def skT : PExpr → List Acc → Sk
       | .partSel .. => .ext (.rd (as.headD (.whole "")))
       | .binary op _ _ =>
           match op with
-          | .m0 .and | .m0 .or | .m0 .xor | .m0 .add | .m0 .sub | .mul | .m0 (.shl _) | .m0 (.shr false) =>
+          | .m0 .and | .m0 .or | .m0 .xor | .m0 .add | .m0 .sub | .mul | .m0 (.shl _) | .m0 (.shr false)
+          | .m0 (.ashr true) =>
               .rsz true (skT e as)
           | _ => .rsz false (skT e as)
       | .unary op _ =>
@@ -495,7 +500,8 @@ def Sk.low (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → Expr2
       let L := if max tw (l.width σ dw) = l.width σ dw then l.low σ dw (l.width σ dw)
         else if sg then .resizeSigned (max tw (l.width σ dw)) (l.low σ dw (l.width σ dw))
         else .resize (max tw (l.width σ dw)) (l.low σ dw (l.width σ dw))
-      let E := Expr2.binary (if d then BinOp.shl sg else BinOp.shr sg) L (r.low σ dw (r.width σ dw))
+      let E := Expr2.binary (if d then BinOp.shl sg else if sg then BinOp.ashr true else BinOp.shr false) L
+        (r.low σ dw (r.width σ dw))
       if max tw (l.width σ dw) ≤ tw then E else .resize tw E
 
 /-- A skeleton in a self-determined position (WP-G S2): no `.fill`, and every gate, comparison and
@@ -875,7 +881,7 @@ def Sk.bitC (σ : String → Int) (dw : String → Nat) (tw : Nat) (rd : String 
   | .sh false false l r, k =>
       XF.shrBits (l.width σ dw) (l.bitC σ dw (l.width σ dw) rd) (r.width σ dw) (r.bitC σ dw (r.width σ dw) rd) k
   | .sh false true l r, k =>
-      XF.shrBits (max tw (l.width σ dw)) (XF.sext (l.width σ dw) (l.bitC σ dw (l.width σ dw) rd)) (r.width σ dw)
+      XF.ashrBits (max tw (l.width σ dw)) (XF.sext (l.width σ dw) (l.bitC σ dw (l.width σ dw) rd)) (r.width σ dw)
         (r.bitC σ dw (r.width σ dw) rd) k
 
 /-- **A v1 skeleton reads the same at every context**: `Sk.bitC` of a self-determined skeleton is its v1 `Sk.bit`. -/
@@ -1481,7 +1487,7 @@ theorem skT_resize_op {ds : List DeclT} {e : PExpr} {rs : List Acc} (m : Nat) (a
       · rcases ctxOpW_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | ⟨cm, rfl⟩ <;> (try cases cm) <;>
           simp [skT, gateOf, mkGate, CmpOp.ex, PExpr.ctxPropagates]
       · rcases selfOpW_cases hb with rfl | rfl <;> simp [skT, gateOf, PExpr.ctxPropagates]
-      · rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl <;> (try cases s) <;> simp [skT, gateOf, PExpr.ctxPropagates]
+      · rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl <;> (try cases s) <;> simp [skT, gateOf, PExpr.ctxPropagates]
       · cases op <;> simp [scmpOp?] at hcm <;> simp [skT, gateOf, PExpr.ctxPropagates]
   | unary op a =>
       rcases rdsOfW?_unary h with ⟨rfl, -⟩ | ⟨rfl, -⟩ <;> simp [skT, PExpr.ctxPropagates]
@@ -1512,29 +1518,32 @@ theorem shLeft_len {ds : List DeclT} {s : Bool} {l : PExpr} {rs : List Acc} (h :
     rs.length = cnt l := by
   obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases h
   have h1 := shOpd_len hxo
-  rcases hx with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩
+  rcases hx with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩ | ⟨-, n, rfl, rfl⟩
   · exact h1
   · rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m', a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
       simpa [cnt] using h1
   · rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m', a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
       simpa [cnt] using h1
+  · simpa [cnt] using h1
 
 /-- **The skeleton of a recognized shift**: `skT` strips the marker from the left operand (it is transparent) and builds
 `Sk.sh`; the signedness flag of the skeleton is the one of the operator. -/
 theorem skT_sh {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {ra rb : List Acc} (hb : shOpW op = true)
     (hl : shLeftRd? ds (shSign op) l = .ok ra) (hr : shAmtRd? ds r = .ok rb) :
     ∃ (d sg : Bool) (x : PExpr),
-      ((op = .m0 (.shl sg) ∧ d = true) ∨ (op = .m0 (.shr false) ∧ d = false ∧ sg = false)) ∧
+      ((op = .m0 (.shl sg) ∧ d = true) ∨ (op = .m0 (.shr false) ∧ d = false ∧ sg = false) ∨
+        (op = .m0 (.ashr true) ∧ d = false ∧ sg = true)) ∧
       shOpdRd? ds x = .ok ra ∧
-      (l = x ∨ (sg = false ∧ ∃ m, l = .resize m x) ∨ (sg = true ∧ ∃ m, l = .signedResize m x)) ∧
+      (l = x ∨ (sg = false ∧ ∃ m, l = .resize m x) ∨ (sg = true ∧ ∃ m, l = .signedResize m x) ∨
+        (sg = true ∧ ∃ n, l = .cast true (.ident n) ∧ x = .ident n)) ∧
       skT (.binary op l r) (ra ++ rb) = .sh d sg (skT x ra) (skT r rb) := by
-  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl
+  rcases shOpW_cases hb with ⟨s, rfl⟩ | rfl | rfl
   · have hl' : shLeftRd? ds s l = .ok ra := hl
     obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases hl'
     have hla := shLeft_len hl'
     have e1 := List.take_left' hla (l₂ := rb)
     have e2 := List.drop_left' hla (l₂ := rb)
-    rcases hx with h | ⟨hs, m, h⟩ | ⟨hs, m, h⟩
+    rcases hx with h | ⟨hs, m, h⟩ | ⟨hs, m, h⟩ | ⟨hs, n, h, rfl⟩
     · subst h
       cases s
       · rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ |
@@ -1546,21 +1555,43 @@ theorem skT_sh {ds : List DeclT} {op : SymBinOp} {l r : PExpr} {ra rb : List Acc
     · subst hs; subst h
       exact ⟨true, false, _, Or.inl ⟨rfl, rfl⟩, hxo, Or.inr (Or.inl ⟨rfl, m, rfl⟩), by simp [skT, gateOf, e1, e2]⟩
     · subst hs; subst h
-      exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, hxo, Or.inr (Or.inr ⟨rfl, m, rfl⟩), by simp [skT, gateOf, e1, e2]⟩
+      exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, hxo, Or.inr (Or.inr (Or.inl ⟨rfl, m, rfl⟩)),
+        by simp [skT, gateOf, e1, e2]⟩
+    · subst hs; subst h
+      exact ⟨true, true, _, Or.inl ⟨rfl, rfl⟩, hxo, Or.inr (Or.inr (Or.inr ⟨rfl, n, rfl, rfl⟩)),
+        by simp [skT, gateOf, e1, e2]⟩
   · have hl' : shLeftRd? ds false l = .ok ra := hl
     obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases hl'
     have hla := shLeft_len hl'
     have e1 := List.take_left' hla (l₂ := rb)
     have e2 := List.drop_left' hla (l₂ := rb)
-    rcases hx with h | ⟨-, m, h⟩ | ⟨hs, m, h⟩
+    rcases hx with h | ⟨-, m, h⟩ | ⟨hs, m, h⟩ | ⟨hs, n, h, -⟩
     · subst h
       rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ |
           ⟨n, is, m, a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
-        exact ⟨false, false, _, Or.inr ⟨rfl, rfl, rfl⟩, hxo, Or.inl rfl, by simp [skT, gateOf, e1, e2]⟩
+        exact ⟨false, false, _, Or.inr (Or.inl ⟨rfl, rfl, rfl⟩), hxo, Or.inl rfl, by simp [skT, gateOf, e1, e2]⟩
     · subst h
-      exact ⟨false, false, _, Or.inr ⟨rfl, rfl, rfl⟩, hxo, Or.inr (Or.inl ⟨rfl, m, rfl⟩),
+      exact ⟨false, false, _, Or.inr (Or.inl ⟨rfl, rfl, rfl⟩), hxo, Or.inr (Or.inl ⟨rfl, m, rfl⟩),
         by simp [skT, gateOf, e1, e2]⟩
     · exact absurd hs (by simp)
+    · exact absurd hs (by simp)
+  · have hl' : shLeftRd? ds true l = .ok ra := hl
+    obtain ⟨x, hx, hxo⟩ := shLeftRd?_cases hl'
+    have hla := shLeft_len hl'
+    have e1 := List.take_left' hla (l₂ := rb)
+    have e2 := List.drop_left' hla (l₂ := rb)
+    rcases hx with h | ⟨hs, m, h⟩ | ⟨-, m, h⟩ | ⟨-, n, h, rfl⟩
+    · subst h
+      rcases shOpdKind hxo with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ |
+          ⟨n, is, m, a, b, rfl⟩ | ⟨b, pm, pl, rfl⟩ <;>
+        exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), hxo, Or.inl rfl, by simp [skT, gateOf, e1, e2]⟩
+    · exact absurd hs (by simp)
+    · subst h
+      exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), hxo, Or.inr (Or.inr (Or.inl ⟨rfl, m, rfl⟩)),
+        by simp [skT, gateOf, e1, e2]⟩
+    · subst h
+      exact ⟨false, true, _, Or.inr (Or.inr ⟨rfl, rfl, rfl⟩), hxo, Or.inr (Or.inr (Or.inr ⟨rfl, n, rfl, rfl⟩)),
+        by simp [skT, gateOf, e1, e2]⟩
 
 theorem shOpd_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd? ds e = .ok rs) :
     (skT e rs).leaves = rs := by

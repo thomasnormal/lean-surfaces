@@ -56,9 +56,10 @@ NOT covered (`xfWidth = none`), and why:
   index is already a `slice` after instantiation);
 * **`/ % **`**: a zero divisor (or a negative exponent) gives `x`; the task bans run-time
   `/` and `%` and fourstate has no rule for them, so a design using them is outside;
-* **signed forms** other than the signed order comparison (`slt …` as a plain binary node, `>>>` on a signed left
-  operand; `resizeSigned` is covered since gate 3, the `scmp` node's `<`/`<=`/`>`/`>=` since the signed-comparison
-  round, its bit the `BitVec.toInt` comparison `LVec.toInt?` computes) and the
+* **signed forms** other than the signed order comparison and the arithmetic shift (`slt …` as a plain binary node;
+  `resizeSigned` is covered since gate 3, the `scmp` node's `<`/`<=`/`>`/`>=` since the signed-comparison round, its bit
+  the `BitVec.toInt` comparison `LVec.toInt?` computes, and `BinOp.ashr true`, `XF.ashrBits`, since the arithmetic-shift
+  round) and the
   wildcard equalities `==?`/`!=?`: known operands DO give a known result, but their Boolean
   equations (sign fill, wildcard matching) are not yet written — an
   extension, not a soundness gap: the theorem simply does not apply to a design that uses them;
@@ -463,6 +464,12 @@ def shlBits (f : Nat → Bool) (wr : Nat) (g : Nat → Bool) (k : Nat) : Bool :=
 def shrBits (w : Nat) (f : Nat → Bool) (wr : Nat) (g : Nat → Bool) (k : Nat) : Bool :=
   decide (k + val g wr < w) && f (k + val g wr)
 
+/-- Arithmetic shift right of a `w`-bit bit function by the amount `val g wr` (bit `k`): the bits shifted down, and from
+the top the sign bit `f (w - 1)` (`false` for an empty vector), the semantics of `LVec.ashr true` (IEEE 1800-2023
+§11.4.10). -/
+def ashrBits (w : Nat) (f : Nat → Bool) (wr : Nat) (g : Nat → Bool) (k : Nat) : Bool :=
+  if k + val g wr < w then f (k + val g wr) else decide (0 < w) && f (w - 1)
+
 /-- Sign extension (or truncation) of a `w`-bit bit function (bit `k`): the bits below `w` as they are, those from `w`
 up the top bit (`false` for an empty vector), the semantics of `LVec.resizeSigned` (WP-B2 gate 3). -/
 def sext (w : Nat) (f : Nat → Bool) (k : Nat) : Bool :=
@@ -605,6 +612,28 @@ theorem shl_ofBoolFn (w wr : Nat) (f g : Nat → Bool) :
       simp [hi, ha, h1, h2]
   · simp [hi]
 
+theorem ashr_true_ofBoolFn (w wr : Nat) (f g : Nat → Bool) :
+    (ofBoolFn w f).ashr true (ofBoolFn wr g) = ofBoolFn w (XF.ashrBits w f wr g) := by
+  have hb : XF.ashrBits w f wr g = fun k =>
+      if k + XF.val g wr < w then f (k + XF.val g wr) else decide (0 < w) && f (w - 1) := rfl
+  have hfill : (ofBoolFn w f).bits.back?.getD .l0 = Logic.ofBool (decide (0 < w) && f (w - 1)) := by
+    rw [Array.back?, show (ofBoolFn w f).bits.size = w from width_ofBoolFn w f, getElem?_ofBoolFn]
+    by_cases h0 : 0 < w
+    · simp [h0, show w - 1 < w by omega]
+    · simp [h0, show ¬ (w - 1 < w) by omega, Logic.ofBool]
+  rw [hb]
+  unfold LVec.ashr
+  simp only [shiftAmount?, toNat?_ofBoolFn, reduceIte, hfill]
+  generalize XF.val g wr = A
+  apply ext_getElem?
+  intro i
+  simp only [Array.getElem?_ofFn, getElem?_ofBoolFn, width_ofBoolFn]
+  by_cases hi : i < w
+  · by_cases ha : i + A < w
+    · simp [hi, ha]
+    · simp [hi, ha]
+  · simp [hi]
+
 theorem shr_ofBoolFn (w wr : Nat) (f g : Nat → Bool) :
     (ofBoolFn w f).shr (ofBoolFn wr g) = ofBoolFn w (XF.shrBits w f wr g) := by
   have hb : XF.shrBits w f wr g = fun k => decide (k + XF.val g wr < w) && f (k + XF.val g wr) :=
@@ -742,6 +771,7 @@ def Expr2.xfWidth (d : Design2) : Expr2 → Option Nat
   | .binary (.shr _) l r => XF.comb (fun a _ => a) (l.xfWidth d) (r.xfWidth d)
   | .binary (.ashl _) l r => XF.comb (fun a _ => a) (l.xfWidth d) (r.xfWidth d)
   | .binary (.ashr false) l r => XF.comb (fun a _ => a) (l.xfWidth d) (r.xfWidth d)
+  | .binary (.ashr true) l r => XF.comb (fun a _ => a) (l.xfWidth d) (r.xfWidth d)
   | .binary _ _ _ => none
   | .logical _ l r =>
       match l.xfWidth d, r.xfWidth d with
@@ -829,6 +859,8 @@ def Expr2.xfBits (d : Design2) (env : String → Nat → Bool) : Expr2 → Nat �
       XF.shlBits (l.xfBits d env) ((r.xfWidth d).getD 0) (r.xfBits d env)
   | .binary (.ashr false) l r =>
       XF.shrBits ((l.xfWidth d).getD 0) (l.xfBits d env) ((r.xfWidth d).getD 0) (r.xfBits d env)
+  | .binary (.ashr true) l r =>
+      XF.ashrBits ((l.xfWidth d).getD 0) (l.xfBits d env) ((r.xfWidth d).getD 0) (r.xfBits d env)
   | .binary _ _ _ => fun _ => false
   | .logical isAnd l r => fun _ =>
       if isAnd then
@@ -1199,6 +1231,14 @@ theorem evals_ashr {l r : Expr2} {w wr : Nat} {fl fr : Nat → Bool}
   rw [LVec.ashr_false_eq_shr]
   exact congrArg Res.ok (LVec.shr_ofBoolFn w wr fl fr)
 
+theorem evals_ashr_true {l r : Expr2} {w wr : Nat} {fl fr : Nat → Bool}
+    (hl : evalPure2 st l = .ok (LVec.ofBoolFn w fl))
+    (hr : evalPure2 st r = .ok (LVec.ofBoolFn wr fr)) :
+    evalPure2 st (.binary (.ashr true) l r) = .ok (LVec.ofBoolFn w (XF.ashrBits w fl wr fr)) := by
+  rw [eval_binary hl hr]
+  show Res.ok ((LVec.ofBoolFn w fl).ashr true (LVec.ofBoolFn wr fr)) = _
+  rw [LVec.ashr_true_ofBoolFn]
+
 theorem evals_repl {n : Nat} {a : Expr2} {w : Nat} {f : Nat → Bool}
     (h : evalPure2 st a = .ok (LVec.ofBoolFn w f)) :
     evalPure2 st (.repl n a) = .ok (LVec.ofBoolFn (w * n) (fun k => f (k % w))) := by
@@ -1415,7 +1455,12 @@ theorem Expr2.evalPure2_ofBoolFn {d : Design2} {st : SvState} (n : Nat) :
             exact this
         | ashr s =>
             cases s with
-            | true => simp [Expr2.xfWidth] at hw
+            | true =>
+                simp only [Expr2.xfWidth] at hw
+                obtain ⟨wl, wr, hwl, hwr, rfl⟩ := XF.comb_eq_some.mp hw
+                have := evals_ashr_true (ih l hsl hwl hrl) (ih r hsr hwr hrr)
+                simp only [Expr2.xfBits, hwl, hwr, Option.getD_some]
+                exact this
             | false =>
                 simp only [Expr2.xfWidth] at hw
                 obtain ⟨wl, wr, hwl, hwr, rfl⟩ := XF.comb_eq_some.mp hw
@@ -1664,7 +1709,7 @@ private def is_ : Expr2 := .ident "s"
 #guard (Expr2.binary .div ia ib).xfWidth tD == none            -- division
 #guard (Expr2.binary .rem ia ib).xfWidth tD == none
 #guard (Expr2.binary (.pow false false) ia ib).xfWidth tD == none
-#guard (Expr2.binary (.ashr true) ia ib).xfWidth tD == none
+#guard (Expr2.binary (.ashr true) ia ib).xfWidth tD == some 4      -- arithmetic shift right of a signed operand
 #guard (Expr2.binary .slt ia ib).xfWidth tD == none
 #guard (Expr2.scmp .lt ia ib).xfWidth tD == some 1                -- signed order comparison: one bit
 #guard (Expr2.scmp .eq ia ib).xfWidth tD == none                  -- not an order comparison: x

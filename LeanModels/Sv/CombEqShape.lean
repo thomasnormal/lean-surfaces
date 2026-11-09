@@ -1054,6 +1054,22 @@ theorem ie_shr_none (wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = 
   simp only [hl]
   rfl
 
+/-- The arithmetic shift right of a signed left operand at a context: the left operand SIGN-extended to the context. -/
+theorem ie_ashr_some (tw wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = some wl) :
+    instExpr2 E elems (some tw) (.binary (.m0 (.ashr true)) l r) =
+      ctxTrunc2 (some tw) (some (max tw wl)) (.binary (.ashr true)
+        (instDivOperand2 E elems true (some (max tw wl)) l)
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r)) := by
+  simp [instExpr2, hl]
+
+theorem ie_ashr_none (wl : Nat) (l r : PExpr) (hl : divOperandWidth2 E elems l = some wl) :
+    instExpr2 E elems none (.binary (.m0 (.ashr true)) l r) =
+      .binary (.ashr true) (instDivOperand2 E elems true (some wl) l)
+        (instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r) := by
+  unfold instExpr2
+  simp only [hl]
+  rfl
+
 /-- `divOperandWidth2` of a signal access is its `selfWidth2`. -/
 theorem divW_eq_selfW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} {a : Acc}
     (h : leafRd? ds e = .ok a) (ha : AccOK σ DW DG EW ns a) :
@@ -1197,24 +1213,26 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         have hR := shAmt_shape C hdw hr hacr (fun g hgr => hcn.1 g (cnames_amount hb hgr))
           (fun n hnr => hcn.1 n (cnames_amount_param hb hnr)) false
         have hlsw : divOperandWidth2 E elems l = some ((skT x ra).width σ dw) := by
-          rcases hxl with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩
+          rcases hxl with rfl | ⟨-, m, rfl⟩ | ⟨-, m, rfl⟩ | ⟨-, n, rfl, rfl⟩
           · exact (hL none).1
+          · simpa [divOperandWidth2] using (hL none).1
           · simpa [divOperandWidth2] using (hL none).1
           · simpa [divOperandWidth2] using (hL none).1
         have hLexp : ∀ c : Nat, instDivOperand2 E elems sg (some c) l =
             fitDivOperand2 sg (some c) (some ((skT x ra).width σ dw))
               ((skT x ra).low σ dw ((skT x ra).width σ dw)) := by
           intro c
-          rcases hxl with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩
+          rcases hxl with rfl | ⟨rfl, m, rfl⟩ | ⟨rfl, m, rfl⟩ | ⟨rfl, n, rfl, rfl⟩
           · exact (hL _).2
           · rw [instDiv_resize false (some c) m x (shOpdKind hxo)]; exact (hL _).2
           · rw [instDiv_sresize true (some c) m x]; exact (hL _).2
+          · rw [instDiv_cast true (some c) n]; exact (hL _).2
         have hRexp : instDivOperand2 E elems false (shiftAmtWidth2 E elems r) r =
             (skT r rb).low σ dw ((skT r rb).width σ dw) := by
           rw [(hR none).1]
           rw [(hR _).2]
           simp [fitDivOperand2]
-        rcases hd with ⟨rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩
+        rcases hd with ⟨rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩
         · refine ⟨by simp [selfWidth2, Sk.width, hlsw], by simp [rigidMax2, selfWidth2, Sk.rmax, hlsw],
             fun _ _ => ?_, ?_, ?_⟩
           · rw [ie_shl_none sg _ l r hlsw, hLexp, hRexp]
@@ -1230,6 +1248,15 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           · rw [ie_shr_some tw _ l r hlsw, hLexp, hRexp]
             simp [Sk.low, fitDivOperand2, ctxTrunc2]
           · rw [fitExpr2_binary, ie_shr_some tw _ l r hlsw, hLexp, hRexp]
+            simp [Sk.low, fitDivOperand2, ctxTrunc2]
+        · -- the arithmetic shift right of a signed left operand (IEEE 1800-2023 §11.4.10)
+          refine ⟨by simp [selfWidth2, Sk.width, hlsw], by simp [rigidMax2, selfWidth2, Sk.rmax, hlsw],
+            fun _ _ => ?_, ?_, ?_⟩
+          · rw [ie_ashr_none _ l r hlsw, hLexp, hRexp]
+            simp [Sk.low, Sk.width, fitDivOperand2]
+          · rw [ie_ashr_some tw _ l r hlsw, hLexp, hRexp]
+            simp [Sk.low, fitDivOperand2, ctxTrunc2]
+          · rw [fitExpr2_binary, ie_ashr_some tw _ l r hlsw, hLexp, hRexp]
             simp [Sk.low, fitDivOperand2, ctxTrunc2]
       · -- a signed comparison of two signed signals of one width (IEEE 1800-2023 §11.4.4, §11.8.1)
         have hsk : skT (.binary op (.cast true (.ident a)) (.cast true (.ident b))) [.whole a, .whole b] =
@@ -2054,21 +2081,34 @@ theorem xf_shLeft (sg : Bool) {L0 : Expr2} {wl lc : Nat} {lbits : Nat → Bool} 
       simp only [Expr2.xfBits, hw, Option.getD_some, if_true]
       exact sext_congr hb k
 
-/-- The shift itself, over an operand already extended to `lc` (bit function `lb`) and an amount of width `wr`. -/
+/-- The shift itself, over an operand already extended to `lc` (bit function `lb`) and an amount of width `wr`: `<<`,
+the arithmetic `>>>` of a signed operand (`sg`), or the logical `>>`. -/
 theorem xf_shCore (d sg : Bool) {Lx R0 : Expr2} {wr lc : Nat} {lb rbits : Nat → Bool}
     (env : String → Nat → Bool) (hLw : Lx.xfWidth m = some lc)
     (hLb : ∀ k, k < lc → Lx.xfBits m env k = lb k)
     (hRw : R0.xfWidth m = some wr) (hRb : ∀ k, k < wr → R0.xfBits m env k = rbits k) :
-    (Expr2.binary (if d then BinOp.shl sg else BinOp.shr sg) Lx R0).xfWidth m = some lc ∧
-      ∀ k, k < lc → (Expr2.binary (if d then BinOp.shl sg else BinOp.shr sg) Lx R0).xfBits m env k =
-        (if d then XF.shlBits lb wr rbits k else XF.shrBits lc lb wr rbits k) := by
+    (Expr2.binary (if d then BinOp.shl sg else if sg then BinOp.ashr true else BinOp.shr false) Lx R0).xfWidth m =
+        some lc ∧
+      ∀ k, k < lc →
+        (Expr2.binary (if d then BinOp.shl sg else if sg then BinOp.ashr true else BinOp.shr false) Lx R0).xfBits m
+            env k =
+          (if d then XF.shlBits lb wr rbits k
+           else if sg then XF.ashrBits lc lb wr rbits k else XF.shrBits lc lb wr rbits k) := by
   have hv : XF.val (R0.xfBits m env) wr = XF.val rbits wr := XF.val_congr_lt hRb
   cases d
-  · refine ⟨by simp [Expr2.xfWidth, hLw, hRw, XF.comb], fun k hk => ?_⟩
-    simp only [Bool.false_eq_true, if_false, Expr2.xfBits, hLw, hRw, Option.getD_some, XF.shrBits, hv]
-    by_cases h1 : k + XF.val rbits wr < lc
-    · rw [hLb _ h1]
-    · simp [h1]
+  · cases sg
+    · refine ⟨by simp [Expr2.xfWidth, hLw, hRw, XF.comb], fun k hk => ?_⟩
+      simp only [Bool.false_eq_true, if_false, Expr2.xfBits, hLw, hRw, Option.getD_some, XF.shrBits, hv]
+      by_cases h1 : k + XF.val rbits wr < lc
+      · rw [hLb _ h1]
+      · simp [h1]
+    · refine ⟨by simp [Expr2.xfWidth, hLw, hRw, XF.comb], fun k hk => ?_⟩
+      simp only [Bool.false_eq_true, if_false, reduceIte, Expr2.xfBits, hLw, hRw, Option.getD_some, XF.ashrBits, hv]
+      by_cases h1 : k + XF.val rbits wr < lc
+      · simp [h1, hLb _ h1]
+      · by_cases h0 : 0 < lc
+        · simp [h1, h0, hLb (lc - 1) (by omega)]
+        · simp [h1, h0]
   · refine ⟨by simp [Expr2.xfWidth, hLw, hRw, XF.comb], fun k hk => ?_⟩
     simp only [if_true, Expr2.xfBits, hLw, hRw, Option.getD_some, XF.shlBits, hv]
     by_cases h1 : XF.val rbits wr ≤ k

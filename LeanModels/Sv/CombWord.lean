@@ -233,6 +233,31 @@ theorem bv_shrBits {w wl wr : Nat} (f g : Nat → Bool) :
     rw [h3]
     simp [hk, h2]
 
+/-- A `w`-bit bit function sign-extended to `w` bits reads as itself. -/
+theorem bv_sext_self {w : Nat} (f : Nat → Bool) : bv w (sext w f) = bv w f :=
+  bv_congr_lt (fun k hk => by simp [sext, hk])
+
+/-- **Arithmetic-shift glue** (IEEE 1800-2023 §11.4.10): `XF.ashrBits`, the equation of `>>>` over a signed operand, is
+`BitVec.sshiftRight` by the amount read as a natural number (an amount of `w` or more fills every bit with the sign). -/
+theorem bv_ashrBits {w wr : Nat} (f g : Nat → Bool) :
+    bv w (ashrBits w f wr g) = (bv w f).sshiftRight (bv wr g).toNat := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro k hk
+  rw [getLsbD_bv hk, BitVec.getLsbD_sshiftRight, toNat_bv]
+  simp only [ashrBits]
+  have hk' : ¬ w ≤ k := by omega
+  by_cases h2 : k + val g wr < w
+  · have h3 : (bv w f).getLsbD (val g wr + k) = f (k + val g wr) := by
+      rw [Nat.add_comm]; exact getLsbD_bv h2
+    have h4 : val g wr + k < w := by omega
+    rw [if_pos h2, if_pos h4, h3]
+    simp [hk']
+  · have hmsb : (bv w f).msb = f (w - 1) := by
+      rw [BitVec.msb_eq_getLsbD_last, getLsbD_bv (show w - 1 < w by omega)]
+    have h4 : ¬ val g wr + k < w := by omega
+    rw [if_neg h2, if_neg h4, hmsb]
+    simp [hk', show 0 < w by omega]
+
 end XF
 end LeanModels.Sv
 
@@ -247,3 +272,7 @@ end LeanModels.Sv
 /-- info: 'LeanModels.Sv.XF.bv_zext' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms LeanModels.Sv.XF.bv_zext
+
+/-- info: 'LeanModels.Sv.XF.bv_ashrBits' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms LeanModels.Sv.XF.bv_ashrBits

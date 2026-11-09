@@ -16,6 +16,8 @@ order `evalPure2` computes through `LVec.toInt?`.
 
 * `sadd_correct`: in every settled state, `s = a + b`, `d = a - b`, `x = a ^ ~b`, `y = a`;
 * `pass_correct`: `y = x`;
+* `asr_correct`: `y = a >>> s` is `BitVec.sshiftRight` by `s` read as a natural number, `z = a >>> 1`, `l = a << s` is
+  `<<<`; `asr_proc_settles`: the same `>>>` inside `always_comb`;
 * `scmp_correct`: `lt = a <ₛ b`, `le = a ≤ₛ b`, `gt = b <ₛ a`, `ge = b ≤ₛ a` (`BitVec.slt`/`BitVec.sle`: the operands
   ordered as two's-complement integers, IEEE 1800-2023 §11.4.4).
 -/
@@ -140,6 +142,62 @@ theorem scmp_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
     | (refine inKnown_ofBitVec hA ?_; omega)
     | (refine inKnown_ofBitVec hB ?_; omega)
 
+/-- **The arithmetic shift right and the left shift of a signed operand**, for every width `W ≥ 1` in the `int` range:
+`>>>` is `BitVec.sshiftRight` by the amount read as a natural number, `<<` is `<<<`. -/
+theorem asr_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
+    asr.sem W ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec W) (sv : BitVec 3), SvState.lookup st "a" = some (LVec.ofBitVec u) →
+        SvState.lookup st "s" = some (LVec.ofBitVec sv) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (u.sshiftRight sv.toNat)) ∧
+        SvState.lookup st "z" = some (LVec.ofBitVec (u.sshiftRight 1)) ∧
+        SvState.lookup st "l" = some (LVec.ofBitVec (u <<< sv.toNat)) := by
+  obtain ⟨hc, ha⟩ : CombDesign (asr.sem W) ∧ Acyclic (asr.sem W) := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+    all_goals (intros; omega)
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u sv hA hS
+  sv_equations
+  · have hWd : (↑W + -1 : Int).natAbs + 1 = W := by omega
+    have h3 : Int.natAbs 2 + 1 = 3 := rfl
+    rw [hWd] at eq_y_1 eq_z_1 eq_l_1 known_y_1 known_z_1 known_l_1
+    rw [h3] at eq_y_1 eq_l_1
+    refine ⟨?_, ?_, ?_⟩
+    · rw [lookup_bv known_y_1 (by omega), XF.bv_congr_lt eq_y_1, XF.bv_ashrBits, XF.bv_sext_self,
+        bv_of_lookup hA, bv_of_lookup hS]
+    · rw [lookup_bv known_z_1 (by omega), XF.bv_congr_lt eq_z_1, XF.bv_ashrBits, XF.bv_sext_self,
+        bv_of_lookup hA, XF.bv_constBit, show (BitVec.ofInt 32 1).toNat = 1 by decide]
+    · rw [lookup_bv known_l_1 (by omega), XF.bv_congr_lt eq_l_1, XF.bv_shlBits_s, bv_of_lookup hA,
+        bv_of_lookup hS, BitVec.signExtend_eq]
+  all_goals first
+    | (intros; omega)
+    | (refine inKnown_ofBitVec hA ?_; omega)
+    | (refine inKnown_ofBitVec hS ?_; omega)
+
+/-- The structure of `asr_proc` (`>>>` inside `always_comb`), for every width. -/
+theorem asr_proc_struct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
+    ∃ d', (asr_proc.sem W).lowerComb = some d' ∧ CombDesign d' ∧ Acyclic d' := by
+  sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  all_goals (intros; omega)
+
+/-- **`>>>` inside `always_comb`**, for every width, in every settled state of the lowered design. -/
+theorem asr_proc_settles (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648)
+    {d' : Design2} (_hl : (asr_proc.sem W).lowerComb = some d') (_hc : CombDesign d') (_ha : Acyclic d')
+    (st : SvState) (_heqs : CombEqs d' st) (_hsh : StateShape d' st) (u : BitVec W) (sv : BitVec 3)
+    (hA : SvState.lookup st "a" = some (LVec.ofBitVec u)) (hS : SvState.lookup st "s" = some (LVec.ofBitVec sv)) :
+    SvState.lookup st "y" = some (LVec.ofBitVec (u.sshiftRight sv.toNat)) := by
+  sv_equations
+  · have hWd : (↑W + -1 : Int).natAbs + 1 = W := by omega
+    have h3 : Int.natAbs 2 + 1 = 3 := rfl
+    rw [hWd, h3] at eq_y_1
+    rw [hWd] at known_y_1
+    rw [lookup_bv known_y_1 (by omega), XF.bv_congr_lt eq_y_1, XF.bv_ashrBits, XF.bv_sext_self,
+      bv_of_lookup hA, bv_of_lookup hS]
+  all_goals first
+    | (intros; omega)
+    | sv_cover
+    | (refine inKnown_ofBitVec hA ?_; omega)
+    | (refine inKnown_ofBitVec hS ?_; omega)
+
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.sadd_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms sadd_correct
@@ -151,5 +209,13 @@ theorem scmp_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms scmp_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.asr_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms asr_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.asr_proc_settles' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms asr_proc_settles
 
 end Examples.«system-verilog».comb_signed.comb_proof

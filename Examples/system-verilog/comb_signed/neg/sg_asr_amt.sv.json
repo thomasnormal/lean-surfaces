@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "sg_asr",
+  "top": "sg_asr_amt",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_signed/neg/sg_asr.sv",
-      "sha256": "54a890d087359e70a87b41c3bd5fc0a25469c19d5f02ffebd92f1ebaee502aa0"
+      "path": "Examples/system-verilog/comb_signed/neg/sg_asr_amt.sv",
+      "sha256": "9358d76b1f443c520d7cb47e7c78417165f09d4f4992501cae2189e312b6f20a"
     }
   ],
   "packages": [],
@@ -22,19 +22,19 @@
         "span": {
           "line": 2,
           "col": 1,
-          "end_line": 7,
+          "end_line": 8,
           "end_col": 10
         },
-        "name": "sg_asr",
+        "name": "sg_asr_amt",
         "imports": [],
         "params": [
           {
             "kind": "ParameterDecl",
             "span": {
               "line": 2,
-              "col": 35,
+              "col": 39,
               "end_line": 2,
-              "end_col": 40
+              "end_col": 44
             },
             "name": "W",
             "type": {
@@ -45,9 +45,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 39,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 44
                     },
                     "value": 31,
                     "resolved_width": 32
@@ -56,9 +56,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 39,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 44
                     },
                     "value": 0,
                     "resolved_width": 32
@@ -71,9 +71,9 @@
               "kind": "Int",
               "span": {
                 "line": 2,
-                "col": 39,
+                "col": 43,
                 "end_line": 2,
-                "end_col": 40
+                "end_col": 44
               },
               "value": 8,
               "resolved_width": 32
@@ -154,6 +154,48 @@
               "end_line": 4,
               "end_col": 32
             },
+            "name": "b",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 24,
+                      "end_line": 4,
+                      "end_col": 25
+                    },
+                    "value": 2,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 26,
+                      "end_line": 4,
+                      "end_col": 27
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            },
+            "signed": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 31,
+              "end_line": 5,
+              "end_col": 32
+            },
             "name": "y",
             "dir": "out",
             "width": {
@@ -163,9 +205,9 @@
                   "msb": {
                     "kind": "Binary",
                     "span": {
-                      "line": 4,
+                      "line": 5,
                       "col": 24,
-                      "end_line": 4,
+                      "end_line": 5,
                       "end_col": 27
                     },
                     "width": null,
@@ -173,9 +215,9 @@
                     "left": {
                       "kind": "ParamRef",
                       "span": {
-                        "line": 4,
+                        "line": 5,
                         "col": 24,
-                        "end_line": 4,
+                        "end_line": 5,
                         "end_col": 25
                       },
                       "name": "W"
@@ -183,9 +225,9 @@
                     "right": {
                       "kind": "Int",
                       "span": {
-                        "line": 4,
+                        "line": 5,
                         "col": 26,
-                        "end_line": 4,
+                        "end_line": 5,
                         "end_col": 27
                       },
                       "value": 1,
@@ -195,9 +237,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 4,
+                      "line": 5,
                       "col": 28,
-                      "end_line": 4,
+                      "end_line": 5,
                       "end_col": 29
                     },
                     "value": 0,
@@ -215,17 +257,17 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 6,
+              "line": 7,
               "col": 10,
-              "end_line": 6,
+              "end_line": 7,
               "end_col": 21
             },
             "target": {
               "kind": "Ident",
               "span": {
-                "line": 6,
+                "line": 7,
                 "col": 10,
-                "end_line": 6,
+                "end_line": 7,
                 "end_col": 11
               },
               "width": 8,
@@ -235,9 +277,9 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 6,
+                "line": 7,
                 "col": 14,
-                "end_line": 6,
+                "end_line": 7,
                 "end_col": 21
               },
               "width": 8,
@@ -245,9 +287,9 @@
               "left": {
                 "kind": "Ident",
                 "span": {
-                  "line": 6,
+                  "line": 7,
                   "col": 14,
-                  "end_line": 6,
+                  "end_line": 7,
                   "end_col": 15
                 },
                 "width": 8,
@@ -255,15 +297,16 @@
                 "signed": true
               },
               "right": {
-                "kind": "Int",
+                "kind": "Ident",
                 "span": {
-                  "line": 6,
+                  "line": 7,
                   "col": 20,
-                  "end_line": 6,
+                  "end_line": 7,
                   "end_col": 21
                 },
-                "value": 1,
-                "resolved_width": 32
+                "width": 3,
+                "name": "b",
+                "signed": true
               }
             }
           }

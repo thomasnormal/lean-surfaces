@@ -17,10 +17,15 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   them as written (`PExpr.unsign` does not enter an operator whose meaning signedness changes), the recognizer reads each
   as a signed comparison of two signed signals declared with the same dimensions, and `sv_equations` states its bit
   through `BitVec.slt`/`BitVec.sle` (`comb_proof.lean` proves all four for every width);
+* `asr.sv`: the arithmetic shift right `>>>` of a signed input by an unsigned amount (a signal and the constant `1`), and
+  the left shift `<<` of a signed input, into targets of the operand's width (`comb_proof.lean`: `BitVec.sshiftRight` and
+  `<<<` for every width);
+* `asr_proc.sv`: the same `>>>` inside `always_comb`, which the procedural route reads too;
 * `neg/`: the constructs whose meaning signedness changes and the tactics do not read yet, refused with that reason
-  (`comb_errors.lean`): an arithmetic shift right, a select of a signed signal, a signed comparison of two signals
-  declared with different dimensions, one in a self-determined position, one of an operand that is not a whole signal,
-  and one inside `always_comb`. (Sign extension into a wider target, `neg/sg_ext.sv`, never reaches the tactics: at a
+  (`comb_errors.lean`): a select of a signed signal, a signed comparison of two signals declared with different
+  dimensions, one in a self-determined position, one of an operand that is not a whole signal, and one inside
+  `always_comb`; an arithmetic shift right by a signed amount, in a self-determined position and into a wider target,
+  and `>>>` of an unsigned operand. (Sign extension into a wider target, `neg/sg_ext.sv`, never reaches the tactics: at a
   symbolic width the extractor marks the conversion `ConversionExpression:width`; so does a signed comparison of two
   operands whose widths differ symbolically.)
 
@@ -35,6 +40,8 @@ open LeanModels.Sv LeanModels.Sv.CombView
 load_design_sv2 sadd from "Examples/system-verilog/comb_signed/sadd.sv.json"
 load_design_sv2 pass from "Examples/system-verilog/comb_signed/pass.sv.json"
 load_design_sv2 scmp from "Examples/system-verilog/comb_signed/scmp.sv.json"
+load_design_sv2 asr from "Examples/system-verilog/comb_signed/asr.sv.json"
+load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.json"
 
 -- The design as written has signed reads: the recognizer refuses them, and summarizes the unsigned twin.
 #guard sadd.pdesign.summary.toOption.isNone
@@ -45,6 +52,9 @@ load_design_sv2 scmp from "Examples/system-verilog/comb_signed/scmp.sv.json"
 -- A signed comparison is read as written: the twin is the design itself, and the recognizer accepts it.
 #guard scmp.pdesign.unsign == scmp.pdesign
 #guard scmp.pdesign.summary.toOption.isSome
+-- So is a shift of a signed operand (the twin does not enter a shift).
+#guard asr.pdesign.unsign == asr.pdesign
+#guard asr.pdesign.summary.toOption.isSome
 
 -- The declarations keep their signedness (the summary's too).
 #guard (sadd.sem 8).decls.toList.map (·.isSigned) == [true, true, true, true, false, false]
@@ -69,6 +79,17 @@ load_design_sv2 scmp from "Examples/system-verilog/comb_signed/scmp.sv.json"
       [("lt", "1"), ("le", "1"), ("gt", "0"), ("ge", "0")].all (fun (n, v) =>
         (SvState.lookup s1 n).map LVec.toBinString == some v) &&
       [("lt", "0"), ("le", "1"), ("gt", "0"), ("ge", "1")].all (fun (n, v) =>
+        (SvState.lookup s2 n).map LVec.toBinString == some v)
+  | _ => false)
+
+-- A run at `W = 4`, `a = -6` (1010), `s = 1`: `y = a >>> 1 = -3` (1101), `z = 1101`, `l = a << 1 = 0100`; and at `s = 5`
+-- (an amount of the width or more): `y = 1111` (all sign bits), `l = 0000`.
+#guard (match run2 (asr.sem 4) σ_src 1000
+    [[("a", .ofNat 4 10), ("s", .ofNat 3 1)], [("a", .ofNat 4 10), ("s", .ofNat 3 5)]] with
+  | .ok [s1, s2] =>
+      [("y", "1101"), ("z", "1101"), ("l", "0100")].all (fun (n, v) =>
+        (SvState.lookup s1 n).map LVec.toBinString == some v) &&
+      [("y", "1111"), ("z", "1101"), ("l", "0000")].all (fun (n, v) =>
         (SvState.lookup s2 n).map LVec.toBinString == some v)
   | _ => false)
 

@@ -10346,6 +10346,23 @@ iterables retain their existing cursor semantics.
 DECIDED: keep creation-time iterator validation in the lowering until native
 generator-expression semantics replace it.
 
+## 2026-11-09-pycomplete-479 — revalidate genexp creation-time iteration
+
+The high-priority `py-genexp-iter-deferred` finding remains closed. The
+synthesized generator-expression call path checks the outer iterable at
+creation, while user generator functions retain CPython's lazy creation
+semantics. The existing `genInitCont` worker seeds the dictionary cursor where
+the tier needs a creation snapshot.
+
+| Measurement | Result |
+|---|---|
+| Scalar outer source | `genexp_iter_creation.py --compare`: `TypeError: 'int' object is not iterable`, exit 1, MATCH |
+| Oracle | CPython 3.9.25 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-iter-deferred`; retain the genexp-only creation guard
+and do not make user generator functions eager.
+
 ## 2026-11-07-pycomplete-452 — audit generator capture and creation iteration
 
 The paired high-priority generator-expression findings are already fixed in the

@@ -63,6 +63,9 @@
   `del` rebinding; unsafe captures refuse loudly and safe walrus capture matches
   CPython 3.9.
 
+- Revalidated creation-time `GET_ITER` for synthesized generator expressions;
+  scalar outer sources raise the same `TypeError` as CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

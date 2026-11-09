@@ -19234,6 +19234,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-assignment-increment-agreement",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectAssignmentIncrementAgreementWitness",
+    "cpp_source": "int assignment_increment_agreement_witness(int value) { value = ++value; return value; } bool callable_witness() { return assignment_increment_agreement_witness(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-value-object-null-comparison-agreement",
     "kind": "statement",
     "corpus": "rung-3 witness",

@@ -70,8 +70,23 @@ def parseEntry (d : MemDesign2) (j : Json) : Except String SvState := do
 def addClock : Option String → Nat → List SvState → List SvState
   | _, _, [] => []
   | none, _, s :: rest => s :: addClock none 0 rest
-  | some name, i, s :: rest =>
-      SvState.set s name (LVec.ofNat 1 (i % 2)) :: addClock (some name) (i + 1) rest
+  | some name, _, s :: rest =>
+      -- gen_tb2 drives every row while the clock is low, raises it once,
+      -- samples at the following negedge, then starts the next row low.
+      -- The memory state therefore sees one rising edge per row.
+      SvState.set s name (LVec.ofNat 1 1) :: addClock (some name) 0 rest
+
+def lowAfterSample (clock : String) (st : MemCycleState) : MemCycleState :=
+  { st with scalar := SvState.set st.scalar clock (LVec.ofNat 1 0) }
+
+def runMemAtNegedge (d : MemDesign2) (fuel : Nat) (clock : String)
+    (st : MemCycleState) : List SvState → Res (List SvState)
+  | [] => .ok []
+  | input :: rest => do
+      let sampled ← memStep d fuel input st
+      let next := lowAfterSample clock sampled
+      let trace ← runMemAtNegedge d fuel clock next rest
+      return next.scalar :: trace
 
 end SvMemHarness
 
@@ -85,7 +100,7 @@ def main (argv : List String) : IO UInt32 := do
   | [envPath, casesPath, caseName, _sigma] => do
       let envText ← IO.FS.readFile ⟨envPath⟩
       let casesText ← IO.FS.readFile ⟨casesPath⟩
-      let r : Except String (MemDesign2 × List SvState × List String × Nat) := do
+      let r : Except String (MemDesign2 × List SvState × List String × Nat × String) := do
         let (pd, lib) ← loadHierString envText
         unless lib.isEmpty do .error "memory runner does not admit hierarchy"
         match pd.crossCheck with
@@ -103,25 +118,29 @@ def main (argv : List String) : IO UInt32 := do
         let stim := addClock clock 0 stim0
         let signals ← (← getArr case "signals").toList.mapM (·.getStr?)
         let fuel := (getOpt cj "fuel").bind (·.getNat?.toOption) |>.getD 1000
-        pure (d, stim, signals, fuel)
+        pure (d, stim, signals, fuel, clock.getD "clk")
       match r with
       | .error e => err e
-      | .ok (d, stim, signals, fuel) =>
+      | .ok (d, stim, signals, fuel, clock) =>
           let out ← IO.getStdout
           for dc in d.decls do
             let sign := if dc.isSigned then "signed" else "unsigned"
             if dc.isInput then out.putStrLn s!"PORT {dc.name} in {dc.width} {sign}"
             else if dc.isOutput then out.putStrLn s!"PORT {dc.name} out {dc.width} {sign}"
-          match runMem2 d fuel stim with
-          | .timeout => err "runMem2: timeout"
-          | .unsupported m => err s!"runMem2: unsupported: {m}"
-          | .ok trace =>
-              let rec emit (k : Nat) : List SvState → IO Unit
-                | [] => pure ()
-                | st :: rest => do
-                    let cells := signals.map fun s => s!"{s}={SvState.showSignal st s}"
-                    out.putStrLn (s!"CYCLE {k} " ++ " ".intercalate cells)
-                    emit (k + 1) rest
-              emit 0 trace
-              return 0
+          match d.initStateRes with
+          | .timeout => err "memory init: timeout"
+          | .unsupported m => err s!"memory init: unsupported: {m}"
+          | .ok initial =>
+            match runMemAtNegedge d fuel clock initial stim with
+            | .timeout => err "runMem2: timeout"
+            | .unsupported m => err s!"runMem2: unsupported: {m}"
+            | .ok trace =>
+                let rec emit (k : Nat) : List SvState → IO Unit
+                  | [] => pure ()
+                  | st :: rest => do
+                      let cells := signals.map fun s => s!"{s}={SvState.showSignal st s}"
+                      out.putStrLn (s!"CYCLE {k} " ++ " ".intercalate cells)
+                      emit (k + 1) rest
+                emit 0 trace
+                return 0
   | _ => err "usage: runner_mem2.lean <envelope.sv.json> <cases2.json> <case> <src|rev> [<probes.json>]"

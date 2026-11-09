@@ -80,6 +80,9 @@ through `MemState`; scalar RHS evaluation and direct cell reads are covered by
 kernel guards, while compound memory expressions remain loud. The
 `async_mem_fifo` clean-room fixture is differentially matched against Icarus
 over reset, write, and read cycles.
+The memory runner raises the clock once for each stimulus row and samples at
+the following negedge, preserving the simulator's low-clock predecessor for
+the next row.
 
 The E route now has a source-shaped hierarchy handle: `HierarchyNode2`
 retains each instance, child `PDesign`, parameter point, and §23.3.3 port

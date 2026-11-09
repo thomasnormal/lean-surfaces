@@ -70,6 +70,10 @@
   no longer affect comprehension semantics and the shadow fixtures match
   CPython 3.9.
 
+- Revalidated ordinary `AugAssign` for repeated sequences; module heap-list
+  aliases mutate in place, boundary list mutation remains loudly unsupported,
+  and the focused differential slice has no failures.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

@@ -10483,6 +10483,24 @@ not yet wired.
 DECIDED: close `py-boundary-augrepeat-rewrite` as already fixed; retain the
 boundary aliasing refusal until the thawed heap-list argument path is wired.
 
+## 2026-11-09-pycomplete-481 — revalidate augmented-repeat audit
+
+The high-priority `py-boundary-augrepeat-rewrite` finding remains closed. The
+shape-specific ingestion rewrite is absent, so `AugAssign` reaches the ordinary
+in-place sequence semantics and preserves the `*=` error path. Heap-list aliases
+inside the module observe mutation; list arguments crossing the public value
+boundary retain their documented loud refusal.
+
+| Measurement | Result |
+|---|---|
+| Module alias witness | `list_aug_repeat_script.py`: `True [1, 2, 1, 2]`, MATCH |
+| Focused differential | 107 rows: 104 MATCH, 3 documented boundary refusals, 0 failures |
+| Source audit | no `lowerBoundaryAugRepeat` path remains |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-boundary-augrepeat-rewrite`; retain only the explicit
+boundary list-aliasing refusal until the thawed heap-list argument path lands.
+
 ## 2026-11-07-pycomplete-409 — recheck dead yield-target handling
 
 The dead-yield target audit finding is already closed by the extractor's

@@ -10798,6 +10798,24 @@ module-level deletion through the position-independent tables.
 DECIDED: close `py-static-del-noop-census` as already fixed; retain loud
 definition deletion until runtime-bound definition objects exist.
 
+## 2026-11-09-pycomplete-487 — revalidate static definition-delete audit
+
+The high-priority `py-static-del-noop-census` finding remains closed.
+`scriptStaticDeleteNoop` admits only the narrow unobserved benign-import case;
+it explicitly excludes module functions, classes, namedtuples, and aliases.
+The script executor therefore refuses definition tombstones before a stale
+position-independent table can answer a later call or handler lookup.
+
+| Measurement | Result |
+|---|---|
+| Call/delete witness | `del_def_call.py`: loud refusal; CPython 3.9 raises `NameError` |
+| Mid/partial deletes | `del_def_mid_script.py` and `del_partial_script.py`: loud refusals; CPython side effects preserved before its result/failure |
+| Trailing delete | `del_trailing_script.py`: loud static-table refusal; CPython 3.9 completes |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-static-del-noop-census`; retain loud definition deletion
+until definitions become runtime-bound objects.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

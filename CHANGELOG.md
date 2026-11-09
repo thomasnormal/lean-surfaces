@@ -94,6 +94,10 @@
   pairs remain structured, and the dead-value witness now refuses rather than
   erasing a later-name `NameError`.
 
+- Revalidated module-definition deletion admission; function, class,
+  namedtuple, and alias deletes remain loud static-table boundaries, including
+  partial and trailing delete shapes.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

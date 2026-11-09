@@ -40969,6 +40969,22 @@ def callableValueObjectLiteralAgreementWitness : Bool :=
 
 #guard callableValueObjectLiteralAgreementWitness
 
+def callableValueObjectUnsignedLiteralAgreementWitness : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .unsignedInt, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.integer 7,
+      sourceType := .builtin .unsignedInt, type := .builtin .unsignedInt}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 32, 7⟩ && objectValue == ⟨.unsigned 32, 7⟩
+  | _, _ => false
+
+#guard callableValueObjectUnsignedLiteralAgreementWitness
+
 def callableValueObjectNoexceptAgreementWitness : Bool :=
   let operand : TypedCallableExpression := {
     expression := CallableExpression.binary "+"

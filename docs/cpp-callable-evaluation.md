@@ -260,6 +260,9 @@ It also includes a `sizeof(short)` callable, checking both evaluator APIs.
 
 It also includes an `alignof(int)` callable, checking both evaluator APIs.
 
+It also includes an unsigned-int literal callable, checking both evaluator
+APIs.
+
 `LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
 the already-admitted `CallableFunction` statement profile; it does not change
 the translation execution boundary or execute object-backed local nodes.

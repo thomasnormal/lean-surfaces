@@ -10582,6 +10582,22 @@ skipped, matching CPython's compiler behavior.
 DECIDED: close `py-annassign-nonsimple-order` as already fixed; retain direct
 structured `AnnAssign` semantics and the scope gate.
 
+## 2026-11-09-pycomplete-483 — revalidate non-simple annotation ordering
+
+The high-priority `py-annassign-nonsimple-order` finding remains closed. The
+approved extractor's scope-aware path keeps non-simple assignments as ordinary
+value/target stores followed by module or class annotation evaluation, while
+function scope skips annotation evaluation as required by CPython 3.9.
+
+| Measurement | Result |
+|---|---|
+| Ordering witness | `ann_nonsimple_order.py --compare`: `val`, `ann`, `val`, `1`, exit 0, MATCH |
+| Scope behavior | function annotation expression is not evaluated |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-annassign-nonsimple-order`; retain direct structured
+annotation semantics and the scope gate.
+
 ## 2026-11-07-pycomplete-411 — recheck length-only repetition removal
 
 The `len(seq * n)` audit finding is already closed by the ordinary

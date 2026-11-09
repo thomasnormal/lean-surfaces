@@ -78,6 +78,10 @@
   declarations; the unsupported send-channel shape refuses before any store
   can be dropped.
 
+- Revalidated scope-aware non-simple annotated assignment order; value stores
+  precede module annotation effects and function annotations are skipped, as in
+  CPython 3.9.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

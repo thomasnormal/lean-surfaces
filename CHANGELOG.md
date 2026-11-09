@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with negative signed
+  multiplication and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with the true operand
   path of logical-not and native differential coverage.
 

@@ -19582,6 +19582,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-value-object-negative-multiplication-agreement",
+    "kind": "statement",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueObjectNegativeMultiplicationAgreementWitness",
+    "cpp_source": "int negative_multiplication_agreement_witness(int value) { return value * 3; } bool callable_witness() { return negative_multiplication_agreement_witness(-7) == -21; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-value-object-logical-not-true-agreement",
     "kind": "statement",
     "corpus": "rung-3 witness",

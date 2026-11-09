@@ -82,6 +82,25 @@ def duplicateWorld : SvWorld :=
   { procs := #[{ residual := [], status := .suspended (.atEdge "clk" .pos),
                  registration := some (.edge "clk" .pos), explicitlySuspended := true }] }
 
+/- A publication while an always process is already ready belongs to its
+current Active activation. It must not be latched as a second activation
+when the body re-arms (IEEE 1800-2023 §9.4.2). -/
+def alreadyReadyWorld : SvWorld :=
+  { signals := [("clk", .ofNat 1 0)]
+  , procs := #[{ residual := [.skip]
+               , arm := some [.skip]
+               , status := .ready
+               , registration := some (.edge "clk" .pos) }]
+  , regionQ := fun _ => [] }
+
+def latchedEdgeWorld : SvWorld :=
+  { signals := [("a", .ofNat 1 0)]
+  , procs := #[{ residual := [.skip]
+               , arm := some [.skip]
+               , status := .suspended (.atEdge "a" .any)
+               , registration := some (.edge "a" .any) }]
+  , regionQ := fun _ => [] }
+
 #guard (worldOf (suspendProcess 0) edgeWorld).map
   (fun w => (w.procs[0]?).map
     (fun p => p.explicitlySuspended &&
@@ -105,6 +124,19 @@ def duplicateWorld : SvWorld :=
     (fun p => p.explicitlySuspended && p.residual == [.skip, .waitEvent "clk" .neg] &&
       edgeRegistered p && edgeWaiting p && w.regionQ .active == []))
   == some (some true)
+
+#guard (worldOf (wakeEdges [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)])
+    alreadyReadyWorld).map
+    (fun w => (w.procs[0]?).map (fun p =>
+      p.status == .ready && p.pendingEdges == 0 && w.regionQ .active == []))
+    == some (some true)
+
+#guard (worldOf (do
+    wakeEdges [("a", .ofNat 1 0)] [("a", .ofNat 1 1)]
+    wakeEdges [("a", .ofNat 1 0)] [("a", .ofNat 1 1)]) latchedEdgeWorld).map
+    (fun w => (w.procs[0]?).map (fun p =>
+      p.status == .ready && p.pendingEdges == 1 && w.regionQ .active == [0]))
+    == some (some true)
 
 #guard (worldOf (do suspendProcess 0; resumeProcess 0) edgeWorld).map
   (fun w => (w.procs[0]?).map

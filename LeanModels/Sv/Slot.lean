@@ -290,8 +290,13 @@ def wakeEdges (old new : SvState) : SvM Unit :=
                     ps.resetTarget.any (fun reset =>
                       sawEdge old new reset ps.resetEdge &&
                       eventGuardPass new ps.resetGuard)) &&
-                  (match ps.status with
-                   | .suspended _ | .ready => true
+                   -- An event is consumed only while the process is parked
+                   -- at its event control.  A process already ready in
+                   -- Active has not reached the next wait yet; latching
+                   -- this publication would replay its body after it
+                   -- re-arms (IEEE 1800-2023 §9.4.2).
+                   (match ps.status with
+                   | .suspended _ => true
                    | _ => false)
             | some (.edges events) =>
                 !ps.explicitlySuspended &&
@@ -300,13 +305,13 @@ def wakeEdges (old new : SvState) : SvM Unit :=
                      then events.map fun (sig, edge) => (sig, edge, none)
                      else ps.eventGuards) &&
                   (match ps.status with
-                   | .suspended _ | .ready => true
+                   | .suspended _ => true
                    | _ => false)
             | some (.exprs events) =>
                 !ps.explicitlySuspended &&
                   eventExprTriggered old new events ps.eventExprByDependency &&
                   (match ps.status with
-                   | .suspended _ | .ready => true
+                   | .suspended _ => true
                    | _ => false)
             | _ => false
         | none => false

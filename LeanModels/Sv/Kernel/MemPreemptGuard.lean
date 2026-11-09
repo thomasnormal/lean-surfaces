@@ -249,7 +249,7 @@ namespace Kernel
 def MemDesign2.memoryPreemptionReport (d : MemDesign2) : Option (String × String) :=
   let accesses := d.processes.map fun p =>
     (PProcess.memPreemptAtomic p, PProcess.memPreemptAccess d p)
-  match firstPreemptUnsafe accesses 0 with
+  match LeanModels.Sv.firstPreemptUnsafe accesses 0 with
   | none => none
   | some (i, j) =>
       some ("Schedule:preemptive",

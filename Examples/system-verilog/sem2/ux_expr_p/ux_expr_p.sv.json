@@ -228,7 +228,7 @@
                   "end_col": 22
                 },
                 "sv_kind": "ConversionExpression:unsized-xz",
-                "text": "'hz1"
+                "text": "zzzzzzzzzzzzzzzzzzzzzzzzzzzz0001"
               },
               "else": {
                 "kind": "Resize",

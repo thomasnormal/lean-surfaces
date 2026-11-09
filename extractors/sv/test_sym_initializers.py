@@ -507,6 +507,8 @@ class UnsizedXZExpressions(unittest.TestCase):
                     "assign y = %s; endmodule\n" % rhs)
                 self.assertEqual((v["kind"], v["sv_kind"]),
                                  ("Unsupported", "ConversionExpression:unsized-xz"))
+                expected = "x" * 32 if rhs == "'bx" else "z" * 28 + "0001"
+                self.assertEqual(v["text"], expected)
 
     def test_uninspectable_literal_fails_closed(self):
         class IntegerLiteral:

@@ -31990,7 +31990,14 @@ def _sym_unsized_xz_widening(sm, e, op, tw):
     if loud is not None:
         return unsupported(sm, e, loud)
     if _sym_family_point_dependent():
-        return unsupported(sm, e, "ConversionExpression:unsized-xz")
+        # Keep the literal's own 32-bit four-state payload on the marker.
+        # The conversion width is point-dependent, so the symbolic envelope
+        # cannot emit a fixed Literal here, but the memory route can apply
+        # IEEE 1800-2023 §5.7.1 at its concrete destination width.  Using
+        # the canonical MSB-first bit spelling avoids losing mixed forms such
+        # as `'hx0`/`'hz1` when source text is unavailable on a bound node.
+        return unsupported(sm, e, "ConversionExpression:unsized-xz",
+                           svint_bits(op.value))
     return signed_metadata({
         "kind": "Literal", "span": node_span(sm, e), "width": tw,
         "bits": bits[0] * (tw - len(bits)) + bits,

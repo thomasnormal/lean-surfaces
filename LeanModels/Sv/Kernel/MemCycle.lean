@@ -408,6 +408,19 @@ def memPExprAllX : PExpr → Bool
   | .lit v => v.bits.toList.all (· == Logic.lx)
   | _ => false
 
+/-- Evaluate the extractor's point-dependent unsized x/z conversion marker.
+The marker text is the literal's own 32-bit, MSB-first payload.  At a
+concrete assignment context, `ofBinLit?` applies §5.7.1: low bits are kept on
+truncation and the payload's most-significant x/z bit is replicated on
+widening. -/
+def evalMemUnsizedXZ (ctx : Option Nat) (payload : String) : Res LVec :=
+  match ctx with
+  | none => .unsupported "unsized x/z conversion has no destination width"
+  | some w =>
+      match LVec.ofBinLit? w payload with
+      | some v => .ok v
+      | none => .unsupported "unsized x/z conversion has an invalid payload"
+
 def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (ctx : Option Nat) (e : PExpr) : Res LVec :=
   match e with
@@ -435,6 +448,8 @@ def evalMemExpr (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       | some pd =>
           evalMemCell d fuel st pd is
   | .arrayPart .. => .unsupported "memory RHS partial target is outside the one-cell fragment"
+  | .unsupported "ConversionExpression:unsized-xz" payload =>
+      evalMemUnsizedXZ ctx payload
   | _ =>
       if d.xzUnsized && memPExprAllX e then
         match ctx with

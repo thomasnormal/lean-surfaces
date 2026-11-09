@@ -26,6 +26,11 @@
 #      import comes along as a dependency.
 # The module list is printed first. A failing library group skips the Examples (they would fail through it).
 #
+# BEFORE THE BUILDS: THE RUN2 RATCHET.  `tools/check_run2_ratchet.sh` runs first (a few seconds, no Lean). `run2` is being
+# retired (docs/sv-kernel.md, "Debts", row "run2 retirement"), and the ratchet fails a tree in which the run layer grew: a
+# new file whose code names it, or more mentions than the committed baseline. A failing or missing ratchet stops the
+# chain with its own exit status before anything is built; its message says what to do.
+#
 # WHAT `--dependents` PRINTS.  One per line, in `--list` order, exactly the chain modules that transitively import the
 # module of any given `LeanModels/Sv/*.lean` path, and nothing else. Only the ANSWER is limited to the chain: the walk reads
 # every `.lean` under LeanModels and Examples, because a path can run through a non-Comb module, another tier or `sem2/`. A
@@ -43,7 +48,8 @@
 #            bash tools/check_sv_chain.sh --list       print the modules, run nothing
 #            bash tools/check_sv_chain.sh --dependents PATH...  print the chain modules importing those files, run nothing
 #            bash tools/check_sv_chain.sh --self-test  the logic against a stubbed `lake` and slot (NO Lean is run)
-# EXIT       0 built; 1 a group failed to build; 2 usage error, no `lake`, or `--dependents` could not read the tree.
+# EXIT       0 built; 1 a group failed to build; 2 usage error, no `lake`, or `--dependents` could not read the tree;
+#            3 the run2 ratchet failed or could not run (nothing was built).
 set -u
 cd "$(dirname "$0")/.."
 
@@ -152,6 +158,11 @@ build_all() {
   collect
   have_chain || return 2
   print_list
+  echo "=== [sv-chain] the run2 ratchet (tools/check_run2_ratchet.sh; no Lean)"
+  if ! bash tools/check_run2_ratchet.sh; then
+    echo "=== [sv-chain] FAILED: the run2 ratchet (nothing was built)" >&2
+    return 3
+  fi
   echo "=== [sv-chain] lake build: library group"
   if ! run_lake "${LIB[@]}"; then
     echo "=== [sv-chain] FAILED: the library group (the Examples were not attempted)" >&2
@@ -196,6 +207,10 @@ STUB
   check "--list names an example module" "$(printf '%s' "$out" | grep -c '«system-verilog».comb_ops.comb_proof')" 1
   check "--list includes the semantic-agreement examples" "$([ "$(printf '%s' "$out" | grep -c 'sem2')" -gt 0 ] && echo yes || echo no)" yes
   check "--list runs no lake" "$(grep -c '^lake' "$STUB_LOG")" 0
+  # The build rows below run the ratchet on this tree first, so its own verdict is named before theirs.
+  out="$(bash tools/check_run2_ratchet.sh 2>&1)"; rc=$?
+  check "the run2 ratchet passes on this tree" "$rc" 0
+  [ "$rc" = 0 ] || printf '%s\n' "$out"
   : > "$STUB_LOG"; PATH="$tmp:$PATH" env -u LEANSLOT bash "$self" >/dev/null 2>&1; rc=$?
   check "no slot: exits 0 when lake succeeds" "$rc" 0
   check "no slot: two lake builds" "$(grep -c '^lake build' "$STUB_LOG")" 2
@@ -279,6 +294,22 @@ STUB
   check "--dependents on a tree with no imports refuses" "$rc" 2
   out="$(bash "$empty/tools/check_sv_chain.sh" --dependents docs/a.md 2>&1)"; rc=$?
   check "  ...while a non-Sv path never asks the tree" "$rc" 0
+  # The ratchet step, over the fixture tree: a copy of the chain script runs the copy of the ratchet beside it.
+  chain() { : > "$STUB_LOG"; out="$(cd / && PATH="$tmp:$PATH" env -u LEANSLOT bash "$tree/tools/check_sv_chain.sh" 2>&1)"; rc=$?; }
+  chain
+  check "a tree with no ratchet script exits 3" "$rc" 3
+  check "  ...and builds nothing" "$(grep -c '^lake build' "$STUB_LOG")" 0
+  cp "$PWD/tools/check_run2_ratchet.sh" "$PWD/tools/leanlex.sh" "$tree/tools/"
+  mk LeanModels/Sv/Drift.lean '/-- Provisional over run2. -/
+def drift := 1'
+  ( cd "$tree" && bash tools/check_run2_ratchet.sh --regenerate >/dev/null 2>&1 )
+  chain
+  check "a passing ratchet lets the two builds run" "$rc:$(grep -c '^lake build' "$STUB_LOG")" "0:2"
+  mk LeanModels/Sv/Drift.lean 'def drift := run2 d'
+  chain
+  check "a failing ratchet exits 3" "$rc" 3
+  check "  ...builds nothing" "$(grep -c '^lake build' "$STUB_LOG")" 0
+  check "  ...and passes the ratchet's message on" "$(printf '%s' "$out" | grep -c 'row "run2 retirement"')" 1
   # THE INCIDENT, on the real tree: `PStmt` lives in Param.lean, and CombProc is what its new constructor broke.
   out="$(bash "$self" --dependents LeanModels/Sv/Param.lean)"; rc=$?
   check "the real tree: Param.lean reaches CombProc" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.CombProc')" 1

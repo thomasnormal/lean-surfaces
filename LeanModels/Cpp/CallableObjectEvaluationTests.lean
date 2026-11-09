@@ -41046,6 +41046,25 @@ def callableValueObjectConversionAgreementWitness : Bool :=
 
 #guard callableValueObjectConversionAgreementWitness
 
+def callableValueObjectUnsignedConversionAgreementWitness : Bool :=
+  let operand : TypedCallableExpression := {
+    expression := CallableExpression.integer 7,
+    sourceType := intType, type := intType}
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .unsignedInt, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {
+      expression := CallableExpression.convert operand,
+      sourceType := intType, type := .builtin .unsignedInt}}
+  match evaluateCallable 32 .lp64 function [],
+      evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value), .ok (.ok objectValue) =>
+      value == ⟨.unsigned 32, 7⟩ && objectValue == ⟨.unsigned 32, 7⟩
+  | _, _ => false
+
+#guard callableValueObjectUnsignedConversionAgreementWitness
+
 def callableValueObjectParameterAgreementWitness : Bool :=
   let function : CallableFunction := {
     occurrence := functionDeclaration

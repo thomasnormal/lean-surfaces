@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Extended the value/object evaluator agreement battery with unsigned-int
+  conversion and native differential coverage.
+
 - Extended the value/object evaluator agreement battery with unary `noexcept`
   and native differential coverage.
 

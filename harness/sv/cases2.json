@@ -1,53 +1,68 @@
 {
-  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). The route boundary applies the conservative IEEE 1800-2023 §4.7 preemption guard by default; the old preemptive flag is retained only in historical envelopes. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
+  "_comment": "SV phase-2 (semantic tier) differential cases. Per case: example dir under Examples/system-verilog/, top module, optional source-file base (file), parameter values (params; absent -> envelope defaults), clock port name (clock, default 'clk'), signals to sample, one stimulus object per cycle (input name -> MSB-first binary at the instantiated width; absent inputs hold). The IEEE 1800-2023 \u00a74.7 suspension guard is a default admission check; rows that need an explicit refusal name `Schedule:preemptive`. xrun_only: skip Icarus (it cannot parse `case inside`). verilator_only: run only with the explicit opt-in Verilator host oracle; it is never selected by --sim auto.",
   "fuel": 2000,
   "cases": [
     {
-      "name": "preemptive_profile_safe_nba",
+      "name": "preemptive_profile_cross_process_nba",
       "example": "sem2/preempt_profile",
       "top": "preempt_profile",
-      "signals": ["q", "r"],
-      "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "1", "b": "0"},
-        {"a": "0", "b": "1"}
+      "signals": [
+        "q",
+        "r"
       ],
-      "measured": "2026-11-09: the default §4.7 route admits this cross-process dependency because both edge bodies are NBA-only; RHS evaluation sees the pre-NBA state and neither activation exposes a partial write."
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "0",
+          "b": "1"
+        }
+      ],
+      "measured": "2026-11-09: two NBA-only always_ff processes may read and write the same state across a clock edge without exposing an intermediate write; the default \u00a74.7 guard admits the source-shaped row and the trace matches Icarus/Xcelium."
     },
     {
       "name": "preemptive_profile_blocking_refuse",
-      "example": "sem2/preempt_blocking",
-      "top": "preempt_blocking",
-      "refusal": "Schedule:preemptive",
-      "signals": ["q", "r"],
-      "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "1", "b": "0"},
-        {"a": "0", "b": "1"}
-      ],
-      "measured": "2026-11-09: the blocking q = a activation can be suspended before r = q reads q, so the default route refuses the cross-process read/write window under IEEE 1800-2023 §4.7."
-    },
-    {
-      "name": "preemptive_profile_block_refuse",
       "example": "sem2/preempt_block_refuse",
       "top": "preempt_block_refuse",
       "refusal": "Schedule:preemptive",
-      "signals": ["q", "r", "z"],
-      "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "1", "b": "0"}
+      "signals": [
+        "q",
+        "r",
+        "z"
       ],
-      "measured": "2026-11-09: a multi-write blocking always_comb can be suspended after its first write while another process reads that window; the default §4.7 route refuses the source-shaped design."
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        }
+      ],
+      "measured": "2026-11-09: a multi-write blocking always_comb can be suspended after its first write while another process reads that window; the default \u00a74.7 guard refuses the source-shaped design."
     },
     {
       "name": "port_net_width_refuse",
       "example": "sem2/port_net_width",
       "top": "port_net_width",
       "refusal": "PortConn:net-width",
-      "signals": ["y"],
+      "signals": [
+        "y"
+      ],
       "stimulus": [
-        {"w": "00"},
-        {"w": "11"}
+        {
+          "w": "00"
+        },
+        {
+          "w": "11"
+        }
       ],
       "measured": "2026-11-07: a net input formal fed by a selected narrower net and a narrow child output driving a wider parent net retain the source shape and refuse the Xcelium/Icarus-width split."
     },
@@ -56,12 +71,23 @@
       "example": "seq_plain",
       "top": "posedge_always_profile",
       "clock": "clk",
-      "signals": ["d", "q"],
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "0"},
-        {"d": "1"},
-        {"d": "0"},
-        {"d": "1"}
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        }
       ],
       "measured": "A plain always @(posedge clk) retains its source kind and matches the NBA edge profile."
     },
@@ -70,13 +96,32 @@
       "example": "seq_async_reset",
       "top": "async_reset_ff_profile",
       "clock": "clk",
-      "signals": ["rstn", "d", "q"],
+      "signals": [
+        "rstn",
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"rstn": "0", "d": "1"},
-        {"rstn": "1", "d": "0"},
-        {"rstn": "1", "d": "1"},
-        {"rstn": "0", "d": "1"},
-        {"rstn": "1", "d": "1"}
+        {
+          "rstn": "0",
+          "d": "1"
+        },
+        {
+          "rstn": "1",
+          "d": "0"
+        },
+        {
+          "rstn": "1",
+          "d": "1"
+        },
+        {
+          "rstn": "0",
+          "d": "1"
+        },
+        {
+          "rstn": "1",
+          "d": "1"
+        }
       ],
       "measured": "Active-low asynchronous reset is sampled and committed before the edge process; the reset assertion and release trace matches Icarus."
     },
@@ -85,13 +130,33 @@
       "example": "seq_async_comb",
       "top": "async_reset_comb_profile",
       "clock": "clk",
-      "signals": ["rstn", "d", "q", "n"],
+      "signals": [
+        "rstn",
+        "d",
+        "q",
+        "n"
+      ],
       "stimulus": [
-        {"rstn": "0", "d": "1"},
-        {"rstn": "1", "d": "0"},
-        {"rstn": "1", "d": "1"},
-        {"rstn": "0", "d": "1"},
-        {"rstn": "1", "d": "0"}
+        {
+          "rstn": "0",
+          "d": "1"
+        },
+        {
+          "rstn": "1",
+          "d": "0"
+        },
+        {
+          "rstn": "1",
+          "d": "1"
+        },
+        {
+          "rstn": "0",
+          "d": "1"
+        },
+        {
+          "rstn": "1",
+          "d": "0"
+        }
       ],
       "measured": "A continuous next-state assignment may precede an asynchronous-reset always_ff in the same profile; comb settle feeds reset and edge phases, and the mixed cycle matches Icarus."
     },
@@ -100,28 +165,68 @@
       "example": "seq_mixed_comb",
       "top": "mixed_comb_profile",
       "clock": "clk",
-      "signals": ["d", "q", "n"],
-      "stimulus": [
-        {"d": "0"},
-        {"d": "1"},
-        {"d": "0"},
-        {"d": "1"}
+      "signals": [
+        "d",
+        "q",
+        "n"
       ],
-      "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge.",
-      "refusal": "Schedule:preemptive"
+      "stimulus": [
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        },
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        }
+      ],
+      "measured": "An always_comb next-state process may precede a plain NBA-only always_ff; ffMixedProfileB retains the source kinds and the mixed cycle settles before the edge."
     },
     {
       "name": "valid_chain_mixed_profile",
       "example": "seq_valid_chain",
       "top": "valid_chain_profile",
-      "params": {"W": 8},
+      "params": {
+        "W": 8
+      },
       "clock": "clk",
-      "signals": ["rst", "valid_i", "ready_i", "data_i", "valid_o", "data_o"],
+      "signals": [
+        "rst",
+        "valid_i",
+        "ready_i",
+        "data_i",
+        "valid_o",
+        "data_o"
+      ],
       "stimulus": [
-        {"rst": "0", "valid_i": "1", "ready_i": "1", "data_i": "10100101"},
-        {"rst": "0", "valid_i": "1", "ready_i": "1", "data_i": "10100101"},
-        {"rst": "0", "valid_i": "0", "ready_i": "1", "data_i": "01011010"},
-        {"rst": "0", "valid_i": "0", "ready_i": "1", "data_i": "01011010"}
+        {
+          "rst": "0",
+          "valid_i": "1",
+          "ready_i": "1",
+          "data_i": "10100101"
+        },
+        {
+          "rst": "0",
+          "valid_i": "1",
+          "ready_i": "1",
+          "data_i": "10100101"
+        },
+        {
+          "rst": "0",
+          "valid_i": "0",
+          "ready_i": "1",
+          "data_i": "01011010"
+        },
+        {
+          "rst": "0",
+          "valid_i": "0",
+          "ready_i": "1",
+          "data_i": "01011010"
+        }
       ],
       "measured": "A valid/ready vector register chain has continuous output drivers beside its NBA always_ff; ffOnlyProfileB is intentionally false, while ffMixedProfileB settles the assigns before each edge and matches the reference trace."
     },
@@ -129,12 +234,23 @@
       "name": "user_function_eval",
       "example": "seq_function",
       "top": "function_call_eval",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1010"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "measured": "A side-effect-free automatic function with input formals is inlined into the combinational expression; other calls remain loud."
     },
@@ -142,12 +258,23 @@
       "name": "function_case_eval",
       "example": "seq_function_case",
       "top": "function_case_eval",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1100"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1100"
+        },
+        {
+          "a": "xxxx"
+        }
       ],
       "measured": "A straight-line automatic function with a local temporary and a plain case is inlined as source-shaped case-equality ternaries; effects, loops, recursion, static storage, and tasks remain loud."
     },
@@ -155,12 +282,23 @@
       "name": "function_unique_case_eval",
       "example": "seq_function_unique",
       "top": "function_unique_case_eval",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1100"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1100"
+        },
+        {
+          "a": "xxxx"
+        }
       ],
       "measured": "A straight-line automatic function with a statically safe unique case (distinct literal labels and a default) is inlined with ordinary first-match value semantics; overlapping, dynamic, or incomplete qualified cases remain loud."
     },
@@ -168,11 +306,20 @@
       "name": "function_generate_case",
       "example": "sem2/function_generate_case",
       "top": "function_generate_case",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00000000000000000000"},
-        {"a": "00000000000000000001"},
-        {"a": "00010010001101000101"}
+        {
+          "a": "00000000000000000000"
+        },
+        {
+          "a": "00000000000000000001"
+        },
+        {
+          "a": "00010010001101000101"
+        }
       ],
       "measured": "2026-11-09: an automatic local-temporary unique case without an explicit begin/end block is inlined inside a generated assignment; the generated family remains source-shaped and matches Icarus and Xcelium."
     },
@@ -180,10 +327,17 @@
       "name": "function_case_return_name",
       "example": "seq_function_case_return_name",
       "top": "function_case_return_name",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        }
       ],
       "measured": "A qualified function case may assign the function name in one arm while an explicit return publishes a local temporary; the unassigned temporary is preserved as x rather than replaced by the function-name value."
     },
@@ -192,8 +346,18 @@
       "example": "sem2/sva_scoped",
       "top": "sva_scoped",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: qualified SVA signal paths retain their elaborated instance/generate spelling as one observation key in the E contract."
     },
@@ -202,8 +366,18 @@
       "example": "sem2/sva_reduce",
       "top": "sva_reduce",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0000"}, {"a": "0101"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0101"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: reduction operators in finite SVA expressions retain the existing PExpr Reduce vocabulary and evaluate with four-state reduction semantics."
     },
@@ -212,8 +386,21 @@
       "example": "sem2/sva_select",
       "top": "sva_select",
       "clock": "clk",
-      "signals": ["a", "i", "q"],
-      "stimulus": [{"a": "1001", "i": "00"}, {"a": "1001", "i": "10"}],
+      "signals": [
+        "a",
+        "i",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "1001",
+          "i": "00"
+        },
+        {
+          "a": "1001",
+          "i": "10"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: dynamic packed element selects in SVA preserve the existing BitSel/Expr2.index path and sampled four-state out-of-range behavior."
     },
@@ -222,10 +409,19 @@
       "example": "sem2/sva_indexed_part",
       "top": "sva_indexed_part",
       "clock": "clk",
-      "signals": ["a", "base"],
+      "signals": [
+        "a",
+        "base"
+      ],
       "stimulus": [
-        {"a": "00000001", "base": "000"},
-        {"a": "00000100", "base": "010"}
+        {
+          "a": "00000001",
+          "base": "000"
+        },
+        {
+          "a": "00000100",
+          "base": "010"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-07: indexed packed part-selects and sized vector literals in SVA retain source widths and evaluate through the sampled Expr2 part-select path."
@@ -235,8 +431,29 @@
       "example": "sem2/sva_past_logic",
       "top": "sva_past_logic",
       "clock": "clk",
-      "signals": ["a", "b", "q"],
-      "stimulus": [{"a": "0", "b": "0"}, {"a": "1", "b": "1"}, {"a": "1", "b": "0"}, {"a": "1", "b": "1"}],
+      "signals": [
+        "a",
+        "b",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: boolean conjunction retains a nested finite $past operand as structured SVA logic."
     },
@@ -245,8 +462,18 @@
       "example": "sem2/sva_isunknown",
       "top": "sva_isunknown",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: $isunknown retains four-state sampled knownness as an explicit SVA predicate."
     },
@@ -255,8 +482,18 @@
       "example": "sem2/sva_onehot0",
       "top": "sva_onehot0",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0000"}, {"a": "0001"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: $onehot0 retains the finite four-state at-most-one-known-one predicate."
     },
@@ -265,14 +502,29 @@
       "example": "sem2/sva_countones",
       "top": "sva_countones",
       "clock": "clk",
-      "signals": ["a", "q"],
+      "signals": [
+        "a",
+        "q"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "0011"},
-        {"a": "0111"},
-        {"a": "10xz"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "0011"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "10xz"
+        },
+        {
+          "a": "zzzz"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-07: $countones retains the finite four-state known-one count in the sampled SVA value tree; x/z bits contribute zero."
@@ -282,8 +534,21 @@
       "example": "sem2/sva_past_cmp",
       "top": "sva_past_cmp",
       "clock": "clk",
-      "signals": ["a", "b", "q"],
-      "stimulus": [{"a": "0001", "b": "0010"}, {"a": "0100", "b": "0011"}],
+      "signals": [
+        "a",
+        "b",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0001",
+          "b": "0010"
+        },
+        {
+          "a": "0100",
+          "b": "0011"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: sampled order comparisons retain a finite $past operand in the existing SVA value tree."
     },
@@ -292,8 +557,18 @@
       "example": "sem2/sva_shift",
       "top": "sva_shift",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0001"}, {"a": "0010"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0001"
+        },
+        {
+          "a": "0010"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: fixed-width shift expressions retain the existing SVA value-binary path; parameter-sized casts remain loud."
     },
@@ -302,8 +577,18 @@
       "example": "sem2/sva_inside",
       "top": "sva_inside",
       "clock": "clk",
-      "signals": ["a", "q"],
-      "stimulus": [{"a": "0"}, {"a": "1"}],
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        }
+      ],
       "verilator_only": true,
       "measured": "2026-11-07: finite SVA inside membership over concrete literal items maps to case-equality disjunction in E; the clean-room source is accepted by Verilator's assertion-capable front end."
     },
@@ -312,11 +597,28 @@
       "example": "sem2/sva_past_value",
       "top": "sva_past_value",
       "clock": "clk",
-      "signals": ["valid", "inc", "depth", "q"],
+      "signals": [
+        "valid",
+        "inc",
+        "depth",
+        "q"
+      ],
       "stimulus": [
-        {"valid": "0", "inc": "0", "depth": "0011"},
-        {"valid": "1", "inc": "0", "depth": "0011"},
-        {"valid": "0", "inc": "0", "depth": "0011"}
+        {
+          "valid": "0",
+          "inc": "0",
+          "depth": "0011"
+        },
+        {
+          "valid": "1",
+          "inc": "0",
+          "depth": "0011"
+        },
+        {
+          "valid": "0",
+          "inc": "0",
+          "depth": "0011"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-07: nested $past values in sampled equality and arithmetic expressions are evaluated against the previous sampled state; the clean-room trace is accepted by Verilator's assertion-capable front end."
@@ -326,11 +628,24 @@
       "example": "sem2/sva_logical_ops",
       "top": "sva_logical_ops",
       "clock": "clk",
-      "signals": ["a", "b", "q"],
+      "signals": [
+        "a",
+        "b",
+        "q"
+      ],
       "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "1", "b": "1"},
-        {"a": "0", "b": "0"}
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "0",
+          "b": "0"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-07: retained SVA logical equivalence and nested logical implication map to the finite E boolean layer; the clean-room source is accepted by Verilator's assertion-capable front end."
@@ -340,11 +655,20 @@
       "example": "sem2/sva_unbased_literal",
       "top": "sva_unbased_literal",
       "clock": "clk",
-      "signals": ["a", "q"],
+      "signals": [
+        "a",
+        "q"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0000"},
-        {"a": "0000"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0000"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-07: the finite SVA bridge retains an unbased unsized '0 literal as a four-state Fill at the expression width; the passing assertion trace is simulator-checkable when Verilator is selected."
@@ -355,11 +679,24 @@
       "top": "async_mem_fifo",
       "memory": true,
       "clock": "clk",
-      "signals": ["rstn", "d", "q"],
+      "signals": [
+        "rstn",
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"rstn": "0", "d": "00000011"},
-        {"rstn": "1", "d": "00010001"},
-        {"rstn": "1", "d": "00100010"}
+        {
+          "rstn": "0",
+          "d": "00000011"
+        },
+        {
+          "rstn": "1",
+          "d": "00010001"
+        },
+        {
+          "rstn": "1",
+          "d": "00100010"
+        }
       ],
       "measured": "A one-rank parameter-sized unpacked memory stays source-shaped in E: reset and sequential cell writes commit through MemState, and q observes mem[0]."
     },
@@ -367,12 +704,23 @@
       "name": "wire_generate",
       "example": "wire_generate",
       "top": "wire_generate",
-      "params": {"W": 4},
-      "signals": ["x", "y"],
+      "params": {
+        "W": 4
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "0000"},
-        {"x": "0101"},
-        {"x": "1010"}
+        {
+          "x": "0000"
+        },
+        {
+          "x": "0101"
+        },
+        {
+          "x": "1010"
+        }
       ],
       "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
     },
@@ -380,12 +728,23 @@
       "name": "hierarchy_parameterized_output_wire",
       "example": "sem2/hierarchy_parameterized",
       "top": "hierarchy_parameterized",
-      "params": {"W": 8},
-      "signals": ["a", "y"],
+      "params": {
+        "W": 8
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00000000"},
-        {"a": "01011010"},
-        {"a": "10100101"}
+        {
+          "a": "00000000"
+        },
+        {
+          "a": "01011010"
+        },
+        {
+          "a": "10100101"
+        }
       ],
       "measured": "2026-11-09: a parameterized parent output wire is tiled by source-shaped child output port ranges; the hierarchy route retains both instance drivers and agrees with Icarus and Xcelium."
     },
@@ -393,12 +752,23 @@
       "name": "hierarchy_parameterized_output_wire_w4",
       "example": "sem2/hierarchy_parameterized",
       "top": "hierarchy_parameterized",
-      "params": {"W": 4},
-      "signals": ["a", "y"],
+      "params": {
+        "W": 4
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0101"},
-        {"a": "1010"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0101"
+        },
+        {
+          "a": "1010"
+        }
       ],
       "measured": "2026-11-09: the same source-shaped instance windows agree at the smaller parameter point W=4."
     },
@@ -406,12 +776,23 @@
       "name": "hierarchy_parameterized_output_wire_w16",
       "example": "sem2/hierarchy_parameterized",
       "top": "hierarchy_parameterized",
-      "params": {"W": 16},
-      "signals": ["a", "y"],
+      "params": {
+        "W": 16
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000000000000000"},
-        {"a": "0101010110101010"},
-        {"a": "1010101001010101"}
+        {
+          "a": "0000000000000000"
+        },
+        {
+          "a": "0101010110101010"
+        },
+        {
+          "a": "1010101001010101"
+        }
       ],
       "measured": "2026-11-09: the same source-shaped instance windows agree at the larger parameter point W=16."
     },
@@ -420,13 +801,34 @@
       "example": "sem2/unpacked_register_memory",
       "top": "unpacked_register_memory",
       "memory": true,
-      "params": {"N": 4},
-      "signals": ["waddr", "raddr", "q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "waddr",
+        "raddr",
+        "q"
+      ],
       "clock": "clk",
       "stimulus": [
-        {"we": "0", "waddr": "00", "raddr": "00", "d": "00000000"},
-        {"we": "1", "waddr": "10", "raddr": "10", "d": "10100101"},
-        {"we": "0", "waddr": "00", "raddr": "10", "d": "00000000"}
+        {
+          "we": "0",
+          "waddr": "00",
+          "raddr": "00",
+          "d": "00000000"
+        },
+        {
+          "we": "1",
+          "waddr": "10",
+          "raddr": "10",
+          "d": "10100101"
+        },
+        {
+          "we": "0",
+          "waddr": "00",
+          "raddr": "10",
+          "d": "00000000"
+        }
       ],
       "measured": "2026-11-07: a parameter-sized one-rank register memory retains dynamic read/write ArraySel nodes; MemState resolves known indices, reads x for unknown indices, and drops unknown/out-of-range writes. Lean and Icarus agree over three cycles."
     },
@@ -435,26 +837,57 @@
       "example": "sem2/unpacked_memory_comb",
       "top": "unpacked_memory_comb",
       "memory": true,
-      "params": {"N": 4},
-      "signals": ["widx", "ridx", "q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "widx",
+        "ridx",
+        "q"
+      ],
       "clock": "clk",
       "stimulus": [
-        {"we": "0", "widx": "00", "ridx": "00", "d": "00000000"},
-        {"we": "1", "widx": "10", "ridx": "10", "d": "10100101"},
-        {"we": "0", "widx": "00", "ridx": "10", "d": "00000000"}
+        {
+          "we": "0",
+          "widx": "00",
+          "ridx": "00",
+          "d": "00000000"
+        },
+        {
+          "we": "1",
+          "widx": "10",
+          "ridx": "10",
+          "d": "10100101"
+        },
+        {
+          "we": "0",
+          "widx": "00",
+          "ridx": "10",
+          "d": "00000000"
+        }
       ],
-      "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted.",
-      "refusal": "Schedule:preemptive"
+      "measured": "2026-11-07: source-shaped always_comb memory reads now settle after the sequential MemState commit; no array expansion or NBA in always_comb is admitted."
     },
     {
       "name": "unpacked_memory_netz",
       "example": "sem2/unpacked_memory_netz",
       "top": "unpacked_memory_netz",
       "memory": true,
-      "params": {"N": 4},
-      "signals": ["q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "q"
+      ],
       "clock": "clk",
-      "stimulus": [{"d": "00000000"}, {"d": "10100101"}],
+      "stimulus": [
+        {
+          "d": "00000000"
+        },
+        {
+          "d": "10100101"
+        }
+      ],
       "measured": "2026-11-07: an undriven four-state wire is retained as NetSymbol:net-z metadata and the memory route preserves its named unsupported-module-member refusal until net resolution is represented."
     },
     {
@@ -463,13 +896,30 @@
       "file": "a1_signed_idx",
       "top": "cnt",
       "clock": "clk",
-      "signals": ["q"],
+      "signals": [
+        "q"
+      ],
       "stimulus": [
-        {"rst": "1", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"}
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        }
       ],
       "measured": "A signed 2-bit dynamic read uses two's-complement indexing: 2'b10 is -2 and produces an all-x read, rather than reading element 2."
     },
@@ -479,13 +929,30 @@
       "file": "c1_signed_wridx",
       "top": "cnt",
       "clock": "clk",
-      "signals": ["q"],
+      "signals": [
+        "q"
+      ],
       "stimulus": [
-        {"rst": "1", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"},
-        {"rst": "0", "en": "0"}
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "0"
+        }
       ],
       "measured": "A signed negative dynamic write is out of range and is a no-op; it must not be treated as unsigned element 2."
     },
@@ -494,12 +961,23 @@
       "example": "sem2/always_ff_loop",
       "top": "always_ff_loop",
       "clock": "clk",
-      "signals": ["d", "q"],
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "00"},
-        {"d": "01"},
-        {"d": "10"},
-        {"d": "xx"}
+        {
+          "d": "00"
+        },
+        {
+          "d": "01"
+        },
+        {
+          "d": "10"
+        },
+        {
+          "d": "xx"
+        }
       ]
     },
     {
@@ -508,24 +986,59 @@
       "top": "always_ff_static_local_nba_refuse",
       "clock": "clk",
       "refusal": "LocalDecl",
-      "signals": ["d", "q"],
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "0"},
-        {"d": "1"}
+        {
+          "d": "0"
+        },
+        {
+          "d": "1"
+        }
       ]
     },
     {
       "name": "loader_accept_areset",
       "example": "sem2/loader_accept_areset",
       "top": "loader_accept_areset",
-      "signals": ["rst", "en", "d", "q"],
+      "signals": [
+        "rst",
+        "en",
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"rst": "0", "en": "0", "d": "0"},
-        {"rst": "1", "en": "0", "d": "1"},
-        {"rst": "0", "en": "1", "d": "1"},
-        {"en": "0", "d": "0"},
-        {"rst": "1", "en": "0", "d": "1"},
-        {"rst": "0", "en": "1", "d": "1"}
+        {
+          "rst": "0",
+          "en": "0",
+          "d": "0"
+        },
+        {
+          "rst": "1",
+          "en": "0",
+          "d": "1"
+        },
+        {
+          "rst": "0",
+          "en": "1",
+          "d": "1"
+        },
+        {
+          "en": "0",
+          "d": "0"
+        },
+        {
+          "rst": "1",
+          "en": "0",
+          "d": "1"
+        },
+        {
+          "rst": "0",
+          "en": "1",
+          "d": "1"
+        }
       ],
       "measured": "Active-high asynchronous reset is retained as the same source-shaped reset process and matches Icarus over six cycles."
     },
@@ -534,16 +1047,30 @@
       "example": "sem2/loader_refuse_negedge",
       "top": "loader_refuse_negedge",
       "refusal": "AlwaysPosedge:edge",
-      "signals": ["q"],
-      "stimulus": [{"en": "0", "d": "0"}]
+      "signals": [
+        "q"
+      ],
+      "stimulus": [
+        {
+          "en": "0",
+          "d": "0"
+        }
+      ]
     },
     {
       "name": "loader_refuse_iff",
       "example": "sem2/loader_refuse_iff",
       "top": "loader_refuse_iff",
       "refusal": "AlwaysPosedge:iff",
-      "signals": ["q"],
-      "stimulus": [{"en": "0", "d": "0"}]
+      "signals": [
+        "q"
+      ],
+      "stimulus": [
+        {
+          "en": "0",
+          "d": "0"
+        }
+      ]
     },
     {
       "name": "concat_assign",
@@ -1915,8 +2442,7 @@
             "stderr": "<source>:10: sorry: Streaming concatenation not supported.\n<source>:10: sorry: Streaming concatenation not supported in l-values.\n"
           }
         ]
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "fixed_array_stream_continuous",
@@ -2736,8 +3262,7 @@
         {},
         {},
         {}
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "alu_div_w8",
@@ -2804,8 +3329,7 @@
         {},
         {},
         {}
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "fifo_d8_w32",
@@ -3013,8 +3537,7 @@
           "pop_i": "1",
           "data_i": "00000000000000000000000000000000"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "fifo_d4_w8",
@@ -3190,8 +3713,7 @@
           "pop_i": "1",
           "data_i": "00000000"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "register_file_ff",
@@ -3326,7 +3848,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): the cv32e40p register file's untyped `localparam NUM_TOT_WORDS = FPU ? (ZFINX ? NUM_WORDS : NUM_WORDS + NUM_FP_WORDS) : NUM_WORDS` (and NUM_WORDS = 2 ** (ADDR_WIDTH - 1)) is built with + and **, which Icarus 12.0 types wider than the 32-bit int of slang and Yosys 0.53 (`N + 1` is 33 bits there, measured with $bits); here its width is only read in dimension and generate bounds, where it is unobservable, and Icarus agreed with the model through round 5 — a recorded over-refusal of the whole-class rule Constant:untyped-width"
+      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): the cv32e40p register file's untyped `localparam NUM_TOT_WORDS = FPU ? (ZFINX ? NUM_WORDS : NUM_WORDS + NUM_FP_WORDS) : NUM_WORDS` (and NUM_WORDS = 2 ** (ADDR_WIDTH - 1)) is built with + and **, which Icarus 12.0 types wider than the 32-bit int of slang and Yosys 0.53 (`N + 1` is 33 bits there, measured with $bits); here its width is only read in dimension and generate bounds, where it is unobservable, and Icarus agreed with the model through round 5 \u2014 a recorded over-refusal of the whole-class rule Constant:untyped-width"
     },
     {
       "name": "concat_add",
@@ -5537,8 +6059,7 @@
           "CYCLE 0 a=0110 w_flat=00000000 z=x",
           "CYCLE 1 a=1001 w_flat=00000000 z=x"
         ]
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "array_param_labels",
@@ -6831,8 +7352,7 @@
         {
           "a": "0101"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "const_wrap",
@@ -14095,8 +14615,7 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_k0_n4",
@@ -14122,8 +14641,7 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_k0_n5",
@@ -14149,8 +14667,7 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_k0_n3",
@@ -14176,8 +14693,7 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_k0_n2",
@@ -14203,8 +14719,7 @@
           "b": "11",
           "v": "1x0z1100"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_n0",
@@ -16619,7 +17134,7 @@
           "a": "1"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: the output-port initializer used to be dropped (round-2 WP2 verifier: lean y = x1, x0 where Icarus 12.0 gives 11, 10); now emitted as the Port's init; round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 CX repair 2026-10-28: the output-port initializer used to be dropped (round-2 WP2 verifier: lean y = x1, x0 where Icarus 12.0 gives 11, 10); now emitted as the Port's init; round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "vg_initqp",
@@ -16644,7 +17159,7 @@
           "a": "0"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "vg_initqp_n1",
@@ -16669,7 +17184,7 @@
           "a": "x"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "vg_initqp_n3",
@@ -16694,7 +17209,7 @@
           "a": "x"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "vg_initqp_n5",
@@ -16719,7 +17234,7 @@
           "a": "x"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 CX repair 2026-10-28: parametric twin of vg_initq (the dropped initializer was identical at every N, so the cross-check agreed; these rows pin it at N = 1, 2, 3, 5); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "vg_initc",
@@ -16743,7 +17258,7 @@
           "a": "z"
         }
       ],
-      "measured": "round 3 CX repair 2026-10-28: a declaration initializer plus an always_comb writer is legal (round-2 WP2 verifier probe, PASS against Icarus 12.0); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_comb writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_comb output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it; the round-3 claim 'a declaration initializer plus an always_comb writer is legal' is withdrawn"
+      "measured": "round 3 CX repair 2026-10-28: a declaration initializer plus an always_comb writer is legal (round-2 WP2 verifier probe, PASS against Icarus 12.0); round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_comb writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_comb output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it; the round-3 claim 'a declaration initializer plus an always_comb writer is legal' is withdrawn"
     },
     {
       "name": "vg_init",
@@ -17015,8 +17530,7 @@
           "CYCLE 5 a=x b=1 y=1x",
           "CYCLE 6 a=0 b=0 y=00"
         ]
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "acg_alias_wire",
@@ -17282,8 +17796,7 @@
         {
           "a": "11"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "acg_alias_copy",
@@ -17318,8 +17831,7 @@
         {
           "a": "11"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "acg_alias_far",
@@ -17364,8 +17876,7 @@
           "a": "11",
           "b": "01"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "acg_alias_bits_ok",
@@ -17409,8 +17920,7 @@
           "a": "1",
           "b": "1"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "acg_alias_port_wr",
@@ -18671,7 +19181,7 @@
           "a": "1"
         }
       ],
-      "measured": "round 3 folds 2026-10-28 (CX verifier major): the non-ANSI `output [1:0] y; logic [1:0] y = 2'b10;` initializer was dropped (y read x1 where Icarus reads 11); Yosys 0.53 agrees with the model now; round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 3 folds 2026-10-28 (CX verifier major): the non-ANSI `output [1:0] y; logic [1:0] y = 2'b10;` initializer was dropped (y read x1 where Icarus reads 11); Yosys 0.53 agrees with the model now; round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "pi_nonansi_reg",
@@ -18733,7 +19243,7 @@
           "a": "x"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "pi_nonansi_p",
@@ -18765,7 +19275,7 @@
           "a": "1"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "pi_nonansi_p_n1",
@@ -18800,7 +19310,7 @@
           "a": "0"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "pi_nonansi_p_n2",
@@ -18835,7 +19345,7 @@
           "a": "0"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "pi_nonansi_p_n5",
@@ -18870,7 +19380,7 @@
           "a": "1"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 §9.2.2.2/§9.2.2.4 with §6.5/§10.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
+      "measured": "round 4 Lane A 2026-10-28 (row corrected from PASS to a loud refusal): an always_ff writer of a variable with a declaration initializer is refused because the tools split on its legality: Xcelium 24.03 rejects this fixture ('xmelab: *E,MULAXX: Multiple drivers to always_ff output variable', IEEE 1800-2023 \u00a79.2.2.2/\u00a79.2.2.4 with \u00a76.5/\u00a710.5 counting the initialization as a procedural assignment) where Icarus 12.0, Yosys 0.53 and slang run it"
     },
     {
       "name": "fold_pgen",
@@ -21201,7 +21711,7 @@
           "a": "x"
         }
       ],
-      "measured": "round 4 Lane A 2026-10-28: the round-2 §6.5 mixture inside a child: Icarus 12.0 'o Unable to assign to unresolved wires', Xcelium 24.03 '*E,ICDDIV: Illegal combination of driver and declaration initializer', Yosys 0.53 a conflicting constant driver"
+      "measured": "round 4 Lane A 2026-10-28: the round-2 \u00a76.5 mixture inside a child: Icarus 12.0 'o Unable to assign to unresolved wires', Xcelium 24.03 '*E,ICDDIV: Illegal combination of driver and declaration initializer', Yosys 0.53 a conflicting constant driver"
     },
     {
       "name": "fold_rself",
@@ -24009,7 +24519,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) — a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
+      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) \u2014 a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
     },
     {
       "name": "fold_uovf_sb100",
@@ -24035,7 +24545,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) — a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
+      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) \u2014 a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
     },
     {
       "name": "fold_uovf_n16",
@@ -24061,7 +24571,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) — a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
+      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) \u2014 a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
     },
     {
       "name": "fold_uovf_n4_sb3",
@@ -24088,7 +24598,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) — a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
+      "measured": "round 6 folds 2026-10-29 (row corrected, was a PASS row): untyped `localparam Y = SB + 1'b1` and `Z = SB * 2'd2` (8-bit SB) are 9 and 10 bits wide in Icarus 12.0 (lossless untyped width, measured with $bits) and 8 bits in slang and the Yosys 0.53 netlist; this row's outputs read them in 64-bit contexts, where Icarus and Yosys agree (it passed through round 5) \u2014 a recorded over-refusal of the whole-class rule Constant:untyped-width (Param.lean evalUntyped/PExpr.icarusWidens), which refuses every untyped constant built with + - * ** at every point"
     },
     {
       "name": "fold_uovf_sb255",
@@ -25475,7 +25985,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3 and minor 4, repros vs_uw/vs_uw3/vs_upw2): untyped `localparam Y = SB + 1'b1` (8-bit SB) is 8 bits in slang and the Yosys 0.53 netlist and 9 in Icarus 12.0 (lossless untyped width, measured with $bits); at N = 16 the tools AGREE on this row's outputs (Y is 17 bits in Icarus, 16 in Yosys, and every read context is wide enough) — a recorded over-refusal of the whole-class rule. Refused at every point (Constant:untyped-width, Param.lean evalUntyped/PExpr.icarusWidens)"
+      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3 and minor 4, repros vs_uw/vs_uw3/vs_upw2): untyped `localparam Y = SB + 1'b1` (8-bit SB) is 8 bits in slang and the Yosys 0.53 netlist and 9 in Icarus 12.0 (lossless untyped width, measured with $bits); at N = 16 the tools AGREE on this row's outputs (Y is 17 bits in Icarus, 16 in Yosys, and every read context is wide enough) \u2014 a recorded over-refusal of the whole-class rule. Refused at every point (Constant:untyped-width, Param.lean evalUntyped/PExpr.icarusWidens)"
     },
     {
       "name": "fold_uwid_sb255",
@@ -25580,7 +26090,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 6) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first — a recorded over-refusal."
+      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 6) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first \u2014 a recorded over-refusal."
     },
     {
       "name": "fold_uwidp_y6_sb3",
@@ -25607,7 +26117,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 6, SB = 3) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first — a recorded over-refusal."
+      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 6, SB = 3) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first \u2014 a recorded over-refusal."
     },
     {
       "name": "fold_uwidp_y250",
@@ -25633,7 +26143,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 250) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first — a recorded over-refusal."
+      "measured": "round 6 folds 2026-10-29 (round 5 FOLDS verifier major 3, repro vs_up): untyped PARAMETER `Y = SB + 1'b1` with an 8-bit SB is 9 bits in Icarus 12.0 and 8 in slang and the Yosys 0.53 netlist at the default point (o1 = (Y + a) >> 1 at a = 255: 130 against 2); refused there (Constant:untyped-width). Overridden by an integer (Y = 250) Y is an int in every tool and the tools agree; the load gate refuses the design at its defaults first \u2014 a recorded over-refusal."
     },
     {
       "name": "fold_uwint",
@@ -25657,7 +26167,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29: the INT-class twin — untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 8, a = 15: `{a, B}` is 0x1e00000009 in Icarus and 0xf00000009 in Yosys; `a + C` (C = -1) is 0x20000000e against 0x10000000e. Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
+      "measured": "round 6 folds 2026-10-29: the INT-class twin \u2014 untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 8, a = 15: `{a, B}` is 0x1e00000009 in Icarus and 0xf00000009 in Yosys; `a + C` (C = -1) is 0x20000000e against 0x10000000e. Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
     },
     {
       "name": "fold_uwint_n0",
@@ -25684,7 +26194,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29: the INT-class twin — untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 0: `{a, B}` 0x1e00000001 against 0xf00000001; `a + C` (C = -9) 0x200000006 against 0x100000006. Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
+      "measured": "round 6 folds 2026-10-29: the INT-class twin \u2014 untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 0: `{a, B}` 0x1e00000001 against 0xf00000001; `a + C` (C = -9) 0x200000006 against 0x100000006. Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
     },
     {
       "name": "fold_uwint_n40",
@@ -25711,7 +26221,7 @@
         }
       ],
       "refusal": "Constant:untyped-width",
-      "measured": "round 6 folds 2026-10-29: the INT-class twin — untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 40: `{a, E}` (E = 2^40) is a·2^42 + 2^40 in Icarus and a·2^32 in Yosys (the 32-bit int wraps to 0). Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
+      "measured": "round 6 folds 2026-10-29: the INT-class twin \u2014 untyped `localparam B = N + 1` (int N) is a 32-bit int to slang, the LRM and the Yosys 0.53 netlist and 33 bits in Icarus 12.0; `C = N - 9` likewise; `E = 2 ** N` is 42 bits in Icarus at N = 40. N = 40: `{a, E}` (E = 2^40) is a\u00b72^42 + 2^40 in Icarus and a\u00b72^32 in Yosys (the 32-bit int wraps to 0). Refused at every point (Constant:untyped-width); before, the model followed Yosys (32-bit int widths, value tier paramNWidth)"
     },
     {
       "name": "fold_uwok",
@@ -25977,7 +26487,7 @@
         }
       ],
       "refusal": "EnumValueSymbol:default-point-value",
-      "measured": "round 6 folds 2026-10-29: `typedef enum logic [7:0] {EA = N, EB = N + 2} e_t` (default N = 3): the envelope's EnumType carried the default point's member values (EB = 5) and the model read them at every N. At the default point the value is right (o1 = 5) — a recorded over-refusal of the default point. Icarus 12.0 and the Yosys 0.53 netlist agree. Refused (extractor EnumValueSymbol:default-point-value, _sym_enum_values_point_dependent)"
+      "measured": "round 6 folds 2026-10-29: `typedef enum logic [7:0] {EA = N, EB = N + 2} e_t` (default N = 3): the envelope's EnumType carried the default point's member values (EB = 5) and the model read them at every N. At the default point the value is right (o1 = 5) \u2014 a recorded over-refusal of the default point. Icarus 12.0 and the Yosys 0.53 netlist agree. Refused (extractor EnumValueSymbol:default-point-value, _sym_enum_values_point_dependent)"
     },
     {
       "name": "fold_enm_n5",
@@ -27024,7 +27534,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 8: X1 = -1, X6 = 44, the fold is exact at the default point — a recorded over-refusal. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 8: X1 = -1, X6 = 44, the fold is exact at the default point \u2014 a recorded over-refusal. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szc_m1",
@@ -27051,7 +27561,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 1: X1 = -1, X6 = 0 (o3 = 0 where the model gave 44). Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 1: X1 = -1, X6 = 0 (o3 = 0 where the model gave 44). Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szc_m4",
@@ -27078,7 +27588,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 4: X1 = -1, X6 = -4 (o3 = 2^64 - 4 where the model gave 44). Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 4: X1 = -1, X6 = -4 (o3 = 2^64 - 4 where the model gave 44). Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szc_m16",
@@ -27105,7 +27615,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 16: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 16: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szc_m40",
@@ -27132,7 +27642,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 40: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 40: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szc_m64",
@@ -27159,7 +27669,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) — a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 64: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szc2): `localparam int X1 = M'(255)`, `X5 = M'(-1)`, `X6 = M'(300)` (default M = 8) \u2014 a size cast whose size is a parameter. slang binds the size away, so the operand has no bound name and the extractor emitted slang's DEFAULT-point fold (X1 = -1, X6 = 44) at every M; the model read o1 = -1, o3 = 44 at every M (verifier run4n.log). Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration agree at every row point (slang3b.py: 3-WAY-AGREE): M = 64: X1 = 255, X6 = 300 where the model gave -1 and 44. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo",
@@ -27182,7 +27692,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 8: W = -1 and 45, the fold is exact at the default point — a recorded over-refusal. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 8: W = -1 and 45, the fold is exact at the default point \u2014 a recorded over-refusal. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo_m1",
@@ -27208,7 +27718,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 1: W2 = 1 (o2 = 1 + a) where the model gave 45 + a. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 1: W2 = 1 (o2 = 1 + a) where the model gave 45 + a. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo_m4",
@@ -27234,7 +27744,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 4: W2 = -3 (o2 = 2^32 - 3 at a = 0) where the model gave 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 4: W2 = -3 (o2 = 2^32 - 3 at a = 0) where the model gave 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo_m16",
@@ -27260,7 +27770,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 16: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 16: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo_m40",
@@ -27286,7 +27796,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 40: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 40: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_szo_m64",
@@ -27312,7 +27822,7 @@
         }
       ],
       "refusal": "ConversionExpression:default-point-fold",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) — slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 64: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 1, repro vw_szo): `.W(M'(255))` and `.W(M'(300) + 1)` into an `int W` child parameter (default M = 8) \u2014 slang's DEFAULT-point folds -1 and 45 were the overrides at every M (verifier run6n.log: the model's o2 = 45 + a at every M). Icarus 12.0 and the Yosys 0.53 netlist agree at every row point: M = 64: W1 = 255, W2 = 301 where the model gave -1 and 45. Refused at every point (extractor _sym_conversion, _sym_bound_syntax_point_dependent: ConversionExpression:default-point-fold)"
     },
     {
       "name": "fold_enw",
@@ -27464,7 +27974,7 @@
         }
       ],
       "refusal": "EnumValueSymbol:default-point-value",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). Default: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) — a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). Default: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) \u2014 a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
     },
     {
       "name": "fold_enb_n3",
@@ -27545,7 +28055,7 @@
         }
       ],
       "refusal": "EnumValueSymbol:default-point-value",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). N = 8: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) — a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). N = 8: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) \u2014 a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
     },
     {
       "name": "fold_enb_n16",
@@ -27572,7 +28082,7 @@
         }
       ],
       "refusal": "EnumValueSymbol:default-point-value",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). N = 16: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) — a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier blocker 2, the base-width class): `typedef enum logic [N-1:0] {SA = 9, SB = 2}` and `{T0, T1, T2}` (default N = 4). The envelope carries the default point's member values and Lean truncates them to the point's base width (Param.lean enumMemberVals). N = 16: Icarus 12.0 and the Yosys 0.53 netlist agree (SA = 9, T2 = 2) \u2014 a recorded over-refusal. Every member of an enum whose base width depends on the point is refused (extractor _sym_enum_values_point_dependent: EnumValueSymbol:default-point-value)"
     },
     {
       "name": "fold_shl",
@@ -28096,7 +28606,7 @@
         }
       ],
       "refusal": "division by zero in a constant context",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier major 4, repro vw_sqd): `localparam shortint H1 = 4'd8 / (U + 1'b1)` (also byte H2 = 4'd9 % (U + 1'b1), bit [15:0] H3), default N = 32. N = 4, U = 15: 4 bits wrap. Where U + 1'b1 wraps to 0 at the operand's own width (max(4, N) bits) but not at the 16-bit target, round 5 refused (division by zero) and round 6's context reading through the Squash2 admitted 0; slang, Icarus 12.0 and the Yosys 0.53 netlist agree on 0 (slang3b.py 3-WAY-AGREE). The round 5 rule admits no shape that was loud: the own-width reading must be defined (Param.lean evalAt, PExpr.isSquash2), so this point is loud again — a recorded over-refusal"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier major 4, repro vw_sqd): `localparam shortint H1 = 4'd8 / (U + 1'b1)` (also byte H2 = 4'd9 % (U + 1'b1), bit [15:0] H3), default N = 32. N = 4, U = 15: 4 bits wrap. Where U + 1'b1 wraps to 0 at the operand's own width (max(4, N) bits) but not at the 16-bit target, round 5 refused (division by zero) and round 6's context reading through the Squash2 admitted 0; slang, Icarus 12.0 and the Yosys 0.53 netlist agree on 0 (slang3b.py 3-WAY-AGREE). The round 5 rule admits no shape that was loud: the own-width reading must be defined (Param.lean evalAt, PExpr.isSquash2), so this point is loud again \u2014 a recorded over-refusal"
     },
     {
       "name": "fold_sqd_n7_u127",
@@ -28124,7 +28634,7 @@
         }
       ],
       "refusal": "division by zero in a constant context",
-      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier major 4, repro vw_sqd): `localparam shortint H1 = 4'd8 / (U + 1'b1)` (also byte H2 = 4'd9 % (U + 1'b1), bit [15:0] H3), default N = 32. N = 7, U = 127: 7 bits wrap. Where U + 1'b1 wraps to 0 at the operand's own width (max(4, N) bits) but not at the 16-bit target, round 5 refused (division by zero) and round 6's context reading through the Squash2 admitted 0; slang, Icarus 12.0 and the Yosys 0.53 netlist agree on 0 (slang3b.py 3-WAY-AGREE). The round 5 rule admits no shape that was loud: the own-width reading must be defined (Param.lean evalAt, PExpr.isSquash2), so this point is loud again — a recorded over-refusal"
+      "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier major 4, repro vw_sqd): `localparam shortint H1 = 4'd8 / (U + 1'b1)` (also byte H2 = 4'd9 % (U + 1'b1), bit [15:0] H3), default N = 32. N = 7, U = 127: 7 bits wrap. Where U + 1'b1 wraps to 0 at the operand's own width (max(4, N) bits) but not at the 16-bit target, round 5 refused (division by zero) and round 6's context reading through the Squash2 admitted 0; slang, Icarus 12.0 and the Yosys 0.53 netlist agree on 0 (slang3b.py 3-WAY-AGREE). The round 5 rule admits no shape that was loud: the own-width reading must be defined (Param.lean evalAt, PExpr.isSquash2), so this point is loud again \u2014 a recorded over-refusal"
     },
     {
       "name": "fold_sqd_n2_u3",
@@ -28880,8 +29390,7 @@
         {
           "b": "0z"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_kminus_p_w3",
@@ -28910,8 +29419,7 @@
         {
           "b": "0z"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_kminus_p_w5",
@@ -28940,8 +29448,7 @@
         {
           "b": "0z"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "label_kminus_q",
@@ -28967,8 +29474,7 @@
         {
           "b": "0z"
         }
-      ],
-      "refusal": "Schedule:preemptive"
+      ]
     },
     {
       "name": "dyn32_part",
@@ -30292,7 +30798,7 @@
           "a": "x00000000000000000000000000000010"
         }
       ],
-      "measured": "Round 6, lane A (Xcelium audit T1, extractor level): v[a] with a 33-bit literal-bounds `a` is a run-time bit-select index wider than 32 bits at the default point. The extractor emits Unsupported `ElementSelectExpression:wide-index`; the model does not truncate (a = 2^32 + 2 is out of range: x in the model and Yosys 0.53 `prep; eval`). Re-measured on this row's own testbench (Xcelium 24.03-s004 via the license gate on the internal Xcelium host, 2026-10-29, and Icarus 12.0): the two traces are identical — o = v[2] = 1 at a = 2^32 + 2 (cycle 1) and at a = x00...010 (an x bit in the index, cycle 4), where the LRM text gives x; Xcelium warns BIGWBS."
+      "measured": "Round 6, lane A (Xcelium audit T1, extractor level): v[a] with a 33-bit literal-bounds `a` is a run-time bit-select index wider than 32 bits at the default point. The extractor emits Unsupported `ElementSelectExpression:wide-index`; the model does not truncate (a = 2^32 + 2 is out of range: x in the model and Yosys 0.53 `prep; eval`). Re-measured on this row's own testbench (Xcelium 24.03-s004 via the license gate on the internal Xcelium host, 2026-10-29, and Icarus 12.0): the two traces are identical \u2014 o = v[2] = 1 at a = 2^32 + 2 (cycle 1) and at a = x00...010 (an x bit in the index, cycle 4), where the LRM text gives x; Xcelium warns BIGWBS."
     },
     {
       "name": "wide_index_const",
@@ -30401,8 +30907,7 @@
           "w_i": "1010xx01111100000000111x01010101"
         }
       ],
-      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Packed union `word_u { logic [31:0] w; logic [1:0][15:0] h; logic [3:0][7:0] b; }`: reads in_v.h[1] = [31:16], in_v.b[3] = [31:24], in_v.w[5] = [5] (the one-dimensional member keeps its bit window), and the byte-swap writes out_v.b[i] = in_v.b[3-i] are 8-bit write windows (pre-fix: bit [i]).",
-      "refusal": "Schedule:preemptive"
+      "measured": "WP-E1 2026-10-30: constant element/range selects through a packed struct/union member whose type is a multi-dimensional packed array were lowered in BIT units (`p.bytes[2]` = PartSel[4:4] width 1, `u.h[1]` = [1:1], a write to `out_v.b[0]` a 1-bit write at [0:0]); every select is now the flat window of the selected ELEMENTS. Packed union `word_u { logic [31:0] w; logic [1:0][15:0] h; logic [3:0][7:0] b; }`: reads in_v.h[1] = [31:16], in_v.b[3] = [31:24], in_v.w[5] = [5] (the one-dimensional member keeps its bit window), and the byte-swap writes out_v.b[i] = in_v.b[3-i] are 8-bit write windows (pre-fix: bit [i])."
     },
     {
       "name": "member_elem_nested",
@@ -30631,7 +31136,7 @@
           "en": "1"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Cycle 0 (no reset yet): q = x (x + 1 = x). en = x holds the count (`else if (x)` takes no branch), rst = x takes the else branch (the count goes on), reset forgets the count."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. Cycle 0 (no reset yet): q = x (x + 1 = x). en = x holds the count (`else if (x)` takes no branch), rst = x takes the else branch (the count goes on), reset forgets the count."
     },
     {
       "name": "clk_cnt_n2",
@@ -30676,7 +31181,7 @@
           "en": "1"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. N = 2: the count wraps 3 -> 0 (the default-point fold is cross-checked at N = 2 by the xcheck sidecar)."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. N = 2: the count wraps 3 -> 0 (the default-point fold is cross-checked at N = 2 by the xcheck sidecar)."
     },
     {
       "name": "clk_shreg",
@@ -30725,7 +31230,7 @@
           "d": "1"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Before the first reset the shifted-in bit lands in an x register (q = xxx1, partially known); d = x shifts an x through the register (101x, 01x0, 1x00, x000) until four known bits are shifted in."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. Before the first reset the shifted-in bit lands in an x register (q = xxx1, partially known); d = x shifts an x through the register (101x, 01x0, 1x00, x000) until four known bits are shifted in."
     },
     {
       "name": "clk_pipe2",
@@ -30782,7 +31287,7 @@
           "b": "0000"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Both stages sampled (`s1`, `y`): y is s1 one cycle later; an x bit in a (1x01) travels through s1 (1x10) to y one cycle later."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. Both stages sampled (`s1`, `y`): y is s1 one cycle later; an x bit in a (1x01) travels through s1 (1x10) to y one cycle later."
     },
     {
       "name": "clk_fsm",
@@ -30840,7 +31345,7 @@
           "go": "1"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Cycle 0: the state is x and the `case` default takes IDLE; IDLE -> RUN -> DONE -> IDLE with `busy`/`done` combinational on the state; go = x (cycle 11) leaves IDLE (the `if (x)` takes no branch)."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. Cycle 0: the state is x and the `case` default takes IDLE; IDLE -> RUN -> DONE -> IDLE with `busy`/`done` combinational on the state; go = x (cycle 11) leaves IDLE (the `if (x)` takes no branch)."
     },
     {
       "name": "clk_arst",
@@ -30895,20 +31400,48 @@
           "d": "0001"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. Asynchronous active-low reset (the pinned pin3 ledger): the reset acts the moment `rst_n` falls (cycles 0 and 4, before the edge); rst_n = x (cycle 8, a 1 -> x glitch) is a negedge event too and the register holds 0110 in all tools; en = x holds. `rst_n` is read as data inside the block (allowed); it is not a clock."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. Asynchronous active-low reset (the pinned pin3 ledger): the reset acts the moment `rst_n` falls (cycles 0 and 4, before the edge); rst_n = x (cycle 8, a 1 -> x glitch) is a negedge event too and the register holds 0110 in all tools; en = x holds. `rst_n` is read as data inside the block (allowed); it is not a clock."
     },
     {
       "name": "clk_arst_high",
       "example": "sem2/clk_arst_high",
       "top": "clk_arst_high",
-      "signals": ["rst", "en", "d", "q"],
+      "signals": [
+        "rst",
+        "en",
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"rst": "0", "en": "0", "d": "0001"},
-        {"rst": "1", "en": "0", "d": "0010"},
-        {"rst": "0", "en": "1", "d": "0110"},
-        {"en": "0", "d": "1111"},
-        {"rst": "1", "en": "0", "d": "0011"},
-        {"rst": "0", "en": "1", "d": "0101"}
+        {
+          "rst": "0",
+          "en": "0",
+          "d": "0001"
+        },
+        {
+          "rst": "1",
+          "en": "0",
+          "d": "0010"
+        },
+        {
+          "rst": "0",
+          "en": "1",
+          "d": "0110"
+        },
+        {
+          "en": "0",
+          "d": "1111"
+        },
+        {
+          "rst": "1",
+          "en": "0",
+          "d": "0011"
+        },
+        {
+          "rst": "0",
+          "en": "1",
+          "d": "0101"
+        }
       ],
       "measured": "E active-high asynchronous reset (2026-11-04): a 0 -> 1 reset edge with the clock held low runs the reset body before the next clock edge; release does not wake it. The retained source shape matches Icarus over six cycles."
     },
@@ -30989,7 +31522,7 @@
           "d": "0"
         }
       ],
-      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED — `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's σ_src trace cycle for cycle. A child register clocked through a bare connection `.ck(clk)` to the parent's input port: the flattened design has the connection copy `u.ck = clk` (a plain copy nothing reads) and the child's edge process on `clk`."
+      "measured": "WP-Q0 clock discipline (2026-10-30): ADMITTED \u2014 `clk` is the only clock, a one-bit input port of the top, never read; a clocked design that satisfies the discipline runs under the model's one-edge-per-cycle semantics exactly as under a simulator. Measured: the pinned Xcelium 24.03-s004 trace (internal host via the license gate, `xcelium_golden.json`, XREF-MATCH) and Icarus 12.0 both equal the model's \u03c3_src trace cycle for cycle. A child register clocked through a bare connection `.ck(clk)` to the parent's input port: the flattened design has the connection copy `u.ck = clk` (a plain copy nothing reads) and the child's edge process on `clk`."
     },
     {
       "name": "clk_undriven",
@@ -31019,7 +31552,7 @@
         }
       ],
       "refusal": "Clock:source",
-      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED; `LeanModels/Sv/ClockGuard2.lean`, a check beside `name.sem`): the clock `clk` is an internal signal nothing drives — the undriven-clock exploit of svgolf/design/sequential/README.md. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through the license gate on the internal Xcelium host and Icarus 12.0, which agree unless said): y = x x x x (no edge ever occurs, the register stays x); the model WITHOUT the guard captures a & b in every cycle, y = 1 0 0 1."
+      "measured": "WP-Q0 clock discipline, `Clock:source` (REFUSED; `LeanModels/Sv/ClockGuard2.lean`, a check beside `name.sem`): the clock `clk` is an internal signal nothing drives \u2014 the undriven-clock exploit of svgolf/design/sequential/README.md. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through the license gate on the internal Xcelium host and Icarus 12.0, which agree unless said): y = x x x x (no edge ever occurs, the register stays x); the model WITHOUT the guard captures a & b in every cycle, y = 1 0 0 1."
     },
     {
       "name": "clk_tied",
@@ -31238,18 +31771,44 @@
         }
       ],
       "refusal": "Clock:multiple",
-      "measured": "WP-Q0 clock discipline, `Clock:multiple` (REFUSED): a second clock port. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through the license gate on the internal Xcelium host and Icarus 12.0, which agree; the testbench pulses `clk1` only, the row's `clock`): `a` follows d, b stays x because `clk2` never ticks: b = x x x x x; the model without the guard ticks both clocks in every cycle (it runs every edge process once per cycle), b = x 1 0 1 1 (b follows a one cycle later) — a reading no stimulus of a simulator is bound to produce.",
+      "measured": "WP-Q0 clock discipline, `Clock:multiple` (REFUSED): a second clock port. Measured on this row's own generated testbench, 2026-10-30 (Xcelium 24.03-s004 through the license gate on the internal Xcelium host and Icarus 12.0, which agree; the testbench pulses `clk1` only, the row's `clock`): `a` follows d, b stays x because `clk2` never ticks: b = x x x x x; the model without the guard ticks both clocks in every cycle (it runs every edge process once per cycle), b = x 1 0 1 1 (b follows a one cycle later) \u2014 a reading no stimulus of a simulator is bound to produce.",
       "clock": "clk1"
     },
     {
       "name": "clk_two_instants",
       "example": "sem2/clk_two",
       "top": "clk_two",
-      "signals": ["d", "a", "b"],
+      "signals": [
+        "d",
+        "a",
+        "b"
+      ],
       "instants": [
-        {"rises": ["clk1"], "inputs": {"d": "1"}},
-        {"rises": ["clk2"], "inputs": {"d": "1"}},
-        {"rises": ["clk1", "clk2"], "inputs": {"d": "0"}}
+        {
+          "rises": [
+            "clk1"
+          ],
+          "inputs": {
+            "d": "1"
+          }
+        },
+        {
+          "rises": [
+            "clk2"
+          ],
+          "inputs": {
+            "d": "1"
+          }
+        },
+        {
+          "rises": [
+            "clk1",
+            "clk2"
+          ],
+          "inputs": {
+            "d": "0"
+          }
+        }
       ],
       "measured": "The exact multi-clock E instant route admits independent and coincident input-clock edges. At a coincident edge the read-domain flop samples the old write-domain value; the row is source-shaped and matches the simulator trace."
     },
@@ -31257,8 +31816,21 @@
       "name": "clk_implicit",
       "example": "sem2/clk_implicit",
       "top": "clk_implicit",
-      "signals": ["a", "d", "q"],
-      "stimulus": [{"a": "0", "d": "1"}, {"a": "1", "d": "0"}],
+      "signals": [
+        "a",
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "d": "1"
+        },
+        {
+          "a": "1",
+          "d": "0"
+        }
+      ],
       "refusal": "Clock:implicit",
       "measured": "Sem2 run2 now refuses a data-driven event control instead of executing the edge body once per stimulus entry; event sensitivity remains in the exact scheduler route."
     },
@@ -54320,8 +54892,7 @@
       ],
       "params": {
         "N": 1
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "wl_rowloop_n2",
@@ -54670,8 +55241,7 @@
       ],
       "params": {
         "N": 2
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "wl_rowloop_n3",
@@ -55260,8 +55830,7 @@
       ],
       "params": {
         "N": 3
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "wl_rowloop_n4",
@@ -56130,8 +56699,7 @@
       ],
       "params": {
         "N": 4
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "wl_rowloop_n8",
@@ -57000,8 +57568,7 @@
       ],
       "params": {
         "N": 8
-      },
-      "refusal": "Schedule:preemptive"
+      }
     },
     {
       "name": "wl_partsel_n1",
@@ -60951,10 +61518,18 @@
         "c"
       ],
       "stimulus": [
-        {"a": "00000000"},
-        {"a": "11111111"},
-        {"a": "10001100"},
-        {"a": "0x110000"}
+        {
+          "a": "00000000"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "10001100"
+        },
+        {
+          "a": "0x110000"
+        }
       ]
     },
     {
@@ -69196,27 +69771,56 @@
       "name": "symbolic_parameter_for_header_shapes",
       "example": "sem2/symbolic_parameter_for_header_shapes",
       "top": "symbolic_parameter_for_header_shapes",
-      "params": {"N": 5},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 5
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "10101010"},
-        {"a": "01010101"},
-        {"a": "xxxxxxxx"},
-        {"a": "11111111"}
+        {
+          "a": "10101010"
+        },
+        {
+          "a": "01010101"
+        },
+        {
+          "a": "xxxxxxxx"
+        },
+        {
+          "a": "11111111"
+        }
       ]
     },
     {
       "name": "symbolic_casez_casex",
       "example": "sem2/symbolic_casez_casex",
       "top": "symbolic_casez_casex",
-      "signals": ["a", "y", "z"],
+      "signals": [
+        "a",
+        "y",
+        "z"
+      ],
       "stimulus": [
-        {"a": "1000"},
-        {"a": "0111"},
-        {"a": "1x0z"},
-        {"a": "0001"},
-        {"a": "zzzz"},
-        {"a": "xxxx"}
+        {
+          "a": "1000"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "1x0z"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "zzzz"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
     },
     {
@@ -69250,13 +69854,26 @@
       "name": "symbolic_nested_parameter_for",
       "example": "sem2/symbolic_nested_parameter_for",
       "top": "symbolic_nested_parameter_for",
-      "params": {"N": 5},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 5
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000000000000000"},
-        {"a": "0000000000001111"},
-        {"a": "1010101010101010"},
-        {"a": "xxxxxxxxxxxxxxxx"}
+        {
+          "a": "0000000000000000"
+        },
+        {
+          "a": "0000000000001111"
+        },
+        {
+          "a": "1010101010101010"
+        },
+        {
+          "a": "xxxxxxxxxxxxxxxx"
+        }
       ]
     },
     {
@@ -69411,14 +70028,30 @@
       "name": "onehot_fixed",
       "example": "sem2/onehot_fixed",
       "top": "onehot_fixed",
-      "signals": ["a", "one", "zero"],
+      "signals": [
+        "a",
+        "one",
+        "zero"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "0011"},
-        {"a": "x001"},
-        {"a": "z000"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "0011"
+        },
+        {
+          "a": "x001"
+        },
+        {
+          "a": "z000"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
     },
     {
@@ -69493,23 +70126,42 @@
       "name": "symbolic_parameter_for_large",
       "example": "sem2/symbolic_parameter_for_large",
       "top": "symbolic_parameter_for_large",
-      "params": {"N": 200},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 200
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"}
+        {
+          "a": "01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"
+        }
       ]
     },
-
     {
       "name": "symbolic_qualified_case",
       "example": "sem2/symbolic_qualified_case",
       "top": "symbolic_qualified_case",
-      "signals": ["a", "y", "z", "w"],
+      "signals": [
+        "a",
+        "y",
+        "z",
+        "w"
+      ],
       "stimulus": [
-        {"a": "00"},
-        {"a": "01"},
-        {"a": "10"},
-        {"a": "11"}
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "11"
+        }
       ]
     },
     {
@@ -69517,9 +70169,14 @@
       "example": "sem2/symbolic_qualified_case_violation",
       "top": "symbolic_qualified_case_violation",
       "refusal": "CaseCheck:unique",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00"}
+        {
+          "a": "00"
+        }
       ]
     },
     {
@@ -69527,12 +70184,27 @@
       "example": "sem2/xcelium_qualified_ops",
       "top": "xcelium_qualified_ops",
       "xrun_only": true,
-      "signals": ["a", "qcase", "qif", "pif", "attrs", "xdefault"],
+      "signals": [
+        "a",
+        "qcase",
+        "qif",
+        "pif",
+        "attrs",
+        "xdefault"
+      ],
       "stimulus": [
-        {"a": "00"},
-        {"a": "01"},
-        {"a": "10"},
-        {"a": "11"}
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "11"
+        }
       ]
     },
     {
@@ -69542,8 +70214,15 @@
       "top": "qualified_case_pre_edge",
       "refusal": "CaseCheck:unique",
       "execution_checks": true,
-      "signals": ["d", "q"],
-      "stimulus": [{"d": "1"}],
+      "signals": [
+        "d",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "d": "1"
+        }
+      ],
       "measured": "A unique-case violation visible in the pre-edge state is reported when the edge process executes, before any NBA commit."
     },
     {
@@ -69553,11 +70232,24 @@
       "top": "qualified_case_post_edge",
       "refusal": "CaseCheck:unique",
       "execution_checks": true,
-      "signals": ["rstn", "d", "q"],
+      "signals": [
+        "rstn",
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"rstn": "0", "d": "0"},
-        {"rstn": "1", "d": "1"},
-        {"rstn": "1", "d": "1"}
+        {
+          "rstn": "0",
+          "d": "0"
+        },
+        {
+          "rstn": "1",
+          "d": "1"
+        },
+        {
+          "rstn": "1",
+          "d": "1"
+        }
       ],
       "measured": "A violation created by an edge's NBA is not checked as if it were pre-edge; it is reported on the following edge when that state is sampled."
     },
@@ -69565,49 +70257,109 @@
       "name": "dim_query_fixed",
       "example": "sem2/dim_query_fixed",
       "top": "dim_query_fixed",
-      "signals": ["a", "l", "r", "lo", "hi", "inc", "sz"],
+      "signals": [
+        "a",
+        "l",
+        "r",
+        "lo",
+        "hi",
+        "inc",
+        "sz"
+      ],
       "stimulus": [
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "0101"}
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "0101"
+        }
       ]
     },
     {
       "name": "two_state_fixed",
       "example": "sem2/two_state_fixed",
       "top": "two_state_fixed",
-      "signals": ["a", "y", "z"],
+      "signals": [
+        "a",
+        "y",
+        "z"
+      ],
       "stimulus": [
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"},
-        {"a": "0101"}
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        },
+        {
+          "a": "0101"
+        }
       ]
     },
     {
       "name": "signed_two_state_fixed",
       "example": "sem2/signed_two_state_fixed",
       "top": "signed_two_state_fixed",
-      "signals": ["a", "raw", "abs_bits"],
+      "signals": [
+        "a",
+        "raw",
+        "abs_bits"
+      ],
       "stimulus": [
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "0111"},
-        {"a": "1000"}
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "1000"
+        }
       ]
     },
     {
       "name": "logical_equivalence",
       "example": "sem2/logical_equivalence",
       "top": "logical_equivalence",
-      "signals": ["a", "b", "y"],
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "0", "b": "1"},
-        {"a": "1", "b": "1"},
-        {"a": "x", "b": "0"},
-        {"a": "x", "b": "x"},
-        {"a": "z", "b": "1"}
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "0",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "x",
+          "b": "0"
+        },
+        {
+          "a": "x",
+          "b": "x"
+        },
+        {
+          "a": "z",
+          "b": "1"
+        }
       ],
       "xcelium_unavailable": {
         "id": "xcelium-logical-equivalence-syntax",
@@ -69633,62 +70385,141 @@
       "name": "case_equality_fixed",
       "example": "sem2/case_equality_fixed",
       "top": "case_equality_fixed",
-      "signals": ["a", "b", "eq", "ne"],
+      "signals": [
+        "a",
+        "b",
+        "eq",
+        "ne"
+      ],
       "stimulus": [
-        {"a": "0", "b": "0"},
-        {"a": "0", "b": "1"},
-        {"a": "x", "b": "x"},
-        {"a": "x", "b": "z"},
-        {"a": "z", "b": "z"},
-        {"a": "1", "b": "x"}
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "0",
+          "b": "1"
+        },
+        {
+          "a": "x",
+          "b": "x"
+        },
+        {
+          "a": "x",
+          "b": "z"
+        },
+        {
+          "a": "z",
+          "b": "z"
+        },
+        {
+          "a": "1",
+          "b": "x"
+        }
       ]
     },
     {
       "name": "cast_fixed",
       "example": "sem2/cast_fixed",
       "top": "cast_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        },
+        {
+          "a": "1111"
+        }
       ]
     },
     {
       "name": "bit_param_fixed",
       "example": "sem2/bit_param_fixed",
       "top": "bit_param_fixed",
-      "params": {"N": 4},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "stimulus_by_params": {
         "N=1": [
-          {"a": "0"},
-          {"a": "1"},
-          {"a": "x"},
-          {"a": "z"}
+          {
+            "a": "0"
+          },
+          {
+            "a": "1"
+          },
+          {
+            "a": "x"
+          },
+          {
+            "a": "z"
+          }
         ],
         "N=4": [
-          {"a": "0000"},
-          {"a": "1010"},
-          {"a": "xxxx"},
-          {"a": "zzzz"},
-          {"a": "1111"}
+          {
+            "a": "0000"
+          },
+          {
+            "a": "1010"
+          },
+          {
+            "a": "xxxx"
+          },
+          {
+            "a": "zzzz"
+          },
+          {
+            "a": "1111"
+          }
         ],
         "N=8": [
-          {"a": "00000000"},
-          {"a": "00001010"},
-          {"a": "xxxxxxxx"},
-          {"a": "zzzzzzzz"},
-          {"a": "11111111"}
+          {
+            "a": "00000000"
+          },
+          {
+            "a": "00001010"
+          },
+          {
+            "a": "xxxxxxxx"
+          },
+          {
+            "a": "zzzzzzzz"
+          },
+          {
+            "a": "11111111"
+          }
         ]
       }
     },
@@ -69696,32 +70527,87 @@
       "name": "signed_param_fixed",
       "example": "sem2/signed_param_fixed",
       "top": "signed_param_fixed",
-      "params": {"N": 4},
-      "signals": ["a", "b", "y", "lt"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "lt"
+      ],
       "stimulus": [
-        {"a": "0001", "b": "0010"},
-        {"a": "1000", "b": "0111"},
-        {"a": "xxxx", "b": "0000"},
-        {"a": "zzzz", "b": "zzzz"}
+        {
+          "a": "0001",
+          "b": "0010"
+        },
+        {
+          "a": "1000",
+          "b": "0111"
+        },
+        {
+          "a": "xxxx",
+          "b": "0000"
+        },
+        {
+          "a": "zzzz",
+          "b": "zzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=1": [
-          {"a": "0", "b": "1"},
-          {"a": "1", "b": "0"},
-          {"a": "x", "b": "0"},
-          {"a": "z", "b": "z"}
+          {
+            "a": "0",
+            "b": "1"
+          },
+          {
+            "a": "1",
+            "b": "0"
+          },
+          {
+            "a": "x",
+            "b": "0"
+          },
+          {
+            "a": "z",
+            "b": "z"
+          }
         ],
         "N=4": [
-          {"a": "0001", "b": "0010"},
-          {"a": "1000", "b": "0111"},
-          {"a": "xxxx", "b": "0000"},
-          {"a": "zzzz", "b": "zzzz"}
+          {
+            "a": "0001",
+            "b": "0010"
+          },
+          {
+            "a": "1000",
+            "b": "0111"
+          },
+          {
+            "a": "xxxx",
+            "b": "0000"
+          },
+          {
+            "a": "zzzz",
+            "b": "zzzz"
+          }
         ],
         "N=8": [
-          {"a": "00000001", "b": "00000010"},
-          {"a": "10000000", "b": "01111111"},
-          {"a": "xxxxxxxx", "b": "00000000"},
-          {"a": "zzzzzzzz", "b": "zzzzzzzz"}
+          {
+            "a": "00000001",
+            "b": "00000010"
+          },
+          {
+            "a": "10000000",
+            "b": "01111111"
+          },
+          {
+            "a": "xxxxxxxx",
+            "b": "00000000"
+          },
+          {
+            "a": "zzzzzzzz",
+            "b": "zzzzzzzz"
+          }
         ]
       }
     },
@@ -69729,80 +70615,187 @@
       "name": "signed_param_fixed_n1",
       "example": "sem2/signed_param_fixed",
       "top": "signed_param_fixed",
-      "params": {"N": 1},
-      "signals": ["a", "b", "y", "lt"],
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "lt"
+      ],
       "stimulus_by_params": {
         "N=1": [
-          {"a": "0", "b": "1"},
-          {"a": "1", "b": "0"},
-          {"a": "x", "b": "0"},
-          {"a": "z", "b": "z"}
+          {
+            "a": "0",
+            "b": "1"
+          },
+          {
+            "a": "1",
+            "b": "0"
+          },
+          {
+            "a": "x",
+            "b": "0"
+          },
+          {
+            "a": "z",
+            "b": "z"
+          }
         ]
       },
       "stimulus": [
-        {"a": "0", "b": "1"},
-        {"a": "1", "b": "0"},
-        {"a": "x", "b": "0"},
-        {"a": "z", "b": "z"}
+        {
+          "a": "0",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "x",
+          "b": "0"
+        },
+        {
+          "a": "z",
+          "b": "z"
+        }
       ]
     },
     {
       "name": "signed_param_fixed_n8",
       "example": "sem2/signed_param_fixed",
       "top": "signed_param_fixed",
-      "params": {"N": 8},
-      "signals": ["a", "b", "y", "lt"],
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "lt"
+      ],
       "stimulus_by_params": {
         "N=8": [
-          {"a": "00000001", "b": "00000010"},
-          {"a": "10000000", "b": "01111111"},
-          {"a": "xxxxxxxx", "b": "00000000"},
-          {"a": "zzzzzzzz", "b": "zzzzzzzz"}
+          {
+            "a": "00000001",
+            "b": "00000010"
+          },
+          {
+            "a": "10000000",
+            "b": "01111111"
+          },
+          {
+            "a": "xxxxxxxx",
+            "b": "00000000"
+          },
+          {
+            "a": "zzzzzzzz",
+            "b": "zzzzzzzz"
+          }
         ]
       },
       "stimulus": [
-        {"a": "00000001", "b": "00000010"},
-        {"a": "10000000", "b": "01111111"},
-        {"a": "xxxxxxxx", "b": "00000000"},
-        {"a": "zzzzzzzz", "b": "zzzzzzzz"}
+        {
+          "a": "00000001",
+          "b": "00000010"
+        },
+        {
+          "a": "10000000",
+          "b": "01111111"
+        },
+        {
+          "a": "xxxxxxxx",
+          "b": "00000000"
+        },
+        {
+          "a": "zzzzzzzz",
+          "b": "zzzzzzzz"
+        }
       ]
     },
     {
       "name": "package_param_fixed",
       "example": "sem2/package_param_fixed",
       "top": "package_param_fixed",
-      "params": {"N": 2},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 2
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "000001"},
-        {"a": "110001"},
-        {"a": "xxxxxx"},
-        {"a": "zzzzzz"}
+        {
+          "a": "000001"
+        },
+        {
+          "a": "110001"
+        },
+        {
+          "a": "xxxxxx"
+        },
+        {
+          "a": "zzzzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=1": [
-          {"a": "00001"},
-          {"a": "10001"},
-          {"a": "xxxxx"},
-          {"a": "zzzzz"}
+          {
+            "a": "00001"
+          },
+          {
+            "a": "10001"
+          },
+          {
+            "a": "xxxxx"
+          },
+          {
+            "a": "zzzzz"
+          }
         ],
         "N=2": [
-          {"a": "000001"},
-          {"a": "110001"},
-          {"a": "xxxxxx"},
-          {"a": "zzzzzz"}
+          {
+            "a": "000001"
+          },
+          {
+            "a": "110001"
+          },
+          {
+            "a": "xxxxxx"
+          },
+          {
+            "a": "zzzzzz"
+          }
         ],
         "N=3": [
-          {"a": "0000001"},
-          {"a": "1110001"},
-          {"a": "xxxxxxx"},
-          {"a": "zzzzzzz"}
+          {
+            "a": "0000001"
+          },
+          {
+            "a": "1110001"
+          },
+          {
+            "a": "xxxxxxx"
+          },
+          {
+            "a": "zzzzzzz"
+          }
         ],
         "N=5": [
-          {"a": "000000001"},
-          {"a": "111110001"},
-          {"a": "xxxxxxxxx"},
-          {"a": "zzzzzzzzz"}
+          {
+            "a": "000000001"
+          },
+          {
+            "a": "111110001"
+          },
+          {
+            "a": "xxxxxxxxx"
+          },
+          {
+            "a": "zzzzzzzzz"
+          }
         ]
       }
     },
@@ -69810,20 +70803,41 @@
       "name": "package_param_fixed_n1",
       "example": "sem2/package_param_fixed",
       "top": "package_param_fixed",
-      "params": {"N": 1},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00001"},
-        {"a": "10001"},
-        {"a": "xxxxx"},
-        {"a": "zzzzz"}
+        {
+          "a": "00001"
+        },
+        {
+          "a": "10001"
+        },
+        {
+          "a": "xxxxx"
+        },
+        {
+          "a": "zzzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=1": [
-          {"a": "00001"},
-          {"a": "10001"},
-          {"a": "xxxxx"},
-          {"a": "zzzzz"}
+          {
+            "a": "00001"
+          },
+          {
+            "a": "10001"
+          },
+          {
+            "a": "xxxxx"
+          },
+          {
+            "a": "zzzzz"
+          }
         ]
       }
     },
@@ -69831,20 +70845,41 @@
       "name": "package_param_fixed_n3",
       "example": "sem2/package_param_fixed",
       "top": "package_param_fixed",
-      "params": {"N": 3},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 3
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000001"},
-        {"a": "1110001"},
-        {"a": "xxxxxxx"},
-        {"a": "zzzzzzz"}
+        {
+          "a": "0000001"
+        },
+        {
+          "a": "1110001"
+        },
+        {
+          "a": "xxxxxxx"
+        },
+        {
+          "a": "zzzzzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=3": [
-          {"a": "0000001"},
-          {"a": "1110001"},
-          {"a": "xxxxxxx"},
-          {"a": "zzzzzzz"}
+          {
+            "a": "0000001"
+          },
+          {
+            "a": "1110001"
+          },
+          {
+            "a": "xxxxxxx"
+          },
+          {
+            "a": "zzzzzzz"
+          }
         ]
       }
     },
@@ -69852,273 +70887,561 @@
       "name": "package_param_fixed_n5",
       "example": "sem2/package_param_fixed",
       "top": "package_param_fixed",
-      "params": {"N": 5},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 5
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "000000001"},
-        {"a": "111110001"},
-        {"a": "xxxxxxxxx"},
-        {"a": "zzzzzzzzz"}
+        {
+          "a": "000000001"
+        },
+        {
+          "a": "111110001"
+        },
+        {
+          "a": "xxxxxxxxx"
+        },
+        {
+          "a": "zzzzzzzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=5": [
-          {"a": "000000001"},
-          {"a": "111110001"},
-          {"a": "xxxxxxxxx"},
-          {"a": "zzzzzzzzz"}
+          {
+            "a": "000000001"
+          },
+          {
+            "a": "111110001"
+          },
+          {
+            "a": "xxxxxxxxx"
+          },
+          {
+            "a": "zzzzzzzzz"
+          }
         ]
       }
-    }
-    ,{
+    },
+    {
       "name": "signed_var_fixed",
       "example": "sem2/signed_var_fixed",
       "top": "signed_var_fixed",
-      "signals": ["a", "b", "y", "lt"],
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "lt"
+      ],
       "stimulus": [
-        {"a": "0001", "b": "0010"},
-        {"a": "1111", "b": "0001"},
-        {"a": "1000", "b": "0111"},
-        {"a": "xxxx", "b": "0000"}
+        {
+          "a": "0001",
+          "b": "0010"
+        },
+        {
+          "a": "1111",
+          "b": "0001"
+        },
+        {
+          "a": "1000",
+          "b": "0111"
+        },
+        {
+          "a": "xxxx",
+          "b": "0000"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "signed_net_fixed",
       "example": "sem2/signed_net_fixed",
       "top": "signed_net_fixed",
-      "signals": ["a", "b", "y", "lt"],
-      "stimulus": [
-        {"a": "0001", "b": "0010"},
-        {"a": "1111", "b": "0001"},
-        {"a": "1000", "b": "0111"},
-        {"a": "xxxx", "b": "0000"}
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "lt"
       ],
-      "refusal": "Schedule:preemptive"
-    }
-    ,{
+      "stimulus": [
+        {
+          "a": "0001",
+          "b": "0010"
+        },
+        {
+          "a": "1111",
+          "b": "0001"
+        },
+        {
+          "a": "1000",
+          "b": "0111"
+        },
+        {
+          "a": "xxxx",
+          "b": "0000"
+        }
+      ]
+    },
+    {
       "name": "signed_cast_fixed",
       "example": "sem2/signed_cast_fixed",
       "top": "signed_cast_fixed",
-      "signals": ["a", "y", "lt"],
+      "signals": [
+        "a",
+        "y",
+        "lt"
+      ],
       "stimulus": [
-        {"a": "00000001"},
-        {"a": "11111111"},
-        {"a": "10000000"},
-        {"a": "xxxxxxxx"}
+        {
+          "a": "00000001"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "10000000"
+        },
+        {
+          "a": "xxxxxxxx"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "signed_struct_fixed",
       "example": "sem2/signed_struct_fixed",
       "top": "signed_struct_fixed",
-      "signals": ["a", "y", "lt"],
+      "signals": [
+        "a",
+        "y",
+        "lt"
+      ],
       "stimulus": [
-        {"a": "00000001"},
-        {"a": "11111111"},
-        {"a": "10000000"},
-        {"a": "xxxxxxxx"}
+        {
+          "a": "00000001"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "10000000"
+        },
+        {
+          "a": "xxxxxxxx"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "two_state_var_fixed",
       "example": "sem2/two_state_var_fixed",
       "top": "two_state_var_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00000001"},
-        {"a": "11111111"},
-        {"a": "xxxxxxxx"},
-        {"a": "zzzzzzzz"}
+        {
+          "a": "00000001"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "xxxxxxxx"
+        },
+        {
+          "a": "zzzzzzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "int_var_fixed",
       "example": "sem2/int_var_fixed",
       "top": "int_var_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00000000000000000000000000000001"},
-        {"a": "11111111111111111111111111111111"},
-        {"a": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
-        {"a": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"}
+        {
+          "a": "00000000000000000000000000000001"
+        },
+        {
+          "a": "11111111111111111111111111111111"
+        },
+        {
+          "a": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        {
+          "a": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "two_state_cast_fixed",
       "example": "sem2/two_state_cast_fixed",
       "top": "two_state_cast_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00000001"},
-        {"a": "11111111"},
-        {"a": "xxxxxxxx"},
-        {"a": "zzzzzzzz"}
+        {
+          "a": "00000001"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "xxxxxxxx"
+        },
+        {
+          "a": "zzzzzzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "pattern_fixed",
       "example": "sem2/pattern_fixed",
       "top": "pattern_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"},
-        {"a": "10xz"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        },
+        {
+          "a": "10xz"
+        },
+        {
+          "a": "zzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "signed_member_fixed",
       "example": "sem2/signed_member_fixed",
       "top": "signed_member_fixed",
-      "signals": ["a", "lt"],
+      "signals": [
+        "a",
+        "lt"
+      ],
       "stimulus": [
-        {"a": "00000001"},
-        {"a": "11111111"},
-        {"a": "10000000"},
-        {"a": "xxxxxxxx"}
+        {
+          "a": "00000001"
+        },
+        {
+          "a": "11111111"
+        },
+        {
+          "a": "10000000"
+        },
+        {
+          "a": "xxxxxxxx"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "package_param_packed",
       "example": "sem2/package_param_packed",
       "top": "package_param_packed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"},
-        {"a": "xxxx"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "package_param_untyped",
       "example": "sem2/package_param_untyped",
       "top": "package_param_untyped",
-      "params": {"N": 0},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 0
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        }
       ],
       "stimulus_by_params": {
         "N=0": [
-          {"a": "0000"},
-          {"a": "0001"},
-          {"a": "1010"},
-          {"a": "xxxx"},
-          {"a": "zzzz"}
+          {
+            "a": "0000"
+          },
+          {
+            "a": "0001"
+          },
+          {
+            "a": "1010"
+          },
+          {
+            "a": "xxxx"
+          },
+          {
+            "a": "zzzz"
+          }
         ],
         "N=1": [
-          {"a": "0000"},
-          {"a": "0001"},
-          {"a": "1010"},
-          {"a": "xxxx"},
-          {"a": "zzzz"}
+          {
+            "a": "0000"
+          },
+          {
+            "a": "0001"
+          },
+          {
+            "a": "1010"
+          },
+          {
+            "a": "xxxx"
+          },
+          {
+            "a": "zzzz"
+          }
         ],
         "N=3": [
-          {"a": "0000"},
-          {"a": "0001"},
-          {"a": "1010"},
-          {"a": "xxxx"},
-          {"a": "zzzz"}
+          {
+            "a": "0000"
+          },
+          {
+            "a": "0001"
+          },
+          {
+            "a": "1010"
+          },
+          {
+            "a": "xxxx"
+          },
+          {
+            "a": "zzzz"
+          }
         ]
       }
-    }
-    ,{
+    },
+    {
       "name": "package_enum_param_fixed",
       "example": "sem2/package_enum_param_fixed",
       "top": "package_enum_param_fixed",
       "params": {},
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00"},
-        {"a": "01"},
-        {"a": "10"},
-        {"a": "xx"},
-        {"a": "zz"}
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "xx"
+        },
+        {
+          "a": "zz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "inside_fixed",
       "example": "sem2/inside_fixed",
       "top": "inside_fixed",
       "verilator_only": true,
-      "signals": ["hit"],
+      "signals": [
+        "hit"
+      ],
       "stimulus": [
-        {"value": "0000"},
-        {"value": "0001"},
-        {"value": "0011"},
-        {"value": "0100"},
-        {"value": "0110"},
-        {"value": "0111"},
-        {"value": "1000"}
+        {
+          "value": "0000"
+        },
+        {
+          "value": "0001"
+        },
+        {
+          "value": "0011"
+        },
+        {
+          "value": "0100"
+        },
+        {
+          "value": "0110"
+        },
+        {
+          "value": "0111"
+        },
+        {
+          "value": "1000"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "two_state_cast_widen",
       "example": "sem2/two_state_cast_widen",
       "top": "two_state_cast_widen",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1111"},
-        {"a": "xxxx"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1111"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "signed_cast_widen",
       "example": "sem2/signed_cast_widen",
       "top": "signed_cast_widen",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "0111"},
-        {"a": "1000"},
-        {"a": "1111"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "1000"
+        },
+        {
+          "a": "1111"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "two_state_struct_fixed",
       "example": "sem2/two_state_struct_fixed",
       "top": "two_state_struct_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        },
+        {
+          "a": "1111"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "pattern_keyed_fixed",
       "example": "sem2/pattern_keyed_fixed",
       "top": "pattern_keyed_fixed",
       "verilator_only": true,
-      "signals": ["a", "b", "y", "z"],
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "z"
+      ],
       "stimulus": [
-        {"a": "000", "b": "0"},
-        {"a": "101", "b": "1"},
-        {"a": "111", "b": "0"},
-        {"a": "010", "b": "1"}
+        {
+          "a": "000",
+          "b": "0"
+        },
+        {
+          "a": "101",
+          "b": "1"
+        },
+        {
+          "a": "111",
+          "b": "0"
+        },
+        {
+          "a": "010",
+          "b": "1"
+        }
       ]
-    }
-    ,{
+    },
+    {
       "name": "proc_local_automatic",
       "example": "sem2/proc_local_automatic",
       "top": "proc_local_automatic",
-      "signals": ["clk", "a", "y"],
+      "signals": [
+        "clk",
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"clk": "0", "a": "00000000"},
-        {"clk": "1", "a": "10100101"}
+        {
+          "clk": "0",
+          "a": "00000000"
+        },
+        {
+          "clk": "1",
+          "a": "10100101"
+        }
       ],
       "refusal": "LocalDecl"
     },
@@ -70127,35 +71450,73 @@
       "example": "sem2/enum_methods_fixed",
       "top": "enum_methods_fixed",
       "verilator_only": true,
-      "signals": ["value", "first_value", "last_value", "count_value", "next_value", "prev_value"],
+      "signals": [
+        "value",
+        "first_value",
+        "last_value",
+        "count_value",
+        "next_value",
+        "prev_value"
+      ],
       "stimulus": [
-        {"value": "00"},
-        {"value": "10"},
-        {"value": "11"},
-        {"value": "01"}
+        {
+          "value": "00"
+        },
+        {
+          "value": "10"
+        },
+        {
+          "value": "11"
+        },
+        {
+          "value": "01"
+        }
       ]
     },
     {
       "name": "symbolic_parameter_for_ne",
       "example": "sem2/symbolic_parameter_for_ne",
       "top": "symbolic_parameter_for_ne",
-      "params": {"N": 4},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "10101010"},
-        {"a": "01010101"},
-        {"a": "xxxxxxxx"},
-        {"a": "11111111"}
+        {
+          "a": "10101010"
+        },
+        {
+          "a": "01010101"
+        },
+        {
+          "a": "xxxxxxxx"
+        },
+        {
+          "a": "11111111"
+        }
       ]
     },
     {
       "name": "symbolic_for_signal_bound_refuse",
       "example": "sem2/symbolic_for_signal_bound_refuse",
       "top": "symbolic_for_signal_bound_refuse",
-      "signals": ["limit", "a", "y"],
+      "signals": [
+        "limit",
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"limit": "000", "a": "10101010"},
-        {"limit": "011", "a": "01010101"}
+        {
+          "limit": "000",
+          "a": "10101010"
+        },
+        {
+          "limit": "011",
+          "a": "01010101"
+        }
       ],
       "refusal": "ForLoopStatement"
     },
@@ -70163,10 +71524,17 @@
       "name": "loop_mixed_signed_refuse",
       "example": "sem2/loop_mixed_signed_refuse",
       "top": "loop_mixed_signed_refuse",
-      "signals": ["d", "q"],
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "00000000"},
-        {"d": "10101010"}
+        {
+          "d": "00000000"
+        },
+        {
+          "d": "10101010"
+        }
       ],
       "refusal": "ForLoopStatement"
     },
@@ -70174,11 +71542,20 @@
       "name": "loop_mixed_signed_param_refuse",
       "example": "sem2/loop_mixed_signed_param_refuse",
       "top": "loop_mixed_signed_param_refuse",
-      "params": {"N": 4},
-      "signals": ["d", "q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "00000000"},
-        {"d": "10101010"}
+        {
+          "d": "00000000"
+        },
+        {
+          "d": "10101010"
+        }
       ],
       "refusal": "ForLoopStatement"
     },
@@ -70186,11 +71563,20 @@
       "name": "loop_name_capture_refuse",
       "example": "sem2/loop_name_capture_refuse",
       "top": "loop_name_capture_refuse",
-      "params": {"N": 4},
-      "signals": ["d", "q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "00000000"},
-        {"d": "10101010"}
+        {
+          "d": "00000000"
+        },
+        {
+          "d": "10101010"
+        }
       ],
       "refusal": "ForLoopStatement"
     },
@@ -70198,11 +71584,20 @@
       "name": "loop_typed_iterator_refuse",
       "example": "sem2/loop_typed_iterator_refuse",
       "top": "loop_typed_iterator_refuse",
-      "params": {"N": 4},
-      "signals": ["d", "q"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "d",
+        "q"
+      ],
       "stimulus": [
-        {"d": "00000000"},
-        {"d": "10101010"}
+        {
+          "d": "00000000"
+        },
+        {
+          "d": "10101010"
+        }
       ],
       "refusal": "ForLoopStatement"
     },
@@ -70210,55 +71605,105 @@
       "name": "unpacked_input_net_port_fixed",
       "example": "sem2/unpacked_input_net_port_fixed",
       "top": "unpacked_input_net_port_fixed",
-      "signals": ["a[0]", "a[1]", "y"],
+      "signals": [
+        "a[0]",
+        "a[1]",
+        "y"
+      ],
       "stimulus": [
-        {"a[0]": "0000", "a[1]": "0000"},
-        {"a[0]": "0101", "a[1]": "0011"},
-        {"a[0]": "xxxx", "a[1]": "0001"}
+        {
+          "a[0]": "0000",
+          "a[1]": "0000"
+        },
+        {
+          "a[0]": "0101",
+          "a[1]": "0011"
+        },
+        {
+          "a[0]": "xxxx",
+          "a[1]": "0001"
+        }
       ]
     },
     {
       "name": "unpacked_output_net_port_fixed",
       "example": "sem2/unpacked_output_net_port_fixed",
       "top": "unpacked_output_net_port_fixed",
-      "signals": ["a", "y[0]", "y[1]"],
+      "signals": [
+        "a",
+        "y[0]",
+        "y[1]"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0101"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0101"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
     },
     {
       "name": "unpacked_internal_net_fixed",
       "example": "sem2/unpacked_internal_net_fixed",
       "top": "unpacked_internal_net_fixed",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0101"},
-        {"a": "xxxx"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0101"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
     },
     {
       "name": "symbolic_mixed_local_function",
       "example": "sem2/symbolic_mixed_local_function",
       "top": "symbolic_mixed_local_function",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "0001"},
-        {"a": "0111"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0001"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "1111"
+        }
       ]
     },
     {
       "name": "symbolic_stateful_function_refuse",
       "example": "sem2/symbolic_stateful_function_refuse",
       "top": "symbolic_stateful_function_refuse",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "refusal": "CallExpression"
     },
@@ -70266,10 +71711,17 @@
       "name": "symbolic_output_formal_function_refuse",
       "example": "sem2/symbolic_output_formal_function_refuse",
       "top": "symbolic_output_formal_function_refuse",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "refusal": "CallExpression"
     },
@@ -70277,10 +71729,17 @@
       "name": "symbolic_ref_formal_function_refuse",
       "example": "sem2/symbolic_ref_formal_function_refuse",
       "top": "symbolic_ref_formal_function_refuse",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "refusal": "CallExpression"
     },
@@ -70288,11 +71747,20 @@
       "name": "parameter_countones_refuse",
       "example": "sem2/parameter_countones_refuse",
       "top": "parameter_countones_refuse",
-      "params": {"N": 4},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1111"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1111"
+        }
       ],
       "refusal": "CallExpression"
     },
@@ -70300,8 +71768,12 @@
       "name": "constant_concat",
       "example": "sem2/constant_concat",
       "top": "constant_concat",
-      "params": {"N": 4},
-      "signals": ["y"],
+      "params": {
+        "N": 4
+      },
+      "signals": [
+        "y"
+      ],
       "stimulus": [
         {},
         {}
@@ -70311,109 +71783,349 @@
       "name": "unpacked_port_fixed",
       "example": "sem2/unpacked_port_fixed",
       "top": "unpacked_port_fixed",
-      "signals": ["y[0]", "y[1]"],
+      "signals": [
+        "y[0]",
+        "y[1]"
+      ],
       "stimulus": [
-        {"a[0]": "0000", "a[1]": "0000"},
-        {"a[0]": "0101", "a[1]": "1010"},
-        {"a[0]": "xxxx", "a[1]": "zzzz"}
+        {
+          "a[0]": "0000",
+          "a[1]": "0000"
+        },
+        {
+          "a[0]": "0101",
+          "a[1]": "1010"
+        },
+        {
+          "a[0]": "xxxx",
+          "a[1]": "zzzz"
+        }
       ]
     },
     {
       "name": "signed_unpacked_var_fixed",
       "example": "sem2/signed_unpacked_var_fixed",
       "top": "signed_unpacked_var_fixed",
-      "signals": ["y0", "y1"],
+      "signals": [
+        "y0",
+        "y1"
+      ],
       "stimulus": [
-        {"a": "1000"},
-        {"a": "1111"},
-        {"a": "0011"},
-        {"a": "xxxx"}
+        {
+          "a": "1000"
+        },
+        {
+          "a": "1111"
+        },
+        {
+          "a": "0011"
+        },
+        {
+          "a": "xxxx"
+        }
       ]
     },
     {
       "name": "signed_unpacked_port_fixed",
       "example": "sem2/signed_unpacked_port_fixed",
       "top": "signed_unpacked_port_fixed",
-      "signals": ["y[0]", "y[1]"],
+      "signals": [
+        "y[0]",
+        "y[1]"
+      ],
       "stimulus": [
-        {"a[0]": "1000", "a[1]": "1111"},
-        {"a[0]": "0011", "a[1]": "0101"},
-        {"a[0]": "xxxx", "a[1]": "zzzz"}
+        {
+          "a[0]": "1000",
+          "a[1]": "1111"
+        },
+        {
+          "a[0]": "0011",
+          "a[1]": "0101"
+        },
+        {
+          "a[0]": "xxxx",
+          "a[1]": "zzzz"
+        }
       ]
     },
     {
       "name": "unpacked_dynamic_target",
       "example": "sem2/unpacked_dynamic_target",
       "top": "unpacked_dynamic_target",
-      "signals": ["index", "source", "out[0]", "out[1]"],
+      "signals": [
+        "index",
+        "source",
+        "out[0]",
+        "out[1]"
+      ],
       "stimulus": [
-        {"index": "00", "source": "1010"},
-        {"index": "01", "source": "0101"},
-        {"index": "10", "source": "1111"},
-        {"index": "xx", "source": "0011"}
+        {
+          "index": "00",
+          "source": "1010"
+        },
+        {
+          "index": "01",
+          "source": "0101"
+        },
+        {
+          "index": "10",
+          "source": "1111"
+        },
+        {
+          "index": "xx",
+          "source": "0011"
+        }
       ]
     },
     {
       "name": "unpacked_dynamic_read",
       "example": "sem2/unpacked_dynamic_read",
       "top": "unpacked_dynamic_read",
-      "signals": ["index", "a[0]", "a[1]", "a[2]", "a[3]", "y"],
+      "signals": [
+        "index",
+        "a[0]",
+        "a[1]",
+        "a[2]",
+        "a[3]",
+        "y"
+      ],
       "stimulus": [
-        {"index": "000", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"},
-        {"index": "001", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"},
-        {"index": "010", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"},
-        {"index": "011", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"},
-        {"index": "100", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"},
-        {"index": "xxx", "a[0]": "00001111", "a[1]": "11110000", "a[2]": "00110011", "a[3]": "11001100"}
+        {
+          "index": "000",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        },
+        {
+          "index": "001",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        },
+        {
+          "index": "010",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        },
+        {
+          "index": "011",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        },
+        {
+          "index": "100",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        },
+        {
+          "index": "xxx",
+          "a[0]": "00001111",
+          "a[1]": "11110000",
+          "a[2]": "00110011",
+          "a[3]": "11001100"
+        }
       ]
     },
     {
       "name": "nested_unpacked_dynamic_read",
       "example": "sem2/nested_unpacked_dynamic_read",
       "top": "nested_unpacked_dynamic_read",
-      "signals": ["i", "j", "a[0][0]", "a[0][1]", "a[0][2]", "a[1][0]", "a[1][1]", "a[1][2]", "y"],
+      "signals": [
+        "i",
+        "j",
+        "a[0][0]",
+        "a[0][1]",
+        "a[0][2]",
+        "a[1][0]",
+        "a[1][1]",
+        "a[1][2]",
+        "y"
+      ],
       "stimulus": [
-        {"i": "0", "j": "00", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "0", "j": "01", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "1", "j": "10", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "1", "j": "11", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "x", "j": "00", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "0", "j": "x0", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"}
+        {
+          "i": "0",
+          "j": "00",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "0",
+          "j": "01",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "1",
+          "j": "10",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "1",
+          "j": "11",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "x",
+          "j": "00",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "0",
+          "j": "x0",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        }
       ]
     },
     {
       "name": "nested_unpacked_mixed_read",
       "example": "sem2/nested_unpacked_mixed_read",
       "top": "nested_unpacked_mixed_read",
-      "signals": ["i", "a[0][0]", "a[0][1]", "a[0][2]", "a[1][0]", "a[1][1]", "a[1][2]", "y"],
+      "signals": [
+        "i",
+        "a[0][0]",
+        "a[0][1]",
+        "a[0][2]",
+        "a[1][0]",
+        "a[1][1]",
+        "a[1][2]",
+        "y"
+      ],
       "stimulus": [
-        {"i": "0", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "1", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"},
-        {"i": "x", "a[0][0]": "00000001", "a[0][1]": "00000010", "a[0][2]": "00000100", "a[1][0]": "00001000", "a[1][1]": "00010000", "a[1][2]": "00100000"}
+        {
+          "i": "0",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "1",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        },
+        {
+          "i": "x",
+          "a[0][0]": "00000001",
+          "a[0][1]": "00000010",
+          "a[0][2]": "00000100",
+          "a[1][0]": "00001000",
+          "a[1][1]": "00010000",
+          "a[1][2]": "00100000"
+        }
       ]
     },
     {
       "name": "nested_unpacked_dynamic_target",
       "example": "sem2/nested_unpacked_dynamic_target",
       "top": "nested_unpacked_dynamic_target",
-      "signals": ["i", "j", "v", "a[0][0]", "a[0][1]", "a[0][2]", "a[1][0]", "a[1][1]", "a[1][2]"],
+      "signals": [
+        "i",
+        "j",
+        "v",
+        "a[0][0]",
+        "a[0][1]",
+        "a[0][2]",
+        "a[1][0]",
+        "a[1][1]",
+        "a[1][2]"
+      ],
       "stimulus": [
-        {"i": "0", "j": "00", "v": "10101010"},
-        {"i": "0", "j": "01", "v": "01010101"},
-        {"i": "1", "j": "10", "v": "11110000"},
-        {"i": "1", "j": "11", "v": "00001111"},
-        {"i": "x", "j": "00", "v": "00110011"}
+        {
+          "i": "0",
+          "j": "00",
+          "v": "10101010"
+        },
+        {
+          "i": "0",
+          "j": "01",
+          "v": "01010101"
+        },
+        {
+          "i": "1",
+          "j": "10",
+          "v": "11110000"
+        },
+        {
+          "i": "1",
+          "j": "11",
+          "v": "00001111"
+        },
+        {
+          "i": "x",
+          "j": "00",
+          "v": "00110011"
+        }
       ]
     },
     {
       "name": "nested_unpacked_mixed_target",
       "example": "sem2/nested_unpacked_mixed_target",
       "top": "nested_unpacked_mixed_target",
-      "signals": ["i", "v", "a[0][0]", "a[0][1]", "a[0][2]", "a[1][0]", "a[1][1]", "a[1][2]"],
+      "signals": [
+        "i",
+        "v",
+        "a[0][0]",
+        "a[0][1]",
+        "a[0][2]",
+        "a[1][0]",
+        "a[1][1]",
+        "a[1][2]"
+      ],
       "stimulus": [
-        {"i": "0", "v": "10101010"},
-        {"i": "1", "v": "01010101"},
-        {"i": "x", "v": "11110000"}
+        {
+          "i": "0",
+          "v": "10101010"
+        },
+        {
+          "i": "1",
+          "v": "01010101"
+        },
+        {
+          "i": "x",
+          "v": "11110000"
+        }
       ]
     },
     {
@@ -70421,20 +72133,29 @@
       "example": "sem2/nested_unpacked_port_fixed",
       "top": "nested_unpacked_port_fixed",
       "signals": [
-        "y[1][2]", "y[1][1]", "y[0][2]", "y[0][1]"
+        "y[1][2]",
+        "y[1][1]",
+        "y[0][2]",
+        "y[0][1]"
       ],
       "stimulus": [
         {
-          "a[1][2]": "1000", "a[1][1]": "1111",
-          "a[0][2]": "0011", "a[0][1]": "0101"
+          "a[1][2]": "1000",
+          "a[1][1]": "1111",
+          "a[0][2]": "0011",
+          "a[0][1]": "0101"
         },
         {
-          "a[1][2]": "0011", "a[1][1]": "0101",
-          "a[0][2]": "1000", "a[0][1]": "1111"
+          "a[1][2]": "0011",
+          "a[1][1]": "0101",
+          "a[0][2]": "1000",
+          "a[0][1]": "1111"
         },
         {
-          "a[1][2]": "xxxx", "a[1][1]": "zzzz",
-          "a[0][2]": "0000", "a[0][1]": "1111"
+          "a[1][2]": "xxxx",
+          "a[1][1]": "zzzz",
+          "a[0][2]": "0000",
+          "a[0][1]": "1111"
         }
       ]
     },
@@ -70442,7 +72163,10 @@
       "name": "unsized_port_conn_bits",
       "example": "sem2/unsized_port_conn_bits",
       "top": "unsized_port_conn_bits",
-      "signals": ["y0", "y1"],
+      "signals": [
+        "y0",
+        "y1"
+      ],
       "stimulus": [
         {},
         {}
@@ -70452,29 +72176,64 @@
       "name": "generate_if_instance_fixed",
       "example": "sem2/generate_if_instance_fixed",
       "top": "generate_if_instance_fixed",
-      "params": {"N": 2},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 2
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00"},
-        {"a": "01"},
-        {"a": "10"},
-        {"a": "xx"},
-        {"a": "zz"}
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "xx"
+        },
+        {
+          "a": "zz"
+        }
       ],
       "stimulus_by_params": {
         "N=2": [
-          {"a": "00"},
-          {"a": "01"},
-          {"a": "10"},
-          {"a": "xx"},
-          {"a": "zz"}
+          {
+            "a": "00"
+          },
+          {
+            "a": "01"
+          },
+          {
+            "a": "10"
+          },
+          {
+            "a": "xx"
+          },
+          {
+            "a": "zz"
+          }
         ],
         "N=3": [
-          {"a": "000"},
-          {"a": "001"},
-          {"a": "010"},
-          {"a": "100"},
-          {"a": "xxx"}
+          {
+            "a": "000"
+          },
+          {
+            "a": "001"
+          },
+          {
+            "a": "010"
+          },
+          {
+            "a": "100"
+          },
+          {
+            "a": "xxx"
+          }
         ]
       }
     },
@@ -70482,29 +72241,64 @@
       "name": "named_generate_wrapper_loop",
       "example": "sem2/named_generate_wrapper_loop",
       "top": "named_generate_wrapper_loop",
-      "params": {"N": 2},
-      "signals": ["a", "y"],
+      "params": {
+        "N": 2
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "00"},
-        {"a": "01"},
-        {"a": "10"},
-        {"a": "xx"},
-        {"a": "zz"}
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "xx"
+        },
+        {
+          "a": "zz"
+        }
       ],
       "stimulus_by_params": {
         "N=2": [
-          {"a": "00"},
-          {"a": "01"},
-          {"a": "10"},
-          {"a": "xx"},
-          {"a": "zz"}
+          {
+            "a": "00"
+          },
+          {
+            "a": "01"
+          },
+          {
+            "a": "10"
+          },
+          {
+            "a": "xx"
+          },
+          {
+            "a": "zz"
+          }
         ],
         "N=3": [
-          {"a": "000"},
-          {"a": "001"},
-          {"a": "010"},
-          {"a": "100"},
-          {"a": "xxx"}
+          {
+            "a": "000"
+          },
+          {
+            "a": "001"
+          },
+          {
+            "a": "010"
+          },
+          {
+            "a": "100"
+          },
+          {
+            "a": "xxx"
+          }
         ]
       }
     },
@@ -70512,37 +72306,73 @@
       "name": "partial_unpacked_net_array",
       "example": "sem2/partial_unpacked_net_array",
       "top": "partial_unpacked_net_array",
-      "signals": ["a", "y"],
+      "signals": [
+        "a",
+        "y"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        }
       ]
     },
     {
       "name": "partial_output_net_port_array",
       "example": "sem2/partial_output_net_port_array",
       "top": "partial_output_net_port_array",
-      "signals": ["a", "y[0]", "y[1]"],
+      "signals": [
+        "a",
+        "y[0]",
+        "y[1]"
+      ],
       "stimulus": [
-        {"a": "0000"},
-        {"a": "1010"},
-        {"a": "xxxx"},
-        {"a": "zzzz"}
+        {
+          "a": "0000"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "xxxx"
+        },
+        {
+          "a": "zzzz"
+        }
       ]
     },
     {
       "name": "signed_localparam_cast",
       "example": "sem2/signed_localparam_cast",
       "top": "signed_localparam_cast",
-      "signals": ["e", "q"],
+      "signals": [
+        "e",
+        "q"
+      ],
       "stimulus": [
-        {"e": "00000000"},
-        {"e": "00000001"},
-        {"e": "01111111"},
-        {"e": "11111110"},
-        {"e": "xxxxxxxx"}
+        {
+          "e": "00000000"
+        },
+        {
+          "e": "00000001"
+        },
+        {
+          "e": "01111111"
+        },
+        {
+          "e": "11111110"
+        },
+        {
+          "e": "xxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: signed packed localparam `DOUBLE_BIAS` keeps its signed INT-class initializer tree; Icarus and the Lean constant tier agree at E = 8."
     },
@@ -70550,14 +72380,29 @@
       "name": "signed_localparam_cast_e4",
       "example": "sem2/signed_localparam_cast",
       "top": "signed_localparam_cast",
-      "params": {"E": 4},
-      "signals": ["e", "q"],
+      "params": {
+        "E": 4
+      },
+      "signals": [
+        "e",
+        "q"
+      ],
       "stimulus": [
-        {"e": "0000"},
-        {"e": "0001"},
-        {"e": "0111"},
-        {"e": "1111"},
-        {"e": "xxxx"}
+        {
+          "e": "0000"
+        },
+        {
+          "e": "0001"
+        },
+        {
+          "e": "0111"
+        },
+        {
+          "e": "1111"
+        },
+        {
+          "e": "xxxx"
+        }
       ],
       "measured": "2026-11-04: signed packed localparam width conversion at E = 4; Icarus and the Lean constant tier agree."
     },
@@ -70565,14 +72410,29 @@
       "name": "signed_localparam_cast_e12",
       "example": "sem2/signed_localparam_cast",
       "top": "signed_localparam_cast",
-      "params": {"E": 12},
-      "signals": ["e", "q"],
+      "params": {
+        "E": 12
+      },
+      "signals": [
+        "e",
+        "q"
+      ],
       "stimulus": [
-        {"e": "000000000000"},
-        {"e": "000000000001"},
-        {"e": "011111111111"},
-        {"e": "100000000000"},
-        {"e": "xxxxxxxxxxxx"}
+        {
+          "e": "000000000000"
+        },
+        {
+          "e": "000000000001"
+        },
+        {
+          "e": "011111111111"
+        },
+        {
+          "e": "100000000000"
+        },
+        {
+          "e": "xxxxxxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: signed packed localparam width conversion at E = 12; Icarus and the Lean constant tier agree."
     },
@@ -70580,13 +72440,26 @@
       "name": "unsized_param_literal",
       "example": "sem2/unsized_param_literal",
       "top": "unsized_param_literal",
-      "params": {"W": 8},
-      "signals": ["x", "y"],
+      "params": {
+        "W": 8
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "00000000"},
-        {"x": "00000001"},
-        {"x": "10101010"},
-        {"x": "xxxxxxxx"}
+        {
+          "x": "00000000"
+        },
+        {
+          "x": "00000001"
+        },
+        {
+          "x": "10101010"
+        },
+        {
+          "x": "xxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: typed packed parameter default `MASK = '0` is evaluated in its declared assignment context; Lean and Icarus agree at W=8."
     },
@@ -70594,13 +72467,26 @@
       "name": "unsized_param_literal_w4",
       "example": "sem2/unsized_param_literal",
       "top": "unsized_param_literal",
-      "params": {"W": 4},
-      "signals": ["x", "y"],
+      "params": {
+        "W": 4
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "0000"},
-        {"x": "0001"},
-        {"x": "1010"},
-        {"x": "xxxx"}
+        {
+          "x": "0000"
+        },
+        {
+          "x": "0001"
+        },
+        {
+          "x": "1010"
+        },
+        {
+          "x": "xxxx"
+        }
       ],
       "measured": "2026-11-04: typed packed parameter fill at W=4; Lean and Icarus agree and the probe cross-check passes."
     },
@@ -70608,13 +72494,26 @@
       "name": "unsized_param_literal_w12",
       "example": "sem2/unsized_param_literal",
       "top": "unsized_param_literal",
-      "params": {"W": 12},
-      "signals": ["x", "y"],
+      "params": {
+        "W": 12
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "000000000000"},
-        {"x": "000000000001"},
-        {"x": "101010101010"},
-        {"x": "xxxxxxxxxxxx"}
+        {
+          "x": "000000000000"
+        },
+        {
+          "x": "000000000001"
+        },
+        {
+          "x": "101010101010"
+        },
+        {
+          "x": "xxxxxxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: typed packed parameter fill at W=12; Lean and Icarus agree and the probe cross-check passes."
     },
@@ -70622,13 +72521,26 @@
       "name": "constant_replication",
       "example": "sem2/constant_replication",
       "top": "constant_replication",
-      "params": {"E": 8},
-      "signals": ["x", "y"],
+      "params": {
+        "E": 8
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "00000000"},
-        {"x": "00000001"},
-        {"x": "10101010"},
-        {"x": "xxxxxxxx"}
+        {
+          "x": "00000000"
+        },
+        {
+          "x": "00000001"
+        },
+        {
+          "x": "10101010"
+        },
+        {
+          "x": "xxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: known one-bit replication in typed localparam `SIGN` evaluates exactly; Lean and Icarus agree at E=8."
     },
@@ -70636,13 +72548,26 @@
       "name": "constant_replication_e4",
       "example": "sem2/constant_replication",
       "top": "constant_replication",
-      "params": {"E": 4},
-      "signals": ["x", "y"],
+      "params": {
+        "E": 4
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "0000"},
-        {"x": "0001"},
-        {"x": "1010"},
-        {"x": "xxxx"}
+        {
+          "x": "0000"
+        },
+        {
+          "x": "0001"
+        },
+        {
+          "x": "1010"
+        },
+        {
+          "x": "xxxx"
+        }
       ],
       "measured": "2026-11-04: replication count at E=4; Lean and Icarus agree with the multi-point cross-check."
     },
@@ -70650,13 +72575,26 @@
       "name": "constant_replication_e12",
       "example": "sem2/constant_replication",
       "top": "constant_replication",
-      "params": {"E": 12},
-      "signals": ["x", "y"],
+      "params": {
+        "E": 12
+      },
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "000000000000"},
-        {"x": "000000000001"},
-        {"x": "101010101010"},
-        {"x": "xxxxxxxxxxxx"}
+        {
+          "x": "000000000000"
+        },
+        {
+          "x": "000000000001"
+        },
+        {
+          "x": "101010101010"
+        },
+        {
+          "x": "xxxxxxxxxxxx"
+        }
       ],
       "measured": "2026-11-04: replication count at E=12; Lean and Icarus agree with the multi-point cross-check."
     },
@@ -70664,12 +72602,22 @@
       "name": "unpacked_generate_array_memory",
       "example": "sem2/unpacked_generate_array",
       "top": "unpacked_generate_array",
-      "params": {"W": 8, "S": 2},
+      "params": {
+        "W": 8,
+        "S": 2
+      },
       "memory": true,
-      "signals": ["x", "y"],
+      "signals": [
+        "x",
+        "y"
+      ],
       "stimulus": [
-        {"x": "00001111"},
-        {"x": "10100101"}
+        {
+          "x": "00001111"
+        },
+        {
+          "x": "10100101"
+        }
       ],
       "measured": "2026-11-09: a parameter-dependent unpacked array is retained in the memory E route; fixed cell identifiers become source-shaped cell operations and the trace matches Icarus."
     },
@@ -70677,29 +72625,80 @@
       "name": "readmemh_rom_initial_refuse",
       "example": "sem2/readmemh_rom",
       "top": "readmemh_rom",
-      "refusal": "ProceduralBlockSymbol:Initial",
-      "signals": ["addr", "q"],
-      "stimulus": [
-        {"addr": "00"},
-        {"addr": "01"},
-        {"addr": "10"},
-        {"addr": "11"}
+      "refusal": "T2:Initial",
+      "signals": [
+        "addr",
+        "q"
       ],
-      "measured": "2026-11-07: the initial $readmemh process is retained as a named ProceduralBlockSymbol:Initial refusal; the ROM read assignment remains source-shaped until initial-process/file-loading semantics enter E."
+      "stimulus": [
+        {
+          "addr": "00"
+        },
+        {
+          "addr": "01"
+        },
+        {
+          "addr": "10"
+        },
+        {
+          "addr": "11"
+        }
+      ],
+      "measured": "2026-11-09: the ordinary Design2 route retains the initial $readmemh process and refuses it as T2:Initial; the source-shaped memory route handles the literal-file form at time zero."
+    },
+    {
+      "name": "readmemh_rom_memory",
+      "example": "sem2/readmemh_rom",
+      "top": "readmemh_rom",
+      "memory": true,
+      "signals": [
+        "addr",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "addr": "00"
+        },
+        {
+          "addr": "01"
+        },
+        {
+          "addr": "10"
+        },
+        {
+          "addr": "11"
+        }
+      ],
+      "measured": "2026-11-09: a literal-file $readmemh is retained as a source-shaped initial task, loaded into the memory E state at time zero, and matches Icarus; missing files, short files, and x/z digits remain loud at extraction."
     },
     {
       "name": "sva_property_retained",
       "example": "sem2/sva_property_retained",
       "top": "sva_property_retained",
-      "signals": ["a", "b", "q"],
+      "signals": [
+        "a",
+        "b",
+        "q"
+      ],
       "stimulus": [
-        {"rst_n": "0", "a": "0", "b": "0"},
-        {"rst_n": "1", "a": "1", "b": "1"},
-        {"rst_n": "1", "a": "0", "b": "1"}
+        {
+          "rst_n": "0",
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "rst_n": "1",
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "rst_n": "1",
+          "a": "0",
+          "b": "1"
+        }
       ],
       "verilator_only": true,
       "measured": "2026-11-04: retained SVA metadata fixture; Verilator is the available assertion-capable differential oracle, while Icarus cannot parse concurrent SVA."
     }
-
   ]
 }

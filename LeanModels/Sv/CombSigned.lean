@@ -18,9 +18,11 @@ carries that through the generate expansion: the summary of the design as writte
 original processes put back (`siteOfU?`, `summaryG_unsign`), and the realized process lists agree site by site
 (`Summary.enum_congr`).
 
-What signedness still changes is outside the fragment and stays refused: sign extension (the `SignedResize` marker), the
-signed comparisons (`s<` …), the arithmetic shift `>>>`, signed `/` and `%`, a signed operand of a shift, a signed read in
-an index, and a signed read in an `always_comb` body.
+A signed comparison of two signed signals declared with the same dimensions is read as written: the twin keeps it
+(`PExpr.unsign` does not enter `s<` …), and the shape theorems lower it to `Expr2.scmp` of the two signals (`Sk.scmp`).
+What else signedness changes is outside the fragment and stays refused: sign extension (the `SignedResize` marker), a
+signed comparison of other operands, the arithmetic shift `>>>`, signed `/` and `%`, a signed operand of a shift, a
+signed read in an index, and a signed read or comparison in an `always_comb` body.
 -/
 
 namespace LeanModels.Sv

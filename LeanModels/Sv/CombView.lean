@@ -809,8 +809,10 @@ theorem bitAcc?_cases (ds : List DeclT) (n : String) (a : Aff) :
 /-- The refusal of an operator whose meaning depends on the signedness of its operands (signed reads are read through
 the unsigned twin, `PExpr.unsign`, only where signedness changes nothing). -/
 def signedOpRefusal? : SymBinOp → Option String
-  | .slt | .sle | .sgt | .sge | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge =>
-      some "a signed comparison (`<`, `<=`, `>`, `>=` of signed operands: the operands are ordered as two's-complement integers, which the fragment does not model; it has the unsigned comparisons)"
+  | .slt | .sle | .sgt | .sge =>
+      some "a signed comparison in a self-determined position (an operand of `&&`, `||`, `!`, a reduction, or the condition of `?:`): the fragment reads a signed comparison as a right-hand side or an operand of the word-level operators, not here"
+  | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge =>
+      some "a signed comparison in the expression tier's operator form (`BinOp.slt` …, not the loader's): the fragment reads the loader's signed comparison of two signed signals"
   | .m0 (.ashr true) | .ashr =>
       some "an arithmetic shift right `>>>` (it fills with the sign bit of a signed operand, which the fragment does not model; it has the logical shifts `<<` and unsigned `>>`)"
   | .m0 (.shr true) =>
@@ -977,6 +979,25 @@ def CmpOp.ex : CmpOp → BinOp
   | .gt => .gt
   | .ge => .ge
 
+/-- The signed relational operators (`<`, `<=`, `>`, `>=` of two signed operands, IEEE 1800-2023 §11.4.4, §11.8.1: the
+operands are compared as two's-complement integers), as the comparison they order by. -/
+def scmpOp? : SymBinOp → Option CmpOp
+  | .slt => some .lt
+  | .sle => some .le
+  | .sgt => some .gt
+  | .sge => some .ge
+  | _ => none
+
+/-- The refusal of an operand of a signed comparison the fragment does not read. -/
+def scmpOpdRefusal (l r : PExpr) : String :=
+  match l, r with
+  | .cast true (.ident _), .cast true (.ident _) =>
+      "a signed comparison of two signals whose declared packed dimensions differ (the narrower operand would be sign-extended at some parameter point, which the fragment does not model: it reads a signed comparison of two signed signals declared with the same dimensions)"
+  | .signedResize .., _ | _, .signedResize .. =>
+      "a signed comparison of operands of different widths (sign extension: the narrower operand is extended with its sign bit, which the fragment does not model; it reads a signed comparison of two signed signals declared with the same dimensions)"
+  | _, _ =>
+      "an operand of a signed comparison that is not a whole signed signal (the fragment reads a signed comparison of two signed signals declared with the same dimensions; a select, a constant or an operation as an operand is outside it)"
+
 /-- The binary operators whose operands `rdsOfW?` reads itself: the bitwise gates, `+`, `-` and `*` (operands
 context-determined at the operation's context) and the six comparisons (operands context-determined at the wider of
 their own natural widths; the result is one bit). -/
@@ -1065,6 +1086,21 @@ def resizeRd? (ds : List DeclT) (e : PExpr) : Except String (List Acc) :=
       | .error m => .error m
   | _ => .error "width conversion of something other than a signal access or a sized literal"
 
+/-- The signals the signed comparisons of a word-level expression compare, pairwise, collected along the positions
+`rdsOfW?` reads at the word level (the recognizer reads `a < b` of two signed signals declared with the same dimensions,
+so each pair has one width at every parameter point: the fact the structural soundness reads, `inst_rdW`). -/
+def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List (String × String)
+  | .binary op l r =>
+      if ctxOpW op then l.scmpPairs ++ r.scmpPairs
+      else
+        match scmpOp? op, l, r with
+        | some _, .cast true (.ident a), .cast true (.ident b) => [(a, b)]
+        | _, _, _ => []
+  | .unary (.m0 .bnot) a => a.scmpPairs
+  | .ternary _ t e => t.scmpPairs ++ e.scmpPairs
+  | .resize _ a => a.scmpPairs
+  | _ => []
+
 /-- The reads of a context-determined expression of the word-level fragment, or the reason it is outside it. -/
 def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .lit _ => .ok []
@@ -1092,7 +1128,13 @@ def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
             match shAmtRd? ds r with
             | .error e => .error e
             | .ok b => .ok (a ++ b)
-      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the run-time shifts `<<` and `>>` and the logical `&&`, `||`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
+      else if (scmpOp? op).isSome then
+        match l, r with
+        | .cast true (.ident a), .cast true (.ident b) =>
+            if (dimsOf ds a).isSome && decide (dimsOf ds a = dimsOf ds b) then .ok [.whole a, .whole b]
+            else .error (scmpOpdRefusal l r)
+        | _, _ => .error (scmpOpdRefusal l r)
+      else .error (signedOpRefusal? op |>.getD s!"operator `{op.sym}` is outside the v1 fragment (it has the bitwise gates `&`, `|`, `^`, the word-level `+`, `-` and `*`, the six comparisons, the four signed comparisons of two signed signals, the run-time shifts `<<` and `>>` and the logical `&&`, `||`; `<<<`, `>>>`, a signed `>>`, `/`, `%` and `**` are word-level operators it does not have yet)")
   | .unary op a =>
       match op with
       | .m0 .bnot => rdsOfW? ds a
@@ -1156,7 +1198,9 @@ instantiation lets that marker vanish (`instExpr2`'s cast arm) everywhere except
 expression is signed, and is therefore loud (`Resize:signed`). So a signed read means the same bits as the unsigned
 read of the same signal wherever no implicit widening happens, and signedness acts only through the operators the
 envelope spells separately (the sign-extension marker `SignedResize`, the signed comparisons `s<` …, the arithmetic
-shift `>>>`, signed `/` and `%`), which the fragment refuses.
+shift `>>>`, signed `/` and `%`). Of these the fragment reads one: a signed comparison of two signed signals declared with
+the same dimensions, as written (`rdsOfW?`; `PExpr.unsign` does not enter it, and `Sk.scmp` states its bit through
+`BitVec.slt`/`BitVec.sle`); it refuses the others.
 
 `PExpr.unsign` is the expression with the marker removed at every position the recognizer reads as a value leaf:
 operands of `& | ^ + - *`, of the six comparisons and of `&& ||`, the operand of `~`, `!` and a reduction, the three

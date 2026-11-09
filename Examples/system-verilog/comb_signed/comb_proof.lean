@@ -4,16 +4,20 @@ import LeanModels.Sv.CombEqTactic
 import LeanModels.Sv.CombWordPins
 
 /-!
-# Signed `+`, `-` and a signed copy, for every width, by `sv_structure` + `sv_equations`
+# Signed `+`, `-`, a signed copy and the signed comparisons, for every width, by `sv_structure` + `sv_equations`
 
 `sadd.sv` reads two signed `W`-bit inputs. Every operand is exactly as wide as its target, so the sum and the difference
 are the two's-complement ones (`BitVec` `+` and `-` modulo `2^W`), and the copy of a signed input into an unsigned output
 is the same bits. The tactics read the design through its unsigned twin (`gen.lean`); `sv_structure` asks the width
 obligation of `sv_equations` besides the structural ones (closed here by `omega` like the others), and `sv_equations`
-states the equations of the design as written.
+states the equations of the design as written. A signed comparison of two signed signals of one width is read as written
+(the twin keeps it): its equation is `BitVec.slt`/`BitVec.sle` of the two operands' bit vectors, the two's-complement
+order `evalPure2` computes through `LVec.toInt?`.
 
 * `sadd_correct`: in every settled state, `s = a + b`, `d = a - b`, `x = a ^ ~b`, `y = a`;
-* `pass_correct`: `y = x`.
+* `pass_correct`: `y = x`;
+* `scmp_correct`: `lt = a <ₛ b`, `le = a ≤ₛ b`, `gt = b <ₛ a`, `ge = b ≤ₛ a` (`BitVec.slt`/`BitVec.sle`: the operands
+  ordered as two's-complement integers, IEEE 1800-2023 §11.4.4).
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -94,6 +98,48 @@ theorem pass_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
     | (intros; omega)
     | (refine inKnown_ofBitVec hX ?_; omega)
 
+/-- A known one-bit signal whose bit is `b` holds `BitVec.ofBool b`. -/
+theorem lookup_bool {st : SvState} {n : String} {b : Bool}
+    (hk : (∃ v, SvState.lookup st n = some v ∧ v.width = 1) ∧ KnownBit st n 0) (he : st.boolAt n 0 = b) :
+    SvState.lookup st n = some (LVec.ofBitVec (BitVec.ofBool b)) := by
+  have hk1 : ∀ k, k < 1 → (∃ v, SvState.lookup st n = some v ∧ v.width = 1) ∧ KnownBit st n k := by
+    intro k hk'
+    obtain rfl : k = 0 := by omega
+    exact hk
+  rw [lookup_bv hk1 (by omega)]
+  congr 2
+  apply BitVec.eq_of_getLsbD_eq
+  intro i hi
+  obtain rfl : i = 0 := by omega
+  rw [XF.getLsbD_bv hi, he]
+  simp
+
+/-- **The four signed comparisons**, for every width `W ≥ 1` in the `int` range: each is one bit, the order of the
+operands as two's-complement integers. -/
+theorem scmp_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
+    scmp.sem W ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u v : BitVec W), SvState.lookup st "a" = some (LVec.ofBitVec u) →
+        SvState.lookup st "b" = some (LVec.ofBitVec v) →
+        SvState.lookup st "lt" = some (LVec.ofBitVec (BitVec.ofBool (u.slt v))) ∧
+        SvState.lookup st "le" = some (LVec.ofBitVec (BitVec.ofBool (u.sle v))) ∧
+        SvState.lookup st "gt" = some (LVec.ofBitVec (BitVec.ofBool (v.slt u))) ∧
+        SvState.lookup st "ge" = some (LVec.ofBitVec (BitVec.ofBool (v.sle u))) := by
+  obtain ⟨hc, ha⟩ : CombDesign (scmp.sem W) ∧ Acyclic (scmp.sem W) := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+    all_goals (intros; omega)
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u v hA hB
+  sv_equations
+  · have hWd : (↑W + -1 : Int).natAbs + 1 = W := by omega
+    rw [hWd] at eq_lt_1 eq_le_1 eq_gt_1 eq_ge_1
+    rw [bv_of_lookup hA, bv_of_lookup hB] at eq_lt_1 eq_le_1 eq_gt_1 eq_ge_1
+    exact ⟨lookup_bool known_lt_1 eq_lt_1, lookup_bool known_le_1 eq_le_1, lookup_bool known_gt_1 eq_gt_1,
+      lookup_bool known_ge_1 eq_ge_1⟩
+  all_goals first
+    | (intros; omega)
+    | (refine inKnown_ofBitVec hA ?_; omega)
+    | (refine inKnown_ofBitVec hB ?_; omega)
+
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.sadd_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms sadd_correct
@@ -101,5 +147,9 @@ theorem pass_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.pass_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms pass_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms scmp_correct
 
 end Examples.«system-verilog».comb_signed.comb_proof

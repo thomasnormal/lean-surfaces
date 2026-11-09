@@ -599,7 +599,27 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .lit v, rs, h, _, ctx => by simp [Expr2.idxFree]
   | .binary op l r, rs, h, hacc, ctx => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨hb, ra, rb, hl, hr', rfl⟩ |
-        ⟨hb, ra, rb, hl, hr', rfl⟩
+        ⟨hb, ra, rb, hl, hr', rfl⟩ | ⟨cm, a, b, hcm, rfl, rfl, -, -, rfl⟩
+      rotate_left 3
+      · -- a signed comparison of two signed signals: `scmp` of the two fitted reads
+        have hsr : ∀ (n : String) (c : Option Nat), (fitExpr2 E elems c (.cast true (.ident n))).idxFree = true := by
+          intro n c
+          have hi : ∀ c', (instExpr2 E elems c' (.cast true (.ident n))).idxFree = true := by
+            intro c'; simp [instExpr2, Expr2.idxFree]
+          unfold fitExpr2
+          split
+          · exact hi _
+          · split
+            · split
+              · split
+                · exact hi _
+                · split
+                  · simp [Expr2.idxFree]
+                  · simp [Expr2.idxFree, hi]
+              · exact hi _
+            · exact hi _
+        cases op <;> simp [scmpOp?] at hcm <;> subst hcm <;> cases ctx <;>
+          simp [instExpr2, Expr2.idxFree, hsr]
       · have ihl := inst_idxFreeW C hdw l ra hl (fun a ha => hacc a (List.mem_append_left _ ha))
         have ihr := inst_idxFreeW C hdw r rb hr' (fun a ha => hacc a (List.mem_append_right _ ha))
         have hfl := fit_idxFree (E := E) (elems := elems) (signedCast_of_rdsW hl) ihl
@@ -736,8 +756,8 @@ theorem wfB_of_rd (σ' : String → Int) {d : Design2} (hd : ∀ n, d.declWidth 
 theorem plfr_rdOK (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {tg : Acc} :
     ∀ (a : PLfR), a.Ok ds tg → (∀ x ∈ a.rds, AccOK σ DW DG EW ns x) → ∀ tw,
       RdOK σ a.rds (a.pl.low E elems tw)
-  | .leafL t v rs, hok, hacc, tw => rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
-  | .leafW n v rs, hok, hacc, tw => rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
+  | .leafL t v rs, hok, hacc, tw => rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
+  | .leafW n v rs, hok, hacc, tw => rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
 
 theorem plfr_idxFree (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {tg : Acc} :
@@ -820,14 +840,14 @@ theorem low_wf (C : Ctx σ E elems DW DG EW ns) {d : Design2}
     ∀ (ptr : PTR), ptr.Ok ds tg → (∀ a ∈ ptr.rds, AccOK σ DW DG EW ns a) → ∀ tw,
       (ptr.pt.low E elems tw).wf d
   | .leafL t v rs, hok, hacc, tw => by
-      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
+      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
       refine (wfB_iff d _).2 ⟨hr.1, fun i hi => ?_⟩
       obtain ⟨a, ha, rfl⟩ := List.mem_map.mp (hr.2.2 i hi)
       have := (hacc a (by simpa [PTR.rds] using ha)).1
       obtain ⟨w, hw⟩ := Option.isSome_iff_exists.mp this
       exact Design2.mem_names_of_declWidth (w := w) (by rw [hd]; exact hw)
   | .leafW n v rs, hok, hacc, tw => by
-      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
+      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
       refine (wfB_iff d _).2 ⟨hr.1, fun i hi => ?_⟩
       obtain ⟨a, ha, rfl⟩ := List.mem_map.mp (hr.2.2 i hi)
       have := (hacc a (by simpa [PTR.rds] using ha)).1
@@ -886,13 +906,13 @@ theorem low_noRead (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {tg : Acc}
     ∀ (ptr : PTR), ptr.Ok ds tg → (∀ a ∈ ptr.rds, AccOK σ DW DG EW ns a) →
       (∀ a ∈ ptr.rds, (a.rd σ).overlaps W = false) → ∀ tw, (ptr.pt.low E elems tw).noRead W
   | .leafL t v rs, hok, hacc, hself, tw => by
-      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
+      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
       intro r hr'
       obtain ⟨a, ha, rfl⟩ := List.mem_map.mp (hr.2.1 r hr')
       have hm : a ∈ (PTR.leafL t v rs).rds := by simpa [PTR.rds] using ha
       exact ⟨hself a hm, acc_rd_pos (hacc a hm)⟩
   | .leafW n v rs, hok, hacc, hself, tw => by
-      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw
+      have hr := rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw
       intro r hr'
       obtain ⟨a, ha, rfl⟩ := List.mem_map.mp (hr.2.1 r hr')
       have hm : a ∈ (PTR.leafW n v rs).rds := by simpa [PTR.rds] using ha
@@ -1012,6 +1032,11 @@ end site
 
 /-! ## The recognizer: which `always_comb` bodies are in the fragment, and why not -/
 
+/-- The refusal of an `always_comb` leaf whose right-hand side `fragOkL` does not accept. -/
+def leafRefusal (v : PExpr) : String :=
+  if v.scmpPairs.isEmpty then "right-hand side outside the v1 fragment (a gate tree, a concatenation or a fill)"
+  else "a signed comparison in an `always_comb` leaf (the procedural route does not read signed comparisons yet; the fragment reads them in a continuous assign)"
+
 /-- A select-target leaf `t = v;`. -/
 def leafL? (ds : List DeclT) (t : PLhs) (v : PExpr) : Except String (Acc × PTR) :=
   match tgtOf? ds t with
@@ -1021,7 +1046,7 @@ def leafL? (ds : List DeclT) (t : PLhs) (v : PExpr) : Except String (Acc × PTR)
       | .error e => .error e
       | .ok rs =>
           if fragOkL v then .ok (tg, .leafL t v rs)
-          else .error "right-hand side outside the v1 fragment (a gate tree, a concatenation or a fill)"
+          else .error (leafRefusal v)
 
 /-- A whole-signal leaf `n = v;`. -/
 def leafW? (ds : List DeclT) (n : String) (v : PExpr) : Except String (Acc × PTR) :=
@@ -1032,7 +1057,7 @@ def leafW? (ds : List DeclT) (n : String) (v : PExpr) : Except String (Acc × PT
       | .error e => .error e
       | .ok rs =>
           if fragOkL v then .ok (tg, .leafW n v rs)
-          else .error "right-hand side outside the v1 fragment (a gate tree, a concatenation or a fill)"
+          else .error (leafRefusal v)
 
 /-- A `case` arm: one assignment `t = v;` or `n = v;` of the target (WP-G S3a). -/
 def armLeaf? (ds : List DeclT) : PStmt → Except String (Acc × PLfR)
@@ -1044,7 +1069,7 @@ def armLeaf? (ds : List DeclT) : PStmt → Except String (Acc × PLfR)
           | .error e => .error e
           | .ok rs =>
               if fragOkL v then .ok (tg, .leafL t v rs)
-              else .error "right-hand side outside the v1 fragment (a gate tree, a concatenation or a fill)"
+              else .error (leafRefusal v)
   | .blockingAssign n v =>
       match tgtOf? ds (.ident n) with
       | .error e => .error e
@@ -1053,7 +1078,7 @@ def armLeaf? (ds : List DeclT) : PStmt → Except String (Acc × PLfR)
           | .error e => .error e
           | .ok rs =>
               if fragOkL v then .ok (tg, .leafW n v rs)
-              else .error "right-hand side outside the v1 fragment (a gate tree, a concatenation or a fill)"
+              else .error (leafRefusal v)
   | .nbaAssign .. | .nbaAssignL .. =>
       .error "nonblocking assignment in always_comb (outside the v1 fragment)"
   | .ifStmt .. | .block .. | .caseStmt .. | .unsupported .. | .forLoop .. =>

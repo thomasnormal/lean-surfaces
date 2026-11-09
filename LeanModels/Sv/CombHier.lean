@@ -179,6 +179,7 @@ def Sk.hren (pfx : String) : Sk → Sk
   | .rep p => .rep (p.hren pfx)
   | .rsz pr p => .rsz pr (p.hren pfx)
   | .sh d sg l r => .sh d sg (l.hren pfx) (r.hren pfx)
+  | .scmp op a b => .scmp op (a.hren pfx) (b.hren pfx)
 
 /-- A skeleton whose width is its context's wherever its width contract holds (`Sk.width_of_exactW`): an input
 connection's actual of this shape is exactly as wide as the port, so `connProcs` takes its assignment branch. -/
@@ -229,6 +230,7 @@ theorem Sk.width_of_exactW (σ : String → Int) (dw : String → Nat) :
   | .cref _, _, he, _ => by simp [Sk.exactW] at he
   | .rsz _ _, _, he, _ => by simp [Sk.exactW] at he
   | .sh _ _ _ _, _, he, _ => by simp [Sk.exactW] at he
+  | .scmp _ _ _, _, he, _ => by simp [Sk.exactW] at he
 
 end CombEq
 

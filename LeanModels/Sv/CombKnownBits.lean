@@ -56,9 +56,11 @@ NOT covered (`xfWidth = none`), and why:
   index is already a `slice` after instantiation);
 * **`/ % **`**: a zero divisor (or a negative exponent) gives `x`; the task bans run-time
   `/` and `%` and fourstate has no rule for them, so a design using them is outside;
-* **signed forms** (`scmp`, `slt …`, `>>>` on a signed left operand; `resizeSigned` is covered since gate 3) and the
+* **signed forms** other than the signed order comparison (`slt …` as a plain binary node, `>>>` on a signed left
+  operand; `resizeSigned` is covered since gate 3, the `scmp` node's `<`/`<=`/`>`/`>=` since the signed-comparison
+  round, its bit the `BitVec.toInt` comparison `LVec.toInt?` computes) and the
   wildcard equalities `==?`/`!=?`: known operands DO give a known result, but their Boolean
-  equations (two's-complement value, sign fill, wildcard matching) are not yet written — an
+  equations (sign fill, wildcard matching) are not yet written — an
   extension, not a soundness gap: the theorem simply does not apply to a design that uses them;
 * **`squash2`** (the 2-state conversion, `Expr2.squash2`: an assignment to a 2-state declaration):
   on a known operand it is the identity, but the fragment is a FOUR-state one (the comb layer's
@@ -495,6 +497,25 @@ theorem allKnown_ofBoolFn (w : Nat) (f : Nat → Bool) : (ofBoolFn w f).allKnown
 theorem toNat?_ofBoolFn (w : Nat) (f : Nat → Bool) : (ofBoolFn w f).toNat? = some (XF.val f w) := by
   rw [ofBoolFn_eq_ofNat, toNat?_ofNat, Nat.mod_eq_of_lt (XF.val_lt f w)]
 
+/-- The two's-complement reading of a known vector (`LVec.toInt?`, the signed comparison's operand reading, IEEE
+1800-2023 §11.8.1) is `BitVec.toInt` of its bit vector. -/
+theorem toInt?_ofBoolFn (w : Nat) (f : Nat → Bool) : (ofBoolFn w f).toInt? = some (XF.bv w f).toInt := by
+  have hv := XF.val_lt f w
+  have hbv : (XF.bv w f).toNat = XF.val f w := by
+    simp only [XF.bv, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hv]
+  simp only [toInt?, toNat?_ofBoolFn, width_ofBoolFn, BitVec.toInt_eq_toNat_cond, hbv]
+  by_cases hw : w = 0
+  · subst hw
+    have : XF.val f 0 = 0 := by simp at hv; omega
+    simp [this]
+  · have h2 : 2 ^ w = 2 * 2 ^ (w - 1) := by
+      rw [← Nat.pow_succ']; congr 1; omega
+    simp only [beq_iff_eq, hw, if_false]
+    by_cases hlt : XF.val f w < 2 ^ (w - 1)
+    · rw [if_pos hlt, if_pos (by omega)]
+    · rw [if_neg hlt, if_neg (by omega)]
+      simp
+
 theorem add_ofBoolFn (wa wb : Nat) (fa fb : Nat → Bool) :
     (ofBoolFn wa fa).add (ofBoolFn wb fb) = ofBoolFn (max wa wb) (XF.addBits wa fa wb fb) := by
   unfold LVec.add
@@ -739,6 +760,10 @@ def Expr2.xfWidth (d : Design2) : Expr2 → Option Nat
   | .resize w a => (a.xfWidth d).map fun _ => w
   | .resizeSigned w a => (a.xfWidth d).map fun _ => w
   | .squash2 _ => none
+  | .scmp .lt l r => XF.comb (fun _ _ => 1) (l.xfWidth d) (r.xfWidth d)
+  | .scmp .le l r => XF.comb (fun _ _ => 1) (l.xfWidth d) (r.xfWidth d)
+  | .scmp .gt l r => XF.comb (fun _ _ => 1) (l.xfWidth d) (r.xfWidth d)
+  | .scmp .ge l r => XF.comb (fun _ _ => 1) (l.xfWidth d) (r.xfWidth d)
   | .scmp _ _ _ => none
   | .index _ _ _ => none
   | .repl n a => (a.xfWidth d).map fun w => w * n
@@ -821,6 +846,18 @@ def Expr2.xfBits (d : Design2) (env : String → Nat → Bool) : Expr2 → Nat �
   | .resize _ a => fun k => decide (k < (a.xfWidth d).getD 0) && a.xfBits d env k
   | .resizeSigned _ a => XF.sext ((a.xfWidth d).getD 0) (a.xfBits d env)
   | .squash2 _ => fun _ => false
+  | .scmp .lt l r => fun _ =>
+      decide ((XF.bv ((l.xfWidth d).getD 0) (l.xfBits d env)).toInt <
+        (XF.bv ((r.xfWidth d).getD 0) (r.xfBits d env)).toInt)
+  | .scmp .le l r => fun _ =>
+      decide ((XF.bv ((l.xfWidth d).getD 0) (l.xfBits d env)).toInt ≤
+        (XF.bv ((r.xfWidth d).getD 0) (r.xfBits d env)).toInt)
+  | .scmp .gt l r => fun _ =>
+      decide ((XF.bv ((l.xfWidth d).getD 0) (l.xfBits d env)).toInt >
+        (XF.bv ((r.xfWidth d).getD 0) (r.xfBits d env)).toInt)
+  | .scmp .ge l r => fun _ =>
+      decide ((XF.bv ((l.xfWidth d).getD 0) (l.xfBits d env)).toInt ≥
+        (XF.bv ((r.xfWidth d).getD 0) (r.xfBits d env)).toInt)
   | .scmp _ _ _ => fun _ => false
   | .index _ _ _ => fun _ => false
   | .repl _ a => fun k => a.xfBits d env (k % (a.xfWidth d).getD 0)
@@ -1206,7 +1243,21 @@ theorem Expr2.evalPure2_ofBoolFn {d : Design2} {st : SvState} (n : Nat) :
         simp only [Expr2.xfBits, haw, Option.getD_some]
         exact this
     | squash2 arg => simp [Expr2.xfWidth] at hw
-    | scmp op l r => simp [Expr2.xfWidth] at hw
+    | scmp op l r =>
+        have hsl : l.size < n := by simp only [Expr2.size] at hs; omega
+        have hsr : r.size < n := by simp only [Expr2.size] at hs; omega
+        have hrl : ∀ r' ∈ l.reads, ReadKnown d st r' := fun r' h' =>
+          hr r' (by simp [Expr2.reads, h'])
+        have hrr : ∀ r' ∈ r.reads, ReadKnown d st r' := fun r' h' =>
+          hr r' (by simp [Expr2.reads, h'])
+        cases op <;> simp only [Expr2.xfWidth] at hw <;> (try exact absurd hw (by simp)) <;>
+        · obtain ⟨wl, wr, hwl, hwr, rfl⟩ := XF.comb_eq_some.mp hw
+          rw [evalPure2_scmp, ih l hsl hwl hrl, ih r hsr hwr hrr]
+          simp only [Pure2.res_ok_bind, LVec.toInt?_ofBoolFn, Pure2.res_pure_eq, Expr2.xfBits]
+          rw [hwl, hwr]
+          dsimp only [Option.getD]
+          rw [← LVec.ofLogic_ofBool_eq]
+          simp [Logic.ofBool]
     | index b i elemW => simp [Expr2.xfWidth] at hw
     | unsupported k t => simp [Expr2.xfWidth] at hw
     | lit v =>
@@ -1615,7 +1666,8 @@ private def is_ : Expr2 := .ident "s"
 #guard (Expr2.binary (.pow false false) ia ib).xfWidth tD == none
 #guard (Expr2.binary (.ashr true) ia ib).xfWidth tD == none
 #guard (Expr2.binary .slt ia ib).xfWidth tD == none
-#guard (Expr2.scmp .lt ia ib).xfWidth tD == none
+#guard (Expr2.scmp .lt ia ib).xfWidth tD == some 1                -- signed order comparison: one bit
+#guard (Expr2.scmp .eq ia ib).xfWidth tD == none                  -- not an order comparison: x
 #guard (Expr2.unsupported "k" "t").xfWidth tD == none
 #guard (Expr2.concat #[ia, .lit (LVec.lit "x")]).xfWidth tD == none
 

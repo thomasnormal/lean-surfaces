@@ -110,9 +110,9 @@ theorem low_rdOK (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {tg : Acc} :
     ∀ (ptr : PTR), ptr.Ok ds tg → (∀ a ∈ ptr.rds, AccOK σ DW DG EW ns a) → ∀ tw,
       RdOK σ ptr.rds ((ptr.pt.low E elems tw).low tw)
   | .leafL t v rs, hok, hacc, tw => by
-      simpa [PTR.pt, PT.low, PTree.low, PTR.rds] using RdOK.resize tw (rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw)
+      simpa [PTR.pt, PT.low, PTree.low, PTR.rds] using RdOK.resize tw (rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw)
   | .leafW n v rs, hok, hacc, tw => by
-      simpa [PTR.pt, PT.low, PTree.low, PTR.rds] using RdOK.resize tw (rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) tw)
+      simpa [PTR.pt, PT.low, PTree.low, PTR.rds] using RdOK.resize tw (rhs_ok C hok.2.1 hacc (fragOkL_co hok.2.2) (fragOkL_weq hok.2.2) tw)
   | .ite c rc a b, ⟨⟨hc, _⟩, ha, hb⟩, hacc, tw
   | .ovr c rc a b, ⟨⟨hc, _⟩, ha, hb⟩, hacc, tw => by
       have hcr := inst_rd C c rc hc (fun x hx => hacc x (by simp [PTR.rds, hx])) none

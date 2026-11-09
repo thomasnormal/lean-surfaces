@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "sg_cmp",
+  "top": "sg_cmp_proc",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp.sv",
-      "sha256": "64b091be47cd1ead13dd6d24c9743dbf87328cccf729e6ab89a1075aa3d3ffa6"
+      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_proc.sv",
+      "sha256": "03f513462fe4dd746bbc752ed934952dca387a7813d984de696f6ca624d3c6f1"
     }
   ],
   "packages": [],
@@ -25,16 +25,16 @@
           "end_line": 7,
           "end_col": 10
         },
-        "name": "sg_cmp",
+        "name": "sg_cmp_proc",
         "imports": [],
         "params": [
           {
             "kind": "ParameterDecl",
             "span": {
               "line": 2,
-              "col": 35,
+              "col": 40,
               "end_line": 2,
-              "end_col": 40
+              "end_col": 45
             },
             "name": "W",
             "type": {
@@ -45,9 +45,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 40,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 45
                     },
                     "value": 31,
                     "resolved_width": 32
@@ -56,9 +56,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 2,
-                      "col": 35,
+                      "col": 40,
                       "end_line": 2,
-                      "end_col": 40
+                      "end_col": 45
                     },
                     "value": 0,
                     "resolved_width": 32
@@ -71,9 +71,9 @@
               "kind": "Int",
               "span": {
                 "line": 2,
-                "col": 39,
+                "col": 44,
                 "end_line": 2,
-                "end_col": 40
+                "end_col": 45
               },
               "value": 8,
               "resolved_width": 32
@@ -229,57 +229,66 @@
         "decls": [],
         "processes": [
           {
-            "kind": "Assign",
+            "kind": "AlwaysComb",
             "span": {
               "line": 6,
-              "col": 10,
+              "col": 3,
               "end_line": 6,
-              "end_col": 20
+              "end_col": 26
             },
-            "target": {
-              "kind": "Ident",
-              "span": {
-                "line": 6,
-                "col": 10,
-                "end_line": 6,
-                "end_col": 12
-              },
-              "width": 1,
-              "name": "lt"
-            },
-            "value": {
-              "kind": "Binary",
+            "body": {
+              "kind": "BlockingAssign",
               "span": {
                 "line": 6,
                 "col": 15,
                 "end_line": 6,
-                "end_col": 20
+                "end_col": 26
               },
-              "width": 1,
-              "op": "s<",
-              "left": {
+              "target": {
                 "kind": "Ident",
                 "span": {
                   "line": 6,
                   "col": 15,
                   "end_line": 6,
-                  "end_col": 16
+                  "end_col": 17
                 },
-                "width": 8,
-                "name": "a",
-                "signed": true
+                "width": 1,
+                "name": "lt"
               },
-              "right": {
-                "kind": "Ident",
+              "value": {
+                "kind": "Binary",
                 "span": {
                   "line": 6,
-                  "col": 19,
+                  "col": 20,
                   "end_line": 6,
-                  "end_col": 20
+                  "end_col": 25
                 },
-                "width": 8,
-                "name": "b",
-                "signed": true
+                "width": 1,
+                "op": "s<",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 20,
+                    "end_line": 6,
+                    "end_col": 21
+                  },
+                  "width": 8,
+                  "name": "a",
+                  "signed": true
+                },
+                "right": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 24,
+                    "end_line": 6,
+                    "end_col": 25
+                  },
+                  "width": 8,
+                  "name": "b",
+                  "signed": true
+                }
               }
             }
           }

@@ -83,6 +83,40 @@ def memDeclOf? : List PDecl → String → Option PDecl
 def memDeclsOf (d : PDesign) : List PDecl :=
   d.decls.filter fun pd => !pd.unpackedDims.isEmpty
 
+def parseFixedCellName? (s : String) : Option (String × Int) :=
+  match s.splitOn "[" with
+  | [base, suffix] =>
+      if base.isEmpty || !suffix.endsWith "]" then none
+      else
+        let digits := String.ofList suffix.toList.dropLast
+        match digits.toInt? with
+        | some i => some (base, i)
+        | none => none
+  | _ => none
+
+/-- The symbolic extractor keeps a statically selected unpacked cell as an
+`Ident` such as `stage[0]`.  At the memory boundary this is the same source
+selection as `ArraySel(stage, 0)`; retain the cell name and route it through
+`MemState` instead of treating it as an undeclared scalar. -/
+def memCellExpr (mems : List PDecl) : PExpr → PExpr
+  | .ident n =>
+      match parseFixedCellName? n with
+      | some (base, i) =>
+          if mems.any (·.name == base) then .arrayElem base [.int i] else .ident n
+      | none => .ident n
+  | e => e
+
+def memNormalizeProcess (mems : List PDecl) : PProcess → PProcess
+  | .assign n e =>
+      match parseFixedCellName? n with
+      | some (base, i) =>
+          if mems.any (·.name == base) then
+            .assignL (.arrayElem base [.int i]) (memCellExpr mems e)
+          else .assign n (memCellExpr mems e)
+      | none => .assign n (memCellExpr mems e)
+  | .assignL lhs e => .assignL lhs (memCellExpr mems e)
+  | p => p
+
 /-- Referenced empty input-only tasks are retained as source metadata by the
 extractor, while their calls are represented by the existing empty statement
 node.  Every other unsupported module member remains a loud memory-route
@@ -283,12 +317,13 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   let (scalarDecls, initializers) ← scalarDeclsMem env d.decls
   let decls := scalarDecls ++ memOtherDecls d.others
   let generated ← memExpandList env iterFuel [] d.generates
+  let memDecls := memDeclsOf d
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
-  return { name := d.name, env := envP, decls, memDecls := memDeclsOf d,
+  return { name := d.name, env := envP, decls, memDecls,
            initializers,
            xzUnsized := d.others.any fun (k, t) =>
              k == "ConversionExpression:xz-literal-parametric" && t == "'bx",
-           processes := d.processes ++ generated }
+           processes := (d.processes.map (memNormalizeProcess memDecls)) ++ generated }
 
 def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
   match instantiateMem2 d args (PDesign.surfaceFuel args) with

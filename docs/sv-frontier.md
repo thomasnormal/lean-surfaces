@@ -57,7 +57,11 @@ members are no longer the first executable-process wall.
 The first array packet retains parameter-dependent unpacked declarations as
 `UnpackedDecl` with symbolic bounds. The flat scalar store does not fabricate
 default-point cells. The one-rank sequential memory packet now routes that
-retained source form through `MemDesign2` and `MemState` instead.
+retained source form through `MemDesign2` and `MemState` instead. Fixed cell
+identifiers such as `stage[0]` are normalized at this source-shaped memory
+boundary to `ArraySel` operations, preserving the cell and avoiding scalar
+fabrication. The clean-room `sem2/unpacked_generate_array` row now agrees
+with Icarus at `W=8,S=2`.
 
 The first E memory packet is now present in `LeanModels.Sv.Kernel.CoreMem`.
 `MemShape` retains the source labels and element width, `MemBlock` stores

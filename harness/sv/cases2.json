@@ -70557,17 +70557,17 @@
       "measured": "2026-11-04: replication count at E=12; Lean and Icarus agree with the multi-point cross-check."
     },
     {
-      "name": "unpacked_generate_array_refuse",
+      "name": "unpacked_generate_array_memory",
       "example": "sem2/unpacked_generate_array",
       "top": "unpacked_generate_array",
       "params": {"W": 8, "S": 2},
-      "refusal": "UnpackedDecl:memory",
+      "memory": true,
       "signals": ["x", "y"],
       "stimulus": [
-        {"x": "00000000"},
-        {"x": "10101010"}
+        {"x": "00001111"},
+        {"x": "10100101"}
       ],
-      "measured": "2026-11-04: the envelope retains the parameter-dependent array as UnpackedDecl; the flat E store refuses UnpackedDecl:memory rather than flattening default-point cells."
+      "measured": "2026-11-09: a parameter-dependent unpacked array is retained in the memory E route; fixed cell identifiers become source-shaped cell operations and the trace matches Icarus."
     },
     {
       "name": "readmemh_rom_initial_refuse",

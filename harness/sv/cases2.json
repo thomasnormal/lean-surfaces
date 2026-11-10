@@ -72694,6 +72694,35 @@
       "measured": "2026-11-09: IEEE 1800-2023 §10.3/§4.5 permits the later continuous driver to wake the earlier downstream driver; the source-order memory adapter cannot settle this chain in one pass and refuses it before returning a stale value."
     },
     {
+      "name": "unsized_xz_ternary_mem",
+      "example": "sem2/unsized_xz_ternary_mem",
+      "top": "unsized_xz_ternary_mem",
+      "memory": true,
+      "clock": "clk",
+      "signals": ["a", "y", "mem_q"],
+      "stimulus": [
+        {"a": "1"},
+        {"a": "0"},
+        {"a": "x"}
+      ],
+      "measured": "2026-11-10: IEEE 1800-2023 §5.7.1 sizes the retained ConversionExpression:unsized-xz branch at N = 40; the memory route applies the canonical payload at the concrete point, and Icarus 13.0 and Xcelium 24.03-s004 agree."
+    },
+    {
+      "name": "unsized_xz_ternary_mem_n8",
+      "example": "sem2/unsized_xz_ternary_mem",
+      "top": "unsized_xz_ternary_mem",
+      "params": {"N": 8},
+      "memory": true,
+      "clock": "clk",
+      "signals": ["a", "y", "mem_q"],
+      "stimulus": [
+        {"a": "1"},
+        {"a": "0"},
+        {"a": "x"}
+      ],
+      "measured": "2026-11-10: at N = 8 the same §5.7.1 conversion truncates the 32-bit payload to zzzz0001; Icarus 13.0 and Xcelium 24.03-s004 agree, and the source-shaped memory read remains x."
+    },
+    {
       "name": "sva_property_retained",
       "example": "sem2/sva_property_retained",
       "top": "sva_property_retained",

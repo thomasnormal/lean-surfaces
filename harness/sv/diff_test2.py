@@ -102,7 +102,7 @@ from oracle_disagreements import (HarnessError, SimulatorError, check_declaratio
 SV_LEAN_MODULES = ["Basic", "Ast", "Semantics", "Obs", "Sem2", "CombGuard2",
                    "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "CombAlias2",
                    "ClockGuard2", "Ingest2", "PreemptGuard2",
-                   "Kernel/MemPreemptGuard"]
+                   "MemPreemptGuard"]
 
 SIGMA_NAMES = ("src", "rev")
 
@@ -195,6 +195,13 @@ def prepare_probes(cases, base, verbose):
     `error`."""
     groups = {}
     for case in cases:
+        # The source-shaped memory runner is deliberately outside the
+        # ordinary Design2/Probe2 comparison: an unpacked PDecl is a loud
+        # `UnpackedDecl:memory` in that route.  Memory rows still get their
+        # concrete Lean and simulator traces below; probing them through the
+        # ordinary point extractor would report a false cross-check failure.
+        if case.get("memory"):
+            continue
         pt = case_point(case)
         if pt is None:
             continue
@@ -508,7 +515,7 @@ def main():
         # The multi-point cross-check of this row (round 3 CX).
         xprobe = None
         xstatus = None
-        if args.xcheck and case_point(case) is not None:
+        if args.xcheck and not case.get("memory") and case_point(case) is not None:
             st, info = probes.get(envelope, ("error", "no probe extraction"))
             if st == "ok":
                 xprobe = info

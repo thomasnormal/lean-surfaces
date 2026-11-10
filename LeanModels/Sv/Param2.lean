@@ -697,6 +697,23 @@ private def intLit2 (ctx : Option Nat) (v : Int) : Expr2 :=
 theorem intLit2_eq (ctx : Option Nat) (v : Int) :
     intLit2 ctx v = .lit (LVec.ofInt (ctx.getD 32) v) := rfl
 
+/-! An unsized x/z literal is represented by the extractor as a parser-shaped
+`ConversionExpression:unsized-xz` node carrying its own 32-bit, MSB-first
+payload.  Its width is context-determined (§5.7.1), so the symbolic node must
+survive until a concrete point supplies `ctx`; `ofBinLit?` then truncates low
+bits or replicates the payload's most-significant x/z bit on widening. -/
+def unsizedXZ2 (ctx : Option Nat) (payload : String) : Expr2 :=
+  match ctx with
+  | none =>
+      .unsupported "ConversionExpression:unsized-xz"
+        "unsized x/z conversion has no destination width"
+  | some width =>
+      match LVec.ofBinLit? width payload with
+      | some value => .lit value
+      | none =>
+          .unsupported "ConversionExpression:unsized-xz"
+            "unsized x/z conversion has an invalid payload"
+
 /-- Expressions whose instantiated width is INTRINSIC (context-independent):
 declared signals, sized literals, selects, concats, replications,
 reductions — plus casts of such. Everything else is context-directed
@@ -1052,6 +1069,8 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
           | none => .unsupported "ArraySel:dynamic" "run-time part-select base of unknown width"
       | some (.error e) => .unsupported "ArraySel:dynamic" e
       | none => arrayPartRead env n is mode a b
+  | .unsupported "ConversionExpression:unsized-xz" payload =>
+      unsizedXZ2 ctx payload
   | .unsupported k t => .unsupported k t
 
 /-- Concat parts are self-determined (unsized literals in concats are

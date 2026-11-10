@@ -5237,15 +5237,17 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     -- len
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                      refine PBF.bind (PBF.liftRes hs1 _) fun s2 _ _ hs2 => ?_
                                       cases vs with
-                                      | nil => exact PBF.exn hs1 _
+                                      | nil => exact PBF.exn hs2 _
                                       | cons v rest =>
                                           cases rest with
                                           | nil =>
                                               simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                lenValH_swapAt hs1 htwin]
-                                              exact PBF.liftRes hs1 _
-                                          | cons _ _ => exact PBF.exn hs1 _
+                                                lenValH_swapAt hs2 htwin]
+                                              exact PBF.liftRes hs2 _
+                                          | cons _ _ => exact PBF.exn hs2 _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     -- sorted
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
@@ -6416,7 +6418,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 fun s1 vs _ hs1 => ?_
                               refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                 fun s2 kvs _ hs2 => ?_
-                              exact PBF.exn hs2 _
+                              simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                              exact PBF.bind (PBF.liftRes hs2 _) fun s3 _ _ hs3 => PBF.exn hs3 _
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
                             · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                 fun s1 vs _ hs1 => ?_

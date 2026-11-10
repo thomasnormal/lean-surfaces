@@ -5488,6 +5488,15 @@ def lenValH (h : Heap) : RVal → Res RVal
   | .ref a => heapLen h a
   | v => lenVal v
 
+/-- CPython 3.9's `len` is a `METH_O` builtin. For one positional argument,
+`cfunction_vectorcall_O` enters a recursion unit before `builtin_len`. For
+wrong arity or keywords, `_PyObject_FunctionStr` instead compares the builtin's
+module name through `PyObject_RichCompareBool`; that comparison has its own
+unit. Both paths observe the same boundary after argument evaluation
+(Objects/methodobject.c and Objects/object.c). -/
+def builtinLenRecursionCheck (depth : Nat) : Res Unit :=
+  if pythonRecursionFull depth then .exn .recursionError else .ok ()
+
 /-- Subscript read over the heap: a `.ref` container is a dict read
 (`KeyError` faithful); a `.ref` INDEX into a value container is a faithful
 `TypeError` (every H1 heap object is a dict — `lst[d]`); everything else
@@ -9133,6 +9142,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else
                   if fname == "len" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.liftRes st (builtinLenRecursionCheck st.world.callDepth) ⤳ fun st _ =>
                     match vs with
                     | [v] => Run.liftRes st (lenValH st.world.heap v)
                     | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
@@ -9967,6 +9977,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       -- faithful TypeErrors, preserving Python's order.
                       flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                      Run.liftRes st (if fname == "len" then
+                        builtinLenRecursionCheck st.world.callDepth else .ok ()) ⤳ fun st _ =>
                       .exn st (.typeError (if fname == "float" then
                         "float() takes no keyword arguments"
                       else if fname == "len" then

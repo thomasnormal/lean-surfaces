@@ -93,6 +93,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Revalidated the generator specification; its reported `squares_upto` guards
+  now build successfully.
+
 - Revalidated the dict-comprehension specification; its previously reported
   `bad_pair` guards now build successfully.
 

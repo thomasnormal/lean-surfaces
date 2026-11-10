@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Forwarded retained event-controlled procedures inside generate regions to
+  the existing process parser. Implicit events and their bodies now retain
+  there too; E activation remains incomplete. Memory instantiation explicitly
+  refuses retained explicit events. Added generated source and refusal rows.
+
 - Retained plain `always @*` as its own parametric process node and parsed
   body for E. Contradictory event metadata is rejected; frozen execution
   routes keep the existing refusal. Native implicit-event execution is open.

@@ -55,4 +55,31 @@ def callableParameterExpressionAgreementWitness : Bool :=
 
 #guard callableParameterExpressionAgreementWitness
 
+/-- Even an out-of-range literal has the same invalid result in both
+expression evaluators; this constructed IR is not an admitted C++ literal. -/
+theorem invalidLiteralExpressionAgreement :
+    evaluateCallableExpression 8 .lp64 [] []
+      {expression := .integer 2147483648, sourceType := intType, type := intType} =
+      .ok (.invalid .outOfRange, []) ∧
+    evaluateCallableObjectExpression 8 .lp64 sampleFrame
+      {expression := .integer 2147483648, sourceType := intType, type := intType} =
+      {frame := sampleFrame, result := .ok (.invalid .outOfRange)} := by
+  exact callableLiteralExpressionAgreement 7 .lp64 [] [] sampleFrame 2147483648
+    (signed 2147483648) intType intType rfl rfl
+
+private def literalReadWitness (n : Nat) : Bool :=
+  let value : IntegralValue := ⟨.signed 32, n⟩
+  let expression : TypedCallableExpression := {
+    expression := .integer n, sourceType := intType, type := intType}
+  let object := evaluateCallableObjectExpression 8 .lp64 sampleFrame expression
+  match evaluateCallableExpression 8 .lp64 [] [] expression, object.result with
+  | .ok (.ok a, []), .ok (.ok b) =>
+      a == value && b == value && object.frame == sampleFrame
+  | _, _ => false
+
+def callableLiteralExpressionAgreementWitness : Bool :=
+  [0, 7, 2147483647].all literalReadWitness
+
+#guard callableLiteralExpressionAgreementWitness
+
 end LeanModels.Cpp.CallableRefinementTests

@@ -20192,5 +20192,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-literal-expression-agreement",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableLiteralExpressionAgreementWitness",
+    "cpp_source": "int zero_value() { return 0; } int seven_value() { return 7; } int max_value() { return 2147483647; } bool callable_witness() { return zero_value() == 0 && seven_value() == 7 && max_value() == 2147483647; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

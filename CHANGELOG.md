@@ -105,6 +105,9 @@
 - Proved a symbolic parameter-expression agreement case for related value
   arguments and object-frame reads.
 
+- Proved literal-expression agreement for matching formats, including invalid
+  results and preservation of both evaluator states.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

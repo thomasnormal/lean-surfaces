@@ -5,6 +5,26 @@ namespace LeanModels.Cpp
 
 open CallableObjectEvaluation
 
+/-- Related literal evaluations return the same integral result, including
+invalid values, and preserve the argument list and object frame. The source
+literal and result type must resolve to the stated common format. -/
+theorem callableLiteralExpressionAgreement (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments : List IntegralValue)
+    (frame : IntegralObjectFrame) (n : Nat) (value : IntegralValue)
+    (sourceType resultType : CppTypeEvidence)
+    (hsource : integralLiteralOfEvidence profile sourceType n = .ok value)
+    (hresult : integralFormatOfEvidence profile resultType = .ok value.format) :
+    let expression : TypedCallableExpression :=
+      {expression := .integer n, sourceType := sourceType, type := resultType}
+    evaluateCallableExpression (fuel + 1) profile parameters arguments expression =
+      .ok (integralConvert value.format value, arguments) ∧
+    evaluateCallableObjectExpression (fuel + 1) profile frame expression =
+      {frame := frame, result := .ok (integralConvert value.format value)} := by
+  exact ⟨evaluateCallableExpression_literal fuel profile parameters arguments n value
+    sourceType resultType hsource,
+    evaluateCallableObjectExpression_literal fuel profile frame n value sourceType resultType
+      hsource hresult⟩
+
 /-- A related value argument and object-frame read have the same parameter
 expression result and preserve their respective states. The frame-read premise
 is the relation between the two representations; it is not established by

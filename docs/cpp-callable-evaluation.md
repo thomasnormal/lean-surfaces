@@ -76,6 +76,12 @@ The concrete test initializes a frame and discharges those premises. Relating
 frame initialization, errors and the remaining expression and statement cases
 is still required for a whole-call refinement theorem.
 
+`callableLiteralExpressionAgreement` relates literal expressions for any
+profile, parameter list, arguments and object frame when source and result
+formats agree. It preserves both states and covers invalid results as well as
+valid values. Invalid manually constructed literals used in the Lean test are
+not claimed to be admitted C++ programs.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

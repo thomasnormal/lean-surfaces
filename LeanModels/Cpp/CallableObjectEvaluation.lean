@@ -249,6 +249,20 @@ def evaluateCallableObjectExpression (fuel : Nat) (profile : TargetProfile)
     Outcome (IntegralResult IntegralValue) :=
   evalExpression fuel profile frame expression
 
+/-- A literal preserves the frame and converts the constructed value to the
+selected result format. -/
+theorem evaluateCallableObjectExpression_literal (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (n : Nat) (value : IntegralValue)
+    (sourceType resultType : CppTypeEvidence)
+    (hsource : integralLiteralOfEvidence profile sourceType n = .ok value)
+    (hresult : integralFormatOfEvidence profile resultType = .ok value.format) :
+    evaluateCallableObjectExpression (fuel + 1) profile frame
+      {expression := .integer n, sourceType := sourceType, type := resultType} =
+      {frame := frame, result := .ok (integralConvert value.format value)} := by
+  simp [evaluateCallableObjectExpression, evalExpression, literalValue, hsource, success,
+    convertTo, integralConvertOfEvidence, hresult, Except.bind, Bind.bind, Pure.pure,
+    Except.pure, Except.toOption]
+
 /-- A parameter read that the frame resolves to a valid value of the selected
 format returns that value without changing the frame. -/
 theorem evaluateCallableObjectExpression_parameter (fuel : Nat) (profile : TargetProfile)

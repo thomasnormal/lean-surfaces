@@ -434,6 +434,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         pure (.ntuple starArgValueName #[] xs.toArray)
     | _ => refuse "internal: <star-arg> expects one positional argument"
   else if fname == "len" then
+    let st ← get
+    let _ ← liftRes (builtinLenRecursionCheck st.world.callDepth)
     match vs with
     | [v] => lenM v
     | _ => raisePy (.typeError s!"len() takes exactly one argument ({vs.length} given)")
@@ -1233,6 +1235,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     -- faithful TypeErrors, preserving Python's order.
                     let _ ← evalOpenCallList (K, m, args.toList)
                     let _ ← K.kwArgs kwargs.toList
+                    if name == "len" then
+                      let st ← get
+                      let _ ← liftRes (builtinLenRecursionCheck st.world.callDepth)
+                      pure ()
                     raisePy (.typeError (if name == "float" then
                       "float() takes no keyword arguments"
                     else if name == "len" then

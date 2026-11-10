@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Revalidated the string specification; its reported `join_generator` guard
+  now builds successfully.
+
 - Revalidated the generator specification; its reported `squares_upto` guards
   now build successfully.
 

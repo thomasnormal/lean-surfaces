@@ -552,3 +552,6 @@ greater-than-or-equal comparison, with the same kernel reduction and native diff
 
 `callableEvaluatorRefinementLessEqual` carries the relation through a pure
 less-than-or-equal comparison, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementLogicalAnd` carries the relation through pure logical
+conjunction, with the same kernel reduction and native differential coverage.

@@ -191,6 +191,25 @@ than returning a length CPython cannot produce.
 DECIDED: close `py-lenmult-length-only` on this branch and retain the explicit
 allocation-budget refusal until memory outcomes are modeled.
 
+## 2026-11-10-pyfoundation-21 — revalidate set iteration-order admission
+
+The inbox finding `py-set-iteration-order` remains closed by conservative
+table-order admission. Direct nonnegative integer insertion retains the
+modeled CPython order; negative hashes, copied sets, dictionary-source
+construction, and intersection construction refuse before iteration because
+their CPython table sizing and probing are not represented.
+
+| Measurement | Result |
+|---|---|
+| Focused battery | 7 rows: 1 MATCH, 6 documented loud refusals, 0 failures in both interpreters |
+| Admitted row | `iter_order(7)` returns `[8, 7]` like CPython 3.9.25 |
+| Refused rows | `iter_order(-1)`, `iter_order(-5)`, copy, dictionary-source (small/wide), intersection |
+| Script witness | `print_set.py --compare`: `3` and `{1, 2, 3}`, MATCH |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-set-iteration-order` on this branch; retain loud refusal
+for unmodeled hash-table construction and iteration paths.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

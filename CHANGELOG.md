@@ -113,6 +113,10 @@
 - Added a pinned 64-bit `Py_ssize_t` narrowing boundary for huge list indices
   and oversized range lengths; those operations now refuse loudly.
 
+- Added the foundation protocol census covering comparison, hashing, index,
+  float conversion, iteration, sizing, rendering, recursion, operator, builtin,
+  and method dispatch across both Python interpreter surfaces.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

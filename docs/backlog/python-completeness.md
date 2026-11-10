@@ -10897,6 +10897,27 @@ or length operations.
 DECIDED: keep the 64-bit narrowing refusal until the complete
 `PyNumber_AsSsize_t`/`_PyEval_SliceIndex` protocol and messages are modeled.
 
+## 2026-11-10-pyfoundation-2 — protocol census
+
+Foundation step 2 records the protocol census in
+`docs/python-protocol-census.md`. It covers the shared CPython protocol
+workers, every operator family, the complete builtin inventory in
+`Monadic.Eval.applyBuiltin`, and the dict/list/string/float/instance method
+plans in both interpreter surfaces. It explicitly marks the remaining
+abstractions: typed raising versus clamping index conversion, platform `pow`,
+and recursion units beyond `callIn`.
+
+| Measurement | Result |
+|---|---|
+| Protocol families | 13 C-level protocol rows |
+| Operator families | arithmetic, unary, comparison, identity, membership |
+| Builtins | 25 named/synthetic dispatch arms |
+| Methods | dict, list, str, float, instance/namedtuple plans |
+| Semantic change | none; census and work-list only |
+
+DECIDED: use the census as the protocol work list; implement one shared
+protocol at a time, with proof transport appended after each semantic step.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

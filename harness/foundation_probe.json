@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "d113c03374212eea656bd077af22d22d5bbd48e5ff04bb4e02ee8dd05c769db3",
+  "source_sha256": "8756a876d6b303f97f63b37af496bdfa7a1483314cc460c0877b684c8092c498",
   "module": {
     "kind": "Module",
     "body": [
@@ -3419,6 +3419,482 @@
               "value": {
                 "type": "int",
                 "repr": "1"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 141,
+          "col_offset": 0,
+          "end_lineno": 142,
+          "end_col_offset": 31
+        },
+        "name": "negative_pow_exponent_overflow",
+        "args": [
+          {
+            "arg": "base",
+            "span": {
+              "lineno": 141,
+              "col_offset": 35,
+              "end_lineno": 141,
+              "end_col_offset": 39
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 142,
+              "col_offset": 4,
+              "end_lineno": 142,
+              "end_col_offset": 31
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 142,
+                "col_offset": 11,
+                "end_lineno": 142,
+                "end_col_offset": 31
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 142,
+                  "col_offset": 11,
+                  "end_lineno": 142,
+                  "end_col_offset": 15
+                },
+                "id": "base"
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 142,
+                  "col_offset": 19,
+                  "end_lineno": 142,
+                  "end_col_offset": 31
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 142,
+                    "col_offset": 21,
+                    "end_lineno": 142,
+                    "end_col_offset": 30
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 142,
+                      "col_offset": 21,
+                      "end_lineno": 142,
+                      "end_col_offset": 22
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 142,
+                      "col_offset": 26,
+                      "end_lineno": 142,
+                      "end_col_offset": 30
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1100"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 145,
+          "col_offset": 0,
+          "end_lineno": 146,
+          "end_col_offset": 29
+        },
+        "name": "negative_pow_exponent_boundary",
+        "args": [
+          {
+            "arg": "shift",
+            "span": {
+              "lineno": 145,
+              "col_offset": 35,
+              "end_lineno": 145,
+              "end_col_offset": 40
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 146,
+              "col_offset": 4,
+              "end_lineno": 146,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 146,
+                "col_offset": 11,
+                "end_lineno": 146,
+                "end_col_offset": 29
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 146,
+                  "col_offset": 11,
+                  "end_lineno": 146,
+                  "end_col_offset": 12
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 146,
+                  "col_offset": 16,
+                  "end_lineno": 146,
+                  "end_col_offset": 29
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 146,
+                    "col_offset": 18,
+                    "end_lineno": 146,
+                    "end_col_offset": 28
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 146,
+                      "col_offset": 18,
+                      "end_lineno": 146,
+                      "end_col_offset": 19
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 146,
+                      "col_offset": 23,
+                      "end_lineno": 146,
+                      "end_col_offset": 28
+                    },
+                    "id": "shift"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 149,
+          "col_offset": 0,
+          "end_lineno": 150,
+          "end_col_offset": 35
+        },
+        "name": "negative_pow_base_overflow",
+        "args": [
+          {
+            "arg": "exponent",
+            "span": {
+              "lineno": 149,
+              "col_offset": 31,
+              "end_lineno": 149,
+              "end_col_offset": 39
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 150,
+              "col_offset": 4,
+              "end_lineno": 150,
+              "end_col_offset": 35
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 150,
+                "col_offset": 11,
+                "end_lineno": 150,
+                "end_col_offset": 35
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 150,
+                  "col_offset": 12,
+                  "end_lineno": 150,
+                  "end_col_offset": 21
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 150,
+                    "col_offset": 12,
+                    "end_lineno": 150,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 150,
+                    "col_offset": 17,
+                    "end_lineno": 150,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
+                  }
+                }
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 150,
+                  "col_offset": 26,
+                  "end_lineno": 150,
+                  "end_col_offset": 35
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 150,
+                    "col_offset": 27,
+                    "end_lineno": 150,
+                    "end_col_offset": 35
+                  },
+                  "id": "exponent"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 153,
+          "col_offset": 0,
+          "end_lineno": 154,
+          "end_col_offset": 29
+        },
+        "name": "float_pow_base_overflow",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 154,
+              "col_offset": 4,
+              "end_lineno": 154,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 154,
+                "col_offset": 11,
+                "end_lineno": 154,
+                "end_col_offset": 29
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 154,
+                  "col_offset": 12,
+                  "end_lineno": 154,
+                  "end_col_offset": 21
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 154,
+                    "col_offset": 12,
+                    "end_lineno": 154,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 154,
+                    "col_offset": 17,
+                    "end_lineno": 154,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
+                  }
+                }
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 154,
+                  "col_offset": 26,
+                  "end_lineno": 154,
+                  "end_col_offset": 29
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "4607182418800017408"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 157,
+          "col_offset": 0,
+          "end_lineno": 158,
+          "end_col_offset": 30
+        },
+        "name": "float_pow_exponent_overflow",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 158,
+              "col_offset": 4,
+              "end_lineno": 158,
+              "end_col_offset": 30
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 158,
+                "col_offset": 11,
+                "end_lineno": 158,
+                "end_col_offset": 30
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 158,
+                  "col_offset": 11,
+                  "end_lineno": 158,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "0"
+                }
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 158,
+                  "col_offset": 18,
+                  "end_lineno": 158,
+                  "end_col_offset": 30
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 158,
+                    "col_offset": 20,
+                    "end_lineno": 158,
+                    "end_col_offset": 29
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 158,
+                      "col_offset": 20,
+                      "end_lineno": 158,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 158,
+                      "col_offset": 25,
+                      "end_lineno": 158,
+                      "end_col_offset": 29
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1100"
+                    }
+                  }
+                }
               }
             }
           }

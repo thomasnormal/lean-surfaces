@@ -136,3 +136,23 @@ def gen_capture_del():
 def gen_iter_deferred(value):
     g = (x for x in value)
     return 1
+
+
+def negative_pow_exponent_overflow(base):
+    return base ** -(1 << 1100)
+
+
+def negative_pow_exponent_boundary(shift):
+    return 0 ** -(1 << shift)
+
+
+def negative_pow_base_overflow(exponent):
+    return (1 << 1100) ** -exponent
+
+
+def float_pow_base_overflow():
+    return (1 << 1100) ** 1.0
+
+
+def float_pow_exponent_overflow():
+    return 0.0 ** -(1 << 1100)

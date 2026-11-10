@@ -109,6 +109,22 @@ DECIDED: close `py-genexp-capture-census` on this branch and retain
 conservative loudness for uncertified captures until native generator-
 expression nodes replace the lowering.
 
+## 2026-11-10-pyfoundation-15 — revalidate genexp creation-time iteration
+
+The inbox finding `py-genexp-iter-deferred` is already closed. The synthesized
+generator-expression path validates the outer iterable at creation, while user
+generator functions remain lazy; the dictionary cursor is seeded only on the
+genexp path where CPython creates it eagerly.
+
+| Measurement | Result |
+|---|---|
+| Scalar outer source | `genexp_iter_creation.py`: MATCH CPython 3.9.25 `TypeError`, exit 1 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-iter-deferred` on this branch and retain the
+genexp-only creation guard until native generator-expression nodes replace the
+lowering.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

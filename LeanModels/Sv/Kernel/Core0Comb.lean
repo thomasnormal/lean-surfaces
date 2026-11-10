@@ -24,7 +24,7 @@ slice of a **transport theorem** to Design2's `combSettle2`.
 
 * `exec_closes` / `slot_closes`: under the profile (`Profile0`, debt D-X1a)
   and a rank certificate (`Acyclic`), from every configuration satisfying the
-  settle invariant (`SettleInv`), EVERY legal schedule closes the slot, and the
+  settle invariant (`SettleInv`), EVERY process-atomic legal schedule closes the slot, and the
   executor closes it within `potential + 1` steps. The measure is explicit:
   `potential N rank c = Σ_{q ∈ c.active} (N+1)^(N − rank q)` (`step_decreases`).
 * `SlotCloses.combEqs`: the closed store solves the equations (`CombEqs`) and
@@ -636,7 +636,7 @@ theorem Settles.step_decreases {E : Elab} {d : Design2} {rank : Nat → Nat} {ch
   simp only [wsum]
   exact Nat.lt_of_lt_of_le (Nat.add_lt_add_left hlt _) (Nat.le_of_eq (Nat.add_comm _ _))
 
-/-! ## The slot closes, under every legal schedule -/
+/-! ## The slot closes, under every process-atomic legal schedule -/
 
 /-- The executor closes the slot within any budget above the measure. -/
 theorem Settles.exec_closes_of_lt {E : Elab} {d : Design2} {rank : Nat → Nat}
@@ -653,13 +653,13 @@ theorem Settles.exec_closes_of_lt {E : Elab} {d : Design2} {rank : Nat → Nat}
           obtain ⟨c', hc'⟩ := hS.exec_closes_of_lt ch m c₁ (by omega) hI₁
           exact ⟨c', by simp only [exec, hstep]; exact hc'⟩
 
-/-- **Every legal schedule closes the slot within `potential + 1` steps.** -/
+/-- **Every process-atomic legal schedule closes the slot within `potential + 1` steps.** -/
 theorem Settles.exec_closes {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles E d rank)
     (ch : Choice) {c : Config} (hI : SettleInv E d c) :
     ∃ c', exec E ch (potential E.procs.size rank c + 1) c = .closed c' :=
   hS.exec_closes_of_lt ch _ c (Nat.lt_succ_self _) hI
 
-/-- **The slot closes** under every legal schedule, and the invariant holds there. -/
+/-- **The slot closes** under every process-atomic legal schedule, and the invariant holds there. -/
 theorem Settles.slot_closes {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles E d rank)
     (ch : Choice) {c : Config} (hI : SettleInv E d c) :
     ∃ c', SlotCloses E ch c c' ∧ SettleInv E d c' := by
@@ -731,7 +731,7 @@ theorem combEqs_unique {d : Design2} (hd : CombDesign d) (ha : Acyclic d) {st st
   exact StateShape.eq_of_agree_bits hd hs hs' fun x b =>
     (key d.processes.size).2 x b fun j _ hW _ => hlt j (lt_of_writes hW)
 
-/-- **Schedule independence**: any two legal schedules close the slot at the same
+/-- **Schedule independence**: any two process-atomic legal schedules close the slot at the same
 store (its view; the view determines every declared variable). -/
 theorem Settles.schedule_independent {E : Elab} {d : Design2} {rank : Nat → Nat}
     (hS : Settles E d rank) {c c₁ c₂ : Config} {ch₁ ch₂ : Choice} (hI : SettleInv E d c)
@@ -742,7 +742,7 @@ theorem Settles.schedule_independent {E : Elab} {d : Design2} {rank : Nat → Na
   exact combEqs_unique hS.comb hS.acyclic hs₁ hs₂ he₁ he₂ (hf₁.symm.trans hf₂)
 
 /-- **R-COMB-0, generic** (derived from E). From every configuration
-satisfying the settle invariant, under every legal schedule, the slot closes;
+satisfying the settle invariant, under every process-atomic legal schedule, the slot closes;
 the closed store solves `d`'s equations, keeps the undriven bits, and is the
 ONLY shaped solution that does. -/
 theorem Settles.rcomb {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles E d rank)
@@ -858,7 +858,7 @@ theorem step_inv {E : Elab} {ch : Choice} {c c' : Config} (hP : Profile0 E) {ran
   obtain ⟨_, -, hS⟩ := Settles.ofProfile0' hP ⟨rank, hr⟩
   exact hS.step_inv hI h
 
-/-- **Every legal process-atomic schedule closes the slot, within an explicit
+/-- **Every process-atomic legal schedule closes the slot, within an explicit
 bound** (assign-only): for a compressed rank, the executor at budget
 `potential + 1` closes it, for every Choice. -/
 theorem exec_closes {E : Elab} (hP : Profile0 E) (ha : Acyclic E.toDesign2) {c : Config}
@@ -867,7 +867,7 @@ theorem exec_closes {E : Elab} (hP : Profile0 E) (ha : Acyclic E.toDesign2) {c :
   obtain ⟨rank, hr, hS⟩ := Settles.ofProfile0' hP ha
   exact ⟨rank, hr, fun ch => hS.exec_closes ch hI⟩
 
-/-- **The slot closes** under every legal schedule (assign-only). -/
+/-- **The slot closes** under every process-atomic legal schedule (assign-only). -/
 theorem slot_closes {E : Elab} (hP : Profile0 E) (ha : Acyclic E.toDesign2) (ch : Choice)
     {c : Config} (hI : SettleInv E E.toDesign2 c) :
     ∃ c', SlotCloses E ch c c' ∧ SettleInv E E.toDesign2 c' := by

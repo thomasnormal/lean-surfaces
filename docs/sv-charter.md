@@ -8231,7 +8231,7 @@ unobservable*. The SV form is stronger and already shipped:
 
 ```
 m ⊨ P   ≡   ∀ stim σ tr, m / stim ⇓[σ] tr → P stim tr
-Sv.Deterministic m — all schedules give the same observable trace
+Sv.Deterministic m — all process-atomic legal schedules give the same observable trace
 ```
 
 **Every SV theorem is already universally quantified over the schedule
@@ -14253,7 +14253,7 @@ run, at any fuel, IS that assign's write, and the body completes at every fuel
 from the static bound `Stmt2.fuelB` (`symExec_sound` / `symExec_total`, one
 fuel induction over `execStmt2`/`execCase2`/`execStmts2`); a step simulation
 (`CombSim`) lifts that to `Runs2.lowerComb_iff` — a design and its lowering
-have the same completed runs under every schedule whenever the lowering is in
+have the same completed runs under every process-atomic legal schedule whenever the lowering is in
 the comb profile. The settle theorems of `Comb2Sound`/`Comb2Term` therefore
 apply unchanged (`Comb2*.lean` are untouched): `Terminates2.of_lowerComb_acyclic`,
 `Models2.of_combProc` (with `_inputs` / `_pointwise`), the fixpoint

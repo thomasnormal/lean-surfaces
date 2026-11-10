@@ -207,10 +207,12 @@ private theorem length_pos (data : List Int) (hne : data ≠ []) :
   | nil => exact absurd rfl hne
   | cons a l => simp
 
-/-- **Main theorem (`median_high`).** For every nonempty int list,
+/-- **Main theorem (`median_high`).** For every nonempty int list whose length
+fits CPython's pinned 64-bit `Py_ssize_t`,
 CPython's `median_high` — run byte-verbatim through the interpreter —
 terminates and returns the element at sorted rank `⌊n/2⌋`. -/
-theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
+theorem median_high_total (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_high(data) ==>
       (sortInts data).getD (data.length / 2) 0 := by
   have hpos : 0 < data.length := length_pos data hne
@@ -219,6 +221,9 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
   have hnn : ¬((data.length : Int) / 2 < 0) := by omega
   have h0le : (0 : Int) ≤ (data.length : Int) / 2 := by omega
   have hlt : (data.length : Int) / 2 < (data.length : Int) := by omega
+  have hfit : pySsizeFits ((data.length : Int) / 2) = true := by
+    apply (pySsizeFits_iff _).mpr
+    constructor <;> (try simp only [pySsizeMin]) <;> omega
   have htn : (((data.length : Int)) / 2).toNat = data.length / 2 := by omega
   have hq := arrVal_getElem (sortInts data) (data.length / 2)
     (by rw [sortInts_length]; omega)
@@ -237,15 +242,18 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
     data_ne_sorted, data_ne_len,
+    normIndexRaising, pySsizeIndex, hfit,
     hne, hfd, hnn, h0le, hlt, htn, hq, pythonTopCallDepth,
     pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
 
-/-- **Main theorem (`median_low`).** For every nonempty int list,
+/-- **Main theorem (`median_low`).** For every nonempty int list whose length
+fits CPython's pinned 64-bit `Py_ssize_t`,
 CPython's `median_low` terminates and returns the element at sorted rank
 `⌊(n−1)/2⌋` — for odd `n` this is the middle rank `n/2` (`n//2` odd =
 `(n−1)/2`), for even `n` the lower middle `n/2 − 1` (= `(n−1)/2`), so one
 rank expression covers both vendored branches. -/
-theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
+theorem median_low_total (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_low(data) ==>
       (sortInts data).getD ((data.length - 1) / 2) 0 := by
   have hpos : 0 < data.length := length_pos data hne
@@ -262,6 +270,9 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have hnn : ¬((data.length : Int) / 2 < 0) := by omega
     have h0le : (0 : Int) ≤ (data.length : Int) / 2 := by omega
     have hlt : (data.length : Int) / 2 < (data.length : Int) := by omega
+    have hfit : pySsizeFits ((data.length : Int) / 2) = true := by
+      apply (pySsizeFits_iff _).mpr
+      constructor <;> (try simp only [pySsizeMin]) <;> omega
     have htn : (((data.length : Int)) / 2).toNat = (data.length - 1) / 2 := by
       omega
     py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
@@ -278,6 +289,7 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
     data_ne_sorted, data_ne_len,
+      normIndexRaising, pySsizeIndex, hfit,
       hne, hfd, hpar, hnn, h0le, hlt, htn, hq, pythonTopCallDepth,
       pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
   · -- even length: return data[n // 2 - 1], and n//2 − 1 = (n-1)/2
@@ -287,6 +299,9 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have hnn : ¬((data.length : Int) / 2 - 1 < 0) := by omega
     have h1le : (1 : Int) ≤ (data.length : Int) / 2 := by omega
     have hlt : (data.length : Int) / 2 - 1 < (data.length : Int) := by omega
+    have hfit : pySsizeFits ((data.length : Int) / 2 - 1) = true := by
+      apply (pySsizeFits_iff _).mpr
+      constructor <;> (try simp only [pySsizeMin]) <;> omega
     have htn : ((((data.length : Int)) / 2) - 1).toNat = (data.length - 1) / 2 := by
       omega
     py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
@@ -303,6 +318,7 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     Run.timeout_bind, Run.unsupported_bind, Env.lookup, lookupG,
     moduleGlobals, globalsFold, globalsStep, globals_empty, Env.set,
       data_ne_sorted, data_ne_len,
+      normIndexRaising, pySsizeIndex, hfit,
       hne, hfd, hpar, hnn, h1le, hlt, htn, hq, pythonTopCallDepth,
       pythonRecursionLimit, Run.finishCallAt, Run.leaveCallDepth, Run.toPublic_ok]
 
@@ -312,13 +328,14 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
 result is an element of the data, with at least `⌊(n−1)/2⌋ + 1` data
 elements `≤` it and at least `n − ⌊(n−1)/2⌋` data elements `≥` it — the
 order-statistics contract over SYMBOLIC data, not "index into sorted()". -/
-theorem median_low_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
+theorem median_low_rank (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) {r : PyInt}
     (h : bench_statistics.median_low(data) ⇓ r) :
     r ∈ data ∧
       (data.length - 1) / 2 + 1 ≤ data.countP (fun v => decide (v ≤ r)) ∧
       data.length - (data.length - 1) / 2
         ≤ data.countP (fun v => decide (r ≤ v)) := by
-  have htot := median_low_total data hne
+  have htot := median_low_total data hne hsize
   have heq : (ToVal.toVal r : Val)
       = ToVal.toVal ((sortInts data).getD ((data.length - 1) / 2) 0) :=
     CallsTo.eq_of_partialTo h htot.partialTo
@@ -332,13 +349,14 @@ theorem median_low_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
 /-- **Rank characterization (`median_high`, `⇓`-relational)**: at least
 `⌊n/2⌋ + 1` data elements `≤` it, at least `n − ⌊n/2⌋` data elements
 `≥` it. -/
-theorem median_high_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
+theorem median_high_rank (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) {r : PyInt}
     (h : bench_statistics.median_high(data) ⇓ r) :
     r ∈ data ∧
       data.length / 2 + 1 ≤ data.countP (fun v => decide (v ≤ r)) ∧
       data.length - data.length / 2
         ≤ data.countP (fun v => decide (r ≤ v)) := by
-  have htot := median_high_total data hne
+  have htot := median_high_total data hne hsize
   have heq : (ToVal.toVal r : Val)
       = ToVal.toVal ((sortInts data).getD (data.length / 2) 0) :=
     CallsTo.eq_of_partialTo h htot.partialTo
@@ -352,29 +370,32 @@ theorem median_high_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
 /-- **Strengthened partial correctness (`median_low`, `~~>`)**: every run,
 at every fuel, either times out or returns exactly the low median — no
 exception, no `unsupported`, no other value. Free via fuel determinism. -/
-theorem median_low_partial (data : List PyInt) (hne : data ≠ []) :
+theorem median_low_partial (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_low(data) ~~>
       (sortInts data).getD ((data.length - 1) / 2) 0 :=
-  (median_low_total data hne).partialTo
+  (median_low_total data hne hsize).partialTo
 
 /-- **Strengthened partial correctness (`median_high`, `~~>`)**. -/
-theorem median_high_partial (data : List PyInt) (hne : data ≠ []) :
+theorem median_high_partial (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_high(data) ~~>
       (sortInts data).getD (data.length / 2) 0 :=
-  (median_high_total data hne).partialTo
+  (median_high_total data hne hsize).partialTo
 
 /-- **Low ≤ high**: on the same data, any observed `median_low` result is
 `≤` any observed `median_high` result (ranks `⌊(n−1)/2⌋ ≤ ⌊n/2⌋` in an
 ascending list). -/
 theorem median_low_le_median_high (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     {lo hi : PyInt} (hlo : bench_statistics.median_low(data) ⇓ lo)
     (hhi : bench_statistics.median_high(data) ⇓ hi) :
     lo ≤ hi := by
   have hpos : 0 < data.length := length_pos data hne
   have hloEq : lo = (sortInts data).getD ((data.length - 1) / 2) 0 := by
-    simpa using CallsTo.eq_of_partialTo hlo (median_low_partial data hne)
+    simpa using CallsTo.eq_of_partialTo hlo (median_low_partial data hne hsize)
   have hhiEq : hi = (sortInts data).getD (data.length / 2) 0 := by
-    simpa using CallsTo.eq_of_partialTo hhi (median_high_partial data hne)
+    simpa using CallsTo.eq_of_partialTo hhi (median_high_partial data hne hsize)
   subst hloEq hhiEq
   exact sorted_getD (sortInts_pairwise data) (by omega)
     (by rw [sortInts_length]; omega)
@@ -382,17 +403,19 @@ theorem median_low_le_median_high (data : List PyInt) (hne : data ≠ [])
 /-- **Pre-sorted input (`median_low`)**: on already-ascending data the low
 median is literally `data[(n−1)/2]` (`sortInts` fixpoint). -/
 theorem median_low_presorted (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     (hs : data.Pairwise (· ≤ ·)) :
     bench_statistics.median_low(data) ==>
       data.getD ((data.length - 1) / 2) 0 := by
-  have h := median_low_total data hne
+  have h := median_low_total data hne hsize
   rwa [sortInts_of_pairwise hs] at h
 
 /-- **Pre-sorted input (`median_high`)**: `data[n/2]`. -/
 theorem median_high_presorted (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     (hs : data.Pairwise (· ≤ ·)) :
     bench_statistics.median_high(data) ==> data.getD (data.length / 2) 0 := by
-  have h := median_high_total data hne
+  have h := median_high_total data hne hsize
   rwa [sortInts_of_pairwise hs] at h
 
 end Examples.python.bench_statistics.proof

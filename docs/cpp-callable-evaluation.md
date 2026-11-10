@@ -528,3 +528,6 @@ disjunction, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementBitXor` carries the relation through pure bitwise
 exclusive-or, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementShiftLeft` carries the relation through pure left
+shift, with the same kernel reduction and native differential coverage.

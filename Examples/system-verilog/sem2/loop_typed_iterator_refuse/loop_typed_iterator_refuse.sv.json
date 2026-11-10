@@ -252,7 +252,30 @@
                           "resolved_width": 8
                         }
                       },
-                      "signed": true
+                      "signed": true,
+                      "lifetime": "automatic",
+                      "lexical_path": "loop_typed_iterator_refuse.i",
+                      "hierarchical_path": "loop_typed_iterator_refuse.i",
+                      "decl_type": {
+                        "kind": "PackedType",
+                        "packed": [
+                          {
+                            "msb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 7,
+                              "resolved_width": null
+                            },
+                            "lsb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 0,
+                              "resolved_width": null
+                            }
+                          }
+                        ],
+                        "resolved": 8
+                      }
                     },
                     {
                       "kind": "Unsupported",
@@ -265,7 +288,13 @@
                       "sv_kind": "ForLoopStatement",
                       "text": "for (byte i = 100; i < N + 124; i += 30)\n      q[0] = d[0];"
                     }
-                  ]
+                  ],
+                  "scope": {
+                    "name": "",
+                    "lexical_path": "loop_typed_iterator_refuse",
+                    "hierarchical_path": "loop_typed_iterator_refuse",
+                    "default_lifetime": "static"
+                  }
                 }
               ]
             }

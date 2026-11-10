@@ -202,7 +202,41 @@
                   "name": "t",
                   "width": 4,
                   "two_state": false,
-                  "init": null
+                  "init": null,
+                  "symbolic_local_retained": true,
+                  "lifetime": "static",
+                  "lexical_path": "blocking_local_always_ff_step11.capture.t",
+                  "hierarchical_path": "blocking_local_always_ff_step11.capture.t",
+                  "decl_type": {
+                    "kind": "PackedType",
+                    "packed": [
+                      {
+                        "msb": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 12,
+                            "col": 16,
+                            "end_line": 12,
+                            "end_col": 17
+                          },
+                          "value": 3,
+                          "resolved_width": null
+                        },
+                        "lsb": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 12,
+                            "col": 18,
+                            "end_line": 12,
+                            "end_col": 19
+                          },
+                          "value": 0,
+                          "resolved_width": null
+                        }
+                      }
+                    ],
+                    "resolved": 4
+                  }
                 },
                 {
                   "kind": "BlockingAssign",
@@ -339,7 +373,13 @@
                     "name": "t"
                   }
                 }
-              ]
+              ],
+              "scope": {
+                "name": "capture",
+                "lexical_path": "blocking_local_always_ff_step11.capture",
+                "hierarchical_path": "blocking_local_always_ff_step11.capture",
+                "default_lifetime": "static"
+              }
             }
           }
         ],

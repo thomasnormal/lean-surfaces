@@ -20024,5 +20024,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-refinement-less-than",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorRefinementLessThanWitness",
+    "cpp_source": "bool less_than_refinement_witness(int value) { return value < 10; } bool callable_witness() { return less_than_refinement_witness(7); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

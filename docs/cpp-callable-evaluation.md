@@ -534,3 +534,6 @@ shift, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementShiftRight` carries the relation through pure right
 shift, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementLessThan` carries the relation through a pure
+less-than comparison, with the same kernel reduction and native differential coverage.

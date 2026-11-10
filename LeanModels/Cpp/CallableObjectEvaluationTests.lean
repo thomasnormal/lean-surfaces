@@ -42222,4 +42222,27 @@ def callableEvaluatorRefinementShiftRightWitness : Bool :=
 
 #guard callableEvaluatorRefinementShiftRightWitness
 
+private def callableEvaluatorRefinementLessThanFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}
+      {expression := .integer 10,
+        sourceType := intType, type := intType}
+      , sourceType := .builtin .boolean, type := .builtin .boolean}}
+
+theorem callableEvaluatorRefinementLessThan :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementLessThanFunction [signed 7]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLessThanFunction [signed 7]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementLessThanWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementLessThanFunction [signed 7]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLessThanFunction [signed 7]).toOption
+
+#guard callableEvaluatorRefinementLessThanWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

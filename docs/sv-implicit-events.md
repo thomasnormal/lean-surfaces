@@ -8,9 +8,15 @@ in the set, while identifiers used only by nested timing controls are excluded.
 
 ## The retained sensitivity path
 
-`AlwaysImplicit` stores the inferred read set and retained body in the same
-timed process table as the other concurrent processes. It runs once at time
-zero, becomes dormant, and wakes when a read signal changes. Blocking writes
+The legacy timed loader's `AlwaysImplicit` stores a read set and retained
+body in the same process table as the other concurrent processes. It starts
+the body ready, runs once at time zero, becomes dormant, and wakes when a read signal changes.
+That initial run is legacy execution debt: IEEE `@*` first waits for an
+event, unlike `always_comb`. The [Step 11 source fixtures](sv-e-step11-always-star.md)
+isolate startup without input-port propagation and agree in both simulators.
+They also record the distinct port-startup observations without claiming E
+execution. This older executor is not the E meaning of implicit controls.
+Blocking writes
 publish after each statement and NBA commits publish through the same edge
 queue, so two changes in one time slot are observable without a second
 scheduler. Empty bodies remain loud, as do event lists, `iff`, and level waits

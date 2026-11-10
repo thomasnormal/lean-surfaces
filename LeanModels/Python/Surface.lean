@@ -765,17 +765,25 @@ macro "py_prove" "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic 
     (intros
      first
        | (refine ⟨32, ?_⟩
-          py_simp [callFunction, callIn, $extra,*]
+          py_simp [callFunction, callIn, evalBinOpH, setLikeRefH,
+            pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+            Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB, $extra,*]
           first
             | done
             | split <;> py_simp <;> omega
             | omega
           done)
        | (refine CallsTo.intro 32 ?_
-          py_simp [callFunction, callIn, $extra,*]
+          py_simp [callFunction, callIn, evalBinOpH, setLikeRefH,
+            pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+            Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB, $extra,*]
           done)
-       | refine ⟨32, ?_⟩ <;> py_simp [callFunction, callIn, $extra,*]
-       | (py_simp [callFunction, callIn, $extra,*]
+       | refine ⟨32, ?_⟩ <;> py_simp [callFunction, callIn, evalBinOpH, setLikeRefH,
+           pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+           Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB, $extra,*]
+       | (py_simp [callFunction, callIn, evalBinOpH, setLikeRefH,
+            pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
+            Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB, $extra,*]
           all_goals try (first | rfl | omega))
      py_prove_residual_guard))
 

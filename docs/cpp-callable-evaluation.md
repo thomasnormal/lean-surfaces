@@ -503,3 +503,7 @@ row exercises the same witness through the native oracle.
 `callableEvaluatorRefinementParameter` extends that seam through argument
 binding and a parameter read; it also reduces by `rfl` and has its own native
 differential row.
+
+`callableEvaluatorRefinementBinary` carries the relation through a pure
+parameter-plus-literal expression, again with a kernel `rfl` proof and a native
+differential row.

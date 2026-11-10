@@ -41994,4 +41994,27 @@ def callableEvaluatorRefinementParameterWitness : Bool :=
 
 #guard callableEvaluatorRefinementParameterWitness
 
+private def callableEvaluatorRefinementBinaryFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .binary "+"
+      {expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}
+      {expression := .integer 3,
+        sourceType := intType, type := intType}
+      , sourceType := intType, type := intType}}
+
+theorem callableEvaluatorRefinementBinary :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementBinaryFunction [signed 7]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementBinaryFunction [signed 7]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementBinaryWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementBinaryFunction [signed 7]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementBinaryFunction [signed 7]).toOption
+
+#guard callableEvaluatorRefinementBinaryWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

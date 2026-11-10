@@ -132,4 +132,78 @@ theorem callableParameterExpressionAgreement (fuel : Nat) (profile : TargetProfi
   · exact evaluateCallableObjectExpression_parameter fuel profile frame declaration value
       sourceType resultType hread hresult hvalid
 
+/-- Derivations of a supported expression evaluation. A parameter rule
+requires the explicit relation between the value list and the frame. -/
+inductive CallableExpressionDerivation (profile : TargetProfile) (parameters : List CallableParameter) :
+    Nat → List IntegralValue → IntegralObjectFrame → TypedCallableExpression →
+    IntegralResult IntegralValue → List IntegralValue → IntegralObjectFrame → Prop where
+  | literal (fuel : Nat) (arguments : List IntegralValue) (frame : IntegralObjectFrame)
+      (n : Nat) (value : IntegralValue) (sourceType resultType : CppTypeEvidence)
+      (hsource : integralLiteralOfEvidence profile sourceType n = .ok value)
+      (hformat : integralFormatOfEvidence profile resultType = .ok value.format) :
+      CallableExpressionDerivation profile parameters (fuel + 1) arguments frame
+        {expression := .integer n, sourceType := sourceType, type := resultType}
+        (integralConvert value.format value) arguments frame
+  | parameter (fuel : Nat) (arguments : List IntegralValue) (frame : IntegralObjectFrame)
+      (declaration : FrontendHandle) (index : Nat) (param : CallableParameter)
+      (value : IntegralValue) (sourceType resultType : CppTypeEvidence)
+      (hidx : parameters.findIdx? (fun p => p.declaration == declaration) = some index)
+      (hp : parameters[index]? = some param) (ha : arguments[index]? = some value)
+      (hparam : integralFormatOfEvidence profile param.type = .ok value.format)
+      (hresult : integralFormatOfEvidence profile resultType = .ok value.format)
+      (hvalid : value.invalid? = none)
+      (hread : frame.evaluate 1 (.read declaration) = {frame := frame, result := .ok (.ok value)}) :
+      CallableExpressionDerivation profile parameters (fuel + 2) arguments frame
+        {expression := .parameter declaration, sourceType := sourceType, type := resultType}
+        (.ok value) arguments frame
+  | convert (fuel : Nat) (arguments arguments' : List IntegralValue)
+      (frame frame' : IntegralObjectFrame) (operand : TypedCallableExpression)
+      (sourceType resultType : CppTypeEvidence) (fmt : IntegralFormat)
+      (result : IntegralResult IntegralValue)
+      (operandDerivation : CallableExpressionDerivation profile parameters fuel arguments frame operand result arguments' frame')
+      (hformat : integralFormatOfEvidence profile resultType = .ok fmt) :
+      CallableExpressionDerivation profile parameters (fuel + 1) arguments frame
+        {expression := .convert operand, sourceType := sourceType, type := resultType}
+        (bindIntegralResultValue result (integralConvert fmt)) arguments' frame'
+  | conditional (fuel : Nat) (arguments afterCondition afterBranch : List IntegralValue)
+      (frame frameAfterCondition frameAfterBranch : IntegralObjectFrame)
+      (condition whenTrue whenFalse : TypedCallableExpression)
+      (sourceType resultType : CppTypeEvidence) (value : IntegralValue)
+      (result : IntegralResult IntegralValue)
+      (conditionDerivation : CallableExpressionDerivation profile parameters fuel arguments frame condition
+        (.ok value) afterCondition frameAfterCondition)
+      (branchDerivation : CallableExpressionDerivation profile parameters fuel afterCondition frameAfterCondition
+        (if value.value == 0 then whenFalse else whenTrue) result afterBranch frameAfterBranch) :
+      CallableExpressionDerivation profile parameters (fuel + 1) arguments frame
+        {expression := .conditional condition whenTrue whenFalse, sourceType := sourceType, type := resultType}
+        result afterBranch frameAfterBranch
+  | conditionalNonvalue (fuel : Nat) (arguments afterCondition : List IntegralValue)
+      (frame frameAfterCondition : IntegralObjectFrame)
+      (condition whenTrue whenFalse : TypedCallableExpression)
+      (sourceType resultType : CppTypeEvidence) (result : IntegralResult IntegralValue)
+      (hnonvalue : ∀ v, result ≠ .ok v)
+      (conditionDerivation : CallableExpressionDerivation profile parameters fuel arguments frame condition
+        result afterCondition frameAfterCondition) :
+      CallableExpressionDerivation profile parameters (fuel + 1) arguments frame
+        {expression := .conditional condition whenTrue whenFalse, sourceType := sourceType, type := resultType}
+        result afterCondition frameAfterCondition
+
+theorem CallableExpressionDerivation.sound {profile : TargetProfile} {parameters : List CallableParameter}
+    {fuel : Nat} {arguments arguments' : List IntegralValue} {frame frame' : IntegralObjectFrame}
+    {expression : TypedCallableExpression} {result : IntegralResult IntegralValue}
+    (derivation : CallableExpressionDerivation profile parameters fuel arguments frame expression result arguments' frame') :
+    evaluateCallableExpression fuel profile parameters arguments expression = .ok (result, arguments') ∧
+      evaluateCallableObjectExpression fuel profile frame expression = {frame := frame', result := .ok result} := by
+  induction derivation with
+  | literal fuel args frame n value st rt hs hf =>
+      exact callableLiteralExpressionAgreement fuel profile parameters args frame n value st rt hs hf
+  | parameter fuel args frame decl idx param value st rt hi hp ha hf hr hv hd =>
+      exact callableParameterExpressionAgreement fuel profile parameters args frame decl idx param value st rt hi hp ha hf hr hv hd
+  | convert fuel args args' frame frame' operand st rt fmt result derivation hf ih =>
+      exact callableConvertExpressionAgreement fuel profile parameters args args' frame frame' operand st rt fmt result ih.1 ih.2 hf
+  | conditional fuel args mid final frame fm ff cond yes no st rt value result dc db ihc ihb =>
+      exact callableConditionalExpressionAgreement fuel profile parameters args mid final frame fm ff cond yes no st rt value result ihc.1 ihc.2 ihb.1 ihb.2
+  | conditionalNonvalue fuel args mid frame fm cond yes no st rt result hn dc ih =>
+      exact callableConditionalExpressionAgreement_nonvalue fuel profile parameters args mid frame fm cond yes no st rt result hn ih.1 ih.2
+
 end LeanModels.Cpp

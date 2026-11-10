@@ -194,4 +194,77 @@ def callableConditionalExpressionAgreementWitness : Bool :=
 
 #guard callableConditionalExpressionAgreementWitness
 
+private def nestedCondition : TypedCallableExpression := {
+  expression := .integer 1, sourceType := intType, type := intType}
+private def nestedOperand : TypedCallableExpression := {
+  expression := .integer 257, sourceType := intType, type := intType}
+private def nestedTrue : TypedCallableExpression := {
+  expression := .convert nestedOperand, sourceType := intType, type := unsignedCharType}
+private def nestedFalse : TypedCallableExpression := {
+  expression := .convert seventeen, sourceType := intType, type := unsignedCharType}
+private def nestedExpression : TypedCallableExpression := {
+  expression := .conditional nestedCondition nestedTrue nestedFalse,
+  sourceType := unsignedCharType, type := unsignedCharType}
+
+/-- A nested conditional and conversion is derived structurally, then both
+evaluator results follow from the derivation's soundness theorem. -/
+theorem nestedExpressionDerivation :
+    CallableExpressionDerivation .lp64 [] 9 [] sampleFrame nestedExpression
+      (.ok ⟨.unsigned 8, 1⟩) [] sampleFrame := by
+  apply CallableExpressionDerivation.conditional 8 [] [] [] sampleFrame sampleFrame sampleFrame
+    nestedCondition nestedTrue nestedFalse unsignedCharType unsignedCharType
+    (signed 1) (.ok ⟨.unsigned 8, 1⟩)
+  · exact CallableExpressionDerivation.literal 7 [] sampleFrame 1 (signed 1) intType intType rfl rfl
+  · exact CallableExpressionDerivation.convert 7 [] [] sampleFrame sampleFrame nestedOperand
+      intType unsignedCharType (.unsigned 8) (.ok (signed 257))
+      (CallableExpressionDerivation.literal 6 [] sampleFrame 257 (signed 257) intType intType rfl rfl)
+      rfl
+
+theorem nestedExpressionAgreement :
+    evaluateCallableExpression 9 .lp64 [] [] nestedExpression =
+      .ok (.ok ⟨.unsigned 8, 1⟩, []) ∧
+    evaluateCallableObjectExpression 9 .lp64 sampleFrame nestedExpression =
+      {frame := sampleFrame, result := .ok (.ok ⟨.unsigned 8, 1⟩)} :=
+  nestedExpressionDerivation.sound
+
+/-- A related parameter can also be used as the condition in a derivation. -/
+theorem parameterConditionalDerivation :
+    let zero : TypedCallableExpression := {
+      expression := .integer 0, sourceType := intType, type := intType}
+    CallableExpressionDerivation .lp64 [parameter] 9 [signed (-128)] sampleFrame
+      {expression := .conditional expression seventeen zero, sourceType := intType, type := intType}
+      (.ok (signed 17)) [signed (-128)] sampleFrame := by
+  exact CallableExpressionDerivation.conditional 8 [signed (-128)] [signed (-128)]
+    [signed (-128)] sampleFrame sampleFrame sampleFrame expression seventeen
+    {expression := .integer 0, sourceType := intType, type := intType} intType intType
+    (signed (-128)) (.ok (signed 17))
+    (CallableExpressionDerivation.parameter 6 [signed (-128)] sampleFrame handle 0 parameter
+      (signed (-128)) intType intType rfl rfl rfl rfl rfl rfl rfl)
+    (CallableExpressionDerivation.literal 7 [signed (-128)] sampleFrame 17 (signed 17)
+      intType intType rfl rfl)
+
+/-- The structural rule for a non-value condition does not require either
+unselected branch to have a derivation. -/
+theorem invalidConditionalDerivation :
+    CallableExpressionDerivation .lp64 [] 9 [] sampleFrame
+      {expression := .conditional
+        {expression := .integer 2147483648, sourceType := intType, type := intType}
+        missingParameter missingParameter, sourceType := intType, type := intType}
+      (.invalid .outOfRange) [] sampleFrame := by
+  exact CallableExpressionDerivation.conditionalNonvalue 8 [] [] sampleFrame sampleFrame
+    {expression := .integer 2147483648, sourceType := intType, type := intType}
+    missingParameter missingParameter intType intType (.invalid .outOfRange)
+    (by intro v h; cases h)
+    (CallableExpressionDerivation.literal 7 [] sampleFrame 2147483648
+      (signed 2147483648) intType intType rfl rfl)
+
+def callableNestedDerivationWitness : Bool :=
+  let object := evaluateCallableObjectExpression 9 .lp64 sampleFrame nestedExpression
+  match evaluateCallableExpression 9 .lp64 [] [] nestedExpression, object.result with
+  | .ok (.ok a, []), .ok (.ok b) =>
+      a == ⟨.unsigned 8, 1⟩ && b == ⟨.unsigned 8, 1⟩ && object.frame == sampleFrame
+  | _, _ => false
+
+#guard callableNestedDerivationWitness
+
 end LeanModels.Cpp.CallableRefinementTests

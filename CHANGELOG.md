@@ -114,6 +114,9 @@
 - Proved conditional-expression agreement through the selected branch and
   propagation of non-value conditions.
 
+- Added a structural derivation and soundness theorem for callable literal,
+  parameter, conversion and conditional expression agreement.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

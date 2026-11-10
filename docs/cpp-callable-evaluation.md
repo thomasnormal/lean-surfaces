@@ -98,6 +98,14 @@ The refinement tests apply the rule to a branch that increments a parameter;
 they also check that an invalid constructed condition bypasses failing
 branches. These cases do not establish agreement for outer evaluator errors.
 
+`CallableExpressionDerivation.sound` proves evaluator agreement by induction
+on a derivation for literals, related parameter reads, conversions and
+conditionals. The derivation records the result and both states at each step;
+the parameter rule assumes the frame read corresponds to the argument. It does
+not yet cover other expression forms, outer evaluator errors, or establish that
+every admitted expression has a derivation. The tests build nested derivations
+and use the soundness theorem rather than assuming agreement of their operands.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

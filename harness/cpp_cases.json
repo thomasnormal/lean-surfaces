@@ -20228,5 +20228,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-nested-derivation-soundness",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableNestedDerivationWitness",
+    "cpp_source": "unsigned char nested() { return 1 ? static_cast<unsigned char>(257) : static_cast<unsigned char>(17); } bool callable_witness() { return nested() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

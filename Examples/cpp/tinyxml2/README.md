@@ -174,3 +174,16 @@ complete class paths (recorded as `122,21` and `122,23`), and the base getter wi
 `export_member_getter.lean` at `122,15,24`. All three must come from the same
 capture: frontend handles cannot be combined across independent captures.
 Regenerate the manifest hashes, rebuild the proof and rerun the native controls.
+
+To verify that all five generated literals still match the current exporters,
+set `LEANCPP_TINYXML2_PROBE` to the complete canonical probe captured from the
+pinned source and run:
+
+```sh
+LEANCPP_TINYXML2_PROBE=/outside/the/repo/tinyxml2-probe.json \\
+  python3 extractors/cpp/test_tinyxml2_literals.py
+```
+
+The gate fails when the probe is missing, an exporter fails, a literal differs,
+or a `literal_sha256` pin is stale. It never substitutes default structure
+values for a missing capture.

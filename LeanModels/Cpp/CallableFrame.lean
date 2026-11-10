@@ -204,16 +204,14 @@ private theorem convertArgument_same (profile : TargetProfile) (parameter : Call
   simp [convertArgument, formatFor, builtinIntegralType, htype, hformat, hvalid,
     integralConvert_same_of_valid, Except.bind, Bind.bind, Pure.pure, Except.pure]
 
-/-- If a single builtin parameter starts successfully with a valid value
-already in its selected format, reading it returns that value. -/
-theorem start_singleParameter_read (profile : TargetProfile) (function : CallableFunction) (argument : IntegralValue)
-    (parameter : CallableParameter) (callable : CallableObjectFrame) (kind : CppIntType)
-    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
-    (hformat : profile.format kind = .ok argument.format) (hvalid : argument.invalid? = none)
+
+private theorem start_singleParameter_read_of_convert (profile : TargetProfile) (function : CallableFunction) (argument converted : IntegralValue)
+    (parameter : CallableParameter) (callable : CallableObjectFrame)
+    (hparams : function.parameters = [parameter])
+    (hconv : convertArgument profile parameter argument = .ok converted)
     (hstart : start profile function [argument] = .ok callable) :
     callable.frame.evaluate 1 (.read parameter.declaration) =
-      {frame := callable.frame, result := .ok (.ok argument)} := by
-  have hconv := convertArgument_same profile parameter argument kind htype hformat hvalid
+      {frame := callable.frame, result := .ok (.ok converted)} := by
   cases hp : profile.valid with
   | false => simp [start, hp, Bind.bind, Except.bind, Pure.pure, Except.pure] at hstart
   | true =>
@@ -224,20 +222,56 @@ theorem start_singleParameter_read (profile : TargetProfile) (function : Callabl
     | ok frame =>
       let entered := frame.enterScope.frame
       have hent : frame.enterScope.result = .ok () := rfl
-      cases hd : (entered.declareParameter parameter.declaration parameter.type argument).result with
+      cases hd : (entered.declareParameter parameter.declaration parameter.type converted).result with
       | error reason =>
-        change (frame.enterScope.frame.declareParameter parameter.declaration parameter.type argument).result = .error reason at hd
+        change (frame.enterScope.frame.declareParameter parameter.declaration parameter.type converted).result = .error reason at hd
         simp [start, hp, hparams, convertArguments, hconv, he, hent, initializeParameters, hd,
           Bind.bind, Except.bind, Pure.pure, Except.pure, failure] at hstart
       | ok object =>
-        have hread := IntegralObjectFrame.declareParameter_read entered parameter.declaration parameter.type argument object hd
-        have hd' : (frame.enterScope.frame.declareParameter parameter.declaration parameter.type argument).result = .ok object := hd
-        have hframe : callable.frame = (entered.declareParameter parameter.declaration parameter.type argument).frame := by
+        have hread := IntegralObjectFrame.declareParameter_read entered parameter.declaration parameter.type converted object hd
+        have hd' : (frame.enterScope.frame.declareParameter parameter.declaration parameter.type converted).result = .ok object := hd
+        have hframe : callable.frame = (entered.declareParameter parameter.declaration parameter.type converted).frame := by
           simp [start, hp, hparams, convertArguments, hconv, he, hent, initializeParameters, hd',
             Bind.bind, Except.bind, Pure.pure, Except.pure, success] at hstart
           exact (congrArg CallableObjectFrame.frame hstart).symm
         rw [hframe]
         exact hread
+
+private theorem convertArgument_of_conversion (profile : TargetProfile) (parameter : CallableParameter) (argument converted : IntegralValue)
+    (kind : CppIntType) (fmt : IntegralFormat)
+    (htype : parameter.type = .builtin kind) (hformat : profile.format kind = .ok fmt)
+    (hconvert : integralConvert fmt argument = .ok converted) :
+    convertArgument profile parameter argument = .ok converted := by
+  cases hv : argument.invalid? with
+  | none =>
+      simp [convertArgument, formatFor, builtinIntegralType, htype, hformat, hv, hconvert,
+        Except.bind, Bind.bind, Pure.pure, Except.pure]
+  | some reason => simp [integralConvert, hv] at hconvert
+
+/-- If conversion to a builtin parameter format succeeds, a successful
+single-parameter start reads the converted value from its frame. -/
+theorem start_singleParameter_read_converted (profile : TargetProfile) (function : CallableFunction)
+    (argument converted : IntegralValue) (parameter : CallableParameter) (callable : CallableObjectFrame)
+    (kind : CppIntType) (fmt : IntegralFormat)
+    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
+    (hformat : profile.format kind = .ok fmt) (hconvert : integralConvert fmt argument = .ok converted)
+    (hstart : start profile function [argument] = .ok callable) :
+    callable.frame.evaluate 1 (.read parameter.declaration) =
+      {frame := callable.frame, result := .ok (.ok converted)} := by
+  exact start_singleParameter_read_of_convert profile function argument converted parameter callable
+    hparams (convertArgument_of_conversion profile parameter argument converted kind fmt htype hformat hconvert) hstart
+
+/-- If a single builtin parameter starts successfully with a valid value
+already in its selected format, reading it returns that value. -/
+theorem start_singleParameter_read (profile : TargetProfile) (function : CallableFunction) (argument : IntegralValue)
+    (parameter : CallableParameter) (callable : CallableObjectFrame) (kind : CppIntType)
+    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
+    (hformat : profile.format kind = .ok argument.format) (hvalid : argument.invalid? = none)
+    (hstart : start profile function [argument] = .ok callable) :
+    callable.frame.evaluate 1 (.read parameter.declaration) =
+      {frame := callable.frame, result := .ok (.ok argument)} := by
+  exact start_singleParameter_read_of_convert profile function argument argument parameter callable
+    hparams (convertArgument_same profile parameter argument kind htype hformat hvalid) hstart
 
 end CallableObjectFrame
 

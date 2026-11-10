@@ -83,6 +83,14 @@ lemmas for object storage and parameter declarations. Multiple parameters,
 argument conversions to a different format and whole-call execution remain
 outside this theorem.
 
+`callableSingleParameterConvertedStartAgreement` also covers an argument
+converted to a different builtin parameter format. Given successful conversion
+and callable start, the value evaluator's argument-conversion boundary and
+both parameter-expression evaluators agree on the converted value. Successful
+conversion is proved to produce a valid value in the destination format. This
+still covers one parameter and does not prove callable-start success or
+whole-call execution.
+
 `callableLiteralExpressionAgreement` relates literal expressions for any
 profile, parameter list, arguments and object frame when source and result
 formats agree. It preserves both states and covers invalid results as well as

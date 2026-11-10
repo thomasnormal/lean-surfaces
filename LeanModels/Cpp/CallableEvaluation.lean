@@ -509,6 +509,22 @@ mutual
   termination_by structural fuel
 end
 
+/-- Argument conversion used by the value evaluator before entering a call. -/
+def convertCallableArguments (profile : TargetProfile) (parameters : List CallableParameter)
+    (arguments : List IntegralValue) :
+    Except CallableEvaluationError (IntegralResult (List IntegralValue)) :=
+  convertArguments profile parameters arguments
+
+/-- A single successful conversion is the argument list used by the value
+evaluator for a single-parameter call. -/
+theorem convertCallableArguments_single (profile : TargetProfile) (parameter : CallableParameter)
+    (argument converted : IntegralValue) (fmt : IntegralFormat)
+    (hformat : integralFormatOfEvidence profile parameter.type = .ok fmt)
+    (hconvert : integralConvert fmt argument = .ok converted) :
+    convertCallableArguments profile [parameter] [argument] = .ok (.ok [converted]) := by
+  simp [convertCallableArguments, convertArguments, convertTo, integralConvertOfEvidence,
+    hformat, hconvert, Except.bind, Bind.bind, Except.mapError, Pure.pure, Except.pure]
+
 /-- The value evaluator's expression boundary, including the updated
 parameter values. This is the same evaluator used inside callable bodies. -/
 def evaluateCallableExpression (fuel : Nat) (profile : TargetProfile)

@@ -292,4 +292,36 @@ theorem callableSingleParameterStartAgreement (fuel : Nat) (profile : TargetProf
   exact callableParameterExpressionAgreement fuel profile [parameter] [argument] callable.frame
     parameter.declaration 0 parameter argument sourceType parameter.type hidx rfl rfl hparam hparam hvalid hread
 
+
+/-- Successful argument conversion and callable start establish agreement on
+the single parameter expression, without assuming its frame read. -/
+theorem callableSingleParameterConvertedStartAgreement (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (argument converted : IntegralValue) (parameter : CallableParameter) (callable : CallableObjectFrame)
+    (kind : CppIntType) (fmt : IntegralFormat) (sourceType : CppTypeEvidence)
+    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
+    (hformat : profile.format kind = .ok fmt) (hconvert : integralConvert fmt argument = .ok converted)
+    (hstart : CallableObjectFrame.start profile function [argument] = .ok callable) :
+    let expression : TypedCallableExpression := {
+      expression := .parameter parameter.declaration, sourceType := sourceType, type := parameter.type}
+    convertCallableArguments profile [parameter] [argument] = .ok (.ok [converted]) ∧
+    evaluateCallableExpression (fuel + 2) profile [parameter] [converted] expression =
+      .ok (.ok converted, [converted]) ∧
+    evaluateCallableObjectExpression (fuel + 2) profile callable.frame expression =
+      {frame := callable.frame, result := .ok (.ok converted)} := by
+  obtain ⟨hfmt, hvalid⟩ := integralConvert_ok_valid fmt argument converted hconvert
+  have hparam : integralFormatOfEvidence profile parameter.type = .ok fmt := by
+    simp [integralFormatOfEvidence, integralTypeOfEvidence, htype, hformat]
+  have hparam' : integralFormatOfEvidence profile parameter.type = .ok converted.format := by
+    simpa [hfmt] using hparam
+  have hread := CallableObjectFrame.start_singleParameter_read_converted profile function argument converted
+    parameter callable kind fmt hparams htype hformat hconvert hstart
+  have heq : (parameter.declaration == parameter.declaration) = true := by
+    cases parameter.declaration with
+    | mk v => simp [BEq.beq, instBEqFrontendHandle.beq]
+  have hidx : [parameter].findIdx? (fun p => p.declaration == parameter.declaration) = some 0 := by
+    simp only [List.findIdx?_singleton, heq, ↓reduceIte]
+  refine ⟨convertCallableArguments_single profile parameter argument converted fmt hparam hconvert, ?_⟩
+  exact callableParameterExpressionAgreement fuel profile [parameter] [converted] callable.frame
+    parameter.declaration 0 parameter converted sourceType parameter.type hidx rfl rfl hparam' hparam' hvalid hread
+
 end LeanModels.Cpp

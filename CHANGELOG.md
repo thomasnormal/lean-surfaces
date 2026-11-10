@@ -123,6 +123,9 @@
 - Proved read-after-initialization and used it to establish parameter
   expression agreement after a successful single-parameter callable start.
 
+- Extended single-parameter agreement to successful cross-format argument
+  conversions and proved converted values have valid destination formats.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

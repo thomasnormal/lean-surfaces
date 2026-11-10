@@ -148,6 +148,58 @@ theorem integralConvert_same (value : IntegralValue) :
   | none => simpa [h] using integralConvert_same_of_valid value h
   | some reason => simp [integralConvert, h]
 
+
+/-- Wrapping in a nonzero-width format produces a representable value. -/
+theorem IntegralFormat.contains_wrap (fmt : IntegralFormat) (value : Int) (hw : 0 < fmt.width) :
+    fmt.contains (fmt.wrap value) = true := by
+  cases fmt with
+  | boolean =>
+      by_cases hz : value = 0 <;> simp [IntegralFormat.contains, IntegralFormat.minimum,
+        IntegralFormat.maximum, IntegralFormat.wrap, hz]
+  | unsigned width =>
+      have hp : (0 : Int) < 2 ^ width := Int.pow_pos (by decide)
+      have hlo := Int.emod_nonneg value (Int.ne_of_gt hp)
+      have hhi := Int.emod_lt_of_pos value hp
+      simp [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+        IntegralFormat.wrap]
+      constructor <;> apply decide_eq_true <;> omega
+  | signed width =>
+      have hw' : 0 < width := hw
+      let half : Int := 2 ^ (width - 1)
+      have halfpos : 0 < half := Int.pow_pos (by decide)
+      have poweq : (2 ^ width : Int) = 2 * half := by
+        cases width with
+        | zero => simp at hw'
+        | succ n => simp [half, Int.pow_succ, Int.mul_comm]
+      have hp : (0 : Int) < 2 * half := by omega
+      have hlo := Int.emod_nonneg value (Int.ne_of_gt hp)
+      have hhi := Int.emod_lt_of_pos value hp
+      by_cases hg : value % (2 * half) ≥ half
+      · simp [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+          IntegralFormat.wrap, poweq, hg, half]
+        dsimp [half] at hlo hhi hg
+        omega
+      · simp [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+          IntegralFormat.wrap, poweq, hg, half]
+        dsimp [half] at hlo hhi hg
+        omega
+
+/-- Every successful conversion produces a valid value in the destination format. -/
+theorem integralConvert_ok_valid (fmt : IntegralFormat) (source converted : IntegralValue)
+    (h : integralConvert fmt source = .ok converted) :
+    converted.format = fmt ∧ converted.invalid? = none := by
+  cases hv : source.invalid? with
+  | some reason => simp [integralConvert, hv] at h
+  | none =>
+    by_cases hzero : fmt.width = 0
+    · simp [integralConvert, hv, hzero] at h
+    · have hc : converted = ⟨fmt, fmt.wrap source.value⟩ := by
+        simpa [integralConvert, hv, hzero] using h.symm
+      subst converted
+      have hw : 0 < fmt.width := Nat.pos_of_ne_zero hzero
+      have hrange := IntegralFormat.contains_wrap fmt source.value hw
+      simp [IntegralValue.invalid?, hzero, hrange]
+
 private def integralArithmetic (format : IntegralFormat) (value : Int) : IntegralResult IntegralValue :=
   match format with
   | .boolean => .unsupported .unpromotedBoolean

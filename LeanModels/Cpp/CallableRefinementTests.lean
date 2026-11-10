@@ -112,6 +112,51 @@ def callableLiteralExpressionAgreementWitness : Bool :=
 
 private def unsignedCharType : CppTypeEvidence := .builtin .unsignedChar
 
+private def unsignedParameter : CallableParameter := {
+  declaration := handle, name := some "x", type := unsignedCharType}
+private def unsignedExpression : TypedCallableExpression := {
+  expression := .parameter handle, sourceType := unsignedCharType, type := unsignedCharType}
+private def unsignedFunction : CallableFunction := {
+  occurrence := declaration,
+  signature := {result := unsignedCharType, parameters := [unsignedCharType], variadic := false},
+  parameters := [unsignedParameter], body := .return_ unsignedExpression}
+private def convertedCallable : CallableObjectFrame :=
+  match CallableObjectFrame.start .lp64 unsignedFunction [signed 257] with
+  | .ok callable => callable
+  | .error _ => default
+
+/-- Argument conversion and the frame read both yield the converted value. -/
+theorem sampleConvertedStartAgreement :
+    convertCallableArguments .lp64 [unsignedParameter] [signed 257] =
+      .ok (.ok [⟨.unsigned 8, 1⟩]) ∧
+    evaluateCallableExpression 9 .lp64 [unsignedParameter] [⟨.unsigned 8, 1⟩] unsignedExpression =
+      .ok (.ok ⟨.unsigned 8, 1⟩, [⟨.unsigned 8, 1⟩]) ∧
+    evaluateCallableObjectExpression 9 .lp64 convertedCallable.frame unsignedExpression =
+      {frame := convertedCallable.frame, result := .ok (.ok ⟨.unsigned 8, 1⟩)} := by
+  exact callableSingleParameterConvertedStartAgreement 7 .lp64 unsignedFunction (signed 257)
+    ⟨.unsigned 8, 1⟩ unsignedParameter convertedCallable .unsignedChar (.unsigned 8) unsignedCharType
+    rfl rfl rfl rfl rfl
+
+private def convertedStartWitness (n : Int) : Bool :=
+  let argument := signed n
+  let expected : IntegralValue := ⟨.unsigned 8, n % 256⟩
+  match convertCallableArguments .lp64 [unsignedParameter] [argument],
+      CallableObjectFrame.start .lp64 unsignedFunction [argument] with
+  | .ok (.ok [converted]), .ok callable =>
+      let object := evaluateCallableObjectExpression 9 .lp64 callable.frame unsignedExpression
+      match evaluateCallableExpression 9 .lp64 [unsignedParameter] [converted] unsignedExpression,
+          object.result with
+      | .ok (.ok value, arguments), .ok (.ok objectValue) =>
+          converted == expected && value == expected && objectValue == expected &&
+            arguments == [expected] && object.frame == callable.frame
+      | _, _ => false
+  | _, _ => false
+
+def callableConvertedStartAgreementWitness : Bool :=
+  [-1, 0, 255, 256, 257].all convertedStartWitness
+
+#guard callableConvertedStartAgreementWitness
+
 /-- The conversion rule composes with literal agreement; 257 converts to 1. -/
 theorem sampleConvertExpressionAgreement :
     let operand : TypedCallableExpression := {

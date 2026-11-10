@@ -20264,5 +20264,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-converted-parameter-start-agreement",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableConvertedStartAgreementWitness",
+    "cpp_source": "unsigned char identity(unsigned char x) { return x; } bool callable_witness() { return identity(-1) == 255 && identity(0) == 0 && identity(255) == 255 && identity(256) == 0 && identity(257) == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

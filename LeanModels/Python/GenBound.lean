@@ -307,10 +307,12 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl)
+    (hdepthStable : GenStepsDepthStable m)
+    (hroom : nativeIteratorName fname = true ∨ ¬pythonRecursionFull st₁.world.callDepth)
     (hy : GenYields m
-      ⟨{ st₁.world with heap := st₁.world.heap.push (.generator fname
+      ⟨generatorEntryWorld st₁.world (st₁.world.heap.push (.generator fname
           (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray))
-          [.block f.body.toList] .running) },
+          [.block f.body.toList] .running)) fname,
         markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)⟩
       [.block f.body.toList] ys st') :
     ∃ w', EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
@@ -320,7 +322,7 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
       IterDrains m
         { st₁.world with heap := st₁.world.heap.push (genObj fname f vs.toArray) }
         st₁.world.heap.size ys w' := by
-  obtain ⟨w', hd⟩ := IterDrains.of_genYields ys
+  obtain ⟨w', hd⟩ := IterDrains.of_genYields hdepthStable ys
     { st₁.world with heap := st₁.world.heap.push (genObj fname f vs.toArray) }
     (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray))
     [.block f.body.toList] .created
@@ -329,7 +331,7 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
       [.block f.body.toList] .running)) st'
     (by simpa [genObj] using
       (Heap.get?_push_size st₁.world.heap (genObj fname f vs.toArray)))
-    (Or.inl rfl) (Heap.update_push_size _ _ _) hy
+    (Or.inl rfl) (Heap.update_push_size _ _ _) hroom (by simpa [generatorEntryWorld] using hy)
   exact ⟨w', EvalsIn.genCallIn hlocal hglob hcls hnt hf hargsOk hlocalsOk harity
     hgen hargs hcreate hstar hflat hunbound, hd⟩
 

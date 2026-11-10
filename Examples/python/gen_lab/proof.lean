@@ -650,34 +650,38 @@ yields `k` and moves to configuration `k + 1`. `IterSteps.pureStep` does
 the heap bookkeeping — this generator's own resumption touches only its
 frame, so its two `stepIter` writes collapse onto the slot the allocation
 made. -/
-theorem upto_iter (w : World) (n : Int) (k : Nat) (h : (k : Int) < n) (hdepth : w.callDepth < 999) :
+theorem upto_iter (w : World) (n : Int) (k : Nat) (h : (k : Int) < n) (hdepth : w.callDepth < 998) :
     IterSteps gen_lab (uptoWorld w n k) w.heap.size (some (.int (k : Int)))
       (uptoWorld w n (k + 1)) := by
   cases k with
   | zero =>
     exact IterSteps.pureStep (Heap.get?_push_size _ _) (Or.inl rfl)
-      (Heap.update_push_size _ _ _) (upto_first _ n (by exact_mod_cast h) (by simpa [uptoWorld] using hdepth))
+      (Heap.update_push_size _ _ _) (Or.inr (by simp [pythonRecursionFull, pythonRecursionLimit, uptoWorld]; omega))
+      (upto_first _ n (by exact_mod_cast h) (by simp [generatorEntryWorld, nativeIteratorName, uptoWorld]; omega))
       (Heap.update_push_size _ _ _)
   | succ j =>
     exact IterSteps.pureStep (Heap.get?_push_size _ _) (Or.inr rfl)
       (Heap.update_push_size _ _ _)
-      (upto_resume_step _ n (j : Int) (by omega) (by simpa [uptoWorld] using hdepth)) (Heap.update_push_size _ _ _)
+      (Or.inr (by simp [pythonRecursionFull, pythonRecursionLimit, uptoWorld]; omega))
+      (upto_resume_step _ n (j : Int) (by omega) (by simp [generatorEntryWorld, nativeIteratorName, uptoWorld]; omega)) (Heap.update_push_size _ _ _)
 
 /-- **The exhausting step**: at configuration `k` with nothing left, the
 object reports `none` and is CLOSED — continuation dropped, which is what
 makes every later consumer see zero values. -/
-theorem upto_iter_done (w : World) (n : Int) (k : Nat) (h : ¬ ((k : Int) < n)) (hdepth : w.callDepth < 999) :
+theorem upto_iter_done (w : World) (n : Int) (k : Nat) (h : ¬ ((k : Int) < n)) (hdepth : w.callDepth < 998) :
     IterSteps gen_lab (uptoWorld w n k) w.heap.size Option.none
       (uptoWorldDone w n k) := by
   cases k with
   | zero =>
     exact IterSteps.pureDone (Heap.get?_push_size _ _) (Or.inl rfl)
-      (Heap.update_push_size _ _ _) (upto_first_done _ n (by exact_mod_cast h) (by simpa [uptoWorld] using hdepth))
+      (Heap.update_push_size _ _ _) (Or.inr (by simp [pythonRecursionFull, pythonRecursionLimit, uptoWorld]; omega))
+      (upto_first_done _ n (by exact_mod_cast h) (by simp [generatorEntryWorld, nativeIteratorName, uptoWorld]; omega))
       (Heap.update_push_size _ _ _)
   | succ j =>
     exact IterSteps.pureDone (Heap.get?_push_size _ _) (Or.inr rfl)
       (Heap.update_push_size _ _ _)
-      (upto_resume_done _ n (j : Int) (by omega) (by simpa [uptoWorld] using hdepth)) (Heap.update_push_size _ _ _)
+      (Or.inr (by simp [pythonRecursionFull, pythonRecursionLimit, uptoWorld]; omega))
+      (upto_resume_done _ n (j : Int) (by omega) (by simp [generatorEntryWorld, nativeIteratorName, uptoWorld]; omega)) (Heap.update_push_size _ _ _)
 
 /-! ## `total(n)`: a function that CONSUMES a generator
 
@@ -804,7 +808,7 @@ abbrev totalInv (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop
     st = ⟨uptoWorld w (N : Int) k, totalLocals N k⟩
 
 /-- `total`'s whole body, as a triple over an arbitrary entry world. -/
-theorem total_body_triple (w : World) (N : Nat) (hdepth : w.callDepth < 999) :
+theorem total_body_triple (w : World) (N : Nat) (hdepth : w.callDepth < 998) :
     PyTriple gen_lab (fun st => st = ⟨w, [("n", .int (N : Int))]⟩) totalBody
       (.ofRet fun rv _ => rv = RVal.int (sumUpto N)) := by
   obtain ⟨s₁, s₂, s₃, hassign⟩ := totalAssign_lit
@@ -1080,7 +1084,7 @@ abbrev tpInv2 (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop :
 
 /-- `two_phase`'s whole body, as a triple over an arbitrary entry world. -/
 theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N)
-    (hdepth : w.callDepth < 999) :
+    (hdepth : w.callDepth < 998) :
     PyTriple gen_lab (fun st => st = ⟨w, [("n", .int (N : Int))]⟩) twoPhaseBody
       (.ofRet fun rv _ => rv = RVal.int 1) := by
   obtain ⟨g₁, g₂, hbind⟩ := tpBindG_lit

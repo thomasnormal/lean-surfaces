@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Assign dated IDs to two C++ backlog records so the generated index passes
+  its freshness and heading checks after the lane merge.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

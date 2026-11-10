@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1344 entries across 18 lanes.** Regenerate with
+**1346 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -47,6 +47,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-10-pyfoundation-6` |  | finish CPython recursion units | python-completeness |
 | `2026-11-10-pyfoundation-5` |  | eager non-iterable genexp creation check | python-completeness |
 | `2026-11-10-pyfoundation-2` |  | protocol census | python-completeness |
+| `2026-11-10-cpp-2` |  | `cpp-two-callable-evaluators`: one callable semantics | cpp |
+| `2026-11-10-cpp-1` |  | `cpp-diff-handwritten-twins`: source-derived differential execution | cpp |
 | `2026-11-09-pycomplete-487` |  | revalidate static definition-delete audit | python-completeness |
 | `2026-11-09-pycomplete-486` |  | revalidate shape-specific ingestion audit | python-completeness |
 | `2026-11-09-pycomplete-485` |  | revalidate signed set-order audit | python-completeness |

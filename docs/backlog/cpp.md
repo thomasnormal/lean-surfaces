@@ -1,6 +1,8 @@
 # C++ lane backlog
 
-## `cpp-diff-handwritten-twins`: source-derived differential execution
+<a id="cpp-diff-handwritten-twins-source-derived-differential-execution"></a>
+
+## 2026-11-10-cpp-1 — `cpp-diff-handwritten-twins`: source-derived differential execution
 
 **Open.** The C++ coverage harness evaluates checked-in Lean fixtures while
 Clang compiles separate source witnesses. Passing both is useful unit evidence,
@@ -20,7 +22,9 @@ admit a source. Keep independent fixtures as unit witnesses, and run grammar
 samples through the same source-to-model path before treating them as execution
 results.
 
-## `cpp-two-callable-evaluators`: one callable semantics
+<a id="cpp-two-callable-evaluators-one-callable-semantics"></a>
+
+## 2026-11-10-cpp-2 — `cpp-two-callable-evaluators`: one callable semantics
 
 **Open.** The value and object evaluators still interpret the same callable IR
 independently. Expression and restricted whole-call agreement theorems cover

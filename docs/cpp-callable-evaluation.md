@@ -499,3 +499,7 @@ truncation toward zero for `-7 / 3`.
 parameterless integer-literal callable, the value and object evaluator results
 are definitionally equal after their error wrappers are erased. The differential
 row exercises the same witness through the native oracle.
+
+`callableEvaluatorRefinementParameter` extends that seam through argument
+binding and a parameter read; it also reduces by `rfl` and has its own native
+differential row.

@@ -387,6 +387,39 @@ def iterSentinelValH (h : Heap) : RVal → Res RVal
       | _ => .exn (.typeError "iter(v, w): v must be callable")
   | _ => .exn (.typeError "iter(v, w): v must be callable")
 
+/-- A frame action under one CPython recursion unit. Both Python exceptions
+and returns restore the caller's active depth. -/
+def withFrameRecursionUnit {α : Type} (action : SemF α) : SemF α := do
+  let st ← get
+  if pythonRecursionFull st.world.callDepth then
+    raisePy .recursionError
+  else
+    set { st with world := { st.world with callDepth := st.world.callDepth + 1 } }
+    tryCatch
+      (do
+        let v ← action
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        pure v)
+      (fun e => do
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        raisePy e)
+
+/-- The world-state counterpart of `withFrameRecursionUnit`. -/
+def withWorldRecursionUnit {α : Type} (action : SemW α) : SemW α := do
+  let w ← get
+  if pythonRecursionFull w.callDepth then
+    raisePy .recursionError
+  else
+    set { w with callDepth := w.callDepth + 1 }
+    tryCatch
+      (do
+        let v ← action
+        modify fun w => { w with callDepth := w.callDepth.pred }
+        pure v)
+      (fun e => do
+        modify fun w => { w with callDepth := w.callDepth.pred }
+        raisePy e)
+
 /-- The builtin table. `isBuiltinName` (Ast.lean) is the AUTHORITATIVE
 implemented set — so a name reaching here is one the tier claims, and
 a name it does not claim can never fall silently past the table. Arguments are
@@ -660,18 +693,20 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- `StopIteration`; `next(g, d)` CONSUMES exhaustion and yields `d`. A
     -- non-iterator argument is the faithful `TypeError`, raised inside
     -- `stepIter`, which owns the referent dispatch.
-    match vs with
-    | [.ref a] => do
-        match ← inFrame (K.stepIter a) with
-        | some v => pure v
-        | Option.none => raisePy .stopIteration
-    | [.ref a, d] => do
-        match ← inFrame (K.stepIter a) with
-        | some v => pure v
-        | Option.none => pure d
-    | [] => raisePy (.typeError "next expected at least 1 argument, got 0")
-    | v :: _ => do
-        raisePy (.typeError s!"'{RVal.typeNameH (← frameHeap) v}' object is not an iterator")
+    -- cfunction_vectorcall_FASTCALL enters before builtin_next dispatch.
+    withFrameRecursionUnit do
+      match vs with
+      | [.ref a] => do
+          match ← inFrame (K.stepIter a) with
+          | some v => pure v
+          | Option.none => raisePy .stopIteration
+      | [.ref a, d] => do
+          match ← inFrame (K.stepIter a) with
+          | some v => pure v
+          | Option.none => pure d
+      | [] => raisePy (.typeError "next expected at least 1 argument, got 0")
+      | v :: _ => do
+          raisePy (.typeError s!"'{RVal.typeNameH (← frameHeap) v}' object is not an iterator")
   else if fname == "enumerate" then
     -- A LAZY iterator object, not a materialized list: `enumerate(board)` is
     -- stepped one pair at a time, exactly as CPython's is. It allocates a
@@ -762,23 +797,6 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
       | _ => refuse viewRecvMsg
     | Option.none => notYet s!"builtin: {fname}()"
 
-/-- The recursion unit around CPython's generic `tp_call` dispatch. The
-world is retained and the unit leaves on both returns and Python exceptions. -/
-def withTypeCallDepth {α : Type} (action : SemF α) : SemF α := do
-  let st ← get
-  if pythonRecursionFull st.world.callDepth then
-    raisePy .recursionError
-  else
-    set { st with world := { st.world with callDepth := st.world.callDepth + 1 } }
-    tryCatch
-      (do
-        let v ← action
-        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
-        pure v)
-      (fun e => do
-        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
-        raisePy e)
-
 /-- Apply a resolved plan to already-evaluated arguments. Not mutual with the
 evaluator: the arguments are values, so nothing here evaluates syntax. -/
 def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
@@ -807,7 +825,7 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
       -- arguments'.
       if vs.length == flds.size then pure (.ntuple tn flds vs.toArray)
       else raisePy (.typeError (ntArityErrorMsg flds vs.length))
-  | .instantiate ci cname hasInit, vs => withTypeCallDepth do
+  | .instantiate ci cname hasInit, vs => withFrameRecursionUnit do
         if hasInit then do
           let a ← heapPush (.instance ci (instanceAttrsM m ci))
           let initName := (classMethodQname m ci "__init__").getD (cname ++ ".__init__")
@@ -2135,8 +2153,7 @@ def stepIterAt (K : Kont) (a : Addr) : SemW (Option RVal) := do
       match Heap.update w.heap a (.generator qname locals cont .running) with
       | Option.none => refuse danglingMsg
       | some h₁ => do
-          set { w with heap := h₁ }
-          inWorld locals (tryCatch
+          let resume := inWorld locals (tryCatch
             (do
               let r ← K.execGen cont
               let st ← get
@@ -2157,6 +2174,18 @@ def stepIterAt (K : Kont) (a : Addr) : SemW (Option RVal) := do
                   (.generator qname st.locals [] (cont.exceptionStatus e)) with
               | Option.none => refuse danglingMsg
               | some h₂ => do heapPut h₂; raisePy (generatorEscape e)))
+          if nativeIteratorName qname then
+            set { w with heap := h₁ }
+            resume
+          else if pythonRecursionFull w.callDepth then
+            match Heap.update h₁ a (.generator qname locals [] .closed) with
+            | Option.none => refuse danglingMsg
+            | some h₂ => do
+                set { w with heap := h₂ }
+                raisePy .recursionError
+          else
+            set { w with heap := h₁ }
+            withWorldRecursionUnit resume
   | some _ =>
       raisePy (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
   | Option.none => refuse danglingMsg

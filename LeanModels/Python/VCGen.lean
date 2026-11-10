@@ -729,49 +729,64 @@ would need turns out to be DERIVABLE rather than assumed: while the object
 at `a` is `.running` nothing can write it, which is one half of §L6's
 `PayloadBlind`. -/
 
-/-- **One step of a suspended generator OBJECT** that yields: the stored
-continuation's `GenSteps` fact, plus the two heap writes `stepIter`
-performs (`.running` on entry, the new continuation `.suspended` on exit).
-Both writes are hypotheses rather than side conditions, so nothing here
-assumes the address is live — a dangling one simply has no proof. -/
+/-- The execution world of a resumed iterator. Python generators enter a
+frame; native iterator cursors use the caller's depth directly. -/
+def generatorEntryWorld (w : World) (h : Heap) (qname : String) : World :=
+  { { w with heap := h } with
+    callDepth := if nativeIteratorName qname then w.callDepth else w.callDepth + 1 }
+
+/-- Restore the caller's recursion depth after a generator frame leaves. -/
+def generatorReturnWorld (w : World) (qname : String) : World :=
+  if nativeIteratorName qname then w else { w with callDepth := w.callDepth.pred }
+
+/-- The per-step depth obligation needed to lift a frame-level drain through
+an object: modeled generator execution must return with its entry depth. -/
+def GenStepsDepthStable (m : Module) : Prop :=
+  ∀ st cont r st', GenSteps m st cont r st' → st'.world.callDepth = st.world.callDepth
+
+/-- Resume a generator object and write back a yielded value. -/
 theorem stepIter_of_genSteps {m : Module} {w : World} {a : Addr}
     {qname : String} {locals : REnv} {cont cont' : GenCont}
     {status : GenStatus} {h₁ h₂ : Heap} {st₁ : FrameState} {v : RVal}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont (some (v, cont')) st₁)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont (some (v, cont')) st₁)
     (hback : Heap.update st₁.world.heap a
         (.generator qname st₁.locals cont' .suspended) = some h₂) :
     ∃ t, ∀ F ≥ t, stepIter m F w a
-      = .ok { st₁.world with heap := h₂ } (some v) := by
+      = .ok (generatorReturnWorld { st₁.world with heap := h₂ } qname) (some v) := by
   obtain ⟨t, ht⟩ := hstep
   refine ⟨t + 1, fun F hF => ?_⟩
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   rw [stepIter]
   rcases hstatus with rfl | rfl <;>
-    simp only [hobj, hrun, ht F' hF', Run.ok_bindE, hback, Run.toWorld]
+    by_cases hn : nativeIteratorName qname = true <;>
+    simp_all [generatorEntryWorld, generatorReturnWorld, Run.ok_bindE,
+      Run.toWorld, Run.leaveCallDepth] <;> omega
 
-/-- **One step of a suspended generator OBJECT** that is EXHAUSTED: the
-object is closed and its continuation dropped, which is what makes every
-later `next` a `StopIteration` rather than a resume. -/
+/-- Resume a generator object and close it on normal exhaustion. -/
 theorem stepIter_of_genDone {m : Module} {w : World} {a : Addr}
     {qname : String} {locals : REnv} {cont : GenCont} {status : GenStatus}
     {h₁ h₂ : Heap} {st₁ : FrameState}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont Option.none st₁)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont Option.none st₁)
     (hback : Heap.update st₁.world.heap a
         (.generator qname st₁.locals [] .closed) = some h₂) :
     ∃ t, ∀ F ≥ t, stepIter m F w a
-      = .ok { st₁.world with heap := h₂ } Option.none := by
+      = .ok (generatorReturnWorld { st₁.world with heap := h₂ } qname) Option.none := by
   obtain ⟨t, ht⟩ := hstep
   refine ⟨t + 1, fun F hF => ?_⟩
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   rw [stepIter]
   rcases hstatus with rfl | rfl <;>
-    simp only [hobj, hrun, ht F' hF', Run.ok_bindE, hback, Run.toWorld]
+    by_cases hn : nativeIteratorName qname = true <;>
+    simp_all [generatorEntryWorld, generatorReturnWorld, Run.ok_bindE,
+      Run.toWorld, Run.leaveCallDepth] <;> omega
 
 /-! ## Delegation: the yield-free statements
 
@@ -1090,63 +1105,65 @@ theorem of_genSteps {m : Module} {w : World} {a : Addr} {qname : String}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont (some (v, cont')) st₁)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont (some (v, cont')) st₁)
     (hback : Heap.update st₁.world.heap a
         (.generator qname st₁.locals cont' .suspended) = some h₂) :
-    IterSteps m w a (some v) { st₁.world with heap := h₂ } :=
-  stepIter_of_genSteps hobj hstatus hrun hstep hback
+    IterSteps m w a (some v) (generatorReturnWorld { st₁.world with heap := h₂ } qname) :=
+  stepIter_of_genSteps hobj hstatus hrun hroom hstep hback
 
-/-- **Exhaustion of the object**, likewise from `stepIter_of_genDone`. -/
+/-- Exhaustion of an iterator object. -/
 theorem of_genDone {m : Module} {w : World} {a : Addr} {qname : String}
     {locals : REnv} {cont : GenCont} {status : GenStatus} {h₁ h₂ : Heap}
     {st₁ : FrameState}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont Option.none st₁)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont Option.none st₁)
     (hback : Heap.update st₁.world.heap a
         (.generator qname st₁.locals [] .closed) = some h₂) :
-    IterSteps m w a Option.none { st₁.world with heap := h₂ } :=
-  stepIter_of_genDone hobj hstatus hrun hstep hback
+    IterSteps m w a Option.none (generatorReturnWorld { st₁.world with heap := h₂ } qname) :=
+  stepIter_of_genDone hobj hstatus hrun hroom hstep hback
 
-/-- **One step of a generator object whose own resumption is heap-pure** —
-the common case, and the one every consumer of `EvalsIn.genCall` meets: a
-generator whose body touches only its own frame. Then `stepIter`'s two
-writes (`.running` on entry, the resumption on exit) land on the same slot
-and collapse (`Heap.update_update`), so the whole step is ONE observable
-change of the object and the caller never has to name the intermediate
-heap twice. `of_genSteps` is the general form, for a resumption that moves
-the world. -/
+/-- A heap-pure iterator step. The body is evaluated at the entered depth,
+then the return adapter restores the caller's depth. -/
 theorem pureStep {m : Module} {w : World} {a : Addr} {qname : String}
     {locals locals' : REnv} {cont cont' : GenCont} {status : GenStatus}
     {h₁ h₂ : Heap} {v : RVal}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont (some (v, cont'))
-      ⟨{ w with heap := h₁ }, locals'⟩)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont (some (v, cont'))
+      ⟨generatorEntryWorld w h₁ qname, locals'⟩)
     (hback : Heap.update w.heap a
       (.generator qname locals' cont' .suspended) = some h₂) :
-    IterSteps m w a (some v) { w with heap := h₂ } :=
-  IterSteps.of_genSteps hobj hstatus hrun hstep (by
+    IterSteps m w a (some v) { w with heap := h₂ } := by
+  have h := IterSteps.of_genSteps hobj hstatus hrun hroom hstep (by
     show Heap.update h₁ a (.generator qname locals' cont' .suspended) = some h₂
     rw [Heap.update_update hrun]
     exact hback)
+  by_cases hn : nativeIteratorName qname = true <;>
+    simpa [generatorEntryWorld, generatorReturnWorld, hn] using h
 
-/-- `pureStep`'s exhaustion twin. -/
+/-- The heap-pure iterator exhaustion rule. -/
 theorem pureDone {m : Module} {w : World} {a : Addr} {qname : String}
     {locals locals' : REnv} {cont : GenCont} {status : GenStatus} {h₁ h₂ : Heap}
     (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
     (hstatus : status = .created ∨ status = .suspended)
     (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
-    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont Option.none
-      ⟨{ w with heap := h₁ }, locals'⟩)
+    (hroom : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth)
+    (hstep : GenSteps m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont Option.none
+      ⟨generatorEntryWorld w h₁ qname, locals'⟩)
     (hback : Heap.update w.heap a (.generator qname locals' [] .closed) = some h₂) :
-    IterSteps m w a Option.none { w with heap := h₂ } :=
-  IterSteps.of_genDone hobj hstatus hrun hstep (by
+    IterSteps m w a Option.none { w with heap := h₂ } := by
+  have h := IterSteps.of_genDone hobj hstatus hrun hroom hstep (by
     show Heap.update h₁ a (.generator qname locals' [] .closed) = some h₂
     rw [Heap.update_update hrun]
     exact hback)
+  by_cases hn : nativeIteratorName qname = true <;>
+    simpa [generatorEntryWorld, generatorReturnWorld, hn] using h
 
 /-- A CLOSED object answers exhaustion forever without running anything —
 what makes a second `for` over a drained generator run zero times
@@ -1527,7 +1544,7 @@ theorem iterSteps_countFrom {m : Module} {w : World} {a : Addr}
     IterSteps m w a (some (.int cur)) { w with heap := h₂ } := by
   obtain ⟨h₁, hrun⟩ :=
     Heap.update_of_get? (.generator "<count>" [] [.countFrom cur step] .running) hobj
-  exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_countFrom hback
+  exact IterSteps.pureStep hobj (Or.inr rfl) hrun (by simp [nativeIteratorName]) genSteps_countFrom hback
 
 /-- The heap object `enumerate(s)` allocates over a value SNAPSHOT — the
 board scan's own generator, `countObj`'s finite twin. -/
@@ -1547,7 +1564,7 @@ theorem iterSteps_enumSeq {m : Module} {w : World} {a : Addr} {i : Int}
     IterSteps m w a (some (.tuple #[.int i, x])) { w with heap := h₂ } := by
   obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
     (.generator "<enumerate>" [] [.enumSeq i (x :: rest)] .running) hobj
-  exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_enumSeqCons hback
+  exact IterSteps.pureStep hobj (Or.inr rfl) hrun (by simp [nativeIteratorName]) genSteps_enumSeqCons hback
 
 /-- **The `enumerate` object is EXHAUSTED** — the board scan's only exit
 (a `count` object never gets here), and a whole drain's last step. -/
@@ -1557,7 +1574,7 @@ theorem iterSteps_enumDone {m : Module} {w : World} {a : Addr} {i : Int} {h₂ :
     IterSteps m w a Option.none { w with heap := h₂ } := by
   obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
     (.generator "<enumerate>" [] [.enumSeq i []] .running) hobj
-  exact IterSteps.pureDone hobj (Or.inr rfl) hrun
+  exact IterSteps.pureDone hobj (Or.inr rfl) hrun (by simp [nativeIteratorName])
     (GenSteps.silent genSilent_enumSeqNil genSteps_nil) hback
 
 /-- **Generator-internal `break`**, as a silent transition. The statement
@@ -1919,53 +1936,75 @@ the remaining frame-level fact transported to the world that write left.
 The exit world is existential: a drain's own last write (the object goes
 `.closed`) is bookkeeping no consumer of the VALUES needs to name. -/
 theorem IterDrains.of_genYields {m : Module} {a : Addr}
-    {qname : String} :
+    {qname : String} (hdepthStable : GenStepsDepthStable m) :
     ∀ (vs : List RVal) (w : World) (locals : REnv) (cont : GenCont)
       (status : GenStatus) (h₁ : Heap) (st' : FrameState),
       Heap.get? w.heap a = some (.generator qname locals cont status) →
       (status = .created ∨ status = .suspended) →
       Heap.update w.heap a (.generator qname locals cont .running) = some h₁ →
-      GenYields m ⟨{ w with heap := h₁ }, locals⟩ cont vs st' →
+      (nativeIteratorName qname = true ∨ ¬pythonRecursionFull w.callDepth) →
+      GenYields m ⟨generatorEntryWorld w h₁ qname, locals⟩ cont vs st' →
       ∃ w', IterDrains m w a vs w' := by
   intro vs
   induction vs with
   | nil =>
-    intro w locals cont status h₁ st' hobj hstatus hrun hy
-    have hslot : Heap.get? ({ w with heap := h₁ } : World).heap a
-        = some (.generator qname locals cont .running) :=
-      Heap.get?_update_self hrun
+    intro w locals cont status h₁ st' hobj hstatus hrun hroom hy
+    have hslot : Heap.get? (generatorEntryWorld w h₁ qname).heap a
+        = some (.generator qname locals cont .running) := by
+      simpa [generatorEntryWorld] using Heap.get?_update_self hrun
     have hstable := GenSteps.slot_stable hslot (GenYields.unnil hy)
     obtain ⟨h₂, hback⟩ := Heap.update_of_get?
       (.generator qname st'.locals [] .closed) hstable
-    exact ⟨_, IterDrains.nil (IterSteps.of_genDone hobj hstatus hrun
+    exact ⟨_, IterDrains.nil (IterSteps.of_genDone hobj hstatus hrun hroom
       (GenYields.unnil hy) hback)⟩
   | cons v vs ih =>
-    intro w locals cont status h₁ st' hobj hstatus hrun hy
-    have hslot : Heap.get? ({ w with heap := h₁ } : World).heap a
-        = some (.generator qname locals cont .running) :=
-      Heap.get?_update_self hrun
+    intro w locals cont status h₁ st' hobj hstatus hrun hroom hy
+    have hslot : Heap.get? (generatorEntryWorld w h₁ qname).heap a
+        = some (.generator qname locals cont .running) := by
+      simpa [generatorEntryWorld] using Heap.get?_update_self hrun
     obtain ⟨st₁, k₁, hstep, hrest⟩ := GenYields.uncons hy
+    have hdepth := hdepthStable _ _ _ _ hstep
     have hstable := GenSteps.slot_stable hslot hstep
-    -- the object-level step: `stepIter`'s write-back, and the object it leaves
     obtain ⟨h₂, hback⟩ := Heap.update_of_get?
       (.generator qname st₁.locals k₁ .suspended) hstable
     have hobj₂ : Heap.get? h₂ a = some (.generator qname st₁.locals k₁ .suspended) :=
       Heap.get?_update_self hback
     obtain ⟨h₁', hrun₂⟩ := Heap.update_of_get?
       (.generator qname st₁.locals k₁ .running) hobj₂
-    -- the next round's entry write, seen at the FRAME-level world: two
-    -- writes to one slot are the second write
     have hsetf : Heap.update st₁.world.heap a
         (.generator qname st₁.locals k₁ .running) = some h₁' := by
       rw [← Heap.update_update hback]; exact hrun₂
     obtain ⟨-, h', -, hrest'⟩ :=
       GenYields.transport vs st₁ st' k₁ locals cont st₁.locals k₁ h₁'
         hstable hsetf hrest
-    obtain ⟨w', hdrain⟩ := ih { st₁.world with heap := h₂ } st₁.locals k₁
-      .suspended h₁' ⟨{ st'.world with heap := h' }, st'.locals⟩ hobj₂ (Or.inr rfl)
-      hrun₂ hrest'
+    let w₂ := generatorReturnWorld { st₁.world with heap := h₂ } qname
+    have hdepthRet : w₂.callDepth = w.callDepth := by
+      cases hn : nativeIteratorName qname <;>
+        simp [w₂, generatorEntryWorld, generatorReturnWorld, hn] at hdepth ⊢ <;> omega
+    have hentry : generatorEntryWorld w₂ h₁' qname = { st₁.world with heap := h₁' } := by
+      cases hn : nativeIteratorName qname with
+      | false =>
+        have hd : st₁.world.callDepth = w.callDepth + 1 := by
+          simpa [generatorEntryWorld, hn] using hdepth
+        simp [w₂, generatorEntryWorld, generatorReturnWorld, hn, hd]
+      | true =>
+        simp [w₂, generatorEntryWorld, generatorReturnWorld, hn]
+    have hobj₂' : Heap.get? w₂.heap a = some (.generator qname st₁.locals k₁ .suspended) := by
+      cases hn : nativeIteratorName qname <;>
+        simpa [w₂, generatorReturnWorld, hn] using hobj₂
+    have hrun₂' : Heap.update w₂.heap a (.generator qname st₁.locals k₁ .running) = some h₁' := by
+      cases hn : nativeIteratorName qname <;>
+        simpa [w₂, generatorReturnWorld, hn] using hrun₂
+    have hroom₂ : nativeIteratorName qname = true ∨ ¬pythonRecursionFull w₂.callDepth := by
+      simpa [hdepthRet] using hroom
+    have hy₂ : GenYields m ⟨generatorEntryWorld w₂ h₁' qname, st₁.locals⟩ k₁ vs
+        ⟨{ st'.world with heap := h' }, st'.locals⟩ := by
+      rw [hentry]; exact hrest'
+    obtain ⟨w', hdrain⟩ := ih w₂ st₁.locals k₁ .suspended h₁'
+      ⟨{ st'.world with heap := h' }, st'.locals⟩ hobj₂' (Or.inr rfl)
+      hrun₂' hroom₂ hy₂
     exact ⟨w', IterDrains.cons
-      (IterSteps.of_genSteps hobj hstatus hrun hstep hback) hdrain⟩
+      (IterSteps.of_genSteps hobj hstatus hrun hroom hstep hback) hdrain⟩
 
 /-- **Call it, then drain it** — the shape a draining consumer meets, and the
 object-level twin of `EvalsIn.genCall` composed with a body spec: calling a
@@ -1979,10 +2018,12 @@ theorem callIn_drains {m : Module} {w : World}
     (hlocalsOk : f.localsOk = true) (harity : arityOk f.params args.size = true)
     (hgen : f.isGenerator = true)
     (hcreate : genExpCreationRun w.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ())
+    (hdepthStable : GenStepsDepthStable m)
+    (hroom : nativeIteratorName fname = true ∨ ¬pythonRecursionFull w.callDepth)
     (hy : GenYields m
-      ⟨{ w with heap := w.heap.push (.generator fname
+      ⟨generatorEntryWorld w (w.heap.push (.generator fname
           (markUnboundLocals f.body.toList (mkCallEnv f.params args))
-          [.block f.body.toList] .running) },
+          [.block f.body.toList] .running)) fname,
         markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
       [.block f.body.toList] vs st') :
     ∃ w', ∃ t, ∀ F ≥ t,
@@ -1990,14 +2031,14 @@ theorem callIn_drains {m : Module} {w : World}
           = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) ∧
       drainIter m F { w with heap := w.heap.push (genObj fname f args) }
           w.heap.size = .ok w' vs := by
-  obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields vs
+  obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields hdepthStable vs
     { w with heap := w.heap.push (genObj fname f args) }
     (markUnboundLocals f.body.toList (mkCallEnv f.params args))
     [.block f.body.toList] .created
     (w.heap.push (.generator fname
       (markUnboundLocals f.body.toList (mkCallEnv f.params args))
       [.block f.body.toList] .running)) st'
-    (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hy
+    (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hroom (by simpa [generatorEntryWorld] using hy)
   exact ⟨w', t + 1, fun F hF => by
     obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
     exact ⟨callIn_genCall hf hargsOk hlocalsOk harity hgen hcreate,

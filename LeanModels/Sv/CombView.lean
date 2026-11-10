@@ -1763,6 +1763,21 @@ def siteOf? (ds : List DeclT) (pos : Nat) : PProcess → Except String TSite
   | .alwaysImplicit _ => .error "unsupported process `ProceduralBlockSymbol:Always`"
   | .unsupported k _ => .error s!"unsupported process `{k}`"
 
+/-- What the refusal of a design with an `initial` `$readmemh` adds (for the tactics' messages only; no theorem reads
+it). A time-zero ROM load (the extractor's `SystemTask:readmemh` marker, ls-sv 539ad6172): `X.sem` (`instProcess2`) keeps
+it as the loud process `T2:Initial` and the ROM's cells as uninitialized declarations, and only the source-shaped memory
+route (`Kernel.MemCycle`, `runMem2`'s initial phase) loads the file, so the cells hold no constants the tactics could
+read. A `SystemTask:readmemh:<wall>` marker is the extractor's own refusal of the task. `""` for any other design. -/
+def _root_.LeanModels.Sv.PDesign.romNote (d : PDesign) : String :=
+  match d.processes.findSome? (fun p => match p with | .initial (.unsupported k t) => some (k, t) | _ => none) with
+  | some (k, t) =>
+      if k == "SystemTask:readmemh" then
+        " (the `initial` is a `$readmemh` ROM load, which the semantic-tier family `X.sem` keeps as the loud process `T2:Initial`, the ROM's cells uninitialized declarations; the file contents are loaded only on the source-shaped memory route, `runMem2`, which has no proof layer the tactics could be sound against)"
+      else if k.startsWith "SystemTask:readmemh:" then
+        s!" (the `initial` is a `$readmemh` the extractor refuses, below the tactics: `{k}`: {t})"
+      else ""
+  | none => ""
+
 /-- The recognizer of a process list, GENERIC in the recognizer `so` of one process (`siteOf?`; the
 proc-aware layer, `CombProcSummary.lean`, instantiates it with `siteOfP?`). -/
 def sitesOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds : List DeclT) (tag : String) : Nat → List PProcess → Except String (List TSite)
@@ -2147,7 +2162,8 @@ def _root_.LeanModels.Sv.PDesign.summaryG (so : List DeclT → Nat → PProcess 
   | .error e => .error e
   | .ok lps =>
       if !d.enums.isEmpty then .error "enums are outside the v1 fragment"
-      else if !d.others.isEmpty then .error "out-of-tier module members are present"
+      else if !d.others.isEmpty then
+        .error s!"out-of-tier module members are present ({", ".intercalate (d.others.map fun (k, t) => s!"`{k}`: {t}")})"
       else
         match declsOf? d.decls with
         | .error e => .error e

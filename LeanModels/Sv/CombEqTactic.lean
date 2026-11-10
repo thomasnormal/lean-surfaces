@@ -544,7 +544,8 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
                 (mkApp2 (mkConst ``LeanModels.Sv.CombHier.twinRefusedOrigin) pdH lib)
               pure (if o.isEmpty then "" else s!" (in the flat twin of this design: {o})")
           | none => pure ""
-        throwError "sv_equations: outside the supported fragment — {msg}{loc}"
+        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.romNote) pdS)
+        throwError "sv_equations: outside the supported fragment — {msg}{loc}{rom}"
     | .ok s =>
       let probs := s.structProblems
       unless probs.isEmpty do

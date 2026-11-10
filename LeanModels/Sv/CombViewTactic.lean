@@ -897,7 +897,8 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
         let loc := match twin? with
           | some tw => if tw.origin.isEmpty then "" else s!" (in the flat twin of this design: {tw.origin})"
           | none => ""
-        throwError "sv_structure: outside the supported fragment — {msg}{loc}"
+        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.romNote) pdS)
+        throwError "sv_structure: outside the supported fragment — {msg}{loc}{rom}"
     | .ok s =>
       if hintOnly then
         logInfo m!"{s.describe}"

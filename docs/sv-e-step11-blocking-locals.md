@@ -46,3 +46,13 @@ semantic process loud.  If that boundary is passed, the existing E edge
 executor's next explicit boundary is `9.2.2.4: blocking assignment in
 always_ff is outside E-core-1`; neither is silently reinterpreted by this
 fixture.
+
+## E-core review boundary
+
+The fixture was reviewed against E-core-1 on 2026-11-10. Its parser envelope
+and five differential rows are accepted evidence, but the implementation stays
+parked. A correct admission needs a scoped edge frame with static lifetime,
+left-to-right blocking-local evaluation, and an NBA frame theorem; adding a
+local declaration by treating it as a module signal would change sensitivity,
+aliasing, and persistence. The existing flat `Elab1` store has no such scope,
+so the loud `LocalDecl` refusal remains the named boundary.

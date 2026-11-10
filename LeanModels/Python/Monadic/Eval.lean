@@ -668,30 +668,31 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         pure (.ref a)
     | vs => raisePy (.typeError s!"set expected at most 1 argument, got {vs.length}")
   else if fname == "any" || fname == "all" then
-    match vs with
-    | [v] => do
-        -- THE GENERATOR ARM IS NOT A DRAIN, and the difference is observable:
-        -- `any`/`all` step only until the answer DECIDES and leave the object
-        -- SUSPENDED, so a later `next` sees the partial consumption. Routing it
-        -- through `iterValues` would fully drain it — a wrong answer to a
-        -- question about state, not a missing feature. It gets its own arm.
-        let isGen ← (match v with
-          | .ref a => do
-              match Heap.get? (← frameHeap) a with
-              | some (.generator ..) => pure true
-              | _ => pure false
-          | _ => pure false)
-        if isGen then
-          match v with
-          | .ref a => do
-              let b ← inFrame (K.anyAllIter a (fname == "all"))
-              pure (.bool b)
-          | _ => refuse "internal: generator flag without a referent (report this)"
-        else do
-          let xs ← iterValues K m fname true v
-          let b ← liftRes (anyAllScan (← frameHeap) (fname == "all") xs)
-          pure (.bool b)
-    | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
+    withFrameRecursionUnit do
+      match vs with
+      | [v] => do
+          -- THE GENERATOR ARM IS NOT A DRAIN, and the difference is observable:
+          -- `any`/`all` step only until the answer DECIDES and leave the object
+          -- SUSPENDED, so a later `next` sees the partial consumption. Routing it
+          -- through `iterValues` would fully drain it — a wrong answer to a
+          -- question about state, not a missing feature. It gets its own arm.
+          let isGen ← (match v with
+            | .ref a => do
+                match Heap.get? (← frameHeap) a with
+                | some (.generator ..) => pure true
+                | _ => pure false
+            | _ => pure false)
+          if isGen then
+            match v with
+            | .ref a => do
+                let b ← inFrame (K.anyAllIter a (fname == "all"))
+                pure (.bool b)
+            | _ => refuse "internal: generator flag without a referent (report this)"
+          else do
+            let xs ← iterValues K m fname true v
+            let b ← liftRes (anyAllScan (← frameHeap) (fname == "all") xs)
+            pure (.bool b)
+      | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
   else if fname == "next" then
     -- STEP an iterator. `next(g)` on an exhausted generator is the faithful
     -- `StopIteration`; `next(g, d)` CONSUMES exhaustion and yields `d`. A
@@ -1231,13 +1232,13 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           | [_], _ =>
                               refuse "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
                           | vs, _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
-                  else if name == "float" || name == "len" || name == "bool" then
+                  else if name == "float" || name == "len" || name == "bool" || name == "any" || name == "all" then
                     -- CPython's float, len, and bool constructors accept no keyword
                     -- arguments. Evaluate both argument lists before their
                     -- faithful TypeErrors, preserving Python's order.
                     let _ ← evalOpenCallList (K, m, args.toList)
                     let _ ← K.kwArgs kwargs.toList
-                    if name == "len" then
+                    if name == "len" || name == "any" || name == "all" then
                       let st ← get
                       let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
                       pure ()
@@ -1245,7 +1246,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                       "float() takes no keyword arguments"
                     else if name == "len" then
                       "len() takes no keyword arguments"
-                    else "bool() takes no keyword arguments"))
+                    else if name == "bool" then "bool() takes no keyword arguments"
+                    else s!"{name}() takes no keyword arguments"))
                   else if name == "divmod" then
                     -- CPython's divmod constructor accepts no keyword
                     -- arguments. Evaluate both argument lists before its

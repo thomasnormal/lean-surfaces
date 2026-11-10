@@ -2645,6 +2645,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 exact .liftRes hs3 _
                     case banyall =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine ClockErasedF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>

@@ -1189,6 +1189,28 @@ with `Literal "00000001"`); `race_blk` / `swap_nba` = two `Var` decls with
 
 # Symbolic mode — schema sv-0.2 (additive; `--top`)
 
+Symbolic `Block` nodes that retain direct `LocalDecl` statements also retain
+an optional `scope` object from Slang's `BlockStatement.blockSymbol`:
+`name`, `lexical_path`, `hierarchical_path`, and `default_lifetime`
+(`"static"`, `"automatic"`, or `"unknown"`). It is null if Slang supplies no
+block symbol. Blocks without retained declarations keep their existing
+fields.
+
+Symbolic `LocalDecl` nodes retain `lifetime` (the resolved Slang lifetime),
+`lexical_path`, `hierarchical_path`, and `decl_type` (the same symbolic type
+AST used for module declarations). An unsupported type has `decl_type: null`
+and `decl_type_reason`; it is not reconstructed from the resolved default
+width. Existing `width`, `signed`, `two_state` and `init` fields remain. The
+retained-procedure route preserves these fields too and keeps the declaration
+in its lexical block. These additive metadata fields do not admit local
+storage to E: the current loader still refuses LocalDecl.
+
+Paths are opaque Slang names, not unique declaration identifiers. In
+particular, anonymous scopes may have equal printed paths. Their enclosing
+Block tree and source spans distinguish the declarations. Consumers must not
+merge locals merely because their paths or names coincide. See
+[the Step 11 evidence](sv-e-step11-blocking-locals.md).
+
 Phase 1 of the CV32E40P program adds a second extraction mode:
 
 ```

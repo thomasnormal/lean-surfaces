@@ -9,14 +9,14 @@ IEEE 1800-2023 §§9.2.2.1 and 9.2.2.4 distinguish the general `always` process
 from `always_ff`; this source-shaped form still has one positive-edge event and
 NBA-only updates. `Kernel/Core1Elab.lean` now transports both retained source
 nodes into E through `FF.ofProcess2` and `Elab1.ofEdgeDesign2`. The `FF.style`
-field retains `.alwaysPlain` or `.alwaysFF`; the clock, reset and body are
+field retains `.alwaysPlain` or `.alwaysFF`; the single clock event and body are
 copied verbatim. `FF.toProcess2?` reads the source node back. The preservation
 theorems prove that a successful transport retains every process in source
 order, its entire body, the declarations and module name. No process is
 filtered, and no statement is lowered.
 
-This entry point requires scalar input clocks/resets and `ffOkB` bodies.
-Mixed comb/edge designs, active-high resets and unsupported process nodes
+This entry point requires scalar input clocks and `ffOkB` bodies.
+Mixed comb/edge designs, asynchronous resets and unsupported process nodes
 refuse explicitly. It has a separate name from Step 9's planned general
 `Elab1.ofDesign2`. One-writer and no-clock-write conditions remain explicit
 `EdgeProfile` obligations for R-EDGE. The unchanged E edge rule samples each
@@ -41,6 +41,44 @@ over every typed store and process-atomic legal schedule, and a kernel-checked
 trace equality including startup. Its source-style guard checks the E image,
 not just the loader's node. Blocking bodies, delays and unsupported event
 controls remain loud in this edge fragment.
+
+Async-reset transport is deliberately outside this narrow entry point.
+The legacy loader's `alwaysFFR` node does not retain plain-always source
+style, and its reset-event `iff` metadata is not yet represented. A transport
+round trip over that node cannot establish preservation of the original
+source. `FF.ofProcess2` therefore refuses every `alwaysFFR` before E
+elaboration. This does not change E's separately constructed reset rules.
+The loaded-source regression
+[`plain_always_reset_metadata_step11.sv`](../Examples/system-verilog/sem2/plain_always_posedge_step11/plain_always_reset_metadata_step11.sv)
+keeps an unguarded plain-always reset beside an `always_ff` reset guarded by
+`iff gate` (§9.4.2.3). Its source oracle distinguishes a masked reset from an
+enabled one. It must refuse this edge entry until the frontend retains the
+complete source event. No E execution result is claimed for this regression.
+The envelope uses the legacy default extraction mode so the loaded-source
+guard exercises that metadata-loss path. Retained-procedure mode already
+refuses the plain multi-event always. `reset_boundary.lean` rejects the loaded
+default-mode design and both direct reset polarities; it does not pin the
+loader's lossy node shape as expected behavior.
+
+Xcelium 24.03-s004 verifies eleven source rows. Icarus 13.0 rejects the
+event-control `iff` at the fixture's line 9, so no Icarus result is claimed
+for this source. The checker accepts only that exact compiler diagnostic;
+other compile failures fail the check, and an Icarus version that accepts
+the source must execute all eleven rows.
+
+| action | unguarded `q` | guarded `r` |
+| --- | --- | --- |
+| first | x | x |
+| clock, data 1 | 1 | 1 |
+| reset, gate 0 | 0 | 1 |
+| clock, data 0, gate 0 | 0 | 0 |
+| clock, data 1 | 1 | 1 |
+| reset, gate 1 | 0 | 0 |
+| clock, data x | x | x |
+| clock, data z | z | z |
+| clock, data 1 | 1 | 1 |
+| reset, gate x | 0 | 1 |
+| reset, gate z | 0 | 1 |
 
 The second source,
 [`plain_always_kinds_step11.sv`](../Examples/system-verilog/sem2/plain_always_posedge_step11/plain_always_kinds_step11.sv),
@@ -82,12 +120,15 @@ After building the fixture, compare E's actual execution directly with both
 source testbenches:
 
 ```sh
-lake build 'Examples.«system-verilog».sem2.plain_always_posedge_step11.agree'
+lake build 'Examples.«system-verilog».sem2.plain_always_posedge_step11.agree' \
+  'Examples.«system-verilog».sem2.plain_always_posedge_step11.reset_boundary'
 python3 Examples/system-verilog/sem2/plain_always_posedge_step11/check.py
 ```
 
 The checker uses the Xcelium readiness gate, prints simulator versions and E
-trace timings, and requires all nineteen rows. Subprocesses have a 120-second
+trace timings, and requires all nineteen E rows. It separately checks the
+eleven reset-guard source rows, with the explicit Icarus limitation above.
+Subprocesses have a 120-second
 limit. A refused or incomplete E trace fails.
 
 The two-process oracle caches declared store values between closed slots.

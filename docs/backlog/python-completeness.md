@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
+
+The inbox finding `py-no-recursion-limit` is already closed by the active
+`World.callDepth` guard and the pinned CPython 3.9 limit of 1000. Rechecking
+the current post-builtin-recursion branch found no divergence: both the direct
+comparison and linear-recursion probes raise at the same boundaries, and the
+script witness still raises `RecursionError` instead of returning its depth.
+`sys.setrecursionlimit` remains outside the tier because it needs an explicit
+environment/oracle input.
+
+| Measurement | Result |
+|---|---|
+| Focused closed-function differential | 13/13 MATCH against CPython 3.9.25 |
+| Script witness | `recursion_limit_script.py --compare`: `RecursionError`, exit 1, MATCH |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-no-recursion-limit` for this branch; keep the explicit
+depth hypothesis on universal recursive specifications and move to the next
+unresolved high-priority audit item.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

@@ -6,6 +6,10 @@ Load with::
 
 Magics provided (see notebooks/01-pipeline.ipynb for the guided tour):
 
+Python extraction and differential execution default to CPython 3.9, independently
+of the notebook kernel. ``LEANPY_FRONTEND`` and ``LEANPY_CPYTHON`` select the
+frontend and oracle respectively, as in ``tools/leanpy``.
+
 ``%%pyfile <name>.py``
     Write the cell body to the scratch working dir ``notebooks/work/``
     (gitignored), run the extractor on it, and report the envelope summary
@@ -105,7 +109,6 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -272,6 +275,15 @@ def _usage_error(msg):
     (keeps the class contract: the message was displayed before the raise)."""
     _show(_banner(_SEV_COLOR["error"], msg))
     return UsageDisplayed(msg)
+
+
+def _python_executable(variable):
+    """Use the same pinned defaults and explicit overrides as leanpy."""
+    requested = os.environ.get(variable) or "python3.9"
+    executable = shutil.which(requested)
+    if executable is None:
+        raise _usage_error("%s: Python executable %r was not found" % (variable, requested))
+    return executable
 
 
 # ---------------------------------------------------------------------------
@@ -463,7 +475,7 @@ class LeanMagics(Magics):
         py_path.write_text(cell if cell.endswith("\n") else cell + "\n",
                            encoding="utf-8")
         rel = py_path.relative_to(REPO_ROOT).as_posix()
-        python3 = shutil.which("python3") or sys.executable
+        python3 = _python_executable("LEANPY_FRONTEND")
         t0 = time.monotonic()
         proc = subprocess.run(
             [python3, str(EXTRACTOR), rel, "--companion-dir", "notebooks/work"],
@@ -749,7 +761,7 @@ class LeanMagics(Magics):
         stem, json_path = self._find_function(fname, modstem)
         py_path = WORK_DIR / (stem + ".py")
 
-        python3 = shutil.which("python3") or sys.executable
+        python3 = _python_executable("LEANPY_CPYTHON")
         t0 = time.monotonic()
         try:
             proc = subprocess.run(
@@ -783,7 +795,7 @@ class LeanMagics(Magics):
             "<tr><td style='padding:2px 14px 2px 0'>Lean&nbsp;interpreter</td>"
             "<td style='padding:2px 14px 2px 0'>%s</td>"
             "<td style='color:#888;padding:2px 0'>%s</td></tr></table>"
-            % (_esc(stem + ".py"), _esc(_pretty_res(cpy)),
+            % (_esc(stem + ".py; " + python3), _esc(_pretty_res(cpy)),
                _esc(json.dumps(cpy)), _esc(_pretty_res(lean)),
                _esc(json.dumps(lean)))
         )

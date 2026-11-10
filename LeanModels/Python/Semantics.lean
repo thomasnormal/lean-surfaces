@@ -184,7 +184,11 @@ def roundFloatZero (value : Float64) : Res RVal :=
 outside its decimal exponent window, and otherwise rounds the exact binary64
 ratio after scaling by `10 ^ ndigits`. -/
 def roundFloatNDigits (value : Float64) (digits : Int) : Res RVal :=
-  if digits > 323 then
+  -- CPython 3.9 `float___round___impl` returns non-finite values before
+  -- applying the decimal exponent cutoffs.
+  if value.exponent == 2047 then
+    .ok (.float value)
+  else if digits > 323 then
     .ok (.float value)
   else if digits < -308 then
     .ok (.float (if value.sign then Float64.ofBits 0x8000000000000000 else Float64.ofBits 0))
